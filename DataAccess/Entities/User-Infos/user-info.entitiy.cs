@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Entities.Cinema_Infos;
+using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable All
 
@@ -12,7 +13,7 @@ namespace DataAccess.Entities.User_Info
 
         [Key]
         [Column(TypeName = "varchar(100)")]
-        public string userId { get; set; } = "";
+        public string userId { get; set; } = Guid.NewGuid().ToString();
         
         [Column(TypeName = "varchar(100)")]
         [Required]
@@ -20,8 +21,16 @@ namespace DataAccess.Entities.User_Info
 
 
         [Column(TypeName = "varchar(100)")]
+        public string password { get; set; } = String.Empty;
+
+        [Column(TypeName = "varchar(100)")]
+        public string? refreshToken { get; set; } = string.Empty;
+        
+        [Column(TypeName = "varchar(50)")]
+        public string? subId { get; set; } = string.Empty;
+        
         [Required]
-        public string password { get; set; } = "";
+        public register_method_enum registerMethod { get; set; } 
 
         public List<user_role_info_entity> user_role_info_entity { get; set; } = [];
 

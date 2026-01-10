@@ -1,6 +1,6 @@
 // ReSharper disable All
 
-namespace Backend.Exceptions;
+namespace Backend.Shard.Exceptions;
 
 public class app_exception : Exception
 {

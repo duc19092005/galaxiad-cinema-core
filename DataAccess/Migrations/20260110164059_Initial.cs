@@ -29,7 +29,7 @@ namespace DataAccess.Migrations
                 {
                     userId = table.Column<string>(type: "varchar(100)", nullable: false),
                     userEmail = table.Column<string>(type: "varchar(100)", nullable: false),
-                    password = table.Column<string>(type: "varchar(100)", nullable: false)
+                    password = table.Column<string>(type: "varchar(100)", nullable: true)
                 },
                 constraints: table =>
                 {

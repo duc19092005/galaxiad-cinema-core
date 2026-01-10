@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text.Json;
-using Backend.Exceptions;
 using Backend.Middlewares;
+using Backend.Shard.Exceptions;
 
 namespace Backend.Middlewares
 {
