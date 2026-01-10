@@ -1,0 +1,57 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using DataAccess.Entities.Cinema_Infos;
+using Microsoft.EntityFrameworkCore;
+// ReSharper disable All
+
+namespace DataAccess.Entities.User_Info
+{
+    [Index(nameof(userEmail) , IsUnique = true)]
+    public class user_info_entity
+    {
+
+        [Key]
+        [Column(TypeName = "varchar(100)")]
+        public string userId { get; set; } = "";
+        
+        [Column(TypeName = "varchar(100)")]
+        [Required]
+        public string userEmail { get; set; } = "";
+
+
+        [Column(TypeName = "varchar(100)")]
+        [Required]
+        public string password { get; set; } = "";
+
+        public List<user_role_info_entity> user_role_info_entity { get; set; } = [];
+
+        public user_profile_entity user_profile_entity { get; set; } = null!;
+        
+        // QL Rap
+        
+        public virtual ICollection<cinema_info_entity> createdCinemas { get; set; } = [];
+        public virtual ICollection<cinema_info_entity> deletedCinemas { get; set; } = [];
+        public virtual ICollection<cinema_info_entity> updatedCinemas { get; set; } = [];
+        public virtual ICollection<cinema_info_entity> managedCinemas { get; set; } = [];
+        
+        // QL Phòng
+        
+        public virtual ICollection<auditorium_info_entity> createdAuditoriums { get; set; } = [];
+        public virtual ICollection<auditorium_info_entity> deletedAuditoriums { get; set; } = [];
+        public virtual ICollection<auditorium_info_entity> updatedAuditoriums { get; set; } = [];
+        
+        // QL Định dạng
+        
+        public virtual ICollection<movie_format_info_entity> createdMovieFormats { get; set; } = [];
+        public virtual ICollection<movie_format_info_entity> deletedMovieFormats { get; set; } = [];
+        public virtual ICollection<movie_format_info_entity> updatedMovieFormats { get; set; } = [];
+        
+        // QL Ghe
+        
+        public virtual ICollection<seats_info_entity> createdSeats { get; set; } = [];
+        public virtual ICollection<seats_info_entity> deletedSeats { get; set; } = [];
+        public virtual ICollection<seats_info_entity> updatedSeats { get; set; } = [];
+        
+        
+    }
+}

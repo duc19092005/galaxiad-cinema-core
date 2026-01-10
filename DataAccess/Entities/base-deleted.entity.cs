@@ -1,0 +1,21 @@
+// ReSharper disable All
+
+
+public class base_deleted_entity<T> where T : class
+{
+    public bool isDeleted { get; set; } = false;
+    public bool isActive { get; set; } = true;
+    public DateTime? deletedAt { get; set; }
+    public DateTime activeAt { get; set; }
+    public DateTime createdAt { get; set; } = DateTime.Now;
+
+    public string createdByUserId { get; set; } = string.Empty;
+    public string? updatedByUserId { get; set; }
+    public string? deletedByUserId { get; set; }
+    public string? managerId { get; set; }
+
+    public virtual T? creator { get; set; }    
+    public virtual T? updater { get; set; }    
+    public virtual T? deleter { get; set; }    
+    public virtual T? manager { get; set; }    
+}
