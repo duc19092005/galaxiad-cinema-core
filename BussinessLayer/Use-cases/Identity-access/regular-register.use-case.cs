@@ -2,7 +2,7 @@
 
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos.Identity_Access;
-using BussinessLayer.Dtos.Response;
+using BussinessLayer.Dtos;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Validates.Identity_access;
 using DataAccess;
@@ -35,7 +35,6 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
         using var transaction = await _dbContext.Database.BeginTransactionAsync();        
         try
         {
-            
             if (register_validate.checkExistEmail(_dbContext, dto.userEmail))
             {
                 throw new app_exception("Email Already Exits", 400, "UError02");
@@ -63,7 +62,7 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
 
             // Add User
 
-            var generateUserId = Guid.NewGuid().ToString();
+            var generateUserId = Guid.NewGuid();
 
             await _dbContext.user_info_entity.AddAsync(new user_info_entity()
             {

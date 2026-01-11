@@ -10,8 +10,7 @@ namespace DataAccess.Entities.User_Info
     public class role_list_info_entity
     {
         [Key]
-        [Column(TypeName = "varchar(100)")]
-        public string roleId { get; set; } = "";
+        public Guid roleId { get; set; } 
         
         [Required]
         [Column(TypeName = "nvarchar(50)")]

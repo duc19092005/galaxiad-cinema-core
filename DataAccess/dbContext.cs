@@ -62,5 +62,10 @@ public class dbContext : DbContext
             entity.HasOne(m => m.updater).WithMany(u => u.updatedMovieFormats).HasForeignKey(m => m.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(m => m.deleter).WithMany(u => u.deletedMovieFormats).HasForeignKey(m => m.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
+        
+        modelBuilder.Entity<user_info_entity>()
+            .HasOne(u => u.user_profile_entity)
+            .WithOne(p => p.user_info_entity)
+            .HasForeignKey<user_profile_entity>(p => p.userID);
     }
 }

@@ -8,8 +8,7 @@ namespace DataAccess.Entities.Cinema_Infos;
 public class cinema_info_entity : base_deleted_entity<user_info_entity>
 {
     [Key]
-    [Column(TypeName = "varchar(100)")]
-    public string cinemaId { get; set; } = null!;
+    public Guid cinemaId { get; set; } 
     
     [Column(TypeName = "nvarchar(100)")]
     public string cinemaLocation { get; set; } = null!;

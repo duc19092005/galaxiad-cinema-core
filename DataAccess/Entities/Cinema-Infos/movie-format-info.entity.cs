@@ -9,7 +9,7 @@ public class movie_format_info_entity : base_deleted_entity<user_info_entity>
 {
     [Key]
     [Column(TypeName = "varchar(100)")]
-    public string movieFormatId { get; set; } = null!;
+    public Guid movieFormatId { get; set; } 
     
     [Required]
     [Column(TypeName = "nvarchar(50)")]

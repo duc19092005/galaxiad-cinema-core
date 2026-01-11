@@ -12,8 +12,7 @@ namespace DataAccess.Entities.User_Info
     {
 
         [Key]
-        [Column(TypeName = "varchar(100)")]
-        public string userId { get; set; } = Guid.NewGuid().ToString();
+        public Guid userId { get; set; } 
         
         [Column(TypeName = "varchar(100)")]
         [Required]

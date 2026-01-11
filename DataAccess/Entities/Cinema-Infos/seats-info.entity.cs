@@ -10,7 +10,7 @@ public class seats_info_entity : base_deleted_entity<user_info_entity>
 {
     [Key]
     [Column(TypeName = "varchar(100)")]
-    public string seatId { get; set; } = null!;
+    public Guid seatId { get; set; }
 
     [Column(TypeName = "nvarchar(50)")] 
     public string seatNumber { get; set; } = null!;
@@ -27,4 +27,11 @@ public class seats_info_entity : base_deleted_entity<user_info_entity>
 
     public int rowIndex { get; set; }
     
+    // Foreign Key
+    
+    [ForeignKey("auditorium_info_entity")]
+    public Guid auditoriumId { get; set; }
+
+    public auditorium_info_entity auditorium_info_entity { get; set; } = null!;
+
 }

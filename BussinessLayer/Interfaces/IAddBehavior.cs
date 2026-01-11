@@ -1,4 +1,4 @@
-using BussinessLayer.Dtos.Response;
+using BussinessLayer.Dtos;
 // ReSharper disable All
 
 namespace BussinessLayer.Interfaces;

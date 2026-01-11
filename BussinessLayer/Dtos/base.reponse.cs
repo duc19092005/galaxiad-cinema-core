@@ -1,4 +1,4 @@
-namespace BussinessLayer.Dtos.Response;
+namespace BussinessLayer.Dtos;
 // ReSharper disable All
 
 public class base_reponse<T>

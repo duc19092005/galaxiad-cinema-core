@@ -12,14 +12,12 @@ namespace DataAccess.Entities.User_Info
         // ID của user
 
         [ForeignKey("user_info_entity")]
-        [Column(TypeName = "varchar(100)")]
-        public string userId { get; set; } = "";
+        public Guid userId { get; set; } 
 
         // Role của User
 
         [ForeignKey("role_list_info_entity")]
-        [Column(TypeName = "varchar(100)")]
-        public string roleId { get; set; } = "";
+        public Guid roleId { get; set; } 
 
         public user_info_entity user_info_entity { get; set; } = null!;
 

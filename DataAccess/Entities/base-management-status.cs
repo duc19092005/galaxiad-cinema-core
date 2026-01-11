@@ -9,10 +9,10 @@ public class base_deleted_entity<T> where T : class
     public DateTime activeAt { get; set; }
     public DateTime createdAt { get; set; } = DateTime.Now;
 
-    public string createdByUserId { get; set; } = string.Empty;
-    public string? updatedByUserId { get; set; }
-    public string? deletedByUserId { get; set; }
-    public string? managerId { get; set; }
+    public Guid createdByUserId { get; set; } 
+    public Guid? updatedByUserId { get; set; }
+    public Guid? deletedByUserId { get; set; }
+    public Guid? managerId { get; set; }
 
     public virtual T? creator { get; set; }    
     public virtual T? updater { get; set; }    

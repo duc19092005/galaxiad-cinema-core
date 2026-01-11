@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(dbContext))]
-    [Migration("20260110185307_add-google-register")]
-    partial class addgoogleregister
+    [Migration("20260111131202_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -27,8 +27,9 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", b =>
                 {
-                    b.Property<string>("auditoriumId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("auditoriumId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("activeAt")
                         .HasColumnType("datetime2");
@@ -40,15 +41,14 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("createdByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("createdByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("deletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("deletedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("deletedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("isActive")
                         .HasColumnType("bit");
@@ -56,15 +56,15 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("managerId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("managerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("movieFormatId")
                         .IsRequired()
                         .HasColumnType("varchar(100)");
 
-                    b.Property<string>("updatedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("updatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("auditoriumId");
 
@@ -83,8 +83,9 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.cinema_info_entity", b =>
                 {
-                    b.Property<string>("cinemaId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("cinemaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("activeAt")
                         .HasColumnType("datetime2");
@@ -108,15 +109,14 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("createdByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("createdByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("deletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("deletedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("deletedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("isActive")
                         .HasColumnType("bit");
@@ -124,11 +124,11 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("managerId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("managerId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("updatedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("updatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("cinemaId");
 
@@ -146,6 +146,7 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.movie_format_info_entity", b =>
                 {
                     b.Property<string>("movieFormatId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("activeAt")
@@ -154,15 +155,14 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("createdByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("createdByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("deletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("deletedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("deletedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("isActive")
                         .HasColumnType("bit");
@@ -170,8 +170,8 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("managerId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("managerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("movieFormatDescription")
                         .IsRequired()
@@ -181,8 +181,8 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("updatedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("updatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("movieFormatId");
 
@@ -200,13 +200,14 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.seats_info_entity", b =>
                 {
                     b.Property<string>("seatId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(100)");
 
                     b.Property<DateTime>("activeAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("auditorium_info_entityauditoriumId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("auditoriumId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("colIndex")
                         .HasColumnType("int");
@@ -220,15 +221,14 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("createdByUserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("createdByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime?>("deletedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("deletedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("deletedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<bool>("isActive")
                         .HasColumnType("bit");
@@ -236,8 +236,8 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<string>("managerId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("managerId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("rowIndex")
                         .HasColumnType("int");
@@ -246,12 +246,12 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("updatedByUserId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid?>("updatedByUserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("seatId");
 
-                    b.HasIndex("auditorium_info_entityauditoriumId");
+                    b.HasIndex("auditoriumId");
 
                     b.HasIndex("createdByUserId");
 
@@ -266,8 +266,9 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.role_list_info_entity", b =>
                 {
-                    b.Property<string>("roleId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("roleId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("roleName")
                         .IsRequired()
@@ -283,8 +284,9 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.user_info_entity", b =>
                 {
-                    b.Property<string>("userId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("userId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("password")
                         .IsRequired()
@@ -313,8 +315,8 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.user_profile_entity", b =>
                 {
-                    b.Property<string>("userID")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("userID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("dateOfBirth")
                         .HasColumnType("datetime2");
@@ -338,11 +340,11 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.user_role_info_entity", b =>
                 {
-                    b.Property<string>("roleId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("roleId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("userId")
-                        .HasColumnType("varchar(100)");
+                    b.Property<Guid>("userId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("roleId", "userId");
 
@@ -455,9 +457,11 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.seats_info_entity", b =>
                 {
-                    b.HasOne("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", null)
+                    b.HasOne("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", "auditorium_info_entity")
                         .WithMany("seats_info_entity")
-                        .HasForeignKey("auditorium_info_entityauditoriumId");
+                        .HasForeignKey("auditoriumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
                         .WithMany("createdSeats")
@@ -478,6 +482,8 @@ namespace DataAccess.Migrations
                         .WithMany("updatedSeats")
                         .HasForeignKey("updatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("auditorium_info_entity");
 
                     b.Navigation("creator");
 

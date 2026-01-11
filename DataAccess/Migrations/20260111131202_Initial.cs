@@ -15,7 +15,7 @@ namespace DataAccess.Migrations
                 name: "role_list_info_entity",
                 columns: table => new
                 {
-                    roleId = table.Column<string>(type: "varchar(100)", nullable: false),
+                    roleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     roleName = table.Column<string>(type: "nvarchar(50)", nullable: false)
                 },
                 constraints: table =>
@@ -27,9 +27,12 @@ namespace DataAccess.Migrations
                 name: "user_info_entity",
                 columns: table => new
                 {
-                    userId = table.Column<string>(type: "varchar(100)", nullable: false),
+                    userId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     userEmail = table.Column<string>(type: "varchar(100)", nullable: false),
-                    password = table.Column<string>(type: "varchar(100)", nullable: true)
+                    password = table.Column<string>(type: "varchar(100)", nullable: false),
+                    refreshToken = table.Column<string>(type: "varchar(100)", nullable: true),
+                    subId = table.Column<string>(type: "varchar(50)", nullable: true),
+                    registerMethod = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -40,7 +43,7 @@ namespace DataAccess.Migrations
                 name: "cinema_info_entity",
                 columns: table => new
                 {
-                    cinemaId = table.Column<string>(type: "varchar(100)", nullable: false),
+                    cinemaId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     cinemaLocation = table.Column<string>(type: "nvarchar(100)", nullable: false),
                     cinemaName = table.Column<string>(type: "nvarchar(1000)", nullable: false),
                     cinemaHotLineNumber = table.Column<string>(type: "char(10)", nullable: false),
@@ -50,10 +53,10 @@ namespace DataAccess.Migrations
                     deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     activeAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    createdByUserId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    updatedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    deletedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    managerId = table.Column<string>(type: "varchar(100)", nullable: true)
+                    createdByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    updatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    deletedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    managerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -96,10 +99,10 @@ namespace DataAccess.Migrations
                     deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     activeAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    createdByUserId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    updatedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    deletedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    managerId = table.Column<string>(type: "varchar(100)", nullable: true)
+                    createdByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    updatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    deletedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    managerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -133,7 +136,7 @@ namespace DataAccess.Migrations
                 name: "user_profile_entity",
                 columns: table => new
                 {
-                    userID = table.Column<string>(type: "varchar(100)", nullable: false),
+                    userID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     userName = table.Column<string>(type: "nvarchar(100)", nullable: false),
                     identityCode = table.Column<string>(type: "varchar(200)", nullable: false),
                     dateOfBirth = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -154,8 +157,8 @@ namespace DataAccess.Migrations
                 name: "user_role_info_entity",
                 columns: table => new
                 {
-                    userId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    roleId = table.Column<string>(type: "varchar(100)", nullable: false)
+                    userId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    roleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,7 +181,7 @@ namespace DataAccess.Migrations
                 name: "auditorium_info_entity",
                 columns: table => new
                 {
-                    auditoriumId = table.Column<string>(type: "varchar(100)", nullable: false),
+                    auditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     auditoriumNumber = table.Column<string>(type: "varchar(100)", nullable: false),
                     movieFormatId = table.Column<string>(type: "varchar(100)", nullable: false),
                     isDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -186,10 +189,10 @@ namespace DataAccess.Migrations
                     deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     activeAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    createdByUserId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    updatedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    deletedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    managerId = table.Column<string>(type: "varchar(100)", nullable: true)
+                    createdByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    updatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    deletedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    managerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -235,25 +238,26 @@ namespace DataAccess.Migrations
                     coordY = table.Column<double>(type: "float", nullable: false),
                     colIndex = table.Column<int>(type: "int", nullable: false),
                     rowIndex = table.Column<int>(type: "int", nullable: false),
-                    auditorium_info_entityauditoriumId = table.Column<string>(type: "varchar(100)", nullable: true),
+                    auditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     isDeleted = table.Column<bool>(type: "bit", nullable: false),
                     isActive = table.Column<bool>(type: "bit", nullable: false),
                     deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     activeAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    createdByUserId = table.Column<string>(type: "varchar(100)", nullable: false),
-                    updatedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    deletedByUserId = table.Column<string>(type: "varchar(100)", nullable: true),
-                    managerId = table.Column<string>(type: "varchar(100)", nullable: true)
+                    createdByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    updatedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    deletedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    managerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_seats_info_entity", x => x.seatId);
                     table.ForeignKey(
-                        name: "FK_seats_info_entity_auditorium_info_entity_auditorium_info_entityauditoriumId",
-                        column: x => x.auditorium_info_entityauditoriumId,
+                        name: "FK_seats_info_entity_auditorium_info_entity_auditoriumId",
+                        column: x => x.auditoriumId,
                         principalTable: "auditorium_info_entity",
-                        principalColumn: "auditoriumId");
+                        principalColumn: "auditoriumId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_seats_info_entity_user_info_entity_createdByUserId",
                         column: x => x.createdByUserId,
@@ -351,9 +355,9 @@ namespace DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_seats_info_entity_auditorium_info_entityauditoriumId",
+                name: "IX_seats_info_entity_auditoriumId",
                 table: "seats_info_entity",
-                column: "auditorium_info_entityauditoriumId");
+                column: "auditoriumId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_seats_info_entity_createdByUserId",
