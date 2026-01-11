@@ -30,6 +30,9 @@ namespace DataAccess.Entities.User_Info
         
         [Required]
         public register_method_enum registerMethod { get; set; } 
+        
+        [Required]
+        public account_status_enum accoutStatus { get; set; }
 
         public List<user_role_info_entity> user_role_info_entity { get; set; } = [];
 

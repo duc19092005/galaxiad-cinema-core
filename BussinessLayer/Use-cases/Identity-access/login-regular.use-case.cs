@@ -44,7 +44,7 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
                 var validatePassword = BCrypt_helper.Validate(getUserInfo.password , dto.password);
                 if (!validatePassword)
                 {
-                    throw new app_exception("Invalid Password", 401, "UN01");
+                    throw new app_exception("Username or password is wrong", 401, "UN01");
                 }
                 else
                 {

@@ -26,4 +26,12 @@
       <ProjectReference Include="..\Shared\Shared.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Controllers\admin\" />
+      <Folder Include="Controllers\customer\" />
+      <Folder Include="Controllers\facilities-manager\" />
+      <Folder Include="Controllers\movie-manager\" />
+      <Folder Include="Controllers\theater-manager\" />
+    </ItemGroup>
+
 </Project>

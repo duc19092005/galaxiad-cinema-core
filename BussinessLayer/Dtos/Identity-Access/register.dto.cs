@@ -8,6 +8,7 @@ public class regular_register_request_dto
 {
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress(ErrorMessage = "Email is invalid")]
+    [Length(10, 50, ErrorMessage = "Email length is invalid")]
     public string userEmail { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Password is required")]
