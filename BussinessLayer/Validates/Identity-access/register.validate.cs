@@ -1,3 +1,5 @@
+// ReSharper disable All
+
 using System.Net;
 using Backend.Shard.Exceptions;
 using DataAccess;
@@ -19,9 +21,9 @@ public class register_validate
         switch (registerUserTypeEnum)
         {
             case register_user_type_enum.Customer:
-                return DateTime.Now.Year - date.Year >= 16 ? "User Must Be At least 16 Year" : null;
+                return DateTime.Now.Year - date.Year < 16 ? "User Must Be At least 16 Years Old" : null;
             case register_user_type_enum.Staff:
-                return DateTime.Now.Year - date.Year >= 18 ? "Staff Must Be At least 18 Years Old" : null;
+                return DateTime.Now.Year - date.Year < 18 ? "Staff Must Be At least 18 Years Old" : null;
             default:
                 throw new app_exception("Invalid User Type", 400, "UError01");
         }
@@ -29,6 +31,8 @@ public class register_validate
 
     public static bool checkExistIdentityCode(string AES256Key , string AES256_IV ,dbContext context, string inputIdentityCode)
     {
-        return context.user_profile_entity.Any(x => AES256Helper.Decrypt(x.identityCode , AES256Key , AES256_IV).Equals(inputIdentityCode));
+        var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, AES256Key, AES256_IV);
+        
+        return context.user_profile_entity.Any(x => x.identityCode == encryptedInput);
     }
 }

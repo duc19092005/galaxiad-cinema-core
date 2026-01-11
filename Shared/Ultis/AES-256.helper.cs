@@ -1,16 +1,19 @@
 using System.Security.Cryptography;
 using System.Text;
 
+// ReSharper disable All
+
 namespace Shared.Ultis;
 
 public static class AES256Helper
 {
-    public static string Encrypt(string plainText, string keyString, string ivString)
+    public static string Encrypt(string plainText, string keyHex, string ivHex)
     {
         using Aes aesAlg = Aes.Create();
-        // Chuyển string sang Byte array
-        aesAlg.Key = Encoding.UTF8.GetBytes(keyString); 
-        aesAlg.IV = Encoding.UTF8.GetBytes(ivString);
+        
+        aesAlg.Key = Convert.FromHexString(keyHex); 
+        aesAlg.IV = Convert.FromHexString(ivHex);
+        
         aesAlg.Mode = CipherMode.CBC;
         aesAlg.Padding = PaddingMode.PKCS7;
 
@@ -27,13 +30,15 @@ public static class AES256Helper
         return Convert.ToBase64String(msEncrypt.ToArray());
     }
     
-    public static string Decrypt(string cipherText, string keyString, string ivString)
+    public static string Decrypt(string cipherText, string keyHex, string ivHex)
     {
         if (string.IsNullOrEmpty(cipherText)) return "";
 
         using Aes aesAlg = Aes.Create();
-        aesAlg.Key = Encoding.UTF8.GetBytes(keyString);
-        aesAlg.IV = Encoding.UTF8.GetBytes(ivString);
+        
+        aesAlg.Key = Convert.FromHexString(keyHex);
+        aesAlg.IV = Convert.FromHexString(ivHex);
+        
         aesAlg.Mode = CipherMode.CBC;
         aesAlg.Padding = PaddingMode.PKCS7;
 

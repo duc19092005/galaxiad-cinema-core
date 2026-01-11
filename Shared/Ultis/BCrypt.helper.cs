@@ -1,4 +1,5 @@
 using Backend.Shard.Exceptions;
+// ReSharper disable All
 
 namespace Shared.Ultis;
 using BCrypt.Net;

@@ -48,8 +48,8 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
                 throw new app_exception(ageMessage, 404, "UError03");
             }
 
-            string? getAESKey = _configuration["AES:Key"];
-            string? getAESIV = _configuration["AES:IV"];
+            string? getAESKey = _configuration["AES_256:Key"];
+            string? getAESIV = _configuration["AES_256:IV"];
 
             if (getAESKey == null || getAESIV == null)
             {
