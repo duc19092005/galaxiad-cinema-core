@@ -6,6 +6,7 @@ using BussinessLayer.Dtos;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Validates.Identity_access;
 using DataAccess;
+using DataAccess.Constants;
 using DataAccess.Entities;
 using DataAccess.Entities.User_Info;
 using DataAccess.Enums;
@@ -79,6 +80,12 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
                 identityCode = AES256Helper.Encrypt(dto.identityCode, getAESKey, getAESIV),
                 phoneNumber = dto.phoneNumber,
                 userName = dto.userName,
+            });
+
+            await _dbContext.user_role_info_entity.AddAsync(new user_role_info_entity()
+            {
+                userId = generateUserId,
+                roleId = userRoles.Customer
             });
 
             await _dbContext.SaveChangesAsync();

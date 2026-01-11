@@ -1,8 +1,10 @@
 
 using System.Text;
+using Backend.Bootstraps;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Factories;
+using BussinessLayer.Factories.Identity_access;
 using BussinessLayer.Interfaces;
 using BussinessLayer.Services.Identity_access;
 using BussinessLayer.Use_cases.Identity_access;
@@ -35,55 +37,16 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
-builder.Services.AddScoped<register_service>();
-builder.Services.AddScoped<register_factory>();
+builder.Services.AddServices();
+builder.Services.addApplicationFactories();
 
 // Factories Dependency Injections
 
-builder.Services.AddScoped<IAddBehavior<regular_register_request_dto, string>, regular_register_use_case>();
+builder.Services.addRegisterObjectsFactory();
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters()
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JWT_Info:Iss"],
-            ValidAudience = builder.Configuration["JWT_Info:Aud"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["JWT_Info:Key"]))
-        };
+// JWT Config
 
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Token = context.Request.Cookies["X-Access-Token"];
-                return Task.CompletedTask;
-            },
-            OnChallenge =  context => 
-            {
-                throw new app_exception("Unauthorized", 401, "AUTH01");
-            },
-            OnForbidden = context =>
-            {
-                throw new app_exception("Forbidden", 403, "AUTH03");
-            }, OnTokenValidated = context =>
-            {
-                throw new app_exception("Token Expire", 401, "AUTH04");
-            },
-            OnAuthenticationFailed = context =>
-            {
-                throw new app_exception("Key is Invalid", 405, "AUTH05");
-            }
-        };
-    });
+builder.Services.AddJwt(builder.Configuration);
 
 var app = builder.Build();
 

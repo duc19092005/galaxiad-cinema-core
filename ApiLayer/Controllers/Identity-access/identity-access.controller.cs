@@ -15,11 +15,14 @@ public class identity_access_controller : ControllerBase
     private readonly dbContext _dbContext;
     
     private readonly register_service register_service;
+    
+    private readonly login_service login_service;
 
-    public identity_access_controller(dbContext dbContext , register_service service)
+    public identity_access_controller(dbContext dbContext , register_service service , login_service login_service)
     {
         this._dbContext = dbContext;
         this.register_service = service;
+        this.login_service = login_service;
     }
 
     [HttpPost("regular-register")]
@@ -28,13 +31,24 @@ public class identity_access_controller : ControllerBase
         var results = await register_service.regularRegister(registerRegularIdentityAccessDto);
         return Ok(results);
     }
-    
-    [HttpPost("test")]
-    public async Task<IActionResult> test([FromBody] regular_register_request_dto registerRegularIdentityAccessDto)
+
+    [HttpPost("regular-login")]
+    public async Task<IActionResult> regularLogin([FromBody] regular_login_req_dto regularLoginReqDto)
     {
-        var results = await register_service.regularRegister(registerRegularIdentityAccessDto);
+        var results = await login_service.regularLogin(regularLoginReqDto);
+        
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true, 
+            Secure = false,      
+            SameSite = SameSiteMode.Strict, 
+            Expires = DateTime.UtcNow.AddDays(7) 
+        };
+
+        Response.Cookies.Append("X-Access-Token", results.data?.access_token , cookieOptions);
+
+        results.data.access_token = null;
+        
         return Ok(results);
     }
-    
-    
 }

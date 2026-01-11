@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 
-namespace BussinessLayer.Factories;
+namespace BussinessLayer.Factories.Identity_access;
 
 public class register_factory
 {
