@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
@@ -32,7 +34,8 @@ namespace DataAccess.Migrations
                     password = table.Column<string>(type: "varchar(100)", nullable: false),
                     refreshToken = table.Column<string>(type: "varchar(100)", nullable: true),
                     subId = table.Column<string>(type: "varchar(50)", nullable: true),
-                    registerMethod = table.Column<int>(type: "int", nullable: false)
+                    registerMethod = table.Column<int>(type: "int", nullable: false),
+                    accoutStatus = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -184,6 +187,7 @@ namespace DataAccess.Migrations
                     auditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     auditoriumNumber = table.Column<string>(type: "varchar(100)", nullable: false),
                     movieFormatId = table.Column<string>(type: "varchar(100)", nullable: false),
+                    cinemaId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     isDeleted = table.Column<bool>(type: "bit", nullable: false),
                     isActive = table.Column<bool>(type: "bit", nullable: false),
                     deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -197,6 +201,12 @@ namespace DataAccess.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_auditorium_info_entity", x => x.auditoriumId);
+                    table.ForeignKey(
+                        name: "FK_auditorium_info_entity_cinema_info_entity_cinemaId",
+                        column: x => x.cinemaId,
+                        principalTable: "cinema_info_entity",
+                        principalColumn: "cinemaId",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_auditorium_info_entity_movie_format_info_entity_movieFormatId",
                         column: x => x.movieFormatId,
@@ -283,6 +293,31 @@ namespace DataAccess.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.InsertData(
+                table: "role_list_info_entity",
+                columns: new[] { "roleId", "roleName" },
+                values: new object[,]
+                {
+                    { new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c"), "Cashier" },
+                    { new Guid("2b9c8d0e-f5a6-7b8c-d9e0-1f2a3b4c5d6e"), "Customer" },
+                    { new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f"), "Admin" },
+                    { new Guid("4d1e0f2a-b7c8-d9e0-f1a2-3b4c5d6e7f8a"), "MovieManager" },
+                    { new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b"), "TheaterManager" },
+                    { new Guid("6f3a2b4c-d9e0-f1a2-b3c4-d5e6f7a8b9c0"), "FacilitiesManager" }
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_auditorium_info_entity_auditoriumNumber_cinemaId",
+                table: "auditorium_info_entity",
+                columns: new[] { "auditoriumNumber", "cinemaId" },
+                unique: true,
+                filter: "[isDeleted] = CAST(0 AS BIT)");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_auditorium_info_entity_cinemaId",
+                table: "auditorium_info_entity",
+                column: "cinemaId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_auditorium_info_entity_createdByUserId",
                 table: "auditorium_info_entity",
@@ -307,6 +342,19 @@ namespace DataAccess.Migrations
                 name: "IX_auditorium_info_entity_updatedByUserId",
                 table: "auditorium_info_entity",
                 column: "updatedByUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_cinema_info_entity_cinemaHotLineNumber",
+                table: "cinema_info_entity",
+                column: "cinemaHotLineNumber",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_cinema_info_entity_cinemaName",
+                table: "cinema_info_entity",
+                column: "cinemaName",
+                unique: true,
+                filter: "[isDeleted] = CAST(0 AS BIT)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_cinema_info_entity_createdByUserId",
@@ -380,9 +428,28 @@ namespace DataAccess.Migrations
                 column: "updatedByUserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_user_info_entity_refreshToken",
+                table: "user_info_entity",
+                column: "refreshToken",
+                unique: true,
+                filter: "[refreshToken] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_user_info_entity_userEmail",
                 table: "user_info_entity",
                 column: "userEmail",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_user_profile_entity_identityCode",
+                table: "user_profile_entity",
+                column: "identityCode",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_user_profile_entity_phoneNumber",
+                table: "user_profile_entity",
+                column: "phoneNumber",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -394,9 +461,6 @@ namespace DataAccess.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "cinema_info_entity");
-
             migrationBuilder.DropTable(
                 name: "seats_info_entity");
 
@@ -411,6 +475,9 @@ namespace DataAccess.Migrations
 
             migrationBuilder.DropTable(
                 name: "role_list_info_entity");
+
+            migrationBuilder.DropTable(
+                name: "cinema_info_entity");
 
             migrationBuilder.DropTable(
                 name: "movie_format_info_entity");

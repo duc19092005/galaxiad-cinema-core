@@ -21,5 +21,7 @@ public class cinema_info_entity : base_deleted_entity<user_info_entity>
 
     [Column(TypeName = "nvarchar(max)")]
     public string cinemaDescription { get; set; } = null!;
-    
+
+    public List<auditorium_info_entity> auditorium_info_entity { get; set; } = [];
+
 }

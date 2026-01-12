@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Entities.User_Info
 {
-    [Index(nameof(roleName) , IsUnique = true)]
     public class role_list_info_entity
     {
         [Key]

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(dbContext))]
-    [Migration("20260111145448_seed-roles")]
-    partial class seedroles
+    [Migration("20260112030847_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,6 +37,9 @@ namespace DataAccess.Migrations
                     b.Property<string>("auditoriumNumber")
                         .IsRequired()
                         .HasColumnType("varchar(100)");
+
+                    b.Property<Guid>("cinemaId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
@@ -68,6 +71,8 @@ namespace DataAccess.Migrations
 
                     b.HasKey("auditoriumId");
 
+                    b.HasIndex("cinemaId");
+
                     b.HasIndex("createdByUserId");
 
                     b.HasIndex("deletedByUserId");
@@ -77,6 +82,10 @@ namespace DataAccess.Migrations
                     b.HasIndex("movieFormatId");
 
                     b.HasIndex("updatedByUserId");
+
+                    b.HasIndex("auditoriumNumber", "cinemaId")
+                        .IsUnique()
+                        .HasFilter("[isDeleted] = CAST(0 AS BIT)");
 
                     b.ToTable("auditorium_info_entity");
                 });
@@ -131,6 +140,13 @@ namespace DataAccess.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("cinemaId");
+
+                    b.HasIndex("cinemaHotLineNumber")
+                        .IsUnique();
+
+                    b.HasIndex("cinemaName")
+                        .IsUnique()
+                        .HasFilter("[isDeleted] = CAST(0 AS BIT)");
 
                     b.HasIndex("createdByUserId");
 
@@ -320,6 +336,9 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("accoutStatus")
+                        .HasColumnType("int");
+
                     b.Property<string>("password")
                         .IsRequired()
                         .HasColumnType("varchar(100)");
@@ -338,6 +357,10 @@ namespace DataAccess.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.HasKey("userId");
+
+                    b.HasIndex("refreshToken")
+                        .IsUnique()
+                        .HasFilter("[refreshToken] IS NOT NULL");
 
                     b.HasIndex("userEmail")
                         .IsUnique();
@@ -367,6 +390,12 @@ namespace DataAccess.Migrations
 
                     b.HasKey("userID");
 
+                    b.HasIndex("identityCode")
+                        .IsUnique();
+
+                    b.HasIndex("phoneNumber")
+                        .IsUnique();
+
                     b.ToTable("user_profile_entity");
                 });
 
@@ -387,6 +416,12 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", b =>
                 {
+                    b.HasOne("DataAccess.Entities.Cinema_Infos.cinema_info_entity", "cinema_info_entity")
+                        .WithMany("auditorium_info_entity")
+                        .HasForeignKey("cinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
                         .WithMany("createdAuditoriums")
                         .HasForeignKey("createdByUserId")
@@ -412,6 +447,8 @@ namespace DataAccess.Migrations
                         .WithMany("updatedAuditoriums")
                         .HasForeignKey("updatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("cinema_info_entity");
 
                     b.Navigation("creator");
 
@@ -559,6 +596,11 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", b =>
                 {
                     b.Navigation("seats_info_entity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.cinema_info_entity", b =>
+                {
+                    b.Navigation("auditorium_info_entity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.role_list_info_entity", b =>

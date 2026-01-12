@@ -35,6 +35,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(100)");
 
+                    b.Property<Guid>("cinemaId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
 
@@ -65,6 +68,8 @@ namespace DataAccess.Migrations
 
                     b.HasKey("auditoriumId");
 
+                    b.HasIndex("cinemaId");
+
                     b.HasIndex("createdByUserId");
 
                     b.HasIndex("deletedByUserId");
@@ -74,6 +79,10 @@ namespace DataAccess.Migrations
                     b.HasIndex("movieFormatId");
 
                     b.HasIndex("updatedByUserId");
+
+                    b.HasIndex("auditoriumNumber", "cinemaId")
+                        .IsUnique()
+                        .HasFilter("[isDeleted] = CAST(0 AS BIT)");
 
                     b.ToTable("auditorium_info_entity");
                 });
@@ -128,6 +137,13 @@ namespace DataAccess.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("cinemaId");
+
+                    b.HasIndex("cinemaHotLineNumber")
+                        .IsUnique();
+
+                    b.HasIndex("cinemaName")
+                        .IsUnique()
+                        .HasFilter("[isDeleted] = CAST(0 AS BIT)");
 
                     b.HasIndex("createdByUserId");
 
@@ -339,10 +355,56 @@ namespace DataAccess.Migrations
 
                     b.HasKey("userId");
 
+                    b.HasIndex("refreshToken")
+                        .IsUnique()
+                        .HasFilter("[refreshToken] IS NOT NULL");
+
                     b.HasIndex("userEmail")
                         .IsUnique();
 
                     b.ToTable("user_info_entity");
+
+                    b.HasData(
+                        new
+                        {
+                            userId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            accoutStatus = 0,
+                            password = "$2a$12$ADqBiSquthm1g7bLZvg6UulJ5QJFQQ6olUQzf66AQfJDGbQ2W1wlG",
+                            registerMethod = 0,
+                            userEmail = "user@example.com"
+                        },
+                        new
+                        {
+                            userId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            accoutStatus = 0,
+                            password = "$2a$12$91JfhncA5t3ssFtiaoKjSOrbMj7zON.wtL/n3cjme/wvK2kDCgZ7K",
+                            registerMethod = 0,
+                            userEmail = "admin@example.com"
+                        },
+                        new
+                        {
+                            userId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                            accoutStatus = 0,
+                            password = "$2a$12$FeLXQjfW3gfNFfELxTJS3.gH8o9Y2CB5WSGcDZxKMrPEJiR2RcxIS",
+                            registerMethod = 0,
+                            userEmail = "theater@example.com"
+                        },
+                        new
+                        {
+                            userId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
+                            accoutStatus = 0,
+                            password = "$2a$12$CkugZHMrWhxG0h6hUqOAf.fX9QQFkLnfnLlI.xWCNZ1y/PivtfN2O",
+                            registerMethod = 0,
+                            userEmail = "facilities@example.com"
+                        },
+                        new
+                        {
+                            userId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
+                            accoutStatus = 0,
+                            password = "$2a$12$CkugZHMrWhxG0h6hUqOAf.fX9QQFkLnfnLlI.xWCNZ1y/PivtfN2O",
+                            registerMethod = 0,
+                            userEmail = "cashier@example.com"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.user_profile_entity", b =>
@@ -367,7 +429,55 @@ namespace DataAccess.Migrations
 
                     b.HasKey("userID");
 
+                    b.HasIndex("identityCode")
+                        .IsUnique();
+
+                    b.HasIndex("phoneNumber")
+                        .IsUnique();
+
                     b.ToTable("user_profile_entity");
+
+                    b.HasData(
+                        new
+                        {
+                            userID = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            dateOfBirth = new DateTime(2005, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            identityCode = "NjItl/uAfIOjjzvtWPbnzg==",
+                            phoneNumber = "0123456789",
+                            userName = "Movie Manager 1"
+                        },
+                        new
+                        {
+                            userID = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            dateOfBirth = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            identityCode = "pxc5zG8sfEcsJrHg1AjV3w==",
+                            phoneNumber = "0988123456",
+                            userName = "Admin"
+                        },
+                        new
+                        {
+                            userID = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                            dateOfBirth = new DateTime(1990, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            identityCode = "Pk3VcB5Kk2xdhHerF74zBg==",
+                            phoneNumber = "0977234567",
+                            userName = "Theater Manager"
+                        },
+                        new
+                        {
+                            userID = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
+                            dateOfBirth = new DateTime(1992, 8, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            identityCode = "cFobMOQzli9Um8tWi/vJZg==",
+                            phoneNumber = "0966345678",
+                            userName = "Facilities Manager"
+                        },
+                        new
+                        {
+                            userID = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
+                            dateOfBirth = new DateTime(1995, 12, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            identityCode = "pFoBRlv4RT1kyqKE1Ch3Hw==",
+                            phoneNumber = "0944456789",
+                            userName = "Cashier"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.user_role_info_entity", b =>
@@ -383,10 +493,43 @@ namespace DataAccess.Migrations
                     b.HasIndex("userId");
 
                     b.ToTable("user_role_info_entity");
+
+                    b.HasData(
+                        new
+                        {
+                            roleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f"),
+                            userId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c")
+                        },
+                        new
+                        {
+                            roleId = new Guid("4d1e0f2a-b7c8-d9e0-f1a2-3b4c5d6e7f8a"),
+                            userId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7")
+                        },
+                        new
+                        {
+                            roleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b"),
+                            userId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5")
+                        },
+                        new
+                        {
+                            roleId = new Guid("6f3a2b4c-d9e0-f1a2-b3c4-d5e6f7a8b9c0"),
+                            userId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e")
+                        },
+                        new
+                        {
+                            roleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c"),
+                            userId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6")
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", b =>
                 {
+                    b.HasOne("DataAccess.Entities.Cinema_Infos.cinema_info_entity", "cinema_info_entity")
+                        .WithMany("auditorium_info_entity")
+                        .HasForeignKey("cinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
                         .WithMany("createdAuditoriums")
                         .HasForeignKey("createdByUserId")
@@ -412,6 +555,8 @@ namespace DataAccess.Migrations
                         .WithMany("updatedAuditoriums")
                         .HasForeignKey("updatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("cinema_info_entity");
 
                     b.Navigation("creator");
 
@@ -559,6 +704,11 @@ namespace DataAccess.Migrations
             modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.auditorium_info_entity", b =>
                 {
                     b.Navigation("seats_info_entity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Cinema_Infos.cinema_info_entity", b =>
+                {
+                    b.Navigation("auditorium_info_entity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.role_list_info_entity", b =>

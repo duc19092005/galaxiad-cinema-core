@@ -1,6 +1,7 @@
 using Backend.Bootstraps;
 using Backend.Shard.Exceptions;
 using DataAccess;
+using DataAccess.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,12 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddSingleton<user_identity_code_constant>();
+
+builder.Services.AddHttpContextAccessor();
+
+
 builder.Services.AddDbContext<dbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
@@ -28,6 +35,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 builder.Services.AddServices();
+builder.Services.addWriteObjectsFactory();
 builder.Services.addApplicationFactories();
 
 // Factories Dependency Injections
@@ -52,7 +60,16 @@ builder.Services.AddCors(options =>
         });
 });
 
+// Policy
+
+builder.Services.AddAuthorization
+(options =>
+    options.AddPolicy("FacilitiesManager", policy =>
+        policy.RequireRole("FacilitiesManager")));
+
 var app = builder.Build();
+
+// Singleton
 
 
 app.UseErrorMiddleware();
