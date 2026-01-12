@@ -1,3 +1,4 @@
+// ReSharper disable All
 using Backend.Shard.Exceptions;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_identity_access;

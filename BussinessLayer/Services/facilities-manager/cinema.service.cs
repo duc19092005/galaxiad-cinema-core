@@ -1,3 +1,4 @@
+// ReSharper disable All
 using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.cinemas;
 using BussinessLayer.Factories;
@@ -19,6 +20,14 @@ public class cinema_service
         var objects = 
             write_factory.wirte<add_cinema_req_dto , edit_cinema_req_dto , string> (write_enum.Cinema);
         var getResults = await objects.AddItem(addCinemaReqDto);
+        return getResults;
+    }
+
+    public async Task<base_reponse<string>> EditItem(Guid cinemaId ,edit_cinema_req_dto editCinemaReqDto)
+    {
+        var objects
+            = write_factory.wirte<add_cinema_req_dto, edit_cinema_req_dto, string>(write_enum.Cinema);
+        var getResults = await objects.UpdateItem(cinemaId,editCinemaReqDto);
         return getResults;
     }
 }

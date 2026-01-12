@@ -7,8 +7,8 @@ using BussinessLayer.Validates;
 using DataAccess;
 using Microsoft.Extensions.Logging;
 using DataAccess.Entities.Cinema_Infos;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace BussinessLayer.Use_cases.facilities_manager;
 
@@ -28,25 +28,25 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
     
     public async Task<base_reponse<string>> AddItem(add_cinema_req_dto request)
     {
-        if (cinema_validate.validateCinemaname(request.cinemaName, _dbContext))
+        if (cinema_validate.validateCinemaname(null,request.cinemaName, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema named " + request.cinemaName ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaDescription(request.cinemaDescription, _dbContext))
+        if (cinema_validate.validateCinemaDescription(null,request.cinemaDescription, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema Description " + request.cinemaDescription ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaLocation(request.cinemaLocation, _dbContext))
+        if (cinema_validate.validateCinemaLocation(null ,request.cinemaLocation, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema Location " + request.cinemaLocation ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaHotlinenumber(request.cinemaHotlineNumber, _dbContext))
+        if (cinema_validate.validateCinemaHotlinenumber(null , request.cinemaHotlineNumber, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
                 StatusCodes.Status400BadRequest , "C01");
@@ -88,7 +88,92 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
 
     public async Task<base_reponse<string>> UpdateItem(Guid itemId, edit_cinema_req_dto request)
     {
-        return null!;
+        // Find the cinema Infos
+        try
+        {
+            var findCinema = await _dbContext.cinema_info_entity.FirstOrDefaultAsync(x => x.cinemaId.Equals(itemId));
+            if (findCinema == null)
+            {
+                throw new app_exception("Error : There is no cinema with Id : " + itemId,
+                    StatusCodes.Status404NotFound, "C01");
+            }
+            else
+            {
+                bool checkExitsDescription = cinema_validate.validateCinemaDescription(findCinema.cinemaId,
+                    request.cinemaDescription,_dbContext);
+                
+                bool checkExitsCinemaName = cinema_validate.validateCinemaname(findCinema.cinemaId, request.cinemaName, _dbContext);
+                
+                bool checkExitsHotlineNumber = cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId , request.cinemaHotlineNumber , _dbContext);
+                
+                bool checkExitsLocation = cinema_validate.validateCinemaLocation(findCinema.cinemaId , request.cinemaLocation, _dbContext);
+
+                if (checkExitsDescription)
+                {
+                    throw new app_exception("Error : There's already a cinema Description " + request.cinemaDescription ,
+                        StatusCodes.Status400BadRequest , "C01");
+                }
+
+                if (checkExitsCinemaName)
+                {
+                    throw new app_exception("Error : There's already a cinema named " + request.cinemaName ,
+                        StatusCodes.Status400BadRequest , "C01");
+                }
+
+                if (checkExitsHotlineNumber)
+                {
+                    throw new app_exception("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
+                        StatusCodes.Status400BadRequest , "C01");
+                }
+
+                if (checkExitsLocation)
+                {
+                    throw new app_exception("Error : There's already a cinema Location " + request.cinemaLocation ,
+                        StatusCodes.Status400BadRequest , "C01");
+                }
+                
+                findCinema.cinemaName = (!string.IsNullOrWhiteSpace(request.cinemaName)
+                                         && !cinema_validate.validateCinemaname(findCinema.cinemaId, request.cinemaName,
+                                             _dbContext))
+                    ? request.cinemaName
+                    : findCinema.cinemaName;
+
+                findCinema.cinemaDescription = (!string.IsNullOrWhiteSpace(request.cinemaDescription)
+                                                && !cinema_validate.validateCinemaDescription(findCinema.cinemaId,
+                                                    request.cinemaDescription, _dbContext))
+                    ? request.cinemaDescription
+                    : findCinema.cinemaDescription;
+
+                findCinema.cinemaHotLineNumber = (!string.IsNullOrWhiteSpace(request.cinemaHotlineNumber)
+                                                  && !cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId,
+                                                      request.cinemaHotlineNumber, _dbContext))
+                    ? request.cinemaHotlineNumber
+                    : findCinema.cinemaHotLineNumber;
+
+                findCinema.cinemaLocation = (!string.IsNullOrWhiteSpace(request.cinemaLocation)
+                                             && !cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId,
+                                                 request.cinemaLocation, _dbContext))
+                    ? request.cinemaLocation
+                    : findCinema.cinemaLocation;
+
+                await _dbContext.SaveChangesAsync();
+
+                return new base_reponse<string>()
+                {
+                    isSuccess = true,
+                    data = null,
+                    message = "Update Cinema Completed"
+                };
+            }
+        }
+        catch (app_exception)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+        }
     }
 
     public async Task<base_reponse<string>> DeleteItem(Guid itemId)

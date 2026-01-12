@@ -1,4 +1,7 @@
+// ReSharper disable All
+
 using BussinessLayer.Dtos.cinemas;
+using BussinessLayer.Dtos.cinemas.facilities_manager;
 using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_identity_access;
@@ -19,6 +22,12 @@ public static class Generate_object_factories_bootstrap
     public static IServiceCollection addWriteObjectsFactory(this IServiceCollection services)
     {
         services.AddScoped<i_write_behavior<add_cinema_req_dto, edit_cinema_req_dto, string>, write_use_case>();
+        return services;
+    }
+
+    public static IServiceCollection addReadObjectsFactoryFacilitiesManager(this IServiceCollection services)
+    {
+        services.AddScoped<i_read_behavior<res_facilities_manager_cinema>, read_use_case_facilities_manager>();
         return services;
     }
 }

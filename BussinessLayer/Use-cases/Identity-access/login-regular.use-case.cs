@@ -108,7 +108,7 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
         }
         catch (Exception)
         {
-            throw new app_exception("Database Error", 500, "S01");
+            throw new app_exception("There's an error with the system", 500, "S01");
         }
     }
 }

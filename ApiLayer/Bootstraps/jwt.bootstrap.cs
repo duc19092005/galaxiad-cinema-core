@@ -1,3 +1,5 @@
+// ReSharper disable All
+
 using System.Text;
 using Backend.Shard.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

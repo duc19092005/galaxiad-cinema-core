@@ -8,12 +8,20 @@ namespace BussinessLayer.Validates;
 
 public class cinema_validate
 {
-    public static bool validateCinemaname(string cinemaName , dbContext dbContext)
+    public static bool validateCinemaname(Guid? cinemaId ,string cinemaName , dbContext dbContext)
     {
         try
         {
-            return dbContext.cinema_info_entity.Any(x => 
-                !x.isDeleted && x.cinemaName.ToLower().Equals(cinemaName.ToLower()));
+            if (cinemaId == null)
+            {
+                return dbContext.cinema_info_entity.Any(x => 
+                    !x.isDeleted && x.cinemaName.ToLower().Equals(cinemaName.ToLower()));
+            }
+            else
+            {
+                return dbContext.cinema_info_entity.Any(x => 
+                    !x.isDeleted && x.cinemaId != cinemaId && x.cinemaName.ToLower().Equals(cinemaName.ToLower()));
+            }
         }
         catch (app_exception)
         {
@@ -25,11 +33,21 @@ public class cinema_validate
         }
     }
 
-    public static bool validateCinemaDescription(string cinemaDescriptions, dbContext dbContext)
+    public static bool validateCinemaDescription(Guid ? cinemaId,string cinemaDescriptions, dbContext dbContext)
     {
         try
         {
-            return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaDescription.ToLower().Equals(cinemaDescriptions.ToLower()));
+            if (cinemaId == null)
+            {
+                return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaDescription.ToLower().Equals(cinemaDescriptions.ToLower()));
+            }
+            else
+            {
+                return dbContext.cinema_info_entity.Any
+                    (x => !x.isDeleted 
+                          && x.cinemaDescription.ToLower().Equals(cinemaDescriptions.ToLower())
+                          && x.cinemaId != cinemaId);
+            }
         }
         catch (app_exception)
         {
@@ -41,11 +59,19 @@ public class cinema_validate
         }
     }
     
-    public static bool validateCinemaHotlinenumber(string hotlineNumber, dbContext dbContext)
+    public static bool validateCinemaHotlinenumber(Guid ? cinemaId,string hotlineNumber, dbContext dbContext)
     {
         try
         {
-            return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower()));
+            if (cinemaId == null)
+            {
+                return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower()));
+            }
+            else
+            {
+                return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower())
+                && x.cinemaId != cinemaId);
+            }
         }
         catch (app_exception)
         {
@@ -57,11 +83,20 @@ public class cinema_validate
         }
     }
     
-    public static bool validateCinemaLocation(string cinemaLocation, dbContext dbContext)
+    public static bool validateCinemaLocation(Guid? cinemaId,string cinemaLocation, dbContext dbContext)
     {
         try
         {
-            return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaLocation.ToLower().Equals(cinemaLocation.ToLower()));
+            if (cinemaId == null)
+            {
+                return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaLocation.ToLower().Equals(cinemaLocation.ToLower()));
+            }
+            else
+            {
+                return dbContext.cinema_info_entity.Any(x => !x.isDeleted && x.cinemaLocation.ToLower().Equals(cinemaLocation.ToLower())
+                && x.cinemaId != cinemaId);
+
+            }
         }
         catch (app_exception)
         {
