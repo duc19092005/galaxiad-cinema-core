@@ -8,7 +8,9 @@ public class base_deleted_entity<T> where T : class
     public DateTime? deletedAt { get; set; }
     public DateTime activeAt { get; set; }
     public DateTime createdAt { get; set; } = DateTime.Now;
-
+    
+    public DateTime updatedAt { get; set; } = DateTime.Now;
+    
     public Guid createdByUserId { get; set; } 
     public Guid? updatedByUserId { get; set; }
     public Guid? deletedByUserId { get; set; }

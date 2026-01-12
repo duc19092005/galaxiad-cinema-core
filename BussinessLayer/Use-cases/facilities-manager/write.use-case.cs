@@ -17,7 +17,6 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
     private readonly dbContext _dbContext;
     private ILogger<write_use_case> _logger;
     private IHttpContextAccessor  _httpContextAccessor;
-
     public write_use_case(dbContext dbContext, ILogger<write_use_case> logger ,
         IHttpContextAccessor httpContextAccessor)
     {
@@ -62,9 +61,11 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
                 cinemaDescription = request.cinemaDescription,
                 cinemaLocation = request.cinemaLocation,
                 cinemaHotLineNumber = request.cinemaHotlineNumber,
-                createdAt = request.releaseDate ,
+                createdAt = DateTime.Now ,
                 createdByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid)?.Value)
+                    ClaimTypes.Sid)?.Value), 
+                activeAt = request.activeAt,
+                isActive = request.activeAt > DateTime.Now ? false : true,
             });
             await _dbContext.SaveChangesAsync();
 
@@ -155,6 +156,15 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
                                                  request.cinemaLocation, _dbContext))
                     ? request.cinemaLocation
                     : findCinema.cinemaLocation;
+                
+                findCinema.activeAt = request.activeAt ?? findCinema.activeAt;
+                
+                findCinema.updatedAt = DateTime.Now;
+
+                findCinema.isActive = findCinema.activeAt >= DateTime.Now ? false : true;
+                
+                findCinema.updatedByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
+                    ClaimTypes.Sid)?.Value);
 
                 await _dbContext.SaveChangesAsync();
 
