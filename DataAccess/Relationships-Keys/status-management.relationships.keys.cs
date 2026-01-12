@@ -1,0 +1,41 @@
+using DataAccess.Entities.Cinema_Infos;
+using Microsoft.EntityFrameworkCore;
+
+namespace DataAccess.status_management_relationships_keys;
+
+public class status_management_relationships
+{
+    public static void add_relationships_cinema_info(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<cinema_info_entity>(entity => {
+            entity.HasOne(c => c.creator).WithMany(u => u.createdCinemas).HasForeignKey(c => c.createdByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.updater).WithMany(u => u.updatedCinemas).HasForeignKey(c => c.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.deleter).WithMany(u => u.deletedCinemas).HasForeignKey(c => c.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.manager).WithMany(u => u.managedCinemas).HasForeignKey(c => c.managerId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<auditorium_info_entity>(entity => {
+            entity.HasOne(a => a.creator).WithMany(u => u.createdAuditoriums).HasForeignKey(a => a.createdByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(a => a.updater).WithMany(u => u.updatedAuditoriums).HasForeignKey(a => a.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(a => a.deleter).WithMany(u => u.deletedAuditoriums).HasForeignKey(a => a.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<seats_info_entity>(entity => {
+            entity.HasOne(s => s.creator).WithMany(u => u.createdSeats).HasForeignKey(s => s.createdByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.updater).WithMany(u => u.updatedSeats).HasForeignKey(s => s.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(s => s.deleter).WithMany(u => u.deletedSeats).HasForeignKey(s => s.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<movie_format_info_entity>(entity => {
+            entity.HasOne(m => m.creator).WithMany(u => u.createdMovieFormats).HasForeignKey(m => m.createdByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.updater).WithMany(u => u.updatedMovieFormats).HasForeignKey(m => m.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.deleter).WithMany(u => u.deletedMovieFormats).HasForeignKey(m => m.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        
+        modelBuilder.Entity<cinema_discount_info_entity>(entity => {
+            entity.HasOne(m => m.creator).WithMany(u => u.createdCinemaDiscounts).HasForeignKey(m => m.createdByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.updater).WithMany(u => u.updatedCinemaDiscounts).HasForeignKey(m => m.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(m => m.deleter).WithMany(u => u.deletedCinemaDiscounts).HasForeignKey(m => m.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+}

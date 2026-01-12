@@ -63,6 +63,12 @@ namespace DataAccess.Entities.User_Info
         public virtual ICollection<seats_info_entity> deletedSeats { get; set; } = [];
         public virtual ICollection<seats_info_entity> updatedSeats { get; set; } = [];
         
+        // Quản lý Trạng thái discount
         
+        public virtual ICollection<cinema_discount_info_entity> createdCinemaDiscounts { get; set; } = [];
+        
+        public virtual ICollection<cinema_discount_info_entity> deletedCinemaDiscounts { get; set; } = [];
+        
+        public virtual ICollection<cinema_discount_info_entity> updatedCinemaDiscounts { get; set; } = [];
     }
 }

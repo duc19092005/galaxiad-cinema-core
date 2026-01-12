@@ -58,14 +58,14 @@ builder.Services.AddJwt(builder.Configuration);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy(name: "web",
-        policy =>
-        {
-            policy.WithOrigins("https://www.example.com", 
-                    "http://localhost:5174") 
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
+    options.AddPolicy("web", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173") // Không được để "*"
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials() // Bắt buộc cho "include" credentials
+            .SetPreflightMaxAge(TimeSpan.FromMinutes(10)); // Cache kết quả check CORS
+    });
 });
 
 // Policy
@@ -86,6 +86,7 @@ builder.Services.AddSwaggerGen(c =>
 var app = builder.Build();
 
 // Singleton
+app.UseCors("web");
 
 
 app.UseErrorMiddleware();
@@ -101,7 +102,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("web");
 
 app.UseHttpsRedirection();
 

@@ -1,5 +1,6 @@
 // ReSharper disable All
 
+using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Services.Identity_access;
 using DataAccess;
@@ -50,5 +51,23 @@ public class identity_access_controller : ControllerBase
         results.data.access_token = null;
         
         return Ok(results);
+    }
+
+    [HttpPost("Logout")]
+    public IActionResult Logout()
+    {
+        try
+        {
+            Response.Cookies.Delete("X-Access-Token");
+            return Ok(new { message = "Logged out successfully" });
+        }
+        catch (app_exception)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            throw system_exception.system_exception_caller();
+        }
     }
 }

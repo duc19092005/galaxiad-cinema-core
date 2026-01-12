@@ -20,4 +20,11 @@ public class facilities_manager_read_service
         var results = await objects.getAll();
         return results;
     }
+    
+    public async Task<base_reponse<res_facilities_manager_cinema>> getById(Guid id)
+    {
+        var objects = _readFactory.ReadData<res_facilities_manager_cinema>(write_enum.Cinema);
+        var results = await objects.getById(id);
+        return results;
+    }
 }

@@ -6,7 +6,7 @@ using DataAccess.Entities.User_Info;
 
 namespace DataAccess.Entities.Cinema_Infos;
 
-public class seats_info_entity : base_deleted_entity<user_info_entity>
+public class seats_info_entity : base_management_status<user_info_entity>
 {
     [Key]
     [Column(TypeName = "varchar(100)")]
@@ -30,6 +30,7 @@ public class seats_info_entity : base_deleted_entity<user_info_entity>
     // Foreign Key
     
     [ForeignKey("auditorium_info_entity")]
+    
     public Guid auditoriumId { get; set; }
 
     public auditorium_info_entity auditorium_info_entity { get; set; } = null!;

@@ -5,7 +5,7 @@ using DataAccess.Entities.User_Info;
 namespace DataAccess.Entities.Cinema_Infos;
 // ReSharper disable All
 
-public class cinema_info_entity : base_deleted_entity<user_info_entity>
+public class cinema_info_entity : base_management_status<user_info_entity>
 {
     [Key]
     public Guid cinemaId { get; set; } 
@@ -21,7 +21,13 @@ public class cinema_info_entity : base_deleted_entity<user_info_entity>
 
     [Column(TypeName = "nvarchar(max)")]
     public string cinemaDescription { get; set; } = null!;
+    
+    public Guid managerId { get; set; }
+
 
     public List<auditorium_info_entity> auditorium_info_entity { get; set; } = [];
+
+    public List<cinema_discount_info_entity> cinema_discount_info_entity { get; set; } = [];
+    public user_info_entity? manager { get; set; }
 
 }

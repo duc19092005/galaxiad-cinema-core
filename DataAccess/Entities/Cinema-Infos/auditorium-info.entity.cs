@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Entities.Cinema_Infos;
 
-public partial class auditorium_info_entity : base_deleted_entity<user_info_entity>
+public partial class auditorium_info_entity : base_management_status<user_info_entity>
 {
     [Key]
     public Guid auditoriumId { get; set; } 

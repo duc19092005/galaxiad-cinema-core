@@ -79,7 +79,7 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
                         _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
                         throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "E01");
                     }
-                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.userEmail , getUserInfo.userId , getUserRoles.ToArray());
+                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.userEmail ,getUserProfile.userName, getUserInfo.userId , getUserRoles.ToArray());
 
                     if (token == null)
                     {

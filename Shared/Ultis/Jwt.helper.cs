@@ -8,12 +8,13 @@ namespace Shared.Ultis;
 
 public class Jwt_helper
 {
-    public static string? Encrypt(string jwtKey , string jwtIss , string jwtAud ,string userEmail , Guid userId , string [] userRoles)
+    public static string? Encrypt(string jwtKey , string jwtIss , string jwtAud ,string userEmail , string username , Guid userId , string [] userRoles)
     {
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Email , userEmail),
             new Claim(ClaimTypes.Sid , userId.ToString()),
+            new Claim(ClaimTypes.Name , username),
         };
 
         foreach (var roleName in userRoles)

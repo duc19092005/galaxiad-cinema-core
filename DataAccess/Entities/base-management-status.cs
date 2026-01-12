@@ -1,7 +1,7 @@
 // ReSharper disable All
 
 
-public class base_deleted_entity<T> where T : class
+public class base_management_status<T> where T : class
 {
     public bool isDeleted { get; set; } = false;
     public bool isActive { get; set; } = true;
@@ -14,10 +14,8 @@ public class base_deleted_entity<T> where T : class
     public Guid createdByUserId { get; set; } 
     public Guid? updatedByUserId { get; set; }
     public Guid? deletedByUserId { get; set; }
-    public Guid? managerId { get; set; }
 
     public virtual T? creator { get; set; }    
     public virtual T? updater { get; set; }    
     public virtual T? deleter { get; set; }    
-    public virtual T? manager { get; set; }    
 }

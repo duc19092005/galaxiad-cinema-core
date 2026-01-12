@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Backend.Controllers.facilities_manager;
 
 [ApiController]
-[Route("api/facilities")]
+[Route("api/facilities/cinema")]
 [Authorize(Policy = "FacilitiesManager")]
 [Tags("FacilitiesManager - Cinema")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
@@ -30,7 +30,7 @@ public class cinema_controller : ControllerBase
         return Ok(results);
     }
     
-    [HttpPost("cinema")]
+    [HttpPost()]
     [Description("API to create a cinema")]
     public async Task<IActionResult> AddCinema(add_cinema_req_dto addCinemaReqDto)
     {
@@ -38,11 +38,20 @@ public class cinema_controller : ControllerBase
         return Ok(results);
     }
 
-    [HttpPut("cinema/{cinemaId}")]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetCinemaById(Guid id)
+    {
+        var results = await facilities_manager_read_service.getById(id);
+        return Ok(results);
+    }
+
+    [HttpPut("{cinemaId}")]
     [Description("API to update a cinema")]
     public async Task<IActionResult> EditCinema(Guid cinemaId , edit_cinema_req_dto editCinemaReqDto)
     {
         var results = await cinema_service.EditItem(cinemaId , editCinemaReqDto);
         return Ok(results);
     }
+    
+    
 }
