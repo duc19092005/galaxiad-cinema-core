@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Entities.Cinema_Infos;
+using DataAccess.Entities.Movie_infos;
+using DataAccess.Entities.Movies_Infos;
 using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable All
@@ -70,5 +72,33 @@ namespace DataAccess.Entities.User_Info
         public virtual ICollection<cinema_discount_info_entity> deletedCinemaDiscounts { get; set; } = [];
         
         public virtual ICollection<cinema_discount_info_entity> updatedCinemaDiscounts { get; set; } = [];
+        
+        // Quản lý trạng giảm giá
+        
+        public virtual ICollection<cinema_surcharge_infos_entity> createdCinemaSurchargeInfos { get; set; } = [];
+        
+        public virtual ICollection<cinema_surcharge_infos_entity> deleteCinemaSurchargeInfos { get; set; } = [];
+        
+        public virtual ICollection<cinema_surcharge_infos_entity> updatedCinemaSurchargeInfos { get; set; } = [];
+        
+        // Quanr lys phim
+        
+        public virtual ICollection<movie_info_entity> createdMovieInfos { get; set; } = [];
+        
+        public virtual ICollection<movie_info_entity> updatedMovieInfos { get; set; } = [];
+        
+        public virtual ICollection<movie_info_entity> deletedMovieInfos { get; set; } = [];
+        
+        // QL Lich Chieu
+        
+        public virtual ICollection<movie_schedule_info_entity> createdSchedules { get; set; } = [];
+        
+        public virtual ICollection<movie_schedule_info_entity> updatedSchedules { get; set; } = [];
+        
+        public virtual ICollection<movie_schedule_info_entity> deletedSchedules { get; set; } = [];
+        
+        // QL Order
+
+        public virtual ICollection<order_info_entity> order_info_entity { get; set; } = [];
     }
 }

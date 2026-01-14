@@ -6,18 +6,20 @@ using DataAccess.Entities.User_Info;
 
 namespace DataAccess.Entities.Cinema_Infos;
 
-public class cinema_discount_info_entity : base_management_status<user_info_entity>
+public class cinema_surcharge_infos_entity : base_management_status<user_info_entity>
 {
     public Guid cinemaId { get; set; }
     
     public Guid movieFormatId { get; set; }
     
-    [Column(TypeName = "decimal(5,2)")] 
-    public decimal discountPercent { get; set; }
+    public Guid userSegmentId { get; set; }
 
-    public string discountNote { get; set; } = string.Empty;
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal surchangePercent { get; set; }
 
-    public cinema_info_entity cinema_info_entity { get; set; } = null!;
+    public cinema_info_entity cinema_info_entity { get; set; } = null;
 
     public movie_format_info_entity movie_format_info_entity { get; set; } = null!;
+
+    public user_segments_info_entity user_segments_info_entity { get; set; } = null!;
 }

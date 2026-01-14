@@ -5,6 +5,7 @@ public class base_management_status<T> where T : class
 {
     public bool isDeleted { get; set; } = false;
     public bool isActive { get; set; } = true;
+    
     public DateTime? deletedAt { get; set; }
     public DateTime activeAt { get; set; }
     public DateTime createdAt { get; set; } = DateTime.Now;

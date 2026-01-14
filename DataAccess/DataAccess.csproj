@@ -23,7 +23,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Entities\suppliers\" />
+      <Folder Include="Entities\Suppliers\" />
     </ItemGroup>
 
 </Project>

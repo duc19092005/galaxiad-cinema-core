@@ -28,6 +28,10 @@ public class cinema_info_entity : base_management_status<user_info_entity>
     public List<auditorium_info_entity> auditorium_info_entity { get; set; } = [];
 
     public List<cinema_discount_info_entity> cinema_discount_info_entity { get; set; } = [];
+
+    public List<cinema_surcharge_infos_entity> cinema_surcharge_infos_entity { get; set; } = [];
     public user_info_entity? manager { get; set; }
+    
+    
 
 }

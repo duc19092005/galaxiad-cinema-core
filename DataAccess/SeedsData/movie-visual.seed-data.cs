@@ -1,5 +1,6 @@
 using DataAccess.Constants;
 using DataAccess.Entities.Cinema_Infos;
+using DataAccess.Entities.Movies_Infos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;

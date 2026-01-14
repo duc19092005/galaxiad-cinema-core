@@ -1,8 +1,12 @@
 using DataAccess.Constants;
 using DataAccess.Entities.Cinema_Infos;
+using DataAccess.Entities.Movie_infos;
+using DataAccess.Entities.Movies_Infos;
 using DataAccess.Entities.User_Info;
 using DataAccess.SeedsData;
 using DataAccess.status_management_relationships_keys;
+using DataAccess.status_management_relationships_keys.movie_infos;
+using DataAccess.status_management_relationships_keys.user_infos;
 using Microsoft.EntityFrameworkCore;
 
 // ReSharper disable All
@@ -97,5 +101,45 @@ public class dbContext : DbContext
         
         voucher_info_relationships_keys.add_voucher_info_keys(modelBuilder);
         voucher_info_relationships_keys.add_voucher_info_relationships(modelBuilder);
+        
+        // Cinema Surcharge info 
+        
+        cinema_surcharge_info_relationships_keys.add_cinema_surcharge_info_keys(modelBuilder);
+        cinema_surcharge_info_relationships_keys.add_cinema_surcharge_info_relationships(modelBuilder);
+        
+        // Movies Infos
+        
+        movie_info_relationships_keys.add_movie_info_keys(modelBuilder);
+        movie_info_relationships_keys.add_movie_info_relationships(modelBuilder);
+        
+        // Genres
+        
+        movie_genre_info_relationships_keys.add_movie_genre_info_relationships(modelBuilder);
+        movie_genre_info_relationships_keys.add_movie_genre_info_keys(modelBuilder);
+        
+        // Movie infos - genre
+        
+        movie_genre_movie_info_relationships_keys.movie_genre_movie_info_keys(modelBuilder);
+        movie_genre_movie_info_relationships_keys.movie_genre_movie_info_relationships(modelBuilder);
+        
+        // Required age
+        
+        movie_required_age_info_relationships_keys.add_movie_required_age_info_relationships(modelBuilder);
+        movie_required_age_info_relationships_keys.add_movie_required_age_info_keys(modelBuilder);
+        
+        // Order Infos
+        
+        order_info_relationships_keys.add_order_info_relationships(modelBuilder);
+        order_info_relationships_keys.add_order_info_keys(modelBuilder);
+        
+        // Movie Schedules
+        
+        movie_shedule_info_relationships_keys.add_movie_shedule_info_keys(modelBuilder);
+        movie_shedule_info_relationships_keys.add_movie_shedule_info_relationships(modelBuilder);
+        
+        // Order details Infos
+        
+        order_details_info_relationships_keys.add_order_details_info_relationships(modelBuilder);
+        order_details_info_relationships_keys.add_order_details_info_keys(modelBuilder);
     }
 }
