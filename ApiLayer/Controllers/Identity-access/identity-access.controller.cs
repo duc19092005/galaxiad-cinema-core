@@ -3,6 +3,7 @@
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Services.Identity_access;
+using BussinessLayer.Use_cases.Identity_access;
 using DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,12 +19,16 @@ public class identity_access_controller : ControllerBase
     private readonly register_service register_service;
     
     private readonly login_service login_service;
+    
+    private readonly get_access_use_case get_access_usecase;
 
-    public identity_access_controller(dbContext dbContext , register_service service , login_service login_service)
+    public identity_access_controller(dbContext dbContext , register_service service , login_service login_service
+    ,get_access_use_case get_access_usecase)
     {
         this._dbContext = dbContext;
         this.register_service = service;
         this.login_service = login_service;
+        this.get_access_usecase = get_access_usecase;
     }
 
     [HttpPost("regular-register")]
@@ -69,5 +74,13 @@ public class identity_access_controller : ControllerBase
         {
             throw system_exception.system_exception_caller();
         }
+    }
+
+    [Authorize]
+    [HttpGet("get-profile")]
+    public async Task<IActionResult> getProfile()
+    {
+        var results = await get_access_usecase.getAccess();
+        return Ok(results);
     }
 }

@@ -22,7 +22,7 @@ public class add_cinema_req_dto
     public string cinemaDescription { get; set; } = string.Empty;
     
     [Required(ErrorMessage = "Release Date is Required")]
-    public DateTime activeAt { get; set; }
+    public DateTime? activeAt { get; set; }
 }
 
 public class edit_cinema_req_dto

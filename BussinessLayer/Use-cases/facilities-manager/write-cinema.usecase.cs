@@ -54,19 +54,22 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
         try
         {
             Guid cinemaId = Guid.NewGuid();
-            await _dbContext.cinema_info_entity.AddAsync(new cinema_info_entity()
+            var newCinemaInfoEntity = new cinema_info_entity()
             {
                 cinemaId = cinemaId,
                 cinemaName = request.cinemaName,
                 cinemaDescription = request.cinemaDescription,
                 cinemaLocation = request.cinemaLocation,
                 cinemaHotLineNumber = request.cinemaHotlineNumber,
-                createdAt = DateTime.Now ,
+                createdAt = DateTime.Now,
                 createdByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid)?.Value), 
-                activeAt = request.activeAt,
+                    ClaimTypes.Sid)?.Value),
+                managerId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
+                    ClaimTypes.Sid)?.Value),
+                activeAt = request.activeAt ?? DateTime.Now,
                 isActive = request.activeAt > DateTime.Now ? false : true,
-            });
+            };
+            await _dbContext.cinema_info_entity.AddAsync(newCinemaInfoEntity);
             await _dbContext.SaveChangesAsync();
 
             return new base_reponse<string>()

@@ -23,6 +23,8 @@ public class read_factory
                 return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
             case write_enum.Auditorium:
                 return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
+            case write_enum.MovieFormat:
+                return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
             default:
                 throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
