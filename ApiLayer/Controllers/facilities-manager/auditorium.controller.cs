@@ -42,4 +42,11 @@ public class auditorium_controller : ControllerBase
         var results = await read_auditorium_service.getById(id);
         return Ok(results);
     }
+
+    [HttpGet("cinema/{id}")]
+    public async Task<IActionResult> GetCinema(Guid id)
+    {
+        var results = await read_auditorium_service.getByCinemaId(id);
+        return Ok(results);
+    }
 }

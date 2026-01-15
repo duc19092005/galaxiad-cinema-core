@@ -35,56 +35,49 @@ public class get_access_use_case
     {
         try
         {
-            var getUserInfo = await _dbContext.user_info_entity.FirstOrDefaultAsync(x => x.userId.Equals(
-                Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid).Value)));
-            if (getUserInfo == null)
+            var userIdStr = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId))
             {
-                throw new app_exception("User Not Found", 404 , "UN01");
+                throw new app_exception("Invalid Token", 401, "AUTH01");
             }
-            else
+            var result = await _dbContext.user_info_entity
+                .AsNoTracking()
+                .Where(x => x.userId == userId)
+                .Select(x => new regular_login_res_dto
+                {
+                    userId = x.userId,
+                    username = _dbContext.user_profile_entity
+                                .Where(p => p.userID == x.userId)
+                                .Select(p => p.userName)
+                                .FirstOrDefault(),
+                    roles = _dbContext.user_role_info_entity
+                                .Where(r => r.userId == x.userId)
+                                .Select(r => r.role_list_info_entity.roleName)
+                                .ToArray(),
+                    access_token = null
+                })
+                .FirstOrDefaultAsync();
+
+            if (result == null) 
+                throw new app_exception("User Not Found", 404, "UN01");
+            
+            if (string.IsNullOrEmpty(result.username))
+                _logger.LogError("User with Id {0} Profile Not Found", userId);
+
+            if (result.roles == null || result.roles.Length == 0)
+                throw new app_exception("User Role Not Found", 403, "UN02");
+
+            return new base_reponse<regular_login_res_dto>()
             {
-                
-                // Get user Profile
-                var getUserProfile =
-                    await _dbContext.user_profile_entity.FirstOrDefaultAsync(x => x.userID == getUserInfo.userId);
-
-                var getUserRoles =
-                    _dbContext.user_role_info_entity
-                        .Where(x => x.userId.Equals(getUserInfo.userId))
-                        .Select(x => x.role_list_info_entity.roleName);
-
-                if (!getUserRoles.Any())
-                {
-                    _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.userId);
-                    throw new app_exception("User Not Found", 403, "UN01");
-                }
-
-                if (getUserProfile == null)
-                {
-                    _logger.LogError("User with Id {0} Profile Not Found" , getUserInfo.userId);
-                    throw new app_exception("User Not Found", 404, "UN01");
-                }
-                return new base_reponse<regular_login_res_dto>()
-                {
-                    isSuccess = true,
-                    data = new regular_login_res_dto()
-                    {
-                        userId = getUserInfo.userId,
-                        access_token = null,
-                        roles = getUserRoles.ToArray(),
-                        username = getUserProfile.userName
-                    },
-                    message = "Validate SuccessFully"
-                };
-            }
+                isSuccess = true,
+                data = result,
+                message = "Validate Successfully"
+            };
         }
-        catch (app_exception)
+        catch (app_exception) { throw; }
+        catch (Exception ex)
         {
-            throw;
-        }
-        catch (Exception)
-        {
+            _logger.LogError(ex, "System error in getAccess");
             throw new app_exception("There's an error with the system", 500, "S01");
         }
     }

@@ -5,7 +5,7 @@ using BussinessLayer.Services.facilities_manager.Auditoriums;
 using BussinessLayer.Services.facilities_manager.Movie_Infos.Movie_format;
 using BussinessLayer.Services.Identity_access;
 
-namespace Backend.Bootstraps;
+namespace Backend.Bootstraps.ServiceBootstrap;
 
 public static class services_bootstrap
 {

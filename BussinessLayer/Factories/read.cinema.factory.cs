@@ -16,7 +16,7 @@ public class read_cinema_factory
 
     public i_cinema_behavior<T> readDataFromCinemaInfoFactory<T>(write_enum writeEnum)
     {
-        if (Enum.IsDefined(typeof(write_enum), writeEnum))
+        if (!Enum.IsDefined(typeof(write_enum), writeEnum))
         {
             throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
         }

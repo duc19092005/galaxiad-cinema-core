@@ -7,6 +7,7 @@ using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
 using BussinessLayer.Interfaces.facilities_manager.auditoriums;
 using BussinessLayer.Interfaces.i_Behaviors;
+using BussinessLayer.Interfaces.i_cinema;
 using BussinessLayer.Interfaces.i_identity_access;
 using BussinessLayer.Services.facilities_manager.Auditoriums;
 using BussinessLayer.Use_cases.facilities_manager;
@@ -43,10 +44,13 @@ public static class Generate_object_factories_bootstrap
                 facilities_manager_movie_format_info_usecase>();
         services
             .AddScoped<i_read_behavior<get_res_auditorium_dto>, read_auditorium_usecase>();
-
+        
         services.AddScoped<i_auditorium, read_auditorium_usecase>();
         
         services.AddScoped<get_access_use_case>();
+        
+        services.AddScoped<i_cinema_behavior<get_res_auditorium_dto> , read_auditorium_usecase>();
+
         return services;
     }
 }

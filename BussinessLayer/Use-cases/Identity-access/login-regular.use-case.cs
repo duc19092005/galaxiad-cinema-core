@@ -48,22 +48,30 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
                 }
                 else
                 {
-                    // Get user Profile
-                    var getUserProfile =
-                        await _dbContext.user_profile_entity.FirstOrDefaultAsync(x => x.userID == getUserInfo.userId);
 
-                    var getUserRoles =
-                        _dbContext.user_role_info_entity
-                            .Where(x => x.userId.Equals(getUserInfo.userId))
-                            .Select(x => x.role_list_info_entity.roleName);
+                    var result = await _dbContext.user_info_entity
+                        .AsNoTracking() 
+                        .Where(x => x.userId == getUserInfo.userId)
+                        .Select(x => new 
+                        {
+                            UserId = x.userId,
+                            Username = _dbContext.user_profile_entity
+                                .Where(p => p.userID == x.userId)
+                                .Select(p => p.userName)
+                                .FirstOrDefault(),
+                            Roles = x.user_role_info_entity 
+                                .Select(r => r.role_list_info_entity.roleName)
+                                .ToArray()
+                        })
+                        .FirstOrDefaultAsync();
 
-                    if (!getUserRoles.Any())
+                    if (!result.Roles.Any())
                     {
                         _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.userId);
                         throw new app_exception("User Not Found", 403, "UN01");
                     }
 
-                    if (getUserProfile == null)
+                    if (result == null)
                     {
                         _logger.LogError("User with Id {0} Profile Not Found" , getUserInfo.userId);
                         throw new app_exception("User Not Found", 404, "UN01");
@@ -79,7 +87,7 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
                         _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
                         throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "E01");
                     }
-                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.userEmail ,getUserProfile.userName, getUserInfo.userId , getUserRoles.ToArray());
+                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.userEmail ,result.Username, getUserInfo.userId , result.Roles);
 
                     if (token == null)
                     {
@@ -94,8 +102,8 @@ public class login_regular_use_case : ILogin_interface<regular_login_req_dto , r
                         {
                             userId = getUserInfo.userId,
                             access_token = token,
-                            roles = getUserRoles.ToArray(),
-                            username = getUserProfile.userName
+                            roles = result.Roles,
+                            username = result.Username
                         },
                         message = "Login SuccessFully"
                     };

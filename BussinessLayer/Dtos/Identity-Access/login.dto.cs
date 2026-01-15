@@ -19,7 +19,7 @@ public class regular_login_req_dto
 public class regular_login_res_dto
 {
     public Guid userId { get; set; }
-    public string username { get; set; } = string.Empty;
+    public string? username { get; set; } = string.Empty;
     public string[] roles { get; set; } = [];
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

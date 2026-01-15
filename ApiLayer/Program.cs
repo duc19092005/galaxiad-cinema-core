@@ -1,10 +1,13 @@
 using Backend.Bootstraps;
+using Backend.Bootstraps.FactoryBootstrap;
+using Backend.Bootstraps.AuthBootstrap;
 using Backend.Shard.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Backend.Bootstraps.ServiceBootstrap;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +56,7 @@ builder.Services.addReadObjectsFactoryFacilitiesManager();
 // JWT Config
 
 builder.Services.AddJwt(builder.Configuration);
+
 
 // CORS
 

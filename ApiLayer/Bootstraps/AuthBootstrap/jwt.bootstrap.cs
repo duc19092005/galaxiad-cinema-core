@@ -5,7 +5,7 @@ using Backend.Shard.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Backend.Bootstraps;
+namespace Backend.Bootstraps.AuthBootstrap;
 
 public static class jwt_bootstrap
 {
