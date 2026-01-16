@@ -5,7 +5,7 @@ using BussinessLayer.Interfaces.i_identity_access;
 using DataAccess.Enums;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BussinessLayer.Factories;
+namespace BussinessLayer.Factories.ApplicationFactories;
 
 public class write_factory
 {

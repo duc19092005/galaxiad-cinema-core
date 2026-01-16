@@ -12,13 +12,13 @@ public class userProfileService
     {
         this.IProfileBehavior = IProfileBehavior;
     }
-    public async Task<base_reponse<string>> ChangePassword(req_change_password_dto request)
+    public async Task<baseResponse<string>> ChangePassword(reqChangePasswordDto request)
     {
         var results = await IProfileBehavior.ChangePassword(request);
         return results;
     }
 
-    public async Task<base_reponse<regular_login_res_dto>> GetAccess()
+    public async Task<baseResponse<resRegularLoginDto>> GetAccess()
     {
         var results = await IProfileBehavior.GetAccess();
         return results;

@@ -26,7 +26,7 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
         this._httpContextAccessor = httpContextAccessor;
         this._logger = _logger;
     }
-    public async Task<base_reponse<string>> AddItem(add_req_auditorium_dto request)
+    public async Task<baseResponse<string>> AddItem(add_req_auditorium_dto request)
     {
         var transactions = await _dbContext.Database.BeginTransactionAsync();
         try
@@ -77,7 +77,7 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
             
             await transactions.CommitAsync();
 
-            return new base_reponse<string>()
+            return new baseResponse<string>()
             {
                 isSuccess = true,
                 message = "Add Auditorium completed"
@@ -96,12 +96,12 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
         }
     }
 
-    public Task<base_reponse<string>> UpdateItem(Guid itemId, edit_req_auditorium_dto request)
+    public Task<baseResponse<string>> UpdateItem(Guid itemId, edit_req_auditorium_dto request)
     {
         return null!;
     }
 
-    public Task<base_reponse<string>> DeleteItem(Guid itemId)
+    public Task<baseResponse<string>> DeleteItem(Guid itemId)
     {
         return null!;
     }

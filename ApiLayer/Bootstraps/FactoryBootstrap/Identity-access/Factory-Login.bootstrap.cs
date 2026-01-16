@@ -10,7 +10,7 @@ public static class loginFactoryBootstrap
     public static IServiceCollection LoginFactoryBootstrap(this IServiceCollection services)
     {
         services.AddScoped<loginFactory>();
-        services.AddScoped<ILogin_interface<regular_login_req_dto , regular_login_res_dto> , identityAccessRegularLoginUseCase>();
+        services.AddScoped<ILogin_interface<reqRegularLoginDto , resRegularLoginDto> , identityAccessRegularLoginUseCase>();
         return services; 
     }
 }

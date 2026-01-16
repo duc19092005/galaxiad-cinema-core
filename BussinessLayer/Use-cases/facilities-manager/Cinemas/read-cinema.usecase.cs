@@ -6,7 +6,7 @@ using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
-namespace BussinessLayer.Use_cases.facilities_manager;
+namespace BussinessLayer.Use_cases.facilities_manager.Cinemas;
 
 public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_manager_cinema>
 {
@@ -17,7 +17,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
         this._dbContext = _dbContext;
     }
     
-    public async Task<base_reponse<List<res_facilities_manager_cinema>>> GetAll()
+    public async Task<baseResponse<List<res_facilities_manager_cinema>>> GetAll()
     {
         try
         {
@@ -31,7 +31,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
                 totalRooms = x.auditorium_info_entity.Count
             }).ToListAsync();
 
-            return new base_reponse<List<res_facilities_manager_cinema>>()
+            return new baseResponse<List<res_facilities_manager_cinema>>()
             {
                 isSuccess = true,
                 data = getResults,
@@ -48,7 +48,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
         }
     }
 
-    public async Task<base_reponse<res_facilities_manager_cinema>> GetById(Guid id)
+    public async Task<baseResponse<res_facilities_manager_cinema>> GetById(Guid id)
     {
         try
         {
@@ -72,7 +72,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
                     StatusCodes.Status404NotFound, "NotFound01");
             }
 
-            return new base_reponse<res_facilities_manager_cinema>()
+            return new baseResponse<res_facilities_manager_cinema>()
             {
                 isSuccess = true,
                 data = cinemaData,
@@ -85,7 +85,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
         }
     }
 
-    public Task<base_reponse<List<res_facilities_manager_cinema>>> GetByEntityName(string name)
+    public Task<baseResponse<List<res_facilities_manager_cinema>>> GetByEntityName(string name)
     {
         return null!;
     }

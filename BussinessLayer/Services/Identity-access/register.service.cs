@@ -17,10 +17,10 @@ public class registerService
     {
         this.register_factory = register_factory;
     }
-    public async Task<base_reponse<string>> regularRegister(regular_register_request_dto registerRegularIdentityAccessDto)
+    public async Task<baseResponse<string>> regularRegister(resRegularRegisterDto registerRegularIdentityAccessDto)
     {
         var objects =  
-            register_factory.Create<regular_register_request_dto , string>(register_method_enum.UsernamePassword);
+            register_factory.Create<resRegularRegisterDto , string>(register_method_enum.UsernamePassword);
         var results = await objects.Add(registerRegularIdentityAccessDto);
         return results;
     }

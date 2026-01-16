@@ -13,7 +13,7 @@ using Shared.Ultis;
 
 namespace BussinessLayer.Use_cases.Identity_access;
 
-public class identityAccessRegularLoginUseCase : ILogin_interface<regular_login_req_dto , regular_login_res_dto>
+public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLoginDto , resRegularLoginDto>
 {
     private readonly dbContext _dbContext;
     
@@ -29,7 +29,7 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<regular_login_
         _logger = logger;
     }
 
-    public async Task<base_reponse<regular_login_res_dto>> Login(regular_login_req_dto dto)
+    public async Task<baseResponse<resRegularLoginDto>> Login(reqRegularLoginDto dto)
     {
         try
         {
@@ -94,10 +94,10 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<regular_login_
                         throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "E01");
                     }
 
-                    return new base_reponse<regular_login_res_dto>()
+                    return new baseResponse<resRegularLoginDto>()
                     {
                         isSuccess = true,
-                        data = new regular_login_res_dto()
+                        data = new resRegularLoginDto()
                         {
                             userId = getUserInfo.userId,
                             access_token = token,

@@ -26,7 +26,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
     }
     
     // Lấy những danh sách rạp mà do user đó tạo
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> GetAll()
+    public async Task<baseResponse<List<get_res_auditorium_dto>>> GetAll()
     {
         try
         {
@@ -50,7 +50,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                     }).ToList()
                 }).ToListAsync();
 
-            return new base_reponse<List<get_res_auditorium_dto>>()
+            return new baseResponse<List<get_res_auditorium_dto>>()
             {
                 data = getData,
                 isSuccess = true,
@@ -68,7 +68,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
         }
     }
     
-    public async Task<base_reponse<get_res_auditorium_dto>> GetById(Guid id)
+    public async Task<baseResponse<get_res_auditorium_dto>> GetById(Guid id)
     {
         try
         {
@@ -102,7 +102,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                 throw new app_exception("Error : Can not find auditorium", 404, "NOTFOUND01");
             }
 
-            return new base_reponse<get_res_auditorium_dto>()
+            return new baseResponse<get_res_auditorium_dto>()
             {
                 data = result,
                 isSuccess = true,
@@ -119,7 +119,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
         }
     }
     
-    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
+    public async Task<baseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
     {
         try
         {
@@ -135,7 +135,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                     totalSeats = x.seats_info_entity.Count
                 }).ToListAsync();
 
-            return new base_reponse<List<GetResAuditoriumDtoCinema>>()
+            return new baseResponse<List<GetResAuditoriumDtoCinema>>()
             {
                 data = getData,
                 isSuccess = true,
@@ -153,12 +153,12 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
         }
     }
     
-    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaName(string name)
+    public async Task<baseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaName(string name)
     {
         return null!;
     }
     
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> GetByEntityName(string name)
+    public async Task<baseResponse<List<get_res_auditorium_dto>>> GetByEntityName(string name)
     {
         return null!;
     }

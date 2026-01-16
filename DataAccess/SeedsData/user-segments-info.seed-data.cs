@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;
 
-public class user_segments_info_seed_data
+public static class seedDataUserSegmentsInfos
 {
-    public static void add_user_segments_seed_data(ModelBuilder modelBuilder)
+    public static void AddUserSegments(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<user_segments_info_entity>().HasData(new List<user_segments_info_entity>()
         {

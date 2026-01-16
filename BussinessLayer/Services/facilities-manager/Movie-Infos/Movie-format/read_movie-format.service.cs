@@ -2,6 +2,7 @@ using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.Auditoriums.facilities_manager;
 using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
 using BussinessLayer.Factories;
+using BussinessLayer.Factories.ApplicationFactories;
 using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager.Movie_Infos.Movie_format;
@@ -15,9 +16,9 @@ public class facilitiesManagerReadMovieFormatService
         this._readFactory = _readFactory;
     }
 
-    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> ReadAllMovieFormat()
+    public async Task<baseResponse<List<resFacilitiesManagerMovieFormatDto>>> ReadAllMovieFormat()
     {
-        var objects = _readFactory.ReadData<facilities_manager_res_movie_format_dto>(write_enum.MovieFormat);
+        var objects = _readFactory.ReadData<resFacilitiesManagerMovieFormatDto>(write_enum.MovieFormat);
 
         var getResults = await objects.GetAll();
         

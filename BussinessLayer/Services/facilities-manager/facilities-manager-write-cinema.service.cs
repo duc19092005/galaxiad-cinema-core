@@ -2,6 +2,7 @@
 using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.cinemas;
 using BussinessLayer.Factories;
+using BussinessLayer.Factories.ApplicationFactories;
 using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager;
@@ -15,7 +16,7 @@ public class facilitiesManagerWriteCinemaService
         this.write_factory = write_factory;
     }
 
-    public async Task<base_reponse<string>> AddItem(add_cinema_req_dto addCinemaReqDto)
+    public async Task<baseResponse<string>> AddItem(add_cinema_req_dto addCinemaReqDto)
     {
         var objects = 
             write_factory.wirte<add_cinema_req_dto , edit_cinema_req_dto , string> (write_enum.Cinema);
@@ -23,7 +24,7 @@ public class facilitiesManagerWriteCinemaService
         return getResults;
     }
 
-    public async Task<base_reponse<string>> EditItem(Guid cinemaId ,edit_cinema_req_dto editCinemaReqDto)
+    public async Task<baseResponse<string>> EditItem(Guid cinemaId ,edit_cinema_req_dto editCinemaReqDto)
     {
         var objects
             = write_factory.wirte<add_cinema_req_dto, edit_cinema_req_dto, string>(write_enum.Cinema);

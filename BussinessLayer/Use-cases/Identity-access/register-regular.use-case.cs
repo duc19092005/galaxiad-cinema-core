@@ -16,7 +16,7 @@ using Shared.Ultis;
 
 namespace BussinessLayer.Use_cases.Identity_access;
 
-public class identityAccessRegularRegisterUseCase : IAddBehavior<regular_register_request_dto , string>
+public class identityAccessRegularRegisterUseCase : IAddBehavior<resRegularRegisterDto , string>
 {
     private readonly dbContext _dbContext;
     
@@ -31,7 +31,7 @@ public class identityAccessRegularRegisterUseCase : IAddBehavior<regular_registe
         _logger = logger;
     }
     
-    public async Task<base_reponse<string>> Add(regular_register_request_dto dto)
+    public async Task<baseResponse<string>> Add(resRegularRegisterDto dto)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync();        
         try
@@ -92,7 +92,7 @@ public class identityAccessRegularRegisterUseCase : IAddBehavior<regular_registe
             
             await transaction.CommitAsync();
 
-            return new base_reponse<string>()
+            return new baseResponse<string>()
             {
                 isSuccess = true,
                 data = null,

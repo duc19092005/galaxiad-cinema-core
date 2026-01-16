@@ -10,7 +10,7 @@ using DataAccess.Entities.Cinema_Infos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
-namespace BussinessLayer.Use_cases.facilities_manager;
+namespace BussinessLayer.Use_cases.facilities_manager.Cinemas;
 
 public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req_dto ,edit_cinema_req_dto?, string>
 {
@@ -25,7 +25,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
         this._httpContextAccessor = httpContextAccessor;
     }
     
-    public async Task<base_reponse<string>> AddItem(add_cinema_req_dto request)
+    public async Task<baseResponse<string>> AddItem(add_cinema_req_dto request)
     {
         if (cinemaValidate.ValidateCinemaName(null,request.cinemaName, _dbContext))
         {
@@ -72,7 +72,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
             await _dbContext.cinema_info_entity.AddAsync(newCinemaInfoEntity);
             await _dbContext.SaveChangesAsync();
 
-            return new base_reponse<string>()
+            return new baseResponse<string>()
             {
                 isSuccess = true,
                 data = null,
@@ -90,7 +90,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
         }
     }
 
-    public async Task<base_reponse<string>> UpdateItem(Guid itemId, edit_cinema_req_dto request)
+    public async Task<baseResponse<string>> UpdateItem(Guid itemId, edit_cinema_req_dto request)
     {
         // Find the cinema Infos
         try
@@ -171,7 +171,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
 
                 await _dbContext.SaveChangesAsync();
 
-                return new base_reponse<string>()
+                return new baseResponse<string>()
                 {
                     isSuccess = true,
                     data = null,
@@ -189,7 +189,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
         }
     }
 
-    public async Task<base_reponse<string>> DeleteItem(Guid itemId)
+    public async Task<baseResponse<string>> DeleteItem(Guid itemId)
     {
         return null!;
     }

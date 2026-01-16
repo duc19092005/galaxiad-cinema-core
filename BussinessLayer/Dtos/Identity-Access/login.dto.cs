@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace BussinessLayer.Dtos.Identity_Access;
 
-public class regular_login_req_dto
+public class reqRegularLoginDto
 {
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress(ErrorMessage = "Email is invalid")]
@@ -16,7 +16,7 @@ public class regular_login_req_dto
 }
 
 
-public class regular_login_res_dto
+public class resRegularLoginDto
 {
     public Guid userId { get; set; }
     public string? username { get; set; } = string.Empty;

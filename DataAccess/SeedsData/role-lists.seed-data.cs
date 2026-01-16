@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;
 
-public class role_lists_seed_data
+public static class seedDataRoleLists
 {
-    public static void add_role_lists_seed_data(ModelBuilder modelBuilder)
+    public static void AddRoleListsSeedData(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<role_list_info_entity>().HasData(
             new role_list_info_entity() { roleId = userRoles.Customer, roleName = "Customer" },

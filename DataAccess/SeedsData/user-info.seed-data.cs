@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;
 
-public class user_info_seed_data
+public static class seedDataUserInfos
 {
-    public static void add_user_info_seed_data(ModelBuilder modelBuilder , user_identity_code_constant user_identity_code_constant)
+    public static void AddUserInfos(ModelBuilder modelBuilder , user_identity_code_constant user_identity_code_constant)
     {
         // Seed Data for UserInformation
         

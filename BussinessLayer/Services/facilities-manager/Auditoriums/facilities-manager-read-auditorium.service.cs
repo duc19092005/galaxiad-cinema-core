@@ -1,6 +1,7 @@
 using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.Auditoriums.facilities_manager;
 using BussinessLayer.Factories;
+using BussinessLayer.Factories.ApplicationFactories;
 using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager.Auditoriums;
@@ -9,29 +10,29 @@ public class facilitiesManagerReadAuditoriumService
 {
     private readonly read_factory _readFactory;
     
-    private readCinemaFactory _readCinemaFactory;
+    private readDataFromCinemaFactory _readCinemaFactory;
 
-    public facilitiesManagerReadAuditoriumService(read_factory readFactory, readCinemaFactory readCinemaFactory)
+    public facilitiesManagerReadAuditoriumService(read_factory readFactory, readDataFromCinemaFactory readCinemaFactory)
     {
         this._readFactory =  readFactory;
         _readCinemaFactory = readCinemaFactory;
     }
 
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> GetAll()
+    public async Task<baseResponse<List<get_res_auditorium_dto>>> GetAll()
     {
         var objects = _readFactory.ReadData<get_res_auditorium_dto>(write_enum.Auditorium);
         var results = await objects.GetAll();
         return results;
     }
     
-    public async Task<base_reponse<get_res_auditorium_dto>> GetById(Guid id)
+    public async Task<baseResponse<get_res_auditorium_dto>> GetById(Guid id)
     {
         var objects = _readFactory.ReadData<get_res_auditorium_dto>(write_enum.Auditorium);
         var results = await objects.GetById(id);
         return results;
     }
 
-    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
+    public async Task<baseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
     {
         var objects = _readCinemaFactory.ReadDataFromCinemaInfoFactory<GetResAuditoriumDtoCinema>(write_enum.Auditorium);
         var results = await objects.GetByCinemaId(cinemaId);

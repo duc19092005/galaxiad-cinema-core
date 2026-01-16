@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace BussinessLayer.Dtos.Identity_Access;
 
-public class regular_register_request_dto
+public class resRegularRegisterDto
 {
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress(ErrorMessage = "Email is invalid")]
@@ -33,9 +33,4 @@ public class regular_register_request_dto
 
     [Required(ErrorMessage = "Date of birth is required")]
     public DateTime dateOfBirth { get; set; }
-}
-
-public class register_response_dto
-{
-    
 }

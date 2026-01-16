@@ -25,7 +25,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
         this._logger = logger;
     }
     
-    public async Task<base_reponse<regular_login_res_dto>> GetAccess()
+    public async Task<baseResponse<resRegularLoginDto>> GetAccess()
     {
         try
         {
@@ -37,7 +37,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
             var result = await _dbContext.user_info_entity
                 .AsNoTracking()
                 .Where(x => x.userId == userId)
-                .Select(x => new regular_login_res_dto
+                .Select(x => new resRegularLoginDto
                 {
                     userId = x.userId,
                     username = _dbContext.user_profile_entity
@@ -61,7 +61,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
             if (result.roles == null || result.roles.Length == 0)
                 throw new app_exception("User Role Not Found", 403, "UN02");
 
-            return new base_reponse<regular_login_res_dto>()
+            return new baseResponse<resRegularLoginDto>()
             {
                 isSuccess = true,
                 data = result,
@@ -76,7 +76,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
         }
     }
     
-    public async Task<base_reponse<string>> ChangePassword(req_change_password_dto request)
+    public async Task<baseResponse<string>> ChangePassword(reqChangePasswordDto request)
     {
         try
         {
@@ -94,14 +94,16 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
             {
                 if (!BCrypt_helper.Validate(findUser.password, request.OldPassword))
                 {
-                    throw new app_exception("Old Password is Not Match", 400, "Error02");
-                }
-                else
+                    throw new app_exception("Old Password is Not Match !", 400, "Error02");
+                }else if (!BCrypt_helper.Validate(findUser.password, request.NewPassword))
+                {
+                    throw new app_exception("New Password is the same of old password !", 400, "Error02");
+                }else
                 {
                     var newPassword = BCrypt_helper.Hash(request.NewPassword);
                     findUser.password = newPassword;
                     await _dbContext.SaveChangesAsync();
-                    return new base_reponse<string>()
+                    return new baseResponse<string>()
                     {
                         isSuccess = true,
                         data = null,
@@ -122,7 +124,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
         }
     }
 
-    public async Task<base_reponse<res_get_user_profile_dto>> GetUserProfile()
+    public async Task<baseResponse<resGetUserInfo>> GetUserProfile()
     {
         return null!;
     }

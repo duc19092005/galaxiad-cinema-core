@@ -5,9 +5,9 @@ namespace BussinessLayer.Interfaces.i_identity_access;
 
 public interface IProfileBehavior
 {
-    Task<base_reponse<string>> ChangePassword(req_change_password_dto request);
+    Task<baseResponse<string>> ChangePassword(reqChangePasswordDto request);
     
-    Task<base_reponse<regular_login_res_dto>> GetAccess();
+    Task<baseResponse<resRegularLoginDto>> GetAccess();
 
-    Task<base_reponse<res_get_user_profile_dto>> GetUserProfile();
+    Task<baseResponse<resGetUserInfo>> GetUserProfile();
 }

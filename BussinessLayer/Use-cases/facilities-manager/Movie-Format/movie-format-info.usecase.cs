@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Movie_Format;
 
-public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<facilities_manager_res_movie_format_dto>
+public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<resFacilitiesManagerMovieFormatDto>
 {
     private readonly dbContext _dbContext;
     private readonly ILogger<facilitiesManagerReadMovieFormatUseCase> _logger;
@@ -19,12 +19,12 @@ public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<facilities_
         this._dbContext = dbContext;
         this._logger = _logger;
     }
-    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> GetAll()
+    public async Task<baseResponse<List<resFacilitiesManagerMovieFormatDto>>> GetAll()
     {
         try
         {
             var results = await _dbContext.movie_format_info_entity.Select(x =>
-                new facilities_manager_res_movie_format_dto()
+                new resFacilitiesManagerMovieFormatDto()
                 {
                     formatId = x.movieFormatId,
                     formatDescription = x.movieFormatDescription,
@@ -32,7 +32,7 @@ public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<facilities_
                     movieFormatPrice = x.movieFormatPrice
                 }).ToListAsync();
 
-            return new base_reponse<List<facilities_manager_res_movie_format_dto>>
+            return new baseResponse<List<resFacilitiesManagerMovieFormatDto>>
             {
                 isSuccess = true,
                 data = results,
@@ -50,12 +50,12 @@ public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<facilities_
         }
     }
 
-    public async Task<base_reponse<facilities_manager_res_movie_format_dto>> GetById(Guid id)
+    public async Task<baseResponse<resFacilitiesManagerMovieFormatDto>> GetById(Guid id)
     {
         return null!;
     }
 
-    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> GetByEntityName(string name)
+    public async Task<baseResponse<List<resFacilitiesManagerMovieFormatDto>>> GetByEntityName(string name)
     {
         return null!;
     }

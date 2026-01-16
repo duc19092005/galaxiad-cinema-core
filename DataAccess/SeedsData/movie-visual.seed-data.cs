@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;
 
-public class movie_format_seed_data
+public static class seedDataMovieFormat
 {
-    public static void add_movie_format_seed_data(ModelBuilder modelBuilder)
+    public static void AddMovieFormatSeedData(ModelBuilder modelBuilder)
     {
         var adminId = Guid.Parse("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c");
         var defaultDate = new DateTime(2024, 1, 1);

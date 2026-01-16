@@ -19,9 +19,9 @@ public class loginService
         this.login_factory = login_factory;
     }
     
-    public async Task<base_reponse<regular_login_res_dto>> regularLogin(regular_login_req_dto regular_login_req_dto)
+    public async Task<baseResponse<resRegularLoginDto>> regularLogin(reqRegularLoginDto regular_login_req_dto)
     {
-        var objects = login_factory.Login<regular_login_req_dto, regular_login_res_dto>(register_method_enum.UsernamePassword);
+        var objects = login_factory.Login<reqRegularLoginDto, resRegularLoginDto>(register_method_enum.UsernamePassword);
         var results = await objects.Login(regular_login_req_dto);
         
         return results;

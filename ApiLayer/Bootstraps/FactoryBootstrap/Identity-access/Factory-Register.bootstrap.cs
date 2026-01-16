@@ -11,7 +11,7 @@ public static class registerFactoryBootstrap
     public static IServiceCollection AddRegisterFactory(this IServiceCollection services)
     {
         services.AddScoped<registerFactory>();
-        services.AddScoped<IAddBehavior<regular_register_request_dto, string>, identityAccessRegularRegisterUseCase>();
+        services.AddScoped<IAddBehavior<resRegularRegisterDto, string>, identityAccessRegularRegisterUseCase>();
         return services; 
     }
 }

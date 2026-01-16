@@ -33,14 +33,14 @@ public class identity_access_controller : ControllerBase
     }
 
     [HttpPost("regular-register")]
-    public async Task<IActionResult> regularRegister([FromBody] regular_register_request_dto registerRegularIdentityAccessDto)
+    public async Task<IActionResult> regularRegister([FromBody] resRegularRegisterDto registerRegularIdentityAccessDto)
     {
         var results = await register_service.regularRegister(registerRegularIdentityAccessDto);
         return Ok(results);
     }
 
     [HttpPost("regular-login")]
-    public async Task<IActionResult> regularLogin([FromBody] regular_login_req_dto regularLoginReqDto)
+    public async Task<IActionResult> regularLogin([FromBody] reqRegularLoginDto regularLoginReqDto)
     {
         var results = await login_service.regularLogin(regularLoginReqDto);
         
@@ -87,7 +87,7 @@ public class identity_access_controller : ControllerBase
 
     [Authorize]
     [HttpPost("change-password")]
-    public async Task<IActionResult> ChangePassword(req_change_password_dto request)
+    public async Task<IActionResult> ChangePassword(reqChangePasswordDto request)
     {
         var results = await userProfileService.ChangePassword(request);
         return Ok(results);

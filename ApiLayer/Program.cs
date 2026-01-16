@@ -1,6 +1,7 @@
 using Backend.Bootstraps;
 using Backend.Bootstraps.FactoryBootstrap;
 using Backend.Bootstraps.AuthBootstrap;
+using Backend.Bootstraps.FactoryBootstrap.Facilities_manager;
 using Backend.Bootstraps.FactoryBootstrap.Identity_access;
 using Backend.Shard.Exceptions;
 using DataAccess;
@@ -47,17 +48,18 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 builder.Services.AddServices();
 
-// Factories Dependency Injections
+//  -------------------- Factories Dependency Injections ----------------------------
+//  ----------------------- Identity Access
 
 builder.Services.AddRegisterFactory();
 
 builder.Services.LoginFactoryBootstrap();
 
-builder.Services.addWriteObjectsFactory();
+builder.Services.AddApplicationFactories();
 
-builder.Services.addApplicationFactories();
+builder.Services.AddReadObjectsFactoryFacilitiesManager();
 
-builder.Services.addReadObjectsFactoryFacilitiesManager();
+builder.Services.FacilitiesManagerCinemaAddWriteFactory();
 
 // JWT Config
 

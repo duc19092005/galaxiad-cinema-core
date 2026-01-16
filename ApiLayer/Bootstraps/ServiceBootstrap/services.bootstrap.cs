@@ -11,14 +11,24 @@ public static class services_bootstrap
 {
     public static IServiceCollection AddServices(this IServiceCollection services)
     {
+        // ----------------------------------------------------------------
+        // |                 Identity Access Services                     |
+        // ----------------------------------------------------------------
+        
         services.AddScoped<registerService>();
         services.AddScoped<loginService>();
+        services.AddScoped<userProfileService>();
+        
+        // ----------------------------------------------------------------
+        // |                 Facilities Manager Services                  |
+        // ----------------------------------------------------------------
+
         services.AddScoped<facilitiesManagerWriteCinemaService>();
         services.AddScoped<facilitiesManagerReadCinemaService>();
         services.AddScoped<facilitiesManagerWriteAuditoriumService>();
         services.AddScoped<facilitiesManagerReadMovieFormatService>();
         services.AddScoped<facilitiesManagerReadAuditoriumService>();
-        services.AddScoped<userProfileService>();
+        
         return services;
     }
 }

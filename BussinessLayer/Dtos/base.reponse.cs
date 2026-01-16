@@ -1,7 +1,7 @@
 namespace BussinessLayer.Dtos;
 // ReSharper disable All
 
-public class base_reponse<T>
+public class baseResponse<T>
 {
     public bool isSuccess { get; set; }
     public string message { get; set; } = string.Empty;

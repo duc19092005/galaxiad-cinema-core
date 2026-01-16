@@ -5,11 +5,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BussinessLayer.Factories;
 
-public class readCinemaFactory
+public class readDataFromCinemaFactory
 {
     private readonly IServiceProvider _IServiceProvider;
 
-    public readCinemaFactory(IServiceProvider _IServiceProvider)
+    public readDataFromCinemaFactory(IServiceProvider _IServiceProvider)
     {
         this._IServiceProvider = _IServiceProvider;
     }

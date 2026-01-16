@@ -1,6 +1,6 @@
 namespace BussinessLayer.Dtos.Movie_Infos.Movie_Format;
 
-public class facilities_manager_res_movie_format_dto
+public class resFacilitiesManagerMovieFormatDto
 {
     public Guid formatId { get; set; }
     

@@ -81,21 +81,21 @@ public class dbContext : DbContext
        
         // Seeds datas for role lists
         
-        role_lists_seed_data.add_role_lists_seed_data(modelBuilder);
+        seedDataRoleLists.AddRoleListsSeedData(modelBuilder);
         
         // Seeds data for user infos - profiles - roles
         
-        user_info_seed_data.add_user_info_seed_data(modelBuilder , user_identity_code_constant);
+        seedDataUserInfos.AddUserInfos(modelBuilder , user_identity_code_constant);
         
         // Seeds data for movie format
         
-        movie_format_seed_data.add_movie_format_seed_data(modelBuilder);
+        seedDataMovieFormat.AddMovieFormatSeedData(modelBuilder);
         
         // User Segments
         
         user_segments_info_relationships_keys.add_user_segments_info_relationships(modelBuilder);
         user_segments_info_relationships_keys.add_user_segments_info_keys(modelBuilder);
-        user_segments_info_seed_data.add_user_segments_seed_data(modelBuilder);
+        seedDataUserSegmentsInfos.AddUserSegments(modelBuilder);
         
         // Vouchers
         
