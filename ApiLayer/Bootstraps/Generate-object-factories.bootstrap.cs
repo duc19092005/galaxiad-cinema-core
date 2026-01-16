@@ -45,11 +45,11 @@ public static class Generate_object_factories_bootstrap
         services
             .AddScoped<i_read_behavior<get_res_auditorium_dto>, read_auditorium_usecase>();
         
-        services.AddScoped<i_auditorium, read_auditorium_usecase>();
-        
         services.AddScoped<get_access_use_case>();
         
-        services.AddScoped<i_cinema_behavior<get_res_auditorium_dto> , read_auditorium_usecase>();
+        services.AddScoped<i_cinema_behavior<GetResAuditoriumDtoCinema> , read_auditorium_usecase>();
+
+        services.AddScoped<IProfileBehavior, GetUserProfileUseCase>();
 
         return services;
     }

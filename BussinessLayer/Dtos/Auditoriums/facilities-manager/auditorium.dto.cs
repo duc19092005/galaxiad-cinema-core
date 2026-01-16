@@ -55,6 +55,19 @@ public class edit_req_auditorium_dto
 
 }
 
+public class GetResAuditoriumDtoCinema
+{
+    public Guid auditoriumId { get; set; }
+    
+    public string auditoriumNumber { get; set; } = string.Empty;
+    
+    public string movieFormatName { get; set; } = string.Empty;
+    
+    public string cinemaName { get; set; }
+    
+    public int totalSeats { get; set; }
+}
+
 public class get_res_auditorium_dto
 {
     public Guid auditoriumId { get; set; }

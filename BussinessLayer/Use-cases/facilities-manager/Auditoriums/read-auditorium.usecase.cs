@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 
-public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> , i_auditorium , i_cinema_behavior<get_res_auditorium_dto>
+public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> , i_cinema_behavior<GetResAuditoriumDtoCinema>
 {
     private readonly dbContext _dbContext;
     private readonly ILogger<read_auditorium_usecase> _logger;
@@ -120,31 +120,23 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
         }
     }
     
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> getByCinemaId(Guid cinemaId)
+    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> getByCinemaId(Guid cinemaId)
     {
         try
         {
             var getData = await _dbContext.auditorium_info_entity
                 .AsNoTracking()
                 .Where(x => x.createdByUserId.Equals(Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Sid).Value))
-                            && x.cinemaId.Equals(cinemaId)).Select(x => new get_res_auditorium_dto()
+                            && x.cinemaId.Equals(cinemaId)).Select(x => new GetResAuditoriumDtoCinema()
                 {
                     auditoriumId = x.auditoriumId,
                     auditoriumNumber = x.auditoriumNumber,
                     movieFormatName = x.movie_format_info_entity.movieFormatName,
                     cinemaName = x.cinema_info_entity.cinemaName,
-                    totalSeats = x.seats_info_entity.Count,
-                    seatsInfos = x.seats_info_entity.Select(x => new req_seats_auditorium_dto
-                    {
-                        seatNumber = x.seatNumber,
-                        coordX = x.coordX,
-                        coordY = x.coordY,
-                        colIndex = x.colIndex,
-                        rowIndex = x.rowIndex,
-                    }).ToList()
+                    totalSeats = x.seats_info_entity.Count
                 }).ToListAsync();
 
-            return new base_reponse<List<get_res_auditorium_dto>>()
+            return new base_reponse<List<GetResAuditoriumDtoCinema>>()
             {
                 data = getData,
                 isSuccess = true,
@@ -162,7 +154,7 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
         }
     }
     
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> getByCinemaName(string name)
+    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> getByCinemaName(string name)
     {
         return null!;
     }

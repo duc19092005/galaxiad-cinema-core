@@ -31,9 +31,9 @@ public class read_auditorium_service_auditorium_service
         return results;
     }
 
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> getByCinemaId(Guid cinemaId)
+    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> getByCinemaId(Guid cinemaId)
     {
-        var objects = _readCinemaFactory.readDataFromCinemaInfoFactory<get_res_auditorium_dto>(write_enum.Auditorium);
+        var objects = _readCinemaFactory.readDataFromCinemaInfoFactory<GetResAuditoriumDtoCinema>(write_enum.Auditorium);
         var results = await objects.getByCinemaId(cinemaId);
         return results;
     }
