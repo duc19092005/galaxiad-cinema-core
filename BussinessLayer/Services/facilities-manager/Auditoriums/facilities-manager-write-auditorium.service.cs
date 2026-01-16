@@ -5,11 +5,11 @@ using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager.Auditoriums;
 
-public class add_auditorium_service
+public class facilitiesManagerWriteAuditoriumService
 {
     private readonly write_factory write_factory;
 
-    public add_auditorium_service(write_factory writeFactory)
+    public facilitiesManagerWriteAuditoriumService(write_factory writeFactory)
     {
         this.write_factory = writeFactory;
     }
@@ -22,6 +22,4 @@ public class add_auditorium_service
         
         return getResults;
     }
-    
-    
 }

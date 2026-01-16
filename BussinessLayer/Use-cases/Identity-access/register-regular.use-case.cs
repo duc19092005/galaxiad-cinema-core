@@ -16,15 +16,15 @@ using Shared.Ultis;
 
 namespace BussinessLayer.Use_cases.Identity_access;
 
-public class regular_register_use_case : IAddBehavior<regular_register_request_dto , string>
+public class identityAccessRegularRegisterUseCase : IAddBehavior<regular_register_request_dto , string>
 {
     private readonly dbContext _dbContext;
     
     private readonly IConfiguration _configuration;
     
-    private readonly ILogger<regular_register_use_case> _logger;
+    private readonly ILogger<identityAccessRegularRegisterUseCase> _logger;
 
-    public regular_register_use_case(dbContext dbContext , IConfiguration configuration, ILogger<regular_register_use_case> logger)
+    public identityAccessRegularRegisterUseCase(dbContext dbContext , IConfiguration configuration, ILogger<identityAccessRegularRegisterUseCase> logger)
     {
         _dbContext = dbContext;
         _configuration = configuration;
@@ -36,12 +36,12 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
         using var transaction = await _dbContext.Database.BeginTransactionAsync();        
         try
         {
-            if (register_validate.checkExistEmail(_dbContext, dto.userEmail))
+            if (registerValidate.CheckExistEmail(_dbContext, dto.userEmail))
             {
                 throw new app_exception("Email Already Exits", 400, "UError02");
             }
 
-            var ageMessage = register_validate.checkValidateAge(dto.dateOfBirth, register_user_type_enum.Customer);
+            var ageMessage = registerValidate.CheckValidateAge(dto.dateOfBirth, register_user_type_enum.Customer);
 
             if (ageMessage != null)
             {
@@ -56,7 +56,7 @@ public class regular_register_use_case : IAddBehavior<regular_register_request_d
                 throw new app_exception("Key is Null", 400, "UError04");
             }
 
-            if (register_validate.checkExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.identityCode))
+            if (registerValidate.CheckExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.identityCode))
             {
                 throw new app_exception("Identity Code is already Exits", 400, "UError05");
             }

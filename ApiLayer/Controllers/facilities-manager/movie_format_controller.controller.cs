@@ -12,10 +12,10 @@ namespace Backend.Controllers.facilities_manager;
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class movie_format_controller : ControllerBase
 {
-    private readonly facilities_manager_read_movie_format_service facilities_manager_read_movie_format_service;
+    private readonly facilitiesManagerReadMovieFormatService facilities_manager_read_movie_format_service;
 
     public movie_format_controller(
-        facilities_manager_read_movie_format_service facilities_manager_read_movie_format_service)
+        facilitiesManagerReadMovieFormatService facilities_manager_read_movie_format_service)
     {
         this.facilities_manager_read_movie_format_service =  facilities_manager_read_movie_format_service;
     }

@@ -16,19 +16,20 @@ public class identity_access_controller : ControllerBase
 {
     private readonly dbContext _dbContext;
     
-    private readonly register_service register_service;
+    private readonly registerService register_service;
     
-    private readonly login_service login_service;
+    private readonly loginService login_service;
     
-    private readonly get_access_use_case get_access_usecase;
+    private readonly userProfileService userProfileService;
+    
 
-    public identity_access_controller(dbContext dbContext , register_service service , login_service login_service
-    ,get_access_use_case get_access_usecase)
+    public identity_access_controller(dbContext dbContext , registerService service , loginService login_service
+    , userProfileService userProfileService)
     {
         this._dbContext = dbContext;
         this.register_service = service;
         this.login_service = login_service;
-        this.get_access_usecase = get_access_usecase;
+        this.userProfileService = userProfileService;
     }
 
     [HttpPost("regular-register")]
@@ -80,7 +81,15 @@ public class identity_access_controller : ControllerBase
     [HttpGet("get-profile")]
     public async Task<IActionResult> getProfile()
     {
-        var results = await get_access_usecase.getAccess();
+        var results = await userProfileService.GetAccess();
+        return Ok(results);
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(req_change_password_dto request)
+    {
+        var results = await userProfileService.ChangePassword(request);
         return Ok(results);
     }
 }

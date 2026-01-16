@@ -15,17 +15,17 @@ public class write_factory
     {
         this._serviceProvider = serviceProvider;
     }
-    public i_write_behavior<TAddRequest, TEditRequest ,TResponse> wirte<TAddRequest, TEditRequest ,TResponse>(write_enum method)
+    public IWriteBehavior<TAddRequest, TEditRequest ,TResponse> wirte<TAddRequest, TEditRequest ,TResponse>(write_enum method)
     {
         switch (method)
         {
             case write_enum.Cinema:
-                return (i_write_behavior<TAddRequest, TEditRequest ,TResponse>)
-                    _serviceProvider.GetRequiredService(typeof(i_write_behavior<TAddRequest, TEditRequest ,TResponse>));
+                return (IWriteBehavior<TAddRequest, TEditRequest ,TResponse>)
+                    _serviceProvider.GetRequiredService(typeof(IWriteBehavior<TAddRequest, TEditRequest ,TResponse>));
             
             case write_enum.Auditorium:
-                return (i_write_behavior<TAddRequest, TEditRequest ,TResponse>)
-                    _serviceProvider.GetRequiredService(typeof(i_write_behavior<TAddRequest, TEditRequest ,TResponse>));
+                return (IWriteBehavior<TAddRequest, TEditRequest ,TResponse>)
+                    _serviceProvider.GetRequiredService(typeof(IWriteBehavior<TAddRequest, TEditRequest ,TResponse>));
                 
             default:
                 throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");

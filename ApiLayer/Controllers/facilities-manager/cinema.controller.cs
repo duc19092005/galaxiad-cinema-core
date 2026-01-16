@@ -14,10 +14,10 @@ namespace Backend.Controllers.facilities_manager;
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class cinema_controller : ControllerBase
 {
-    private readonly cinema_service cinema_service;
-    private readonly facilities_manager_read_service facilities_manager_read_service;
+    private readonly facilitiesManagerWriteCinemaService cinema_service;
+    private readonly facilitiesManagerReadCinemaService facilities_manager_read_service;
 
-    public cinema_controller(cinema_service cinemaService , facilities_manager_read_service facilities_manager_read_service)
+    public cinema_controller(facilitiesManagerWriteCinemaService cinemaService , facilitiesManagerReadCinemaService facilities_manager_read_service)
     {
         this.cinema_service = cinemaService;
         this.facilities_manager_read_service = facilities_manager_read_service;
@@ -26,7 +26,7 @@ public class cinema_controller : ControllerBase
     [HttpGet()]
     public async Task<IActionResult> GetAll()
     {
-        var results = await facilities_manager_read_service.getAll();
+        var results = await facilities_manager_read_service.GetAll();
         return Ok(results);
     }
     
@@ -41,7 +41,7 @@ public class cinema_controller : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetCinemaById(Guid id)
     {
-        var results = await facilities_manager_read_service.getById(id);
+        var results = await facilities_manager_read_service.GetById(id);
         return Ok(results);
     }
 

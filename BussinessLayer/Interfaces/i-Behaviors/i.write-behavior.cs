@@ -1,9 +1,8 @@
-// ReSharper disable All
 using BussinessLayer.Dtos;
 
 namespace BussinessLayer.Interfaces.i_Behaviors;
 
-public interface i_write_behavior<TAddRequest , TEditRequest , TResponse>
+public interface IWriteBehavior<TAddRequest , TEditRequest , TResponse>
 {
     Task<base_reponse<TResponse>> AddItem(TAddRequest request);
     

@@ -1,6 +1,7 @@
 using Backend.Bootstraps;
 using Backend.Bootstraps.FactoryBootstrap;
 using Backend.Bootstraps.AuthBootstrap;
+using Backend.Bootstraps.FactoryBootstrap.Identity_access;
 using Backend.Shard.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
@@ -48,9 +49,14 @@ builder.Services.AddServices();
 
 // Factories Dependency Injections
 
-builder.Services.addRegisterObjectsFactory();
+builder.Services.AddRegisterFactory();
+
+builder.Services.LoginFactoryBootstrap();
+
 builder.Services.addWriteObjectsFactory();
+
 builder.Services.addApplicationFactories();
+
 builder.Services.addReadObjectsFactoryFacilitiesManager();
 
 // JWT Config

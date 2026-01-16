@@ -6,11 +6,11 @@ using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager;
 
-public class cinema_service
+public class facilitiesManagerWriteCinemaService
 {
     private readonly write_factory write_factory;
 
-    public cinema_service(write_factory write_factory)
+    public facilitiesManagerWriteCinemaService(write_factory write_factory)
     {
         this.write_factory = write_factory;
     }

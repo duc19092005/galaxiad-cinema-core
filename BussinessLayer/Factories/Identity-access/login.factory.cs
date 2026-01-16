@@ -11,11 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BussinessLayer.Factories.Identity_access;
 
-public class login_factory
+public class loginFactory
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public login_factory(IServiceProvider serviceProvider)
+    public loginFactory(IServiceProvider serviceProvider)
     {
         this._serviceProvider = serviceProvider;
     }

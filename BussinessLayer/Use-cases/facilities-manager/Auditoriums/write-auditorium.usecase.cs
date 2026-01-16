@@ -10,17 +10,17 @@ using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 
-public class write_auditorium_usecase : i_write_behavior<add_req_auditorium_dto, edit_req_auditorium_dto , string>
+public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_auditorium_dto, edit_req_auditorium_dto , string>
 {
     private readonly dbContext _dbContext;
     
     private readonly IHttpContextAccessor  _httpContextAccessor;
     
-    private readonly ILogger<write_auditorium_usecase> _logger;
+    private readonly ILogger<facilitiesManagerWriteAuditoriumUseCase> _logger;
 
 
-    public write_auditorium_usecase(dbContext _dbContext
-    ,  IHttpContextAccessor httpContextAccessor , ILogger<write_auditorium_usecase> _logger)
+    public facilitiesManagerWriteAuditoriumUseCase(dbContext _dbContext
+    ,  IHttpContextAccessor httpContextAccessor , ILogger<facilitiesManagerWriteAuditoriumUseCase> _logger)
     {
         this._dbContext = _dbContext;
         this._httpContextAccessor = httpContextAccessor;
@@ -32,7 +32,7 @@ public class write_auditorium_usecase : i_write_behavior<add_req_auditorium_dto,
         try
         {
             // Add auditorium
-            if (Validates.auditorium_validate.isDuplicateAuditoriumNumber(_dbContext, null, request.auditoriumNumber,
+            if (Validates.auditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, null, request.auditoriumNumber,
                     request.cinemaId))
             {
                 throw new app_exception("Error : Auditorium already exists", 400, "D01");

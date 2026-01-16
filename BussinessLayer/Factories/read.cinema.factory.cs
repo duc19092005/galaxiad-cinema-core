@@ -5,16 +5,16 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BussinessLayer.Factories;
 
-public class read_cinema_factory
+public class readCinemaFactory
 {
     private readonly IServiceProvider _IServiceProvider;
 
-    public read_cinema_factory(IServiceProvider _IServiceProvider)
+    public readCinemaFactory(IServiceProvider _IServiceProvider)
     {
         this._IServiceProvider = _IServiceProvider;
     }
 
-    public i_cinema_behavior<T> readDataFromCinemaInfoFactory<T>(write_enum writeEnum)
+    public ICinemaBehavior<T> ReadDataFromCinemaInfoFactory<T>(write_enum writeEnum)
     {
         if (!Enum.IsDefined(typeof(write_enum), writeEnum))
         {
@@ -22,7 +22,7 @@ public class read_cinema_factory
         }
         else
         {
-            return (i_cinema_behavior<T>)_IServiceProvider.GetRequiredService(typeof(i_cinema_behavior<T>));
+            return (ICinemaBehavior<T>)_IServiceProvider.GetRequiredService(typeof(ICinemaBehavior<T>));
         }
     }
 }

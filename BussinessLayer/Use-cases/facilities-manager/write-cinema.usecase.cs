@@ -12,12 +12,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BussinessLayer.Use_cases.facilities_manager;
 
-public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_req_dto?, string>
+public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req_dto ,edit_cinema_req_dto?, string>
 {
     private readonly dbContext _dbContext;
-    private ILogger<write_use_case> _logger;
+    private ILogger<facilitiesManagerWriteCinemaUseCase> _logger;
     private IHttpContextAccessor  _httpContextAccessor;
-    public write_use_case(dbContext dbContext, ILogger<write_use_case> logger ,
+    public facilitiesManagerWriteCinemaUseCase(dbContext dbContext, ILogger<facilitiesManagerWriteCinemaUseCase> logger ,
         IHttpContextAccessor httpContextAccessor)
     {
         this._dbContext = dbContext;
@@ -27,25 +27,25 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
     
     public async Task<base_reponse<string>> AddItem(add_cinema_req_dto request)
     {
-        if (cinema_validate.validateCinemaname(null,request.cinemaName, _dbContext))
+        if (cinemaValidate.ValidateCinemaName(null,request.cinemaName, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema named " + request.cinemaName ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaDescription(null,request.cinemaDescription, _dbContext))
+        if (cinemaValidate.ValidateCinemaDescription(null,request.cinemaDescription, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema Description " + request.cinemaDescription ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaLocation(null ,request.cinemaLocation, _dbContext))
+        if (cinemaValidate.ValidateCinemaLocation(null ,request.cinemaLocation, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema Location " + request.cinemaLocation ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
-        if (cinema_validate.validateCinemaHotlinenumber(null , request.cinemaHotlineNumber, _dbContext))
+        if (cinemaValidate.ValidateCinemaHotLineNumber(null , request.cinemaHotlineNumber, _dbContext))
         {
             throw new app_exception("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
                 StatusCodes.Status400BadRequest , "C01");
@@ -103,14 +103,14 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
             }
             else
             {
-                bool checkExitsDescription = cinema_validate.validateCinemaDescription(findCinema.cinemaId,
+                bool checkExitsDescription = request.cinemaDescription != null && cinemaValidate.ValidateCinemaDescription(findCinema.cinemaId,
                     request.cinemaDescription,_dbContext);
                 
-                bool checkExitsCinemaName = cinema_validate.validateCinemaname(findCinema.cinemaId, request.cinemaName, _dbContext);
+                bool checkExitsCinemaName = request.cinemaName != null && cinemaValidate.ValidateCinemaName(findCinema.cinemaId, request.cinemaName, _dbContext);
                 
-                bool checkExitsHotlineNumber = cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId , request.cinemaHotlineNumber , _dbContext);
+                bool checkExitsHotlineNumber = request.cinemaHotlineNumber != null && cinemaValidate.ValidateCinemaHotLineNumber(findCinema.cinemaId , request.cinemaHotlineNumber , _dbContext);
                 
-                bool checkExitsLocation = cinema_validate.validateCinemaLocation(findCinema.cinemaId , request.cinemaLocation, _dbContext);
+                bool checkExitsLocation = request.cinemaLocation != null && cinemaValidate.ValidateCinemaDescription(findCinema.cinemaId , request.cinemaLocation, _dbContext);
 
                 if (checkExitsDescription)
                 {
@@ -137,25 +137,25 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
                 }
                 
                 findCinema.cinemaName = (!string.IsNullOrWhiteSpace(request.cinemaName)
-                                         && !cinema_validate.validateCinemaname(findCinema.cinemaId, request.cinemaName,
+                                         && !cinemaValidate.ValidateCinemaName(findCinema.cinemaId, request.cinemaName,
                                              _dbContext))
                     ? request.cinemaName
                     : findCinema.cinemaName;
 
                 findCinema.cinemaDescription = (!string.IsNullOrWhiteSpace(request.cinemaDescription)
-                                                && !cinema_validate.validateCinemaDescription(findCinema.cinemaId,
+                                                && !cinemaValidate.ValidateCinemaDescription(findCinema.cinemaId,
                                                     request.cinemaDescription, _dbContext))
                     ? request.cinemaDescription
                     : findCinema.cinemaDescription;
 
                 findCinema.cinemaHotLineNumber = (!string.IsNullOrWhiteSpace(request.cinemaHotlineNumber)
-                                                  && !cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId,
+                                                  && !cinemaValidate.ValidateCinemaHotLineNumber(findCinema.cinemaId,
                                                       request.cinemaHotlineNumber, _dbContext))
                     ? request.cinemaHotlineNumber
                     : findCinema.cinemaHotLineNumber;
 
                 findCinema.cinemaLocation = (!string.IsNullOrWhiteSpace(request.cinemaLocation)
-                                             && !cinema_validate.validateCinemaHotlinenumber(findCinema.cinemaId,
+                                             && !cinemaValidate.ValidateCinemaDescription(findCinema.cinemaId,
                                                  request.cinemaLocation, _dbContext))
                     ? request.cinemaLocation
                     : findCinema.cinemaLocation;
@@ -164,7 +164,7 @@ public class write_use_case : i_write_behavior<add_cinema_req_dto ,edit_cinema_r
                 
                 findCinema.updatedAt = DateTime.Now;
 
-                findCinema.isActive = findCinema.activeAt >= DateTime.Now ? false : true;
+                findCinema.isActive = findCinema.activeAt < DateTime.Now;
                 
                 findCinema.updatedByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
                     ClaimTypes.Sid)?.Value);

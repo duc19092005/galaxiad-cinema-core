@@ -10,11 +10,11 @@ using Microsoft.AspNetCore.Http;
 
 namespace BussinessLayer.Services.Identity_access;
 
-public class login_service
+public class loginService
 {
-    private login_factory login_factory;
+    private loginFactory login_factory;
     
-    public login_service(login_factory login_factory)
+    public loginService(loginFactory login_factory)
     {
         this.login_factory = login_factory;
     }

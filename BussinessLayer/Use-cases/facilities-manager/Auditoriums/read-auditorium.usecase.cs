@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.Auditoriums.facilities_manager;
-using BussinessLayer.Interfaces.facilities_manager.auditoriums;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_cinema;
 using DataAccess;
@@ -12,13 +11,13 @@ using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 
-public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> , i_cinema_behavior<GetResAuditoriumDtoCinema>
+public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_auditorium_dto> , ICinemaBehavior<GetResAuditoriumDtoCinema>
 {
     private readonly dbContext _dbContext;
-    private readonly ILogger<read_auditorium_usecase> _logger;
+    private readonly ILogger<facilitiesManagerReadAuditoriumUseCase> _logger;
     private readonly IHttpContextAccessor  _httpContextAccessor;
 
-    public read_auditorium_usecase(dbContext dbContext, ILogger<read_auditorium_usecase> logger,
+    public facilitiesManagerReadAuditoriumUseCase(dbContext dbContext, ILogger<facilitiesManagerReadAuditoriumUseCase> logger,
         IHttpContextAccessor httpContextAccessor)
     {
         this._logger = logger;
@@ -27,7 +26,7 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
     }
     
     // Lấy những danh sách rạp mà do user đó tạo
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> getAll()
+    public async Task<base_reponse<List<get_res_auditorium_dto>>> GetAll()
     {
         try
         {
@@ -69,7 +68,7 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
         }
     }
     
-    public async Task<base_reponse<get_res_auditorium_dto>> getById(Guid id)
+    public async Task<base_reponse<get_res_auditorium_dto>> GetById(Guid id)
     {
         try
         {
@@ -120,7 +119,7 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
         }
     }
     
-    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> getByCinemaId(Guid cinemaId)
+    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
     {
         try
         {
@@ -154,12 +153,12 @@ public class read_auditorium_usecase : i_read_behavior<get_res_auditorium_dto> ,
         }
     }
     
-    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> getByCinemaName(string name)
+    public async Task<base_reponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaName(string name)
     {
         return null!;
     }
     
-    public async Task<base_reponse<List<get_res_auditorium_dto>>> getByEntityName(string name)
+    public async Task<base_reponse<List<get_res_auditorium_dto>>> GetByEntityName(string name)
     {
         return null!;
     }

@@ -5,7 +5,6 @@ using BussinessLayer.Dtos.cinemas;
 using BussinessLayer.Dtos.cinemas.facilities_manager;
 using BussinessLayer.Dtos.Identity_Access;
 using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
-using BussinessLayer.Interfaces.facilities_manager.auditoriums;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_cinema;
 using BussinessLayer.Interfaces.i_identity_access;
@@ -19,37 +18,31 @@ namespace Backend.Bootstraps;
 
 public static class Generate_object_factories_bootstrap
 {
-    public static IServiceCollection addRegisterObjectsFactory(this IServiceCollection services)
-    {
-        services.AddScoped<IAddBehavior<regular_register_request_dto, string>, regular_register_use_case>();
-        services.AddScoped<ILogin_interface<regular_login_req_dto , regular_login_res_dto> , login_regular_use_case>();
-        return services; 
-    }
 
     public static IServiceCollection addWriteObjectsFactory(this IServiceCollection services)
     {
-        services.AddScoped<i_write_behavior<add_cinema_req_dto, edit_cinema_req_dto, string>, write_use_case>();
+        services.AddScoped<IWriteBehavior<add_cinema_req_dto, edit_cinema_req_dto, string>, facilitiesManagerWriteCinemaUseCase>();
         services
-            .AddScoped<i_write_behavior<add_req_auditorium_dto, edit_req_auditorium_dto, string>,
-                write_auditorium_usecase>(); 
+            .AddScoped<IWriteBehavior<add_req_auditorium_dto, edit_req_auditorium_dto, string>,
+                facilitiesManagerWriteAuditoriumUseCase>(); 
         return services;
     }
 
     public static IServiceCollection addReadObjectsFactoryFacilitiesManager(this IServiceCollection services)
     {
         services
-            .AddScoped<i_read_behavior<res_facilities_manager_cinema>, read_use_case_facilities_manager>();
+            .AddScoped<IReadBehavior<res_facilities_manager_cinema>, facilitiesManagerReadCinemaUseCase>();
         services
-            .AddScoped<i_read_behavior<facilities_manager_res_movie_format_dto>,
-                facilities_manager_movie_format_info_usecase>();
+            .AddScoped<IReadBehavior<facilities_manager_res_movie_format_dto>,
+                facilitiesManagerReadMovieFormatUseCase>();
         services
-            .AddScoped<i_read_behavior<get_res_auditorium_dto>, read_auditorium_usecase>();
+            .AddScoped<IReadBehavior<get_res_auditorium_dto>, facilitiesManagerReadAuditoriumUseCase>();
         
-        services.AddScoped<get_access_use_case>();
         
-        services.AddScoped<i_cinema_behavior<GetResAuditoriumDtoCinema> , read_auditorium_usecase>();
+        services.AddScoped<ICinemaBehavior<GetResAuditoriumDtoCinema> , facilitiesManagerReadAuditoriumUseCase>();
 
-        services.AddScoped<IProfileBehavior, GetUserProfileUseCase>();
+        services.AddScoped<IProfileBehavior, identityAccessUserProfileUseCase>();
+        
 
         return services;
     }

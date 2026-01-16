@@ -8,16 +8,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BussinessLayer.Use_cases.facilities_manager;
 
-public class read_use_case_facilities_manager : i_read_behavior<res_facilities_manager_cinema>
+public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_manager_cinema>
 {
     private readonly dbContext _dbContext;
 
-    public read_use_case_facilities_manager(dbContext _dbContext)
+    public facilitiesManagerReadCinemaUseCase(dbContext _dbContext)
     {
         this._dbContext = _dbContext;
     }
     
-    public async Task<base_reponse<List<res_facilities_manager_cinema>>> getAll()
+    public async Task<base_reponse<List<res_facilities_manager_cinema>>> GetAll()
     {
         try
         {
@@ -48,7 +48,7 @@ public class read_use_case_facilities_manager : i_read_behavior<res_facilities_m
         }
     }
 
-    public async Task<base_reponse<res_facilities_manager_cinema>> getById(Guid id)
+    public async Task<base_reponse<res_facilities_manager_cinema>> GetById(Guid id)
     {
         try
         {
@@ -85,7 +85,7 @@ public class read_use_case_facilities_manager : i_read_behavior<res_facilities_m
         }
     }
 
-    public Task<base_reponse<List<res_facilities_manager_cinema>>> getByEntityName(string name)
+    public Task<base_reponse<List<res_facilities_manager_cinema>>> GetByEntityName(string name)
     {
         return null!;
     }

@@ -8,18 +8,18 @@ using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Movie_Format;
 
-public class facilities_manager_movie_format_info_usecase : i_read_behavior<facilities_manager_res_movie_format_dto>
+public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<facilities_manager_res_movie_format_dto>
 {
     private readonly dbContext _dbContext;
-    private readonly ILogger<facilities_manager_movie_format_info_usecase> _logger;
+    private readonly ILogger<facilitiesManagerReadMovieFormatUseCase> _logger;
 
-    public facilities_manager_movie_format_info_usecase(dbContext dbContext
-    ,ILogger<facilities_manager_movie_format_info_usecase> _logger)
+    public facilitiesManagerReadMovieFormatUseCase(dbContext dbContext
+    ,ILogger<facilitiesManagerReadMovieFormatUseCase> _logger)
     {
         this._dbContext = dbContext;
         this._logger = _logger;
     }
-    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> getAll()
+    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> GetAll()
     {
         try
         {
@@ -50,12 +50,12 @@ public class facilities_manager_movie_format_info_usecase : i_read_behavior<faci
         }
     }
 
-    public async Task<base_reponse<facilities_manager_res_movie_format_dto>> getById(Guid id)
+    public async Task<base_reponse<facilities_manager_res_movie_format_dto>> GetById(Guid id)
     {
         return null!;
     }
 
-    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> getByEntityName(string name)
+    public async Task<base_reponse<List<facilities_manager_res_movie_format_dto>>> GetByEntityName(string name)
     {
         return null!;
     }

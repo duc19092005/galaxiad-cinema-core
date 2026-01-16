@@ -1,4 +1,3 @@
-// ReSharper disable All
 
 using Backend.Shard.Exceptions;
 using DataAccess;
@@ -6,9 +5,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace BussinessLayer.Validates;
 
-public class cinema_validate
+public class cinemaValidate
 {
-    public static bool validateCinemaname(Guid? cinemaId ,string cinemaName , dbContext dbContext)
+    public static bool ValidateCinemaName(Guid? cinemaId ,string cinemaName , dbContext dbContext)
     {
         try
         {
@@ -33,7 +32,7 @@ public class cinema_validate
         }
     }
 
-    public static bool validateCinemaDescription(Guid ? cinemaId,string cinemaDescriptions, dbContext dbContext)
+    public static bool ValidateCinemaDescription(Guid ? cinemaId,string cinemaDescriptions, dbContext dbContext)
     {
         try
         {
@@ -59,7 +58,7 @@ public class cinema_validate
         }
     }
     
-    public static bool validateCinemaHotlinenumber(Guid ? cinemaId,string hotlineNumber, dbContext dbContext)
+    public static bool ValidateCinemaHotLineNumber(Guid ? cinemaId,string hotlineNumber, dbContext dbContext)
     {
         try
         {
@@ -83,7 +82,7 @@ public class cinema_validate
         }
     }
     
-    public static bool validateCinemaLocation(Guid? cinemaId,string cinemaLocation, dbContext dbContext)
+    public static bool ValidateCinemaLocation(Guid? cinemaId,string cinemaLocation, dbContext dbContext)
     {
         try
         {

@@ -6,11 +6,11 @@ using DataAccess.Enums;
 
 namespace BussinessLayer.Services.facilities_manager.Movie_Infos.Movie_format;
 
-public class facilities_manager_read_movie_format_service
+public class facilitiesManagerReadMovieFormatService
 {
     private readonly read_factory _readFactory;
 
-    public facilities_manager_read_movie_format_service(read_factory _readFactory)
+    public facilitiesManagerReadMovieFormatService(read_factory _readFactory)
     {
         this._readFactory = _readFactory;
     }
@@ -19,7 +19,7 @@ public class facilities_manager_read_movie_format_service
     {
         var objects = _readFactory.ReadData<facilities_manager_res_movie_format_dto>(write_enum.MovieFormat);
 
-        var getResults = await objects.getAll();
+        var getResults = await objects.GetAll();
         
         return getResults;
     }

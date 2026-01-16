@@ -12,11 +12,11 @@ namespace Backend.Controllers.facilities_manager;
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class auditorium_controller : ControllerBase
 {
-    private readonly add_auditorium_service add_auditorium_service;
-    private readonly read_auditorium_service_auditorium_service read_auditorium_service;
+    private readonly facilitiesManagerWriteAuditoriumService add_auditorium_service;
+    private readonly facilitiesManagerReadAuditoriumService read_auditorium_service;
 
-    public auditorium_controller(add_auditorium_service addAuditoriumService
-    , read_auditorium_service_auditorium_service  read_auditoriumService)
+    public auditorium_controller(facilitiesManagerWriteAuditoriumService addAuditoriumService
+    , facilitiesManagerReadAuditoriumService  read_auditoriumService)
     {
         add_auditorium_service = addAuditoriumService;
         this.read_auditorium_service = read_auditoriumService;
@@ -32,21 +32,21 @@ public class auditorium_controller : ControllerBase
     [HttpGet("")]
     public async Task<IActionResult> GetAuditorium()
     {
-        var results = await read_auditorium_service.getAll();
+        var results = await read_auditorium_service.GetAll();
         return Ok(results);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAuditorium(Guid id)
     {
-        var results = await read_auditorium_service.getById(id);
+        var results = await read_auditorium_service.GetById(id);
         return Ok(results);
     }
 
     [HttpGet("cinema/{id}")]
     public async Task<IActionResult> GetCinema(Guid id)
     {
-        var results = await read_auditorium_service.getByCinemaId(id);
+        var results = await read_auditorium_service.GetByCinemaId(id);
         return Ok(results);
     }
 }

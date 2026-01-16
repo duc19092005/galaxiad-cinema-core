@@ -15,16 +15,16 @@ public class read_factory
         _provider = provider;
     }
 
-    public i_read_behavior<TResponse> ReadData<TResponse>(write_enum write_enum)
+    public IReadBehavior<TResponse> ReadData<TResponse>(write_enum write_enum)
     {
         switch (write_enum)
         {
             case write_enum.Cinema:
-                return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
+                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
             case write_enum.Auditorium:
-                return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
+                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
             case write_enum.MovieFormat:
-                return (i_read_behavior<TResponse>)_provider.GetRequiredService(typeof(i_read_behavior<TResponse>));
+                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
             default:
                 throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
         }

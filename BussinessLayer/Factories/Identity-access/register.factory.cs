@@ -6,11 +6,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace BussinessLayer.Factories.Identity_access;
 
-public class register_factory
+public class registerFactory
 {
     private readonly IServiceProvider _serviceProvider;
 
-    public register_factory(IServiceProvider serviceProvider)
+    public registerFactory(IServiceProvider serviceProvider)
     {
         this._serviceProvider = serviceProvider;
     }

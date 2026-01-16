@@ -9,11 +9,11 @@ using DataAccess.Enums;
 
 namespace BussinessLayer.Services.Identity_access;
 
-public class register_service
+public class registerService
 {
-    private register_factory register_factory ;
+    private registerFactory register_factory ;
     
-    public register_service(register_factory register_factory)
+    public registerService(registerFactory register_factory)
     {
         this.register_factory = register_factory;
     }

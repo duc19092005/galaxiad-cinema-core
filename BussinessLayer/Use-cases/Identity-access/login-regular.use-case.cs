@@ -1,4 +1,3 @@
-// ReSharper disable All
 
 
 using Backend.Shard.Exceptions;
@@ -14,16 +13,16 @@ using Shared.Ultis;
 
 namespace BussinessLayer.Use_cases.Identity_access;
 
-public class login_regular_use_case : ILogin_interface<regular_login_req_dto , regular_login_res_dto>
+public class identityAccessRegularLoginUseCase : ILogin_interface<regular_login_req_dto , regular_login_res_dto>
 {
     private readonly dbContext _dbContext;
     
     private readonly IConfiguration _configuration;
     
-    private readonly ILogger<login_regular_use_case> _logger;
+    private readonly ILogger<identityAccessRegularLoginUseCase> _logger;
 
-    public login_regular_use_case(dbContext dbContext, IConfiguration configuration,
-        ILogger<login_regular_use_case> logger)
+    public identityAccessRegularLoginUseCase(dbContext dbContext, IConfiguration configuration,
+        ILogger<identityAccessRegularLoginUseCase> logger)
     {
         _dbContext = dbContext;
         _configuration = configuration;

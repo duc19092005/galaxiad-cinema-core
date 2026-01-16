@@ -2,36 +2,30 @@ using System.Security.Claims;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
 using BussinessLayer.Dtos.Identity_Access;
+using BussinessLayer.Interfaces.i_identity_access;
 using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shared.Ultis;
 
 namespace BussinessLayer.Use_cases.Identity_access;
 
-public class get_access_use_case
+public class identityAccessUserProfileUseCase : IProfileBehavior
 {
     private readonly dbContext _dbContext;
-    
-    private readonly ILogger<get_access_use_case> _logger;
-    
-    private readonly IConfiguration _configuration;
-    
-    private readonly IHttpContextAccessor  _httpContextAccessor;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ILogger<identityAccessUserProfileUseCase> _logger;
 
-    public get_access_use_case(dbContext dbContext, ILogger<get_access_use_case> _logger ,
-        IConfiguration _configuration ,
-        IHttpContextAccessor _httpContextAccessor)
+    public identityAccessUserProfileUseCase(dbContext dbContext, IHttpContextAccessor httpContextAccessor,
+        ILogger<identityAccessUserProfileUseCase> logger)
     {
-        _dbContext = dbContext;
-        this._logger = _logger;
-        this._configuration = _configuration;
-        this._httpContextAccessor = _httpContextAccessor;
+        this._dbContext = dbContext;
+        this._httpContextAccessor = httpContextAccessor;
+        this._logger = logger;
     }
     
-    public async Task<base_reponse<regular_login_res_dto>> getAccess()
+    public async Task<base_reponse<regular_login_res_dto>> GetAccess()
     {
         try
         {
@@ -80,5 +74,56 @@ public class get_access_use_case
             _logger.LogError(ex, "System error in getAccess");
             throw new app_exception("There's an error with the system", 500, "S01");
         }
+    }
+    
+    public async Task<base_reponse<string>> ChangePassword(req_change_password_dto request)
+    {
+        try
+        {
+            // Get User Id
+            var getUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
+                ClaimTypes.Sid)?.Value);
+
+            var findUser = await _dbContext.user_info_entity.FirstOrDefaultAsync(x => x.userId.Equals(getUserId));
+
+            if (findUser == null)
+            {
+                throw new app_exception("Cannot Find User Information", 404, "Error01");
+            }
+            else
+            {
+                if (!BCrypt_helper.Validate(findUser.password, request.OldPassword))
+                {
+                    throw new app_exception("Old Password is Not Match", 400, "Error02");
+                }
+                else
+                {
+                    var newPassword = BCrypt_helper.Hash(request.NewPassword);
+                    findUser.password = newPassword;
+                    await _dbContext.SaveChangesAsync();
+                    return new base_reponse<string>()
+                    {
+                        isSuccess = true,
+                        data = null,
+                        message = "Change Password Completed"
+                    };
+                }
+
+            }
+        }
+        catch (app_exception)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex , ex.Message);
+            throw system_exception.system_exception_caller();
+        }
+    }
+
+    public async Task<base_reponse<res_get_user_profile_dto>> GetUserProfile()
+    {
+        return null!;
     }
 }
