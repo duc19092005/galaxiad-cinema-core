@@ -38,7 +38,7 @@ public class movieManagerWriteMovieInfosUseCase : IWriteBehavior<reqAddMovieMana
                 ClaimTypes.Sid)?.Value);
             
             var isExitsMovieName =
-                await movieInfoValidate.IsExistMovieName(_dbContext, request.MovieDescription, null);
+                await movieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, null);
             
             var isExitsMovieDescription =
                 await movieInfoValidate.IsExistMovieDescription(_dbContext, request.MovieDescription, null);
