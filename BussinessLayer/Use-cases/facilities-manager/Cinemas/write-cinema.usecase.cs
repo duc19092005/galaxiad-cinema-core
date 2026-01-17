@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.cinemas;
+using BussinessLayer.Dtos.facilities_manager.Cinemas;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Validates;
 using DataAccess;
@@ -14,10 +14,10 @@ namespace BussinessLayer.Use_cases.facilities_manager.Cinemas;
 
 public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req_dto ,edit_cinema_req_dto?, string>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     private ILogger<facilitiesManagerWriteCinemaUseCase> _logger;
     private IHttpContextAccessor  _httpContextAccessor;
-    public facilitiesManagerWriteCinemaUseCase(dbContext dbContext, ILogger<facilitiesManagerWriteCinemaUseCase> logger ,
+    public facilitiesManagerWriteCinemaUseCase(cinemaDbContext dbContext, ILogger<facilitiesManagerWriteCinemaUseCase> logger ,
         IHttpContextAccessor httpContextAccessor)
     {
         this._dbContext = dbContext;
@@ -29,25 +29,25 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
     {
         if (cinemaValidate.ValidateCinemaName(null,request.cinemaName, _dbContext))
         {
-            throw new app_exception("Error : There's already a cinema named " + request.cinemaName ,
+            throw new appException("Error : There's already a cinema named " + request.cinemaName ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
         if (cinemaValidate.ValidateCinemaDescription(null,request.cinemaDescription, _dbContext))
         {
-            throw new app_exception("Error : There's already a cinema Description " + request.cinemaDescription ,
+            throw new appException("Error : There's already a cinema Description " + request.cinemaDescription ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
         if (cinemaValidate.ValidateCinemaLocation(null ,request.cinemaLocation, _dbContext))
         {
-            throw new app_exception("Error : There's already a cinema Location " + request.cinemaLocation ,
+            throw new appException("Error : There's already a cinema Location " + request.cinemaLocation ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
         if (cinemaValidate.ValidateCinemaHotLineNumber(null , request.cinemaHotlineNumber, _dbContext))
         {
-            throw new app_exception("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
+            throw new appException("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
                 StatusCodes.Status400BadRequest , "C01");
         }
 
@@ -79,14 +79,14 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
                 message = "Add Cinema Completed"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
             _logger.LogError("There a Error with System : {0}" , e.Message);
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
 
@@ -98,7 +98,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
             var findCinema = await _dbContext.cinema_info_entity.FirstOrDefaultAsync(x => x.cinemaId.Equals(itemId));
             if (findCinema == null)
             {
-                throw new app_exception("Error : There is no cinema with Id : " + itemId,
+                throw new appException("Error : There is no cinema with Id : " + itemId,
                     StatusCodes.Status404NotFound, "C01");
             }
             else
@@ -114,25 +114,25 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
 
                 if (checkExitsDescription)
                 {
-                    throw new app_exception("Error : There's already a cinema Description " + request.cinemaDescription ,
+                    throw new appException("Error : There's already a cinema Description " + request.cinemaDescription ,
                         StatusCodes.Status400BadRequest , "C01");
                 }
 
                 if (checkExitsCinemaName)
                 {
-                    throw new app_exception("Error : There's already a cinema named " + request.cinemaName ,
+                    throw new appException("Error : There's already a cinema named " + request.cinemaName ,
                         StatusCodes.Status400BadRequest , "C01");
                 }
 
                 if (checkExitsHotlineNumber)
                 {
-                    throw new app_exception("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
+                    throw new appException("Error : There's already a cinema hotline Number " + request.cinemaHotlineNumber ,
                         StatusCodes.Status400BadRequest , "C01");
                 }
 
                 if (checkExitsLocation)
                 {
-                    throw new app_exception("Error : There's already a cinema Location " + request.cinemaLocation ,
+                    throw new appException("Error : There's already a cinema Location " + request.cinemaLocation ,
                         StatusCodes.Status400BadRequest , "C01");
                 }
                 
@@ -179,13 +179,13 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
                 };
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
 

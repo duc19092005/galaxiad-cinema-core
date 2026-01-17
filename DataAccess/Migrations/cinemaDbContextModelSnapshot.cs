@@ -4,19 +4,16 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace DataAccess.Migrations
 {
-    [DbContext(typeof(dbContext))]
-    [Migration("20260114094357_Initial")]
-    partial class Initial
+    [DbContext(typeof(cinemaDbContext))]
+    partial class cinemaDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,9 +274,6 @@ namespace DataAccess.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("varchar(100)");
 
-                    b.Property<DateTime>("activeAt")
-                        .HasColumnType("datetime2");
-
                     b.Property<Guid>("auditoriumId")
                         .HasColumnType("uniqueidentifier");
 
@@ -291,6 +285,29 @@ namespace DataAccess.Migrations
 
                     b.Property<double>("coordY")
                         .HasColumnType("float");
+
+                    b.Property<int>("rowIndex")
+                        .HasColumnType("int");
+
+                    b.Property<string>("seatNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("seatId");
+
+                    b.HasIndex("auditoriumId");
+
+                    b.ToTable("seats_info_entity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", b =>
+                {
+                    b.Property<Guid>("movieFormatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("activeAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime>("createdAt")
                         .HasColumnType("datetime2");
@@ -310,12 +327,16 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int>("rowIndex")
-                        .HasColumnType("int");
+                    b.Property<string>("movieFormatDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(2000)");
 
-                    b.Property<string>("seatNumber")
+                    b.Property<string>("movieFormatName")
                         .IsRequired()
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<decimal>("movieFormatPrice")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("updatedAt")
                         .HasColumnType("datetime2");
@@ -323,9 +344,7 @@ namespace DataAccess.Migrations
                     b.Property<Guid?>("updatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("seatId");
-
-                    b.HasIndex("auditoriumId");
+                    b.HasKey("movieFormatId");
 
                     b.HasIndex("createdByUserId");
 
@@ -333,35 +352,131 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("updatedByUserId");
 
-                    b.ToTable("seats_info_entity");
+                    b.ToTable("movie_format_info_entity");
+
+                    b.HasData(
+                        new
+                        {
+                            movieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Standard digital 2D format with crystal clear image quality.",
+                            movieFormatName = "2D",
+                            movieFormatPrice = 80000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5559)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Immersive three-dimensional visual experience with specialized glasses.",
+                            movieFormatName = "3D",
+                            movieFormatPrice = 110000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5567)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Giant screen format with unparalleled brightness and ultra-high resolution.",
+                            movieFormatName = "IMAX",
+                            movieFormatPrice = 250000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5570)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("f9e1d2c3-b4a5-4e6f-8d7c-9b0a1f2e3d4c"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "State-of-the-art surround sound technology for a lifelike audio experience.",
+                            movieFormatName = "Dolby Atmos",
+                            movieFormatPrice = 130000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5573)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "A revolutionary 270-degree panoramic cinematic experience.",
+                            movieFormatName = "ScreenX",
+                            movieFormatPrice = 160000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5576)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("5d4c3b2a-1f0e-4d9c-8b7a-6e5d4c3b2a1f"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Multi-sensory experience featuring motion seats, wind, water, and scents.",
+                            movieFormatName = "4DX",
+                            movieFormatPrice = 180000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5580)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Premium luxury seating with in-theater dining and personalized service.",
+                            movieFormatName = "Gold Class",
+                            movieFormatPrice = 300000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5583)
+                        },
+                        new
+                        {
+                            movieFormatId = new Guid("1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f"),
+                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            isActive = true,
+                            isDeleted = false,
+                            movieFormatDescription = "Luxury bed-seating auditorium designed for ultimate comfort and couples.",
+                            movieFormatName = "L'Amour",
+                            movieFormatPrice = 600000m,
+                            updatedAt = new DateTime(2026, 1, 17, 16, 6, 5, 322, DateTimeKind.Local).AddTicks(5586)
+                        });
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_genre_info_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieFormatMovieInfoEntity", b =>
                 {
-                    b.Property<Guid>("movieGenreId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("MovieId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("movieGenreDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(200)");
+                    b.Property<Guid>("FormatId")
+                        .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("movieGenreName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(40)");
+                    b.HasKey("MovieId", "FormatId");
 
-                    b.HasKey("movieGenreId");
+                    b.HasIndex("FormatId");
 
-                    b.HasIndex("movieGenreDescription")
-                        .IsUnique();
-
-                    b.HasIndex("movieGenreName")
-                        .IsUnique();
-
-                    b.ToTable("movie_genre_info_entity");
+                    b.ToTable("movieFormatMovieInfoEntity");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_genre_movie_info_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieGenreMovieInfoEntity", b =>
                 {
                     b.Property<Guid>("movieGenreId")
                         .HasColumnType("uniqueidentifier");
@@ -373,10 +488,10 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("movieId");
 
-                    b.ToTable("movie_genre_movie_info_entity");
+                    b.ToTable("movieGenreMovieInfoEntity");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_info_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieInfoEntity", b =>
                 {
                     b.Property<Guid>("movieId")
                         .ValueGeneratedOnAdd()
@@ -406,9 +521,6 @@ namespace DataAccess.Migrations
                     b.Property<bool>("isDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("managerId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("movieDescription")
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
@@ -424,9 +536,6 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("movieRequiredAgeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("movie_required_age_entitymovieRequiredAgeId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<DateTime>("updatedAt")
                         .HasColumnType("datetime2");
 
@@ -439,8 +548,6 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("deletedByUserId");
 
-                    b.HasIndex("managerId");
-
                     b.HasIndex("movieDescription")
                         .IsUnique();
 
@@ -450,14 +557,14 @@ namespace DataAccess.Migrations
                     b.HasIndex("movieName")
                         .IsUnique();
 
-                    b.HasIndex("movie_required_age_entitymovieRequiredAgeId");
+                    b.HasIndex("movieRequiredAgeId");
 
                     b.HasIndex("updatedByUserId");
 
-                    b.ToTable("movie_info_entity");
+                    b.ToTable("movieInfoEntity");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_required_age_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieRequiredAgeEntity", b =>
                 {
                     b.Property<Guid>("movieRequiredAgeId")
                         .ValueGeneratedOnAdd()
@@ -479,7 +586,126 @@ namespace DataAccess.Migrations
                     b.HasIndex("movieRequiredAgeSymbol")
                         .IsUnique();
 
-                    b.ToTable("movie_required_age_entity");
+                    b.ToTable("movieRequiredAgeEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            movieRequiredAgeId = new Guid("7a2f4b1d-9c3e-4d5a-8b2c-6f1e0a9d4b5c"),
+                            movieRequiredAgeDescription = "General Admission: Suitable for audiences of all ages.",
+                            movieRequiredAgeSymbol = "P"
+                        },
+                        new
+                        {
+                            movieRequiredAgeId = new Guid("3d8e9a2b-1f0c-4b5a-9d6e-7f2a1b4c3d0e"),
+                            movieRequiredAgeDescription = "Parental Guidance: Films suitable for children under 13 with parental supervision.",
+                            movieRequiredAgeSymbol = "K"
+                        },
+                        new
+                        {
+                            movieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
+                            movieRequiredAgeDescription = "13+: This film is restricted to audiences aged 13 and above.",
+                            movieRequiredAgeSymbol = "T13"
+                        },
+                        new
+                        {
+                            movieRequiredAgeId = new Guid("9f0e1d2c-3b4a-4d5e-6f7a-8b9c0d1e2f3a"),
+                            movieRequiredAgeDescription = "16+: This film is restricted to audiences aged 16 and above.",
+                            movieRequiredAgeSymbol = "T16"
+                        },
+                        new
+                        {
+                            movieRequiredAgeId = new Guid("2b3c4d5e-6f7a-4b8c-9d0e-1f2a3b4c5d6e"),
+                            movieRequiredAgeDescription = "18+: Adult only. This film is restricted to audiences aged 18 and above.",
+                            movieRequiredAgeSymbol = "T18"
+                        });
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_genre_info_entity", b =>
+                {
+                    b.Property<Guid>("movieGenreId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("movieGenreDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("movieGenreName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("movieGenreId");
+
+                    b.HasIndex("movieGenreDescription")
+                        .IsUnique();
+
+                    b.HasIndex("movieGenreName")
+                        .IsUnique();
+
+                    b.ToTable("movieGenreInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            movieGenreId = new Guid("f2a1b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"),
+                            movieGenreDescription = "Fast-paced movies with physical feats, stunts, and heroic battles.",
+                            movieGenreName = "Action"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"),
+                            movieGenreDescription = "Films designed to entertain and provoke laughter through humor.",
+                            movieGenreName = "Comedy"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e"),
+                            movieGenreDescription = "Focuses on realistic characters and emotional themes of human conflict.",
+                            movieGenreName = "Drama"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("c3d4e5f6-a7b8-4c9d-0e1f-2a3b4c5d6e7f"),
+                            movieGenreDescription = "Intended to scare, shock, and thrill audiences with supernatural or dark themes.",
+                            movieGenreName = "Horror"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a"),
+                            movieGenreDescription = "Exploring futuristic concepts, space travel, and advanced technology.",
+                            movieGenreName = "Sci-Fi"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b"),
+                            movieGenreDescription = "Focuses on romantic love relationships and emotional connections.",
+                            movieGenreName = "Romance"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("f6a7b8c9-d0e1-4f2a-3b4c-5d6e7f8a9b0c"),
+                            movieGenreDescription = "Feature films produced using traditional or computer-generated imagery.",
+                            movieGenreName = "Animation"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d"),
+                            movieGenreDescription = "Non-fictional films intended to document reality for instruction or history.",
+                            movieGenreName = "Documentary"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("1b2c3d4e-5f6a-7b8c-9d0e-1f2a3b4c5d6e"),
+                            movieGenreDescription = "Movies characterized by excitement, suspense, and intense anticipation.",
+                            movieGenreName = "Thriller"
+                        },
+                        new
+                        {
+                            movieGenreId = new Guid("2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f"),
+                            movieGenreDescription = "Exciting journeys to new places, often involving a quest or exploration.",
+                            movieGenreName = "Adventure"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_schedule_info_entity", b =>
@@ -547,167 +773,6 @@ namespace DataAccess.Migrations
                         .HasFilter("[isDeleted] = 0");
 
                     b.ToTable("movie_schedule_info_entity");
-                });
-
-            modelBuilder.Entity("DataAccess.Entities.Movies_Infos.movie_format_info_entity", b =>
-                {
-                    b.Property<Guid>("movieFormatId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("activeAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("createdAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("createdByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime?>("deletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("deletedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("isActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("isDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("movieFormatDescription")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("movieFormatName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("movieFormatPrice")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("updatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid?>("updatedByUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("movieFormatId");
-
-                    b.HasIndex("createdByUserId");
-
-                    b.HasIndex("deletedByUserId");
-
-                    b.HasIndex("updatedByUserId");
-
-                    b.ToTable("movie_format_info_entity");
-
-                    b.HasData(
-                        new
-                        {
-                            movieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Standard digital 2D format with crystal clear image quality.",
-                            movieFormatName = "2D",
-                            movieFormatPrice = 80000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5671)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Immersive three-dimensional visual experience with specialized glasses.",
-                            movieFormatName = "3D",
-                            movieFormatPrice = 110000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5679)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Giant screen format with unparalleled brightness and ultra-high resolution.",
-                            movieFormatName = "IMAX",
-                            movieFormatPrice = 250000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5682)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("f9e1d2c3-b4a5-4e6f-8d7c-9b0a1f2e3d4c"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "State-of-the-art surround sound technology for a lifelike audio experience.",
-                            movieFormatName = "Dolby Atmos",
-                            movieFormatPrice = 130000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5685)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "A revolutionary 270-degree panoramic cinematic experience.",
-                            movieFormatName = "ScreenX",
-                            movieFormatPrice = 160000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5687)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("5d4c3b2a-1f0e-4d9c-8b7a-6e5d4c3b2a1f"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Multi-sensory experience featuring motion seats, wind, water, and scents.",
-                            movieFormatName = "4DX",
-                            movieFormatPrice = 180000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5690)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Premium luxury seating with in-theater dining and personalized service.",
-                            movieFormatName = "Gold Class",
-                            movieFormatPrice = 300000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5692)
-                        },
-                        new
-                        {
-                            movieFormatId = new Guid("1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f"),
-                            activeAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            createdByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            isActive = true,
-                            isDeleted = false,
-                            movieFormatDescription = "Luxury bed-seating auditorium designed for ultimate comfort and couples.",
-                            movieFormatName = "L'Amour",
-                            movieFormatPrice = 600000m,
-                            updatedAt = new DateTime(2026, 1, 14, 16, 43, 57, 377, DateTimeKind.Local).AddTicks(5694)
-                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.order_details_info", b =>
@@ -866,43 +931,43 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            userId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            userId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             accoutStatus = 0,
-                            password = "$2a$12$ADqBiSquthm1g7bLZvg6UulJ5QJFQQ6olUQzf66AQfJDGbQ2W1wlG",
+                            password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi",
                             registerMethod = 0,
-                            userEmail = "user@example.com"
+                            userEmail = "admin@cinema.com"
                         },
                         new
                         {
-                            userId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            userId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
                             accoutStatus = 0,
-                            password = "$2a$12$91JfhncA5t3ssFtiaoKjSOrbMj7zON.wtL/n3cjme/wvK2kDCgZ7K",
+                            password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke",
                             registerMethod = 0,
-                            userEmail = "admin@example.com"
+                            userEmail = "moviemanager@cinema.com"
                         },
                         new
                         {
                             userId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             accoutStatus = 0,
-                            password = "$2a$12$FeLXQjfW3gfNFfELxTJS3.gH8o9Y2CB5WSGcDZxKMrPEJiR2RcxIS",
+                            password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m",
                             registerMethod = 0,
-                            userEmail = "theater@example.com"
+                            userEmail = "theater@cinema.com"
                         },
                         new
                         {
                             userId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             accoutStatus = 0,
-                            password = "$2a$12$CkugZHMrWhxG0h6hUqOAf.fX9QQFkLnfnLlI.xWCNZ1y/PivtfN2O",
+                            password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2",
                             registerMethod = 0,
-                            userEmail = "facilities@example.com"
+                            userEmail = "facilities@cinema.com"
                         },
                         new
                         {
                             userId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
                             accoutStatus = 0,
-                            password = "$2a$12$CkugZHMrWhxG0h6hUqOAf.fX9QQFkLnfnLlI.xWCNZ1y/PivtfN2O",
+                            password = "$2a$12$HSYdRT84AjbFawIfnmluJ.AMrBqmqBtKyyn6kNZFTNW7olAMMgXPy",
                             registerMethod = 0,
-                            userEmail = "cashier@example.com"
+                            userEmail = "cashier@cinema.com"
                         });
                 });
 
@@ -939,43 +1004,43 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            userID = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
-                            dateOfBirth = new DateTime(2005, 10, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            userID = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            dateOfBirth = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             identityCode = "NjItl/uAfIOjjzvtWPbnzg==",
-                            phoneNumber = "0123456789",
-                            userName = "Movie Manager 1"
+                            phoneNumber = "0988123456",
+                            userName = "System Administrator"
                         },
                         new
                         {
-                            userID = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            dateOfBirth = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            userID = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            dateOfBirth = new DateTime(1990, 5, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             identityCode = "pxc5zG8sfEcsJrHg1AjV3w==",
-                            phoneNumber = "0988123456",
-                            userName = "Admin"
+                            phoneNumber = "0911111111",
+                            userName = "Movie Content Manager"
                         },
                         new
                         {
                             userID = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                            dateOfBirth = new DateTime(1990, 5, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            dateOfBirth = new DateTime(1988, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             identityCode = "Pk3VcB5Kk2xdhHerF74zBg==",
-                            phoneNumber = "0977234567",
-                            userName = "Theater Manager"
+                            phoneNumber = "0922222222",
+                            userName = "Cinema Operations Manager"
                         },
                         new
                         {
                             userID = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             dateOfBirth = new DateTime(1992, 8, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             identityCode = "cFobMOQzli9Um8tWi/vJZg==",
-                            phoneNumber = "0966345678",
-                            userName = "Facilities Manager"
+                            phoneNumber = "0933333333",
+                            userName = "Technical Facilities Manager"
                         },
                         new
                         {
                             userID = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
                             dateOfBirth = new DateTime(1995, 12, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             identityCode = "pFoBRlv4RT1kyqKE1Ch3Hw==",
-                            phoneNumber = "0944456789",
-                            userName = "Cashier"
+                            phoneNumber = "0944444444",
+                            userName = "Main Cashier"
                         });
                 });
 
@@ -1139,8 +1204,8 @@ namespace DataAccess.Migrations
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.Movies_Infos.movie_format_info_entity", "movie_format_info_entity")
-                        .WithMany()
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", "movie_format_info_entity")
+                        .WithMany("auditorium_info_entities")
                         .HasForeignKey("movieFormatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1180,8 +1245,8 @@ namespace DataAccess.Migrations
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.Movies_Infos.movie_format_info_entity", "movie_format_info_entity")
-                        .WithMany("cinema_discount_info_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", "movie_format_info_entity")
+                        .WithMany("cinema_discount_info_entities")
                         .HasForeignKey("movieFormatId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1254,8 +1319,8 @@ namespace DataAccess.Migrations
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.Movies_Infos.movie_format_info_entity", "movie_format_info_entity")
-                        .WithMany("cinema_surcharge_infos_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", "movie_format_info_entity")
+                        .WithMany("cinema_surcharge_infos_entities")
                         .HasForeignKey("movieFormatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1292,23 +1357,26 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("auditorium_info_entity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", b =>
+                {
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
-                        .WithMany("createdSeats")
+                        .WithMany("createdMovieFormats")
                         .HasForeignKey("createdByUserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "deleter")
-                        .WithMany("deletedSeats")
+                        .WithMany("deletedMovieFormats")
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "updater")
-                        .WithMany("updatedSeats")
+                        .WithMany("updatedMovieFormats")
                         .HasForeignKey("updatedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("auditorium_info_entity");
 
                     b.Navigation("creator");
 
@@ -1317,7 +1385,26 @@ namespace DataAccess.Migrations
                     b.Navigation("updater");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_genre_movie_info_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieFormatMovieInfoEntity", b =>
+                {
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", "MovieFormatInfoEntity")
+                        .WithMany("movieFormatMovieInfoEntities")
+                        .HasForeignKey("FormatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieInfoEntity", "MovieInfoEntity")
+                        .WithMany("movieFormatMovieInfoEntity")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MovieFormatInfoEntity");
+
+                    b.Navigation("MovieInfoEntity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieGenreMovieInfoEntity", b =>
                 {
                     b.HasOne("DataAccess.Entities.Movie_infos.movie_genre_info_entity", "movie_genre_info_entity")
                         .WithMany("movie_genre_movie_info_entity")
@@ -1325,7 +1412,7 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DataAccess.Entities.Movie_infos.movie_info_entity", "movie_info_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieInfoEntity", "movie_info_entity")
                         .WithMany("movie_genre_movie_info_entity")
                         .HasForeignKey("movieId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1336,7 +1423,7 @@ namespace DataAccess.Migrations
                     b.Navigation("movie_info_entity");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_info_entity", b =>
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieInfoEntity", b =>
                 {
                     b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
                         .WithMany("createdMovieInfos")
@@ -1349,15 +1436,9 @@ namespace DataAccess.Migrations
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "manager")
-                        .WithMany()
-                        .HasForeignKey("managerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("DataAccess.Entities.Movie_infos.movie_required_age_entity", "movie_required_age_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieRequiredAgeEntity", "movie_required_age_entity")
                         .WithMany("movie_info_entity")
-                        .HasForeignKey("movie_required_age_entitymovieRequiredAgeId")
+                        .HasForeignKey("movieRequiredAgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1369,8 +1450,6 @@ namespace DataAccess.Migrations
                     b.Navigation("creator");
 
                     b.Navigation("deleter");
-
-                    b.Navigation("manager");
 
                     b.Navigation("movie_required_age_entity");
 
@@ -1396,13 +1475,13 @@ namespace DataAccess.Migrations
                         .HasForeignKey("deletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.Movies_Infos.movie_format_info_entity", "movie_format_info_entity")
-                        .WithMany("movie_schedule_info_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", "movie_format_info_entity")
+                        .WithMany("movie_schedule_info_entities")
                         .HasForeignKey("movieFormatId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DataAccess.Entities.Movie_infos.movie_info_entity", "movie_info_entity")
+                    b.HasOne("DataAccess.Entities.Movie_infos.movieInfoEntity", "movie_info_entity")
                         .WithMany("movie_schedule_info_entity")
                         .HasForeignKey("movieId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1422,31 +1501,6 @@ namespace DataAccess.Migrations
                     b.Navigation("movie_format_info_entity");
 
                     b.Navigation("movie_info_entity");
-
-                    b.Navigation("updater");
-                });
-
-            modelBuilder.Entity("DataAccess.Entities.Movies_Infos.movie_format_info_entity", b =>
-                {
-                    b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "creator")
-                        .WithMany("createdMovieFormats")
-                        .HasForeignKey("createdByUserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "deleter")
-                        .WithMany("deletedMovieFormats")
-                        .HasForeignKey("deletedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("DataAccess.Entities.User_Info.user_info_entity", "updater")
-                        .WithMany("updatedMovieFormats")
-                        .HasForeignKey("updatedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("creator");
-
-                    b.Navigation("deleter");
 
                     b.Navigation("updater");
                 });
@@ -1537,35 +1591,41 @@ namespace DataAccess.Migrations
                     b.Navigation("cinema_surcharge_infos_entity");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieFormatInfoEntity", b =>
+                {
+                    b.Navigation("auditorium_info_entities");
+
+                    b.Navigation("cinema_discount_info_entities");
+
+                    b.Navigation("cinema_surcharge_infos_entities");
+
+                    b.Navigation("movieFormatMovieInfoEntities");
+
+                    b.Navigation("movie_schedule_info_entities");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieInfoEntity", b =>
+                {
+                    b.Navigation("movieFormatMovieInfoEntity");
+
+                    b.Navigation("movie_genre_movie_info_entity");
+
+                    b.Navigation("movie_schedule_info_entity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movieRequiredAgeEntity", b =>
+                {
+                    b.Navigation("movie_info_entity");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_genre_info_entity", b =>
                 {
                     b.Navigation("movie_genre_movie_info_entity");
                 });
 
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_info_entity", b =>
-                {
-                    b.Navigation("movie_genre_movie_info_entity");
-
-                    b.Navigation("movie_schedule_info_entity");
-                });
-
-            modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_required_age_entity", b =>
-                {
-                    b.Navigation("movie_info_entity");
-                });
-
             modelBuilder.Entity("DataAccess.Entities.Movie_infos.movie_schedule_info_entity", b =>
                 {
                     b.Navigation("order_details_infos");
-                });
-
-            modelBuilder.Entity("DataAccess.Entities.Movies_Infos.movie_format_info_entity", b =>
-                {
-                    b.Navigation("cinema_discount_info_entity");
-
-                    b.Navigation("cinema_surcharge_infos_entity");
-
-                    b.Navigation("movie_schedule_info_entity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.User_Info.order_info_entity", b =>
@@ -1596,8 +1656,6 @@ namespace DataAccess.Migrations
 
                     b.Navigation("createdSchedules");
 
-                    b.Navigation("createdSeats");
-
                     b.Navigation("deleteCinemaSurchargeInfos");
 
                     b.Navigation("deletedAuditoriums");
@@ -1611,8 +1669,6 @@ namespace DataAccess.Migrations
                     b.Navigation("deletedMovieInfos");
 
                     b.Navigation("deletedSchedules");
-
-                    b.Navigation("deletedSeats");
 
                     b.Navigation("managedCinemas");
 
@@ -1631,8 +1687,6 @@ namespace DataAccess.Migrations
                     b.Navigation("updatedMovieInfos");
 
                     b.Navigation("updatedSchedules");
-
-                    b.Navigation("updatedSeats");
 
                     b.Navigation("user_profile_entity")
                         .IsRequired();

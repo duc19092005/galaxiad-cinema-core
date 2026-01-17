@@ -14,7 +14,7 @@ public class cinema_discounts_relationships_keys
         
         modelBuilder.Entity<cinema_discount_info_entity>()
             .HasOne(x => x.movie_format_info_entity)
-            .WithMany(y => y.cinema_discount_info_entity)
+            .WithMany(y => y.cinema_discount_info_entities)
             .HasForeignKey(x => x.movieFormatId).OnDelete(DeleteBehavior.Restrict);
     }
 

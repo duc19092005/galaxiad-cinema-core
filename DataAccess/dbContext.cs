@@ -1,8 +1,8 @@
 using DataAccess.Constants;
 using DataAccess.Entities.Cinema_Infos;
 using DataAccess.Entities.Movie_infos;
-using DataAccess.Entities.Movies_Infos;
 using DataAccess.Entities.User_Info;
+using DataAccess.Relationships_Keys.movie_infos;
 using DataAccess.SeedsData;
 using DataAccess.status_management_relationships_keys;
 using DataAccess.status_management_relationships_keys.movie_infos;
@@ -14,11 +14,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess;
 
-public class dbContext : DbContext
+public class cinemaDbContext : DbContext
 {
     private readonly user_identity_code_constant user_identity_code_constant;
 
-    public dbContext(DbContextOptions<dbContext> options , user_identity_code_constant user_identity_code_constant) : base(options)
+    public cinemaDbContext(DbContextOptions<cinemaDbContext> options , user_identity_code_constant user_identity_code_constant) : base(options)
     {
         this.user_identity_code_constant = user_identity_code_constant;
     }
@@ -35,11 +35,23 @@ public class dbContext : DbContext
     
     public DbSet<cinema_info_entity>  cinema_info_entity { get; set; }
     
-    public DbSet<movie_format_info_entity>  movie_format_info_entity { get; set; }
+    public DbSet<movieFormatInfoEntity>  movie_format_info_entity { get; set; }
     
     public DbSet<seats_info_entity> seats_info_entity { get; set; }
     
     public DbSet<user_segments_info_entity> user_segments_info_entity { get; set; }
+    
+    // Movie Infos
+    
+    public DbSet<movieInfoEntity> movieInfoEntity { get; set; }
+    
+    public DbSet<movieGenreMovieInfoEntity> movieGenreMovieInfoEntity { get; set; }
+    
+    public DbSet<movie_genre_info_entity> movieGenreInfoEntity { get; set; }
+    
+    public DbSet<movieFormatMovieInfoEntity> movieFormatMovieInfoEntity { get; set; }
+    
+    public DbSet<movieRequiredAgeEntity> movieRequiredAgeEntity { get; set; }
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -78,18 +90,7 @@ public class dbContext : DbContext
         
         cinema_discounts_relationships_keys.add_cinema_discounts_keys(modelBuilder);
         cinema_discounts_relationships_keys.add_cinema_discounts_relationships(modelBuilder);
-       
-        // Seeds datas for role lists
         
-        seedDataRoleLists.AddRoleListsSeedData(modelBuilder);
-        
-        // Seeds data for user infos - profiles - roles
-        
-        seedDataUserInfos.AddUserInfos(modelBuilder , user_identity_code_constant);
-        
-        // Seeds data for movie format
-        
-        seedDataMovieFormat.AddMovieFormatSeedData(modelBuilder);
         
         // User Segments
         
@@ -122,6 +123,11 @@ public class dbContext : DbContext
         movie_genre_movie_info_relationships_keys.movie_genre_movie_info_keys(modelBuilder);
         movie_genre_movie_info_relationships_keys.movie_genre_movie_info_relationships(modelBuilder);
         
+        // Movie Infos - Formats
+        
+        movieFormatMovieInfoRelationshipsKeys.AddMovieFormatMovieInfoKeys(modelBuilder);
+        movieFormatMovieInfoRelationshipsKeys.AddMovieFormatMovieInfoRelationships(modelBuilder);
+        
         // Required age
         
         movie_required_age_info_relationships_keys.add_movie_required_age_info_relationships(modelBuilder);
@@ -141,5 +147,25 @@ public class dbContext : DbContext
         
         order_details_info_relationships_keys.add_order_details_info_relationships(modelBuilder);
         order_details_info_relationships_keys.add_order_details_info_keys(modelBuilder);
+        
+        // Seeds datas for role lists
+        
+        seedDataRoleLists.AddRoleListsSeedData(modelBuilder);
+        
+        // Seeds data for user infos - profiles - roles
+        
+        seedDataUserInfos.AddUserInfos(modelBuilder , user_identity_code_constant);
+        
+        // Seeds data for movie format
+        
+        seedDataMovieFormat.AddMovieFormatSeedData(modelBuilder);
+        
+        // Seed Genres 
+        
+        movieGenresSeedData.AddMovieGenreSeedData(modelBuilder);
+        
+        // Seeds ages
+        
+        movieRequiredAgeSeedData.AddMovieAgeSeedData(modelBuilder);
     }
 }

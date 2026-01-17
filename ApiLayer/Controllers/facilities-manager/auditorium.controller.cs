@@ -1,4 +1,4 @@
-using BussinessLayer.Dtos.Auditoriums.facilities_manager;
+using BussinessLayer.Dtos.facilities_manager.Auditoriums;
 using BussinessLayer.Services.facilities_manager.Auditoriums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,22 +10,29 @@ namespace Backend.Controllers.facilities_manager;
 [Authorize(Policy = "FacilitiesManager")]
 [Tags("FacilitiesManager - auditorium")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
-public class auditorium_controller : ControllerBase
+public class auditoriumController : ControllerBase
 {
-    private readonly facilitiesManagerWriteAuditoriumService add_auditorium_service;
+    private readonly facilitiesManagerWriteAuditoriumService facilitiesManagerWriteAuditoriumService;
     private readonly facilitiesManagerReadAuditoriumService read_auditorium_service;
 
-    public auditorium_controller(facilitiesManagerWriteAuditoriumService addAuditoriumService
+    public auditoriumController(facilitiesManagerWriteAuditoriumService facilitiesManagerWriteAuditoriumService
     , facilitiesManagerReadAuditoriumService  read_auditoriumService)
     {
-        add_auditorium_service = addAuditoriumService;
+        this.facilitiesManagerWriteAuditoriumService = facilitiesManagerWriteAuditoriumService;
         this.read_auditorium_service = read_auditoriumService;
     }
 
     [HttpPost("")]
     public async Task<IActionResult> addAuditorium(add_req_auditorium_dto request)
     {
-        var results = await add_auditorium_service.AddAuditorium(request);
+        var results = await facilitiesManagerWriteAuditoriumService.AddAuditorium(request);
+        return Ok(results);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> EditAuditorium(Guid id, edit_req_auditorium_dto request)
+    {
+        var results = await facilitiesManagerWriteAuditoriumService.EditAuditorium(id, request);
         return Ok(results);
     }
 

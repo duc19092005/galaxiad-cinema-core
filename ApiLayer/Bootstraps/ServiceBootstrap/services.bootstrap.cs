@@ -4,6 +4,7 @@ using BussinessLayer.Services.facilities_manager;
 using BussinessLayer.Services.facilities_manager.Auditoriums;
 using BussinessLayer.Services.facilities_manager.Movie_Infos.Movie_format;
 using BussinessLayer.Services.Identity_access;
+using BussinessLayer.Services.Movie_manager;
 
 namespace Backend.Bootstraps.ServiceBootstrap;
 
@@ -28,6 +29,9 @@ public static class services_bootstrap
         services.AddScoped<facilitiesManagerWriteAuditoriumService>();
         services.AddScoped<facilitiesManagerReadMovieFormatService>();
         services.AddScoped<facilitiesManagerReadAuditoriumService>();
+
+
+        services.AddScoped<movieManagerWriteMovieService>();
         
         return services;
     }

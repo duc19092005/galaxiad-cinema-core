@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Entities.Cinema_Infos;
 using DataAccess.Entities.Movie_infos;
-using DataAccess.Entities.Movies_Infos;
 using DataAccess.Enums;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable All
@@ -25,10 +24,10 @@ namespace DataAccess.Entities.User_Info
         public string password { get; set; } = String.Empty;
 
         [Column(TypeName = "varchar(100)")]
-        public string? refreshToken { get; set; } = string.Empty;
+        public string? refreshToken { get; set; } = null;
         
         [Column(TypeName = "varchar(50)")]
-        public string? subId { get; set; } = string.Empty;
+        public string? subId { get; set; } = null;
         
         [Required]
         public register_method_enum registerMethod { get; set; } 
@@ -55,15 +54,9 @@ namespace DataAccess.Entities.User_Info
         
         // QL Định dạng
         
-        public virtual ICollection<movie_format_info_entity> createdMovieFormats { get; set; } = [];
-        public virtual ICollection<movie_format_info_entity> deletedMovieFormats { get; set; } = [];
-        public virtual ICollection<movie_format_info_entity> updatedMovieFormats { get; set; } = [];
-        
-        // QL Ghe
-        
-        public virtual ICollection<seats_info_entity> createdSeats { get; set; } = [];
-        public virtual ICollection<seats_info_entity> deletedSeats { get; set; } = [];
-        public virtual ICollection<seats_info_entity> updatedSeats { get; set; } = [];
+        public virtual ICollection<movieFormatInfoEntity> createdMovieFormats { get; set; } = [];
+        public virtual ICollection<movieFormatInfoEntity> deletedMovieFormats { get; set; } = [];
+        public virtual ICollection<movieFormatInfoEntity> updatedMovieFormats { get; set; } = [];
         
         // Quản lý Trạng thái discount
         
@@ -83,11 +76,11 @@ namespace DataAccess.Entities.User_Info
         
         // Quanr lys phim
         
-        public virtual ICollection<movie_info_entity> createdMovieInfos { get; set; } = [];
+        public virtual ICollection<movieInfoEntity> createdMovieInfos { get; set; } = [];
         
-        public virtual ICollection<movie_info_entity> updatedMovieInfos { get; set; } = [];
+        public virtual ICollection<movieInfoEntity> updatedMovieInfos { get; set; } = [];
         
-        public virtual ICollection<movie_info_entity> deletedMovieInfos { get; set; } = [];
+        public virtual ICollection<movieInfoEntity> deletedMovieInfos { get; set; } = [];
         
         // QL Lich Chieu
         

@@ -1,6 +1,5 @@
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.Auditoriums.facilities_manager;
-using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
+using BussinessLayer.Dtos.facilities_manager.Movie_Infos.Movie_Format;
 using BussinessLayer.Factories;
 using BussinessLayer.Factories.ApplicationFactories;
 using DataAccess.Enums;

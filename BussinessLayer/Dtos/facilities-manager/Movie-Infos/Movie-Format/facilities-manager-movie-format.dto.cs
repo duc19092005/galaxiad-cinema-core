@@ -1,4 +1,4 @@
-namespace BussinessLayer.Dtos.Movie_Infos.Movie_Format;
+namespace BussinessLayer.Dtos.facilities_manager.Movie_Infos.Movie_Format;
 
 public class resFacilitiesManagerMovieFormatDto
 {

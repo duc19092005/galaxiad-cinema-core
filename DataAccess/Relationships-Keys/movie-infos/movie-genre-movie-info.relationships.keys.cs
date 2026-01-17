@@ -7,18 +7,18 @@ public class movie_genre_movie_info_relationships_keys
 {
     public static void movie_genre_movie_info_relationships(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<movie_genre_movie_info_entity>()
+        modelBuilder.Entity<movieGenreMovieInfoEntity>()
             .HasOne(x => x.movie_info_entity).WithMany(x => x.movie_genre_movie_info_entity)
             .HasForeignKey(x => x.movieId);
         
-        modelBuilder.Entity<movie_genre_movie_info_entity>()
+        modelBuilder.Entity<movieGenreMovieInfoEntity>()
             .HasOne(x => x.movie_genre_info_entity).WithMany(x => x.movie_genre_movie_info_entity)
             .HasForeignKey(x => x.movieGenreId);
     }
 
     public static void movie_genre_movie_info_keys(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<movie_genre_movie_info_entity>()
+        modelBuilder.Entity<movieGenreMovieInfoEntity>()
             .HasKey(x => new { x.movieGenreId, x.movieId });
     }
 }

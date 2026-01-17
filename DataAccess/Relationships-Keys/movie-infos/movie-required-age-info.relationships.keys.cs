@@ -7,15 +7,14 @@ public class movie_required_age_info_relationships_keys
 {
     public static void add_movie_required_age_info_relationships(ModelBuilder modelBuilder)
     {
-       
     }
     
     public static void add_movie_required_age_info_keys(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<movie_required_age_entity>().HasKey(x => x.movieRequiredAgeId);
+        modelBuilder.Entity<movieRequiredAgeEntity>().HasKey(x => x.movieRequiredAgeId);
         
-        modelBuilder.Entity<movie_required_age_entity>().HasIndex(x => x.movieRequiredAgeSymbol).IsUnique();
+        modelBuilder.Entity<movieRequiredAgeEntity>().HasIndex(x => x.movieRequiredAgeSymbol).IsUnique();
 
-        modelBuilder.Entity<movie_required_age_entity>().HasIndex(x => x.movieRequiredAgeDescription).IsUnique();
+        modelBuilder.Entity<movieRequiredAgeEntity>().HasIndex(x => x.movieRequiredAgeDescription).IsUnique();
     }
 }

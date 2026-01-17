@@ -1,6 +1,5 @@
 using DataAccess.Entities.Cinema_Infos;
 using DataAccess.Entities.Movie_infos;
-using DataAccess.Entities.Movies_Infos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.status_management_relationships_keys;
@@ -21,14 +20,8 @@ public class status_management_relationships
             entity.HasOne(a => a.updater).WithMany(u => u.updatedAuditoriums).HasForeignKey(a => a.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(a => a.deleter).WithMany(u => u.deletedAuditoriums).HasForeignKey(a => a.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
-
-        modelBuilder.Entity<seats_info_entity>(entity => {
-            entity.HasOne(s => s.creator).WithMany(u => u.createdSeats).HasForeignKey(s => s.createdByUserId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(s => s.updater).WithMany(u => u.updatedSeats).HasForeignKey(s => s.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(s => s.deleter).WithMany(u => u.deletedSeats).HasForeignKey(s => s.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
-        });
-
-        modelBuilder.Entity<movie_format_info_entity>(entity => {
+        
+        modelBuilder.Entity<movieFormatInfoEntity>(entity => {
             entity.HasOne(m => m.creator).WithMany(u => u.createdMovieFormats).HasForeignKey(m => m.createdByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(m => m.updater).WithMany(u => u.updatedMovieFormats).HasForeignKey(m => m.updatedByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(m => m.deleter).WithMany(u => u.deletedMovieFormats).HasForeignKey(m => m.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
@@ -40,7 +33,7 @@ public class status_management_relationships
             entity.HasOne(m => m.deleter).WithMany(u => u.deletedCinemaDiscounts).HasForeignKey(m => m.deletedByUserId).OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<movie_info_entity>(entity =>
+        modelBuilder.Entity<movieInfoEntity>(entity =>
         {
             entity.HasOne(m => m.creator).WithMany(u => u.createdMovieInfos)
                 .HasForeignKey(m => m.createdByUserId)

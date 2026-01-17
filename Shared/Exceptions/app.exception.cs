@@ -2,13 +2,13 @@
 
 namespace Backend.Shard.Exceptions;
 
-public class app_exception : Exception
+public class appException : Exception
 {
     public int statusCode { get; } 
     
     public string errorCode { get; }
 
-    public app_exception(string message, int statusCode, string errorCode) : base(message)
+    public appException(string message, int statusCode, string errorCode) : base(message)
     {
         this.statusCode = statusCode;
         this.errorCode = errorCode;

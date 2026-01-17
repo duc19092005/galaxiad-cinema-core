@@ -14,7 +14,7 @@ namespace Backend.Controllers.Identity_access;
 [ApiController]
 public class identity_access_controller : ControllerBase
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     
     private readonly registerService register_service;
     
@@ -23,7 +23,7 @@ public class identity_access_controller : ControllerBase
     private readonly userProfileService userProfileService;
     
 
-    public identity_access_controller(dbContext dbContext , registerService service , loginService login_service
+    public identity_access_controller(cinemaDbContext dbContext , registerService service , loginService login_service
     , userProfileService userProfileService)
     {
         this._dbContext = dbContext;
@@ -67,13 +67,13 @@ public class identity_access_controller : ControllerBase
             Response.Cookies.Delete("X-Access-Token");
             return Ok(new { message = "Logged out successfully" });
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
 

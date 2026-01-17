@@ -2,7 +2,7 @@
 
 using System.ComponentModel.DataAnnotations;
 
-namespace BussinessLayer.Dtos.cinemas;
+namespace BussinessLayer.Dtos.facilities_manager.Cinemas;
 
 public class add_cinema_req_dto
 {
@@ -39,4 +39,15 @@ public class edit_cinema_req_dto
     public string? cinemaDescription { get; set; } = string.Empty;
     
     public DateTime? activeAt { get; set; }
+}
+
+public class res_facilities_manager_cinema
+{
+    public Guid cinemaId { get; set; }
+    public string cinemaName { get; set; } = String.Empty;
+    public string cinemaDescription { get; set; } = string.Empty;
+    public string cinemaHotlineNumber { get; set; } = String.Empty;
+    public string cinemaLocation { get; set; } = String.Empty;
+    
+    public int totalRooms { get; set; }
 }

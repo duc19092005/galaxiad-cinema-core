@@ -7,7 +7,7 @@ namespace BussinessLayer.Validates;
 
 public class cinemaValidate
 {
-    public static bool ValidateCinemaName(Guid? cinemaId ,string cinemaName , dbContext dbContext)
+    public static bool ValidateCinemaName(Guid? cinemaId ,string cinemaName , cinemaDbContext dbContext)
     {
         try
         {
@@ -22,17 +22,17 @@ public class cinemaValidate
                     !x.isDeleted && x.cinemaId != cinemaId && x.cinemaName.ToLower().Equals(cinemaName.ToLower()));
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
 
-    public static bool ValidateCinemaDescription(Guid ? cinemaId,string cinemaDescriptions, dbContext dbContext)
+    public static bool ValidateCinemaDescription(Guid ? cinemaId,string cinemaDescriptions, cinemaDbContext dbContext)
     {
         try
         {
@@ -48,17 +48,17 @@ public class cinemaValidate
                           && x.cinemaId != cinemaId);
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
     
-    public static bool ValidateCinemaHotLineNumber(Guid ? cinemaId,string hotlineNumber, dbContext dbContext)
+    public static bool ValidateCinemaHotLineNumber(Guid ? cinemaId,string hotlineNumber, cinemaDbContext dbContext)
     {
         try
         {
@@ -72,17 +72,17 @@ public class cinemaValidate
                 && x.cinemaId != cinemaId);
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
     
-    public static bool ValidateCinemaLocation(Guid? cinemaId,string cinemaLocation, dbContext dbContext)
+    public static bool ValidateCinemaLocation(Guid? cinemaId,string cinemaLocation, cinemaDbContext dbContext)
     {
         try
         {
@@ -97,13 +97,13 @@ public class cinemaValidate
 
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-            throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new appException("System Error", StatusCodes.Status500InternalServerError, "S01");
         }
     }
 }

@@ -23,7 +23,7 @@ public class registerFactory
                     _serviceProvider.GetRequiredService(typeof(IAddBehavior<TRequest, TResponse>));
 
             default:
-                throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
+                throw new appException("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
     }
 }

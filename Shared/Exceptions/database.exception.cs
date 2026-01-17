@@ -1,9 +1,9 @@
 namespace Backend.Shard.Exceptions;
 
-public class system_exception
+public static class systemException
 {
-    public static Exception system_exception_caller()
+    public static Exception SystemExceptionCaller()
     {
-        throw new app_exception("There's an error with the system", 500, "S01");
+        throw new appException("There's an error with the system", 500, "S01");
     }
 }

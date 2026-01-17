@@ -14,7 +14,7 @@ public class BCrypt_helper
         }
         catch (Exception e)
         {
-            throw new app_exception("Hashing password failed", 500 , "H01");
+            throw new appException("Hashing password failed", 500 , "H01");
         }
     }
 
@@ -25,7 +25,7 @@ public class BCrypt_helper
             return BCrypt.Verify(inputPassword , dbPassword);
         }catch (Exception e)
         {
-            throw new app_exception("Validate password failed", 500 , "H01");
+            throw new appException("Validate password failed", 500 , "H01");
         }
     }
 }

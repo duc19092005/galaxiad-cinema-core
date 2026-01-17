@@ -1,5 +1,5 @@
-﻿using BussinessLayer.Dtos.Auditoriums.facilities_manager;
-using BussinessLayer.Dtos.cinemas;
+﻿using BussinessLayer.Dtos.facilities_manager.Auditoriums;
+using BussinessLayer.Dtos.facilities_manager.Cinemas;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 using BussinessLayer.Use_cases.facilities_manager.Cinemas;

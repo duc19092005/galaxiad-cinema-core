@@ -28,7 +28,7 @@ public class loginFactory
                     _serviceProvider.GetRequiredService(typeof(ILogin_interface<TRequest, TResponse>));
 
             default:
-                throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
+                throw new appException("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
     }
 }

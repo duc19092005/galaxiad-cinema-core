@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.Auditoriums.facilities_manager;
+using BussinessLayer.Dtos.facilities_manager.Auditoriums;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_cinema;
 using DataAccess;
@@ -13,11 +13,11 @@ namespace BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 
 public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_auditorium_dto> , ICinemaBehavior<GetResAuditoriumDtoCinema>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     private readonly ILogger<facilitiesManagerReadAuditoriumUseCase> _logger;
     private readonly IHttpContextAccessor  _httpContextAccessor;
 
-    public facilitiesManagerReadAuditoriumUseCase(dbContext dbContext, ILogger<facilitiesManagerReadAuditoriumUseCase> logger,
+    public facilitiesManagerReadAuditoriumUseCase(cinemaDbContext dbContext, ILogger<facilitiesManagerReadAuditoriumUseCase> logger,
         IHttpContextAccessor httpContextAccessor)
     {
         this._logger = logger;
@@ -57,14 +57,14 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                 message = "Get auditorium completed"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
     
@@ -73,7 +73,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
         try
         {
             var userIdClaim = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Sid)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim)) throw new app_exception("Unauthorize", 403, "AUTH02");
+            if (string.IsNullOrEmpty(userIdClaim)) throw new appException("Unauthorize", 403, "AUTH02");
             var userId = Guid.Parse(userIdClaim);
 
             var result = await _dbContext.auditorium_info_entity
@@ -99,7 +99,7 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
 
             if (result == null)
             {
-                throw new app_exception("Error : Can not find auditorium", 404, "NOTFOUND01");
+                throw new appException("Error : Can not find auditorium", 404, "NOTFOUND01");
             }
 
             return new baseResponse<get_res_auditorium_dto>()
@@ -109,13 +109,13 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                 message = "Get auditorium completed"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
     
@@ -142,14 +142,14 @@ public class facilitiesManagerReadAuditoriumUseCase : IReadBehavior<get_res_audi
                 message = "Get auditorium completed"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
     

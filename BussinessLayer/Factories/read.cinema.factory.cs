@@ -18,7 +18,7 @@ public class readDataFromCinemaFactory
     {
         if (!Enum.IsDefined(typeof(write_enum), writeEnum))
         {
-            throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new appException("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
         else
         {

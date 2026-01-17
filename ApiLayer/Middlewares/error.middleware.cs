@@ -42,7 +42,7 @@ namespace Backend.Middlewares
             string errorCode = "INTERNAL_SERVER_ERROR";
             string message = "Đã có lỗi hệ thống xảy ra.";
 
-            if (exception is app_exception appEx)
+            if (exception is appException appEx)
             {
                 statusCode = appEx.statusCode;
                 errorCode = appEx.errorCode;

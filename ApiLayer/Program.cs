@@ -3,6 +3,7 @@ using Backend.Bootstraps.FactoryBootstrap;
 using Backend.Bootstraps.AuthBootstrap;
 using Backend.Bootstraps.FactoryBootstrap.Facilities_manager;
 using Backend.Bootstraps.FactoryBootstrap.Identity_access;
+using Backend.Bootstraps.FactoryBootstrap.Movie_Manager;
 using Backend.Shard.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Backend.Bootstraps.ServiceBootstrap;
+using Shared.Ultis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +29,7 @@ builder.Services.AddHttpContextAccessor();
 
 // DB Context
 
-builder.Services.AddDbContext<dbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
+builder.Services.AddDbContext<cinemaDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 // Custom Error Message API Response
 
@@ -40,7 +42,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .Select(e => e.ErrorMessage)
             .FirstOrDefault();
         
-        throw new app_exception(firstError ?? "Missing One or more Fields", 400, "Validation error");
+        throw new appException(firstError ?? "Missing One or more Fields", 400, "Validation error");
     };
 });
 
@@ -49,6 +51,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 builder.Services.AddServices();
 
 //  -------------------- Factories Dependency Injections ----------------------------
+
 //  ----------------------- Identity Access
 
 builder.Services.AddRegisterFactory();
@@ -61,9 +64,15 @@ builder.Services.AddReadObjectsFactoryFacilitiesManager();
 
 builder.Services.FacilitiesManagerCinemaAddWriteFactory();
 
+builder.Services.MovieManagerWriteFactory();
+
+builder.Services.MovieManagerReadMovieFactory();
+
 // JWT Config
 
 builder.Services.AddJwt(builder.Configuration);
+
+builder.Services.AddSingleton<cloudinaryHelper>();
 
 
 // CORS
@@ -87,12 +96,18 @@ builder.Services.AddAuthorization
     options.AddPolicy("FacilitiesManager", policy =>
         policy.RequireRole("FacilitiesManager")));
 
+builder.Services.AddAuthorization
+(options =>
+    options.AddPolicy("MovieManager", policy =>
+        policy.RequireRole("MovieManager")));
+
 // Swagger Document
 
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1-user", new OpenApiInfo { Title = "User API", Version = "v1" });
     c.SwaggerDoc("v1-facilities-manager", new OpenApiInfo { Title = "facilities-manager API", Version = "v1" });
+    c.SwaggerDoc("v1-movie-manager", new OpenApiInfo { Title = "movie-manager API", Version = "v1" });
 });
 
 var app = builder.Build();
@@ -111,6 +126,7 @@ if (app.Environment.IsDevelopment())
     {
         c.SwaggerEndpoint("/swagger/v1-user/swagger.json", "User API");
         c.SwaggerEndpoint("/swagger/v1-facilities-manager/swagger.json", "facilities-manager API");
+        c.SwaggerEndpoint("/swagger/v1-movie-manager/swagger.json", "movie-manager API");
     });
 }
 

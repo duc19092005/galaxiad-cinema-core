@@ -9,7 +9,7 @@ public class movie_shedule_info_relationships_keys
     {
         modelBuilder.Entity<movie_schedule_info_entity>()
             .HasOne(x => x.movie_format_info_entity)
-            .WithMany(x => x.movie_schedule_info_entity)
+            .WithMany(x => x.movie_schedule_info_entities)
             .HasForeignKey(x => x.movieFormatId);
         
         modelBuilder.Entity<movie_schedule_info_entity>()

@@ -13,11 +13,11 @@ namespace BussinessLayer.Use_cases.Identity_access;
 
 public class identityAccessUserProfileUseCase : IProfileBehavior
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<identityAccessUserProfileUseCase> _logger;
 
-    public identityAccessUserProfileUseCase(dbContext dbContext, IHttpContextAccessor httpContextAccessor,
+    public identityAccessUserProfileUseCase(cinemaDbContext dbContext, IHttpContextAccessor httpContextAccessor,
         ILogger<identityAccessUserProfileUseCase> logger)
     {
         this._dbContext = dbContext;
@@ -32,7 +32,7 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
             var userIdStr = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.Sid)?.Value;
             if (!Guid.TryParse(userIdStr, out var userId))
             {
-                throw new app_exception("Invalid Token", 401, "AUTH01");
+                throw new appException("Invalid Token", 401, "AUTH01");
             }
             var result = await _dbContext.user_info_entity
                 .AsNoTracking()
@@ -53,13 +53,13 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
                 .FirstOrDefaultAsync();
 
             if (result == null) 
-                throw new app_exception("User Not Found", 404, "UN01");
+                throw new appException("User Not Found", 404, "UN01");
             
             if (string.IsNullOrEmpty(result.username))
                 _logger.LogError("User with Id {0} Profile Not Found", userId);
 
             if (result.roles == null || result.roles.Length == 0)
-                throw new app_exception("User Role Not Found", 403, "UN02");
+                throw new appException("User Role Not Found", 403, "UN02");
 
             return new baseResponse<resRegularLoginDto>()
             {
@@ -68,11 +68,11 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
                 message = "Validate Successfully"
             };
         }
-        catch (app_exception) { throw; }
+        catch (appException) { throw; }
         catch (Exception ex)
         {
             _logger.LogError(ex, "System error in getAccess");
-            throw new app_exception("There's an error with the system", 500, "S01");
+            throw new appException("There's an error with the system", 500, "S01");
         }
     }
     
@@ -88,16 +88,16 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
 
             if (findUser == null)
             {
-                throw new app_exception("Cannot Find User Information", 404, "Error01");
+                throw new appException("Cannot Find User Information", 404, "Error01");
             }
             else
             {
                 if (!BCrypt_helper.Validate(findUser.password, request.OldPassword))
                 {
-                    throw new app_exception("Old Password is Not Match !", 400, "Error02");
+                    throw new appException("Old Password is Not Match !", 400, "Error02");
                 }else if (!BCrypt_helper.Validate(findUser.password, request.NewPassword))
                 {
-                    throw new app_exception("New Password is the same of old password !", 400, "Error02");
+                    throw new appException("New Password is the same of old password !", 400, "Error02");
                 }else
                 {
                     var newPassword = BCrypt_helper.Hash(request.NewPassword);
@@ -113,14 +113,14 @@ public class identityAccessUserProfileUseCase : IProfileBehavior
 
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex , ex.Message);
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
 

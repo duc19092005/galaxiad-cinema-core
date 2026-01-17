@@ -1,7 +1,6 @@
-using BussinessLayer.Dtos.Auditoriums.facilities_manager;
-using BussinessLayer.Dtos.cinemas;
-using BussinessLayer.Dtos.cinemas.facilities_manager;
-using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
+using BussinessLayer.Dtos.facilities_manager.Auditoriums;
+using BussinessLayer.Dtos.facilities_manager.Cinemas;
+using BussinessLayer.Dtos.facilities_manager.Movie_Infos.Movie_Format;
 using BussinessLayer.Interfaces.i_Behaviors;
 using BussinessLayer.Interfaces.i_cinema;
 using BussinessLayer.Interfaces.i_identity_access;

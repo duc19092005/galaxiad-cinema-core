@@ -1,15 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BussinessLayer.Dtos.Auditoriums.facilities_manager;
+namespace BussinessLayer.Dtos.facilities_manager.Auditoriums;
 
 public class add_req_auditorium_dto
 {
     [Required(ErrorMessage = "Error Auditorium Number cannot be empty")]
-    // Dùng StringLength thay vì Length
     [StringLength(10, MinimumLength = 3, ErrorMessage = "Auditorium Number must be between 3 and 10 characters")]
     public string auditoriumNumber { get; set; } = string.Empty;
     
-    // Nên dùng Guid? để [Required] có thể bắt được trường hợp thiếu hẳn field này trong JSON
     [Required(ErrorMessage = "Error Movie Format cannot be empty")]
     public Guid movieFormatId { get; set; }
     
@@ -18,7 +16,7 @@ public class add_req_auditorium_dto
 
     [Required]
     [MinLength(1, ErrorMessage = "Auditorium must have at least one seat")]
-    public List<req_seats_auditorium_dto> add_req_seats_auditorium_dto { get; set; } = new();
+    public List<req_seats_auditorium_dto> add_req_seats_auditorium_dto { get; set; } = [];
 }
 
 public class req_seats_auditorium_dto
@@ -27,7 +25,6 @@ public class req_seats_auditorium_dto
     [StringLength(10, MinimumLength = 2, ErrorMessage = "Seat Number must be between 3 and 10 characters")]
     public string seatNumber { get; set; } = string.Empty;
     
-    // Nếu bạn chấp nhận tọa độ = 0 thì dùng Range(0, ...)
     [Range(0, double.MaxValue, ErrorMessage = "coordX must be >= 0")]
     public double coordX { get; set; } 
     
@@ -48,11 +45,8 @@ public class edit_req_auditorium_dto
 
 
     public Guid? cinemaId { get; set; }
-
-
-
+    
     public List<req_seats_auditorium_dto>? add_req_seats_auditorium_dto { get; set; }
-
 }
 
 public class GetResAuditoriumDtoCinema

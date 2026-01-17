@@ -17,18 +17,10 @@ public class write_factory
     }
     public IWriteBehavior<TAddRequest, TEditRequest ,TResponse> wirte<TAddRequest, TEditRequest ,TResponse>(write_enum method)
     {
-        switch (method)
+        if (!Enum.IsDefined(typeof(write_enum), method))
         {
-            case write_enum.Cinema:
-                return (IWriteBehavior<TAddRequest, TEditRequest ,TResponse>)
-                    _serviceProvider.GetRequiredService(typeof(IWriteBehavior<TAddRequest, TEditRequest ,TResponse>));
-            
-            case write_enum.Auditorium:
-                return (IWriteBehavior<TAddRequest, TEditRequest ,TResponse>)
-                    _serviceProvider.GetRequiredService(typeof(IWriteBehavior<TAddRequest, TEditRequest ,TResponse>));
-                
-            default:
-                throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new appException("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
+        return (IWriteBehavior<TAddRequest, TEditRequest ,TResponse>)_serviceProvider.GetRequiredService(typeof(IWriteBehavior<TAddRequest, TEditRequest ,TResponse>));
     }
 }

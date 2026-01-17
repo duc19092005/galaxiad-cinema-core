@@ -14,5 +14,5 @@ public class movie_genre_info_entity
     [Column(TypeName = "nvarchar(200)")]
     public string movieGenreDescription { get; set; } = string.Empty;
 
-    public List<movie_genre_movie_info_entity> movie_genre_movie_info_entity { get; set; } = [];
+    public List<movieGenreMovieInfoEntity> movie_genre_movie_info_entity { get; set; } = [];
 }

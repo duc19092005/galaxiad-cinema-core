@@ -15,13 +15,13 @@ namespace BussinessLayer.Use_cases.Identity_access;
 
 public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLoginDto , resRegularLoginDto>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     
     private readonly IConfiguration _configuration;
     
     private readonly ILogger<identityAccessRegularLoginUseCase> _logger;
 
-    public identityAccessRegularLoginUseCase(dbContext dbContext, IConfiguration configuration,
+    public identityAccessRegularLoginUseCase(cinemaDbContext dbContext, IConfiguration configuration,
         ILogger<identityAccessRegularLoginUseCase> logger)
     {
         _dbContext = dbContext;
@@ -36,14 +36,14 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLogi
             var getUserInfo = await _dbContext.user_info_entity.FirstOrDefaultAsync(x => x.userEmail.Equals(dto.email));
             if (getUserInfo == null)
             {
-                throw new app_exception("User Not Found", 404 , "UN01");
+                throw new appException("User Not Found", 404 , "UN01");
             }
             else
             {
                 var validatePassword = BCrypt_helper.Validate(getUserInfo.password , dto.password);
                 if (!validatePassword)
                 {
-                    throw new app_exception("Username or password is wrong", 401, "UN01");
+                    throw new appException("Username or password is wrong", 401, "UN01");
                 }
                 else
                 {
@@ -67,13 +67,13 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLogi
                     if (!result.Roles.Any())
                     {
                         _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.userId);
-                        throw new app_exception("User Not Found", 403, "UN01");
+                        throw new appException("User Not Found", 403, "UN01");
                     }
 
                     if (result == null)
                     {
                         _logger.LogError("User with Id {0} Profile Not Found" , getUserInfo.userId);
-                        throw new app_exception("User Not Found", 404, "UN01");
+                        throw new appException("User Not Found", 404, "UN01");
                     }
                     
                     // Sign JWT for User
@@ -84,14 +84,14 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLogi
                     if (getJWTKey == null || getJWTIss == null || getJwtAud == null)
                     {
                         _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
-                        throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "E01");
+                        throw new appException("System Error", StatusCodes.Status500InternalServerError, "E01");
                     }
                     string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.userEmail ,result.Username, getUserInfo.userId , result.Roles);
 
                     if (token == null)
                     {
                         _logger.LogError("Token Generator System Error");
-                        throw new app_exception("System Error", StatusCodes.Status500InternalServerError, "E01");
+                        throw new appException("System Error", StatusCodes.Status500InternalServerError, "E01");
                     }
 
                     return new baseResponse<resRegularLoginDto>()
@@ -109,13 +109,13 @@ public class identityAccessRegularLoginUseCase : ILogin_interface<reqRegularLogi
                 }
             }
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception)
         {
-            throw new app_exception("There's an error with the system", 500, "S01");
+            throw new appException("There's an error with the system", 500, "S01");
         }
     }
 }

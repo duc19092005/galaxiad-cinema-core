@@ -1,6 +1,6 @@
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.cinemas.facilities_manager;
+using BussinessLayer.Dtos.facilities_manager.Cinemas;
 using BussinessLayer.Interfaces.i_Behaviors;
 using DataAccess;
 using Microsoft.AspNetCore.Http;
@@ -10,9 +10,9 @@ namespace BussinessLayer.Use_cases.facilities_manager.Cinemas;
 
 public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_manager_cinema>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
 
-    public facilitiesManagerReadCinemaUseCase(dbContext _dbContext)
+    public facilitiesManagerReadCinemaUseCase(cinemaDbContext _dbContext)
     {
         this._dbContext = _dbContext;
     }
@@ -38,13 +38,13 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
                 message = "Get Cinema List SuccessFully"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception e)
         {
-             throw system_exception.system_exception_caller();
+             throw systemException.SystemExceptionCaller();
         }
     }
 
@@ -68,7 +68,7 @@ public class facilitiesManagerReadCinemaUseCase : IReadBehavior<res_facilities_m
 
             if (cinemaData == null)
             {
-                throw new app_exception("Sorry, We can not find the cinema",
+                throw new appException("Sorry, We can not find the cinema",
                     StatusCodes.Status404NotFound, "NotFound01");
             }
 

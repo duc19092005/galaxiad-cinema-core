@@ -17,16 +17,10 @@ public class read_factory
 
     public IReadBehavior<TResponse> ReadData<TResponse>(write_enum write_enum)
     {
-        switch (write_enum)
+        if (!Enum.IsDefined(typeof(write_enum), write_enum))
         {
-            case write_enum.Cinema:
-                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
-            case write_enum.Auditorium:
-                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
-            case write_enum.MovieFormat:
-                return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
-            default:
-                throw new app_exception("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new appException("Method not supported", 400, "UNSUPPORTED_METHOD");
         }
+        return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
     }
 }

@@ -6,7 +6,7 @@ using DataAccess.Entities.User_Info;
 
 namespace DataAccess.Entities.Cinema_Infos;
 
-public class seats_info_entity : base_management_status<user_info_entity>
+public class seats_info_entity
 {
     [Key]
     [Column(TypeName = "varchar(100)")]

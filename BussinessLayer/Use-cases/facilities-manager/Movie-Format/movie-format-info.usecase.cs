@@ -1,6 +1,6 @@
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.Movie_Infos.Movie_Format;
+using BussinessLayer.Dtos.facilities_manager.Movie_Infos.Movie_Format;
 using BussinessLayer.Interfaces.i_Behaviors;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +10,10 @@ namespace BussinessLayer.Use_cases.facilities_manager.Movie_Format;
 
 public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<resFacilitiesManagerMovieFormatDto>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     private readonly ILogger<facilitiesManagerReadMovieFormatUseCase> _logger;
 
-    public facilitiesManagerReadMovieFormatUseCase(dbContext dbContext
+    public facilitiesManagerReadMovieFormatUseCase(cinemaDbContext dbContext
     ,ILogger<facilitiesManagerReadMovieFormatUseCase> _logger)
     {
         this._dbContext = dbContext;
@@ -39,14 +39,14 @@ public class facilitiesManagerReadMovieFormatUseCase : IReadBehavior<resFaciliti
                 message = "Movie Format Datas"
             };
         }
-        catch (app_exception)
+        catch (appException)
         {
             throw;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, ex.Message);
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
 

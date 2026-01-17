@@ -29,7 +29,7 @@ public class user_identity_code_constant
         if (getAESKey == null || getAESIV == null)
         {
             _logger.LogError("AES Key is Null !");
-            throw new app_exception("There's a error with System", 500, "E01");
+            throw new appException("There's a error with System", 500, "E01");
         }
     
         // Khởi tạo mảng để chứa 7 mã định danh đã mã hóa

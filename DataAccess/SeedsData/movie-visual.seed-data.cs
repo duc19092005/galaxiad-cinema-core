@@ -1,6 +1,6 @@
 using DataAccess.Constants;
 using DataAccess.Entities.Cinema_Infos;
-using DataAccess.Entities.Movies_Infos;
+using DataAccess.Entities.Movie_infos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedsData;
@@ -12,7 +12,7 @@ public static class seedDataMovieFormat
         var adminId = Guid.Parse("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c");
         var defaultDate = new DateTime(2024, 1, 1);
 
-        modelBuilder.Entity<movie_format_info_entity>().HasData(new List<movie_format_info_entity>()
+        modelBuilder.Entity<movieFormatInfoEntity>().HasData(new List<movieFormatInfoEntity>()
         {
             new() {
                 movieFormatId = movie_visual_constant.Format2D,

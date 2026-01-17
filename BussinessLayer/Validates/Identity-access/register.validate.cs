@@ -9,7 +9,7 @@ namespace BussinessLayer.Validates.Identity_access;
 
 public class registerValidate
 {
-    public static bool CheckExistEmail(dbContext context , string email)
+    public static bool CheckExistEmail(cinemaDbContext context , string email)
     {
         return context.user_info_entity.Any(x => x.userEmail == email);
     }
@@ -24,11 +24,11 @@ public class registerValidate
             case register_user_type_enum.Staff:
                 return DateTime.Now.Year - date.Year < 18 ? "Staff Must Be At least 18 Years Old" : null;
             default:
-                throw new app_exception("Invalid User Type", 400, "UError01");
+                throw new appException("Invalid User Type", 400, "UError01");
         }
     }
 
-    public static bool CheckExistIdentityCode(string AES256Key , string AES256_IV ,dbContext context, string inputIdentityCode)
+    public static bool CheckExistIdentityCode(string AES256Key , string AES256_IV ,cinemaDbContext context, string inputIdentityCode)
     {
         var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, AES256Key, AES256_IV);
         

@@ -1,7 +1,7 @@
 // ReSharper disable All
 
 using System.ComponentModel.DataAnnotations.Schema;
-using DataAccess.Entities.Movies_Infos;
+using DataAccess.Entities.Movie_infos;
 using DataAccess.Entities.User_Info;
 
 namespace DataAccess.Entities.Cinema_Infos;
@@ -19,7 +19,7 @@ public class cinema_surcharge_infos_entity : base_management_status<user_info_en
 
     public cinema_info_entity cinema_info_entity { get; set; } = null;
 
-    public movie_format_info_entity movie_format_info_entity { get; set; } = null!;
+    public movieFormatInfoEntity movie_format_info_entity { get; set; } = null!;
 
     public user_segments_info_entity user_segments_info_entity { get; set; } = null!;
 }

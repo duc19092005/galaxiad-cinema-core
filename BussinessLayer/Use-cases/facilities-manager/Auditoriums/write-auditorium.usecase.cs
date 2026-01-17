@@ -1,25 +1,27 @@
 using System.Security.Claims;
 using Backend.Shard.Exceptions;
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.Auditoriums.facilities_manager;
+using BussinessLayer.Dtos.facilities_manager.Auditoriums;
 using BussinessLayer.Interfaces.i_Behaviors;
+using BussinessLayer.Validates;
 using DataAccess;
 using DataAccess.Entities.Cinema_Infos;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace BussinessLayer.Use_cases.facilities_manager.Auditoriums;
 
 public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_auditorium_dto, edit_req_auditorium_dto , string>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     
     private readonly IHttpContextAccessor  _httpContextAccessor;
     
     private readonly ILogger<facilitiesManagerWriteAuditoriumUseCase> _logger;
 
 
-    public facilitiesManagerWriteAuditoriumUseCase(dbContext _dbContext
+    public facilitiesManagerWriteAuditoriumUseCase(cinemaDbContext _dbContext
     ,  IHttpContextAccessor httpContextAccessor , ILogger<facilitiesManagerWriteAuditoriumUseCase> _logger)
     {
         this._dbContext = _dbContext;
@@ -35,7 +37,7 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
             if (Validates.auditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, null, request.auditoriumNumber,
                     request.cinemaId))
             {
-                throw new app_exception("Error : Auditorium already exists", 400, "D01");
+                throw new appException("Error : Auditorium already exists", 400, "D01");
             }
             // Add Auditorimum
             Guid generateAuditoriumId = Guid.NewGuid();
@@ -64,9 +66,6 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
                     coordY = items.coordY,
                     colIndex = items.colIndex,
                     rowIndex = items.rowIndex,
-                    createdAt = DateTime.Now ,
-                    createdByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                        ClaimTypes.Sid)?.Value) ,
                     auditoriumId = generateAuditoriumId
                 });
             }
@@ -83,7 +82,7 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
                 message = "Add Auditorium completed"
             };
         }
-        catch (app_exception e)
+        catch (appException e)
         {
             await transactions.RollbackAsync();
             throw;
@@ -92,13 +91,82 @@ public class facilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<add_req_au
         {
             await transactions.RollbackAsync();
             _logger.LogError("Database Error : Error Detail {0}" , e.Message);
-            throw system_exception.system_exception_caller();
+            throw systemException.SystemExceptionCaller();
         }
     }
 
-    public Task<baseResponse<string>> UpdateItem(Guid itemId, edit_req_auditorium_dto request)
+    public async Task<baseResponse<string>> UpdateItem(Guid itemId, edit_req_auditorium_dto request)
     {
-        return null!;
+        var transactions = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            // Check xem co duplicate ten phong khong
+            var getUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
+                ClaimTypes.Sid)?.Value);
+            
+            if (request.auditoriumNumber != null && auditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, itemId,
+                    request.auditoriumNumber,
+                    request.cinemaId))
+            {
+                throw new appException("Duplicate Auditorium Number", 400, "D01");
+            }
+
+            var findAuditorium = await _dbContext.auditorium_info_entity.FirstOrDefaultAsync
+                (a => a.auditoriumId == itemId);
+            
+            if (findAuditorium == null)
+            {
+                throw new notFoundException("Auditorium Not Found");
+            }
+            
+            findAuditorium.auditoriumNumber = request.auditoriumNumber ?? findAuditorium.auditoriumNumber;
+            findAuditorium.movieFormatId = request.movieFormatId ?? findAuditorium.movieFormatId;
+            findAuditorium.cinemaId = request.cinemaId ?? findAuditorium.cinemaId;
+            findAuditorium.createdAt = DateTime.Now;
+            findAuditorium.updatedAt = DateTime.Now;
+            findAuditorium.updatedByUserId = getUserId;
+
+            if (!(request.add_req_seats_auditorium_dto == null || request.add_req_seats_auditorium_dto.Count <= 0))
+            {
+                // Did Nothing
+            }
+
+            await _dbContext.seats_info_entity
+                .Where(x => x.auditoriumId == itemId)
+                .ExecuteDeleteAsync();
+
+            var newSeatsInfos = request.add_req_seats_auditorium_dto.Select(item => new seats_info_entity()
+            {
+                seatId = Guid.NewGuid(),
+                seatNumber = item.seatNumber,
+                coordX = item.coordX,
+                coordY = item.coordY,
+                colIndex = item.colIndex,
+                rowIndex = item.rowIndex,
+                auditoriumId = itemId
+            }).ToList();
+
+            await _dbContext.seats_info_entity.AddRangeAsync(newSeatsInfos);
+            await _dbContext.SaveChangesAsync();
+            await  transactions.CommitAsync();
+
+            return new baseResponse<string>()
+            {
+                isSuccess = true,
+                message = "Update Auditorium completed",
+                data = null
+            };
+        }
+        catch (appException)
+        {
+            await transactions.RollbackAsync();
+            throw;
+        }
+        catch (Exception e)
+        {
+            await transactions.RollbackAsync();
+            throw systemException.SystemExceptionCaller();
+        }
     }
 
     public Task<baseResponse<string>> DeleteItem(Guid itemId)

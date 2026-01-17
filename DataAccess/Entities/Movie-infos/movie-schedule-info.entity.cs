@@ -1,5 +1,4 @@
 using DataAccess.Entities.Cinema_Infos;
-using DataAccess.Entities.Movies_Infos;
 using DataAccess.Entities.User_Info;
 
 namespace DataAccess.Entities.Movie_infos;
@@ -18,9 +17,9 @@ public class movie_schedule_info_entity : base_management_status<user_info_entit
     
     public DateTime endedTime { get; set; }
     
-    public movie_format_info_entity movie_format_info_entity { get; set; }
+    public movieFormatInfoEntity movie_format_info_entity { get; set; }
     
-    public movie_info_entity movie_info_entity { get; set; }
+    public movieInfoEntity movie_info_entity { get; set; }
     
     public auditorium_info_entity  auditorium_info_entity { get; set; }
     

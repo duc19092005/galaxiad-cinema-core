@@ -1,6 +1,6 @@
 // ReSharper disable All
 using BussinessLayer.Dtos;
-using BussinessLayer.Dtos.cinemas;
+using BussinessLayer.Dtos.facilities_manager.Cinemas;
 using BussinessLayer.Factories;
 using BussinessLayer.Factories.ApplicationFactories;
 using DataAccess.Enums;

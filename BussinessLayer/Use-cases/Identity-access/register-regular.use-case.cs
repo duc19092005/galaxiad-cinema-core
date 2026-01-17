@@ -18,13 +18,13 @@ namespace BussinessLayer.Use_cases.Identity_access;
 
 public class identityAccessRegularRegisterUseCase : IAddBehavior<resRegularRegisterDto , string>
 {
-    private readonly dbContext _dbContext;
+    private readonly cinemaDbContext _dbContext;
     
     private readonly IConfiguration _configuration;
     
     private readonly ILogger<identityAccessRegularRegisterUseCase> _logger;
 
-    public identityAccessRegularRegisterUseCase(dbContext dbContext , IConfiguration configuration, ILogger<identityAccessRegularRegisterUseCase> logger)
+    public identityAccessRegularRegisterUseCase(cinemaDbContext dbContext , IConfiguration configuration, ILogger<identityAccessRegularRegisterUseCase> logger)
     {
         _dbContext = dbContext;
         _configuration = configuration;
@@ -38,14 +38,14 @@ public class identityAccessRegularRegisterUseCase : IAddBehavior<resRegularRegis
         {
             if (registerValidate.CheckExistEmail(_dbContext, dto.userEmail))
             {
-                throw new app_exception("Email Already Exits", 400, "UError02");
+                throw new appException("Email Already Exits", 400, "UError02");
             }
 
             var ageMessage = registerValidate.CheckValidateAge(dto.dateOfBirth, register_user_type_enum.Customer);
 
             if (ageMessage != null)
             {
-                throw new app_exception(ageMessage, 404, "UError03");
+                throw new appException(ageMessage, 404, "UError03");
             }
 
             string? getAESKey = _configuration["AES_256:Key"];
@@ -53,12 +53,12 @@ public class identityAccessRegularRegisterUseCase : IAddBehavior<resRegularRegis
 
             if (getAESKey == null || getAESIV == null)
             {
-                throw new app_exception("Key is Null", 400, "UError04");
+                throw new appException("Key is Null", 400, "UError04");
             }
 
             if (registerValidate.CheckExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.identityCode))
             {
-                throw new app_exception("Identity Code is already Exits", 400, "UError05");
+                throw new appException("Identity Code is already Exits", 400, "UError05");
             }
 
             // Add User
@@ -98,14 +98,14 @@ public class identityAccessRegularRegisterUseCase : IAddBehavior<resRegularRegis
                 data = null,
                 message = "Register Successfully"
             };
-        }catch (app_exception) {
+        }catch (appException) {
             await transaction.RollbackAsync();
             throw;
         }
         catch (Exception ex) {
             _logger.LogError(ex, ex.Message);
             await transaction.RollbackAsync();
-            throw new app_exception("Database Error", 500, "S01");
+            throw new appException("Database Error", 500, "S01");
         }
     }
 }

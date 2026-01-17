@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Entities.Movie_infos;
 
 namespace DataAccess.Entities.User_Info;
@@ -10,6 +11,7 @@ public class order_details_info
     
     public Guid movieScheduleId { get; set; }
     
+    [Column(TypeName = "decimal(18,2)")]
     public decimal priceEach { get; set; }
     
     public movie_schedule_info_entity movie_schedule_info { get; set; }

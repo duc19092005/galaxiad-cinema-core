@@ -2,9 +2,9 @@ using DataAccess;
 
 namespace BussinessLayer.Validates;
 
-public class auditoriumValidate
+public static class auditoriumValidate
 {
-    public static bool IsDuplicateAuditoriumNumber(dbContext dbContext , Guid? auditoriumId ,string auditoriumNumber , Guid cinemaId)
+    public static bool IsDuplicateAuditoriumNumber(cinemaDbContext dbContext , Guid? auditoriumId ,string auditoriumNumber , Guid? cinemaId)
     {
         if (auditoriumId == null)
         {
