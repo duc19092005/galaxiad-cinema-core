@@ -22,4 +22,12 @@ public class movieManagerWriteMovieService
         var getResults = await worker.AddItem(request);
         return getResults;
     }
+
+    public async Task<baseResponse<string>> UpdateItem(Guid itemId , reqEditMovieManagerMovieDto request)
+    {
+        var worker = 
+            write_factory.wirte<reqAddMovieManagerMovieDto , reqEditMovieManagerMovieDto , string> (write_enum.Movie);
+        var getResults = await worker.UpdateItem(itemId, request);
+        return getResults;
+    }
 }

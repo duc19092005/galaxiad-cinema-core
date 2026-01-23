@@ -21,9 +21,16 @@ public class movieController : ControllerBase
     }
 
     [HttpPost("")]
-    public async Task<IActionResult> createMovie(reqAddMovieManagerMovieDto request)
+    public async Task<IActionResult> CreateMovie(reqAddMovieManagerMovieDto request)
     {
         var results = await movieManagerWriteMovieService.AddItem(request);
+        return Ok(results);
+    }
+
+    [HttpPut("{movieId}")]
+    public async Task<IActionResult> UpdateMovie(Guid movieId, reqEditMovieManagerMovieDto request)
+    {
+        var results = await movieManagerWriteMovieService.UpdateItem(movieId, request);
         return Ok(results);
     }
 }
