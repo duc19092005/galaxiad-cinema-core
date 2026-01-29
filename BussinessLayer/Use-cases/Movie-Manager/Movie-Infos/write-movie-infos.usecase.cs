@@ -70,7 +70,7 @@ public class movieManagerWriteMovieInfosUseCase : IWriteBehavior<reqAddMovieMana
                 movieImageUrl = cloudinaryStatus.Item2,
                 movieRequiredAgeId = request.MovieRequiredAgeId,
                 endedDate = request.EndedDate,
-                activeAt = request.StartedDate,
+                ActiveAt = request.StartedDate,
                 isActive = DateTime.Now > request.StartedDate,
                 createdByUserId = getUserId
             };
@@ -177,7 +177,7 @@ public class movieManagerWriteMovieInfosUseCase : IWriteBehavior<reqAddMovieMana
                 findTheMovie.movieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.movieRequiredAgeId;
                 findTheMovie.movieDescription = request.MovieDescription ?? findTheMovie.movieDescription;
                 findTheMovie.movieName = request.MovieName ?? findTheMovie.movieName;
-                findTheMovie.activeAt = request.StartedDate ?? findTheMovie.activeAt;
+                findTheMovie.ActiveAt = request.StartedDate ?? findTheMovie.ActiveAt;
                 findTheMovie.endedDate = request.EndedDate ?? findTheMovie.endedDate;
                 findTheMovie.updatedAt = DateTime.Now;
                 findTheMovie.updatedByUserId = getUserId;

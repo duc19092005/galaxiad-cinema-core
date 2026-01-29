@@ -25,6 +25,10 @@ public class movieInfoEntity : base_management_status<user_info_entity>
     public string movieImageUrl { get; set; } = string.Empty;
     
     public DateTime endedDate { get; set; }
+    
+    public Guid ManagerId { get; set; }
+
+    public user_info_entity Manager { get; set; } = null!;
 
     public List<movieGenreMovieInfoEntity> movie_genre_movie_info_entity = [];
 

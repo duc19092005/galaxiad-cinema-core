@@ -82,6 +82,8 @@ namespace DataAccess.Entities.User_Info
         
         public virtual ICollection<movieInfoEntity> deletedMovieInfos { get; set; } = [];
         
+        public virtual ICollection<movieInfoEntity> manageMovieInfos { get; set; } = [];
+        
         // QL Lich Chieu
         
         public virtual ICollection<movie_schedule_info_entity> createdSchedules { get; set; } = [];

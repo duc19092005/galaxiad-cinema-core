@@ -52,3 +52,30 @@ public class reqEditMovieManagerMovieDto
 
     public List<Guid>? MovieGenreIds { get; set; } = [];
 }
+
+public class resGetMovieInfosMovieManagerDto
+{
+    public Guid MovieId { get; set; }
+    
+    public string MovieName { get; set; } = String.Empty;
+
+    public string MovieDescriptions { get; set; } = string.Empty;
+    
+    public string MovieImageUrl { get; set; } = string.Empty;
+    
+    public DateTime EndedDate { get; set; }
+    
+    public DateTime StartedDate { get; set; }
+
+    public List<string> MovieGenresInfos { get; set; } = [];
+
+    public List<string> MovieVisualFormatInfos { get; set; } = [];
+    
+    public DateTime UpdatedAt { get; set; }
+    
+    public DateTime CreatedAt { get; set; }
+    
+    public DateTime UpdatedBy { get; set; }
+    
+    public DateTime CreatedBy { get; set; }
+}

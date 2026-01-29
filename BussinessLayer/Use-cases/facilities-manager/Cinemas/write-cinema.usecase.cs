@@ -66,7 +66,7 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
                     ClaimTypes.Sid)?.Value),
                 managerId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
                     ClaimTypes.Sid)?.Value),
-                activeAt = request.activeAt ?? DateTime.Now,
+                ActiveAt = request.activeAt ?? DateTime.Now,
                 isActive = request.activeAt > DateTime.Now ? false : true,
             };
             await _dbContext.cinema_info_entity.AddAsync(newCinemaInfoEntity);
@@ -160,11 +160,11 @@ public class facilitiesManagerWriteCinemaUseCase : IWriteBehavior<add_cinema_req
                     ? request.cinemaLocation
                     : findCinema.cinemaLocation;
                 
-                findCinema.activeAt = request.activeAt ?? findCinema.activeAt;
+                findCinema.ActiveAt = request.activeAt ?? findCinema.ActiveAt;
                 
                 findCinema.updatedAt = DateTime.Now;
 
-                findCinema.isActive = findCinema.activeAt < DateTime.Now;
+                findCinema.isActive = findCinema.ActiveAt < DateTime.Now;
                 
                 findCinema.updatedByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
                     ClaimTypes.Sid)?.Value);

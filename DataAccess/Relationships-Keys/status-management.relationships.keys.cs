@@ -44,6 +44,8 @@ public class status_management_relationships
             entity.HasOne(m => m.deleter).WithMany(u => u.deletedMovieInfos)
                 .HasForeignKey(m => m.deletedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.Manager).WithMany(u => u.manageMovieInfos)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<cinema_surcharge_infos_entity>(entity =>
