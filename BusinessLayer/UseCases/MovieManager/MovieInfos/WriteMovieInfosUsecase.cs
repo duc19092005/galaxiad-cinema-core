@@ -4,13 +4,13 @@ using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.MovieManager;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using BusinessLayer.Validators.MovieManager;
 using DataAccess;
 using DataAccess.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Exceptions;
 using Shared.Utils;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
@@ -72,7 +72,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 MovieRequiredAgeId = request.MovieRequiredAgeId,
                 EndedDate = request.EndedDate,
                 ActiveAt = request.StartedDate,
-                IsActive = DateTime.Now > request.StartedDate,
+                IsActive = DateTime.Now > request.StartedDate && DateTime.Now < request.EndedDate,
                 CreatedByUserId = getUserId
             };
 
@@ -180,7 +180,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.EndedDate = request.EndedDate ?? findTheMovie.EndedDate;
                 findTheMovie.UpdatedAt = DateTime.Now;
                 findTheMovie.UpdatedByUserId = getUserId;
-                findTheMovie.IsActive = (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now;
+                findTheMovie.IsActive = (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) < DateTime.Now;
                 
                 if (request.MovieImage != null)
                 {

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Shared.Exceptions;
 
-namespace Shared.Utils;
+namespace BusinessLayer.Services.IdentityAccess;
 
 public interface IUserContextService
 {
@@ -34,7 +34,7 @@ public class UserContextService : IUserContextService
                 return guid;
             }
             
-            throw new UnauthorizeException();
+            throw new UnauthorizeException(null);
         }
         catch (Exception e) when (e is not UnauthorizeException)
         {

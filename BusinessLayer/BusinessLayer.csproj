@@ -25,6 +25,7 @@
 
     <ItemGroup>
       <Folder Include="Interfaces\ICinema\auditoriums\" />
+      <Folder Include="Proxy\" />
       <Folder Include="Services\Admin\" />
       <Folder Include="UseCases\Public\" />
     </ItemGroup>

@@ -2,7 +2,7 @@ namespace Shared.Exceptions;
 
 public class UnauthorizeException : AppException
 {
-    public UnauthorizeException() : base("Unauthorize" , 401 , "AuthE01")
+    public UnauthorizeException(string? message) : base(!String.IsNullOrEmpty(message) ? message : "Unauthorize" , 401 , "AuthE01")
     {
         
     }

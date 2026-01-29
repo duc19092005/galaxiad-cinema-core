@@ -2,6 +2,7 @@ using Shared.Exceptions;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using DataAccess;
 using DataAccess.Entities.CinemaInfos;
