@@ -1,17 +1,15 @@
-using Backend.Bootstraps;
-using Backend.Bootstraps.FactoryBootstrap;
-using Backend.Bootstraps.AuthBootstrap;
-using Backend.Bootstraps.FactoryBootstrap.Facilities_manager;
-using Backend.Bootstraps.FactoryBootstrap.Identity_access;
-using Backend.Bootstraps.FactoryBootstrap.Movie_Manager;
-using Backend.Shard.Exceptions;
+using ApiLayer.Bootstraps.Authentication;
+using ApiLayer.Bootstraps.Common;
+using ApiLayer.Bootstraps.Facilities;
+using ApiLayer.Bootstraps.IdentityAccess;
+using ApiLayer.Bootstraps.MovieInfos;
+using Shared.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Backend.Bootstraps.ServiceBootstrap;
-using Shared.Ultis;
+using Shared.Utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +27,7 @@ builder.Services.AddHttpContextAccessor();
 
 // DB Context
 
-builder.Services.AddDbContext<cinemaDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
+builder.Services.AddDbContext<CinemaDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 // Custom Error Message API Response
 
@@ -42,31 +40,28 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .Select(e => e.ErrorMessage)
             .FirstOrDefault();
         
-        throw new appException(firstError ?? "Missing One or more Fields", 400, "Validation error");
+        throw new AppException(firstError ?? "Missing One or more Fields", 400, "Validation error");
     };
 });
 
 // Services
 
-builder.Services.AddServices();
+builder.Services.AddIdentityServices();
+builder.Services.AddFacilitiesServices();
+builder.Services.AddMovieServices();
+builder.Services.AddCommonServices();
 
 //  -------------------- Factories Dependency Injections ----------------------------
 
 //  ----------------------- Identity Access
 
-builder.Services.AddRegisterFactory();
+builder.Services.AddIdentityFactories();
 
-builder.Services.LoginFactoryBootstrap();
+builder.Services.AddFacilitiesFactories();
+
+builder.Services.AddMovieFactories();
 
 builder.Services.AddApplicationFactories();
-
-builder.Services.AddReadObjectsFactoryFacilitiesManager();
-
-builder.Services.FacilitiesManagerCinemaAddWriteFactory();
-
-builder.Services.MovieManagerWriteFactory();
-
-builder.Services.MovieManagerReadMovieFactory();
 
 // JWT Config
 
@@ -140,3 +135,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
