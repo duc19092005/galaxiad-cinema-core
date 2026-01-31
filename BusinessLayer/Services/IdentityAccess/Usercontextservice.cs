@@ -34,7 +34,7 @@ public class UserContextService : IUserContextService
                 return guid;
             }
             
-            throw new UnauthorizeException();
+            throw new UnauthorizeException(null);
         }
         catch (Exception e) when (e is not UnauthorizeException)
         {

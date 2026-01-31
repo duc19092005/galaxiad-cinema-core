@@ -1,6 +1,9 @@
 
 using Shared.Exceptions;
 
+namespace DataAccess.Entities;
+
+
 public class BaseManagementStatus<T> where T : class
 {
     public bool IsDeleted { get; set; } = false;

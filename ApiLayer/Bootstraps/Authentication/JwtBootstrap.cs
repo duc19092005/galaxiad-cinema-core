@@ -35,16 +35,16 @@ public static class JwtBootstrap
                         context.Token = context.Request.Cookies["X-Access-Token"];
                         return Task.CompletedTask;
                     },
-                    OnChallenge = context => { throw new AppException("Authentication failed", 401, "AUTH05"); },
-                    OnForbidden = context => { throw new AppException("Forbidden", 403, "AUTH03"); },
-                    OnTokenValidated = context => { return Task.CompletedTask; },
+                    OnChallenge = context => throw new UnauthorizeException(null),
+                    OnForbidden = context => throw new ForbiddenException(),
+                    OnTokenValidated = context => Task.CompletedTask,
                     OnAuthenticationFailed = context => 
                     {
                         if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                         {
-                            throw new AppException("Token has expired", 401, "AUTH04");
+                            throw new UnauthorizeException("Token has expired");
                         }
-                        throw new AppException("Authentication failed", 401, "AUTH05");
+                        throw new UnauthorizeException(null);
                     }                
                 };
             });
