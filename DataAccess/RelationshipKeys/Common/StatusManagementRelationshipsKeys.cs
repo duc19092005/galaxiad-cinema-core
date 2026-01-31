@@ -1,5 +1,6 @@
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
+using DataAccess.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.Common;

@@ -12,16 +12,17 @@ public static class OrderInfoRelationshipsKeys
             .WithMany(x => x.OrderInfoEntity)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<OrderInfoEntity>()
+            .HasOne(x => x.UserInfoEntity)
+            .WithMany(x => x.OrderInfoEntity)
+            .HasForeignKey(x => x.StaffId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public static void AddOrderInfoKeys(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OrderInfoEntity>()
             .HasKey(x => x.OrderId);
-
-        modelBuilder.Entity<OrderInfoEntity>()
-            .HasIndex(x => new { userId = x.UserId, orderId = x.OrderId })
-            .IsUnique();
     }
 }
 

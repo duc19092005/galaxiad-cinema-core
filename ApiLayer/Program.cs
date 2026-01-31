@@ -46,10 +46,12 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 // Services
 
+builder.Services.AddCommonServices();
+
+
 builder.Services.AddIdentityServices();
 builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
-builder.Services.AddCommonServices();
 
 //  -------------------- Factories Dependency Injections ----------------------------
 

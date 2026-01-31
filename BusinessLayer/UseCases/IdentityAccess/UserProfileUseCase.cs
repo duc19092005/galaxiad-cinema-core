@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Shared.Exceptions;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess;
 using BusinessLayer.Interfaces.IIdentityAccess;
+using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -87,10 +87,10 @@ public class UserProfileUseCase : IProfileBehavior
             }
             else
             {
-                if (!BCrypt_helper.Validate(findUser.Password, request.OldPassword))
+                if (!BCrypt_helper.Validate(findUser.Password, request.OldPassword!))
                 {
                     throw new AppException("Old Password is Not Match !", 400, "Error02");
-                }else if (!BCrypt_helper.Validate(findUser.Password, request.NewPassword))
+                }else if (!BCrypt_helper.Validate(findUser.Password, request.NewPassword!))
                 {
                     throw new AppException("New Password is the same of old password !", 400, "Error02");
                 }else

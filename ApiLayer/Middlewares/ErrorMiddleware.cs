@@ -41,12 +41,14 @@ namespace ApiLayer.Middlewares
             int statusCode = (int)HttpStatusCode.InternalServerError;
             string errorCode = "INTERNAL_SERVER_ERROR";
             string message = "Đã có lỗi hệ thống xảy ra.";
+            List<string> errors = new List<string>();
 
             if (exception is AppException appEx)
             {
                 statusCode = appEx.StatusCode;
                 errorCode = appEx.ErrorCode;
                 message = exception.Message;
+                errors = appEx.Errors ?? new List<string> { exception.Message };
             }
             else
             {
@@ -55,6 +57,11 @@ namespace ApiLayer.Middlewares
                 if (_environment.IsDevelopment())
                 {
                     message = exception.Message;
+                    errors = new List<string> { exception.Message };
+                }
+                else
+                {
+                    errors = new List<string> { message };
                 }
             }
 
@@ -64,7 +71,8 @@ namespace ApiLayer.Middlewares
             {
                 StatusCode = statusCode,
                 ErrorCode = errorCode,
-                Message = message,
+                Message = message, 
+                Errors = errors,  
                 Timestamp = DateTime.Now
             };
 

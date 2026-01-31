@@ -6,4 +6,9 @@ public class BadRequestException : AppException
     {
         
     }
+
+    public BadRequestException(List<string> errors , string errorCode) : base(errors , 400 , errorCode)
+    {
+        
+    }
 }

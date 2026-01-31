@@ -7,6 +7,7 @@ namespace BusinessLayer.Services.FacilitiesManager.Auditoriums;
 
 public class FacilitiesManagerWriteAuditoriumService
 {
+    
     private readonly WriteFactory _writeFactory;
 
     public FacilitiesManagerWriteAuditoriumService(WriteFactory writeFactory)
@@ -29,6 +30,5 @@ public class FacilitiesManagerWriteAuditoriumService
         var objects = _writeFactory.Write<AddReqAuditoriumDto, EditReqAuditoriumDto, string>(WriteEnum.Auditorium);
         var getResults = await objects.UpdateItem(auditoriumId , editReqAuditoriumDto);
         return getResults;
-
     }
 }

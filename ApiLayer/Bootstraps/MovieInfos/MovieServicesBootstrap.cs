@@ -7,6 +7,7 @@ public static class MovieServicesBootstrap
     public static IServiceCollection AddMovieServices(this IServiceCollection services)
     {
         services.AddScoped<MovieManagerWriteMovieService>();
+        services.AddScoped<MovieManagerReadMovie>();
         return services;
     }
 }

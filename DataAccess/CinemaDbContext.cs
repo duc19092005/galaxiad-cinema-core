@@ -8,7 +8,6 @@ using DataAccess.RelationshipKeys.Facilities;
 using DataAccess.RelationshipKeys.IdentityAccess;
 using DataAccess.RelationshipKeys.Promotions;
 using DataAccess.RelationshipKeys.Common;
-using DataAccess.RelationshipKeys.MovieInfos;
 using DataAccess.RelationshipKeys.UserInfos;
 using Microsoft.EntityFrameworkCore;
 

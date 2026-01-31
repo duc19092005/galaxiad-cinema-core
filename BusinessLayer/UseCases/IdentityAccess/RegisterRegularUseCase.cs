@@ -1,4 +1,3 @@
-// ReSharper disable All
 
 using Shared.Exceptions;
 using BusinessLayer.Dtos.IdentityAccess;
@@ -7,7 +6,6 @@ using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.Validators.IdentityAccess;
 using DataAccess;
 using DataAccess.Constants;
-using DataAccess.Entities;
 using DataAccess.Entities.UserInfos;
 using Shared.Enums;
 using Microsoft.Extensions.Configuration;
@@ -36,16 +34,18 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
         using var transaction = await _dbContext.Database.BeginTransactionAsync();        
         try
         {
+            var validationErrors = new List<string>();
+
             if (RegisterValidate.CheckExistEmail(_dbContext, dto.UserEmail))
             {
-                throw new AppException("Email Already Exits", 400, "UError02");
+                validationErrors.Add("Email Already Exits");
             }
 
             var ageMessage = RegisterValidate.CheckValidateAge(dto.DateOfBirth, RegisterUserTypeEnum.Customer);
 
             if (ageMessage != null)
             {
-                throw new AppException(ageMessage, 404, "UError03");
+                validationErrors.Add(ageMessage);
             }
 
             string? getAESKey = _configuration["AES_256:Key"];
@@ -53,12 +53,18 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
 
             if (getAESKey == null || getAESIV == null)
             {
-                throw new AppException("Key is Null", 400, "UError04");
+                _logger.LogError("Error AES Key and AES IV is null !");
+                throw CustomSystemException.SystemExceptionCaller();
             }
 
             if (RegisterValidate.CheckExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.IdentityCode))
             {
-                throw new AppException("Identity Code is already Exits", 400, "UError05");
+                validationErrors.Add("Identity Code is already Exits");
+            }
+            
+            if (validationErrors.Any())
+            {
+                throw new BadRequestException(validationErrors, "VALIDATION_ERROR");
             }
 
             // Add User

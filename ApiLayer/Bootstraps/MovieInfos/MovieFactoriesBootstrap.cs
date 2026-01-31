@@ -11,6 +11,8 @@ public static class MovieFactoriesBootstrap
         services
             .AddScoped<IWriteBehavior<ReqAddMovieManagerMovieDto, ReqEditMovieManagerMovieDto, string>,
                 WriteMovieInfosUseCase>();
+
+        services.AddScoped<IReadBehavior<ResGetMovieInfosMovieManagerDto> , ReadMovieInfoUseCase>();
         
         return services;
     }

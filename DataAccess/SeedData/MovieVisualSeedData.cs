@@ -20,6 +20,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Standard digital 2D format with crystal clear image quality.",
                 MovieFormatPrice = 80000, 
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -28,6 +29,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Immersive three-dimensional visual experience with specialized glasses.",
                 MovieFormatPrice = 110000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -36,6 +38,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Giant screen format with unparalleled brightness and ultra-high resolution.",
                 MovieFormatPrice = 250000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -44,6 +47,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "State-of-the-art surround sound technology for a lifelike audio experience.",
                 MovieFormatPrice = 130000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -52,6 +56,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "A revolutionary 270-degree panoramic cinematic experience.",
                 MovieFormatPrice = 160000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -60,6 +65,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Multi-sensory experience featuring motion seats, wind, water, and scents.",
                 MovieFormatPrice = 180000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -68,6 +74,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Premium luxury seating with in-theater dining and personalized service.",
                 MovieFormatPrice = 300000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             },
             new() {
@@ -76,6 +83,7 @@ public static class SeedDataMovieFormat
                 MovieFormatDescription = "Luxury bed-seating auditorium designed for ultimate comfort and couples.",
                 MovieFormatPrice = 600000,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId
             }
         });

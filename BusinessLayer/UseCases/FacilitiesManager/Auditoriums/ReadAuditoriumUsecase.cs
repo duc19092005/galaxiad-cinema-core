@@ -4,6 +4,7 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.ICinema;
+using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;

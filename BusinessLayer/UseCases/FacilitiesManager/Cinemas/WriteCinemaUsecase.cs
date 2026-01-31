@@ -27,28 +27,31 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     
     public async Task<BaseResponse<string>> AddItem(AddCinemaReqDto request)
     {
+        var validationErrors = new List<string>();
+
         if (CinemaValidate.ValidateCinemaName(null, request.CinemaName, _dbContext))
         {
-            throw new AppException("Error : There's already a cinema named " + request.CinemaName ,
-                StatusCodes.Status400BadRequest , "C01");
+            validationErrors.Add("Error : There's already a cinema named " + request.CinemaName);
         }
 
         if (CinemaValidate.ValidateCinemaDescription(null, request.CinemaDescription, _dbContext))
         {
-            throw new AppException("Error : There's already a cinema Description " + request.CinemaDescription ,
-                StatusCodes.Status400BadRequest , "C01");
+            validationErrors.Add("Error : There's already a cinema Description " + request.CinemaDescription);
         }
 
         if (CinemaValidate.ValidateCinemaLocation(null , request.CinemaLocation, _dbContext))
         {
-            throw new AppException("Error : There's already a cinema Location " + request.CinemaLocation ,
-                StatusCodes.Status400BadRequest , "C01");
+            validationErrors.Add("Error : There's already a cinema Location " + request.CinemaLocation);
         }
 
         if (CinemaValidate.ValidateCinemaHotLineNumber(null , request.CinemaHotlineNumber, _dbContext))
         {
-            throw new AppException("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber ,
-                StatusCodes.Status400BadRequest , "C01");
+            validationErrors.Add("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber);
+        }
+        
+        if (validationErrors.Any())
+        {
+            throw new BadRequestException(validationErrors, "C01");
         }
 
         try
@@ -103,6 +106,8 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             }
             else
             {
+                var validationErrors = new List<string>();
+
                 bool checkExitsDescription = request.CinemaDescription != null && CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
                     request.CinemaDescription, _dbContext);
                 
@@ -114,26 +119,27 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
                 if (checkExitsDescription)
                 {
-                    throw new AppException("Error : There's already a cinema Description " + request.CinemaDescription ,
-                        StatusCodes.Status400BadRequest , "C01");
+                    validationErrors.Add("Error : There's already a cinema Description " + request.CinemaDescription);
                 }
 
                 if (checkExitsCinemaName)
                 {
-                    throw new AppException("Error : There's already a cinema named " + request.CinemaName ,
-                        StatusCodes.Status400BadRequest , "C01");
+                    validationErrors.Add("Error : There's already a cinema named " + request.CinemaName);
                 }
 
                 if (checkExitsHotlineNumber)
                 {
-                    throw new AppException("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber ,
-                        StatusCodes.Status400BadRequest , "C01");
+                    validationErrors.Add("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber);
                 }
 
                 if (checkExitsLocation)
                 {
-                    throw new AppException("Error : There's already a cinema Location " + request.CinemaLocation ,
-                        StatusCodes.Status400BadRequest , "C01");
+                    validationErrors.Add("Error : There's already a cinema Location " + request.CinemaLocation);
+                }
+                
+                if (validationErrors.Any())
+                {
+                    throw new BadRequestException(validationErrors, "C01");
                 }
                 
                 findCinema.CinemaName = (!string.IsNullOrWhiteSpace(request.CinemaName)

@@ -17,14 +17,14 @@ public class MovieScheduleInfoEntity : BaseManagementStatus<UserInfoEntity>
     
     public DateTime EndedTime { get; set; }
     
-    public MovieFormatInfoEntity MovieFormatInfoEntity { get; set; }
+    public MovieFormatInfoEntity? MovieFormatInfoEntity { get; set; }
     
-    public MovieInfoEntity movie_info_entity { get; set; }
+    public MovieInfoEntity? movie_info_entity { get; set; }
     
-    public AuditoriumInfoEntities  AuditoriumInfoEntities { get; set; }
+    public AuditoriumInfoEntities? AuditoriumInfoEntities { get; set; }
     
     
-    public List<OrderDetailsInfo> OrderDetailsInfos { get; set; }
+    public List<OrderDetailsInfo>? OrderDetailsInfos { get; set; }
 }
 
 
