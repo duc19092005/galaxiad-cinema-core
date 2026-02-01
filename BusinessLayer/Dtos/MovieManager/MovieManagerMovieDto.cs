@@ -20,10 +20,10 @@ public class ReqAddMovieManagerMovieDto
     public IFormFile MovieImage { get; set; } =  null!;
 
     [Required(ErrorMessage = "Movie Ended Date is required")]
-    public DateTime EndedDate { get; set; }
+    public DateTime EndedDate { get; set; } 
     
     [Required(ErrorMessage = "Movie Started Date is required")]
-    public DateTime StartedDate { get; set; }
+    public DateTime StartedDate { get; set; } 
 
     [Required(ErrorMessage = "Movie Format Ids is required")]
     public List<Guid> MovieFormatIds { get; set; } = [];

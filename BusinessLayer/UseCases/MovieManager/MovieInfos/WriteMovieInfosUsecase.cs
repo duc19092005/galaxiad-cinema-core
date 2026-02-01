@@ -28,54 +28,52 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         _dbContext = dbContext;
         _cloudinaryHelper = cloudinaryHelper;
     }
-    
+
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
     {
         using var transactions = await _dbContext.Database.BeginTransactionAsync();
-        (bool success, string result) cloudinaryStatus = (false, string.Empty);        
+        (bool success, string result) cloudinaryStatus = (false, string.Empty);
         try
         {
             var getUserId = _userContextService.GetUserId();
-            
-            // Assuming movieInfoValidate is static or needs refactoring. Leaving as is if static, but fixing namespace if needed.
+
             var isExitsMovieName =
                 await MovieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, null);
-            
+
             var isExitsMovieDescription =
                 await MovieInfoValidate.IsExistMovieDescription(_dbContext, request.MovieDescription, null);
-            
+
             var validationErrors = new List<string>();
 
             if (isExitsMovieName)
             {
                 validationErrors.Add("Movie Name is already in use");
             }
-            
-            if(isExitsMovieDescription)
+
+            if (isExitsMovieDescription)
             {
                 validationErrors.Add("Movie Descriptions is already in use");
             }
-            
-            if(GeneralValidation.ValidateDates(request.StartedDate , request.EndedDate))
+            var checkingDates = GeneralValidation.ValidateDates(request.StartedDate, request.EndedDate);
+            if (!checkingDates.IsValid)
             {
-                validationErrors.Add("Time is invalid");
+                validationErrors.Add(checkingDates.Message);
             }
 
             if (validationErrors.Any())
             {
                 throw new BadRequestException(validationErrors, "E01");
             }
-            
+
             // Add Into Databases
             var newMovieId = Guid.NewGuid();
 
             cloudinaryStatus = await _cloudinaryHelper.PostImageIntoCloudinary(request.MovieImage);
             if (!cloudinaryStatus.success)
             {
-                throw new AppException("Error uploading image to Cloudinary", 400 , "E01");
+                throw new AppException("Error uploading image to Cloudinary", 400, "E01");
             }
-            Console.WriteLine("Ended Date -----------------" + request.EndedDate);
-            
+
             var newMovieEntity = new MovieInfoEntity()
             {
                 MovieId = newMovieId,
@@ -86,7 +84,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 ActiveAt = request.StartedDate,
                 EndedDate = request.EndedDate,
                 IsActive = DateTime.Now >= request.StartedDate && request.EndedDate > DateTime.Now,
-                CreatedByUserId = getUserId ,
+                CreatedByUserId = getUserId,
                 ManagerId = getUserId
             };
 
@@ -101,11 +99,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 MovieId = newMovieId,
                 FormatId = id
             });
-            
+
             await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
-            
+
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
 
@@ -115,7 +113,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 IsSuccess = true,
                 Message = "Add Movie Completed"
             };
-        }catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             await transactions.RollbackAsync();
 
@@ -124,13 +123,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 await _cloudinaryHelper.DeleteImageFromCloudinary(cloudinaryStatus.result);
             }
 
-            if (ex is AppException) 
+            if (ex is AppException)
             {
-                throw; 
+                throw;
             }
 
             _logger.LogError(ex, "Error creating movie");
-            
+
             throw CustomSystemException.SystemExceptionCaller();
         }
     }
@@ -139,7 +138,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     {
         // Update the Movie
         using var transactions = await _dbContext.Database.BeginTransactionAsync();
-        (bool success, string result) fileUploadStatus = (false , "upload false");
+        (bool success, string result) fileUploadStatus = (false, "upload false");
         string oldImageUrl = null!;
         try
         {
@@ -152,14 +151,14 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 var getUserId = _userContextService.GetUserId();
                 var validationsError = new List<string>();
-                
+
                 if (!string.IsNullOrEmpty(request.MovieName))
                 {
                     if (await MovieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, itemId))
                     {
                         validationsError.Add("Movie Name already exists");
                     }
-                } 
+                }
                 if (!string.IsNullOrEmpty(request.MovieDescription))
                 {
                     if (await MovieInfoValidate.IsExistMovieDescription(_dbContext, request.MovieDescription, itemId))
@@ -167,26 +166,23 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                         validationsError.Add("Movie Description already exists");
                     }
                 }
-                if (request.StartedDate != null && request.StartedDate < DateTime.Now)
+                var (isValid, message) = GeneralValidation.ValidateDates(
+                    request.StartedDate,
+                    request.EndedDate,
+                    findTheMovie.ActiveAt,
+                    findTheMovie.EndedDate
+                );
+                if (!isValid)
                 {
-                    validationsError.Add("Started Date is invalid , started date must be higher than the current date");
-                } 
-                if (request.EndedDate != null && request.EndedDate < DateTime.Now)
-                {
-                    validationsError.Add("Ended Date is invalid ,ended date must be higher than the current date");
-                } 
-                if (request.StartedDate != null && request.EndedDate != null
-                                                      && request.StartedDate > request.EndedDate)
-                {
-                    validationsError.Add("Started Date is invalid , Started Date must be lower than the ended date");
+                    validationsError.Add(message);
                 }
 
                 if (validationsError.Count > 0)
                 {
                     throw new BadRequestException(validationsError, "S01");
                 }
-                
-                 
+
+
                 findTheMovie.MovieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.MovieRequiredAgeId;
                 findTheMovie.MovieDescription = request.MovieDescription ?? findTheMovie.MovieDescription;
                 findTheMovie.MovieName = request.MovieName ?? findTheMovie.MovieName;
@@ -194,9 +190,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.EndedDate = request.EndedDate ?? findTheMovie.EndedDate;
                 findTheMovie.UpdatedAt = DateTime.Now;
                 findTheMovie.UpdatedByUserId = getUserId;
-                findTheMovie.IsActive = 
+                findTheMovie.IsActive =
                     (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.Now;
-                
+
                 if (request.MovieImage != null)
                 {
                     fileUploadStatus = await _cloudinaryHelper.PostImageIntoCloudinary(request.MovieImage);
@@ -217,7 +213,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     // Truy Van trong dbo
                     var findTheFormats = _dbContext.MovieFormatMovieInfoEntity.Where(x => x.MovieId.Equals(itemId));
                     _dbContext.MovieFormatMovieInfoEntity.RemoveRange(findTheFormats);
-                    
+
                     // Add Again in databases
 
                     _dbContext.MovieFormatMovieInfoEntity.AddRange(request.MovieFormatIds.Distinct().Select(id => new movieFormatMovieInfoEntity()
@@ -232,7 +228,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     // Truy Van trong dbo
                     var findTheGenres = _dbContext.MovieGenreMovieInfoEntity.Where(x => x.MovieId.Equals(itemId));
                     _dbContext.MovieGenreMovieInfoEntity.RemoveRange(findTheGenres);
-                    
+
                     // Add Again in databases
 
                     _dbContext.MovieGenreMovieInfoEntity.AddRange(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
@@ -241,13 +237,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                         MovieGenreId = id
                     }));
                 }
-                
+
                 await _dbContext.SaveChangesAsync();
                 await transactions.CommitAsync();
 
                 if (fileUploadStatus.success && !string.IsNullOrEmpty(oldImageUrl))
                 {
-                    try 
+                    try
                     {
                         await _cloudinaryHelper.DeleteImageFromCloudinary(oldImageUrl);
                     }
@@ -256,7 +252,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                         _logger.LogWarning(ex, "Could not delete old image: {Url}", oldImageUrl);
                     }
                 }
-                
+
                 return new BaseResponse<string>()
                 {
                     IsSuccess = true,
@@ -274,14 +270,14 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 var deleteImageFromCloudinary = await _cloudinaryHelper.DeleteImageFromCloudinary(fileUploadStatus.result);
                 if (!deleteImageFromCloudinary)
                 {
-                    _logger.LogError(ex , "Error while delete image from Cloudinary");
+                    _logger.LogError(ex, "Error while delete image from Cloudinary");
                 }
             }
             if (ex is AppException)
             {
                 throw;
             }
-            _logger.LogError(ex , "There's a error while edit movie");
+            _logger.LogError(ex, "There's a error while edit movie");
             throw CustomSystemException.SystemExceptionCaller();
         }
     }

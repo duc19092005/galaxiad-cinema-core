@@ -2,10 +2,40 @@ namespace BusinessLayer.Validators;
 
 static class GeneralValidation
 {
-    public static bool ValidateDates(DateTime startedDate , DateTime endedDate)
+    public static (bool IsValid, string Message) ValidateDates(
+        DateTime? reqStart,
+        DateTime? reqEnd,
+        DateTime? oldStart = null,
+        DateTime? oldEnd = null)
     {
-        return startedDate < endedDate 
-        && endedDate > DateTime.Now
-        && startedDate > DateTime.Now.AddSeconds(-20);
+        var now = DateTime.Now;
+
+        var finalStart = reqStart ?? oldStart ?? DateTime.MinValue;
+        var finalEnd = reqEnd ?? oldEnd ?? DateTime.MaxValue;
+
+        if (finalStart >= finalEnd)
+        {
+            return (false, "Started Date must be lower than the ended date.");
+        }
+
+        if (reqStart.HasValue || oldStart == null)
+        {
+            var startToVerify = reqStart ?? finalStart;
+            if (startToVerify < now.AddSeconds(-20))
+            {
+                return (false, "Started Date must be higher than the current date.");
+            }
+        }
+
+        if (reqEnd.HasValue || oldEnd == null)
+        {
+            var endToVerify = reqEnd ?? finalEnd;
+            if (endToVerify < now)
+            {
+                return (false, "Ended Date must be higher than the current date.");
+            }
+        }
+
+        return (true, string.Empty);
     }
 }
