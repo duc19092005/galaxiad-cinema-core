@@ -28,6 +28,8 @@ public class MovieFormatInfoEntity : BaseManagementStatus<UserInfoEntity>
     public virtual List<CinemaSurchargeInfosEntity> cinema_surcharge_infos_entities { get; set; } = [];
     public virtual List<MovieScheduleInfoEntity> movie_schedule_info_entities { get; set; } = [];
     public virtual List<movieFormatMovieInfoEntity> movieFormatMovieInfoEntities { get; set; } = [];
+    
+    public List<AuditoriumFormatInfos> AuditoriumFormatInfosList { get; set; } = [];
 
 }
 

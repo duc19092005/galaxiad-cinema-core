@@ -17,20 +17,15 @@ public partial class AuditoriumInfoEntities : BaseManagementStatus<UserInfoEntit
     [Column(TypeName = "varchar(100)")]
     public string AuditoriumNumber { get; set; } = null!;
     
-    // Movie Format Infos
-    
-    [ForeignKey("MovieFormatInfoEntity")]
-    
-    public Guid MovieFormatId { get; set; } 
-    
     public Guid CinemaId { get; set; }
-
-    public MovieFormatInfoEntity MovieFormatInfoEntity { get; set; } = null!;
     
     public List<SeatsInfoEntity> SeatsInfoEntity { get; set; } = null!;
 
     public List<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; } = [];
+    
     public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
+
+    public List<AuditoriumFormatInfos> AuditoriumFormatInfosList = [];
 }
 
 

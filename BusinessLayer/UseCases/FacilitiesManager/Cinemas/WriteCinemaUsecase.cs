@@ -4,6 +4,7 @@ using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using DataAccess;
 using Microsoft.Extensions.Logging;
@@ -16,18 +17,22 @@ namespace BusinessLayer.UseCases.FacilitiesManager.Cinemas;
 public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDto, EditCinemaReqDto, string>
 {
     private readonly CinemaDbContext _dbContext;
-    private ILogger<FacilitiesManagerWriteCinemaUseCase> _logger;
-    private IHttpContextAccessor  _httpContextAccessor;
-    public FacilitiesManagerWriteCinemaUseCase(CinemaDbContext dbContext, ILogger<FacilitiesManagerWriteCinemaUseCase> logger ,
-        IHttpContextAccessor httpContextAccessor)
+    private readonly ILogger<FacilitiesManagerWriteCinemaUseCase> _logger;
+    private readonly IUserContextService _userContext;
+
+    public FacilitiesManagerWriteCinemaUseCase(CinemaDbContext dbContext,
+        ILogger<FacilitiesManagerWriteCinemaUseCase> logger,
+        IUserContextService userContext)
     {
         this._dbContext = dbContext;
         this._logger = logger;
-        this._httpContextAccessor = httpContextAccessor;
+        _userContext = userContext;
     }
-    
+
     public async Task<BaseResponse<string>> AddItem(AddCinemaReqDto request)
     {
+        Guid userId = GetUserId();
+        
         var validationErrors = new List<string>();
 
         if (CinemaValidate.ValidateCinemaName(null, request.CinemaName, _dbContext))
@@ -40,16 +45,16 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription));
         }
 
-        if (CinemaValidate.ValidateCinemaLocation(null , request.CinemaLocation, _dbContext))
+        if (CinemaValidate.ValidateCinemaLocation(null, request.CinemaLocation, _dbContext))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation));
         }
 
-        if (CinemaValidate.ValidateCinemaHotLineNumber(null , request.CinemaHotlineNumber, _dbContext))
+        if (CinemaValidate.ValidateCinemaHotLineNumber(null, request.CinemaHotlineNumber, _dbContext))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber));
         }
-        
+
         if (validationErrors.Any())
         {
             throw new BadRequestException(validationErrors, "C01");
@@ -66,12 +71,10 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 CinemaLocation = request.CinemaLocation,
                 CinemaHotLineNumber = request.CinemaHotlineNumber,
                 CreatedAt = DateTime.Now,
-                CreatedByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid)?.Value),
-                ManagerId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid)?.Value),
+                CreatedByUserId = userId,
+                ManagerId = userId,
                 ActiveAt = request.ActiveAt ?? DateTime.Now,
-                IsActive = request.ActiveAt > DateTime.Now ? false : true,
+                IsActive = request.ActiveAt < DateTime.Now,
             };
             await _dbContext.CinemaInfoEntity.AddAsync(newCinemaInfoEntity);
             await _dbContext.SaveChangesAsync();
@@ -89,7 +92,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         }
         catch (Exception e)
         {
-            _logger.LogError("There a Error with System : {0}" , e.Message);
+            _logger.LogError("There a Error with System : {0}", e.Message);
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
@@ -99,6 +102,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         // Find the cinema Infos
         try
         {
+            var userId = GetUserId();
             var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x => x.CinemaId.Equals(itemId));
             if (findCinema == null)
             {
@@ -109,40 +113,47 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             {
                 var validationErrors = new List<string>();
 
-                bool checkExitsDescription = request.CinemaDescription != null && CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
-                    request.CinemaDescription, _dbContext);
-                
-                bool checkExitsCinemaName = request.CinemaName != null && CinemaValidate.ValidateCinemaName(findCinema.CinemaId, request.CinemaName, _dbContext);
-                
-                bool checkExitsHotlineNumber = request.CinemaHotlineNumber != null && CinemaValidate.ValidateCinemaHotLineNumber(findCinema.CinemaId , request.CinemaHotlineNumber , _dbContext);
-                
-                bool checkExitsLocation = request.CinemaLocation != null && CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId , request.CinemaLocation, _dbContext);
+                bool checkExitsDescription = request.CinemaDescription != null &&
+                                             CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
+                                                 request.CinemaDescription, _dbContext);
+
+                bool checkExitsCinemaName = request.CinemaName != null &&
+                                            CinemaValidate.ValidateCinemaName(findCinema.CinemaId, request.CinemaName,
+                                                _dbContext);
+
+                bool checkExitsHotlineNumber = request.CinemaHotlineNumber != null &&
+                                               CinemaValidate.ValidateCinemaHotLineNumber(findCinema.CinemaId,
+                                                   request.CinemaHotlineNumber, _dbContext);
+
+                bool checkExitsLocation = request.CinemaLocation != null &&
+                                          CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
+                                              request.CinemaLocation, _dbContext);
 
                 if (checkExitsDescription)
                 {
-                    validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription));
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription!));
                 }
 
                 if (checkExitsCinemaName)
                 {
-                    validationErrors.Add(Messages.Cinema.AlreadyExistsName(request.CinemaName));
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsName(request.CinemaName!));
                 }
 
                 if (checkExitsHotlineNumber)
                 {
-                    validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber));
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber!));
                 }
 
                 if (checkExitsLocation)
                 {
-                    validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation));
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation!));
                 }
-                
+
                 if (validationErrors.Any())
                 {
                     throw new BadRequestException(validationErrors, "C01");
                 }
-                
+
                 findCinema.CinemaName = (!string.IsNullOrWhiteSpace(request.CinemaName)
                                          && !CinemaValidate.ValidateCinemaName(findCinema.CinemaId, request.CinemaName,
                                              _dbContext))
@@ -166,15 +177,14 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                                                  request.CinemaLocation, _dbContext))
                     ? request.CinemaLocation
                     : findCinema.CinemaLocation;
-                
+
                 findCinema.ActiveAt = request.ActiveAt ?? findCinema.ActiveAt;
-                
+
                 findCinema.UpdatedAt = DateTime.Now;
 
                 findCinema.IsActive = findCinema.ActiveAt < DateTime.Now;
-                
-                findCinema.UpdatedByUserId = Guid.Parse(_httpContextAccessor.HttpContext.User.FindFirst(
-                    ClaimTypes.Sid)?.Value);
+
+                findCinema.UpdatedByUserId = userId;
 
                 await _dbContext.SaveChangesAsync();
 
@@ -192,6 +202,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex.Message);
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
@@ -200,5 +211,11 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     {
         return null!;
     }
+
+    private Guid GetUserId()
+    {
+        return _userContext.GetUserId();
+    }
+
 }
 

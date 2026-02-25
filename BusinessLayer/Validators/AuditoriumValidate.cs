@@ -4,15 +4,15 @@ namespace BusinessLayer.Validators;
 
 public static class AuditoriumValidate
 {
-    public static bool IsDuplicateAuditoriumNumber(CinemaDbContext dbContext , Guid? AuditoriumId ,string AuditoriumNumber , Guid? CinemaId)
+    public static bool IsDuplicateAuditoriumNumber(CinemaDbContext dbContext , Guid? auditoriumId ,string auditoriumNumber , Guid? cinemaId)
     {
-        if (AuditoriumId == null)
+        if (auditoriumId == null)
         {
             // Check Trong DB
             var checkDuplicateAuditoriumNumber =
                 dbContext.AuditoriumInfoEntities.FirstOrDefault
-                (x => x.AuditoriumNumber.Equals(AuditoriumNumber)
-                      && x.CinemaId.Equals(CinemaId)
+                (x => x.AuditoriumNumber.Equals(auditoriumNumber)
+                      && x.CinemaId.Equals(cinemaId)
                       && !x.IsDeleted);
             return checkDuplicateAuditoriumNumber != null ? true : false;
         }
@@ -20,10 +20,10 @@ public static class AuditoriumValidate
         {
             var checkDuplicateAuditoriumNumber =
                 dbContext.AuditoriumInfoEntities.FirstOrDefault
-                (x => x.AuditoriumNumber.Equals(AuditoriumNumber)
-                      && x.CinemaId.Equals(CinemaId)
+                (x => x.AuditoriumNumber.Equals(auditoriumNumber)
+                      && x.CinemaId.Equals(cinemaId)
                       && !x.IsDeleted
-                      && !x.AuditoriumId.Equals(AuditoriumId));
+                      && !x.AuditoriumId.Equals(auditoriumId));
             return checkDuplicateAuditoriumNumber != null ? true : false;
         }
     }

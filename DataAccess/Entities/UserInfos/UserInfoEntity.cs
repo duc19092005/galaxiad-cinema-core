@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 using Shared.Enums;
@@ -34,6 +35,8 @@ namespace DataAccess.Entities.UserInfos
         
         [Required]
         public AccountStatusEnum AccountStatus { get; set; }
+        
+        public string? LockoutReason { get; set; }
 
         public List<UserRoleInfoEntity> UserRoleInfoEntity { get; set; } = [];
 

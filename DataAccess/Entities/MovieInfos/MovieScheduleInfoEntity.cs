@@ -16,8 +16,8 @@ public class MovieScheduleInfoEntity : BaseManagementStatus<UserInfoEntity>
     public DateTime EndedTime { get; set; }
     
     public MovieFormatInfoEntity? MovieFormatInfoEntity { get; set; }
-    
-    public MovieInfoEntity? movie_info_entity { get; set; }
+
+    public MovieInfoEntity? MovieInfoEntity { get; set; } = null!;
     
     public AuditoriumInfoEntities? AuditoriumInfoEntities { get; set; }
     

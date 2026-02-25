@@ -10,12 +10,12 @@ public interface IUserContextService
     Guid GetUserId();
 }
 
-public class UserContextService : IUserContextService
+public class UserContextservice : IUserContextService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<UserContextService> _logger;
+    private readonly ILogger<UserContextservice> _logger;
 
-    public UserContextService(IHttpContextAccessor httpContextAccessor, ILogger<UserContextService> logger)
+    public UserContextservice(IHttpContextAccessor httpContextAccessor, ILogger<UserContextservice> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;

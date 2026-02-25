@@ -38,4 +38,13 @@ static class GeneralValidation
 
         return (true, string.Empty);
     }
+
+    public static bool IsGuidHasValue(Guid? id)
+    {
+        if (!id.HasValue)
+        {
+            return false;
+        }
+        return true;
+    }
 }

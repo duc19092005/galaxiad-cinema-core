@@ -40,8 +40,10 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 CreatedBy =  _dbContext.UserProfileEntity
                     .FirstOrDefault(x => x
                         .UserId.Equals
-                            (getUserId())).UserName,
-                Duration = x.MovieDuration
+                            (GetUserId())).UserName,
+                Duration = x.MovieDuration ,
+                EndedDate = x.EndedDate,
+                StartedDate = x.ActiveAt
             })
             .AsNoTracking()
             .ToListAsync();
@@ -56,7 +58,7 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
 
     public async Task<BaseResponse<ResGetMovieInfosMovieManagerDto>> GetById(Guid id)
     {
-        Guid currentUserId = getUserId();
+        Guid currentUserId = GetUserId();
 
         var findMovieInfos = await _dbContext.MovieInfoEntity
             .Where(x => x.ManagerId == currentUserId)
@@ -70,7 +72,9 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieName = m.MovieName,
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
-                Duration = m.MovieDuration
+                Duration = m.MovieDuration,
+                EndedDate = m.EndedDate,
+                StartedDate = m.ActiveAt
             }).FirstOrDefaultAsync();
         
         return new BaseResponse<ResGetMovieInfosMovieManagerDto>()
@@ -87,7 +91,7 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
         return null!;
     }
 
-    private Guid getUserId()
+    private Guid GetUserId()
     {
         return _userContextService.GetUserId();
     }

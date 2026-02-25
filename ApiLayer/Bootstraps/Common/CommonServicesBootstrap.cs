@@ -12,7 +12,7 @@ public static class CommonServicesBootstrap
         // |                   Shared Utils Services                      |
         // ----------------------------------------------------------------
         
-        services.AddScoped<IUserContextService, UserContextService>();
+        services.AddScoped<IUserContextService, UserContextservice>();
         
         // ----------------------------------------------------------------
         // |                   Localization Services                      |

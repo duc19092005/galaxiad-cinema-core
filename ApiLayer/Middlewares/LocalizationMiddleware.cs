@@ -30,36 +30,42 @@ public class LocalizationMiddleware
         using var memoryStream = new MemoryStream();
         httpContext.Response.Body = memoryStream;
 
-        await _next(httpContext);
-
-        // Only translate JSON responses
-        if (httpContext.Response.ContentType?.Contains("application/json") == true)
+        try
         {
-            memoryStream.Seek(0, SeekOrigin.Begin);
-            var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
+            await _next(httpContext);
 
-            if (!string.IsNullOrEmpty(responseBody))
+            // Only translate JSON responses
+            if (httpContext.Response.ContentType?.Contains("application/json") == true)
             {
-                try
-                {
-                    var translatedBody = TranslateJsonResponse(responseBody, localizationService);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
 
-                    httpContext.Response.Body = originalBodyStream;
-                    httpContext.Response.ContentLength = Encoding.UTF8.GetByteCount(translatedBody);
-                    await httpContext.Response.WriteAsync(translatedBody, Encoding.UTF8);
-                    return;
-                }
-                catch
+                if (!string.IsNullOrEmpty(responseBody))
                 {
-                    // If translation fails, return original response
+                    try
+                    {
+                        var translatedBody = TranslateJsonResponse(responseBody, localizationService);
+
+                        httpContext.Response.Body = originalBodyStream;
+                        httpContext.Response.ContentLength = Encoding.UTF8.GetByteCount(translatedBody);
+                        await httpContext.Response.WriteAsync(translatedBody, Encoding.UTF8);
+                        return;
+                    }
+                    catch
+                    {
+                        // If translation fails, return original response
+                    }
                 }
             }
-        }
 
-        // Fallback: write original response
-        memoryStream.Seek(0, SeekOrigin.Begin);
-        await memoryStream.CopyToAsync(originalBodyStream);
-        httpContext.Response.Body = originalBodyStream;
+            // Fallback: write original response
+            memoryStream.Seek(0, SeekOrigin.Begin);
+            await memoryStream.CopyToAsync(originalBodyStream);
+        }
+        finally
+        {
+            httpContext.Response.Body = originalBodyStream;
+        }
     }
 
     private static string TranslateJsonResponse(string jsonBody, ILocalizationService localizationService)

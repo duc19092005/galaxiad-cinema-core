@@ -40,12 +40,12 @@ public class FacilitiesManagerReadMovieFormatUseCase : IReadBehavior<ResFaciliti
                 Message = Messages.MovieFormat.GetDataSuccess
             };
         }
-        catch (AppException)
-        {
-            throw;
-        }
         catch (Exception ex)
         {
+            if (ex is AppException)
+            {
+                throw;
+            }
             _logger.LogError(ex, ex.Message);
             throw CustomSystemException.SystemExceptionCaller();
         }

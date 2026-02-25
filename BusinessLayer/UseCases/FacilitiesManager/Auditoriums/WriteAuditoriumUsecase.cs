@@ -7,10 +7,8 @@ using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using DataAccess;
 using DataAccess.Entities.CinemaInfos;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Utils;
 
 namespace BusinessLayer.UseCases.FacilitiesManager.Auditoriums;
 
@@ -51,10 +49,17 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                 AuditoriumId = generateAuditoriumId,
                 CinemaId = request.CinemaId,
                 AuditoriumNumber = request.AuditoriumNumber,
-                MovieFormatId = request.MovieFormatId,
                 CreatedAt = DateTime.Now,
                 CreatedByUserId = userId
             };
+
+            var listsAuditoriumFormat = request.MovieFormatId.Select(x => new AuditoriumFormatInfos()
+            {
+                FormatId = x,
+                AuditoriumId = generateAuditoriumId
+            });
+
+            await _dbContext.AuditoriumFormatInfosEntity.AddRangeAsync(listsAuditoriumFormat);
 
             await _dbContext.AuditoriumInfoEntities.AddAsync(newAuditoriumInfo);
 
@@ -85,14 +90,14 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                 Message = Messages.Auditorium.AddCompleted
             };
         }
-        catch (AppException e)
-        {
-            await transactions.RollbackAsync();
-            throw;
-        }
         catch (Exception e)
         {
             await transactions.RollbackAsync();
+
+            if (e is AppException)
+            {
+                throw;
+            }
             _logger.LogError("Database Error : Error Detail {0}" , e.Message);
             throw CustomSystemException.SystemExceptionCaller();
         }
@@ -104,6 +109,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
         try
         {
             // Check xem co duplicate ten phong khong
+            
             var getUserId = _userContextService.GetUserId();
             
             if (request.AuditoriumNumber != null && AuditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, itemId,
@@ -116,13 +122,25 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             var findAuditorium = await _dbContext.AuditoriumInfoEntities.FirstOrDefaultAsync
                 (a => a.AuditoriumId == itemId);
             
+            
             if (findAuditorium == null)
             {
                 throw new NotFoundException(Messages.Auditorium.NotFound);
             }
             
+            if (request.FormatInfos.Any())
+            {
+                var formats = _dbContext.AuditoriumFormatInfosEntity.Where(x => x.AuditoriumId.Equals(itemId));
+                _dbContext.AuditoriumFormatInfosEntity.RemoveRange(formats);
+                var newLists = request.FormatInfos.Select(x => new AuditoriumFormatInfos
+                {
+                    AuditoriumId = itemId,
+                    FormatId = x
+                });
+                await _dbContext.SaveChangesAsync();
+            }
+            
             findAuditorium.AuditoriumNumber = request.AuditoriumNumber ?? findAuditorium.AuditoriumNumber;
-            findAuditorium.MovieFormatId = request.MovieFormatId ?? findAuditorium.MovieFormatId;
             findAuditorium.CinemaId = request.CinemaId ?? findAuditorium.CinemaId;
             findAuditorium.CreatedAt = DateTime.Now;
             findAuditorium.UpdatedAt = DateTime.Now;
@@ -162,14 +180,13 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                 Data = null
             };
         }
-        catch (AppException)
-        {
-            await transactions.RollbackAsync();
-            throw;
-        }
         catch (Exception e)
         {
             await transactions.RollbackAsync();
+            if (e is AppException)
+            {
+                throw;
+            }
             throw CustomSystemException.SystemExceptionCaller();
         }
     }

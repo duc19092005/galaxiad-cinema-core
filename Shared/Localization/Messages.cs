@@ -98,7 +98,7 @@ public static class Messages
         public const string AddCompleted = "Add Auditorium completed";
         public const string UpdateCompleted = "Update Auditorium completed";
         public const string GetCompleted = "Get auditorium completed";
-
+        
         // Errors
         public const string AlreadyExists = "Error : Auditorium already exists";
         public const string DuplicateNumber = "Duplicate Auditorium Number";
@@ -158,13 +158,21 @@ public static class Messages
         public const string AuditoriumNotFound = "Error Auditorium Not Found";
         public const string PastDateNotAllowed = "Cannot schedule show times for a past date or time.";
         public const string OverlappingSchedules = "Overlapping schedules detected within the request.";
+        public const string ScheduleListCannotBeEmpty = "The showtime list must not be left blank.";
 
+        public const string SchedulesIsNotFoundOrMovieIsInactivated =
+            "Schedules is not found or it's has been deleted or Movie is Inactivated";
         // Dynamic errors
         public static string MovieAvailability(string movieName, string from, string to) =>
             $"Movie '{movieName}' is available from {from} to {to}.";
 
         public static string TimeSlotConflict(string startTime, string endTime) =>
             $"Time slot from {startTime} to {endTime} conflicts with an existing schedule.";
+    }
+
+    public static class RequiredAge
+    {
+        public const string GetRequiredAgeCompleted = "Get Required Age Completed";
     }
 
     // =============================================================

@@ -8,19 +8,19 @@ namespace BusinessLayer.Validators;
 
 public class CinemaValidate
 {
-    public static bool ValidateCinemaName(Guid? CinemaId ,string CinemaName , CinemaDbContext dbContext)
+    public static bool ValidateCinemaName(Guid? cinemaId ,string cinemaName , CinemaDbContext dbContext)
     {
         try
         {
-            if (CinemaId == null)
+            if (cinemaId == null)
             {
                 return dbContext.CinemaInfoEntity.Any(x => 
-                    !x.IsDeleted && x.CinemaName.ToLower().Equals(CinemaName.ToLower()));
+                    !x.IsDeleted && x.CinemaName.ToLower().Equals(cinemaName.ToLower()));
             }
             else
             {
                 return dbContext.CinemaInfoEntity.Any(x => 
-                    !x.IsDeleted && x.CinemaId != CinemaId && x.CinemaName.ToLower().Equals(CinemaName.ToLower()));
+                    !x.IsDeleted && x.CinemaId != cinemaId && x.CinemaName.ToLower().Equals(cinemaName.ToLower()));
             }
         }
         catch (AppException)

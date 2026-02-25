@@ -202,6 +202,7 @@ namespace DataAccess.Migrations
                     MovieName = table.Column<string>(type: "nvarchar(100)", nullable: false),
                     MovieDescription = table.Column<string>(type: "varchar(2048)", nullable: false),
                     MovieImageUrl = table.Column<string>(type: "varchar(2048)", nullable: false),
+                    MovieDuration = table.Column<int>(type: "int", nullable: false),
                     EndedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ManagerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -327,8 +328,8 @@ namespace DataAccess.Migrations
                 {
                     AuditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AuditoriumNumber = table.Column<string>(type: "varchar(100)", nullable: false),
-                    MovieFormatId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CinemaId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MovieFormatInfoEntityMovieFormatId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -349,11 +350,10 @@ namespace DataAccess.Migrations
                         principalColumn: "CinemaId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_AuditoriumInfoEntities_MovieFormatInfoEntity_MovieFormatId",
-                        column: x => x.MovieFormatId,
+                        name: "FK_AuditoriumInfoEntities_MovieFormatInfoEntity_MovieFormatInfoEntityMovieFormatId",
+                        column: x => x.MovieFormatInfoEntityMovieFormatId,
                         principalTable: "MovieFormatInfoEntity",
-                        principalColumn: "MovieFormatId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "MovieFormatId");
                     table.ForeignKey(
                         name: "FK_AuditoriumInfoEntities_UserInfoEntity_CreatedByUserId",
                         column: x => x.CreatedByUserId,
@@ -535,6 +535,30 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AuditoriumFormatInfosEntity",
+                columns: table => new
+                {
+                    AuditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    FormatId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AuditoriumFormatInfosEntity", x => new { x.AuditoriumId, x.FormatId });
+                    table.ForeignKey(
+                        name: "FK_AuditoriumFormatInfosEntity_AuditoriumInfoEntities_AuditoriumId",
+                        column: x => x.AuditoriumId,
+                        principalTable: "AuditoriumInfoEntities",
+                        principalColumn: "AuditoriumId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_AuditoriumFormatInfosEntity_MovieFormatInfoEntity_FormatId",
+                        column: x => x.FormatId,
+                        principalTable: "MovieFormatInfoEntity",
+                        principalColumn: "MovieFormatId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "MovieScheduleInfoEntity",
                 columns: table => new
                 {
@@ -542,7 +566,6 @@ namespace DataAccess.Migrations
                     MovieId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AuditoriumId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MovieFormatId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    StartedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     EndedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     IsActive = table.Column<bool>(type: "bit", nullable: false),
@@ -755,6 +778,11 @@ namespace DataAccess.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "IX_AuditoriumFormatInfosEntity_FormatId",
+                table: "AuditoriumFormatInfosEntity",
+                column: "FormatId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AuditoriumInfoEntities_AuditoriumNumber_CinemaId",
                 table: "AuditoriumInfoEntities",
                 columns: new[] { "AuditoriumNumber", "CinemaId" },
@@ -777,9 +805,9 @@ namespace DataAccess.Migrations
                 column: "DeletedByUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AuditoriumInfoEntities_MovieFormatId",
+                name: "IX_AuditoriumInfoEntities_MovieFormatInfoEntityMovieFormatId",
                 table: "AuditoriumInfoEntities",
-                column: "MovieFormatId");
+                column: "MovieFormatInfoEntityMovieFormatId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AuditoriumInfoEntities_UpdatedByUserId",
@@ -958,9 +986,9 @@ namespace DataAccess.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_MovieScheduleInfoEntity_AuditoriumId_StartedTime",
+                name: "IX_MovieScheduleInfoEntity_AuditoriumId_ActiveAt",
                 table: "MovieScheduleInfoEntity",
-                columns: new[] { "AuditoriumId", "StartedTime" },
+                columns: new[] { "AuditoriumId", "ActiveAt" },
                 unique: true,
                 filter: "[isDeleted] = 0");
 
@@ -1073,6 +1101,9 @@ namespace DataAccess.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AuditoriumFormatInfosEntity");
+
             migrationBuilder.DropTable(
                 name: "CinemaDiscountInfoEntity");
 

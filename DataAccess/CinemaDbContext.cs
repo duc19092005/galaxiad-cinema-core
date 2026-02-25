@@ -57,6 +57,7 @@ public class CinemaDbContext : DbContext
     
     public DbSet<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; }
     
+    public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

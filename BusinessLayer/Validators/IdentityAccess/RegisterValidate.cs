@@ -8,7 +8,7 @@ using Shared.Utils;
 
 namespace BusinessLayer.Validators.IdentityAccess;
 
-public class RegisterValidate
+public static class RegisterValidate
 {
     public static bool CheckExistEmail(CinemaDbContext context , string email)
     {
@@ -29,9 +29,9 @@ public class RegisterValidate
         }
     }
 
-    public static bool CheckExistIdentityCode(string AES256Key , string AES256_IV ,CinemaDbContext context, string inputIdentityCode)
+    public static bool CheckExistIdentityCode(string aes256Key , string aes256Iv ,CinemaDbContext context, string inputIdentityCode)
     {
-        var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, AES256Key, AES256_IV);
+        var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, aes256Key, aes256Iv);
         
         return context.UserProfileEntity.Any(x => x.IdentityCode == encryptedInput);
     }

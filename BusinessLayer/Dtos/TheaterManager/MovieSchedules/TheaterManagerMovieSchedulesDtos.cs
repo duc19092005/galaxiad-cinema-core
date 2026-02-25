@@ -16,13 +16,13 @@ public class TheaterManagerAddMovieSchedulesRequest
 
 public class TheaterManagerEditMovieSchedulesRequest
 {
-
     public List<SchedulesInfos>? Slots {get;set;}
-
 }
 
 public class SchedulesInfos
 {
+    public Guid ScheduleId {get;set;}
+    
     public Guid MovieId {get;set;}
 
     public Guid FormatId {get;set;}

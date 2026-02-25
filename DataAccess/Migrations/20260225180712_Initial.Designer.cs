@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    [Migration("20260224114920_Initial")]
+    [Migration("20260225180712_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -24,6 +24,21 @@ namespace DataAccess.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumFormatInfos", b =>
+                {
+                    b.Property<Guid>("AuditoriumId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("FormatId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AuditoriumId", "FormatId");
+
+                    b.HasIndex("FormatId");
+
+                    b.ToTable("AuditoriumFormatInfosEntity");
+                });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumInfoEntities", b =>
                 {
@@ -59,7 +74,7 @@ namespace DataAccess.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("MovieFormatId")
+                    b.Property<Guid?>("MovieFormatInfoEntityMovieFormatId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -76,7 +91,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("MovieFormatId");
+                    b.HasIndex("MovieFormatInfoEntityMovieFormatId");
 
                     b.HasIndex("UpdatedByUserId");
 
@@ -603,6 +618,9 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
 
+                    b.Property<int>("MovieDuration")
+                        .HasColumnType("int");
+
                     b.Property<string>("MovieImageUrl")
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
@@ -683,9 +701,6 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("MovieId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateTime>("StartedTime")
-                        .HasColumnType("datetime2");
-
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -704,7 +719,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("UpdatedByUserId");
 
-                    b.HasIndex("AuditoriumId", "StartedTime")
+                    b.HasIndex("AuditoriumId", "ActiveAt")
                         .IsUnique()
                         .HasFilter("[isDeleted] = 0");
 
@@ -1217,6 +1232,25 @@ namespace DataAccess.Migrations
                     b.ToTable("VoucherInfoEntity");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumFormatInfos", b =>
+                {
+                    b.HasOne("DataAccess.Entities.CinemaInfos.AuditoriumInfoEntities", "AuditoriumInfoEntities")
+                        .WithMany("AuditoriumFormatInfosList")
+                        .HasForeignKey("AuditoriumId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", "MovieFormatInfoEntity")
+                        .WithMany("AuditoriumFormatInfosList")
+                        .HasForeignKey("FormatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AuditoriumInfoEntities");
+
+                    b.Navigation("MovieFormatInfoEntity");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumInfoEntities", b =>
                 {
                     b.HasOne("DataAccess.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
@@ -1236,11 +1270,9 @@ namespace DataAccess.Migrations
                         .HasForeignKey("DeletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", "MovieFormatInfoEntity")
+                    b.HasOne("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", null)
                         .WithMany("auditorium_info_entities")
-                        .HasForeignKey("MovieFormatId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MovieFormatInfoEntityMovieFormatId");
 
                     b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "Updater")
                         .WithMany("UpdatedAuditoriums")
@@ -1252,8 +1284,6 @@ namespace DataAccess.Migrations
                     b.Navigation("Creator");
 
                     b.Navigation("Deleter");
-
-                    b.Navigation("MovieFormatInfoEntity");
 
                     b.Navigation("Updater");
                 });
@@ -1502,7 +1532,7 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("DataAccess.Entities.MovieInfos.MovieInfoEntity", "movie_info_entity")
+                    b.HasOne("DataAccess.Entities.MovieInfos.MovieInfoEntity", "MovieInfoEntity")
                         .WithMany("MovieScheduleInfoEntity")
                         .HasForeignKey("MovieId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -1521,9 +1551,9 @@ namespace DataAccess.Migrations
 
                     b.Navigation("MovieFormatInfoEntity");
 
-                    b.Navigation("Updater");
+                    b.Navigation("MovieInfoEntity");
 
-                    b.Navigation("movie_info_entity");
+                    b.Navigation("Updater");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.movieFormatMovieInfoEntity", b =>
@@ -1617,6 +1647,8 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumInfoEntities", b =>
                 {
+                    b.Navigation("AuditoriumFormatInfosList");
+
                     b.Navigation("MovieScheduleInfoEntity");
 
                     b.Navigation("SeatsInfoEntity");
@@ -1633,6 +1665,8 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>
                 {
+                    b.Navigation("AuditoriumFormatInfosList");
+
                     b.Navigation("auditorium_info_entities");
 
                     b.Navigation("cinema_discount_info_entities");

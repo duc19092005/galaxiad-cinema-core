@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
@@ -7,11 +6,9 @@ using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.ICinema;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Exceptions;
-using Shared.Utils;
+
 
 namespace BusinessLayer.UseCases.FacilitiesManager.Auditoriums;
 
@@ -19,15 +16,13 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
 {
     private readonly CinemaDbContext _dbContext;
     private readonly ILogger<FacilitiesManagerReadAuditoriumUseCase> _logger;
-    private readonly IHttpContextAccessor  _httpContextAccessor;
     private readonly IUserContextService _userContextService;
 
     public FacilitiesManagerReadAuditoriumUseCase(CinemaDbContext dbContext, ILogger<FacilitiesManagerReadAuditoriumUseCase> logger,
-        IHttpContextAccessor httpContextAccessor , IUserContextService userContextService)
+        IUserContextService userContextService)
     {
         this._logger = logger;
         this._dbContext = dbContext;
-        this._httpContextAccessor = httpContextAccessor;
         this._userContextService = userContextService;
     }
     
@@ -36,16 +31,20 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
     {
         try
         {
-            var UserId = _userContextService.GetUserId();
+            var userId = _userContextService.GetUserId();
             
             var getData = await _dbContext.AuditoriumInfoEntities
                 .AsNoTracking()
-                .Where(x => x.CreatedByUserId.Equals((UserId)))
+                .Where(x => x.CreatedByUserId.Equals((userId)))
                 .Select(x => new GetResAuditoriumDto()
                 {
                     AuditoriumId = x.AuditoriumId,
                     AuditoriumNumber = x.AuditoriumNumber,
-                    MovieFormatName = x.MovieFormatInfoEntity.MovieFormatName,
+                    FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo()
+                    {
+                        FormatId = y.MovieFormatInfoEntity.MovieFormatId,
+                        FormatName = y.MovieFormatInfoEntity.MovieFormatName
+                    }),
                     CinemaName = x.CinemaInfoEntity.CinemaName,
                     TotalSeats = x.SeatsInfoEntity.Count,
                     SeatsInfos = x.SeatsInfoEntity.Select(s => new ReqSeatsAuditoriumDto
@@ -55,7 +54,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
                         CoordY = s.CoordY,
                         ColIndex = s.ColIndex,
                         RowIndex = s.RowIndex,
-                    }).ToList()
+                    })
                 }).ToListAsync();
 
             return new BaseResponse<List<GetResAuditoriumDto>>()
@@ -80,18 +79,21 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
     {
         try
         {
-            var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Sid)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim)) throw new AppException(Messages.Auth.Unauthorized, 401, "AUTH02");
-            var UserId = Guid.Parse(userIdClaim);
+
+            var userId = GetUserId();
 
             var result = await _dbContext.AuditoriumInfoEntities
                 .AsNoTracking()
-                .Where(x => x.AuditoriumId == id && x.CreatedByUserId == UserId)
+                .Where(x => x.AuditoriumId == id && x.CreatedByUserId == userId)
                 .Select(x => new GetResAuditoriumDto()
                 {
                     AuditoriumId = x.AuditoriumId,
                     AuditoriumNumber = x.AuditoriumNumber,
-                    MovieFormatName = x.MovieFormatInfoEntity.MovieFormatName,
+                    FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo()
+                    {
+                        FormatId = y.MovieFormatInfoEntity.MovieFormatId,
+                        FormatName = y.MovieFormatInfoEntity.MovieFormatName
+                    }),
                     CinemaName = x.CinemaInfoEntity.CinemaName,
                     TotalSeats = x.SeatsInfoEntity.Count,
                     SeatsInfos = x.SeatsInfoEntity.Select(s => new ReqSeatsAuditoriumDto()
@@ -101,7 +103,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
                         CoordY = s.CoordY,
                         ColIndex = s.ColIndex,
                         RowIndex = s.RowIndex,
-                    }).ToList()
+                    })
                 })
                 .FirstOrDefaultAsync();
 
@@ -128,20 +130,24 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
         }
     }
     
-    public async Task<BaseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid CinemaId)
+    public async Task<BaseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaId(Guid cinemaId)
     {
         try
         {
-            var UserId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Sid)?.Value;
+            var userId = GetUserId();
             
             var getData = await _dbContext.AuditoriumInfoEntities
                 .AsNoTracking()
-                .Where(x => x.CreatedByUserId.Equals(UserId)
-                            && x.CinemaId.Equals(CinemaId)).Select(x => new GetResAuditoriumDtoCinema()
+                .Where(x => x.CreatedByUserId.Equals(userId)
+                            && x.CinemaId.Equals(cinemaId)).Select(x => new GetResAuditoriumDtoCinema()
                 {
                     AuditoriumId = x.AuditoriumId,
                     AuditoriumNumber = x.AuditoriumNumber,
-                    MovieFormatName = x.MovieFormatInfoEntity.MovieFormatName,
+                    FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo()
+                    {
+                        FormatId = y.MovieFormatInfoEntity.MovieFormatId,
+                        FormatName = y.MovieFormatInfoEntity.MovieFormatName
+                    }),
                     CinemaName = x.CinemaInfoEntity.CinemaName,
                     TotalSeats = x.SeatsInfoEntity.Count
                 }).ToListAsync();
@@ -172,6 +178,11 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
     public async Task<BaseResponse<List<GetResAuditoriumDto>>> GetByEntityName(string name)
     {
         return null!;
+    }
+
+    private Guid GetUserId()
+    {
+        return _userContextService.GetUserId();
     }
 }
 

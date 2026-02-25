@@ -9,6 +9,9 @@ public class LocalizationService : ILocalizationService
 
     // Default language when no header is provided
     private const string DefaultLanguage = "en";
+    
+    private const string HeaderXLanguage = "X-Language";
+    private const string HeaderAcceptLanguage = "Accept-Language";
 
     // Supported languages
     private static readonly HashSet<string> SupportedLanguages = new() { "en", "vi" };
@@ -55,6 +58,7 @@ public class LocalizationService : ILocalizationService
         {"Token Has Expired" , "Token đã hết hạn"},
 
         // Cinema Management
+        
         { "Add Cinema Completed", "Thêm rạp chiếu phim thành công" },
         { "Update Cinema Completed", "Cập nhật rạp chiếu phim thành công" },
         { "Get Cinema List SuccessFully", "Lấy danh sách rạp chiếu phim thành công" },
@@ -168,7 +172,10 @@ public class LocalizationService : ILocalizationService
 
         // Schedule DTO Validations
         { "Auditorium Id is required", "Mã phòng chiếu là bắt buộc" },
-        { "TheaterManager is required", "Quản lý rạp là bắt buộc" }
+        { "TheaterManager is required", "Quản lý rạp là bắt buộc" } ,
+        {"The showtime list must not be left blank." , "Danh sách lịch chiếu không được để trống"} ,
+        {"Schedules is not found or it's been deleted or Movie is Inactive" , "Không tìm thấy lịch chiếu hoặc lịch chiếu đã bị xóa hoặc phim không hoạt động."},
+        {"Get Required Age Completed" , "Lấy danh sách độ tuổi thành công"}
     };
 
     /// <summary>
@@ -254,24 +261,32 @@ public class LocalizationService : ILocalizationService
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null) return DefaultLanguage;
 
-        // Check custom header first: X-Language
-        if (httpContext.Request.Headers.TryGetValue("X-Language", out var xLang))
+        // 1. Check custom header X-Language (Highest Priority)
+        if (httpContext.Request.Headers.TryGetValue(HeaderXLanguage, out var xLang))
         {
             var langValue = xLang.ToString().Trim().ToLower();
             if (SupportedLanguages.Contains(langValue))
                 return langValue;
         }
 
-        // Fallback to standard Accept-Language header
-        if (httpContext.Request.Headers.TryGetValue("Accept-Language", out var acceptLang))
+        // 2. Fallback to standard Accept-Language header
+        if (httpContext.Request.Headers.TryGetValue(HeaderAcceptLanguage, out var acceptLang))
         {
-            var langValue = acceptLang.ToString().Trim().ToLower();
+            // Parse: "en-US,en;q=0.9,vi;q=0.8" -> take the first one or find "vi" in the list
+            var headerValue = acceptLang.ToString().ToLower();
+            
+            // Split by comma to get individual language preferences
+            var languages = headerValue.Split(',')
+                .Select(l => l.Split(';')[0].Split('-')[0].Trim())
+                .Where(l => !string.IsNullOrEmpty(l));
 
-            // Parse: "vi", "vi-VN", "en-US,en;q=0.9,vi;q=0.8"
-            var primaryLang = langValue.Split(',')[0].Split(';')[0].Split('-')[0].Trim();
-
-            if (SupportedLanguages.Contains(primaryLang))
-                return primaryLang;
+            foreach (var lang in languages)
+            {
+                if (SupportedLanguages.Contains(lang))
+                {
+                    return lang;
+                }
+            }
         }
 
         return DefaultLanguage;

@@ -35,16 +35,48 @@ public static class JwtBootstrap
                         context.Token = context.Request.Cookies["X-Access-Token"];
                         return Task.CompletedTask;
                     },
-                    OnChallenge = context => throw new UnauthorizeException(null),
-                    OnForbidden = context => throw new ForbiddenException(),
-                    OnTokenValidated = context => Task.CompletedTask,
-                    OnAuthenticationFailed = context => 
+                    OnChallenge = async context => 
                     {
-                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
-                        {
-                            throw new UnauthorizeException(Shared.Localization.Messages.Auth.TokenExpired);
-                        }
-                        throw new UnauthorizeException(null);
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        var response = new {
+                            StatusCode = 401,
+                            ErrorCode = "AuthE01",
+                            Message = Shared.Localization.Messages.Auth.Unauthorized,
+                            Errors = new List<string> { Shared.Localization.Messages.Auth.Unauthorized },
+                            Timestamp = DateTime.Now
+                        };
+                        await context.Response.WriteAsJsonAsync(response);
+                    },
+                    OnForbidden = async context => 
+                    {
+                        context.Response.StatusCode = 403;
+                        context.Response.ContentType = "application/json";
+                        var response = new {
+                            StatusCode = 403,
+                            ErrorCode = "AuthE01",
+                            Message = Shared.Localization.Messages.Auth.Forbidden,
+                            Errors = new List<string> { Shared.Localization.Messages.Auth.Forbidden },
+                            Timestamp = DateTime.Now
+                        };
+                        await context.Response.WriteAsJsonAsync(response);
+                    },
+                    OnTokenValidated = context => Task.CompletedTask,
+                    OnAuthenticationFailed = async context => 
+                    {
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        var isExpired = context.Exception.GetType() == typeof(SecurityTokenExpiredException);
+                        var msg = isExpired ? Shared.Localization.Messages.Auth.TokenExpired : Shared.Localization.Messages.Auth.Unauthorized;
+                        var response = new {
+                            StatusCode = 401,
+                            ErrorCode = "AuthE01",
+                            Message = msg,
+                            Errors = new List<string> { msg },
+                            Timestamp = DateTime.Now
+                        };
+                        await context.Response.WriteAsJsonAsync(response);
                     }                
                 };
             });

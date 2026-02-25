@@ -36,6 +36,12 @@ namespace ApiLayer.Middlewares
         
         private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
+            if (context.Response.HasStarted)
+            {
+                _logger.LogWarning(exception, "The response has already started, the error middleware will not be executed.");
+                return;
+            }
+
             context.Response.ContentType = "application/json";
             
             int statusCode = (int)HttpStatusCode.InternalServerError;

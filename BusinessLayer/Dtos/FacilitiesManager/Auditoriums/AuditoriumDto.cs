@@ -7,9 +7,9 @@ public class AddReqAuditoriumDto
     [Required(ErrorMessage = "Error Auditorium Number cannot be empty")]
     [StringLength(10, MinimumLength = 3, ErrorMessage = "Auditorium Number must be between 3 and 10 characters")]
     public string AuditoriumNumber { get; set; } = string.Empty;
-    
+
     [Required(ErrorMessage = "Error Movie Format cannot be empty")]
-    public Guid MovieFormatId { get; set; }
+    public List<Guid> MovieFormatId { get; set; } = [];
     
     [Required(ErrorMessage = "Error Cinema cannot be empty")]
     public Guid CinemaId { get; set; }
@@ -40,13 +40,13 @@ public class EditReqAuditoriumDto
 {
 
     public string? AuditoriumNumber { get; set; }
-
-    public Guid? MovieFormatId { get; set; }
-
-
+    
     public Guid? CinemaId { get; set; }
+
+    public List<Guid> FormatInfos { get; set; } = [];
     
     public List<ReqSeatsAuditoriumDto>? AddReqSeatsAuditoriumDto { get; set; }
+    
 }
 
 public class GetResAuditoriumDtoCinema
@@ -55,7 +55,7 @@ public class GetResAuditoriumDtoCinema
     
     public string AuditoriumNumber { get; set; } = string.Empty;
     
-    public string MovieFormatName { get; set; } = string.Empty;
+    public IEnumerable<BaseFormatInfo> FormatInfos { get; set; } = [];
 
     public string CinemaName { get; set; } = string.Empty;
     
@@ -67,12 +67,12 @@ public class GetResAuditoriumDto
     public Guid AuditoriumId { get; set; }
     
     public string AuditoriumNumber { get; set; } = string.Empty;
-    
-    public string MovieFormatName { get; set; } = string.Empty;
 
+    public IEnumerable<BaseFormatInfo> FormatInfos { get; set; } = [];
+    
     public string CinemaName { get; set; } = string.Empty;
     
     public int TotalSeats { get; set; }
 
-    public List<ReqSeatsAuditoriumDto> SeatsInfos { get; set; } = [];
+    public IEnumerable<ReqSeatsAuditoriumDto> SeatsInfos { get; set; } = [];
 }

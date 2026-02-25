@@ -96,7 +96,7 @@ public class UserProfileUseCase : IProfileBehavior
                     throw new AppException(Messages.Auth.NewPasswordSameAsOld, 400, "Error02");
                 }else
                 {
-                    var newPassword = BCrypt_helper.Hash(request.NewPassword);
+                    var newPassword = BCrypt_helper.Hash(request.NewPassword!);
                     findUser.Password = newPassword;
                     await _dbContext.SaveChangesAsync();
                     return new BaseResponse<string>()

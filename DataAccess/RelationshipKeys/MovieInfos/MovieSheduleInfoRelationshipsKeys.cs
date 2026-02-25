@@ -13,7 +13,7 @@ public static class MovieSheduleInfoRelationshipsKeys
             .HasForeignKey(x => x.MovieFormatId);
         
         modelBuilder.Entity<MovieScheduleInfoEntity>()
-            .HasOne(x => x.movie_info_entity)
+            .HasOne(x => x.MovieInfoEntity)
             .WithMany(x => x.MovieScheduleInfoEntity)
             .HasForeignKey(x => x.MovieId)
             .OnDelete(DeleteBehavior.Restrict);
