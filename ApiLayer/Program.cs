@@ -3,6 +3,7 @@ using ApiLayer.Bootstraps.Common;
 using ApiLayer.Bootstraps.Facilities;
 using ApiLayer.Bootstraps.IdentityAccess;
 using ApiLayer.Bootstraps.MovieInfos;
+using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
@@ -20,7 +21,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<user_identity_code_constant>();
+builder.Services.AddSingleton<UserIdentityCodeConstant>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -78,11 +79,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("web", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") // Không được để "*"
+        policy.WithOrigins("http://localhost:5173") 
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials() // Bắt buộc cho "include" credentials
-            .SetPreflightMaxAge(TimeSpan.FromMinutes(10)); // Cache kết quả check CORS
+            .AllowCredentials();
     });
 });
 
@@ -92,6 +92,11 @@ builder.Services.AddAuthorization
 (options =>
     options.AddPolicy("FacilitiesManager", policy =>
         policy.RequireRole("FacilitiesManager")));
+
+builder.Services.AddAuthorization
+(options =>
+    options.AddPolicy("TheaterManager", policy =>
+        policy.RequireRole("TheaterManager")));
 
 builder.Services.AddAuthorization
 (options =>
@@ -105,6 +110,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1-user", new OpenApiInfo { Title = "User API", Version = "v1" });
     c.SwaggerDoc("v1-facilities-manager", new OpenApiInfo { Title = "facilities-manager API", Version = "v1" });
     c.SwaggerDoc("v1-movie-manager", new OpenApiInfo { Title = "movie-manager API", Version = "v1" });
+    c.SwaggerDoc("v1-theater-manager", new OpenApiInfo { Title = "Theater-manager API", Version = "v1" });
 });
 
 var app = builder.Build();
@@ -115,6 +121,8 @@ app.UseCors("web");
 
 app.UseErrorMiddleware();
 
+app.UseLocalizationMiddleware();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -124,6 +132,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1-user/swagger.json", "User API");
         c.SwaggerEndpoint("/swagger/v1-facilities-manager/swagger.json", "facilities-manager API");
         c.SwaggerEndpoint("/swagger/v1-movie-manager/swagger.json", "movie-manager API");
+        c.SwaggerEndpoint("/swagger/v1-theater-manager/swagger.json", "theater-manager API");
     });
 }
 

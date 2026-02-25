@@ -1,6 +1,7 @@
 
 using System.Net;
 using Shared.Exceptions;
+using Shared.Localization;
 using DataAccess;
 using Shared.Enums;
 using Shared.Utils;
@@ -24,7 +25,7 @@ public class RegisterValidate
             case RegisterUserTypeEnum.Staff:
                 return DateTime.Now.Year - date.Year < 18 ? "Staff Must Be At least 18 Years Old" : null;
             default:
-                throw new AppException("Invalid User Type", 400, "UError01");
+                throw new AppException(Messages.Auth.InvalidUserType, 400, "UError01");
         }
     }
 

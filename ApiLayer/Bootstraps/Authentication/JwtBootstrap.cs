@@ -42,7 +42,7 @@ public static class JwtBootstrap
                     {
                         if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
                         {
-                            throw new UnauthorizeException("Token has expired");
+                            throw new UnauthorizeException(Shared.Localization.Messages.Auth.TokenExpired);
                         }
                         throw new UnauthorizeException(null);
                     }                

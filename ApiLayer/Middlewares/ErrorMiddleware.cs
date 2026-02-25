@@ -40,7 +40,7 @@ namespace ApiLayer.Middlewares
             
             int statusCode = (int)HttpStatusCode.InternalServerError;
             string errorCode = "INTERNAL_SERVER_ERROR";
-            string message = "Đã có lỗi hệ thống xảy ra.";
+            string message = Shared.Localization.Messages.System.GeneralError;
             List<string> errors = new List<string>();
 
             if (exception is AppException appEx)

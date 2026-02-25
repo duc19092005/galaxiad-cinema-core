@@ -31,7 +31,7 @@ public static class MovieSheduleInfoRelationshipsKeys
             .HasKey(x => x.MovieScheduleInfoId);
         
         modelBuilder.Entity<MovieScheduleInfoEntity>()
-            .HasIndex(x => new { x.AuditoriumId, x.StartedTime })
+            .HasIndex(x => new { x.AuditoriumId, x.ActiveAt })
             .IsUnique()
             .HasFilter("[isDeleted] = 0");
     }

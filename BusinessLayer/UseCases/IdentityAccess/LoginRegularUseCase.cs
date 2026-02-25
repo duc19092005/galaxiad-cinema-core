@@ -1,6 +1,7 @@
 
 
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess;
 using BusinessLayer.Interfaces.IIdentityAccess;
@@ -36,14 +37,14 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
             var getUserInfo = await _dbContext.UserInfoEntity.FirstOrDefaultAsync(x => x.UserEmail.Equals(dto.Email));
             if (getUserInfo == null)
             {
-                throw new AppException("User Not Found", 404 , "UN01");
+                throw new AppException(Messages.Auth.UserNotFound, 404 , "UN01");
             }
             else
             {
                 var validatePassword = BCrypt_helper.Validate(getUserInfo.Password , dto.Password);
                 if (!validatePassword)
                 {
-                    throw new AppException("Username or password is wrong", 401, "UN01");
+                    throw new AppException(Messages.Auth.WrongCredentials, 401, "UN01");
                 }
                 else
                 {
@@ -67,13 +68,13 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                     if (!result.Roles.Any())
                     {
                         _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.UserId);
-                        throw new AppException("User Not Found", 403, "UN01");
+                        throw new AppException(Messages.Auth.UserNotFound, 403, "UN01");
                     }
 
                     if (result == null)
                     {
                         _logger.LogError("User with Id {0} Profile Not Found" , getUserInfo.UserId);
-                        throw new AppException("User Not Found", 404, "UN01");
+                        throw new AppException(Messages.Auth.UserNotFound, 404, "UN01");
                     }
                     
                     // Sign JWT for User
@@ -84,14 +85,14 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                     if (getJWTKey == null || getJWTIss == null || getJwtAud == null)
                     {
                         _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
-                        throw new AppException("System Error", StatusCodes.Status500InternalServerError, "E01");
+                        throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
                     }
                     string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.UserEmail ,result.Username, getUserInfo.UserId , result.Roles);
 
                     if (token == null)
                     {
                         _logger.LogError("Token Generator System Error");
-                        throw new AppException("System Error", StatusCodes.Status500InternalServerError, "E01");
+                        throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
                     }
 
                     return new BaseResponse<ResRegularLoginDto>()
@@ -104,7 +105,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                             Roles = result.Roles,
                             Username = result.Username
                         },
-                        Message = "Login SuccessFully"
+                        Message = Messages.Auth.LoginSuccess
                     };
                 }
             }
@@ -115,7 +116,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
         }
         catch (Exception)
         {
-            throw new AppException("There's an error with the system", 500, "S01");
+            throw new AppException(Messages.System.GeneralError, 500, "S01");
         }
     }
 }

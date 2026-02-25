@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -31,22 +32,22 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
         if (CinemaValidate.ValidateCinemaName(null, request.CinemaName, _dbContext))
         {
-            validationErrors.Add("Error : There's already a cinema named " + request.CinemaName);
+            validationErrors.Add(Messages.Cinema.AlreadyExistsName(request.CinemaName));
         }
 
         if (CinemaValidate.ValidateCinemaDescription(null, request.CinemaDescription, _dbContext))
         {
-            validationErrors.Add("Error : There's already a cinema Description " + request.CinemaDescription);
+            validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription));
         }
 
         if (CinemaValidate.ValidateCinemaLocation(null , request.CinemaLocation, _dbContext))
         {
-            validationErrors.Add("Error : There's already a cinema Location " + request.CinemaLocation);
+            validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation));
         }
 
         if (CinemaValidate.ValidateCinemaHotLineNumber(null , request.CinemaHotlineNumber, _dbContext))
         {
-            validationErrors.Add("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber);
+            validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber));
         }
         
         if (validationErrors.Any())
@@ -79,7 +80,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             {
                 IsSuccess = true,
                 Data = null,
-                Message = "Add Cinema Completed"
+                Message = Messages.Cinema.AddCompleted
             };
         }
         catch (AppException)
@@ -89,7 +90,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         catch (Exception e)
         {
             _logger.LogError("There a Error with System : {0}" , e.Message);
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
 
@@ -101,7 +102,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x => x.CinemaId.Equals(itemId));
             if (findCinema == null)
             {
-                throw new AppException("Error : There is no cinema with Id : " + itemId,
+                throw new AppException(Messages.Cinema.NotFoundById(itemId),
                     StatusCodes.Status404NotFound, "C01");
             }
             else
@@ -119,22 +120,22 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
                 if (checkExitsDescription)
                 {
-                    validationErrors.Add("Error : There's already a cinema Description " + request.CinemaDescription);
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription));
                 }
 
                 if (checkExitsCinemaName)
                 {
-                    validationErrors.Add("Error : There's already a cinema named " + request.CinemaName);
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsName(request.CinemaName));
                 }
 
                 if (checkExitsHotlineNumber)
                 {
-                    validationErrors.Add("Error : There's already a cinema hotline Number " + request.CinemaHotlineNumber);
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber));
                 }
 
                 if (checkExitsLocation)
                 {
-                    validationErrors.Add("Error : There's already a cinema Location " + request.CinemaLocation);
+                    validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation));
                 }
                 
                 if (validationErrors.Any())
@@ -181,7 +182,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 {
                     IsSuccess = true,
                     Data = null,
-                    Message = "Update Cinema Completed"
+                    Message = Messages.Cinema.UpdateCompleted
                 };
             }
         }
@@ -191,7 +192,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         }
         catch (Exception ex)
         {
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
 

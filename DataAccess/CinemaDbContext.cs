@@ -18,9 +18,9 @@ namespace DataAccess;
 
 public class CinemaDbContext : DbContext
 {
-    private readonly user_identity_code_constant user_identity_code_constant;
+    private readonly UserIdentityCodeConstant user_identity_code_constant;
 
-    public CinemaDbContext(DbContextOptions<CinemaDbContext> options , user_identity_code_constant user_identity_code_constant) : base(options)
+    public CinemaDbContext(DbContextOptions<CinemaDbContext> options , UserIdentityCodeConstant user_identity_code_constant) : base(options)
     {
         this.user_identity_code_constant = user_identity_code_constant;
     }
@@ -54,6 +54,8 @@ public class CinemaDbContext : DbContext
     public DbSet<movieFormatMovieInfoEntity> MovieFormatMovieInfoEntity { get; set; }
     
     public DbSet<movieRequiredAgeEntity> MovieRequiredAgeEntity { get; set; }
+    
+    public DbSet<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; }
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

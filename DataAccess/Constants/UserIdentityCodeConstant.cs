@@ -2,20 +2,21 @@
 
 
 using Shared.Exceptions;
+using Shared.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shared.Utils;
 
 namespace DataAccess.Constants;
 
-public class user_identity_code_constant
+public class UserIdentityCodeConstant
 {
     public IConfiguration _IConfiguration;
     
-    private ILogger<user_identity_code_constant> _logger;
+    private ILogger<UserIdentityCodeConstant> _logger;
 
-    public user_identity_code_constant(IConfiguration _IConfiguration ,
-        ILogger<user_identity_code_constant> _logger)
+    public UserIdentityCodeConstant(IConfiguration _IConfiguration ,
+        ILogger<UserIdentityCodeConstant> _logger)
     {
         this._IConfiguration = _IConfiguration;
         this._logger = _logger;
@@ -29,11 +30,11 @@ public class user_identity_code_constant
         if (getAESKey == null || getAESIV == null)
         {
             _logger.LogError("AES Key is Null !");
-            throw new AppException("There's a error with System", 500, "E01");
+            throw new AppException(Messages.System.GeneralError, 500, "E01");
         }
     
-        // Khởi tạo mảng để chứa 7 mã định danh đã mã hóa
-        string[] encryptedUsers = new string[7];
+        // Khởi tạo mảng để chứa 8 mã định danh đã mã hóa
+        string[] encryptedUsers = new string[8];
 
         encryptedUsers[0] = AES256Helper.Encrypt("382947105632", getAESKey, getAESIV);
         encryptedUsers[1] = AES256Helper.Encrypt("710584293641", getAESKey, getAESIV);
@@ -42,6 +43,7 @@ public class user_identity_code_constant
         encryptedUsers[4] = AES256Helper.Encrypt("603847219584", getAESKey, getAESIV);
         encryptedUsers[5] = AES256Helper.Encrypt("472105938672", getAESKey, getAESIV);
         encryptedUsers[6] = AES256Helper.Encrypt("836491025740", getAESKey, getAESIV);
+        encryptedUsers[7] = AES256Helper.Encrypt("836491025712", getAESKey, getAESIV);
 
         return encryptedUsers;
     }

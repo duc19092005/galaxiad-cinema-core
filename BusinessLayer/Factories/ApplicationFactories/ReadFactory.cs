@@ -1,5 +1,6 @@
 
 using Shared.Exceptions;
+using Shared.Localization;
 using Shared.Enums;
 using BusinessLayer.Interfaces.IBehaviors;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ public class ReadFactory
     {
         if (!Enum.IsDefined(typeof(WriteEnum), write_enum))
         {
-            throw new AppException("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new AppException(Messages.System.MethodNotSupported, 400, "UNSUPPORTED_METHOD");
         }
         return (IReadBehavior<TResponse>)_provider.GetRequiredService(typeof(IReadBehavior<TResponse>));
     }

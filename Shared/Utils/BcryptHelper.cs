@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 // ReSharper disable All
 
 namespace Shared.Utils;
@@ -14,7 +15,7 @@ public class BCrypt_helper
         }
         catch (Exception e)
         {
-            throw new AppException("Hashing password failed", 500 , "H01");
+            throw new AppException(Messages.Utility.HashingPasswordFailed, 500 , "H01");
         }
     }
 
@@ -25,7 +26,7 @@ public class BCrypt_helper
             return BCrypt.Verify(inputPassword , dbPassword);
         }catch (Exception e)
         {
-            throw new AppException("Validate password failed", 500 , "H01");
+            throw new AppException(Messages.Utility.ValidatePasswordFailed, 500 , "H01");
         }
     }
 }

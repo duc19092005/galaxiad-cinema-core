@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess;
 using BusinessLayer.Interfaces.IIdentityAccess;
@@ -49,26 +50,26 @@ public class UserProfileUseCase : IProfileBehavior
                 .FirstOrDefaultAsync();
 
             if (result == null) 
-                throw new AppException("User Not Found", 404, "UN01");
+                throw new AppException(Messages.Auth.UserNotFound, 404, "UN01");
             
             if (string.IsNullOrEmpty(result.Username))
                 _logger.LogError("User with Id {0} Profile Not Found", userId);
 
             if (result.Roles == null || result.Roles.Length == 0)
-                throw new AppException("User Role Not Found", 403, "UN02");
+                throw new AppException(Messages.Auth.RoleNotFound, 403, "UN02");
 
             return new BaseResponse<ResRegularLoginDto>()
             {
                 IsSuccess = true,
                 Data = result,
-                Message = "Validate Successfully"
+                Message = Messages.Auth.ValidateSuccess
             };
         }
         catch (AppException) { throw; }
         catch (Exception ex)
         {
             _logger.LogError(ex, "System error in getAccess");
-            throw new AppException("There's an error with the system", 500, "S01");
+            throw new AppException(Messages.System.GeneralError, 500, "S01");
         }
     }
     
@@ -83,16 +84,16 @@ public class UserProfileUseCase : IProfileBehavior
 
             if (findUser == null)
             {
-                throw new AppException("Cannot Find User Information", 404, "Error01");
+                throw new AppException(Messages.Auth.UserInfoNotFound, 404, "Error01");
             }
             else
             {
                 if (!BCrypt_helper.Validate(findUser.Password, request.OldPassword!))
                 {
-                    throw new AppException("Old Password is Not Match !", 400, "Error02");
+                    throw new AppException(Messages.Auth.OldPasswordNotMatch, 400, "Error02");
                 }else if (!BCrypt_helper.Validate(findUser.Password, request.NewPassword!))
                 {
-                    throw new AppException("New Password is the same of old password !", 400, "Error02");
+                    throw new AppException(Messages.Auth.NewPasswordSameAsOld, 400, "Error02");
                 }else
                 {
                     var newPassword = BCrypt_helper.Hash(request.NewPassword);
@@ -102,7 +103,7 @@ public class UserProfileUseCase : IProfileBehavior
                     {
                         IsSuccess = true,
                         Data = null,
-                        Message = "Change Password Completed"
+                        Message = Messages.Auth.ChangePasswordCompleted
                     };
                 }
 

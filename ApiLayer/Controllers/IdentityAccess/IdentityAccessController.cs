@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ApiLayer.Controllers.IdentityAccess;
 
 [Route("api/v1/[controller]/")]
+[Tags("Identity Access")]
 [ApiController]
 public class IdentityAccessController : ControllerBase
 {

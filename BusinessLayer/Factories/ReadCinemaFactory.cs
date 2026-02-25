@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Interfaces.ICinema;
 using Shared.Enums;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,7 +19,7 @@ public class ReadDataFromCinemaFactory
     {
         if (!Enum.IsDefined(typeof(WriteEnum), writeEnum))
         {
-            throw new AppException("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new AppException(Messages.System.MethodNotSupported, 400, "UNSUPPORTED_METHOD");
         }
         else
         {

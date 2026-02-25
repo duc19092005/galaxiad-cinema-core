@@ -13,8 +13,6 @@ public class MovieScheduleInfoEntity : BaseManagementStatus<UserInfoEntity>
     
     public Guid MovieFormatId { get; set; }
     
-    public DateTime StartedTime { get; set; }
-    
     public DateTime EndedTime { get; set; }
     
     public MovieFormatInfoEntity? MovieFormatInfoEntity { get; set; }

@@ -1,4 +1,5 @@
 using BusinessLayer.Services.IdentityAccess;
+using Shared.Localization;
 using Shared.Utils;
 
 namespace ApiLayer.Bootstraps.Common;
@@ -12,6 +13,13 @@ public static class CommonServicesBootstrap
         // ----------------------------------------------------------------
         
         services.AddScoped<IUserContextService, UserContextService>();
+        
+        // ----------------------------------------------------------------
+        // |                   Localization Services                      |
+        // ----------------------------------------------------------------
+        
+        services.AddScoped<ILocalizationService, LocalizationService>();
+        
         return services;
     }
 }

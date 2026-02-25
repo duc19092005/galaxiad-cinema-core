@@ -9,7 +9,7 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 [ApiController]
 [Route("api/facilities/movie-format")]
 [Authorize(Policy = "FacilitiesManager")]
-[Tags("FacilitiesManager - Movie Format")]
+[Tags("Facilities Manager - Movie Format")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class MovieFormatController : ControllerBase
 {

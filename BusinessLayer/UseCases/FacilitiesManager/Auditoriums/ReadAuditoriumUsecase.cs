@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -61,7 +62,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
             {
                 Data = getData,
                 IsSuccess = true,
-                Message = "Get auditorium completed"
+                Message = Messages.Auditorium.GetCompleted
             };
         }
         catch (AppException)
@@ -80,7 +81,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
         try
         {
             var userIdClaim = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Sid)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim)) throw new AppException("Unauthorize", 401, "AUTH02");
+            if (string.IsNullOrEmpty(userIdClaim)) throw new AppException(Messages.Auth.Unauthorized, 401, "AUTH02");
             var UserId = Guid.Parse(userIdClaim);
 
             var result = await _dbContext.AuditoriumInfoEntities
@@ -106,14 +107,14 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
 
             if (result == null)
             {
-                throw new AppException("Error : Can not find auditorium", 404, "NOTFOUND01");
+                throw new AppException(Messages.Auditorium.CannotFind, 404, "NOTFOUND01");
             }
 
             return new BaseResponse<GetResAuditoriumDto>()
             {
                 Data = result,
                 IsSuccess = true,
-                Message = "Get auditorium completed"
+                Message = Messages.Auditorium.GetCompleted
             };
         }
         catch (AppException)
@@ -149,7 +150,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
             {
                 Data = getData,
                 IsSuccess = true,
-                Message = "Get auditorium completed"
+                Message = Messages.Auditorium.GetCompleted
             };
         }
         catch (AppException)

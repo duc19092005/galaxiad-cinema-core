@@ -11,7 +11,7 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 [ApiController]
 [Route("api/facilities/cinema")]
 [Authorize(Policy = "FacilitiesManager")]
-[Tags("FacilitiesManager - Cinema")]
+[Tags("Facilities Manager - Cinema")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class CinemaController : ControllerBase
 {

@@ -1,32 +1,31 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace BusinessLayer.Dtos.TheaterManager.MovieSchedules;
 
 
 
-class TheaterManagerAddMovieSchedulesRequest
+public class TheaterManagerAddMovieSchedulesRequest
 {
+    [Required(ErrorMessage = "Auditorium Id is required")]
     public Guid AuditoriumId {get;set;}
-
+    
+    [Required(ErrorMessage = "TheaterManager is required")]
     public List<SchedulesInfos> Slots {get;set;} = [];
 }
 
 
-class TheaterManagerEditMovieSchedulesRequest
+public class TheaterManagerEditMovieSchedulesRequest
 {
-    public Guid AuditoriumId {get;set;}
 
     public List<SchedulesInfos>? Slots {get;set;}
 
 }
 
-class SchedulesInfos
+public class SchedulesInfos
 {
     public Guid MovieId {get;set;}
 
     public Guid FormatId {get;set;}
 
-    public DateTime StartedTime {get;set;}
-
-    public int Duration {get;set;}
-    public DateTime EndedTime {get;set;}
-
+    public DateTime StartedDate {get;set;}
 }

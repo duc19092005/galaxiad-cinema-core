@@ -1,6 +1,7 @@
 using BusinessLayer.Interfaces.IIdentityAccess;
 using Shared.Enums;
 using Shared.Exceptions;
+using Shared.Localization;
 using Microsoft.Extensions.DependencyInjection;
 
 
@@ -23,7 +24,7 @@ public class RegisterFactory
                     _serviceProvider.GetRequiredService(typeof(IAddBehavior<TRequest, TResponse>));
 
             default:
-                throw new AppException("Method not supported", 400, "UNSUPPORTED_METHOD");
+                throw new AppException(Messages.System.MethodNotSupported, 400, "UNSUPPORTED_METHOD");
         }
     }
 }

@@ -1,6 +1,7 @@
 using BusinessLayer.Services.FacilitiesManager.Cinemas;
 using BusinessLayer.Services.FacilitiesManager.Auditoriums;
 using BusinessLayer.Services.FacilitiesManager.MovieInfos.MovieFormats;
+using BusinessLayer.Services.TheaterManager.MovieSchedules;
 
 namespace ApiLayer.Bootstraps.Facilities;
 
@@ -17,6 +18,7 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<FacilitiesManagerWriteAuditoriumService>();
         services.AddScoped<FacilitiesManagerReadMovieFormatService>();
         services.AddScoped<FacilitiesManagerReadAuditoriumService>();
+        services.AddScoped<TheaterManagerWriteSchedulesService>();
 
         return services;
     }

@@ -29,7 +29,6 @@
     <ItemGroup>
       <Folder Include="Controllers\admin\" />
       <Folder Include="Controllers\customer\" />
-      <Folder Include="Controllers\theater-manager\" />
     </ItemGroup>
 
 </Project>

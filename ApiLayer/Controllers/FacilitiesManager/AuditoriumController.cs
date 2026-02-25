@@ -8,7 +8,7 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 [ApiController]
 [Route("api/facilities/auditorium")]
 [Authorize(Policy = "FacilitiesManager")]
-[Tags("FacilitiesManager - auditorium")]
+[Tags("Facilities Manager - auditorium")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class auditoriumController : ControllerBase
 {

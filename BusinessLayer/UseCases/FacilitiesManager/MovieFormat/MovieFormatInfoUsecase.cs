@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -36,7 +37,7 @@ public class FacilitiesManagerReadMovieFormatUseCase : IReadBehavior<ResFaciliti
             {
                 IsSuccess = true,
                 Data = results,
-                Message = "Movie Format Datas"
+                Message = Messages.MovieFormat.GetDataSuccess
             };
         }
         catch (AppException)

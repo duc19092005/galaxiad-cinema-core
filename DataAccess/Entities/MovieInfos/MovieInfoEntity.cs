@@ -25,8 +25,8 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     [Column(TypeName = "varchar(2048)")]
     public string MovieImageUrl { get; set; } = string.Empty;
-
-
+    
+    public int MovieDuration { get; set; }
     public DateTime EndedDate {get;set;}
 
     public Guid ManagerId { get; set; }

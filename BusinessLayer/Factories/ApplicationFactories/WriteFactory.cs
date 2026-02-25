@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -21,7 +22,7 @@ public class WriteFactory
     {
         if (!Enum.IsDefined(typeof(WriteEnum), method))
         {
-            throw new AppException("Method not supported", 400, "UNSUPPORTED_METHOD");
+            throw new AppException(Messages.System.MethodNotSupported, 400, "UNSUPPORTED_METHOD");
         }
 
         return (IWriteBehavior<TAddRequest, TEditRequest, TResponse>)_serviceProvider.GetRequiredService(

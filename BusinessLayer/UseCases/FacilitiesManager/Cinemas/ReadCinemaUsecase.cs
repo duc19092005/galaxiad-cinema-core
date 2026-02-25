@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -39,7 +40,7 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
             {
                 IsSuccess = true,
                 Data = getResults,
-                Message = "Get Cinema List SuccessFully"
+                Message = Messages.Cinema.GetListSuccess
             };
         }
         catch (Exception e)
@@ -68,7 +69,7 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
 
             if (cinemaData == null)
             {
-                throw new AppException("Sorry, We can not find the cinema",
+                throw new AppException(Messages.Cinema.NotFound,
                     StatusCodes.Status404NotFound, "NotFound01");
             }
 
@@ -76,7 +77,7 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
             {
                 IsSuccess = true,
                 Data = cinemaData,
-                Message = "Cinema Infos"
+                Message = Messages.Cinema.GetInfoSuccess
             };
         }
         catch (Exception e)

@@ -30,6 +30,9 @@ public class ReqAddMovieManagerMovieDto
 
     [Required(ErrorMessage = "Movie Genre Ids is required")]
     public List<Guid> MovieGenreIds { get; set; } = [];
+    
+    [Required(ErrorMessage = "Movie Duration is Required")]
+    public int Duration { get; set; }
 }
 
 public class ReqEditMovieManagerMovieDto
@@ -51,6 +54,8 @@ public class ReqEditMovieManagerMovieDto
     public List<Guid>? MovieFormatIds { get; set; } = [];
 
     public List<Guid>? MovieGenreIds { get; set; } = [];
+    
+    public int? Duration { get; set; }
 }
 
 public class ResGetMovieInfosMovieManagerDto
@@ -74,8 +79,10 @@ public class ResGetMovieInfosMovieManagerDto
     public DateTime UpdatedAt { get; set; }
     
     public DateTime CreatedAt { get; set; }
+
+    public string UpdatedBy { get; set; } = String.Empty;
+
+    public string CreatedBy { get; set; } = String.Empty;
     
-    public DateTime UpdatedBy { get; set; }
-    
-    public DateTime CreatedBy { get; set; }
+    public int Duration { get; set; }
 }

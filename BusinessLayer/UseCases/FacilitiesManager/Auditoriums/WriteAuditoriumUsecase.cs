@@ -1,4 +1,5 @@
 using Shared.Exceptions;
+using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -40,7 +41,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             if (AuditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, null, request.AuditoriumNumber,
                     request.CinemaId))
             {
-                throw new AppException("Error : Auditorium already exists", 400, "D01");
+                throw new AppException(Messages.Auditorium.AlreadyExists, 400, "D01");
             }
             // Add Auditorimum
             Guid generateAuditoriumId = Guid.NewGuid();
@@ -81,7 +82,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             return new BaseResponse<string>()
             {
                 IsSuccess = true,
-                Message = "Add Auditorium completed"
+                Message = Messages.Auditorium.AddCompleted
             };
         }
         catch (AppException e)
@@ -109,7 +110,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                     request.AuditoriumNumber,
                     request.CinemaId))
             {
-                throw new AppException("Duplicate Auditorium Number", 400, "D01");
+                throw new AppException(Messages.Auditorium.DuplicateNumber, 400, "D01");
             }
 
             var findAuditorium = await _dbContext.AuditoriumInfoEntities.FirstOrDefaultAsync
@@ -117,7 +118,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             
             if (findAuditorium == null)
             {
-                throw new NotFoundException("Auditorium Not Found");
+                throw new NotFoundException(Messages.Auditorium.NotFound);
             }
             
             findAuditorium.AuditoriumNumber = request.AuditoriumNumber ?? findAuditorium.AuditoriumNumber;
@@ -157,7 +158,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             return new BaseResponse<string>()
             {
                 IsSuccess = true,
-                Message = "Update Auditorium completed",
+                Message = Messages.Auditorium.UpdateCompleted,
                 Data = null
             };
         }

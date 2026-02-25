@@ -9,7 +9,7 @@ namespace ApiLayer.Controllers.MovieManager;
 [ApiController]
 [Route("api/movieManager/movies")]
 [Authorize(Policy = "MovieManager")]
-[Tags("movie Manager - Movies")]
+[Tags("Movie Manager - Movies")]
 [ApiExplorerSettings(GroupName = "v1-movie-manager")]
 public class movieController : ControllerBase
 {

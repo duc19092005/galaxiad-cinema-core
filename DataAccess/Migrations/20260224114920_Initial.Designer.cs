@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    [Migration("20260131173123_newMig")]
-    partial class newMig
+    [Migration("20260224114920_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -369,7 +369,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Standard digital 2D format with crystal clear image quality.",
                             MovieFormatName = "2D",
                             MovieFormatPrice = 80000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1798)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -382,7 +382,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Immersive three-dimensional visual experience with specialized glasses.",
                             MovieFormatName = "3D",
                             MovieFormatPrice = 110000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1806)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -395,7 +395,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Giant screen format with unparalleled brightness and ultra-high resolution.",
                             MovieFormatName = "IMAX",
                             MovieFormatPrice = 250000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1809)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -408,7 +408,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "State-of-the-art surround sound technology for a lifelike audio experience.",
                             MovieFormatName = "Dolby Atmos",
                             MovieFormatPrice = 130000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1812)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -421,7 +421,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "A revolutionary 270-degree panoramic cinematic experience.",
                             MovieFormatName = "ScreenX",
                             MovieFormatPrice = 160000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1814)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -434,7 +434,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Multi-sensory experience featuring motion seats, wind, water, and scents.",
                             MovieFormatName = "4DX",
                             MovieFormatPrice = 180000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1818)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -447,7 +447,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Premium luxury seating with in-theater dining and personalized service.",
                             MovieFormatName = "Gold Class",
                             MovieFormatPrice = 300000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1867)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         },
                         new
                         {
@@ -460,7 +460,7 @@ namespace DataAccess.Migrations
                             MovieFormatDescription = "Luxury bed-seating auditorium designed for ultimate comfort and couples.",
                             MovieFormatName = "L'Amour",
                             MovieFormatPrice = 600000m,
-                            UpdatedAt = new DateTime(2026, 2, 1, 0, 31, 23, 126, DateTimeKind.Local).AddTicks(1869)
+                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
                         });
                 });
 
@@ -811,15 +811,12 @@ namespace DataAccess.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("CustomerAddress")
-                        .IsRequired()
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("CustomerEmail")
-                        .IsRequired()
                         .HasColumnType("varchar(40)");
 
                     b.Property<string>("CustomerName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("OrderDate")
@@ -830,6 +827,9 @@ namespace DataAccess.Migrations
 
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("StaffId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("TotalPrice")
                         .HasColumnType("decimal(18,2)");
@@ -842,9 +842,7 @@ namespace DataAccess.Migrations
 
                     b.HasKey("OrderId");
 
-                    b.HasIndex("UserId", "OrderId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
+                    b.HasIndex("StaffId");
 
                     b.ToTable("OrderInfoEntity");
                 });
@@ -976,6 +974,14 @@ namespace DataAccess.Migrations
                             Password = "$2a$12$HSYdRT84AjbFawIfnmluJ.AMrBqmqBtKyyn6kNZFTNW7olAMMgXPy",
                             RegisterMethod = 0,
                             UserEmail = "cashier@cinema.com"
+                        },
+                        new
+                        {
+                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0"),
+                            AccountStatus = 0,
+                            Password = "$2a$12$HSYdRT84AjbFawIfnmluJ.AMrBqmqBtKyyn6kNZFTNW7olAMMgXPy",
+                            RegisterMethod = 0,
+                            UserEmail = "testAdminFacilitiesManager@gmail.com"
                         });
                 });
 
@@ -1049,6 +1055,14 @@ namespace DataAccess.Migrations
                             IdentityCode = "pFoBRlv4RT1kyqKE1Ch3Hw==",
                             PhoneNumber = "0944444444",
                             UserName = "Main Cashier"
+                        },
+                        new
+                        {
+                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0"),
+                            DateOfBirth = new DateTime(1986, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            IdentityCode = "fByrPlhQbK2U5YNuCLR5rA==",
+                            PhoneNumber = "0955555555",
+                            UserName = "Test Multi Role Account"
                         });
                 });
 
@@ -1091,6 +1105,16 @@ namespace DataAccess.Migrations
                         {
                             RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c"),
                             UserId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b"),
+                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f"),
+                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0")
                         });
                 });
 
@@ -1544,7 +1568,7 @@ namespace DataAccess.Migrations
                 {
                     b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "UserInfoEntity")
                         .WithMany("OrderInfoEntity")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("StaffId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("UserInfoEntity");

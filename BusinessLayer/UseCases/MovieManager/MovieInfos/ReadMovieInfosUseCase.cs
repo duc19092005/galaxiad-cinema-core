@@ -1,6 +1,7 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.MovieManager;
 using BusinessLayer.Interfaces.IBehaviors;
+using Shared.Localization;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,12 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieImageUrl = x.MovieImageUrl,
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity
-                    .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList()
+                    .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                CreatedBy =  _dbContext.UserProfileEntity
+                    .FirstOrDefault(x => x
+                        .UserId.Equals
+                            (getUserId())).UserName,
+                Duration = x.MovieDuration
             })
             .AsNoTracking()
             .ToListAsync();
@@ -44,7 +50,7 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
         {
             IsSuccess = true,
             Data = getUserMovieInfos,
-            Message = "Get Movies Info Success"
+            Message = Messages.Movie.GetListSuccess
         };
     }
 
@@ -63,13 +69,14 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieImageUrl = m.MovieImageUrl,
                 MovieName = m.MovieName,
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity
-                    .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList()
+                    .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                Duration = m.MovieDuration
             }).FirstOrDefaultAsync();
         
         return new BaseResponse<ResGetMovieInfosMovieManagerDto>()
         {
             Data = findMovieInfos ,
-            Message = "Get Movie Info Successfully" ,
+            Message = Messages.Movie.GetInfoSuccess ,
             IsSuccess = true
         };
 

@@ -1,9 +1,11 @@
+using Shared.Localization;
+
 namespace Shared.Exceptions;
 
 public static class CustomSystemException
 {
-    public static Exception SystemExceptionCaller()
+    public static AppException SystemExceptionCaller()
     {
-        throw new AppException("There's an error with the system", 500, "S01");
+        return new AppException(Messages.System.GeneralError, 500, "S01");
     }
 }

@@ -6,5 +6,6 @@ public enum WriteEnum
     Auditorium ,
     MovieFormat ,
     StaffInformation ,
-    Movie
+    Movie ,
+    MovieSchedules
 }

@@ -2,6 +2,7 @@
 using Shared.Exceptions;
 using BusinessLayer.Dtos.IdentityAccess;
 using BusinessLayer.Dtos;
+using Shared.Localization;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.Validators.IdentityAccess;
 using DataAccess;
@@ -38,7 +39,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
 
             if (RegisterValidate.CheckExistEmail(_dbContext, dto.UserEmail))
             {
-                validationErrors.Add("Email Already Exits");
+                validationErrors.Add(Messages.Auth.EmailAlreadyExists);
             }
 
             var ageMessage = RegisterValidate.CheckValidateAge(dto.DateOfBirth, RegisterUserTypeEnum.Customer);
@@ -59,7 +60,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
 
             if (RegisterValidate.CheckExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.IdentityCode))
             {
-                validationErrors.Add("Identity Code is already Exits");
+                validationErrors.Add(Messages.Auth.IdentityCodeAlreadyExists);
             }
             
             if (validationErrors.Any())
@@ -102,7 +103,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
             {
                 IsSuccess = true,
                 Data = null,
-                Message = "Register Successfully"
+                Message = Messages.Auth.RegisterSuccess
             };
         }catch (AppException) {
             await transaction.RollbackAsync();
@@ -111,7 +112,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
         catch (Exception ex) {
             _logger.LogError(ex, ex.Message);
             await transaction.RollbackAsync();
-            throw new AppException("Database Error", 500, "S01");
+            throw new AppException(Messages.System.DatabaseError, 500, "S01");
         }
     }
 }

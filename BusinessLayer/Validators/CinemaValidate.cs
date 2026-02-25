@@ -1,5 +1,6 @@
 
 using Shared.Exceptions;
+using Shared.Localization;
 using DataAccess;
 using Microsoft.AspNetCore.Http;
 
@@ -28,7 +29,7 @@ public class CinemaValidate
         }
         catch (Exception e)
         {
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
 
@@ -54,7 +55,7 @@ public class CinemaValidate
         }
         catch (Exception e)
         {
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
     
@@ -78,7 +79,7 @@ public class CinemaValidate
         }
         catch (Exception e)
         {
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
     
@@ -103,7 +104,7 @@ public class CinemaValidate
         }
         catch (Exception e)
         {
-            throw new AppException("System Error", StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
     }
 }
