@@ -1,6 +1,7 @@
 using DataAccess.Constants;
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
+using DataAccess.Entities.ScheduleJob;
 using DataAccess.Entities.UserInfos;
 using DataAccess.RelationshipKeys.MovieInfos;
 using DataAccess.SeedData;
@@ -58,6 +59,9 @@ public class CinemaDbContext : DbContext
     public DbSet<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; }
     
     public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
+    
+    public DbSet<ScheduleJobLogger> BackGroundJobLoggerEntity { get; set; }
+    
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -795,6 +795,31 @@ namespace DataAccess.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.ScheduleJob.ScheduleJobLogger", b =>
+                {
+                    b.Property<string>("JobId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("FinishedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("JobCategory")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SchedulesJobStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("JobId");
+
+                    b.ToTable("BackGroundJobLoggerEntity");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderDetailsInfo", b =>
                 {
                     b.Property<Guid>("OrderId")

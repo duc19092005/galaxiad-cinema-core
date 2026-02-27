@@ -8,7 +8,7 @@ static class GeneralValidation
         DateTime? oldStart = null,
         DateTime? oldEnd = null)
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
 
         var finalStart = reqStart ?? oldStart ?? DateTime.MinValue;
         var finalEnd = reqEnd ?? oldEnd ?? DateTime.MaxValue;
@@ -20,7 +20,7 @@ static class GeneralValidation
 
         if (reqStart.HasValue || oldStart == null)
         {
-            var startToVerify = reqStart ?? finalStart;
+            var startToVerify = (reqStart ?? finalStart).ToUniversalTime();
             if (startToVerify < now.AddSeconds(-20))
             {
                 return (false, "Started Date must be higher than the current date.");

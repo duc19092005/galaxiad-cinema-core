@@ -1,6 +1,7 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.TheaterManager.MovieSchedules;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
 using DataAccess.Entities.MovieInfos;
@@ -19,13 +20,16 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     private readonly ILogger<WriteMovieSchedulesUseCase> _logger;
     
     private readonly IUserContextService _userContextService;
+    
+    private readonly IScheduleJobsService _scheduleJobsService;
 
     public WriteMovieSchedulesUseCase(CinemaDbContext cinemaDbContext , ILogger<WriteMovieSchedulesUseCase> logger ,
-        IUserContextService userContextService)
+        IUserContextService userContextService , IScheduleJobsService scheduleJobsService)
     {
         _cinemaDbContext = cinemaDbContext;
         _logger = logger;
         _userContextService = userContextService;
+        _scheduleJobsService = scheduleJobsService;
     }
     public async Task<BaseResponse<string>> AddItem(TheaterManagerAddMovieSchedulesRequest request)
     {
@@ -309,6 +313,31 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             Data = null,
             IsSuccess = true
         };
+    }
+
+    public async Task<bool> SetScheduleStatus(Guid scheduleId)
+    {
+        var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
+        if (findSchedule == null)
+        {
+            return false;
+        }
+        else
+        {
+            try
+            {
+                findSchedule.IsActive = false;
+                _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
+                await _cinemaDbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error Updating Movie Schedule Status");
+                return false;
+            }
+        }
+        
     }
 
 }

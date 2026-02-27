@@ -1,3 +1,4 @@
+using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using Shared.Localization;
 using Shared.Utils;
@@ -19,6 +20,12 @@ public static class CommonServicesBootstrap
         // ----------------------------------------------------------------
         
         services.AddScoped<ILocalizationService, LocalizationService>();
+        
+        // ----------------------------------------------------------------
+        // |                   Schedules JobServices                      |
+        // ----------------------------------------------------------------
+        
+        services.AddScoped<IScheduleJobsService ,  ScheduleJobsService>();
         
         return services;
     }

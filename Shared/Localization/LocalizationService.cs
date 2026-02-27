@@ -188,7 +188,6 @@ public class LocalizationService : ILocalizationService
         ViToEnTranslations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var kvp in EnToViTranslations)
         {
-            // Avoid duplicate keys; en is the primary source
             if (!ViToEnTranslations.ContainsKey(kvp.Value))
             {
                 ViToEnTranslations[kvp.Value] = kvp.Key;

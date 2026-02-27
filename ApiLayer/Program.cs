@@ -7,6 +7,7 @@ using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
+using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -113,11 +114,16 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1-theater-manager", new OpenApiInfo { Title = "Theater-manager API", Version = "v1" });
 });
 
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+
 var app = builder.Build();
 
 // Singleton
 app.UseCors("web");
-
 
 app.UseErrorMiddleware();
 
@@ -142,6 +148,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseHangfireDashboard();
 
 app.MapControllers();
 

@@ -3,6 +3,7 @@ using Shared.Localization;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.MovieManager;
+using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators.MovieManager;
 using DataAccess;
@@ -11,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shared.Utils;
 using BusinessLayer.Validators;
+using Shared.Enums;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
 
@@ -20,14 +22,17 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     private readonly ILogger<WriteMovieInfosUseCase> _logger;
     private readonly CinemaDbContext _dbContext;
     private readonly cloudinaryHelper _cloudinaryHelper;
+    private readonly IScheduleJobsService _scheduleJobsService;
+
 
     public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, CinemaDbContext dbContext,
-        cloudinaryHelper cloudinaryHelper)
+        cloudinaryHelper cloudinaryHelper , IScheduleJobsService scheduleJobService)
     {
         _userContextService = userContextService;
         _logger = logger;
         _dbContext = dbContext;
         _cloudinaryHelper = cloudinaryHelper;
+        _scheduleJobsService = scheduleJobService;
     }
 
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
@@ -107,10 +112,19 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 FormatId = id
             });
 
+            string getJobStatus =
+                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobEnums.Movies, newMovieId, request.StartedDate);
+
+            if (String.IsNullOrEmpty(getJobStatus))
+            {
+                _logger.LogError("Error While Adding Jobs in Movie Service");
+                throw CustomSystemException.SystemExceptionCaller();
+            }
+
             await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
-
+            
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
 
@@ -198,7 +212,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     throw new BadRequestException(validationsErrors, "S01");
                 }
 
-
+                bool UpdateJobStatus = await _scheduleJobsService.UpdatedJobIntoBackground
+                    (SchedulesJobEnums.Movies, itemId, request.StartedDate);
+                if (!UpdateJobStatus)
+                {
+                    _logger.LogError("Error While Adding Jobs in Movie Service");
+                    throw CustomSystemException.SystemExceptionCaller();
+                }
                 findTheMovie.MovieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.MovieRequiredAgeId;
                 findTheMovie.MovieDescription = request.MovieDescription ?? findTheMovie.MovieDescription;
                 findTheMovie.MovieName = request.MovieName ?? findTheMovie.MovieName;
@@ -302,5 +322,28 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
         return null!;
+    }
+
+    public async Task UpdatedComingMovieStatusJobs(Guid movieId)
+    {
+        var findMovie = await _dbContext.MovieInfoEntity.FindAsync(movieId);
+        if (findMovie == null)
+        {
+            // Log the error
+            _logger.LogError("Can't find movie with id: {movieId} to run Jobs", movieId);
+        }
+        else
+        {
+            try
+            {
+                findMovie.IsActive = true;
+                _dbContext.MovieInfoEntity.Update(findMovie);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e, $"Error while update movie status id : {movieId}");
+            }
+        }
     }
 }

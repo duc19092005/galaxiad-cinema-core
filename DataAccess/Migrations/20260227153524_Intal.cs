@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace DataAccess.Migrations
 {
     /// <inheritdoc />
-    public partial class AddLockoutReason : Migration
+    public partial class Intal : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,6 +16,22 @@ namespace DataAccess.Migrations
                 table: "UserInfoEntity",
                 type: "nvarchar(max)",
                 nullable: true);
+
+            migrationBuilder.CreateTable(
+                name: "BackGroundJobLoggerEntity",
+                columns: table => new
+                {
+                    JobId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TargetId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    StartedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    FinishedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    SchedulesJobStatus = table.Column<int>(type: "int", nullable: false),
+                    JobCategory = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BackGroundJobLoggerEntity", x => x.JobId);
+                });
 
             migrationBuilder.UpdateData(
                 table: "UserInfoEntity",
@@ -63,6 +79,9 @@ namespace DataAccess.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "BackGroundJobLoggerEntity");
+
             migrationBuilder.DropColumn(
                 name: "LockoutReason",
                 table: "UserInfoEntity");

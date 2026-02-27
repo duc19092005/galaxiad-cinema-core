@@ -27,8 +27,6 @@ public class movieController : ControllerBase
     [HttpPost("")]
     public async Task<IActionResult> CreateMovie(ReqAddMovieManagerMovieDto request)
     {
-        Console.WriteLine("Ended At " + request.EndedDate);
-        Console.WriteLine("Started At " + request.StartedDate);
         var results = await movieManagerWriteMovieService.AddItem(request);
         return Ok(results);
     }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    [Migration("20260225182549_AddLockoutReason")]
-    partial class AddLockoutReason
+    [Migration("20260227153524_Intal")]
+    partial class Intal
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -796,6 +796,31 @@ namespace DataAccess.Migrations
                             MovieRequiredAgeDescription = "18+: Adult only. This film is restricted to audiences aged 18 and above.",
                             MovieRequiredAgeSymbol = "T18"
                         });
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.ScheduleJob.ScheduleJobLogger", b =>
+                {
+                    b.Property<string>("JobId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("FinishedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("JobCategory")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SchedulesJobStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartedTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("JobId");
+
+                    b.ToTable("BackGroundJobLoggerEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderDetailsInfo", b =>
