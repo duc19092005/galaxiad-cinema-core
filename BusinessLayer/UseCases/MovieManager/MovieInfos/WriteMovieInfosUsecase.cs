@@ -113,7 +113,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             });
 
             string getJobStatus =
-                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
+                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
 
             if (String.IsNullOrEmpty(getJobStatus))
             {
@@ -213,7 +213,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 }
 
                 bool UpdateJobStatus = await _scheduleJobsService.UpdatedJobIntoBackground
-                    (SchedulesJobEnums.Movies, itemId, request.StartedDate , request.EndedDate);
+                    (SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate , request.EndedDate);
                 if (!UpdateJobStatus)
                 {
                     _logger.LogError("Error While Adding Jobs in Movie Service");

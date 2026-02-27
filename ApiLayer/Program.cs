@@ -1,3 +1,4 @@
+using ApiLayer.Bootstraps.Admin;
 using ApiLayer.Bootstraps.Authentication;
 using ApiLayer.Bootstraps.Common;
 using ApiLayer.Bootstraps.Facilities;
@@ -67,6 +68,8 @@ builder.Services.AddMovieFactories();
 
 builder.Services.AddApplicationFactories();
 
+builder.Services.AddAdminBootstrap();
+
 // JWT Config
 
 builder.Services.AddJwt(builder.Configuration);
@@ -94,6 +97,9 @@ builder.Services.AddAuthorization
     options.AddPolicy("FacilitiesManager", policy =>
         policy.RequireRole("FacilitiesManager")));
 
+builder.Services.AddAuthorization(options => 
+    options.AddPolicy("Admin" , policy => policy.RequireRole("Admin")));
+
 builder.Services.AddAuthorization
 (options =>
     options.AddPolicy("TheaterManager", policy =>
@@ -112,6 +118,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1-facilities-manager", new OpenApiInfo { Title = "facilities-manager API", Version = "v1" });
     c.SwaggerDoc("v1-movie-manager", new OpenApiInfo { Title = "movie-manager API", Version = "v1" });
     c.SwaggerDoc("v1-theater-manager", new OpenApiInfo { Title = "Theater-manager API", Version = "v1" });
+    c.SwaggerDoc("v1-admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
 });
 
 builder.Services.AddHangfire(config => config
@@ -139,6 +146,7 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("/swagger/v1-facilities-manager/swagger.json", "facilities-manager API");
         c.SwaggerEndpoint("/swagger/v1-movie-manager/swagger.json", "movie-manager API");
         c.SwaggerEndpoint("/swagger/v1-theater-manager/swagger.json", "theater-manager API");
+        c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
     });
 }
 

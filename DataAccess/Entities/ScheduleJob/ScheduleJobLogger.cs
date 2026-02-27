@@ -13,26 +13,16 @@ public class ScheduleJobLogger
     public DateTime StartedTime { get; set; }
     
     public DateTime FinishedTime { get; set; }
-
+    
+    public string? FailedReason { get; set; } = string.Empty;
+    
     public SchedulesJobStatusEnums SchedulesJobStatus { get; set; }
     
-    public SchedulesJobEnums JobCategory { get; set; }
+    public SchedulesJobCategoryEnums JobCategory { get; set; }
     
-    public ScheduleJobStatusType ScheduleJobStatus { get; set; }
+    public ScheduleJobStatusType ScheduleJobStatusType { get; set; }
 }
 
-public enum SchedulesJobStatusEnums
-{
-    Completed ,
-    Failed ,
-    Processing ,
-    Pending
-}
 
-public enum ScheduleJobStatusType
-{
-    EndSchedule ,
-    StartSchedule ,
-}
 
 

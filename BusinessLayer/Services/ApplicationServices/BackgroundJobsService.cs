@@ -12,9 +12,9 @@ namespace BusinessLayer.Services.ApplicationServices;
 
 public interface IScheduleJobsService
 {
-    Task<string> AddJobIntoBackground(SchedulesJobEnums enums, Guid jobId, DateTime startedTime,
+    Task<string> AddJobIntoBackground(SchedulesJobCategoryEnums enums, Guid jobId, DateTime startedTime,
     DateTime endedTime);
-    Task<bool> UpdatedJobIntoBackground(SchedulesJobEnums typeOfJob , Guid targetId, DateTime? updatedStartedTime , DateTime ?endedTime);
+    Task<bool> UpdatedJobIntoBackground(SchedulesJobCategoryEnums typeOfJob , Guid targetId, DateTime? updatedStartedTime , DateTime ?endedTime);
 }
 
 public class ScheduleJobsService : IScheduleJobsService
@@ -30,13 +30,13 @@ public class ScheduleJobsService : IScheduleJobsService
         _logger = logger;
     }
 
-    private (string startJobId, string endJobId) RegisterHangfireJobs(SchedulesJobEnums type, Guid targetId, DateTime start, DateTime end)
+    private (string startJobId, string endJobId) RegisterHangfireJobs(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end)
     {
         string sId = string.Empty;
         string eId = string.Empty;
         var toleranceTime = DateTime.Now.AddSeconds(-20);
 
-        if (type == SchedulesJobEnums.Movies)
+        if (type == SchedulesJobCategoryEnums.Movies)
         {
             if (start > toleranceTime)
                 sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), start);
@@ -44,7 +44,7 @@ public class ScheduleJobsService : IScheduleJobsService
             if (end > toleranceTime)
                 eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), end);
         }
-        else if (type == SchedulesJobEnums.Schedules)
+        else if (type == SchedulesJobCategoryEnums.Schedules)
         {
             if (start > toleranceTime)
                 sId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleStatus(targetId), start);
@@ -52,7 +52,7 @@ public class ScheduleJobsService : IScheduleJobsService
         return (sId, eId);
     }
 
-    public async Task<string> AddJobIntoBackground(SchedulesJobEnums type, Guid targetId, DateTime start, DateTime end)
+    public async Task<string> AddJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end)
     {
         try
         {
@@ -60,8 +60,8 @@ public class ScheduleJobsService : IScheduleJobsService
 
             var logs = new List<ScheduleJobLogger>
             {
-                new() { JobId = ids.startJobId, TargetId = targetId, StartedTime = start, ScheduleJobStatus = ScheduleJobStatusType.StartSchedule, SchedulesJobStatus = SchedulesJobStatusEnums.Pending, JobCategory = type },
-                new() { JobId = ids.endJobId, TargetId = targetId, StartedTime = end, ScheduleJobStatus = ScheduleJobStatusType.EndSchedule, SchedulesJobStatus = SchedulesJobStatusEnums.Pending, JobCategory = type }
+                new() { JobId = ids.startJobId, TargetId = targetId, StartedTime = start, ScheduleJobStatusType = ScheduleJobStatusType.StartSchedule, SchedulesJobStatus = SchedulesJobStatusEnums.Pending, JobCategory = type },
+                new() { JobId = ids.endJobId, TargetId = targetId, StartedTime = end, ScheduleJobStatusType = ScheduleJobStatusType.EndSchedule, SchedulesJobStatus = SchedulesJobStatusEnums.Pending, JobCategory = type }
             };
 
             await _cinemaDbContext.BackGroundJobLoggerEntity.AddRangeAsync(logs);
@@ -75,7 +75,7 @@ public class ScheduleJobsService : IScheduleJobsService
         }
     }
 
-    public async Task<bool> UpdatedJobIntoBackground(SchedulesJobEnums type, Guid targetId, DateTime? start, DateTime? end)
+    public async Task<bool> UpdatedJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime? start, DateTime? end)
     {
         var existingJobs = await _cinemaDbContext.BackGroundJobLoggerEntity
             .Where(x => x.TargetId == targetId).ToListAsync();
@@ -94,7 +94,7 @@ public class ScheduleJobsService : IScheduleJobsService
 
             foreach (var job in existingJobs)
             {
-                if (job.ScheduleJobStatus == ScheduleJobStatusType.StartSchedule)
+                if (job.ScheduleJobStatusType == ScheduleJobStatusType.StartSchedule)
                 {
                     job.JobId = newIds.startJobId;
                     job.StartedTime = start ?? job.StartedTime;

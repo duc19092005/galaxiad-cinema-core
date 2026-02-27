@@ -43,7 +43,7 @@ public static class FacilitiesFactoriesBootstrap
         services
             .AddScoped<IWriteBehavior<TheaterManagerAddMovieSchedulesRequest,
             TheaterManagerEditMovieSchedulesRequest, string>, WriteMovieSchedulesUseCase>();
-
+        
         return services;
     }
 }

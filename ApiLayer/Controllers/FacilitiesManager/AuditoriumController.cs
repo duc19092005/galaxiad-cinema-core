@@ -10,29 +10,29 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 [Authorize(Policy = "FacilitiesManager")]
 [Tags("Facilities Manager - auditorium")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
-public class auditoriumController : ControllerBase
+public class AuditoriumController : ControllerBase
 {
-    private readonly FacilitiesManagerWriteAuditoriumService FacilitiesManagerWriteAuditoriumService;
+    private readonly FacilitiesManagerWriteAuditoriumService facilitiesManagerWriteAuditoriumService;
     private readonly FacilitiesManagerReadAuditoriumService read_auditorium_service;
 
-    public auditoriumController(FacilitiesManagerWriteAuditoriumService FacilitiesManagerWriteAuditoriumService
-    , FacilitiesManagerReadAuditoriumService  read_auditoriumService)
+    public AuditoriumController(FacilitiesManagerWriteAuditoriumService facilitiesManagerWriteAuditoriumService
+    , FacilitiesManagerReadAuditoriumService  readAuditoriumService)
     {
-        this.FacilitiesManagerWriteAuditoriumService = FacilitiesManagerWriteAuditoriumService;
-        this.read_auditorium_service = read_auditoriumService;
+        this.facilitiesManagerWriteAuditoriumService = facilitiesManagerWriteAuditoriumService;
+        this.read_auditorium_service = readAuditoriumService;
     }
 
     [HttpPost("")]
-    public async Task<IActionResult> addAuditorium(AddReqAuditoriumDto request)
+    public async Task<IActionResult> AddAuditorium(AddReqAuditoriumDto request)
     {
-        var results = await FacilitiesManagerWriteAuditoriumService.AddAuditorium(request);
+        var results = await facilitiesManagerWriteAuditoriumService.AddAuditorium(request);
         return Ok(results);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> EditAuditorium(Guid id, EditReqAuditoriumDto request)
     {
-        var results = await FacilitiesManagerWriteAuditoriumService.EditAuditorium(id, request);
+        var results = await facilitiesManagerWriteAuditoriumService.EditAuditorium(id, request);
         return Ok(results);
     }
 
