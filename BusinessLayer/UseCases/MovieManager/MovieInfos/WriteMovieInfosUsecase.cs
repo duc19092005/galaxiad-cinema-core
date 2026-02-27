@@ -113,7 +113,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             });
 
             string getJobStatus =
-                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobEnums.Movies, newMovieId, request.StartedDate);
+                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
 
             if (String.IsNullOrEmpty(getJobStatus))
             {
@@ -213,7 +213,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 }
 
                 bool UpdateJobStatus = await _scheduleJobsService.UpdatedJobIntoBackground
-                    (SchedulesJobEnums.Movies, itemId, request.StartedDate);
+                    (SchedulesJobEnums.Movies, itemId, request.StartedDate , request.EndedDate);
                 if (!UpdateJobStatus)
                 {
                     _logger.LogError("Error While Adding Jobs in Movie Service");
@@ -337,6 +337,29 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             try
             {
                 findMovie.IsActive = true;
+                _dbContext.MovieInfoEntity.Update(findMovie);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch(Exception e)
+            {
+                _logger.LogError(e, $"Error while update movie status id : {movieId}");
+            }
+        }
+    }
+    
+    public async Task UpdatedOverDueStatus(Guid movieId)
+    {
+        var findMovie = await _dbContext.MovieInfoEntity.FindAsync(movieId);
+        if (findMovie == null)
+        {
+            // Log the error
+            _logger.LogError("Can't find movie with id: {movieId} to run Jobs", movieId);
+        }
+        else
+        {
+            try
+            {
+                findMovie.IsActive = false;
                 _dbContext.MovieInfoEntity.Update(findMovie);
                 await _dbContext.SaveChangesAsync();
             }

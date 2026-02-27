@@ -17,6 +17,8 @@ public class ScheduleJobLogger
     public SchedulesJobStatusEnums SchedulesJobStatus { get; set; }
     
     public SchedulesJobEnums JobCategory { get; set; }
+    
+    public ScheduleJobStatusType ScheduleJobStatus { get; set; }
 }
 
 public enum SchedulesJobStatusEnums
@@ -25,6 +27,12 @@ public enum SchedulesJobStatusEnums
     Failed ,
     Processing ,
     Pending
+}
+
+public enum ScheduleJobStatusType
+{
+    EndSchedule ,
+    StartSchedule ,
 }
 
 
