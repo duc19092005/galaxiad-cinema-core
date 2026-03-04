@@ -336,6 +336,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         {
             try
             {
+                findMovie.IsCommingSoon = false;
                 findMovie.IsActive = true;
                 _dbContext.MovieInfoEntity.Update(findMovie);
                 await _dbContext.SaveChangesAsync();
@@ -359,6 +360,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         {
             try
             {
+                findMovie.IsCommingSoon = false;
                 findMovie.IsActive = false;
                 _dbContext.MovieInfoEntity.Update(findMovie);
                 await _dbContext.SaveChangesAsync();

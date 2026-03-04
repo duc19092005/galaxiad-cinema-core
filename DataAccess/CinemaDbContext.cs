@@ -61,6 +61,12 @@ public class CinemaDbContext : DbContext
     public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
     
     public DbSet<ScheduleJobLogger> BackGroundJobLoggerEntity { get; set; }
+
+    public DbSet<OrderInfoEntity> OrderInfoEntity { get; set; }
+
+    public DbSet<OrderDetailsInfo> OrderDetailsInfoEntity { get; set; }
+
+
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

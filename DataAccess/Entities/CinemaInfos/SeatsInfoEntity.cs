@@ -34,5 +34,7 @@ public class SeatsInfoEntity
 
     public AuditoriumInfoEntities AuditoriumInfoEntities { get; set; } = null!;
 
+    public List<OrderDetailsInfo> OrderDetailsInfo { get; set; } = null!;
+
 }
 

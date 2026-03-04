@@ -4,6 +4,7 @@ using ApiLayer.Bootstraps.Common;
 using ApiLayer.Bootstraps.Facilities;
 using ApiLayer.Bootstraps.IdentityAccess;
 using ApiLayer.Bootstraps.MovieInfos;
+using ApiLayer.Bootstraps.Validate;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
@@ -49,6 +50,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 // Services
 
+
 builder.Services.AddCommonServices();
 
 
@@ -76,6 +78,7 @@ builder.Services.AddJwt(builder.Configuration);
 
 builder.Services.AddSingleton<cloudinaryHelper>();
 
+builder.Services.TheaterManagerValidate();
 
 // CORS
 

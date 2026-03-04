@@ -18,6 +18,12 @@ public static class OrderDetailsInfoRelationshipsKeys
             .WithMany(x => x.OrderDetailsInfos)
             .HasForeignKey(x => x.MovieScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<OrderDetailsInfo>()
+            .HasOne(x => x.SeatsInfoEntity)
+            .WithMany(x => x.OrderDetailsInfo)
+            .HasForeignKey(x => x.SeatId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public static void AddOrderDetailsInfoKeys(ModelBuilder modelBuilder)
