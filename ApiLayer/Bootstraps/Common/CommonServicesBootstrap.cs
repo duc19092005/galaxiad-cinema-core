@@ -1,5 +1,7 @@
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
+using BusinessLayer.Services.ThirdPersonServices;
+using BusinessLayer.Services.ThirdPersonServices.HashServices;
 using Shared.Localization;
 using Shared.Utils;
 
@@ -26,6 +28,11 @@ public static class CommonServicesBootstrap
         // ----------------------------------------------------------------
         
         services.AddScoped<IScheduleJobsService ,  ScheduleJobsService>();
+        
+        
+        services.AddScoped<ISha256Services , Sha256Service>();
+        
+        services.AddScoped<IVnPayService , VnpayService>();
         
         return services;
     }
