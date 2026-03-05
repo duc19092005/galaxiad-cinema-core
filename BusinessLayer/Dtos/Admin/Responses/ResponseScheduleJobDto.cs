@@ -1,13 +1,6 @@
-﻿using System.Text.Json.Serialization;
-using DataAccess.Entities.ScheduleJob;
-using Shared.Enums;
+using System.Text.Json.Serialization;
 
-namespace BusinessLayer.Dtos.Admin;
-
-public class RequestScheduleJobDto
-{
-    
-}
+namespace BusinessLayer.Dtos.Admin.Responses;
 
 public class ResponseScheduleJobDto
 {

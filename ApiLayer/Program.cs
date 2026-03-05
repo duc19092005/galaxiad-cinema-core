@@ -13,7 +13,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Shared.Utils;
+using BusinessLayer.Services.ThirdPersonServices;
 
 var builder = WebApplication.CreateBuilder(args);
 

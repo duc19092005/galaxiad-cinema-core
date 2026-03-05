@@ -1,4 +1,5 @@
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
+using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Factories.IdentityAccess;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.UseCases.IdentityAccess;
@@ -11,7 +12,7 @@ public static class IdentityFactoriesBootstrap
     {
         // Register Factory
         services.AddScoped<RegisterFactory>();
-        services.AddScoped<IAddBehavior<ResRegularRegisterDto, string>, IdentityAccessRegularRegisterUseCase>();
+        services.AddScoped<IAddBehavior<ReqRegularRegisterDto, string>, IdentityAccessRegularRegisterUseCase>();
         
         // Login Factory
         services.AddScoped<LoginFactory>();

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
+namespace BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
 
 public class AddReqAuditoriumDto
 {
@@ -47,32 +47,4 @@ public class EditReqAuditoriumDto
     
     public List<ReqSeatsAuditoriumDto>? AddReqSeatsAuditoriumDto { get; set; }
     
-}
-
-public class GetResAuditoriumDtoCinema
-{
-    public Guid AuditoriumId { get; set; }
-    
-    public string AuditoriumNumber { get; set; } = string.Empty;
-    
-    public IEnumerable<BaseFormatInfo> FormatInfos { get; set; } = [];
-
-    public string CinemaName { get; set; } = string.Empty;
-    
-    public int TotalSeats { get; set; }
-}
-
-public class GetResAuditoriumDto
-{
-    public Guid AuditoriumId { get; set; }
-    
-    public string AuditoriumNumber { get; set; } = string.Empty;
-
-    public IEnumerable<BaseFormatInfo> FormatInfos { get; set; } = [];
-    
-    public string CinemaName { get; set; } = string.Empty;
-    
-    public int TotalSeats { get; set; }
-
-    public IEnumerable<ReqSeatsAuditoriumDto> SeatsInfos { get; set; } = [];
 }

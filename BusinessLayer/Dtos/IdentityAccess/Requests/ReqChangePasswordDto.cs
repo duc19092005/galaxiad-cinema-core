@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessLayer.Dtos.IdentityAccess;
+namespace BusinessLayer.Dtos.IdentityAccess.Requests;
 
 public class ReqChangePasswordDto
 {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessLayer.Dtos.TheaterManager.MovieSchedules;
+namespace BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 
 
 

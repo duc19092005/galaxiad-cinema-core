@@ -1,4 +1,4 @@
-using BusinessLayer.Dtos.MovieManager;
+using BusinessLayer.Dtos.MovieManager.Requests;
 using BusinessLayer.Services.MovieManager;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;

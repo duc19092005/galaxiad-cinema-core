@@ -2,7 +2,7 @@ using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.MovieManager;
+using BusinessLayer.Dtos.MovieManager.Requests;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators.MovieManager;
@@ -10,7 +10,7 @@ using DataAccess;
 using DataAccess.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Utils;
+using BusinessLayer.Services.ThirdPersonServices;
 using BusinessLayer.Validators;
 using Shared.Enums;
 

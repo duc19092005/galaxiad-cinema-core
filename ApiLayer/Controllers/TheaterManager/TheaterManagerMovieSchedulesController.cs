@@ -1,5 +1,4 @@
-﻿using BusinessLayer.Dtos.MovieManager;
-using BusinessLayer.Dtos.TheaterManager.MovieSchedules;
+﻿using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 using BusinessLayer.Services.TheaterManager.MovieSchedules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;

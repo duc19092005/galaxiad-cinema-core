@@ -1,4 +1,3 @@
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
 using DataAccess;
 
 public class TheaterManagerValidate

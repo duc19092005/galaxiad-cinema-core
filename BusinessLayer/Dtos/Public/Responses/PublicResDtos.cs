@@ -1,4 +1,4 @@
-
+namespace BusinessLayer.Dtos.Public.Responses;
 
 public class MovieInfoRes : BaseMovieInfoRes
 {
@@ -74,7 +74,7 @@ public class GetSeatsRes
     public bool IsBooked {get;set;}
 }
 
-// Lopws nayf để kế thừa cho nhanh
+// Lớp này để kế thừa cho nhanh
 
 public class BaseMovieInfoRes
 {

@@ -3,14 +3,15 @@
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
+using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using DataAccess;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Shared.Utils;
+using BusinessLayer.Services.IdentityAccess;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 

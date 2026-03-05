@@ -1,4 +1,4 @@
-namespace BusinessLayer.Dtos.IdentityAccess;
+namespace BusinessLayer.Dtos.IdentityAccess.Responses;
 
 public class ResGetUserInfo
 {

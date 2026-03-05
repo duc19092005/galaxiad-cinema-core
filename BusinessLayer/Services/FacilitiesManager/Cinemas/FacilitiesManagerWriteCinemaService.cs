@@ -1,6 +1,6 @@
 
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Factories.ApplicationFactories;
 using Shared.Enums;
 

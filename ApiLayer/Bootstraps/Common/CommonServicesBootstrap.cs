@@ -3,7 +3,6 @@ using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Services.ThirdPersonServices;
 using BusinessLayer.Services.ThirdPersonServices.HashServices;
 using Shared.Localization;
-using Shared.Utils;
 
 namespace ApiLayer.Bootstraps.Common;
 

@@ -1,5 +1,5 @@
 ﻿using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.TheaterManager.Auditoriums;
+using BusinessLayer.Dtos.TheaterManager.Auditoriums.Responses;
 
 namespace BusinessLayer.Interfaces.TheaterManager;
 

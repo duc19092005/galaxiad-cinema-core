@@ -1,5 +1,5 @@
 using System.ComponentModel;
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Services.FacilitiesManager;
 using BusinessLayer.Services.FacilitiesManager.Cinemas;
 using Microsoft.AspNetCore.Authorization;

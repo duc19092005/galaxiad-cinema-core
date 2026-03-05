@@ -1,7 +1,8 @@
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.ICinema;
 using BusinessLayer.Services.IdentityAccess;

@@ -1,5 +1,5 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.TheaterManager.MovieSchedules;
+using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;

@@ -1,5 +1,6 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
+using BusinessLayer.Dtos.IdentityAccess.Responses;
 
 namespace BusinessLayer.Interfaces.IIdentityAccess;
 

@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BusinessLayer.Dtos.IdentityAccess;
+namespace BusinessLayer.Dtos.IdentityAccess.Requests;
 
-public class ResRegularRegisterDto
+public class ReqRegularRegisterDto
 {
     [Required(ErrorMessage = "Email is required")]
     [EmailAddress(ErrorMessage = "Email is invalid")]

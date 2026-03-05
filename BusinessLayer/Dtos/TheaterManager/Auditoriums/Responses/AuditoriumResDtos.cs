@@ -1,4 +1,4 @@
-﻿namespace BusinessLayer.Dtos.TheaterManager.Auditoriums;
+namespace BusinessLayer.Dtos.TheaterManager.Auditoriums.Responses;
 
 public class TheaterManagerAuditoriumRes
 {
@@ -21,5 +21,3 @@ public class TheaterManagerAuditoriumInfos
     
     public IEnumerable<string> AuditoriumSupportedFormats =  Array.Empty<string>(); 
 }
-
-

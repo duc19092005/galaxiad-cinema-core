@@ -1,8 +1,9 @@
-using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
-using BusinessLayer.Dtos.FacilitiesManager.MovieInfos;
-using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats;
-using BusinessLayer.Dtos.TheaterManager.MovieSchedules;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Responses;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Responses;
+using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats.Responses;
+using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.ICinema;
 using BusinessLayer.Interfaces.IIdentityAccess;

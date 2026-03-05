@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Shared.Utils;
+namespace BusinessLayer.Services.IdentityAccess;
 // ReSharper disable All
 
 public class Jwt_helper

@@ -1,5 +1,5 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Responses;
 using BusinessLayer.Factories;
 using BusinessLayer.Factories.ApplicationFactories;
 using Shared.Enums;
