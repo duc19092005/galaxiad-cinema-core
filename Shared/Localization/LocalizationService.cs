@@ -175,7 +175,28 @@ public class LocalizationService : ILocalizationService
         { "TheaterManager is required", "Quản lý rạp là bắt buộc" } ,
         {"The showtime list must not be left blank." , "Danh sách lịch chiếu không được để trống"} ,
         {"Schedules is not found or it's been deleted or Movie is Inactive" , "Không tìm thấy lịch chiếu hoặc lịch chiếu đã bị xóa hoặc phim không hoạt động."},
-        {"Get Required Age Completed" , "Lấy danh sách độ tuổi thành công"}
+        {"Get Required Age Completed" , "Lấy danh sách độ tuổi thành công"},
+        
+        // Booking Messages
+        {"Get cities list successfully", "Lấy danh sách thành phố thành công"},
+        {"Get showtimes successfully", "Lấy lịch chiếu thành công"},
+        {"Get seat map successfully", "Lấy sơ đồ ghế thành công"},
+        {"Get pricing successfully", "Lấy thông tin giá thành công"},
+        {"Booking created successfully", "Đặt vé thành công"},
+        {"Payment completed successfully", "Thanh toán thành công"},
+        {"Schedule not found", "Không tìm thấy lịch chiếu"},
+        {"Schedule not found or movie is inactive", "Không tìm thấy lịch chiếu hoặc phim không hoạt động"},
+        {"This showtime has already started", "Suất chiếu này đã bắt đầu"},
+        {"One or more selected seats are invalid", "Một hoặc nhiều ghế đã chọn không hợp lệ"},
+        {"One or more selected seats are already booked", "Một hoặc nhiều ghế đã chọn đã được đặt"},
+        {"Payment failed", "Thanh toán thất bại"},
+        {"Order not found", "Không tìm thấy đơn hàng"},
+        
+        // Booking DTO Validations
+        {"Schedule Id is required", "Mã lịch chiếu là bắt buộc"},
+        {"Seat Ids are required", "Mã ghế là bắt buộc"},
+        {"At least one seat must be selected", "Phải chọn ít nhất một ghế"},
+        {"Invalid email format", "Định dạng email không hợp lệ"}
     };
 
     /// <summary>

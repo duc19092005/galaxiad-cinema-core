@@ -4,6 +4,7 @@ using ApiLayer.Bootstraps.Common;
 using ApiLayer.Bootstraps.Facilities;
 using ApiLayer.Bootstraps.IdentityAccess;
 using ApiLayer.Bootstraps.MovieInfos;
+using ApiLayer.Bootstraps.Booking;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
@@ -55,6 +56,7 @@ builder.Services.AddCommonServices();
 builder.Services.AddIdentityServices();
 builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
+builder.Services.AddBookingServices();
 
 //  -------------------- Factories Dependency Injections ----------------------------
 

@@ -176,6 +176,9 @@ public class CinemaDbContext : DbContext
         // Seeds ages
         
         MovieRequiredAgeSeedData.AddMovieAgeSeedData(modelBuilder);
+
+        // Seeds Cinema, Auditorium, Seats, Movie, Schedule (For Booking Flow)
+        CinemaAndMovieSeedData.AddSeedData(modelBuilder);
     }
 }
 

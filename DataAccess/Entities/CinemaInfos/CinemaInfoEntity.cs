@@ -11,6 +11,9 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     public Guid CinemaId { get; set; } 
     
     [Column(TypeName = "nvarchar(100)")]
+    public string CinemaCity { get; set; } = null!;
+    
+    [Column(TypeName = "nvarchar(100)")]
     public string CinemaLocation { get; set; } = null!;
     
     [Column(TypeName = "nvarchar(1000)")]

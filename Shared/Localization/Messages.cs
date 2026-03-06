@@ -170,6 +170,29 @@ public static class Messages
             $"Time slot from {startTime} to {endTime} conflicts with an existing schedule.";
     }
 
+    // =============================================================
+    //  BOOKING
+    // =============================================================
+    public static class Booking
+    {
+        // Success
+        public const string GetCitiesSuccess = "Get cities list successfully";
+        public const string GetShowtimesSuccess = "Get showtimes successfully";
+        public const string GetSeatMapSuccess = "Get seat map successfully";
+        public const string GetPricingSuccess = "Get pricing successfully";
+        public const string CreateBookingSuccess = "Booking created successfully";
+        public const string PaymentSuccess = "Payment completed successfully";
+
+        // Errors
+        public const string ScheduleNotFound = "Schedule not found";
+        public const string ScheduleNotFoundOrInactive = "Schedule not found or movie is inactive";
+        public const string ShowtimeAlreadyStarted = "This showtime has already started";
+        public const string InvalidSeats = "One or more selected seats are invalid";
+        public const string SeatsAlreadyBooked = "One or more selected seats are already booked";
+        public const string PaymentFailed = "Payment failed";
+        public const string OrderNotFound = "Order not found";
+    }
+
     public static class RequiredAge
     {
         public const string GetRequiredAgeCompleted = "Get Required Age Completed";

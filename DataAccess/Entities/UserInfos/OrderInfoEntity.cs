@@ -31,6 +31,9 @@ public class OrderInfoEntity
     
     [Column(TypeName = "varchar(40)")]
     public string? CustomerEmail { get; set; }
+    
+    [Column(TypeName = "varchar(100)")]
+    public string? VnPayTransactionId { get; set; }
 
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
 

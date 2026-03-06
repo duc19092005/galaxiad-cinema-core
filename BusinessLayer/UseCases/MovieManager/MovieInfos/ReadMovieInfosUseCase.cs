@@ -43,7 +43,11 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                             (GetUserId())).UserName,
                 Duration = x.MovieDuration ,
                 EndedDate = x.EndedDate,
-                StartedDate = x.ActiveAt
+                StartedDate = x.ActiveAt,
+                TrailerUrl = x.TrailerUrl,
+                Director = x.Director,
+                Actors = x.Actors,
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
             })
             .AsNoTracking()
             .ToListAsync();
@@ -74,7 +78,11 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 Duration = m.MovieDuration,
                 EndedDate = m.EndedDate,
-                StartedDate = m.ActiveAt
+                StartedDate = m.ActiveAt,
+                TrailerUrl = m.TrailerUrl,
+                Director = m.Director,
+                Actors = m.Actors,
+                MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
             }).FirstOrDefaultAsync();
         
         return new BaseResponse<ResGetMovieInfosMovieManagerDto>()

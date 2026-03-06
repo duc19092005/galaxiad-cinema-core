@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 
 namespace DataAccess.Entities.UserInfos;
@@ -17,5 +18,7 @@ public class OrderDetailsInfo
     public MovieScheduleInfoEntity MovieScheduleInfoEntity { get; set; } = null!;
     
     public OrderInfoEntity OrderInfoEntity { get; set; }= null!;
+    
+    public SeatsInfoEntity SeatsInfoEntity { get; set; } = null!;
 }
 

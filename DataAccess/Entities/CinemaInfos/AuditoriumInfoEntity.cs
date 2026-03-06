@@ -25,7 +25,7 @@ public partial class AuditoriumInfoEntities : BaseManagementStatus<UserInfoEntit
     
     public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
 
-    public List<AuditoriumFormatInfos> AuditoriumFormatInfosList = [];
+    public List<AuditoriumFormatInfos> AuditoriumFormatInfosList { get; set; } = [];
 }
 
 

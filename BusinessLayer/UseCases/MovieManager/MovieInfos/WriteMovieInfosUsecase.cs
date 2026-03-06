@@ -98,6 +98,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 CreatedByUserId = getUserId,
                 ManagerId = getUserId,
                 MovieDuration = request.Duration,
+                TrailerUrl = request.TrailerUrl ?? string.Empty,
+                Director = request.Director ?? string.Empty,
+                Actors = request.Actors ?? string.Empty,
             };
 
             var newMovieGenreMovieInfos = request.MovieGenreIds.Select(id => new MovieGenreMovieInfoEntity()
@@ -229,6 +232,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.IsActive =
                     (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.Now;
                 findTheMovie.MovieDuration = request.Duration ?? findTheMovie.MovieDuration;
+                findTheMovie.TrailerUrl = request.TrailerUrl ?? findTheMovie.TrailerUrl;
+                findTheMovie.Director = request.Director ?? findTheMovie.Director;
+                findTheMovie.Actors = request.Actors ?? findTheMovie.Actors;
                 
                 if (request.MovieImage != null)
                 {
