@@ -22,6 +22,7 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<FacilitiesManagerReadAuditoriumService>();
         services.AddScoped<TheaterManagerWriteSchedulesService>();
         services.AddScoped<TheaterManagerReadSchedulesService>();
+        services.AddScoped<BusinessLayer.Interfaces.TheaterManager.ITheaterManagerReadSchedules, BusinessLayer.UseCases.TheaterManager.MovieSchedules.ReadMovieSchedules>();
         services.AddScoped<AdminReadScheduleJobService>();
 
         return services;

@@ -149,73 +149,56 @@ public static class CinemaAndMovieSeedData
             new movieFormatMovieInfoEntity { MovieId = movieId2, FormatId = movie_visual_constant.Format3D }
         );
 
-        // 5. Seed Movie Schedules (Lịch chiếu)
-        var scheduleId1 = Guid.Parse("88888888-8888-8888-8888-888888888888");
-        var scheduleId2 = Guid.Parse("99999999-9999-9999-9999-999999999999");
-        var scheduleId3 = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
-        var scheduleId4 = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+        // 5. Seed Movie Schedules (Lịch chiếu) - Loop from 2026-03-07 to 2026-04-01
+        var today = new DateTime(2026, 3, 7);
+        var endDate = new DateTime(2026, 4, 1);
+        var schedules = new List<MovieScheduleInfoEntity>();
+        
+        int dayIndex = 0;
+        for (var date = today; date <= endDate; date = date.AddDays(1))
+        {
+            // Tạo GUID cố định cho từng ngày dựa trên dayIndex để EF Core không báo lỗi
+            var g1 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
+            var g2 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2);
+            var g3 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
+            var g4 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4);
 
-        modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(
-            // --- HỒ CHÍ MINH ---
-            // Dune Part 2 - 2D - HCM (Phòng 1) - Tầm 10 giờ tối
-            new MovieScheduleInfoEntity
+            // HCM 2D - Phim 1
+            schedules.Add(new MovieScheduleInfoEntity
             {
-                MovieScheduleInfoId = scheduleId1,
-                MovieId = movieId1,
-                AuditoriumId = auditorium1Id,
+                MovieScheduleInfoId = g1, MovieId = movieId1, AuditoriumId = auditorium1Id,
                 MovieFormatId = movie_visual_constant.Format2D,
-                StartTime = now.Date.AddHours(22), 
-                EndedTime = now.Date.AddHours(22).AddMinutes(166),
-                ActiveAt = now.Date.AddHours(22), 
-                IsActive = true,
-                CreatedAt = defaultDate,
-                CreatedByUserId = theaterManagerId
-            },
-            // Dune Part 2 - IMAX - HCM (Phòng 2) - Tầm 11 giờ tối
-            new MovieScheduleInfoEntity
+                StartTime = date.AddHours(22), EndedTime = date.AddHours(22).AddMinutes(166),
+                ActiveAt = date.AddHours(22), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
+            });
+            // HCM IMAX - Phim 1
+            schedules.Add(new MovieScheduleInfoEntity
             {
-                MovieScheduleInfoId = scheduleId2,
-                MovieId = movieId1,
-                AuditoriumId = auditorium2Id,
+                MovieScheduleInfoId = g2, MovieId = movieId1, AuditoriumId = auditorium2Id,
                 MovieFormatId = movie_visual_constant.Imax,
-                StartTime = now.Date.AddHours(23),
-                EndedTime = now.Date.AddHours(23).AddMinutes(166),
-                ActiveAt = now.Date.AddHours(23), 
-                IsActive = true,
-                CreatedAt = defaultDate,
-                CreatedByUserId = theaterManagerId
-            },
+                StartTime = date.AddHours(20), EndedTime = date.AddHours(20).AddMinutes(166),
+                ActiveAt = date.AddHours(20), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
+            });
+            // HN 3D - Phim 1
+            schedules.Add(new MovieScheduleInfoEntity
+            {
+                MovieScheduleInfoId = g3, MovieId = movieId1, AuditoriumId = auditorium3Id,
+                MovieFormatId = movie_visual_constant.Format3D,
+                StartTime = date.AddHours(22).AddMinutes(30), EndedTime = date.AddHours(22).AddMinutes(30).AddMinutes(166),
+                ActiveAt = date.AddHours(22).AddMinutes(30), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
+            });
+            // HN 3D - Phim 2
+            schedules.Add(new MovieScheduleInfoEntity
+            {
+                MovieScheduleInfoId = g4, MovieId = movieId2, AuditoriumId = auditorium3Id,
+                MovieFormatId = movie_visual_constant.Format3D,
+                StartTime = date.AddHours(14), EndedTime = date.AddHours(14).AddMinutes(94), // Chiếu buổi chiều
+                ActiveAt = date.AddHours(14), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
+            });
 
-            // --- HÀ NỘI ---
-            // Dune Part 2 - 3D - HN (Phòng 1) - Tầm 10:30 tối
-            new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = scheduleId4,
-                MovieId = movieId1,
-                AuditoriumId = auditorium3Id,
-                MovieFormatId = movie_visual_constant.Format3D,
-                StartTime = now.Date.AddHours(22).AddMinutes(30),
-                EndedTime = now.Date.AddHours(22).AddMinutes(30).AddMinutes(166),
-                ActiveAt = now.Date.AddHours(22).AddMinutes(30),
-                IsActive = true,
-                CreatedAt = defaultDate,
-                CreatedByUserId = theaterManagerId
-            },
-            
-            // Kung Fu Panda 4 - 3D - HN (Phòng 1) - 5 ngày tới
-            new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = scheduleId3,
-                MovieId = movieId2,
-                AuditoriumId = auditorium3Id,
-                MovieFormatId = movie_visual_constant.Format3D,
-                StartTime = now.AddDays(5),
-                EndedTime = now.AddDays(5).AddMinutes(94),
-                ActiveAt = now.AddDays(5),
-                IsActive = true,
-                CreatedAt = defaultDate,
-                CreatedByUserId = theaterManagerId
-            }
-        );
+            dayIndex++;
+        }
+
+        modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(schedules);
     }
 }

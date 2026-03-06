@@ -6,6 +6,7 @@ using ApiLayer.Bootstraps.IdentityAccess;
 using ApiLayer.Bootstraps.MovieInfos;
 using ApiLayer.Bootstraps.Booking;
 using ApiLayer.Bootstraps.Validate;
+using ApiLayer.Hubs;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
@@ -132,6 +133,8 @@ builder.Services.AddHangfire(config => config
     .UseRecommendedSerializerSettings()
     .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Singleton
@@ -165,6 +168,8 @@ app.UseAuthorization();
 app.UseHangfireDashboard();
 
 app.MapControllers();
+
+app.MapHub<SeatHub>("/ws/seat");
 
 app.Run();
 

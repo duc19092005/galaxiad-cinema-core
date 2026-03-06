@@ -9,6 +9,7 @@ public static class AdminBootstrap
     {
         services.AddScoped<IAdminReadScheduleBehavior, AdminReadScheduleUseCase>();
         services.AddScoped<AdminReadScheduleJobService>();
+        services.AddScoped<BusinessLayer.Services.Admin.UserManagement.AdminManageUserService>();
         return services;
     }
 }

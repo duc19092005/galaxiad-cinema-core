@@ -19,17 +19,20 @@ public class BookingService
     private readonly CinemaDbContext _dbContext;
     private readonly IUserContextService _userContextService;
     private readonly VnPayHelper _vnPayHelper;
+    private readonly BusinessLayer.Services.ThirdPersonServices.IVnPayService _vnPayService;
     private readonly ILogger<BookingService> _logger;
 
     public BookingService(
         CinemaDbContext dbContext,
         IUserContextService userContextService,
         VnPayHelper vnPayHelper,
+        BusinessLayer.Services.ThirdPersonServices.IVnPayService vnPayService,
         ILogger<BookingService> logger)
     {
         _dbContext = dbContext;
         _userContextService = userContextService;
         _vnPayHelper = vnPayHelper;
+        _vnPayService = vnPayService;
         _logger = logger;
     }
 
@@ -447,8 +450,8 @@ public class BookingService
             await transaction.CommitAsync();
 
             // Generate VNPay payment URL
-            var orderInfo = $"Thanh toan hoa don {orderId}";
-            var paymentUrl = _vnPayHelper.CreatePaymentUrl(orderId, totalPrice, orderInfo, ipAddress);
+            // Sử dụng logic Vnpay nguyên bản của dự án cũ
+            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)totalPrice, orderId.ToString());
 
             return new BaseResponse<ResCreateBookingDto>
             {

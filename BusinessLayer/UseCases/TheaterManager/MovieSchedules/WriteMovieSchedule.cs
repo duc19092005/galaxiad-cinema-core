@@ -108,30 +108,31 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             
             for (int i = 0; i < sortedProposedSlots.Count - 1; i++)
             {
-                if (sortedProposedSlots[i].EndedTime > sortedProposedSlots[i + 1].ActiveAt)
+                if (sortedProposedSlots[i].EndedTime.AddMinutes(15) > sortedProposedSlots[i + 1].ActiveAt)
                 {
-                    throw new BadRequestException(Messages.Schedule.OverlappingSchedules, "E02");
+                    throw new BadRequestException("Phải có khoảng trống 15 phút giữa 2 lịch chiếu để dọn dẹp phòng rạp.", "E02");
                 }
             }
 
             var minStartTime = sortedProposedSlots.First().ActiveAt;
-            var maxEndTime = sortedProposedSlots.Last().EndedTime;
+            var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
             var existingSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == request.AuditoriumId 
-                         && x.EndedTime > minStartTime 
-                         && x.ActiveAt < maxEndTime)
+                         && x.EndedTime.AddMinutes(15) > minStartTime 
+                         && x.ActiveAt < maxEndTime
+                         && !x.IsDeleted)
                 .ToListAsync();
 
             foreach (var newSlot in proposedSlots)
             {
                 var hasConflict = existingSchedules.Any(existing => 
-                    newSlot.ActiveAt < existing.EndedTime && existing.ActiveAt < newSlot.EndedTime);
+                    newSlot.ActiveAt < existing.EndedTime.AddMinutes(15) && existing.ActiveAt < newSlot.EndedTime.AddMinutes(15));
 
                 if (hasConflict)
                 {
-                    throw new BadRequestException(Messages.Schedule.TimeSlotConflict(newSlot.ActiveAt.ToString("HH:mm"), newSlot.EndedTime.ToString("HH:mm")), "E02");
+                    throw new BadRequestException("Bị trùng lịch với một suất chiếu khác (Chưa tính 15 phút dọn dẹp).", "E02");
                 }
             }
 
@@ -256,19 +257,19 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             
             for (int i = 0; i < sortedProposedSlots.Count - 1; i++)
             {
-                if (sortedProposedSlots[i].EndedTime > sortedProposedSlots[i + 1].ActiveAt)
+                if (sortedProposedSlots[i].EndedTime.AddMinutes(15) > sortedProposedSlots[i + 1].ActiveAt)
                 {
-                    throw new BadRequestException(Messages.Schedule.OverlappingSchedules, "E02");
+                    throw new BadRequestException("Phải có khoảng trống 15 phút giữa 2 lịch chiếu để dọn dẹp phòng rạp.", "E02");
                 }
             }
 
             var minStartTime = sortedProposedSlots.First().ActiveAt;
-            var maxEndTime = sortedProposedSlots.Last().EndedTime;
+            var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
             var existingDbSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == auditoriumId 
-                         && x.EndedTime > minStartTime 
+                         && x.EndedTime.AddMinutes(15) > minStartTime 
                          && x.ActiveAt < maxEndTime
                          && !x.IsDeleted
                          && !updatingScheduleIds.Contains(x.MovieScheduleInfoId)) 
@@ -277,11 +278,11 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             foreach (var newSlot in proposedSlots)
             {
                 var hasConflict = existingDbSchedules.Any(existing => 
-                    newSlot.ActiveAt < existing.EndedTime && existing.ActiveAt < newSlot.EndedTime);
+                    newSlot.ActiveAt < existing.EndedTime.AddMinutes(15) && existing.ActiveAt < newSlot.EndedTime.AddMinutes(15));
 
                 if (hasConflict)
                 {
-                    throw new BadRequestException(Messages.Schedule.TimeSlotConflict(newSlot.ActiveAt.ToString("HH:mm"), newSlot.EndedTime.ToString("HH:mm")), "E02");
+                    throw new BadRequestException("Bị trùng lịch với một suất chiếu khác (Chưa tính 15 phút dọn dẹp).", "E02");
                 }
             }
 
@@ -322,9 +323,44 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
+        var getCurrentUserId = _userContextService.GetUserId();
+        var schedule = await _cinemaDbContext.MovieScheduleInfoEntity
+            .FirstOrDefaultAsync(x => x.MovieScheduleInfoId == itemId);
+            
+        if (schedule == null)
+        {
+            throw new NotFoundException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated);
+        }
+
+        if (schedule.IsDeleted)
+        {
+            throw new BadRequestException("Lịch chiếu này đã bị xóa.", "D01");
+        }
+
+        if (schedule.EndedTime > DateTime.Now)
+        {
+            throw new BadRequestException("Không thể xóa lịch chiếu chưa kết thúc.", "D02");
+        }
+
+        var hasSuccessfulBooking = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+            .AnyAsync(od => od.MovieScheduleId == itemId &&
+                            (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+
+        if (hasSuccessfulBooking)
+        {
+            throw new BadRequestException("Không thể xóa lịch chiếu đã có người đặt vé thành công.", "D03");
+        }
+
+        schedule.IsDeleted = true;
+        schedule.DeletedByUserId = getCurrentUserId;
+        schedule.DeletedAt = DateTime.Now;
+        
+        _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
+        await _cinemaDbContext.SaveChangesAsync();
+
         return new BaseResponse<string>()
         {
-            Message = "Create Movie Schedule Completed",
+            Message = "Xóa lịch chiếu thành công.",
             Data = null,
             IsSuccess = true
         };

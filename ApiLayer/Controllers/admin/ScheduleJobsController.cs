@@ -6,7 +6,7 @@ namespace ApiLayer.Controllers.admin;
 
 [ApiController]
 [Authorize(Policy = "Admin")]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 [ApiExplorerSettings(GroupName = "v1-admin")]
 public class ScheduleJobsController : ControllerBase
 {

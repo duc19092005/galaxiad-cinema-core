@@ -104,9 +104,9 @@ public class VnPayHelper
         foreach (var kvp in parameters)
         {
             if (sb.Length > 0) sb.Append('&');
-            sb.Append(kvp.Key);
+            sb.Append(WebUtility.UrlEncode(kvp.Key));
             sb.Append('=');
-            sb.Append(kvp.Value);
+            sb.Append(WebUtility.UrlEncode(kvp.Value));
         }
         return sb.ToString();
     }
@@ -117,6 +117,12 @@ public class VnPayHelper
         var inputBytes = Encoding.UTF8.GetBytes(inputData);
         using var hmac = new HMACSHA512(keyBytes);
         var hashBytes = hmac.ComputeHash(inputBytes);
-        return BitConverter.ToString(hashBytes).Replace("-", "").ToUpper();
+        
+        var sb = new StringBuilder(hashBytes.Length * 2);
+        foreach (var b in hashBytes)
+        {
+            sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
     }
 }

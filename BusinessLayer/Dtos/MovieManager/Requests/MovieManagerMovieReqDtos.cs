@@ -75,4 +75,4 @@ public class ReqEditMovieManagerMovieDto
     [StringLength(500)]
     public string? Actors { get; set; }
 }
-}
+

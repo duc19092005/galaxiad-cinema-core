@@ -14,16 +14,40 @@ namespace ApiLayer.Controllers.TheaterManager;
 public class TheaterManagerMovieSchedules : ControllerBase
 {
     private readonly TheaterManagerWriteSchedulesService _theaterManagerWriteSchedulesService;
+    private readonly TheaterManagerReadSchedulesService _theaterManagerReadSchedulesService;
 
-    public TheaterManagerMovieSchedules(TheaterManagerWriteSchedulesService theaterManagerWriteSchedulesService)
+    public TheaterManagerMovieSchedules(TheaterManagerWriteSchedulesService theaterManagerWriteSchedulesService, 
+                                        TheaterManagerReadSchedulesService theaterManagerReadSchedulesService)
     {
-        this._theaterManagerWriteSchedulesService = theaterManagerWriteSchedulesService;
+        _theaterManagerWriteSchedulesService = theaterManagerWriteSchedulesService;
+        _theaterManagerReadSchedulesService = theaterManagerReadSchedulesService;
+    }
+
+    [HttpGet("{auditoriumId}")]
+    public async Task<IActionResult> GetSchedules(Guid auditoriumId)
+    {
+        var result = await _theaterManagerReadSchedulesService.GetSchedulesByAuditoriumId(auditoriumId);
+        return Ok(result);
     }
 
     [HttpPost()]
     public async Task<IActionResult> CreateSchedule(TheaterManagerAddMovieSchedulesRequest request)
     {
         var result = await _theaterManagerWriteSchedulesService.AddItem(request);
+        return Ok(result);
+    }
+
+    [HttpPut("{auditoriumId}")]
+    public async Task<IActionResult> UpdateSchedule(Guid auditoriumId, [FromBody] TheaterManagerEditMovieSchedulesRequest request)
+    {
+        var result = await _theaterManagerWriteSchedulesService.UpdateItem(auditoriumId, request);
+        return Ok(result);
+    }
+
+    [HttpDelete("{scheduleId}")]
+    public async Task<IActionResult> DeleteSchedule(Guid scheduleId)
+    {
+        var result = await _theaterManagerWriteSchedulesService.DeleteItem(scheduleId);
         return Ok(result);
     }
 
