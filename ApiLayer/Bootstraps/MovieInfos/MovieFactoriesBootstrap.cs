@@ -1,4 +1,5 @@
-using BusinessLayer.Dtos.MovieManager;
+using BusinessLayer.Dtos.MovieManager.Requests;
+using BusinessLayer.Dtos.MovieManager.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.UseCases.MovieManager.MovieInfos;
 

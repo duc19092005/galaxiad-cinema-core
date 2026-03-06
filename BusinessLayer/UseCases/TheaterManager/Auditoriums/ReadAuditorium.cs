@@ -1,5 +1,5 @@
 ﻿using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.TheaterManager.Auditoriums;
+using BusinessLayer.Dtos.TheaterManager.Auditoriums.Responses;
 using BusinessLayer.Interfaces.TheaterManager;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;

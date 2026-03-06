@@ -36,6 +36,9 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     public string Actors { get; set; } = string.Empty;
     
     public int MovieDuration { get; set; }
+
+    public bool IsCommingSoon { get; set; } = true;
+
     public DateTime EndedDate {get;set;}
 
     public Guid ManagerId { get; set; }

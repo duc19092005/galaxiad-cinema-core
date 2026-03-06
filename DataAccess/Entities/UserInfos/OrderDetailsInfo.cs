@@ -15,10 +15,10 @@ public class OrderDetailsInfo
     [Column(TypeName = "decimal(18,2)")]
     public decimal PriceEach { get; set; }
 
+    public SeatsInfoEntity SeatsInfoEntity { get; set; } = null!;
+
     public MovieScheduleInfoEntity MovieScheduleInfoEntity { get; set; } = null!;
     
     public OrderInfoEntity OrderInfoEntity { get; set; }= null!;
-    
-    public SeatsInfoEntity SeatsInfoEntity { get; set; } = null!;
 }
 

@@ -1,7 +1,8 @@
 // ReSharper disable All
 
 using Shared.Exceptions;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
+using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.UseCases.IdentityAccess;
 using DataAccess;
@@ -34,7 +35,7 @@ public class IdentityAccessController : ControllerBase
     }
 
     [HttpPost("regular-register")]
-    public async Task<IActionResult> RegularRegister([FromBody] ResRegularRegisterDto registerRegularIdentityAccessDto)
+    public async Task<IActionResult> RegularRegister([FromBody] ReqRegularRegisterDto registerRegularIdentityAccessDto)
     {
         var results = await _registerService.Register(registerRegularIdentityAccessDto);
         return Ok(results);

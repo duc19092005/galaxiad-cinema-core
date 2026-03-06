@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;

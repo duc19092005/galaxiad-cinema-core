@@ -1,7 +1,7 @@
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats;
+using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;

@@ -1,13 +1,14 @@
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
+using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Shared.Utils;
+using BusinessLayer.Services.IdentityAccess;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 

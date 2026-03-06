@@ -2,7 +2,7 @@ using Shared.Exceptions;
 using Shared.Localization;
 // ReSharper disable All
 
-namespace Shared.Utils;
+namespace BusinessLayer.Services.IdentityAccess;
 using BCrypt.Net;
 public class BCrypt_helper
 {

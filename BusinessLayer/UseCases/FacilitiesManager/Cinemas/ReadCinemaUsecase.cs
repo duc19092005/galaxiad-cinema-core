@@ -1,7 +1,7 @@
 using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.Cinemas;
+using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using DataAccess;
 using Microsoft.AspNetCore.Http;

@@ -1,5 +1,5 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.TheaterManager.MovieSchedules;
+using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
@@ -23,13 +23,17 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     
     private readonly IScheduleJobsService _scheduleJobsService;
 
+    private readonly TheaterManagerValidate _theaterManagerValidate;
+
     public WriteMovieSchedulesUseCase(CinemaDbContext cinemaDbContext , ILogger<WriteMovieSchedulesUseCase> logger ,
-        IUserContextService userContextService , IScheduleJobsService scheduleJobsService)
+        IUserContextService userContextService , IScheduleJobsService scheduleJobsService ,
+        TheaterManagerValidate theaterManagerValidate)
     {
         _cinemaDbContext = cinemaDbContext;
         _logger = logger;
         _userContextService = userContextService;
         _scheduleJobsService = scheduleJobsService;
+        _theaterManagerValidate = theaterManagerValidate;
     }
     public async Task<BaseResponse<string>> AddItem(TheaterManagerAddMovieSchedulesRequest request)
     {
@@ -155,6 +159,17 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
     public async Task<BaseResponse<string>> UpdateItem(Guid auditoriumId, TheaterManagerEditMovieSchedulesRequest request)
     {
+        // Checking
+        if(request.Slots != null && request.Slots.Any())
+        {
+            foreach(var slot in request.Slots)
+            {
+                if (_theaterManagerValidate.ValidateSchedule(slot.ScheduleId))
+                {
+                    throw new BadRequestException("Throw Error Here", "E01");
+                }
+            }
+        }
         var getCurrentUserId = _userContextService.GetUserId();
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities

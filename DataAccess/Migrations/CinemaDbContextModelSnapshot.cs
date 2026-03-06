@@ -1180,6 +1180,9 @@ namespace DataAccess.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsCommingSoon")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -1554,7 +1557,7 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("SeatId");
 
-                    b.ToTable("OrderDetailsInfo");
+                    b.ToTable("OrderDetailsInfoEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderInfoEntity", b =>
@@ -2334,7 +2337,7 @@ namespace DataAccess.Migrations
                         .IsRequired();
 
                     b.HasOne("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", "SeatsInfoEntity")
-                        .WithMany()
+                        .WithMany("OrderDetailsInfo")
                         .HasForeignKey("SeatId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -2413,6 +2416,11 @@ namespace DataAccess.Migrations
                     b.Navigation("CinemaDiscountInfoEntity");
 
                     b.Navigation("CinemaSurchargeInfosEntity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", b =>
+                {
+                    b.Navigation("OrderDetailsInfo");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>

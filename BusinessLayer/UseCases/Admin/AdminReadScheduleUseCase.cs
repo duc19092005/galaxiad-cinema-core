@@ -1,5 +1,5 @@
 ﻿using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.Admin;
+using BusinessLayer.Dtos.Admin.Responses;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Shared.MappingEnums;

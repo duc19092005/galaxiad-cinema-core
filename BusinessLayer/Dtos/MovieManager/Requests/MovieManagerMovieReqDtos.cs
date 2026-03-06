@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
-namespace BusinessLayer.Dtos.MovieManager;
+namespace BusinessLayer.Dtos.MovieManager.Requests;
 
 public class ReqAddMovieManagerMovieDto
 {
@@ -75,40 +75,4 @@ public class ReqEditMovieManagerMovieDto
     [StringLength(500)]
     public string? Actors { get; set; }
 }
-
-public class ResGetMovieInfosMovieManagerDto
-{
-    public Guid MovieId { get; set; }
-    
-    public string MovieName { get; set; } = String.Empty;
-
-    public string MovieDescriptions { get; set; } = string.Empty;
-    
-    public string MovieImageUrl { get; set; } = string.Empty;
-    
-    public DateTime EndedDate { get; set; }
-    
-    public DateTime StartedDate { get; set; }
-
-    public List<string> MovieGenresInfos { get; set; } = [];
-
-    public List<string> MovieVisualFormatInfos { get; set; } = [];
-    
-    public DateTime UpdatedAt { get; set; }
-    
-    public DateTime CreatedAt { get; set; }
-
-    public string UpdatedBy { get; set; } = String.Empty;
-
-    public string CreatedBy { get; set; } = String.Empty;
-    
-    public int Duration { get; set; }
-    
-    public string TrailerUrl { get; set; } = string.Empty;
-    
-    public string Director { get; set; } = string.Empty;
-    
-    public string Actors { get; set; } = string.Empty;
-    
-    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
 }

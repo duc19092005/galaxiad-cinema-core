@@ -1,5 +1,5 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.MovieManager;
+using BusinessLayer.Dtos.MovieManager.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using Shared.Localization;
 using BusinessLayer.Services.IdentityAccess;

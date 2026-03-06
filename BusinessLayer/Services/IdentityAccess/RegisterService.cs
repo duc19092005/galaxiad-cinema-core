@@ -1,6 +1,6 @@
 
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Factories.IdentityAccess;
 using Shared.Enums;
 
@@ -15,10 +15,10 @@ public class RegisterService
     {
         this._registerFactory = registerFactory;
     }
-    public async Task<BaseResponse<string>> Register(ResRegularRegisterDto registerRegularIdentityAccessDto)
+    public async Task<BaseResponse<string>> Register(ReqRegularRegisterDto registerRegularIdentityAccessDto)
     {
         var objects =  
-            _registerFactory.Create<ResRegularRegisterDto , string>(RegisterMethodEnum.UsernamePassword);
+            _registerFactory.Create<ReqRegularRegisterDto , string>(RegisterMethodEnum.UsernamePassword);
         var results = await objects.Add(registerRegularIdentityAccessDto);
         return results;
     }

@@ -1,4 +1,4 @@
-using BusinessLayer.Dtos.FacilitiesManager.Auditoriums;
+using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
 using BusinessLayer.Services.FacilitiesManager.Auditoriums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

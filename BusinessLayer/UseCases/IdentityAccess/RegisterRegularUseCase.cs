@@ -1,6 +1,6 @@
 
 using Shared.Exceptions;
-using BusinessLayer.Dtos.IdentityAccess;
+using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos;
 using Shared.Localization;
 using BusinessLayer.Interfaces.IIdentityAccess;
@@ -11,11 +11,12 @@ using DataAccess.Entities.UserInfos;
 using Shared.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using BusinessLayer.Services.IdentityAccess;
 using Shared.Utils;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 
-public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegisterDto , string>
+public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegisterDto , string>
 {
     private readonly CinemaDbContext _dbContext;
     
@@ -30,7 +31,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ResRegularRegis
         _logger = logger;
     }
     
-    public async Task<BaseResponse<string>> Add(ResRegularRegisterDto dto)
+    public async Task<BaseResponse<string>> Add(ReqRegularRegisterDto dto)
     {
         using var transaction = await _dbContext.Database.BeginTransactionAsync();        
         try

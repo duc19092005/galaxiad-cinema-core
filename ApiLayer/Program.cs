@@ -5,6 +5,7 @@ using ApiLayer.Bootstraps.Facilities;
 using ApiLayer.Bootstraps.IdentityAccess;
 using ApiLayer.Bootstraps.MovieInfos;
 using ApiLayer.Bootstraps.Booking;
+using ApiLayer.Bootstraps.Validate;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
@@ -13,7 +14,7 @@ using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using Shared.Utils;
+using BusinessLayer.Services.ThirdPersonServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,6 +51,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 // Services
 
+
 builder.Services.AddCommonServices();
 
 
@@ -78,6 +80,7 @@ builder.Services.AddJwt(builder.Configuration);
 
 builder.Services.AddSingleton<cloudinaryHelper>();
 
+builder.Services.TheaterManagerValidate();
 
 // CORS
 

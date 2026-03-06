@@ -1,5 +1,5 @@
 using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats;
+using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats.Responses;
 using BusinessLayer.Factories.ApplicationFactories;
 using Shared.Enums;
 

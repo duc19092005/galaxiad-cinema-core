@@ -1,5 +1,5 @@
 ﻿using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.Admin;
+using BusinessLayer.Dtos.Admin.Responses;
 using BusinessLayer.UseCases.Admin;
 
 namespace BusinessLayer.Services.Admin.ScheduleJobs;
