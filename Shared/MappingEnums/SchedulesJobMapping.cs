@@ -1,4 +1,4 @@
-﻿using Shared.Enums;
+using Shared.Enums;
 
 
 namespace Shared.MappingEnums;
@@ -9,7 +9,7 @@ public static class SchedulesJobMapping
         new Dictionary<SchedulesJobCategoryEnums, string>
         {
             { SchedulesJobCategoryEnums.Movies, "Movies" },
-            { SchedulesJobCategoryEnums.Schedules, "Schedules" },
+            { SchedulesJobCategoryEnums.Schedules, "Showtimes" }, // Renamed for clarity
         };
 
     public static readonly Dictionary<SchedulesJobStatusEnums, string> SchedulesJobsMapping =

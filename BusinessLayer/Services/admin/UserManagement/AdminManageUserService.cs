@@ -93,17 +93,29 @@ public class AdminManageUserService
                 throw new NotFoundException("Error role is invalid");
             }
 
-            // Deleted All The User Roles
+            // Protect the Admin role: Don't delete it if it exists
+            var adminRoleId = DataAccess.Constants.userRoles.Admin;
+            
+            bool hasAdminPreviously = await _dbContext.UserRoleInfoEntity
+                .AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId);
 
             await _dbContext.UserRoleInfoEntity
-                .Where(ur => ur.UserId == userId)
+                .Where(ur => ur.UserId == userId && ur.RoleId != adminRoleId)
                 .ExecuteDeleteAsync();
 
-            await _dbContext.UserRoleInfoEntity.AddRangeAsync(roleIds.Select(x => new UserRoleInfoEntity()
+            // Add new roles, but skip Admin if they already have it to avoid duplicates
+            var rolesToAdd = roleIds
+                .Where(id => !(id == adminRoleId && hasAdminPreviously))
+                .Select(x => new UserRoleInfoEntity
+                {
+                    UserId = userId,
+                    RoleId = x
+                }).ToList();
+
+            if (rolesToAdd.Any())
             {
-                UserId = userId,
-                RoleId = x
-            }));
+                await _dbContext.UserRoleInfoEntity.AddRangeAsync(rolesToAdd);
+            }
 
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();

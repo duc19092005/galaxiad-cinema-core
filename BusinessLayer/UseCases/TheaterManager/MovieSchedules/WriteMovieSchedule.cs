@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Shared.Enums;
 using Shared.Exceptions;
 using Shared.Localization;
+using Hangfire;
 
 namespace BusinessLayer.UseCases.TheaterManager.MovieSchedules;
 
@@ -140,13 +141,12 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
             await _cinemaDbContext.MovieScheduleInfoEntity.AddRangeAsync(proposedSlots);
             await _cinemaDbContext.SaveChangesAsync();
+            await transactions.CommitAsync();
 
             foreach (var slot in proposedSlots)
             {
-                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime);
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime));
             }
-
-            await transactions.CommitAsync();
 
             return new BaseResponse<string>()
             {
@@ -309,14 +309,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             }
 
             await _cinemaDbContext.SaveChangesAsync();
+            await transactions.CommitAsync();
 
             foreach (var slot in request.Slots)
             {
                 var movie = moviesInfos[slot.MovieId];
-                await _scheduleJobsService.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration));
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration)));
             }
-
-            await transactions.CommitAsync();
 
             return new BaseResponse<string>()
             {

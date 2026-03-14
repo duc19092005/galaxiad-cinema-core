@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.ThirdPersonServices;
 using BusinessLayer.Validators;
 using Shared.Enums;
+using Hangfire;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
 
@@ -101,7 +102,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 TrailerUrl = request.TrailerUrl ?? string.Empty,
                 Director = request.Director ?? string.Empty,
                 Actors = request.Actors ?? string.Empty,
-                IsCommingSoon = DateTime.Now < request.StartedDate
+                IsCommingSoon = DateTime.Now < request.StartedDate,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             var newMovieGenreMovieInfos = request.MovieGenreIds.Select(id => new MovieGenreMovieInfoEntity()
@@ -116,21 +119,16 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 FormatId = id
             });
 
-            string getJobStatus =
-                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
-
-            if (getJobStatus != "OK" && String.IsNullOrEmpty(getJobStatus))
-            {
-                _logger.LogError("Error While Adding Jobs in Movie Service");
-                throw CustomSystemException.SystemExceptionCaller();
-            }
-
             await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
             
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            // Enqueue job registration to background AFTER transaction is committed
+            // This prevents race conditions where the job runs before the DB has the record.
+            BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));
 
             return new BaseResponse<string>()
             {
@@ -216,13 +214,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     throw new BadRequestException(validationsErrors, "S01");
                 }
 
-                bool UpdateJobStatus = await _scheduleJobsService.UpdatedJobIntoBackground
-                    (SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate , request.EndedDate);
-                if (!UpdateJobStatus)
-                {
-                    _logger.LogError("Error While Adding Jobs in Movie Service");
-                    throw CustomSystemException.SystemExceptionCaller();
-                }
+                // (Remove original position)
+                // BackgroundJob.Enqueue updated to move after commit
+
                 findTheMovie.MovieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.MovieRequiredAgeId;
                 findTheMovie.MovieDescription = request.MovieDescription ?? findTheMovie.MovieDescription;
                 findTheMovie.MovieName = request.MovieName ?? findTheMovie.MovieName;
@@ -285,6 +279,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 await _dbContext.SaveChangesAsync();
                 await transactions.CommitAsync();
+
+                // Enqueue job update to background AFTER transaction is committed
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate, request.EndedDate));
 
                 if (fileUploadStatus.success && !string.IsNullOrEmpty(oldImageUrl))
                 {

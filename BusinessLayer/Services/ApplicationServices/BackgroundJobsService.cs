@@ -35,21 +35,28 @@ public class ScheduleJobsService : IScheduleJobsService
     {
         string sId = string.Empty;
         string eId = string.Empty;
+        
+        // Treat incoming dates as the absolute reference (Vietnam Time)
+        // We force Kind to Utc so Hangfire doesn't try to shift it based on server local time.
+        // Actually, Hangfire stores everything as UTC. If we want it to run at 9:44 AM Vietnam, 
+        // and our server is +7, we should pass 2:44 AM UTC.
+        // BUT, since we want to be pragmatic: we'll convert everything to Local kind and let Hangfire handle it.
+        var localStart = DateTime.SpecifyKind(start, DateTimeKind.Local);
+        var localEnd = DateTime.SpecifyKind(end, DateTimeKind.Local);
         var toleranceTime = DateTime.Now.AddSeconds(-20);
 
         if (type == SchedulesJobCategoryEnums.Movies)
         {
-            if (start > toleranceTime)
-                sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), start);
+            if (localStart > toleranceTime)
+                sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), localStart);
         
-            if (end > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), end);
+            if (localEnd > toleranceTime)
+                eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), localEnd);
         }
         else if (type == SchedulesJobCategoryEnums.Schedules)
         {
-            // Schedules should be set to inactive when they END
-            if (end > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleStatus(targetId), end);
+            if (localEnd > toleranceTime)
+                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleStatus(targetId), localEnd);
         }
         return (sId, eId);
     }
@@ -62,30 +69,38 @@ public class ScheduleJobsService : IScheduleJobsService
 
             var logs = new List<ScheduleJobLogger>();
             
-            // Start Job Log
-            logs.Add(new ScheduleJobLogger 
-            { 
-                JobId = string.IsNullOrEmpty(ids.startJobId) ? $"SKIPPED_START_{Guid.NewGuid()}" : ids.startJobId, 
-                TargetId = targetId, 
-                StartedTime = start, 
-                ScheduleJobStatusType = ScheduleJobStatusType.StartSchedule, 
-                SchedulesJobStatus = string.IsNullOrEmpty(ids.startJobId) ? SchedulesJobStatusEnums.Completed : SchedulesJobStatusEnums.Pending, 
-                JobCategory = type 
-            });
+            // Only create log if a JobId was actually returned by Hangfire
+            if (!string.IsNullOrEmpty(ids.startJobId))
+            {
+                logs.Add(new ScheduleJobLogger 
+                { 
+                    JobId = ids.startJobId, 
+                    TargetId = targetId, 
+                    StartedTime = start, 
+                    ScheduleJobStatusType = ScheduleJobStatusType.StartSchedule, 
+                    SchedulesJobStatus = SchedulesJobStatusEnums.Pending, 
+                    JobCategory = type 
+                });
+            }
 
-            // End Job Log
-            logs.Add(new ScheduleJobLogger 
-            { 
-                JobId = string.IsNullOrEmpty(ids.endJobId) ? $"SKIPPED_END_{Guid.NewGuid()}" : ids.endJobId, 
-                TargetId = targetId, 
-                StartedTime = end, 
-                ScheduleJobStatusType = ScheduleJobStatusType.EndSchedule, 
-                SchedulesJobStatus = string.IsNullOrEmpty(ids.endJobId) ? SchedulesJobStatusEnums.Completed : SchedulesJobStatusEnums.Pending, 
-                JobCategory = type 
-            });
+            if (!string.IsNullOrEmpty(ids.endJobId))
+            {
+                logs.Add(new ScheduleJobLogger 
+                { 
+                    JobId = ids.endJobId, 
+                    TargetId = targetId, 
+                    StartedTime = end, 
+                    ScheduleJobStatusType = ScheduleJobStatusType.EndSchedule, 
+                    SchedulesJobStatus = SchedulesJobStatusEnums.Pending, 
+                    JobCategory = type 
+                });
+            }
 
-            await _cinemaDbContext.BackGroundJobLoggerEntity.AddRangeAsync(logs);
-            await _cinemaDbContext.SaveChangesAsync();
+            if (logs.Any())
+            {
+                await _cinemaDbContext.BackGroundJobLoggerEntity.AddRangeAsync(logs);
+                await _cinemaDbContext.SaveChangesAsync();
+            }
             return "OK";
         }
         catch (Exception e)
@@ -97,65 +112,52 @@ public class ScheduleJobsService : IScheduleJobsService
 
     public async Task<bool> UpdatedJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime? start, DateTime? end)
     {
-        var existingJobs = await _cinemaDbContext.BackGroundJobLoggerEntity
-            .Where(x => x.TargetId == targetId).ToListAsync();
-
-        if (!existingJobs.Any())
-        {
-            // ... (keep the same "healing" logic for missing jobs)
-            DateTime finalStartHealing = start ?? DateTime.MinValue;
-            DateTime finalEndHealing = end ?? DateTime.MinValue;
-
-            if (start == null || end == null)
-            {
-                if (type == SchedulesJobCategoryEnums.Movies)
-                {
-                    var movie = await _cinemaDbContext.MovieInfoEntity.FindAsync(targetId);
-                    if (movie != null)
-                    {
-                        finalStartHealing = start ?? movie.ActiveAt;
-                        finalEndHealing = end ?? movie.EndedDate;
-                    }
-                }
-                else if (type == SchedulesJobCategoryEnums.Schedules)
-                {
-                    var schedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(targetId);
-                    if (schedule != null)
-                    {
-                        finalStartHealing = start ?? schedule.ActiveAt;
-                        finalEndHealing = end ?? schedule.EndedTime;
-                    }
-                }
-            }
-
-            if (finalStartHealing != DateTime.MinValue && finalEndHealing != DateTime.MinValue)
-            {
-                await AddJobIntoBackground(type, targetId, finalStartHealing, finalEndHealing);
-                return true;
-            }
-
-            return false;
-        }
-
         try
         {
-            // 1. Delete Hangfire Jobs
-            foreach (var job in existingJobs)
+            // 1. Fetch the MOST UP-TO-DATE information from DB
+            // We ignore the 'start' and 'end' parameters if they are missing, 
+            // ensuring the background job matches exactly what is stored.
+            DateTime finalStart = DateTime.MinValue;
+            DateTime finalEnd = DateTime.MinValue;
+
+            if (type == SchedulesJobCategoryEnums.Movies)
             {
-                if (!string.IsNullOrEmpty(job.JobId) && !job.JobId.StartsWith("SKIPPED_"))
-                    _backgroundJobClient.Delete(job.JobId);
+                var movie = await _cinemaDbContext.MovieInfoEntity.AsNoTracking().FirstOrDefaultAsync(x => x.MovieId == targetId);
+                if (movie != null)
+                {
+                    finalStart = movie.ActiveAt;
+                    finalEnd = movie.EndedDate;
+                }
+            }
+            else if (type == SchedulesJobCategoryEnums.Schedules)
+            {
+                var schedule = await _cinemaDbContext.MovieScheduleInfoEntity.AsNoTracking().FirstOrDefaultAsync(x => x.MovieScheduleInfoId == targetId);
+                if (schedule != null)
+                {
+                    finalStart = schedule.ActiveAt;
+                    finalEnd = schedule.EndedTime;
+                }
             }
 
-            // 2. We can't update PK (JobId) in EF Core easily. 
-            // So we delete the old logs and add new ones.
-            DateTime finalStart = start ?? existingJobs.FirstOrDefault(x => x.ScheduleJobStatusType == ScheduleJobStatusType.StartSchedule)?.StartedTime ?? DateTime.MinValue;
-            DateTime finalEnd = end ?? existingJobs.FirstOrDefault(x => x.ScheduleJobStatusType == ScheduleJobStatusType.EndSchedule)?.StartedTime ?? DateTime.MinValue;
+            if (finalStart == DateTime.MinValue && finalEnd == DateTime.MinValue) return false;
 
-            _cinemaDbContext.BackGroundJobLoggerEntity.RemoveRange(existingJobs);
-            await _cinemaDbContext.SaveChangesAsync();
+            // 2. Delete Existing Hangfire Jobs
+            var existingJobs = await _cinemaDbContext.BackGroundJobLoggerEntity
+                .Where(x => x.TargetId == targetId).ToListAsync();
 
+            if (existingJobs.Any())
+            {
+                foreach (var job in existingJobs)
+                {
+                    if (!string.IsNullOrEmpty(job.JobId) && !job.JobId.StartsWith("SKIPPED_"))
+                        _backgroundJobClient.Delete(job.JobId);
+                }
+                _cinemaDbContext.BackGroundJobLoggerEntity.RemoveRange(existingJobs);
+                await _cinemaDbContext.SaveChangesAsync();
+            }
+
+            // 3. Register Brand New Jobs based on DB truth
             await AddJobIntoBackground(type, targetId, finalStart, finalEnd);
-            
             return true;
         }
         catch (Exception e)
@@ -167,24 +169,42 @@ public class ScheduleJobsService : IScheduleJobsService
 
     public async Task SyncSeededJobs()
     {
-        var movies = await _cinemaDbContext.MovieInfoEntity.ToListAsync();
-        foreach (var movie in movies)
+        var now = DateTime.Now;
+
+        // 1. HARD RESET: Clear the entire logger table AND Hangfire pending jobs
+        // This stops "ghost" jobs from running after the logs are gone.
+        var allLogs = await _cinemaDbContext.BackGroundJobLoggerEntity.ToListAsync();
+        if (allLogs.Any())
         {
-            var hasJobs = await _cinemaDbContext.BackGroundJobLoggerEntity.AnyAsync(x => x.TargetId == movie.MovieId);
-            if (!hasJobs)
+            foreach (var log in allLogs)
             {
-                await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
+                if (!log.JobId.StartsWith("SKIPPED_"))
+                {
+                    _backgroundJobClient.Delete(log.JobId);
+                }
             }
+            _cinemaDbContext.BackGroundJobLoggerEntity.RemoveRange(allLogs);
+            await _cinemaDbContext.SaveChangesAsync();
         }
 
-        var schedules = await _cinemaDbContext.MovieScheduleInfoEntity.ToListAsync();
+        // 2. Process Movies: Only sync movies that haven't ended yet
+        var movies = await _cinemaDbContext.MovieInfoEntity
+            .Where(m => m.EndedDate > now)
+            .ToListAsync();
+
+        foreach (var movie in movies)
+        {
+            await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
+        }
+
+        // 3. Process Schedules: Only sync showtimes that haven't ended yet
+        var schedules = await _cinemaDbContext.MovieScheduleInfoEntity
+            .Where(s => s.EndedTime > now)
+            .ToListAsync();
+
         foreach (var schedule in schedules)
         {
-            var hasJobs = await _cinemaDbContext.BackGroundJobLoggerEntity.AnyAsync(x => x.TargetId == schedule.MovieScheduleInfoId);
-            if (!hasJobs)
-            {
-                await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
-            }
+            await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
         }
     }
 }

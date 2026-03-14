@@ -10,7 +10,7 @@ public class ResponseScheduleJobDto
     
     public DateTime JobStartedAt { get; set; }
     
-    public DateTime JobEndedAt { get; set; }
+    public DateTime? JobEndedAt { get; set; }
 
     public string ScheduleJobCategory { get; set; } = string.Empty;
     

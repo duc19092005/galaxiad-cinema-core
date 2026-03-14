@@ -1,4 +1,4 @@
-﻿using BusinessLayer.Dtos;
+using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
@@ -21,7 +21,9 @@ public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
 
     public async Task<BaseResponse<List<ResponseScheduleJobDto>>> ListScheduleJob()
     {
-        var rawData = await _cinemaDbContext.BackGroundJobLoggerEntity.ToListAsync();
+        var rawData = await _cinemaDbContext.BackGroundJobLoggerEntity
+            .OrderByDescending(x => x.StartedTime)
+            .ToListAsync();
 
         var listScheduleJobDto = rawData.Select(x => {
             var (category, status, type) = SchedulesJobMapping.MappingScheduleEnums(
@@ -34,8 +36,8 @@ public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
             {
                 JobId = x.JobId,
                 TargetId = x.TargetId,
-                JobStartedAt = x.StartedTime,
-                JobEndedAt = x.FinishedTime,
+                JobStartedAt = DateTime.SpecifyKind(x.StartedTime, DateTimeKind.Utc),
+                JobEndedAt = x.FinishedTime == DateTime.MinValue ? null : (DateTime?)DateTime.SpecifyKind(x.FinishedTime, DateTimeKind.Utc),
                 FailedReason = x.FailedReason,
                 ScheduleJobCategory = category,
                 ScheduleJobStatus = status,

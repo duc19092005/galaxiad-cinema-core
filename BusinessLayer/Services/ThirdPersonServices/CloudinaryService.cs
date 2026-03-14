@@ -80,7 +80,7 @@ public class cloudinaryHelper
             {
                 return true;
             }
-            _logger.LogError("Delete failed Details : {0}" , result.Error.Message);
+            _logger.LogError("Delete failed Details : {0}" , result.Error?.Message ?? "Unknown error");
             return false;
         }
         catch (Exception ex)

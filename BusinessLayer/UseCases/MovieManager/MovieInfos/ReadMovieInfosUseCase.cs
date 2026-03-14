@@ -37,13 +37,13 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
-                CreatedBy =  _dbContext.UserProfileEntity
-                    .FirstOrDefault(x => x
-                        .UserId.Equals
-                            (GetUserId())).UserName,
                 Duration = x.MovieDuration ,
-                EndedDate = x.EndedDate,
-                StartedDate = x.ActiveAt,
+                EndedDate = DateTime.SpecifyKind(x.EndedDate, DateTimeKind.Utc),
+                StartedDate = DateTime.SpecifyKind(x.ActiveAt, DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(x.CreatedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(x.UpdatedAt, DateTimeKind.Utc),
+                CreatedBy = x.Creator != null ? x.Creator.UserProfileEntity.UserName : "System Administrator",
+                UpdatedBy = x.Updater != null ? x.Updater.UserProfileEntity.UserName : "",
                 TrailerUrl = x.TrailerUrl,
                 Director = x.Director,
                 Actors = x.Actors,
@@ -77,8 +77,12 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 Duration = m.MovieDuration,
-                EndedDate = m.EndedDate,
-                StartedDate = m.ActiveAt,
+                EndedDate = DateTime.SpecifyKind(m.EndedDate, DateTimeKind.Utc),
+                StartedDate = DateTime.SpecifyKind(m.ActiveAt, DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(m.UpdatedAt, DateTimeKind.Utc),
+                CreatedBy = m.Creator != null ? m.Creator.UserProfileEntity.UserName : "System Administrator",
+                UpdatedBy = m.Updater != null ? m.Updater.UserProfileEntity.UserName : "",
                 TrailerUrl = m.TrailerUrl,
                 Director = m.Director,
                 Actors = m.Actors,
