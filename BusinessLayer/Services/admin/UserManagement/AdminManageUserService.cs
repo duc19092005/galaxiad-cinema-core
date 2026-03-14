@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
 using DataAccess.Entities.UserInfos;
 using Microsoft.Extensions.Logging;
+using Shared.Exceptions;
 
 namespace BusinessLayer.Services.Admin.UserManagement;
 
@@ -12,6 +13,8 @@ public class AdminUserDto
     public Guid UserId { get; set; }
     public string UserEmail { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
+
+    public string UserRoles { get; set; } = string.Empty;
     public AccountStatusEnum AccountStatus { get; set; }
     public RegisterMethodEnum RegisterMethod { get; set; }
 }
@@ -38,7 +41,8 @@ public class AdminManageUserService
                 UserEmail = u.UserEmail,
                 UserName = u.UserProfileEntity != null ? u.UserProfileEntity.UserName : string.Empty,
                 AccountStatus = u.AccountStatus,
-                RegisterMethod = u.RegisterMethod
+                RegisterMethod = u.RegisterMethod,
+                UserRoles = String.Join("," , u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))
             })
             .ToListAsync();
 
@@ -74,29 +78,49 @@ public class AdminManageUserService
         };
     }
 
-    public async Task<BaseResponse<string>> AssignRoleToUserAsync(Guid userId, string roleName)
+    public async Task<BaseResponse<string>> AssignRoleToUserAsync(Guid userId, List<Guid> roleIds)
     {
-        var user = await _dbContext.UserInfoEntity.FindAsync(userId);
-        if (user == null) return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
-
-        var role = await _dbContext.RoleListInfoEntity.FirstOrDefaultAsync(r => r.RoleName == roleName);
-        if (role == null) return new BaseResponse<string> { IsSuccess = false, Message = "Role not found." };
-
-        var existRole = await _dbContext.UserRoleInfoEntity.FirstOrDefaultAsync(ur => ur.UserId == userId);
-        if (existRole != null)
+        var transactions = await _dbContext.Database.BeginTransactionAsync();
+        try
         {
-            _dbContext.UserRoleInfoEntity.Remove(existRole);
+            var user = await _dbContext.UserInfoEntity.FindAsync(userId);
+            if (user == null) return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
+
+            var isValidRole = await _dbContext.RoleListInfoEntity.AnyAsync(r => roleIds.Contains(r.RoleId));
+
+            if (!isValidRole)
+            {
+                throw new NotFoundException("Error role is invalid");
+            }
+
+            // Deleted All The User Roles
+
+            await _dbContext.UserRoleInfoEntity
+                .Where(ur => ur.UserId == userId)
+                .ExecuteDeleteAsync();
+
+            await _dbContext.UserRoleInfoEntity.AddRangeAsync(roleIds.Select(x => new UserRoleInfoEntity()
+            {
+                UserId = userId,
+                RoleId = x
+            }));
+
+            await _dbContext.SaveChangesAsync();
+            await transactions.CommitAsync();
+
+            return new BaseResponse<string> { IsSuccess = true, Message = $"Role Assign Completed successfully." };
         }
-
-        await _dbContext.UserRoleInfoEntity.AddAsync(new UserRoleInfoEntity
+        catch (Exception e)
         {
-            UserId = userId,
-            RoleId = role.RoleId
-        });
+            _logger.LogError(e.Message);
+            await transactions.RollbackAsync();
+            if (e is AppException)
+            {
+                throw;
+            }
+            throw CustomSystemException.SystemExceptionCaller();
 
-        await _dbContext.SaveChangesAsync();
-
-        return new BaseResponse<string> { IsSuccess = true, Message = $"Assigned {roleName} role to user." };
+        }
     }
 
     public async Task<BaseResponse<string>> AssignCinemaToManagerAsync(Guid cinemaId, Guid managerId)

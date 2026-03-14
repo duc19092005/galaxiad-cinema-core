@@ -3,6 +3,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Enums;
 using BusinessLayer.Dtos;
+using BusinessLayer.Dtos.Admin.Responses;
+using DataAccess;
+using DataAccess.Constants;
+using Microsoft.EntityFrameworkCore;
 
 namespace ApiLayer.Controllers.admin;
 
@@ -14,14 +18,15 @@ public class AdminManageUsersController : ControllerBase
 {
     private readonly AdminManageUserService _adminManageUserService;
 
-    public AdminManageUsersController(AdminManageUserService adminManageUserService)
+    private readonly CinemaDbContext _cinemaDbContext;
+
+    public AdminManageUsersController(AdminManageUserService adminManageUserService ,
+        CinemaDbContext cinemaDbContext)
     {
         _adminManageUserService = adminManageUserService;
+        _cinemaDbContext = cinemaDbContext;
     }
-
-    /// <summary>
-    /// Lấy danh sách toàn bộ người dùng 
-    /// </summary>
+    
     [HttpGet]
     public async Task<IActionResult> GetAllUsers()
     {
@@ -29,9 +34,6 @@ public class AdminManageUsersController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Cập nhật trạng thái người dùng (Ban, Lock, Unban...)
-    /// </summary>
     [HttpPut("{userId}/status")]
     public async Task<IActionResult> UpdateUserStatus(Guid userId, [FromQuery] AccountStatusEnum status)
     {
@@ -42,24 +44,26 @@ public class AdminManageUsersController : ControllerBase
         }
         return Ok(result);
     }
-
-    /// <summary>
-    /// Thay đổi Role người dùng
-    /// </summary>
-    [HttpPut("{userId}/role")]
-    public async Task<IActionResult> UpdateUserRole(Guid userId, [FromQuery] string roleName)
+    
+    [HttpGet("{userId}/role")]
+    public async Task<IActionResult> GetUserRole(Guid userId)
     {
-        var result = await _adminManageUserService.AssignRoleToUserAsync(userId, roleName);
+        var result = await _cinemaDbContext.UserRoleInfoEntity.AsNoTracking().Where(x => x.UserId.Equals(userId))
+            .Select(x => x.RoleListInfoEntity.RoleName).ToListAsync();
+        return Ok(result);
+    }
+    
+    [HttpPut("{userId}/role")]
+    public async Task<IActionResult> UpdateUserRole(Guid userId, List<Guid> roleIds)
+    {
+        var result = await _adminManageUserService.AssignRoleToUserAsync(userId, roleIds);
         if (!result.IsSuccess)
         {
             return BadRequest(result);
         }
         return Ok(result);
     }
-
-    /// <summary>
-    /// Giao rạp chiếu cho 1 TheaterManager quản lý
-    /// </summary>
+    
     [HttpPut("cinemas/{cinemaId}/manager")]
     public async Task<IActionResult> AssignCinemaManager(Guid cinemaId, [FromQuery] Guid managerId)
     {
@@ -69,5 +73,18 @@ public class AdminManageUsersController : ControllerBase
             return BadRequest(result);
         }
         return Ok(result);
+    }
+
+    [HttpGet("roles")]
+    public async Task<IActionResult> GetAllRoles()
+    {
+        var getAllRoles = await _cinemaDbContext.RoleListInfoEntity.AsNoTracking().Where(x => 
+            x.RoleId != userRoles.Admin && x.RoleId != userRoles.Customer).Select(x => new ResponseRolesDto()
+        {
+            RoleId = x.RoleId,
+            RoleName = x.RoleName,
+        }).ToListAsync();
+        
+        return Ok(getAllRoles);
     }
 }
