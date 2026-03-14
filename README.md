@@ -1,3 +1,5 @@
+# Đây là Branch Vibe Coder để test xem AI làm như nào và để thuyết trình môn tiếng anh nhưng nếu code tay thì ko kịp nên tạo nhánh này để Vibe Coder đỡ sau khi thuyết trình xong sẽ xóa nhánh này =-)
+
 # TÀI LIỆU BACKEND & API CHO FRONTEND - RENEW CINEMA PROJECT
 
 Dưới đây là tổng hợp nhanh toàn bộ các phân hệ API của dự án Backend quản lý Rạp Phim, dành cho nhóm lập trình UI/UX Frontend tiến hành tham khảo và đấu nối.
