@@ -101,6 +101,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 TrailerUrl = request.TrailerUrl ?? string.Empty,
                 Director = request.Director ?? string.Empty,
                 Actors = request.Actors ?? string.Empty,
+                IsCommingSoon = DateTime.Now < request.StartedDate
             };
 
             var newMovieGenreMovieInfos = request.MovieGenreIds.Select(id => new MovieGenreMovieInfoEntity()
@@ -118,7 +119,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             string getJobStatus =
                 await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
 
-            if (String.IsNullOrEmpty(getJobStatus))
+            if (getJobStatus != "OK" && String.IsNullOrEmpty(getJobStatus))
             {
                 _logger.LogError("Error While Adding Jobs in Movie Service");
                 throw CustomSystemException.SystemExceptionCaller();
@@ -231,6 +232,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.UpdatedByUserId = getUserId;
                 findTheMovie.IsActive =
                     (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.Now;
+                findTheMovie.IsCommingSoon = (request.StartedDate ?? findTheMovie.ActiveAt) > DateTime.Now;
                 findTheMovie.MovieDuration = request.Duration ?? findTheMovie.MovieDuration;
                 findTheMovie.TrailerUrl = request.TrailerUrl ?? findTheMovie.TrailerUrl;
                 findTheMovie.Director = request.Director ?? findTheMovie.Director;

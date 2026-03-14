@@ -7,6 +7,7 @@ using DataAccess;
 using DataAccess.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shared.Enums;
 using Shared.Exceptions;
 using Shared.Localization;
 
@@ -98,6 +99,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     AuditoriumId = request.AuditoriumId,
                     MovieFormatId = slot.FormatId,
                     ActiveAt = slot.StartedDate,
+                    StartTime = slot.StartedDate,
                     EndedTime = endTime,
                     CreatedByUserId = getCurrentUserId,
                     IsActive = DateTime.Now >= slot.StartedDate && DateTime.Now < endTime,
@@ -138,6 +140,12 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
             await _cinemaDbContext.MovieScheduleInfoEntity.AddRangeAsync(proposedSlots);
             await _cinemaDbContext.SaveChangesAsync();
+
+            foreach (var slot in proposedSlots)
+            {
+                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime);
+            }
+
             await transactions.CommitAsync();
 
             return new BaseResponse<string>()
@@ -294,12 +302,20 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 entity.MovieId = slot.MovieId;
                 entity.MovieFormatId = slot.FormatId;
                 entity.ActiveAt = slot.StartedDate;
+                entity.StartTime = slot.StartedDate;
                 entity.EndedTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
                 entity.UpdatedByUserId = getCurrentUserId;
                 entity.UpdatedAt = DateTime.Now;
             }
 
             await _cinemaDbContext.SaveChangesAsync();
+
+            foreach (var slot in request.Slots)
+            {
+                var movie = moviesInfos[slot.MovieId];
+                await _scheduleJobsService.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration));
+            }
+
             await transactions.CommitAsync();
 
             return new BaseResponse<string>()

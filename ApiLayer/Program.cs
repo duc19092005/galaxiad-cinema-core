@@ -171,5 +171,11 @@ app.MapControllers();
 
 app.MapHub<SeatHub>("/ws/seat");
 
+using (var scope = app.Services.CreateScope())
+{
+    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
+    await scheduleJobsService.SyncSeededJobs();
+}
+
 app.Run();
 
