@@ -1,7 +1,7 @@
 // src/api/movieApi.ts
 import { movieAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { Movie, MovieRequiredAge, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
+import type { Movie, MovieRequiredAge, MovieGenre, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
 
 export const movieApi = {
@@ -30,6 +30,14 @@ export const movieApi = {
         return response.data;
     },
 
+    /** GET http://localhost:5032/MovieGenres */
+    getMovieGenres: async (): Promise<ApiSuccessResponse<MovieGenre[]>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<MovieGenre[]>>(
+            'http://localhost:5032/MovieGenres'
+        );
+        return response.data;
+    },
+
     /** GET /api/movieManager/movies/{id} */
     getMovieDetail: async (movieId: string): Promise<ApiSuccessResponse<Movie>> => {
         const response = await movieAxios.get<ApiSuccessResponse<Movie>>(
@@ -45,8 +53,8 @@ export const movieApi = {
         formData.append('movieName', data.movieName);
         formData.append('movieDescription', data.movieDescription);
         formData.append('movieImage', data.movieImage);
-        formData.append('endedDate', data.endedDate);
-        formData.append('startedDate', data.startedDate);
+        formData.append('EndedDate', data.endedDate);
+        formData.append('StartedDate', data.startedDate);
         formData.append('duration', data.duration.toString());
         if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
         if (data.director) formData.append('Director', data.director);
@@ -76,12 +84,12 @@ export const movieApi = {
     updateMovie: async (movieId: string, data: UpdateMovieFormData): Promise<ApiSuccessResponse> => {
         const formData = new FormData();
 
-        if (data.movieRequiredAgeId) formData.append('movieRequiredAgeId', data.movieRequiredAgeId);
+        if (data.movieRequiredAgeId) formData.append('MovieRequiredAgeId', data.movieRequiredAgeId);
         if (data.movieName) formData.append('movieName', data.movieName);
         if (data.movieDescription) formData.append('movieDescription', data.movieDescription);
         if (data.movieImage) formData.append('movieImage', data.movieImage);
-        if (data.endedDate) formData.append('endedDate', data.endedDate);
-        if (data.startedDate) formData.append('startedDate', data.startedDate);
+        if (data.endedDate) formData.append('EndedDate', data.endedDate);
+        if (data.startedDate) formData.append('StartedDate', data.startedDate);
         if (data.duration !== undefined) formData.append('duration', data.duration.toString());
         if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
         if (data.director) formData.append('Director', data.director);

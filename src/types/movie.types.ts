@@ -10,6 +10,12 @@ export interface MovieRequiredAge {
     movieRequiredAgeDescription: string;
 }
 
+export interface MovieGenre {
+    movieGenreId: string;
+    movieGenreName: string;
+    movieGenreDescription?: string;
+}
+
 /** Movie list item / detail (from GET /api/movieManager/movies) */
 export interface Movie {
     movieId: string;
@@ -52,8 +58,8 @@ export interface UpdateMovieFormData {
     movieName?: string;
     movieDescription?: string;
     movieImage?: File;
-    endedDate?: string;
-    startedDate?: string;
+    endedDate?: string | null;
+    startedDate?: string | null;
     movieFormatIds?: string[];
     movieGenreIds?: string[];
     duration?: number;

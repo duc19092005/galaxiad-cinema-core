@@ -187,5 +187,9 @@
     "Full Name": "Tên đầy đủ",
     "User Management": "Quản lý người dùng",
     "Background Jobs": "Quản lý việc chạy ngằm",
-    "Edit Roles": "Sửa Vai Trò"
+    "Edit Roles": "Sửa Vai Trò",
+    "Job Type": "Thể loại công việc chạy ngầm",
+    "Started Time": "Bắt Đầu",
+    "Ended Time": "Kết Thúc",
+    "Job Status": "Trạng Thái"
 }

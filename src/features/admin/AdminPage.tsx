@@ -16,7 +16,11 @@ import {
     CheckCircle,
     XCircle,
     UserCog,
-    ShieldCheck
+    ShieldCheck,
+    Filter,
+    ArrowUpDown,
+    SortAsc,
+    SortDesc
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { adminApi } from '../../api/adminApi';
@@ -27,6 +31,7 @@ import LogoutModal from '../../components/LogoutModal';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import { useTranslation } from 'react-i18next';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -38,11 +43,12 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const navigate = useNavigate();
 
     const menuItems = [
-        { id: 'users', label: 'User Management', icon: Users },
-        { id: 'jobs', label: 'Background Jobs', icon: Clock },
+        { id: 'users', label: t('User Management'), icon: Users },
+        { id: 'jobs', label: t('Background Jobs'), icon: Clock },
     ] as const;
 
     return (
@@ -77,7 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
                     : 'bg-red-600/10 text-red-500'
                     }`}>
                     <LayoutDashboard className="w-4 h-4" />
-                    System Admin
+                    {t('roles.admin')}
                 </div>
             </div>
 
@@ -114,6 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
 const AdminPage: React.FC = () => {
     const navigate = useNavigate();
     const { theme, setTheme } = useTheme();
+    const { t } = useTranslation();
 
     const [activeTab, setActiveTab] = useState<'users' | 'jobs'>('users');
     const [users, setUsers] = useState<AdminUserDto[]>([]);
@@ -128,7 +135,7 @@ const AdminPage: React.FC = () => {
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
     const themeDropdownRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const [user, setUser] = useState<{ username: string; roles?: string[] } | null>(null);
+    const [user, setUser] = useState<{ username: string; roles?: string[]; userId?: string } | null>(null);
 
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -138,12 +145,23 @@ const AdminPage: React.FC = () => {
     const [isCinemaModalOpen, setIsCinemaModalOpen] = useState(false);
     const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
 
-    // Click outside handler for action menu
+    // Background Jobs Filter & Sort
+    const [jobTypeFilter, setJobTypeFilter] = useState<'All' | 'StartSchedule' | 'EndSchedule'>('All');
+    const [jobSortOrder, setJobSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    // Click outside handler for action menu and dropdowns
     useEffect(() => {
-        const handleClickOutside = () => {
-            if (activeActionMenu) {
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            
+            // Handle activeActionMenu (the table dropdown)
+            if (activeActionMenu && !target.closest('.action-menu-container')) {
                 setActiveActionMenu(null);
             }
+            
+            // Handle header dropdowns
+            if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
+            if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -160,15 +178,6 @@ const AdminPage: React.FC = () => {
     useEffect(() => {
         fetchData();
     }, [activeTab]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
-            if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) setIsThemeDropdownOpen(false);
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const fetchData = async () => {
         setLoading(true);
@@ -224,8 +233,17 @@ const AdminPage: React.FC = () => {
     };
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleString('vi-VN');
+        if (!dateStr || dateStr.startsWith('0001-01-01')) return 'N/A';
+        // Strip 'Z' to treat as Wall Time (prevent local offset shifting)
+        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
+        return new Date(wallTimeStr).toLocaleString('vi-VN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     };
 
     return (
@@ -255,7 +273,7 @@ const AdminPage: React.FC = () => {
                             ? 'text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10'
                             : 'text-gray-600 border-gray-300'
                         }`}>
-                        System Admin Dashboard
+                        {t('User Management')}
                     </span>
                 </div>
 
@@ -282,7 +300,7 @@ const AdminPage: React.FC = () => {
                                 <Sun className="w-5 h-5" />
                             )}
                             <span className="hidden sm:inline-block text-sm font-medium">
-                                {theme === 'dark' ? 'Dark' : theme === 'modern' ? 'Modern' : 'Light'}
+                                {theme === 'dark' ? t('Dark Mode') : theme === 'modern' ? t('Modern View') : t('Light Mode')}
                             </span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
                         </button>
@@ -299,11 +317,11 @@ const AdminPage: React.FC = () => {
                                         }`}>
                                         <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-400'
                                             }`}>
-                                            Select Theme
+                                            {t('Select Theme')}
                                         </p>
                                         <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'
                                             }`}>
-                                            Demo - Choose your favorite color tone
+                                            {t('Demo - Choose your favorite color tone')}
                                         </p>
                                     </div>
 
@@ -323,10 +341,10 @@ const AdminPage: React.FC = () => {
                                     >
                                         <Sun className="w-4 h-4" />
                                         <div className="flex-1">
-                                            <div className="font-semibold">Light Mode</div>
+                                            <div className="font-semibold">{t('Light Mode')}</div>
                                             <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
                                                 }`}>
-                                                Light Interface
+                                                {t('Light Interface')}
                                             </div>
                                         </div>
                                         {theme === 'light' && <div className="w-2 h-2 rounded-full bg-red-600" />}
@@ -346,10 +364,10 @@ const AdminPage: React.FC = () => {
                                     >
                                         <Moon className="w-4 h-4" />
                                         <div className="flex-1">
-                                            <div className="font-semibold">Dark Mode</div>
+                                            <div className="font-semibold">{t('Dark Mode')}</div>
                                             <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
                                                 }`}>
-                                                Dark Interface
+                                                {t('Dark Interface')}
                                             </div>
                                         </div>
                                         {theme === 'dark' && <div className="w-2 h-2 rounded-full bg-red-600" />}
@@ -369,10 +387,10 @@ const AdminPage: React.FC = () => {
                                     >
                                         <Sparkles className="w-4 h-4" />
                                         <div className="flex-1">
-                                            <div className="font-semibold">Modern View</div>
+                                            <div className="font-semibold">{t('Modern View')}</div>
                                             <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
                                                 }`}>
-                                                Modern Color Tone
+                                                {t('Web3 Color Tone')}
                                             </div>
                                         </div>
                                         {theme === 'modern' && <div className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" />}
@@ -402,16 +420,16 @@ const AdminPage: React.FC = () => {
                                 }`}>
                                 <div className="py-2">
                                     <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
-                                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>SIGNED IN AS</p>
+                                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('SIGNED IN AS')}</p>
                                         <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
                                     </div>
 
                                     <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                                        <UserCircle className="w-4 h-4" />Account Information
+                                        <UserCircle className="w-4 h-4" />{t('Account Information')}
                                     </button>
 
                                     <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                                        <Settings className="w-4 h-4" />Change Password
+                                        <Settings className="w-4 h-4" />{t('Change Password')}
                                     </button>
 
                                     <button
@@ -420,7 +438,7 @@ const AdminPage: React.FC = () => {
                                             }`}
                                     >
                                         <Users className="w-4 h-4" />
-                                        Switch Role
+                                        {t('Switch Role')}
                                     </button>
 
                                     <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
@@ -431,7 +449,7 @@ const AdminPage: React.FC = () => {
                                             }`}
                                     >
                                         <LogOut className="w-4 h-4" />
-                                        Logout
+                                        {t('Logout')}
                                     </button>
                                 </div>
                             </div>
@@ -454,10 +472,10 @@ const AdminPage: React.FC = () => {
                                     <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
                                         <tr>
                                             <th className="px-6 py-4 font-bold">Email</th>
-                                            <th className="px-6 py-4 font-bold">Tên đầy đủ</th>
-                                            <th className="px-6 py-4 font-bold">Vai Trò</th>
-                                            <th className="px-6 py-4 font-bold">Trạng Thái</th>
-                                            <th className="px-6 py-4 font-bold text-right pr-8">Hành Động</th>
+                                            <th className="px-6 py-4 font-bold">{t('Full Name')}</th>
+                                            <th className="px-6 py-4 font-bold">{t('Roles')}</th>
+                                            <th className="px-6 py-4 font-bold">{t('Status')}</th>
+                                            <th className="px-6 py-4 font-bold text-right pr-8">{t('Actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 divide-opacity-20">
@@ -468,12 +486,11 @@ const AdminPage: React.FC = () => {
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-wrap gap-1 min-w-[120px]">
                                                         {(u.userRoles || '').split(',').map((role, idx) => (
-                                                            <span key={idx} className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                                                role.trim() === 'Admin' ? 'bg-red-500/10 text-red-500 border-red-500/30' :
+                                                            <span key={idx} className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${role.trim() === 'Admin' ? 'bg-red-500/10 text-red-500 border-red-500/30' :
                                                                 role.trim() === 'TheaterManager' ? 'bg-pink-500/10 text-pink-500 border-pink-500/30' :
-                                                                role.trim() === 'Customer' ? 'bg-blue-500/10 text-blue-500 border-blue-500/30' :
-                                                                'bg-gray-500/10 text-gray-400 border-gray-500/30'
-                                                            }`}>
+                                                                    role.trim() === 'Customer' ? 'bg-blue-500/10 text-blue-500 border-blue-500/30' :
+                                                                        'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                                                                }`}>
                                                                 {role.trim()}
                                                             </span>
                                                         ))}
@@ -486,22 +503,24 @@ const AdminPage: React.FC = () => {
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center justify-end gap-2 pr-4">
                                                         {u.accountStatus === 1 ? (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 2); }}
-                                                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-red-600 hover:bg-red-700 text-white shadow-sm'}`}
-                                                            >
-                                                                Block
-                                                            </button>
+                                                            u.userId !== user?.userId && (
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 2); }}
+                                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-red-600 hover:bg-red-700 text-white shadow-sm'}`}
+                                                                >
+                                                                    {t('Block')}
+                                                                </button>
+                                                            )
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 1); }}
                                                                 className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern' ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-green-600 hover:bg-green-700 text-white shadow-sm'}`}
                                                             >
-                                                                Activate
+                                                                {t('Activate')}
                                                             </button>
                                                         )}
 
-                                                        <div className="relative">
+                                                        <div className="relative action-menu-container">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
@@ -521,6 +540,7 @@ const AdminPage: React.FC = () => {
                                                                 <div
                                                                     className={`absolute right-0 top-full mt-1 w-40 rounded-xl shadow-2xl z-[100] border overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#1e1a3a] border-indigo-500/40 shadow-indigo-500/20' : 'bg-white border-gray-200'
                                                                         }`}
+                                                                    onMouseDown={(e) => e.stopPropagation()}
                                                                     onClick={(e) => e.stopPropagation()}
                                                                 >
                                                                     <div className="py-1">
@@ -530,7 +550,7 @@ const AdminPage: React.FC = () => {
                                                                                 }`}
                                                                         >
                                                                             <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                                                                            Edit Roles
+                                                                            {t('Edit Roles')}
                                                                         </button>
 
                                                                         {(u.userRoles || '').includes('TheaterManager') && (
@@ -540,7 +560,7 @@ const AdminPage: React.FC = () => {
                                                                                     }`}
                                                                             >
                                                                                 <Clapperboard className="w-3.5 h-3.5 text-pink-400" />
-                                                                                Assign Cinema
+                                                                                {t('Assign Cinema')}
                                                                             </button>
                                                                         )}
                                                                     </div>
@@ -556,36 +576,96 @@ const AdminPage: React.FC = () => {
                             )}
 
                             {activeTab === 'jobs' && (
-                                <table className="w-full text-left text-sm">
-                                    <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
-                                        <tr>
-                                            <th className="px-4 py-4 font-bold">Job Type</th>
-                                            <th className="px-4 py-4 font-bold">Cron Expression</th>
-                                            <th className="px-4 py-4 font-bold">Last Execution</th>
-                                            <th className="px-4 py-4 font-bold">Next Execution</th>
-                                            <th className="px-4 py-4 font-bold">State</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200 divide-opacity-20">
-                                        {jobs.map((job, idx) => (
-                                            <tr key={idx} className={`hover:bg-black/5 transaction-colors`}>
-                                                <td className="px-4 py-4 font-bold">{job.jobType}</td>
-                                                <td className="px-4 py-4 font-mono text-[10px] truncate max-w-[100px]">{job.cronExpression || 'N/A'}</td>
-                                                <td className="px-4 py-4 text-xs">{formatDate(job.lastExecutionTime)}</td>
-                                                <td className="px-4 py-4 text-xs">{formatDate(job.nextExecutionTime)}</td>
-                                                <td className="px-4 py-4">
-                                                    <span className={`px-2 py-1 rounded text-[10px] border font-bold ${job.stateName === 'Enqueued' || job.stateName === 'Scheduled' ? 'bg-blue-500/20 text-blue-500 border-blue-500/30' :
-                                                        job.stateName === 'Processing' ? 'bg-yellow-500/20 text-yellow-500 border-yellow-500/30' :
-                                                            job.stateName === 'Succeeded' ? 'bg-green-500/20 text-green-500 border-green-500/30' :
-                                                                'bg-red-500/20 text-red-500 border-red-500/30'
-                                                        }`}>
-                                                        {job.stateName}
-                                                    </span>
-                                                </td>
+                                <>
+                                    {/* Jobs Control Bar */}
+                                    <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-4 ${theme === 'dark' ? 'bg-gray-950/50 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]/40 border-indigo-500/20' : 'bg-gray-50'}`}>
+                                        <div className="flex items-center gap-2">
+                                            <Filter className="w-4 h-4 text-indigo-400" />
+                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Filter Status:</span>
+                                            <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+                                                {(['All', 'StartSchedule', 'EndSchedule'] as const).map((type) => (
+                                                    <button
+                                                        key={type}
+                                                        onClick={() => setJobTypeFilter(type)}
+                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobTypeFilter === type 
+                                                            ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-red-600 text-white')
+                                                            : 'text-gray-400 hover:text-white'
+                                                        }`}
+                                                    >
+                                                        {type === 'All' ? 'Tất cả' : type === 'StartSchedule' ? 'Start' : 'End'}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <ArrowUpDown className="w-4 h-4 text-indigo-400" />
+                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sort By ID:</span>
+                                            <button
+                                                onClick={() => setJobSortOrder(jobSortOrder === 'asc' ? 'desc' : 'asc')}
+                                                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-lg border transition-all ${theme === 'modern' ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20' : 'border-gray-700 bg-gray-800 text-gray-300'}`}
+                                            >
+                                                {jobSortOrder === 'asc' ? <SortAsc className="w-3.5 h-3.5" /> : <SortDesc className="w-3.5 h-3.5" />}
+                                                {jobSortOrder === 'asc' ? 'Cũ nhất' : 'Mới nhất'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <table className="w-full text-left text-sm">
+                                        <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
+                                            <tr>
+                                                <th className="px-4 py-4 font-bold">Job ID</th>
+                                                <th className="px-4 py-4 font-bold">{t('Job Type')}</th>
+                                                <th className="px-4 py-4 font-bold">{t('Actions')}</th>
+                                                <th className="px-4 py-4 font-bold">{t('Started Time')}</th>
+                                                <th className="px-4 py-4 font-bold">{t('Ended Time')}</th>
+                                                <th className="px-4 py-4 font-bold">{t('Job Status')}</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200 divide-opacity-20">
+                                            {[...jobs]
+                                                .filter(job => jobTypeFilter === 'All' || job.scheduleJobStatusType === jobTypeFilter)
+                                                .sort((a, b) => {
+                                                    const idA = parseInt(a.jobId) || 0;
+                                                    const idB = parseInt(b.jobId) || 0;
+                                                    return jobSortOrder === 'asc' ? idA - idB : idB - idA;
+                                                })
+                                                .map((job, idx) => (
+                                                    <tr key={job.jobId || idx} className={`hover:bg-black/5 transaction-colors`}>
+                                                        <td className="px-4 py-4 text-xs font-mono opacity-60">#{job.jobId}</td>
+                                                        <td className="px-4 py-4 font-bold">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`w-2 h-2 rounded-full ${job.scheduleJobCategory === 'Schedules' ? 'bg-blue-500' : job.scheduleJobCategory === 'Movies' ? 'bg-cyan-500' : 'bg-purple-500'}`}></span>
+                                                                {job.scheduleJobCategory}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-xs font-medium">
+                                                            <span className={`px-2 py-0.5 rounded-full border text-[9px] ${job.scheduleJobStatusType === 'StartSchedule' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                                                                {job.scheduleJobStatusType}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-4 text-xs">{formatDate(job.jobStartedAt)}</td>
+                                                        <td className="px-4 py-4 text-xs">{formatDate(job.jobEndedAt)}</td>
+                                                        <td className="px-4 py-4">
+                                                            <div className="flex flex-col gap-1">
+                                                                <span className={`px-2 py-1 rounded text-[10px] border font-bold w-fit ${job.scheduleJobStatus === 'Completed' ? 'bg-green-500/20 text-green-500 border-green-500/30' :
+                                                                    job.scheduleJobStatus === 'Pending' ? 'bg-blue-500/20 text-blue-500 border-blue-500/30' :
+                                                                        'bg-red-500/20 text-red-500 border-red-500/30'
+                                                                    }`}>
+                                                                    {job.scheduleJobStatus}
+                                                                </span>
+                                                                {job.failedReason && (
+                                                                    <span className="text-[10px] text-red-400 font-medium truncate max-w-[150px]" title={job.failedReason}>
+                                                                        {job.failedReason}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                        </tbody>
+                                    </table>
+                                </>
                             )}
                         </div>
                     )}

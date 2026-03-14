@@ -10,12 +10,14 @@ export interface AdminUserDto {
 }
 
 export interface ScheduleJobDto {
-    cronExpression: string;
-    jobType: string;
-    lastExecutionTime: string | null;
-    nextExecutionTime: string | null;
-    stateName: string;
-    jobArguments: any[];
+    jobId: string;
+    targetId: string;
+    jobStartedAt: string;
+    jobEndedAt: string;
+    scheduleJobCategory: string;
+    scheduleJobStatus: string;
+    scheduleJobStatusType: string;
+    failedReason: string;
 }
 
 export interface RoleDto {
