@@ -10,6 +10,7 @@ import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing, PublicSegmentPrice } from '../../types/public.types';
 import { useTheme } from '../../contexts/ThemeContext';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../../api/axiosClient';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -51,7 +52,7 @@ const BookingPage: React.FC = () => {
 
             // Set up SignalR
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl("http://localhost:5032/ws/seat")
+                .withUrl(`${API_BASE_URL}/ws/seat`)
                 .withAutomaticReconnect()
                 .build();
 

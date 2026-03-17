@@ -1,5 +1,5 @@
 // src/api/bookingApi.ts
-import { bookingAxios } from './axiosClient';
+import { bookingAxios, API_BASE_URL } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type { CreateBookingRequest, CreateBookingResponse, UserAccountInfo, BookingHistoryItem } from '../types/booking.types';
 
@@ -29,10 +29,8 @@ export const bookingApi = {
         return response.data;
     },
 
-    /** 9. SSE Realtime Payment Status setup URL helper 
-     * Since SSE is consumed via EventSource, returning the URL is useful.
-     */
+    /** SSE Realtime Payment Status setup URL helper */
     getPaymentStatusUrl: (orderId: string): string => {
-        return `http://localhost:5032/api/v1/booking/payment-status/${orderId}`;
+        return `${API_BASE_URL}/api/v1/booking/payment-status/${orderId}`;
     }
 };

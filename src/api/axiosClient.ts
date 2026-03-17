@@ -1,11 +1,11 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const API_BASE_URL = 'http://localhost:5032';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5032';
 
 /**
  * Axios instance for Identity Access APIs
- * Base URL: http://localhost:5032/api/v1
+ * Base URL: {API_BASE_URL}/api/v1
  */
 export const identityAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
@@ -18,7 +18,7 @@ export const identityAxios = axios.create({
 
 /**
  * Axios instance for Facilities Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const facilitiesAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -31,7 +31,7 @@ export const facilitiesAxios = axios.create({
 
 /**
  * Axios instance for Movie Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const movieAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -44,7 +44,7 @@ export const movieAxios = axios.create({
 
 /**
  * Axios instance for Theater Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const theaterAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -61,7 +61,7 @@ export const theaterAxios = axios.create({
 
 /**
  * Axios instance for Booking APIs
- * Base URL: http://localhost:5032/api/v1/booking
+ * Base URL: {API_BASE_URL}/api/v1/booking
  */
 export const bookingAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1/booking`,
@@ -74,7 +74,7 @@ export const bookingAxios = axios.create({
 
 /**
  * Axios instance for Public APIs
- * Base URL: http://localhost:5032/api/v1/public
+ * Base URL: {API_BASE_URL}/api/v1/public
  * Notice: No withCredentials since it is public, but you can include interceptors for Language
  */
 export const publicAxios = axios.create({
