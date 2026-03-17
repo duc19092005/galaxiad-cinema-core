@@ -1,5 +1,5 @@
-// src/api/axiosClient.ts
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
 const API_BASE_URL = 'http://localhost:5032';
 
@@ -82,6 +82,7 @@ export const publicAxios = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
   timeout: 10000,
 });
 
@@ -111,8 +112,9 @@ allInstances.forEach((instance) => {
     (response) => response,
     (error) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        // Token expired or invalid — clear local storage
+        // Token expired or invalid — clear local storage and cookies
         localStorage.removeItem('user_info');
+        Cookies.remove('X-Access-Token');
         // Redirect to login if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';

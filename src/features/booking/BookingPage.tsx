@@ -23,30 +23,28 @@ const BookingPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [pricing, setPricing] = useState<PublicPricing | null>(null);
     const [selectedSegment, setSelectedSegment] = useState<PublicSegmentPrice | null>(null);
-
-    // User details (optional fields from API)
+    const [userName, setUserName] = useState<string>('Guest');
+    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         email: '',
         address: ''
     });
 
+
     const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
     const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
-        if (!storedUser) {
-            toast.error('Please login to book tickets');
-            navigate('/login', { state: { from: `/booking/${scheduleId}` } });
-            return;
+        if (storedUser) {
+            const user = JSON.parse(storedUser);
+            setUserName(user.username || user.userName || 'Guest');
+            setIsLoggedIn(true);
+        } else {
+            setUserName('Guest');
+            setIsLoggedIn(false);
         }
-        const user = JSON.parse(storedUser);
-        setCustomerInfo(prev => ({
-            ...prev,
-            name: user.username,
-            email: user.email || ''
-        }));
 
         if (scheduleId) {
             fetchData();
@@ -117,9 +115,11 @@ const BookingPage: React.FC = () => {
 
     const toggleSeat = async (seat: PublicSeat) => {
         if (seat.isOccupied) return;
-        if (lockedSeats[seat.seatId]) return;
 
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
+        
+        // Nếu không phải là ghế mình đang chọn mà bị người khác khóa thì bỏ qua
+        if (!isCurrentlySelected && lockedSeats[seat.seatId]) return;
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
@@ -138,7 +138,6 @@ const BookingPage: React.FC = () => {
             setSelectedSeats(prev => [...prev, seat]);
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
                 try {
-                    const userName = customerInfo.name || "A User";
                     await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName);
                 } catch (err) {
                     console.error("Error selecting seat", err);
@@ -153,15 +152,27 @@ const BookingPage: React.FC = () => {
             return;
         }
 
+        if (!isLoggedIn) {
+            if (!customerInfo.name.trim() || !customerInfo.email.trim()) {
+                toast.error('Please provide your name and email');
+                return;
+            }
+        }
+
         setBookingLoading(true);
         try {
-            const res = await bookingApi.createBooking({
+            const payload: any = {
                 scheduleId: scheduleId!.trim(),
-                seatIds: selectedSeats.map(s => s.seatId.trim()),
-                customerName: customerInfo.name,
-                customerEmail: customerInfo.email,
-                customerAddress: customerInfo.address
-            });
+                seatIds: selectedSeats.map(s => s.seatId.trim())
+            };
+
+            if (!isLoggedIn) {
+                payload.customerName = customerInfo.name.trim();
+                payload.customerEmail = customerInfo.email.trim();
+                payload.customerAddress = customerInfo.address.trim();
+            }
+
+            const res = await bookingApi.createBooking(payload);
 
             if (res.data.paymentUrl) {
                 // Open VNPay URL
@@ -319,30 +330,67 @@ const BookingPage: React.FC = () => {
                                 <p className="text-[10px] opacity-40 text-right">Inclusives of all taxes</p>
                             </div>
 
-                            {/* Customer Info Form */}
-                            <div className="space-y-3 mb-8">
-                                <input
-                                    type="text"
-                                    placeholder="Full Name"
-                                    value={customerInfo.name}
-                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                                    className={`w-full px-4 py-2 text-sm rounded-lg border ${theme === 'dark' ? 'bg-black border-gray-800' : 'bg-gray-50 border-gray-300'}`}
-                                />
-                                <input
-                                    type="email"
-                                    placeholder="Email Address"
-                                    value={customerInfo.email}
-                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                                    className={`w-full px-4 py-2 text-sm rounded-lg border ${theme === 'dark' ? 'bg-black border-gray-800' : 'bg-gray-50 border-gray-300'}`}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Address (Optional)"
-                                    value={customerInfo.address}
-                                    onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
-                                    className={`w-full px-4 py-2 text-sm rounded-lg border ${theme === 'dark' ? 'bg-black border-gray-800' : 'bg-gray-50 border-gray-300'}`}
-                                />
-                            </div>
+                            {!isLoggedIn ? (
+                                <div className={`space-y-4 mb-6 p-5 rounded-xl border transition-all ${
+                                    theme === 'dark' ? 'bg-gray-900/50 border-gray-800' : 
+                                    theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl backdrop-blur-md' : 
+                                    'bg-white border-gray-200'
+                                }`}>
+                                    <p className={`text-xs font-bold uppercase tracking-wider ${
+                                        theme === 'dark' ? 'text-gray-400' : 
+                                        theme === 'modern' ? 'text-indigo-300' : 
+                                        'text-gray-500'
+                                    }`}>Guest Information</p>
+                                    <div className="space-y-3">
+                                        <input 
+                                            type="text" 
+                                            placeholder="Full Name *" 
+                                            value={customerInfo.name}
+                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
+                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
+                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
+                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                            }`}
+                                        />
+                                        <input 
+                                            type="email" 
+                                            placeholder="Email Address *" 
+                                            value={customerInfo.email}
+                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
+                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
+                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
+                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                            }`}
+                                        />
+                                        <input 
+                                            type="text" 
+                                            placeholder="Address (Optional)" 
+                                            value={customerInfo.address}
+                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
+                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
+                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
+                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                            }`}
+                                        />
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className={`mb-8 p-4 rounded-xl border transition-all ${
+                                    theme === 'dark' ? 'bg-red-600/5 border-red-600/20' : 
+                                    theme === 'modern' ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg' : 
+                                    'bg-red-50 border-red-100'
+                                }`}>
+                                    <p className={`text-xs text-center ${
+                                        theme === 'dark' || theme === 'modern' ? 'opacity-60' : 'text-gray-600'
+                                    }`}>
+                                        Booking as <span className="font-bold text-red-600">{userName}</span>. 
+                                        Your details will be retrieved from your profile.
+                                    </p>
+                                </div>
+                            )}
 
                             <button
                                 disabled={selectedSeats.length === 0 || bookingLoading}

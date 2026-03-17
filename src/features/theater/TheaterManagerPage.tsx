@@ -12,6 +12,7 @@ import {
     Sparkles,
     ArrowLeftRight
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
@@ -20,12 +21,14 @@ import Sidebar from './components/Sidebar';
 import LogoutModal from '../../components/LogoutModal';
 import ScheduleManagerPage from '../schedule/ScheduleManagerPage';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import Cookies from 'js-cookie';
 
 // Placeholder for Employee Management & Dashboard until fully implemented
 const DashboardPlaceholder = () => <div className="p-6">Dashboard functionality coming soon...</div>;
 const EmployeeManagementPlaceholder = () => <div className="p-6">Employee Management functionality coming soon...</div>;
 
 const TheaterManagerPage: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { theme, setTheme } = useTheme();
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
@@ -90,6 +93,7 @@ const TheaterManagerPage: React.FC = () => {
         try {
             await authApi.logout();
             localStorage.removeItem('user_info');
+            Cookies.remove('X-Access-Token');
             setIsLogoutModalOpen(false);
             navigate('/login');
         } catch (error: unknown) {
@@ -312,8 +316,11 @@ const TheaterManagerPage: React.FC = () => {
                                         )}
                                     </div>
 
-                                    <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                                        <UserCircle className="w-4 h-4" />Account Information
+                                    <button 
+                                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                                    >
+                                        <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                                     </button>
 
                                     <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>

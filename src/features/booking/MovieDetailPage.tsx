@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Clock, Calendar, MapPin,
-    Play, Info, Loader2, AlertCircle, ArrowLeft
+    Play, Info, Loader2, AlertCircle, ChevronLeft
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { PublicMovieDetail, PublicCity, PublicCinemaShowtimes } from '../../types/public.types';
@@ -103,33 +103,85 @@ const MovieDetailPage: React.FC = () => {
     }
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'} `}>
+        <div className={`min-h-screen transition-colors duration-300 ${
+            theme === 'dark' ? 'bg-black text-white' : 
+            theme === 'modern' ? 'bg-[#0D081D] text-white' : 
+            'bg-gray-50 text-gray-900'
+        }`}>
+            {/* Header */}
+            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-6 transition-all ${
+                theme === 'dark' ? 'bg-black/80 border-gray-800' : 
+                theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 
+                'bg-white/80 border-gray-200 shadow-sm'
+            }`}>
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className={`p-2 mr-4 rounded-lg transition-colors ${
+                        theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
+                        theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
+                        'hover:bg-gray-100 text-gray-700'
+                    }`}
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                </button>
+                <h2 className={`font-black truncate ${
+                    theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+                }`}>
+                    {movie.movieName}
+                </h2>
+            </header>
+
             {/* Hero Section */}
-            <div className="relative h-[40vh] sm:h-[60vh] overflow-hidden">
-                <img
-                    src={movie.movieImageUrl}
-                    alt={movie.movieName}
-                    className="w-full h-full object-cover opacity-40 blur-sm"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            <div className="relative pt-16 h-[50vh] sm:h-[70vh] overflow-hidden">
+                {/* Backdrop Image */}
+                <div className="absolute inset-0">
+                    <img
+                        src={movie.movieImageUrl}
+                        alt=""
+                        className="w-full h-full object-cover opacity-30 scale-110 blur-xl"
+                    />
+                    <div className={`absolute inset-0 ${
+                        theme === 'dark' ? 'bg-gradient-to-t from-black via-black/40 to-transparent' : 
+                        theme === 'modern' ? 'bg-gradient-to-t from-[#0D081D] via-[#0D081D]/60 to-transparent' : 
+                        'bg-gradient-to-t from-gray-50 via-gray-50/20 to-transparent'
+                    }`} />
+                </div>
 
                 <div className="absolute inset-0 flex items-end">
-                    <div className="container mx-auto px-6 pb-12 flex flex-col md:flex-row gap-8 items-end">
-                        <div className="w-48 sm:w-64 shrink-0 rounded-xl overflow-hidden shadow-2xl border-4 border-white/10 hidden md:block">
-                            <img src={movie.movieImageUrl} alt={movie.movieName} className="w-full h-auto" />
+                    <div className="container mx-auto px-6 pb-12 flex flex-col md:flex-row gap-8 items-center md:items-end">
+                        {/* Movie Poster */}
+                        <div className={`w-40 sm:w-56 lg:w-64 shrink-0 rounded-2xl overflow-hidden shadow-2xl border-4 transition-transform hover:scale-[1.02] duration-300 ${
+                            theme === 'modern' ? 'border-cyan-400/30' : 'border-white/10'
+                        }`}>
+                            <img 
+                                src={movie.movieImageUrl} 
+                                alt={movie.movieName} 
+                                className="w-full h-auto object-cover"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                }}
+                            />
                         </div>
-                        <div className="flex-1">
-                            <button
-                                onClick={() => navigate(-1)}
-                                className="mb-4 flex items-center gap-2 text-sm font-semibold opacity-80 hover:opacity-100 transition-opacity"
-                            >
-                                <ArrowLeft className="w-4 h-4" /> Back
-                            </button>
-                            <h1 className="text-4xl sm:text-6xl font-black mb-4 drop-shadow-lg">{movie.movieName}</h1>
-                            <div className="flex flex-wrap gap-4 text-sm sm:text-base font-medium opacity-90">
-                                <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {movie.movieDuration} mins</span>
-                                <span className="flex items-center gap-1"><Calendar className="w-4 h-4" /> {formatDate(movie.startedDate)}</span>
-                                <span className="px-2 py-0.5 bg-red-600 rounded text-xs font-bold">{movie.movieRequiredAgeSymbol}</span>
+
+                        {/* Movie Basic Info */}
+                        <div className="flex-1 text-center md:text-left">
+                            <h1 className={`text-4xl sm:text-6xl font-black mb-4 drop-shadow-2xl leading-tight ${
+                                theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+                            }`}>
+                                {movie.movieName}
+                            </h1>
+                            <div className={`flex flex-wrap justify-center md:justify-start gap-4 text-sm sm:text-base font-medium ${
+                                theme === 'dark' || theme === 'modern' ? 'text-white/80' : 'text-gray-600'
+                            }`}>
+                                <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <Clock className="w-4 h-4 text-red-600" /> {movie.movieDuration} mins
+                                </span>
+                                <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <Calendar className="w-4 h-4 text-red-600" /> {formatDate(movie.startedDate)}
+                                </span>
+                                <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black shadow-lg shadow-red-600/30">
+                                    {movie.movieRequiredAgeSymbol}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -148,18 +200,30 @@ const MovieDetailPage: React.FC = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <h4 className="text-xs uppercase font-bold text-red-500 tracking-wider">Director</h4>
-                                <p className="font-semibold">{movie.director || 'N/A'}</p>
+                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
+                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
+                                }`}>Director</h4>
+                                <p className="font-bold">{movie.director || 'N/A'}</p>
                             </div>
                             <div>
-                                <h4 className="text-xs uppercase font-bold text-red-500 tracking-wider">Cast</h4>
-                                <p className="font-semibold">{movie.actors || 'N/A'}</p>
+                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
+                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
+                                }`}>Cast</h4>
+                                <p className="font-bold">{movie.actors || 'N/A'}</p>
                             </div>
                             <div>
-                                <h4 className="text-xs uppercase font-bold text-red-500 tracking-wider">Genres</h4>
-                                <div className="flex flex-wrap gap-2 mt-1">
+                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
+                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
+                                }`}>Genres</h4>
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     {movie.movieGenres.map((g, i) => (
-                                        <span key={i} className="px-3 py-1 bg-white/10 rounded-full text-xs font-medium">{g}</span>
+                                        <span key={i} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                                            theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-300' : 
+                                            theme === 'modern' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 
+                                            'bg-gray-100 border-gray-200 text-gray-700'
+                                        }`}>
+                                            {g}
+                                        </span>
                                     ))}
                                 </div>
                             </div>
@@ -191,7 +255,11 @@ const MovieDetailPage: React.FC = () => {
                                         <select
                                             value={selectedCity}
                                             onChange={(e) => setSelectedCity(e.target.value)}
-                                            className={`w - full pl-11 pr-4 py-3 rounded-xl appearance-none focus: outline-none border ${theme === 'dark' ? 'bg-black border-gray-700' : theme === 'modern' ? 'bg-black border-indigo-500/30' : 'bg-gray-50 border-gray-300'} `}
+                                            className={`w-full pl-11 pr-4 py-3 rounded-xl appearance-none focus:outline-none border transition-all ${
+                                                theme === 'dark' ? 'bg-black border-gray-700 text-white focus:border-red-600' : 
+                                                theme === 'modern' ? 'bg-black/50 border-indigo-500/30 text-white focus:border-cyan-400' : 
+                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                            } `}
                                         >
                                             {cities.map(city => (
                                                 <option key={city.cityName} value={city.cityName}>{city.cityName}</option>

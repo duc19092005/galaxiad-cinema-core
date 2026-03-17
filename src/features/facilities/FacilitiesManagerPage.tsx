@@ -24,6 +24,7 @@ import SeatReport from './components/SeatReport';
 import LogoutModal from '../../components/LogoutModal';
 
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import Cookies from 'js-cookie';
 
 const FacilitiesManagerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -115,6 +116,7 @@ const FacilitiesManagerPage: React.FC = () => {
         if (data.statusCode === 401) {
           // Token / cookie hết hạn → logout
           localStorage.removeItem('user_info');
+          Cookies.remove('X-Access-Token');
           navigate('/login');
           return;
         }
@@ -141,6 +143,7 @@ const FacilitiesManagerPage: React.FC = () => {
     try {
       await authApi.logout();
       localStorage.removeItem('user_info');
+      Cookies.remove('X-Access-Token');
       setIsLogoutModalOpen(false);
       navigate('/login');
     } catch (error: unknown) {
@@ -377,7 +380,10 @@ const FacilitiesManagerPage: React.FC = () => {
                     )}
                   </div>
 
-                  <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
+                  <button 
+                    onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                    className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                  >
                     <UserCircle className="w-4 h-4" />Account Information
                   </button>
 

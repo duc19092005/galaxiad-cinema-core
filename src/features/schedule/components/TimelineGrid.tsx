@@ -39,6 +39,12 @@ const getLogicalDateKey = (slotStart: string): string => {
     return toLocalDateKey(d);
 };
 
+// Helper: Get local ISO string without timezone shift (YYYY-MM-DDTHH:mm:ss.sss)
+const toLocalISOString = (date: Date): string => {
+    const tzoffset = date.getTimezoneOffset() * 60000;
+    return (new Date(date.getTime() - tzoffset)).toISOString().slice(0, -1);
+};
+
 const TimelineGrid: React.FC<TimelineGridProps> = ({
     auditoriums,
     scheduleData,
@@ -136,16 +142,13 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
         const startTimeLocal = getTimeFromPixels(snappedPixel, baseDate);
 
         let duration = 0;
-        let format = '';
 
         if (draggingMovie) {
             duration = draggingMovie.durationMinutes;
-            format = draggingMovie.formats[0];
         } else if (movingSlot) {
             const s = new Date(movingSlot.slot.start);
             const en = new Date(movingSlot.slot.end);
             duration = (en.getTime() - s.getTime()) / 60000;
-            format = movingSlot.slot.formatId;
         }
 
         const cleaning = draggingMovie ? 20 : 0;
@@ -164,7 +167,22 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
 
         // Format compatibility
         const aud = auditoriums.find(a => a.id === auditoriumId);
-        const isFormatCompatible = aud?.supportedFormats.includes(format);
+        let isFormatCompatible = true;
+        
+        // If the room defines specific formats, the movie MUST match at least one.
+        if (aud && aud.supportedFormats && aud.supportedFormats.length > 0) {
+            if (draggingMovie) {
+                isFormatCompatible = draggingMovie.formats.some(f => {
+                    const roomFormats = aud.supportedFormats.map(sf => sf.toString().toLowerCase());
+                    return roomFormats.includes(f.id.toLowerCase()) || 
+                           roomFormats.includes(f.name.toLowerCase());
+                });
+            } else if (movingSlot) {
+                const roomFormats = aud.supportedFormats.map(sf => sf.toString().toLowerCase());
+                isFormatCompatible = !!(roomFormats.includes(movingSlot.slot.formatId.toLowerCase()) || 
+                                     (movingSlot.slot.formatName && roomFormats.includes(movingSlot.slot.formatName.toLowerCase())));
+            }
+        }
 
         // Validity
         let invalidReason = '';
@@ -203,20 +221,39 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
         }
 
         if (draggingMovie) {
+            const aud = auditoriums.find(a => a.id === auditoriumId);
+            const audName = aud?.name || '';
+            
+            // Prioritize match: find format that appears in the room name (e.g., "2D" in "Phòng 1 (2D)")
+            const matchedFormat = draggingMovie.formats.find(f => {
+                const isSupported = aud?.supportedFormats?.some(sf => 
+                    sf.toString().toLowerCase() === f.id.toLowerCase() || 
+                    sf.toString().toLowerCase() === f.name.toLowerCase()
+                );
+                return isSupported && audName.toLowerCase().includes(f.name.toLowerCase());
+            }) || draggingMovie.formats.find(f => 
+                aud?.supportedFormats?.some(sf => 
+                    sf.toString().toLowerCase() === f.id.toLowerCase() || 
+                    sf.toString().toLowerCase() === f.name.toLowerCase()
+                )
+            ) || draggingMovie.formats[0];
+            
             const newSlot: ShowTimeSlot = {
-                id: crypto.randomUUID(),
+                id: `new-${crypto.randomUUID()}`,
                 movieId: draggingMovie.id,
-                formatId: draggingMovie.formats.find(f => auditoriums.find(a => a.id === auditoriumId)?.supportedFormats.includes(f)) || draggingMovie.formats[0],
-                start: ghost.start.toISOString(),
-                end: ghost.end.toISOString(),
+                formatId: matchedFormat.id,
+                formatName: matchedFormat.name,
+                start: toLocalISOString(ghost.start),
+                end: toLocalISOString(ghost.end),
                 price: 100
             };
             onAddSlot(auditoriumId, newSlot);
         } else if (movingSlot) {
             const updatedSlot: ShowTimeSlot = {
                 ...movingSlot.slot,
-                start: ghost.start.toISOString(),
-                end: ghost.end.toISOString()
+                start: toLocalISOString(ghost.start),
+                end: toLocalISOString(ghost.end),
+                isDirty: true
             };
             onMoveSlot(movingSlot.originalAuditoriumId, auditoriumId, updatedSlot);
         }
@@ -439,7 +476,7 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                                         >
                                             <div className="font-bold truncate">{movie?.title || 'Unknown Movie'}</div>
                                             <div className="opacity-90">{formatTime(slot.start)} - {formatTime(slot.end)}</div>
-                                            <div className="mt-1 opacity-75">{slot.formatId}</div>
+                                            <div className="mt-1 opacity-75 font-bold">{slot.formatName || slot.formatId}</div>
                                             <div
                                                 className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/20"
                                                 onMouseDown={(e) => {

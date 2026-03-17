@@ -4,6 +4,7 @@
 import axios from 'axios';
 import { authApi } from '../api/authApi';
 import type { ApiErrorResponse } from '../types/auth.types';
+import Cookies from 'js-cookie';
 
 /**
  * Verify authentication bằng cách gọi API get-profile
@@ -57,6 +58,7 @@ export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; usernam
     }
 
     localStorage.removeItem('user_info');
+    Cookies.remove('X-Access-Token');
     return null;
   }
 };

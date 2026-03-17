@@ -7,7 +7,8 @@ import type {
     PublicCity,
     PublicCinemaShowtimes,
     PublicSeatMap,
-    PublicPricing
+    PublicPricing,
+    PublicGenre
 } from '../types/public.types';
 
 export const publicApi = {
@@ -52,6 +53,12 @@ export const publicApi = {
     /** 7. Get Pricing Info */
     getPricing: async (scheduleId: string): Promise<ApiSuccessResponse<PublicPricing>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`);
+        return response.data;
+    },
+
+    /** 8. Get Movie Genres */
+    getMovieGenres: async (): Promise<ApiSuccessResponse<PublicGenre[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PublicGenre[]>>('/movies/genres');
         return response.data;
     }
 };

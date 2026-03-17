@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Settings } from 'lucide-react';
+import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Settings, Shield } from 'lucide-react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
 import { publicApi } from '../../api/publicApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
@@ -36,10 +37,8 @@ const HomePage: React.FC = () => {
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      fetchMovies();
-    } else {
-      navigate('/login');
     }
+    fetchMovies();
   }, [navigate]);
 
   const fetchMovies = async () => {
@@ -57,6 +56,7 @@ const HomePage: React.FC = () => {
         const data = err.response.data as ApiErrorResponse;
         if (data.statusCode === 401) {
           localStorage.removeItem('user_info');
+          Cookies.remove('X-Access-Token');
           navigate('/login');
           return;
         }
@@ -93,6 +93,7 @@ const HomePage: React.FC = () => {
     try {
       await authApi.logout();
       localStorage.removeItem('user_info');
+      Cookies.remove('X-Access-Token');
       setIsLogoutModalOpen(false);
       navigate('/login');
     } catch (error: unknown) {
@@ -170,51 +171,75 @@ const HomePage: React.FC = () => {
               <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
                 }`}>
                 <div className="py-2">
-                  <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
-                    <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
-                    <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
-                  </div>
+                  {user ? (
+                    <>
+                      <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
+                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
+                        <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                      </div>
 
-                  {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
-                    <button
-                      onClick={() => navigate('/role-selection')}
-                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-green-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
-                        }`}
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Go To The Home Management Page
-                    </button>
+                      {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
+                        <button
+                          onClick={() => navigate('/role-selection')}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-green-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
+                            }`}
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Go To The Home Management Page
+                        </button>
+                      )}
+
+                      <button 
+                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                      >
+                        <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
+                      </button>
+
+                      <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
+                        <Settings className="w-4 h-4" />{t('header.changePassword')}
+                      </button>
+
+                      {user?.roles && user.roles.length > 1 && (
+                        <button
+                          onClick={() => navigate('/role-selection')}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
+                            }`}
+                        >
+                          <ArrowLeftRight className="w-4 h-4" />
+                          {t('header.switchRole')}
+                        </button>
+                      )}
+
+                      <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
+
+                      <button
+                        onClick={handleLogoutClick}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]' : 'text-red-600 hover:bg-red-50'
+                          }`}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {t('header.logout')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { navigate('/login'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        Login / Sign In
+                      </button>
+                      <button
+                        onClick={() => { navigate('/register'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
+                      >
+                        <Shield className="w-4 h-4" />
+                        Register / Sign Up
+                      </button>
+                    </>
                   )}
-
-                  <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                    <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
-                  </button>
-
-                  <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                    <Settings className="w-4 h-4" />{t('header.changePassword')}
-                  </button>
-
-                  {user?.roles && user.roles.length > 1 && (
-                    <button
-                      onClick={() => navigate('/role-selection')}
-                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                        }`}
-                    >
-                      <ArrowLeftRight className="w-4 h-4" />
-                      {t('header.switchRole')}
-                    </button>
-                  )}
-
-                  <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
-
-                  <button
-                    onClick={handleLogoutClick}
-                    className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]' : 'text-red-600 hover:bg-red-50'
-                      }`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('header.logout')}
-                  </button>
                 </div>
               </div>
             )}

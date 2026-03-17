@@ -6,6 +6,7 @@ import axios from 'axios';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import Cookies from 'js-cookie';
 
 // Role mapping với icon và màu sắc
 const roleConfig: Record<string, { icon: React.ElementType; color: string; label: string; route: string }> = {
@@ -94,8 +95,9 @@ const RoleSelectionPage: React.FC = () => {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
         if (data.statusCode === 401) {
-          // Authentication failed - xóa user info và redirect về login
+          // Authentication failed - xóa user info và cookie, redirect về login
           localStorage.removeItem('user_info');
+          Cookies.remove('X-Access-Token');
           navigate('/login');
           return;
         }

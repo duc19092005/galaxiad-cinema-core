@@ -32,6 +32,7 @@ import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import Cookies from 'js-cookie';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -153,12 +154,12 @@ const AdminPage: React.FC = () => {
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
-            
+
             // Handle activeActionMenu (the table dropdown)
             if (activeActionMenu && !target.closest('.action-menu-container')) {
                 setActiveActionMenu(null);
             }
-            
+
             // Handle header dropdowns
             if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
             if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
@@ -224,6 +225,7 @@ const AdminPage: React.FC = () => {
         try {
             await authApi.logout();
             localStorage.removeItem('user_info');
+            Cookies.remove('X-Access-Token');
             navigate('/login');
         } catch (error) {
             setLogoutError('Logout failed.');
@@ -424,8 +426,11 @@ const AdminPage: React.FC = () => {
                                         <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
                                     </div>
 
-                                    <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                                        <UserCircle className="w-4 h-4" />{t('Account Information')}
+                                    <button 
+                                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                                    >
+                                        <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                                     </button>
 
                                     <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
@@ -587,10 +592,10 @@ const AdminPage: React.FC = () => {
                                                     <button
                                                         key={type}
                                                         onClick={() => setJobTypeFilter(type)}
-                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobTypeFilter === type 
+                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobTypeFilter === type
                                                             ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-red-600 text-white')
                                                             : 'text-gray-400 hover:text-white'
-                                                        }`}
+                                                            }`}
                                                     >
                                                         {type === 'All' ? 'Tất cả' : type === 'StartSchedule' ? 'Start' : 'End'}
                                                     </button>

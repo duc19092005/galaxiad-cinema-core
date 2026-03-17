@@ -49,10 +49,10 @@ const TrashCan: React.FC<TrashCanProps> = ({ onDeleteSlot }) => {
         <div
             ref={containerRef}
             style={{ minWidth: DROP_ZONE_SIZE, minHeight: DROP_ZONE_SIZE }}
-            className={`fixed bottom-8 right-8 rounded-2xl shadow-lg transition-all z-50 flex items-center justify-center gap-2
+            className={`fixed bottom-8 right-8 rounded-2xl shadow-2xl transition-all z-50 flex items-center justify-center gap-2
                 ${isOver
-                    ? 'bg-red-600 text-white scale-105 shadow-red-500/50'
-                    : 'bg-white dark:bg-slate-800 text-white/60 dark:text-slate-500 border border-slate-200 dark:border-slate-700 hover:text-red-500 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)] dark:hover:text-red-500 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]'
+                    ? 'bg-red-600 text-white scale-110 shadow-red-500/50'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-2 border-slate-200 dark:border-slate-700 hover:text-red-600 hover:border-red-400 hover:bg-white'
                 }
             `}
             onDragOver={handleDragOver}

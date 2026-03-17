@@ -37,7 +37,9 @@ import type { MovieFormat } from '../../types/facilities.types';
 import { useTheme } from '../../contexts/ThemeContext';
 import LogoutModal from '../../components/LogoutModal';
 import { useTranslation } from 'react-i18next';
+import Cookies from 'js-cookie';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import { publicApi } from '../../api/publicApi';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -1021,6 +1023,7 @@ const MovieManagerPage: React.FC = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+
     const [movies, setMovies] = useState<Movie[]>([]);
     const [formats, setFormats] = useState<MovieFormat[]>([]);
     const [requiredAges, setRequiredAges] = useState<MovieRequiredAge[]>([]);
@@ -1090,7 +1093,12 @@ const MovieManagerPage: React.FC = () => {
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
                 const data = err.response.data as ApiErrorResponse;
-                if (data.statusCode === 401) { localStorage.removeItem('user_info'); navigate('/login'); return; }
+                if (data.statusCode === 401) { 
+                    localStorage.removeItem('user_info'); 
+                    Cookies.remove('X-Access-Token');
+                    navigate('/login'); 
+                    return; 
+                }
                 setError(data.message || 'Cannot load movies list.');
             } else if (axios.isAxiosError(err) && err.request) {
                 setError('Cannot connect to server. Please check your network connection.');
@@ -1122,8 +1130,14 @@ const MovieManagerPage: React.FC = () => {
 
     const fetchGenres = async () => {
         try {
-            const res = await movieApi.getMovieGenres();
-            setGenres(res.data || []);
+            const res = await publicApi.getMovieGenres();
+            // Map PublicGenre to MovieGenre format if needed (they should be compatible)
+            const genresData: MovieGenre[] = (res.data || []).map(g => ({
+                movieGenreId: g.genreId,
+                movieGenreName: g.genreName,
+                movieGenreDescription: g.description
+            }));
+            setGenres(genresData);
         } catch {
             /* silently ignore */
         }
@@ -1137,6 +1151,7 @@ const MovieManagerPage: React.FC = () => {
         try {
             await authApi.logout();
             localStorage.removeItem('user_info');
+            Cookies.remove('X-Access-Token');
             setIsLogoutModalOpen(false);
             navigate('/login');
         } catch (error: unknown) {
@@ -1227,7 +1242,10 @@ const MovieManagerPage: React.FC = () => {
                                         <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>SIGNED IN AS</p>
                                         <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
                                     </div>
-                                    <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
+                                    <button 
+                                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                                    >
                                         <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                                     </button>
 

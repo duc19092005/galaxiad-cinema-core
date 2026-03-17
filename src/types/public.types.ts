@@ -75,3 +75,9 @@ export interface PublicPricing {
     basePrice: number;
     segmentPrices: PublicSegmentPrice[];
 }
+
+export interface PublicGenre {
+    genreId: string;
+    genreName: string;
+    description: string;
+}

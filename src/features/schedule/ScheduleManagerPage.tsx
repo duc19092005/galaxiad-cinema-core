@@ -45,6 +45,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 id: s.scheduleId,
                 movieId: s.movieId,
                 formatId: s.formatId,
+                formatName: s.formatName,
                 start: s.startedDate,
                 end: s.endedTime,
                 price: 0
@@ -78,25 +79,36 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                     moviesMap.set(m.movieId, {
                         id: m.movieId,
                         title: m.movieName,
-                        durationMinutes: 120, // Default duration, should ideal be fetched or provided
+                        durationMinutes: 120, // Default duration
                         formats: [],
                         color: colorPalette[colorIndex % colorPalette.length]
                     });
                     colorIndex++;
                 }
                 const movie = moviesMap.get(m.movieId)!;
-                if (!movie.formats.includes(m.formatId)) {
-                    movie.formats.push(m.formatId);
+                if (!movie.formats.find(f => f.id === m.formatId)) {
+                    movie.formats.push({
+                        id: m.formatId,
+                        name: m.formatName
+                    });
                 }
             });
 
             const mappedMovies = Array.from(moviesMap.values());
 
-            const mappedAuds: ScheduleAuditorium[] = (audsRes.data?.auditoriums || []).map((a: any) => ({
-                id: a.auditoriumId,
-                name: a.auditoriumNumber.toString(),
-                supportedFormats: [] // Not returned by API, assume all
-            }));
+            const mappedAuds: ScheduleAuditorium[] = (audsRes.data?.auditoriums || []).map((a: any) => {
+                // Robust mapping of supported formats (look for multiple property names)
+                const formatsFromApi = a.formatInfos || a.movieFormatInfos || a.formats || [];
+                const supportedFormats = (Array.isArray(formatsFromApi) ? formatsFromApi : [])
+                    .map((f: any) => f.formatId || f.formatName || f.id || f)
+                    .filter(Boolean);
+
+                return {
+                    id: a.auditoriumId,
+                    name: a.auditoriumNumber.toString(),
+                    supportedFormats: supportedFormats
+                };
+            });
 
             setMoviesList(mappedMovies);
             setAuditoriumsList(mappedAuds);
@@ -134,7 +146,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
             const newData = [...prev.data];
             const audIndex = newData.findIndex(d => d.auditoriumId === auditoriumId);
             if (audIndex >= 0) {
-                const newSlots = newData[audIndex].slots.map(s => s.id === slotId ? { ...s, ...updates } : s);
+                const newSlots = newData[audIndex].slots.map(s => s.id === slotId ? { ...s, ...updates, isDirty: true } : s);
                 newData[audIndex] = { ...newData[audIndex], slots: newSlots };
             }
             return { ...prev, data: newData };
@@ -147,6 +159,13 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 await scheduleApi.deleteSchedule(slotId);
                 toast.success('Xóa lịch chiếu thành công.');
             }
+        } catch (error: any) {
+            // If already deleted or move to archive, just remove locally without error toast if it's 404
+            if (error.response?.status !== 404) {
+                const msg = error.response?.data?.message || 'Lỗi khi xóa lịch chiếu.';
+                toast.error(msg);
+            }
+        } finally {
             // Xóa ở local
             setScheduleData(prev => {
                 const newData = [...prev.data];
@@ -157,9 +176,6 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 }
                 return { ...prev, data: newData };
             });
-        } catch (error: any) {
-            const msg = error.response?.data?.message || 'Lỗi khi xóa lịch chiếu.';
-            toast.error(msg);
         }
     };
 
@@ -167,14 +183,16 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
         setScheduleData(prev => {
             const newData = [...prev.data];
             const fromIndex = newData.findIndex(d => d.auditoriumId === fromAuditoriumId);
+            const updatedSlot = { ...slot, isDirty: true };
+
             if (fromIndex >= 0) {
                 newData[fromIndex] = { ...newData[fromIndex], slots: newData[fromIndex].slots.filter(s => s.id !== slot.id) };
             }
             const toIndex = newData.findIndex(d => d.auditoriumId === toAuditoriumId);
             if (toIndex >= 0) {
-                newData[toIndex] = { ...newData[toIndex], slots: [...newData[toIndex].slots, slot] };
+                newData[toIndex] = { ...newData[toIndex], slots: [...newData[toIndex].slots, updatedSlot] };
             } else {
-                newData.push({ auditoriumId: toAuditoriumId, slots: [slot] });
+                newData.push({ auditoriumId: toAuditoriumId, slots: [updatedSlot] });
             }
             return { ...prev, data: newData };
         });
@@ -182,9 +200,13 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
 
     const handleSaveSchedule = async () => {
         if (!selectedAuditoriumId) return;
-        const slots = scheduleData.data.find(d => d.auditoriumId === selectedAuditoriumId)?.slots || [];
-        if (slots.length === 0) {
-            toast.error("No schedule to save for this auditorium!");
+        const allSlots = scheduleData.data.find(d => d.auditoriumId === selectedAuditoriumId)?.slots || [];
+        
+        // Filter: ONLY new slots OR dirty (moved/updated) slots
+        const slotsToSave = allSlots.filter(s => s.id.startsWith('new-') || s.isDirty);
+        
+        if (slotsToSave.length === 0) {
+            toast("Không có thay đổi nào để lưu.");
             return;
         }
 
@@ -192,9 +214,9 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
         try {
             const payload = {
                 auditoriumId: selectedAuditoriumId,
-                slots: slots.map(s => {
+                slots: slotsToSave.map(s => {
                     return {
-                        scheduleId: "00000000-0000-0000-0000-000000000000",
+                        scheduleId: s.id.startsWith('new-') ? "00000000-0000-0000-0000-000000000000" : s.id,
                         movieId: s.movieId,
                         formatId: s.formatId,
                         startedDate: s.start

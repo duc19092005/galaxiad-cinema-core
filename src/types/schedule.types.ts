@@ -35,6 +35,10 @@ export interface MyAuditorium {
     auditoriumId: string;
     auditoriumNumber: number;
     totalSeats: number;
+    formatInfos?: {
+        formatId: string;
+        formatName: string;
+    }[];
 }
 
 export interface MyCinemaAuditoriums {
