@@ -11,4 +11,12 @@ public class ResRegularLoginDto
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? AccessToken { get; set; }
 
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<ManagedCinemaInfoDto>? ManagedCinemas { get; set; }
+}
+
+public class ManagedCinemaInfoDto
+{
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
 }

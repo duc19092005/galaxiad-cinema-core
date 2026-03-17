@@ -97,7 +97,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 EndedDate = request.EndedDate,
                 IsActive = DateTime.Now >= request.StartedDate && request.EndedDate > DateTime.Now,
                 CreatedByUserId = getUserId,
-                ManagerId = getUserId,
+                MovieManagerId = getUserId,
                 MovieDuration = request.Duration,
                 TrailerUrl = request.TrailerUrl ?? string.Empty,
                 Director = request.Director ?? string.Empty,
@@ -174,6 +174,15 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 var getUserId = _userContextService.GetUserId();
                 var validationsErrors = new List<string>();
+
+                var hasSuccessfulBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                    .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
+                                    (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+
+                if (hasSuccessfulBooking)
+                {
+                    throw new BadRequestException("Không thể sửa phim khi đã có khách hàng đặt vé thành công.", "E03");
+                }
 
                 if (!string.IsNullOrEmpty(request.MovieName))
                 {

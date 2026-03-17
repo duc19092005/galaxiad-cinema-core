@@ -24,9 +24,15 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
     {
         // Find By User Id
         var findUserId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var getUserMovieInfos = await _dbContext.MovieInfoEntity
-            .Where(x => x.ManagerId.Equals(findUserId))
+        var query = _dbContext.MovieInfoEntity.AsQueryable();
+        if (!isAdmin)
+        {
+            query = query.Where(x => x.MovieManagerId == findUserId);
+        }
+
+        var getUserMovieInfos = await query
             .Select(x => new ResGetMovieInfosMovieManagerDto()
             {
                 MovieId = x.MovieId,
@@ -47,7 +53,8 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 TrailerUrl = x.TrailerUrl,
                 Director = x.Director,
                 Actors = x.Actors,
-                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
+                MovieManagerName = x.MovieManager != null && x.MovieManager.UserProfileEntity != null ? x.MovieManager.UserProfileEntity.UserName : "Chưa có"
             })
             .AsNoTracking()
             .ToListAsync();
@@ -63,9 +70,15 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
     public async Task<BaseResponse<ResGetMovieInfosMovieManagerDto>> GetById(Guid id)
     {
         Guid currentUserId = GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var findMovieInfos = await _dbContext.MovieInfoEntity
-            .Where(x => x.ManagerId == currentUserId)
+        var query = _dbContext.MovieInfoEntity.Where(x => x.MovieId == id);
+        if (!isAdmin)
+        {
+            query = query.Where(x => x.MovieManagerId == currentUserId);
+        }
+
+        var findMovieInfos = await query
             .Select(m => new ResGetMovieInfosMovieManagerDto()
             {
                 MovieId = m.MovieId,
@@ -86,7 +99,8 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 TrailerUrl = m.TrailerUrl,
                 Director = m.Director,
                 Actors = m.Actors,
-                MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
+                MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
+                MovieManagerName = m.MovieManager != null && m.MovieManager.UserProfileEntity != null ? m.MovieManager.UserProfileEntity.UserName : "Chưa có"
             }).FirstOrDefaultAsync();
         
         return new BaseResponse<ResGetMovieInfosMovieManagerDto>()

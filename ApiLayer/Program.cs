@@ -19,24 +19,19 @@ using BusinessLayer.Services.ThirdPersonServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// --- SERVICES CONTAINER ---
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
 builder.Services.AddSingleton<UserIdentityCodeConstant>();
-
 builder.Services.AddHttpContextAccessor();
 
-
 // DB Context
-
-builder.Services.AddDbContext<CinemaDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
+builder.Services.AddDbContext<CinemaDbContext>(options => 
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 // Custom Error Message API Response
-
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
     options.InvalidModelStateResponseFactory = context =>
@@ -50,74 +45,50 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
-// Services
-
-
+// Business Services & Factories
 builder.Services.AddCommonServices();
-
-
 builder.Services.AddIdentityServices();
 builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
 builder.Services.AddBookingServices();
-
-//  -------------------- Factories Dependency Injections ----------------------------
-
-//  ----------------------- Identity Access
-
 builder.Services.AddIdentityFactories();
-
 builder.Services.AddFacilitiesFactories();
-
 builder.Services.AddMovieFactories();
-
 builder.Services.AddApplicationFactories();
-
 builder.Services.AddAdminBootstrap();
 
-// JWT Config
-
+// JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);
-
 builder.Services.AddSingleton<cloudinaryHelper>();
-
 builder.Services.TheaterManagerValidate();
 
-// CORS
-
+// --- CẤU HÌNH CORS (ĐÃ SỬA LỖI) ---
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("web", policy =>
     {
-        policy.WithOrigins("http://localhost:5173") 
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+        policy.SetIsOriginAllowed(origin => 
+              {
+                  if (string.IsNullOrWhiteSpace(origin)) return false;
+                  var host = new Uri(origin).Host;
+                  // Chấp nhận localhost và tất cả các sub-domain của vercel.app
+                  return host == "localhost" || host == "127.0.0.1" || host.EndsWith("vercel.app");
+              })
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); 
     });
 });
 
-// Policy
+// Authorization Policies
+builder.Services.AddAuthorization(options => {
+    options.AddPolicy("FacilitiesManager", policy => policy.RequireRole("FacilitiesManager"));
+    options.AddPolicy("Admin" , policy => policy.RequireRole("Admin"));
+    options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager"));
+    options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager"));
+});
 
-builder.Services.AddAuthorization
-(options =>
-    options.AddPolicy("FacilitiesManager", policy =>
-        policy.RequireRole("FacilitiesManager")));
-
-builder.Services.AddAuthorization(options => 
-    options.AddPolicy("Admin" , policy => policy.RequireRole("Admin")));
-
-builder.Services.AddAuthorization
-(options =>
-    options.AddPolicy("TheaterManager", policy =>
-        policy.RequireRole("TheaterManager")));
-
-builder.Services.AddAuthorization
-(options =>
-    options.AddPolicy("MovieManager", policy =>
-        policy.RequireRole("MovieManager")));
-
-// Swagger Document
-
+// Swagger Config
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1-user", new OpenApiInfo { Title = "User API", Version = "v1" });
@@ -127,24 +98,24 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1-admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
 });
 
+// Hangfire & SignalR
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
     .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
 
+builder.Services.AddHangfireServer();
+
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
-// Singleton
 app.UseCors("web");
 
 app.UseErrorMiddleware();
-
 app.UseLocalizationMiddleware();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -158,19 +129,17 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
 app.MapControllers();
-
 app.MapHub<SeatHub>("/ws/seat");
 
+// Seed Jobs
 using (var scope = app.Services.CreateScope())
 {
     var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
@@ -178,4 +147,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-

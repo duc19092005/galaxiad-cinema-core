@@ -11,4 +11,6 @@ public interface IProfileBehavior
     Task<BaseResponse<ResRegularLoginDto>> GetAccess();
 
     Task<BaseResponse<ResGetUserInfo>> GetUserProfile();
+
+    Task<BaseResponse<string>> UpdateUserProfile(ReqUpdateUserProfileDto request);
 }

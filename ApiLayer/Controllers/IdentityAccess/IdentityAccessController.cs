@@ -46,11 +46,11 @@ public class IdentityAccessController : ControllerBase
     {
         var results = await _loginService.Login(regularLoginReqDto);
         
-        var cookieOptions = new CookieOptions
-        {
+        var cookieOptions = new CookieOptions {
             HttpOnly = true, 
-            Secure = false,      
-            SameSite = SameSiteMode.Strict, 
+            Secure = true, 
+            SameSite = SameSiteMode.None,
+            Path = "/",
             Expires = DateTime.UtcNow.AddDays(7) 
         };
 
@@ -95,6 +95,14 @@ public class IdentityAccessController : ControllerBase
     public async Task<IActionResult> ChangePassword(ReqChangePasswordDto request)
     {
         var results = await _userProfileService.ChangePassword(request);
+        return Ok(results);
+    }
+
+    [Authorize]
+    [HttpPut("update-profile")]
+    public async Task<IActionResult> UpdateUserProfile(ReqUpdateUserProfileDto request)
+    {
+        var results = await _userProfileService.UpdateUserProfile(request);
         return Ok(results);
     }
 }

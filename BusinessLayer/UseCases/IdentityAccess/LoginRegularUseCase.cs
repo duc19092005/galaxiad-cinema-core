@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.IdentityAccess;
+using Shared.Enums;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 
@@ -35,7 +36,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
     {
         try
         {
-            var getUserInfo = await _dbContext.UserInfoEntity.FirstOrDefaultAsync(x => x.UserEmail.Equals(dto.Email));
+            var getUserInfo = await _dbContext.UserInfoEntity.FirstOrDefaultAsync(x => x.UserEmail.Equals(dto.Email) && x.AccountStatus == AccountStatusEnum.Active);
             if (getUserInfo == null)
             {
                 throw new AppException(Messages.Auth.UserNotFound, 404 , "UN01");

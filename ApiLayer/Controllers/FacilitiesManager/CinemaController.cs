@@ -10,7 +10,6 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 
 [ApiController]
 [Route("api/facilities/cinema")]
-[Authorize(Policy = "FacilitiesManager")]
 [Tags("Facilities Manager - Cinema")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class CinemaController : ControllerBase
@@ -24,7 +23,11 @@ public class CinemaController : ControllerBase
         this._readService = readService;
     }
 
+    /// <summary>
+    /// Get all cinemas - accessible by FacilitiesManager, TheaterManager, and Admin
+    /// </summary>
     [HttpGet()]
+    [Authorize(Roles = "FacilitiesManager,TheaterManager,Admin")]
     public async Task<IActionResult> GetAll()
     {
         var results = await _readService.GetAll();
@@ -32,6 +35,7 @@ public class CinemaController : ControllerBase
     }
     
     [HttpPost()]
+    [Authorize(Policy = "FacilitiesManager")]
     [Description("API to create a cinema")]
     public async Task<IActionResult> AddCinema(AddCinemaReqDto addCinemaReqDto)
     {
@@ -39,7 +43,11 @@ public class CinemaController : ControllerBase
         return Ok(results);
     }
 
+    /// <summary>
+    /// Get cinema by ID - accessible by FacilitiesManager, TheaterManager, and Admin
+    /// </summary>
     [HttpGet("{id}")]
+    [Authorize(Roles = "FacilitiesManager,TheaterManager,Admin")]
     public async Task<IActionResult> GetCinemaById(Guid id)
     {
         var results = await _readService.GetById(id);
@@ -47,6 +55,7 @@ public class CinemaController : ControllerBase
     }
 
     [HttpPut("{cinemaId}")]
+    [Authorize(Policy = "FacilitiesManager")]
     [Description("API to update a cinema")]
     public async Task<IActionResult> EditCinema(Guid cinemaId , EditCinemaReqDto editCinemaReqDto)
     {
@@ -54,3 +63,4 @@ public class CinemaController : ControllerBase
         return Ok(results);
     }
 }
+

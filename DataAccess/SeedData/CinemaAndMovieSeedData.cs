@@ -12,79 +12,93 @@ public static class CinemaAndMovieSeedData
         var adminId = Guid.Parse("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c");
         var movieManagerId = Guid.Parse("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7");
         var theaterManagerId = Guid.Parse("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5");
+        var facilitiesManagerId = Guid.Parse("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e");
         
         var defaultDate = new DateTime(2024, 1, 1);
-        var now = DateTime.Now;
+        var now = new DateTime(2026, 3, 18, 0, 0, 0); // Use fixed date for stable migrations
 
         // 1. Seed Cinemas
         var cinemaHCMId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var cinemaHNId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var cinemaBHDId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
 
         modelBuilder.Entity<CinemaInfoEntity>().HasData(
             new CinemaInfoEntity 
             { 
                 CinemaId = cinemaHCMId, 
-                CinemaName = "CGV Vincom Center Landmark 81",
+                CinemaName = "Galaxy Cinema Nguyễn Du",
                 CinemaCity = "Hồ Chí Minh",
-                CinemaLocation = "Tầng B1, Vincom Center Landmark 81, 772 Điện Biên Phủ, P.22, Q. Bình Thạnh",
-                CinemaHotLineNumber = "1900 6017",
-                CinemaDescription = "Rạp chiếu phim hiện đại nhất Việt Nam",
+                CinemaLocation = "116 Nguyễn Du, Quận 1, TP. HCM",
+                CinemaHotLineNumber = "19002235",
+                CinemaDescription = "Không gian điện ảnh trẻ trung, hiện đại bậc nhất Sài Gòn.",
                 IsActive = true,
                 CreatedAt = defaultDate,
                 CreatedByUserId = adminId,
-                ManagerId = theaterManagerId
+                TheaterManagerId = theaterManagerId
             },
             new CinemaInfoEntity 
             { 
                 CinemaId = cinemaHNId, 
-                CinemaName = "Lotte Cinema Landmark",
+                CinemaName = "Lotte Cinema West Lake",
                 CinemaCity = "Hà Nội",
-                CinemaLocation = "Tầng 5 Keangnam Hanoi Landmark Tower, E6 Phạm Hùng",
-                CinemaHotLineNumber = "0243837800",
-                CinemaDescription = "Trải nghiệm điện ảnh đỉnh cao",
+                CinemaLocation = "Tầng 4, Lotte Mall West Lake, 272 Võ Chí Công, Tây Hồ",
+                CinemaHotLineNumber = "0243724666",
+                CinemaDescription = "Cụm rạp cao cấp với công nghệ âm thanh Dolby Atmos.",
                 IsActive = true,
                 CreatedAt = defaultDate,
                 CreatedByUserId = adminId,
-                ManagerId = theaterManagerId
+                TheaterManagerId = adminId // Admin quản lý rạp này
+            },
+            new CinemaInfoEntity 
+            { 
+                CinemaId = cinemaBHDId, 
+                CinemaName = "BHD Star Bitexco",
+                CinemaCity = "Hồ Chí Minh",
+                CinemaLocation = "Tầng 3 & 4, Tòa nhà Bitexco, 2 Hải Triều, Quận 1",
+                CinemaHotLineNumber = "19002099",
+                CinemaDescription = "Tọa lạc tại biểu tượng của thành phố, mang lại trải nghiệm đẳng cấp.",
+                IsActive = true,
+                CreatedAt = defaultDate,
+                CreatedByUserId = adminId,
+                FacilitiesManagerId = facilitiesManagerId // Facilities Manager quản lý rạp này
             }
         );
 
         // 2. Seed Auditoriums (Phòng chiếu)
-        var auditorium1Id = Guid.Parse("33333333-3333-3333-3333-333333333333"); // HCM - Theo định dạng 2D
-        var auditorium2Id = Guid.Parse("44444444-4444-4444-4444-444444444444"); // HCM - IMAX
-        var auditorium3Id = Guid.Parse("55555555-5555-5555-5555-555555555555"); // HN - 3D
+        var auditorium1Id = Guid.Parse("33333333-3333-3333-3333-333333333333"); 
+        var auditorium2Id = Guid.Parse("44444444-4444-4444-4444-444444444444"); 
+        var auditorium3Id = Guid.Parse("55555555-5555-5555-5555-555555555555"); 
 
         modelBuilder.Entity<AuditoriumInfoEntities>().HasData(
-            new AuditoriumInfoEntities { AuditoriumId = auditorium1Id, CinemaId = cinemaHCMId, AuditoriumNumber = "Phòng 1 (2D)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, IsActive = true },
-            new AuditoriumInfoEntities { AuditoriumId = auditorium2Id, CinemaId = cinemaHCMId, AuditoriumNumber = "Phòng 2 (IMAX)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, IsActive = true },
-            new AuditoriumInfoEntities { AuditoriumId = auditorium3Id, CinemaId = cinemaHNId, AuditoriumNumber = "Phòng 1 (3D)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, IsActive = true }
+            new AuditoriumInfoEntities { AuditoriumId = auditorium1Id, CinemaId = cinemaHCMId, AuditoriumNumber = "Cinema 1 (2D)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, IsActive = true },
+            new AuditoriumInfoEntities { AuditoriumId = auditorium2Id, CinemaId = cinemaHNId, AuditoriumNumber = "Cinema 2 (IMAX)", CreatedByUserId = adminId, CreatedAt = defaultDate, IsActive = true },
+            new AuditoriumInfoEntities { AuditoriumId = auditorium3Id, CinemaId = cinemaBHDId, AuditoriumNumber = "Cinema 3 (3D)", CreatedByUserId = facilitiesManagerId, CreatedAt = defaultDate, IsActive = true }
         );
 
-        // Map Auditorium với Format
         modelBuilder.Entity<AuditoriumFormatInfos>().HasData(
             new AuditoriumFormatInfos { AuditoriumId = auditorium1Id, FormatId = movie_visual_constant.Format2D },
             new AuditoriumFormatInfos { AuditoriumId = auditorium2Id, FormatId = movie_visual_constant.Imax },
             new AuditoriumFormatInfos { AuditoriumId = auditorium3Id, FormatId = movie_visual_constant.Format3D }
         );
 
-        // 3. Seed Seats (Ghế) - Tạo một vài ghế tượng trưng cho mỗi phòng
+        // 3. Seed Seats (Ghế)
         var seats = new List<SeatsInfoEntity>();
-        string[] rows = { "A", "B", "C" };
+        string[] rows = { "A", "B", "C", "D" };
         foreach (var audId in new[] { auditorium1Id, auditorium2Id, auditorium3Id })
         {
-            for (int r = 0; r < 3; r++)
+            for (int r = 0; r < 4; r++)
             {
-                for (int c = 1; c <= 5; c++)
+                for (int c = 1; c <= 8; c++)
                 {
                     seats.Add(new SeatsInfoEntity
                     {
-                        SeatId = Guid.NewGuid(),
+                        SeatId = Guid.Parse($"{audId.ToString().Substring(0, 24)}{r:D4}{c:D8}"), // Deterministic ID
                         AuditoriumId = audId,
                         SeatNumber = $"{rows[r]}{c}",
                         ColIndex = c - 1,
                         RowIndex = r,
-                        CoordX = (c - 1) * 50,
-                        CoordY = r * 50
+                        CoordX = (c - 1) * 60,
+                        CoordY = r * 60
                     });
                 }
             }
@@ -92,112 +106,100 @@ public static class CinemaAndMovieSeedData
         modelBuilder.Entity<SeatsInfoEntity>().HasData(seats);
 
         // 4. Seed Movies
-        var movieId1 = Guid.Parse("66666666-6666-6666-6666-666666666666"); // Đang chiếu
-        var movieId2 = Guid.Parse("77777777-7777-7777-7777-777777777777"); // Sắp chiếu
+        var movieId1 = Guid.Parse("66666666-6666-6666-6666-666666666666"); 
+        var movieId2 = Guid.Parse("77777777-7777-7777-7777-777777777777"); 
+        var movieId3 = Guid.Parse("88888888-8888-8888-8888-888888888888");
 
         modelBuilder.Entity<MovieInfoEntity>().HasData(
             new MovieInfoEntity
             {
                 MovieId = movieId1,
-                MovieName = "Dune: Part Two",
-                MovieDescription = "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family.",
-                MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v170000000/dune2_poster",
-                TrailerUrl = "https://www.youtube.com/watch?v=Way9Dexny3w",
-                Director = "Denis Villeneuve",
-                Actors = "Timothée Chalamet, Zendaya, Rebecca Ferguson",
-                MovieDuration = 166,
+                MovieName = "The Batman",
+                MovieDescription = "Batman ventures into Gotham City's underworld when a sadistic killer leaves behind a trail of cryptic clues.",
+                MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/the_batman_poster",
+                TrailerUrl = "https://www.youtube.com/watch?v=mqqft239u6Q",
+                Director = "Matt Reeves",
+                Actors = "Robert Pattinson, Zoë Kravitz, Paul Dano",
+                MovieDuration = 176,
                 MovieRequiredAgeId = movieRequiredAgeConstants.Teen13,
-                ActiveAt = now.AddDays(-10), // Đã chiếu được 10 ngày
-                EndedDate = now.AddDays(20), // Còn chiếu 20 ngày nữa
+                ActiveAt = now.AddDays(-5),
+                EndedDate = now.AddDays(25), 
                 IsActive = true,
                 CreatedAt = defaultDate,
                 CreatedByUserId = movieManagerId,
-                ManagerId = movieManagerId
+                MovieManagerId = movieManagerId
             },
             new MovieInfoEntity
             {
                 MovieId = movieId2,
-                MovieName = "Kung Fu Panda 4",
-                MovieDescription = "After Po is tapped to become the Spiritual Leader of the Valley of Peace, he needs to find and train a new Dragon Warrior.",
-                MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v170000000/kfp4_poster",
-                TrailerUrl = "https://www.youtube.com/watch?v=_inKs4eeHiI",
-                Director = "Mike Mitchell",
-                Actors = "Jack Black, Awkwafina, Viola Davis",
-                MovieDuration = 94,
-                MovieRequiredAgeId = movieRequiredAgeConstants.AllAges,
-                ActiveAt = now.AddDays(5), // 5 ngày nữa mới chiếu (Sắp chiếu)
-                EndedDate = now.AddDays(35),
+                MovieName = "Oppenheimer",
+                MovieDescription = "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
+                MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/oppenheimer_poster",
+                TrailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
+                Director = "Christopher Nolan",
+                Actors = "Cillian Murphy, Emily Blunt, Matt Damon",
+                MovieDuration = 180,
+                MovieRequiredAgeId = movieRequiredAgeConstants.Teen16,
+                ActiveAt = now.AddDays(-1),
+                EndedDate = now.AddDays(30),
+                IsActive = true,
+                CreatedAt = defaultDate,
+                CreatedByUserId = adminId,
+                MovieManagerId = adminId // Admin quản lý nội dung phim này
+            },
+            new MovieInfoEntity
+            {
+                MovieId = movieId3,
+                MovieName = "Avatar: The Way of Water",
+                MovieDescription = "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora.",
+                MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/avatar_poster",
+                TrailerUrl = "https://www.youtube.com/watch?v=d9MyW72ELq0",
+                Director = "James Cameron",
+                Actors = "Sam Worthington, Zoe Saldana, Sigourney Weaver",
+                MovieDuration = 192,
+                MovieRequiredAgeId = movieRequiredAgeConstants.Teen13,
+                ActiveAt = now.AddDays(10), // Phim sắp chiếu
+                EndedDate = now.AddDays(40),
                 IsActive = true,
                 CreatedAt = defaultDate,
                 CreatedByUserId = movieManagerId,
-                ManagerId = movieManagerId
+                MovieManagerId = movieManagerId
             }
         );
 
-        // Map Movie với Genre và Format
         modelBuilder.Entity<MovieGenreMovieInfoEntity>().HasData(
-            new MovieGenreMovieInfoEntity { MovieId = movieId1, MovieGenreId = movieGenreConstant.SciFi },
             new MovieGenreMovieInfoEntity { MovieId = movieId1, MovieGenreId = movieGenreConstant.Action },
-            new MovieGenreMovieInfoEntity { MovieId = movieId2, MovieGenreId = movieGenreConstant.Animation },
-            new MovieGenreMovieInfoEntity { MovieId = movieId2, MovieGenreId = movieGenreConstant.Comedy }
+            new MovieGenreMovieInfoEntity { MovieId = movieId2, MovieGenreId = movieGenreConstant.Drama },
+            new MovieGenreMovieInfoEntity { MovieId = movieId3, MovieGenreId = movieGenreConstant.SciFi }
         );
 
         modelBuilder.Entity<movieFormatMovieInfoEntity>().HasData(
             new movieFormatMovieInfoEntity { MovieId = movieId1, FormatId = movie_visual_constant.Format2D },
-            new movieFormatMovieInfoEntity { MovieId = movieId1, FormatId = movie_visual_constant.Imax },
-            new movieFormatMovieInfoEntity { MovieId = movieId2, FormatId = movie_visual_constant.Format2D },
-            new movieFormatMovieInfoEntity { MovieId = movieId2, FormatId = movie_visual_constant.Format3D }
+            new movieFormatMovieInfoEntity { MovieId = movieId2, FormatId = movie_visual_constant.Imax },
+            new movieFormatMovieInfoEntity { MovieId = movieId3, FormatId = movie_visual_constant.Format3D }
         );
 
-        // 5. Seed Movie Schedules (Lịch chiếu) - Loop from 2026-03-07 to 2026-04-01
-        var today = new DateTime(2026, 3, 7);
-        var endDate = new DateTime(2026, 4, 1);
+        // 5. Seed Movie Schedules (Lịch chiếu) - Chỉ tạo 1 vài slot tiêu biểu
         var schedules = new List<MovieScheduleInfoEntity>();
-        
-        int dayIndex = 0;
-        for (var date = today; date <= endDate; date = date.AddDays(1))
+        var scheduleDate = now.Date.AddDays(1); // Ưu tiên ngày mai
+
+        // Galaxy Cinema - The Batman
+        schedules.Add(new MovieScheduleInfoEntity
         {
-            // Tạo GUID cố định cho từng ngày dựa trên dayIndex để EF Core không báo lỗi
-            var g1 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1);
-            var g2 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2);
-            var g3 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3);
-            var g4 = new Guid(dayIndex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4);
+            MovieScheduleInfoId = Guid.NewGuid(), MovieId = movieId1, AuditoriumId = auditorium1Id,
+            MovieFormatId = movie_visual_constant.Format2D,
+            StartTime = scheduleDate.AddHours(19), EndedTime = scheduleDate.AddHours(19).AddMinutes(176),
+            ActiveAt = scheduleDate.AddHours(19), IsActive = true, CreatedByUserId = theaterManagerId
+        });
 
-            // HCM 2D - Phim 1
-            schedules.Add(new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = g1, MovieId = movieId1, AuditoriumId = auditorium1Id,
-                MovieFormatId = movie_visual_constant.Format2D,
-                StartTime = date.AddHours(22), EndedTime = date.AddHours(22).AddMinutes(166),
-                ActiveAt = date.AddHours(22), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
-            });
-            // HCM IMAX - Phim 1
-            schedules.Add(new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = g2, MovieId = movieId1, AuditoriumId = auditorium2Id,
-                MovieFormatId = movie_visual_constant.Imax,
-                StartTime = date.AddHours(20), EndedTime = date.AddHours(20).AddMinutes(166),
-                ActiveAt = date.AddHours(20), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
-            });
-            // HN 3D - Phim 1
-            schedules.Add(new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = g3, MovieId = movieId1, AuditoriumId = auditorium3Id,
-                MovieFormatId = movie_visual_constant.Format3D,
-                StartTime = date.AddHours(22).AddMinutes(30), EndedTime = date.AddHours(22).AddMinutes(30).AddMinutes(166),
-                ActiveAt = date.AddHours(22).AddMinutes(30), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
-            });
-            // HN 3D - Phim 2
-            schedules.Add(new MovieScheduleInfoEntity
-            {
-                MovieScheduleInfoId = g4, MovieId = movieId2, AuditoriumId = auditorium3Id,
-                MovieFormatId = movie_visual_constant.Format3D,
-                StartTime = date.AddHours(14), EndedTime = date.AddHours(14).AddMinutes(94), // Chiếu buổi chiều
-                ActiveAt = date.AddHours(14), IsActive = true, CreatedAt = defaultDate, CreatedByUserId = theaterManagerId
-            });
-
-            dayIndex++;
-        }
+        // Lotte Cinema - Oppenheimer (IMAX)
+        schedules.Add(new MovieScheduleInfoEntity
+        {
+            MovieScheduleInfoId = Guid.NewGuid(), MovieId = movieId2, AuditoriumId = auditorium2Id,
+            MovieFormatId = movie_visual_constant.Imax,
+            StartTime = scheduleDate.AddHours(20), EndedTime = scheduleDate.AddHours(20).AddMinutes(180),
+            ActiveAt = scheduleDate.AddHours(20), IsActive = true, CreatedByUserId = adminId
+        });
 
         modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(schedules);
     }

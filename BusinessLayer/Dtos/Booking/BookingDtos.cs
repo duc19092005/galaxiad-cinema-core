@@ -207,3 +207,32 @@ public class ResUserBookingHistoryDto
     /// </summary>
     public string MovieAiringStatus { get; set; } = string.Empty;
 }
+
+// ==========================================
+// PUBLIC - Advanced Search & Dropdowns
+// ==========================================
+
+public class ResPublicSimpleCinemaDto
+{
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
+}
+
+public class ResPublicSimpleMovieDto
+{
+    public Guid MovieId { get; set; }
+    public string MovieName { get; set; } = string.Empty;
+}
+
+public class ResAdvancedSearchMovieDto
+{
+    public Guid MovieId { get; set; }
+    public string MovieName { get; set; } = string.Empty;
+    public string MovieImageUrl { get; set; } = string.Empty;
+    public string MovieDescription { get; set; } = string.Empty;
+    public int MovieDuration { get; set; }
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
+    public List<string> MovieGenres { get; set; } = [];
+    
+    public List<ResPublicCinemaShowtimeDto> Cinemas { get; set; } = [];
+}

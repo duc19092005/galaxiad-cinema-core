@@ -41,9 +41,9 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     public DateTime EndedDate {get;set;}
 
-    public Guid ManagerId { get; set; }
+    public Guid? MovieManagerId { get; set; }
 
-    public UserInfoEntity Manager { get; set; } = null!;
+    public UserInfoEntity? MovieManager { get; set; } = null!;
 
     public List<MovieGenreMovieInfoEntity> MovieGenreMovieInfoEntity { get; set; } = [];
 

@@ -25,22 +25,24 @@ public class PublicMovieController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách phim đang chiếu
+    /// Lấy danh sách phim đang chiếu (hỗ trợ search theo tên phim hoặc tên rạp)
     /// </summary>
     [HttpGet("now-showing")]
-    public async Task<IActionResult> GetNowShowing()
+    public async Task<IActionResult> GetNowShowing([FromQuery] string? keyword, [FromQuery] Guid? cinemaId, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 5)
     {
-        var result = await _bookingService.GetNowShowingMovies();
+        var searchParam = keyword ?? cinemaId?.ToString();
+        var result = await _bookingService.GetNowShowingMovies(searchParam, pageIndex, pageSize);
         return Ok(result);
     }
 
     /// <summary>
-    /// Lấy danh sách phim sắp chiếu
+    /// Lấy danh sách phim sắp chiếu (hỗ trợ search theo tên phim hoặc tên rạp)
     /// </summary>
     [HttpGet("coming-soon")]
-    public async Task<IActionResult> GetComingSoon()
+    public async Task<IActionResult> GetComingSoon([FromQuery] string? keyword, [FromQuery] Guid? cinemaId, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 5)
     {
-        var result = await _bookingService.GetComingSoonMovies();
+        var searchParam = keyword ?? cinemaId?.ToString();
+        var result = await _bookingService.GetComingSoonMovies(searchParam, pageIndex, pageSize);
         return Ok(result);
     }
 
@@ -61,6 +63,40 @@ public class PublicMovieController : ControllerBase
     public async Task<IActionResult> GetGenres()
     {
         var result = await _bookingService.GetGenres();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy danh sách các rạp đang hoạt động (dành cho Combobox tìm kiếm)
+    /// </summary>
+    [HttpGet("active-cinemas")]
+    public async Task<IActionResult> GetActiveCinemas()
+    {
+        var result = await _bookingService.GetActiveCinemas();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy danh sách các phim đang hoạt động (dành cho Combobox tìm kiếm)
+    /// </summary>
+    [HttpGet("active-movies")]
+    public async Task<IActionResult> GetActiveMovies()
+    {
+        var result = await _bookingService.GetActiveMovies();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Tìm kiếm nâng cao hiển thị cả phim, rạp và giờ chiếu
+    /// Dành cho module (Ngày - Phim - Rạp) ở trang chủ
+    /// </summary>
+    [HttpGet("search-schedules")]
+    public async Task<IActionResult> GetAdvancedSearchSchedules(
+        [FromQuery] DateTime? date,
+        [FromQuery] Guid? movieId,
+        [FromQuery] Guid? cinemaId)
+    {
+        var result = await _bookingService.GetAdvancedSearchSchedules(date, movieId, cinemaId);
         return Ok(result);
     }
 

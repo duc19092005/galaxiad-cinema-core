@@ -47,7 +47,8 @@ namespace DataAccess.Entities.UserInfos
         public virtual ICollection<CinemaInfoEntity> CreatedCinemas { get; set; } = [];
         public virtual ICollection<CinemaInfoEntity> DeletedCinemas { get; set; } = [];
         public virtual ICollection<CinemaInfoEntity> UpdatedCinemas { get; set; } = [];
-        public virtual ICollection<CinemaInfoEntity> ManagedCinemas { get; set; } = [];
+        public virtual ICollection<CinemaInfoEntity> TheaterManagedCinemas { get; set; } = [];
+        public virtual ICollection<CinemaInfoEntity> FacilitiesManagedCinemas { get; set; } = [];
         
         // QL Phòng
         

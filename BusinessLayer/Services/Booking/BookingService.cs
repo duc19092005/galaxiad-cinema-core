@@ -43,11 +43,34 @@ public class BookingService
     // ==========================================
     // 1. Lấy danh sách phim đang chiếu
     // ==========================================
-    public async Task<BaseResponse<List<ResPublicMovieListDto>>> GetNowShowingMovies()
+    public async Task<BaseResponse<PagedResult<ResPublicMovieListDto>>> GetNowShowingMovies(string? keyword = null, int pageIndex = 1, int pageSize = 5)
     {
-        var now = DateTime.Now;
-        var movies = await _dbContext.MovieInfoEntity
-            .Where(x => x.IsActive && !x.IsDeleted && x.ActiveAt <= now && x.EndedDate > now)
+        var query = _dbContext.MovieInfoEntity
+            .Where(x => !x.IsDeleted && x.IsActive && !x.IsCommingSoon);
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            var kw = keyword.ToLower();
+            if (Guid.TryParse(keyword, out Guid cId))
+            {
+                query = query.Where(x => x.MovieScheduleInfoEntity.Any(s => 
+                    !s.IsDeleted && s.AuditoriumInfoEntities!.CinemaId == cId));
+            }
+            else
+            {
+                query = query.Where(x => 
+                    x.MovieName.ToLower().Contains(kw) || 
+                    x.MovieScheduleInfoEntity.Any(s => !s.IsDeleted && s.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName.ToLower().Contains(kw))
+                );
+            }
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var movies = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new ResPublicMovieListDto
             {
                 MovieId = x.MovieId,
@@ -66,10 +89,10 @@ public class BookingService
             .AsNoTracking()
             .ToListAsync();
 
-        return new BaseResponse<List<ResPublicMovieListDto>>
+        return new BaseResponse<PagedResult<ResPublicMovieListDto>>
         {
             IsSuccess = true,
-            Data = movies,
+            Data = new PagedResult<ResPublicMovieListDto>(movies, totalCount, pageIndex, pageSize),
             Message = Messages.Movie.GetListSuccess
         };
     }
@@ -77,11 +100,35 @@ public class BookingService
     // ==========================================
     // 2. Lấy danh sách phim sắp chiếu
     // ==========================================
-    public async Task<BaseResponse<List<ResPublicMovieListDto>>> GetComingSoonMovies()
+    public async Task<BaseResponse<PagedResult<ResPublicMovieListDto>>> GetComingSoonMovies(string? keyword = null, int pageIndex = 1, int pageSize = 5)
     {
-        var now = DateTime.Now;
-        var movies = await _dbContext.MovieInfoEntity
-            .Where(x => !x.IsDeleted && x.ActiveAt > now)
+        var query = _dbContext.MovieInfoEntity
+            .Where(x => !x.IsDeleted && x.IsCommingSoon);
+
+        if (!string.IsNullOrEmpty(keyword))
+        {
+            var kw = keyword.ToLower();
+            if (Guid.TryParse(keyword, out Guid cId))
+            {
+                // Correctly filter by cinemaId: movie MUST have at least one schedule at this cinema
+                query = query.Where(x => x.MovieScheduleInfoEntity.Any(s => 
+                    !s.IsDeleted && s.AuditoriumInfoEntities!.CinemaId == cId));
+            }
+            else
+            {
+                query = query.Where(x => 
+                    x.MovieName.ToLower().Contains(kw) || 
+                    x.MovieScheduleInfoEntity.Any(s => !s.IsDeleted && s.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName.ToLower().Contains(kw))
+                );
+            }
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var movies = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new ResPublicMovieListDto
             {
                 MovieId = x.MovieId,
@@ -100,10 +147,10 @@ public class BookingService
             .AsNoTracking()
             .ToListAsync();
 
-        return new BaseResponse<List<ResPublicMovieListDto>>
+        return new BaseResponse<PagedResult<ResPublicMovieListDto>>
         {
             IsSuccess = true,
-            Data = movies,
+            Data = new PagedResult<ResPublicMovieListDto>(movies, totalCount, pageIndex, pageSize),
             Message = Messages.Movie.GetListSuccess
         };
     }
@@ -146,6 +193,137 @@ public class BookingService
             IsSuccess = true,
             Data = movie,
             Message = Messages.Movie.GetInfoSuccess
+        };
+    }
+
+    // ==========================================
+    // 3.1. Advanced Search / Combobox Dropdowns
+    // ==========================================
+    public async Task<BaseResponse<List<ResPublicSimpleCinemaDto>>> GetActiveCinemas()
+    {
+        var cinemas = await _dbContext.CinemaInfoEntity
+            .Where(c => !c.IsDeleted && c.IsActive)
+            .Select(c => new ResPublicSimpleCinemaDto
+            {
+                CinemaId = c.CinemaId,
+                CinemaName = c.CinemaName
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new BaseResponse<List<ResPublicSimpleCinemaDto>>
+        {
+            IsSuccess = true,
+            Data = cinemas,
+            Message = "Lấy danh sách rạp thành công"
+        };
+    }
+
+    public async Task<BaseResponse<List<ResPublicSimpleMovieDto>>> GetActiveMovies()
+    {
+        var now = DateTime.Now;
+        var movies = await _dbContext.MovieInfoEntity
+            .Where(m => m.IsActive && !m.IsDeleted && m.EndedDate > now)
+            .Select(m => new ResPublicSimpleMovieDto
+            {
+                MovieId = m.MovieId,
+                MovieName = m.MovieName
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new BaseResponse<List<ResPublicSimpleMovieDto>>
+        {
+            IsSuccess = true,
+            Data = movies,
+            Message = "Lấy danh sách phim thành công"
+        };
+    }
+
+    // ==========================================
+    // 3.2. Lấy dữ liệu cho Advanced Search (Ngày + Phim + Rạp)
+    // ==========================================
+    public async Task<BaseResponse<List<ResAdvancedSearchMovieDto>>> GetAdvancedSearchSchedules(DateTime? date, Guid? movieId, Guid? cinemaId)
+    {
+        var targetDate = date ?? DateTime.Today;
+        var startOfDay = targetDate.Date;
+        var endOfDay = startOfDay.AddDays(1);
+
+        var query = _dbContext.MovieScheduleInfoEntity
+            .Where(s => !s.IsDeleted 
+                        && s.StartTime >= startOfDay 
+                        && s.StartTime < endOfDay);
+
+        if (movieId.HasValue)
+            query = query.Where(s => s.MovieId == movieId.Value);
+        
+        if (cinemaId.HasValue)
+            query = query.Where(s => s.AuditoriumInfoEntities!.CinemaId == cinemaId.Value);
+
+        var schedules = await query
+            .Select(s => new
+            {
+                s.MovieScheduleInfoId,
+                s.StartTime,
+                s.EndedTime,
+                s.MovieId,
+                s.MovieInfoEntity!.MovieName,
+                s.MovieInfoEntity.MovieImageUrl,
+                s.MovieInfoEntity.MovieDuration,
+                s.MovieInfoEntity.MovieDescription,
+                MovieRequiredAgeSymbol = s.MovieInfoEntity.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
+                MovieGenres = s.MovieInfoEntity.MovieGenreMovieInfoEntity.Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList(),
+                CinemaId = s.AuditoriumInfoEntities!.CinemaId,
+                s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaName,
+                s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaLocation,
+                s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity,
+                FormatId = s.MovieFormatId,
+                FormatName = s.MovieFormatInfoEntity!.MovieFormatName,
+                s.AuditoriumId,
+                AuditoriumNumber = s.AuditoriumInfoEntities.AuditoriumNumber
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        var result = schedules.GroupBy(s => new { s.MovieId, s.MovieName, s.MovieImageUrl, s.MovieDuration, s.MovieRequiredAgeSymbol, s.MovieDescription })
+            .Select(mGroup => new ResAdvancedSearchMovieDto
+            {
+                MovieId = mGroup.Key.MovieId,
+                MovieName = mGroup.Key.MovieName,
+                MovieImageUrl = mGroup.Key.MovieImageUrl,
+                MovieDuration = mGroup.Key.MovieDuration,
+                MovieRequiredAgeSymbol = mGroup.Key.MovieRequiredAgeSymbol,
+                MovieDescription = mGroup.Key.MovieDescription,
+                MovieGenres = mGroup.First().MovieGenres,
+                Cinemas = mGroup.GroupBy(c => new { c.CinemaId, c.CinemaName, c.CinemaLocation, c.CinemaCity })
+                    .Select(cGroup => new ResPublicCinemaShowtimeDto
+                    {
+                        CinemaId = cGroup.Key.CinemaId,
+                        CinemaName = cGroup.Key.CinemaName,
+                        CinemaLocation = cGroup.Key.CinemaLocation,
+                        CinemaCity = cGroup.Key.CinemaCity,
+                        FormatShowtimes = cGroup.GroupBy(f => new { f.FormatId, f.FormatName })
+                            .Select(fGroup => new FormatShowtimeGroup
+                            {
+                                FormatId = fGroup.Key.FormatId,
+                                FormatName = fGroup.Key.FormatName,
+                                Showtimes = fGroup.Select(st => new ShowtimeSlot
+                                {
+                                    ScheduleId = st.MovieScheduleInfoId,
+                                    StartTime = st.StartTime,
+                                    EndedTime = st.EndedTime,
+                                    AuditoriumId = st.AuditoriumId,
+                                    AuditoriumNumber = st.AuditoriumNumber
+                                }).OrderBy(st => st.StartTime).ToList()
+                            }).ToList()
+                    }).ToList()
+            }).ToList();
+
+        return new BaseResponse<List<ResAdvancedSearchMovieDto>>
+        {
+            IsSuccess = true,
+            Data = result,
+            Message = "Lọc danh sách phim và lịch chiếu thành công"
         };
     }
 
@@ -222,8 +400,7 @@ public class BookingService
                         .Where(s => s.MovieId == movieId
                                     && !s.IsDeleted
                                     && s.StartTime >= startOfDay
-                                    && s.StartTime < endOfDay
-                                    && s.StartTime > now)
+                                    && s.StartTime < endOfDay)
                         .Select(s => new
                         {
                             s.MovieFormatId,

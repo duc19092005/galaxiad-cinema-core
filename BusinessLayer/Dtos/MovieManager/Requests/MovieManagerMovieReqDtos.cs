@@ -49,7 +49,7 @@ public class ReqEditMovieManagerMovieDto
     public Guid? MovieRequiredAgeId { get; set; }
     
     [StringLength(50, MinimumLength = 1 , ErrorMessage = "Movie Name length must be between 1 and 50 characters")]
-    public string? MovieName { get; set; } = string.Empty;
+    public string? MovieName { get; set; }
     
     [StringLength(200, MinimumLength = 1 , ErrorMessage = "Movie Descriptions length must be between 1 and 200 characters")]
     public string? MovieDescription { get; set; } 

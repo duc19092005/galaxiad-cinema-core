@@ -43,7 +43,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
-            .AnyAsync(x => x.AuditoriumId == request.AuditoriumId);
+            .AnyAsync(x => x.AuditoriumId == request.AuditoriumId && 
+                           x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId);
             
         if (!isAuditoriumExist)
         {
@@ -212,7 +213,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
-            .AnyAsync(x => x.AuditoriumId == auditoriumId);
+            .AnyAsync(x => x.AuditoriumId == auditoriumId && 
+                           (x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId || 
+                            x.CinemaInfoEntity.FacilitiesManagerId == getCurrentUserId));
 
         if (!isAuditoriumExist)
         {
@@ -241,6 +244,15 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             if (schedulesToUpdate.Count != updatingScheduleIds.Count)
             {
                 throw new BadRequestException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated, "E01");
+            }
+
+            var hasSuccessfulBookingOnUpdatingSchedules = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                .AnyAsync(od => updatingScheduleIds.Contains(od.MovieScheduleId) &&
+                                od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked);
+
+            if (hasSuccessfulBookingOnUpdatingSchedules)
+            {
+                throw new BadRequestException("Không thể sửa các suất chiếu đã có người đặt vé thành công.", "E03");
             }
 
             var movieIdsToCheck = request.Slots.Select(s => s.MovieId).Distinct().ToList();
@@ -396,11 +408,6 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             throw new BadRequestException("Lịch chiếu này đã bị xóa.", "D01");
         }
 
-        if (schedule.EndedTime > DateTime.Now)
-        {
-            throw new BadRequestException("Không thể xóa lịch chiếu chưa kết thúc.", "D02");
-        }
-
         var hasSuccessfulBooking = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
             .AnyAsync(od => od.MovieScheduleId == itemId &&
                             (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
@@ -425,29 +432,58 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         };
     }
 
-    public async Task<bool> SetScheduleStatus(Guid scheduleId)
+    /// <summary>
+    /// Called by Hangfire when showtime STARTS - sets IsActive = true
+    /// </summary>
+    public async Task<bool> SetScheduleActiveStatus(Guid scheduleId)
     {
         var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
         if (findSchedule == null)
         {
+            _logger.LogWarning("Schedule {ScheduleId} not found for activation", scheduleId);
             return false;
         }
-        else
+
+        try
         {
-            try
-            {
-                findSchedule.IsActive = false;
-                _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
-                await _cinemaDbContext.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error Updating Movie Schedule Status");
-                return false;
-            }
+            findSchedule.IsActive = true;
+            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
+            await _cinemaDbContext.SaveChangesAsync();
+            _logger.LogInformation("Schedule {ScheduleId} activated (IsActive=true)", scheduleId);
+            return true;
         }
-        
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error activating Movie Schedule {ScheduleId}", scheduleId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Called by Hangfire when showtime ENDS - sets IsActive = false
+    /// </summary>
+    public async Task<bool> SetScheduleInactiveStatus(Guid scheduleId)
+    {
+        var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
+        if (findSchedule == null)
+        {
+            _logger.LogWarning("Schedule {ScheduleId} not found for deactivation", scheduleId);
+            return false;
+        }
+
+        try
+        {
+            findSchedule.IsActive = false;
+            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
+            await _cinemaDbContext.SaveChangesAsync();
+            _logger.LogInformation("Schedule {ScheduleId} deactivated (IsActive=false)", scheduleId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deactivating Movie Schedule {ScheduleId}", scheduleId);
+            return false;
+        }
     }
 
 }

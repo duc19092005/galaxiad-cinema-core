@@ -35,4 +35,5 @@ public class ResGetMovieInfosMovieManagerDto
     public string Actors { get; set; } = string.Empty;
     
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
+    public string MovieManagerName { get; set; } = string.Empty;
 }

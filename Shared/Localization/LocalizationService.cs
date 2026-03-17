@@ -96,7 +96,7 @@ public class LocalizationService : ILocalizationService
         { "Missing One or more Fields", "Thiếu một hoặc nhiều trường dữ liệu" },
 
         // Auth Errors
-        { "User Not Found", "Không tìm thấy người dùng" },
+        { "User Not Found or you're account is banned from the system", "Không tìm thấy người dùng hoặc tài khoản đã bị chăn" },
         { "Username or password is wrong", "Tên đăng nhập hoặc mật khẩu không đúng" },
         { "User Role Not Found", "Không tìm thấy vai trò người dùng" },
         { "Unauthorize", "Không có quyền truy cập" },

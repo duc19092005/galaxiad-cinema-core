@@ -9,6 +9,7 @@ public interface IUserContextService
 {
     Guid GetUserId();
     Guid? TryGetUserId();
+    bool IsInRole(string roleName);
 }
 
 public class UserContextservice : IUserContextService
@@ -62,5 +63,10 @@ public class UserContextservice : IUserContextService
         {
             return null;
         }
+    }
+
+    public bool IsInRole(string roleName)
+    {
+        return _httpContextAccessor.HttpContext?.User.IsInRole(roleName) ?? false;
     }
 }

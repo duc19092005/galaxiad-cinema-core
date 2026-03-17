@@ -8,4 +8,6 @@ public class ResFacilitiesManagerCinema
     public string CinemaHotlineNumber { get; set; } = String.Empty;
     public string CinemaLocation { get; set; } = String.Empty;
     public int TotalRooms { get; set; }
+    public string TheaterManagerName { get; set; } = string.Empty;
+    public string FacilitiesManagerName { get; set; } = string.Empty;
 }

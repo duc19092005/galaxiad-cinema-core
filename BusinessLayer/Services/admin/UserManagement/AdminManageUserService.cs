@@ -140,13 +140,22 @@ public class AdminManageUserService
         var cinema = await _dbContext.CinemaInfoEntity.FindAsync(cinemaId);
         if (cinema == null) return new BaseResponse<string> { IsSuccess = false, Message = "Cinema not found." };
 
-        var managerRole = await _dbContext.UserRoleInfoEntity
+        var userRole = await _dbContext.UserRoleInfoEntity
             .Include(ur => ur.RoleListInfoEntity)
-            .FirstOrDefaultAsync(ur => ur.UserId == managerId && ur.RoleListInfoEntity.RoleName == "TheaterManager");
+            .FirstOrDefaultAsync(ur => ur.UserId == managerId && 
+                                       (ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager"));
 
-        if (managerRole == null) return new BaseResponse<string> { IsSuccess = false, Message = "User is not a TheaterManager." };
+        if (userRole == null) return new BaseResponse<string> { IsSuccess = false, Message = "User must be a TheaterManager or FacilitiesManager." };
 
-        cinema.ManagerId = managerId;
+        if (userRole.RoleListInfoEntity.RoleName == "TheaterManager")
+        {
+            cinema.TheaterManagerId = managerId;
+        }
+        else
+        {
+            cinema.FacilitiesManagerId = managerId;
+        }
+        
         _dbContext.CinemaInfoEntity.Update(cinema);
         await _dbContext.SaveChangesAsync();
 

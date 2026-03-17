@@ -69,12 +69,14 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 CinemaName = request.CinemaName,
                 CinemaDescription = request.CinemaDescription,
                 CinemaLocation = request.CinemaLocation,
+                CinemaCity = request.CinemaCity,
                 CinemaHotLineNumber = request.CinemaHotlineNumber,
                 CreatedAt = DateTime.Now,
                 CreatedByUserId = userId,
-                ManagerId = userId,
+                FacilitiesManagerId = userId,
+                TheaterManagerId = userId,
                 ActiveAt = request.ActiveAt ?? DateTime.Now,
-                IsActive = request.ActiveAt < DateTime.Now,
+                IsActive = request.ActiveAt < DateTime.Now
             };
             await _dbContext.CinemaInfoEntity.AddAsync(newCinemaInfoEntity);
             await _dbContext.SaveChangesAsync();
@@ -103,7 +105,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         try
         {
             var userId = GetUserId();
-            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x => x.CinemaId.Equals(itemId));
+            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x => x.CinemaId.Equals(itemId) && (x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
             if (findCinema == null)
             {
                 throw new AppException(Messages.Cinema.NotFoundById(itemId),
@@ -177,6 +179,10 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                                                  request.CinemaLocation, _dbContext))
                     ? request.CinemaLocation
                     : findCinema.CinemaLocation;
+
+                findCinema.CinemaCity = (!string.IsNullOrWhiteSpace(request.CinemaCity))
+                    ? request.CinemaCity
+                    : findCinema.CinemaCity;
 
                 findCinema.ActiveAt = request.ActiveAt ?? findCinema.ActiveAt;
 

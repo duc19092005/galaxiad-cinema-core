@@ -4,6 +4,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260317175520_FixOrphanedCustomersRoles")]
+    partial class FixOrphanedCustomersRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -126,7 +129,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7115)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1677)
                         },
                         new
                         {
@@ -138,7 +141,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7118)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1681)
                         },
                         new
                         {
@@ -150,7 +153,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7121)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1683)
                         });
                 });
 
@@ -304,7 +307,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7071)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1626)
                         },
                         new
                         {
@@ -320,7 +323,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7075)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1633)
                         },
                         new
                         {
@@ -336,7 +339,7 @@ namespace DataAccess.Migrations
                             FacilitiesManagerId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(7078)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1636)
                         });
                 });
 
@@ -346,9 +349,6 @@ namespace DataAccess.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("MovieFormatId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("UserSegmentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("ActiveAt")
@@ -381,723 +381,23 @@ namespace DataAccess.Migrations
                     b.Property<Guid?>("UpdatedByUserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.HasKey("CinemaId", "MovieFormatId", "UserSegmentId");
+                    b.Property<Guid>("UserSegmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CinemaId", "MovieFormatId");
 
                     b.HasIndex("CreatedByUserId");
 
                     b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("MovieFormatId");
-
                     b.HasIndex("UpdatedByUserId");
 
                     b.HasIndex("UserSegmentId");
 
-                    b.ToTable("CinemaSurchargeInfosEntity");
+                    b.HasIndex("MovieFormatId", "UserSegmentId")
+                        .IsUnique();
 
-                    b.HasData(
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = 0m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -15.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("9f8e7d6c-5b4a-4e3d-2c1b-0a9f8e7d6c5b"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -20.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("3d4e5f6a-7b8c-4d9e-0f1a-2b3c4d5e6f7a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -10.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("5c6d7e8f-9a0b-4c1d-2e3f-4a5b6c7d8e9f"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -5.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
-                            UserSegmentId = new Guid("d1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f5a"),
-                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            IsActive = true,
-                            IsDeleted = false,
-                            SurchangePercent = -25.00m,
-                            UpdatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
+                    b.ToTable("CinemaSurchargeInfosEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", b =>
@@ -1134,7 +434,7 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000001",
+                            SeatId = "173db5de-cbef-40aa-a46f-1d7d3e5344e1",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1144,7 +444,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000002",
+                            SeatId = "64a9ede3-944d-49f2-b15a-9921f168b228",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1154,7 +454,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000003",
+                            SeatId = "aecbabf4-6d36-4b6c-b4de-9f6f1756f38b",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1164,7 +464,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000004",
+                            SeatId = "18deb7b4-8a0d-4336-b4e0-d4b60d3ec5dd",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1174,7 +474,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000005",
+                            SeatId = "dcacbe81-cb2e-42b0-9002-930afa1b6734",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1184,7 +484,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000006",
+                            SeatId = "38cdafc5-089b-4aa4-a7e5-a74f496e50ee",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1194,7 +494,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000007",
+                            SeatId = "7712a8fb-f6dd-41ed-b6e5-74d6d45ba30f",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1204,7 +504,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000000000008",
+                            SeatId = "074602e9-e76c-4c45-a5ff-ff1f743e2f95",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1214,7 +514,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000001",
+                            SeatId = "28a5ab82-bbe6-4dde-91d3-9c7f25d7acc4",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1224,7 +524,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000002",
+                            SeatId = "6f2402d2-542d-4908-930d-2073f452a00a",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1234,7 +534,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000003",
+                            SeatId = "8a09fc94-2b91-42fc-a478-9af9a911f137",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1244,7 +544,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000004",
+                            SeatId = "55f7444d-8f15-481b-8943-3e7bd0b83b5c",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1254,7 +554,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000005",
+                            SeatId = "751670d7-46d0-46e4-ac95-17f479c102fe",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1264,7 +564,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000006",
+                            SeatId = "bfaa0d66-3a0a-4155-bcf1-0f9d4d917bb4",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1274,7 +574,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000007",
+                            SeatId = "af45556e-b6ea-44ba-a58a-8bdd2ae1834a",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1284,7 +584,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000100000008",
+                            SeatId = "db150e78-a375-4d0a-ac2c-71baeab7b4a6",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1294,7 +594,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000001",
+                            SeatId = "2af27e13-4cc4-4214-b19c-e6b952874641",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1304,7 +604,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000002",
+                            SeatId = "fcc3d087-c0e5-4e61-ab1f-8a8c5c7e03fe",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1314,7 +614,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000003",
+                            SeatId = "8561f473-00b9-4fba-98fd-6565a4aca112",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1324,7 +624,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000004",
+                            SeatId = "c1d6dfd4-51cd-4012-ac01-c9ba8b5508e4",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1334,7 +634,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000005",
+                            SeatId = "92c9a654-17cb-4d6b-ab77-3a359aa2b144",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1344,7 +644,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000006",
+                            SeatId = "22079b78-ee83-45d4-93f2-556b2d6346ca",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1354,7 +654,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000007",
+                            SeatId = "4cddaa84-1f3d-48ee-b0f5-175828d05088",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1364,7 +664,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000200000008",
+                            SeatId = "82b6b235-c9a0-4904-86f0-2f887a07f729",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1374,7 +674,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000001",
+                            SeatId = "14b05914-4ac5-400b-8c11-346033238016",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1384,7 +684,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000002",
+                            SeatId = "23b941cb-d882-4c19-9d71-a16af5f997e1",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1394,7 +694,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000003",
+                            SeatId = "b2e7ec8b-b69b-4d38-8dc7-22acb1cf7c6c",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1404,7 +704,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000004",
+                            SeatId = "869bc8ad-7518-47ae-bfc3-13d4eeac2277",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1414,7 +714,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000005",
+                            SeatId = "5c20796f-67a5-4c4a-8ee5-3ff33011d001",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1424,7 +724,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000006",
+                            SeatId = "da16ca3d-01fc-4aeb-858a-8aedebf360b9",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1434,7 +734,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000007",
+                            SeatId = "e0e8d2b4-7d7e-40b4-94ae-c91d46e33a19",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1444,7 +744,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "33333333-3333-3333-3333-000300000008",
+                            SeatId = "575ab31a-1570-4fa0-90a8-bb116bc3f084",
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1454,7 +754,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000001",
+                            SeatId = "e8b27282-eeb6-444f-b510-884df6c965f2",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1464,7 +764,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000002",
+                            SeatId = "6583c2ef-2480-496a-b142-833e2ef45036",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1474,7 +774,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000003",
+                            SeatId = "c2bfe787-c1b6-475e-8fd1-b06567a43015",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1484,7 +784,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000004",
+                            SeatId = "7719c56e-a68f-4a8a-b102-4192e8d5a8a4",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1494,7 +794,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000005",
+                            SeatId = "0d532393-3485-4515-89c5-102eee8c6c8a",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1504,7 +804,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000006",
+                            SeatId = "18ab32bf-7412-40bb-8146-ad4c1526ac56",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1514,7 +814,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000007",
+                            SeatId = "f67f1b3b-23ae-48c6-9b97-f9bb82d6dfc9",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1524,7 +824,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000000000008",
+                            SeatId = "cd781ad1-8606-40a9-8147-e574117695a8",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1534,7 +834,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000001",
+                            SeatId = "5cc4a51a-09d7-4fd4-8ed5-ea7c6091ad66",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1544,7 +844,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000002",
+                            SeatId = "208494da-c6a0-4d70-87f3-5ff8f11189cb",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1554,7 +854,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000003",
+                            SeatId = "678336a0-041b-4534-b315-b053348864e7",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1564,7 +864,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000004",
+                            SeatId = "c719ef7e-85c0-4d6e-bd39-ba696a2be2d1",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1574,7 +874,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000005",
+                            SeatId = "ab671234-12a5-4925-82c5-cb6088e7962a",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1584,7 +884,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000006",
+                            SeatId = "207524e2-ac1a-45a6-99c5-ce62491c7a63",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1594,7 +894,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000007",
+                            SeatId = "b9f7e9b0-5bef-46f4-a7a0-212bb942f6c9",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1604,7 +904,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000100000008",
+                            SeatId = "6aec3b6a-1297-4b4a-9357-68cc2253371e",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1614,7 +914,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000001",
+                            SeatId = "67417068-26a7-480d-b6df-49603db14b55",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1624,7 +924,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000002",
+                            SeatId = "7e6f7ce0-2b11-4ade-8d47-2798384d79c5",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1634,7 +934,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000003",
+                            SeatId = "6c175e3c-4a13-47f3-9b55-62c973774df8",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1644,7 +944,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000004",
+                            SeatId = "30923d27-2f7a-4478-93ef-be5f40a4647a",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1654,7 +954,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000005",
+                            SeatId = "5f075e7d-06a5-43c2-9673-81c71ed4667d",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1664,7 +964,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000006",
+                            SeatId = "afc43066-44da-4305-bd52-d813a759079f",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1674,7 +974,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000007",
+                            SeatId = "0c2949d6-1c1a-48a2-91d5-d578cda88ea5",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1684,7 +984,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000200000008",
+                            SeatId = "fd5bebef-0a58-4487-9779-8be3b8d59696",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1694,7 +994,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000001",
+                            SeatId = "d4940178-7c4c-46cb-9e93-fdabc7112539",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1704,7 +1004,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000002",
+                            SeatId = "3785e887-fd2a-4207-af51-23461bcafacf",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1714,7 +1014,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000003",
+                            SeatId = "7e16f6c2-1ebd-4910-8bde-66f941d96423",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1724,7 +1024,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000004",
+                            SeatId = "80bd10f8-f8d4-4f87-8dc9-f48cb54eb5e2",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1734,7 +1034,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000005",
+                            SeatId = "646c2c16-4a26-4e6c-b442-a6141b00a0b0",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1744,7 +1044,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000006",
+                            SeatId = "49d77488-adcd-4f63-a1d1-1e6381db9545",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1754,7 +1054,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000007",
+                            SeatId = "b72d696f-5aa2-4815-aa8d-3ef1545f014e",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1764,7 +1064,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "44444444-4444-4444-4444-000300000008",
+                            SeatId = "05527976-186b-4784-afb2-d2c412d86e0b",
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1774,7 +1074,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000001",
+                            SeatId = "467efeab-70f5-49a6-a8ed-728a36e3915d",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1784,7 +1084,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000002",
+                            SeatId = "c50c5e1b-07c0-460a-b813-33910fc4c4b6",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1794,7 +1094,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000003",
+                            SeatId = "0c0c9392-a58a-42bc-bad2-993a03e44a21",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1804,7 +1104,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000004",
+                            SeatId = "3cdc33dd-c989-474b-9cfa-301cbe7d21bc",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1814,7 +1114,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000005",
+                            SeatId = "077a4bef-210c-4d97-ae67-baa00975f1a1",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1824,7 +1124,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000006",
+                            SeatId = "d9d138f7-0f5b-4fcf-926a-6ceb0f62b4a8",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1834,7 +1134,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000007",
+                            SeatId = "01fa0a85-a9bf-43c1-8870-41ce702d6c3f",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1844,7 +1144,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000000000008",
+                            SeatId = "564d592b-a500-4c2b-a4b9-5cdd18a9cf94",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1854,7 +1154,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000001",
+                            SeatId = "b4c01315-6d25-4ad5-8d06-e958e3582b98",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1864,7 +1164,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000002",
+                            SeatId = "1f501102-4c1c-43f9-a0db-64683f2500f8",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1874,7 +1174,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000003",
+                            SeatId = "a755bbfe-2167-42ad-ac4a-070e4176932f",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1884,7 +1184,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000004",
+                            SeatId = "19713b74-64ca-406f-beff-8f7bb29e48bd",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1894,7 +1194,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000005",
+                            SeatId = "d2cd885f-9181-4fa8-9901-c194237a59ca",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1904,7 +1204,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000006",
+                            SeatId = "ed4c1112-b9b0-4a67-8be0-b309a6888fdf",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1914,7 +1214,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000007",
+                            SeatId = "11c7f67c-a204-48b9-ab63-8625271ca102",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -1924,7 +1224,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000100000008",
+                            SeatId = "f138941a-9a0e-4cbe-84b2-a23a818af851",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -1934,7 +1234,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000001",
+                            SeatId = "fd673d52-7984-4046-b0de-bb89c46c353c",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -1944,7 +1244,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000002",
+                            SeatId = "a386837f-846e-41a5-8f5f-ec598102bd5a",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -1954,7 +1254,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000003",
+                            SeatId = "264ed062-62fb-43cc-86f4-8ada5534f852",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -1964,7 +1264,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000004",
+                            SeatId = "cc14a14b-4827-4d09-ae93-ac61b1897a53",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -1974,7 +1274,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000005",
+                            SeatId = "57e36b1b-6d47-445f-b879-c17b32f39310",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -1984,7 +1284,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000006",
+                            SeatId = "1c5572a6-4295-42bb-93b0-0c0d3e90c100",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -1994,7 +1294,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000007",
+                            SeatId = "26d253d5-7369-449c-94ff-582ba3e1662a",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -2004,7 +1304,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000200000008",
+                            SeatId = "fcf21d8f-c4fa-41bc-92f1-788a5ceda60b",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -2014,7 +1314,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000001",
+                            SeatId = "3c0347e9-0be5-4fcc-adea-8d44fd8567ac",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 0,
                             CoordX = 0.0,
@@ -2024,7 +1324,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000002",
+                            SeatId = "727b3583-965a-4238-be51-9f5f5f757f18",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 1,
                             CoordX = 60.0,
@@ -2034,7 +1334,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000003",
+                            SeatId = "833a2856-24ab-4582-b4da-85c2eeb3418a",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 2,
                             CoordX = 120.0,
@@ -2044,7 +1344,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000004",
+                            SeatId = "973bcde6-849c-4043-88b5-9a471eae1906",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 3,
                             CoordX = 180.0,
@@ -2054,7 +1354,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000005",
+                            SeatId = "e8a02fb5-966f-470e-9b5c-3e07b3f6be66",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 4,
                             CoordX = 240.0,
@@ -2064,7 +1364,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000006",
+                            SeatId = "ba77788b-8a5d-4922-8160-eae20b9806a6",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 5,
                             CoordX = 300.0,
@@ -2074,7 +1374,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000007",
+                            SeatId = "b8095595-2cec-41b2-99a2-8f1ee9e6a6f8",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 6,
                             CoordX = 360.0,
@@ -2084,7 +1384,7 @@ namespace DataAccess.Migrations
                         },
                         new
                         {
-                            SeatId = "55555555-5555-5555-5555-000300000008",
+                            SeatId = "244168d6-b87c-4c57-913a-649fde3754ea",
                             AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
                             ColIndex = 7,
                             CoordX = 420.0,
@@ -2473,12 +1773,12 @@ namespace DataAccess.Migrations
                         new
                         {
                             MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            ActiveAt = new DateTime(2026, 3, 13, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ActiveAt = new DateTime(2026, 3, 13, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             Actors = "Robert Pattinson, Zoë Kravitz, Paul Dano",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
                             Director = "Matt Reeves",
-                            EndedDate = new DateTime(2026, 4, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndedDate = new DateTime(2026, 4, 12, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,
@@ -2489,17 +1789,17 @@ namespace DataAccess.Migrations
                             MovieName = "The Batman",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=mqqft239u6Q",
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8158)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2403)
                         },
                         new
                         {
                             MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            ActiveAt = new DateTime(2026, 3, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ActiveAt = new DateTime(2026, 3, 17, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             Actors = "Cillian Murphy, Emily Blunt, Matt Damon",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             Director = "Christopher Nolan",
-                            EndedDate = new DateTime(2026, 4, 17, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndedDate = new DateTime(2026, 4, 17, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,
@@ -2510,17 +1810,17 @@ namespace DataAccess.Migrations
                             MovieName = "Oppenheimer",
                             MovieRequiredAgeId = new Guid("9f0e1d2c-3b4a-4d5e-6f7a-8b9c0d1e2f3a"),
                             TrailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8183)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2416)
                         },
                         new
                         {
                             MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
-                            ActiveAt = new DateTime(2026, 3, 28, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            ActiveAt = new DateTime(2026, 3, 28, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             Actors = "Sam Worthington, Zoe Saldana, Sigourney Weaver",
                             CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
                             Director = "James Cameron",
-                            EndedDate = new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndedDate = new DateTime(2026, 4, 27, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(1570),
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,
@@ -2531,7 +1831,7 @@ namespace DataAccess.Migrations
                             MovieName = "Avatar: The Way of Water",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=d9MyW72ELq0",
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8187)
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2421)
                         });
                 });
 
@@ -2604,33 +1904,33 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            MovieScheduleInfoId = new Guid("eb69c94e-936e-4fc9-acb4-a68720ec1fac"),
-                            ActiveAt = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
+                            MovieScheduleInfoId = new Guid("24451f1a-e807-4317-93d5-0ed02532ec6d"),
+                            ActiveAt = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Local),
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8275),
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2498),
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                            EndedTime = new DateTime(2026, 3, 19, 21, 56, 0, 0, DateTimeKind.Unspecified),
+                            EndedTime = new DateTime(2026, 3, 19, 21, 56, 0, 0, DateTimeKind.Local),
                             IsActive = true,
                             IsDeleted = false,
                             MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
                             MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            StartTime = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8276)
+                            StartTime = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2499)
                         },
                         new
                         {
-                            MovieScheduleInfoId = new Guid("b9d5eb84-478a-4dfe-a914-24fe302f7477"),
-                            ActiveAt = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
+                            MovieScheduleInfoId = new Guid("9ab6a86c-246c-43e6-bde4-214e30205f96"),
+                            ActiveAt = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Local),
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8310),
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2507),
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            EndedTime = new DateTime(2026, 3, 19, 23, 0, 0, 0, DateTimeKind.Unspecified),
+                            EndedTime = new DateTime(2026, 3, 19, 23, 0, 0, 0, DateTimeKind.Local),
                             IsActive = true,
                             IsDeleted = false,
                             MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
                             MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            StartTime = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 3, 18, 1, 43, 55, 759, DateTimeKind.Local).AddTicks(8311)
+                            StartTime = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 55, 19, 482, DateTimeKind.Local).AddTicks(2508)
                         });
                 });
 

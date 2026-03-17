@@ -13,7 +13,8 @@ public static class StatusManagementRelationships
             entity.HasOne(c => c.Creator).WithMany(u => u.CreatedCinemas).HasForeignKey(c => c.CreatedByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(c => c.Updater).WithMany(u => u.UpdatedCinemas).HasForeignKey(c => c.UpdatedByUserId).OnDelete(DeleteBehavior.Restrict);
             entity.HasOne(c => c.Deleter).WithMany(u => u.DeletedCinemas).HasForeignKey(c => c.DeletedByUserId).OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(c => c.manager).WithMany(u => u.ManagedCinemas).HasForeignKey(c => c.ManagerId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.TheaterManager).WithMany(u => u.TheaterManagedCinemas).HasForeignKey(c => c.TheaterManagerId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(c => c.FacilitiesManager).WithMany(u => u.FacilitiesManagedCinemas).HasForeignKey(c => c.FacilitiesManagerId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<AuditoriumInfoEntities>(entity => {
@@ -45,7 +46,7 @@ public static class StatusManagementRelationships
             entity.HasOne(m => m.Deleter).WithMany(u => u.DeletedMovieInfos)
                 .HasForeignKey(m => m.DeletedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne(x => x.Manager).WithMany(u => u.ManagedMovieInfos)
+            entity.HasOne(x => x.MovieManager).WithMany(u => u.ManagedMovieInfos).HasForeignKey(m => m.MovieManagerId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

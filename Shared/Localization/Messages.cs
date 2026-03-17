@@ -43,7 +43,7 @@ public static class Messages
         public const string GetInfoSuccess = "Get user information successfully";
 
         // Errors
-        public const string UserNotFound = "User Not Found";
+        public const string UserNotFound = "User Not Found or you're account is banned from the system";
         public const string WrongCredentials = "Username or password is wrong";
         public const string RoleNotFound = "User Role Not Found";
         public const string Unauthorized = "Unauthorize";

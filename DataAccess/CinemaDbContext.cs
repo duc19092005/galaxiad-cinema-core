@@ -185,6 +185,9 @@ public class CinemaDbContext : DbContext
 
         // Seeds Cinema, Auditorium, Seats, Movie, Schedule (For Booking Flow)
         CinemaAndMovieSeedData.AddSeedData(modelBuilder);
+        
+        // Seeds Cinema Surcharges for User Segments
+        CinemaSurchargeSeedData.AddCinemaSurchargeSeedData(modelBuilder);
     }
 }
 

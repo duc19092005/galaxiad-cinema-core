@@ -62,20 +62,25 @@ public class TheaterManagerDataController : ControllerBase
     /// Lấy danh sách các phòng chiếu mà Rạp của TheaterManager hiện tại đang chứa
     /// </summary>
     [HttpGet("my-auditoriums")]
-    public async Task<IActionResult> GetMyAuditoriums()
+    public async Task<IActionResult> GetMyAuditoriums([FromQuery] Guid? cinemaId)
     {
         var userId = _userContextService.GetUserId();
 
-        var cinema = await _dbContext.CinemaInfoEntity
-            .AsNoTracking()
-            .FirstOrDefaultAsync(c => c.ManagerId == userId);
+        var query = _dbContext.CinemaInfoEntity.AsNoTracking().Where(c => c.TheaterManagerId == userId);
+        
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(c => c.CinemaId == cinemaId.Value);
+        }
+
+        var cinema = await query.FirstOrDefaultAsync();
 
         if (cinema == null)
         {
             return BadRequest(new BaseResponse<object>
             {
                 IsSuccess = false,
-                Message = "Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào."
+                Message = cinemaId.HasValue ? "Rạp phim theo Id không tìm thấy hoặc bạn không có quyền quản lý." : "Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào."
             });
         }
 
@@ -86,7 +91,12 @@ public class TheaterManagerDataController : ControllerBase
             {
                 a.AuditoriumId,
                 a.AuditoriumNumber,
-                TotalSeats = a.SeatsInfoEntity.Count
+                TotalSeats = a.SeatsInfoEntity.Count,
+                Formats = a.AuditoriumFormatInfosList.Select(af => new
+                {
+                    FormatId = af.FormatId,
+                    FormatName = af.MovieFormatInfoEntity.MovieFormatName
+                }).ToList()
             })
             .ToListAsync();
 

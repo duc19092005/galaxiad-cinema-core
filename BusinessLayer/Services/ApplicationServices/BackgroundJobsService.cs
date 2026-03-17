@@ -55,8 +55,11 @@ public class ScheduleJobsService : IScheduleJobsService
         }
         else if (type == SchedulesJobCategoryEnums.Schedules)
         {
+            if (localStart > toleranceTime)
+                sId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleActiveStatus(targetId), localStart);
+
             if (localEnd > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleStatus(targetId), localEnd);
+                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleInactiveStatus(targetId), localEnd);
         }
         return (sId, eId);
     }
@@ -170,41 +173,96 @@ public class ScheduleJobsService : IScheduleJobsService
     public async Task SyncSeededJobs()
     {
         var now = DateTime.Now;
+        _logger.LogInformation("SyncSeededJobs: Starting full sync at {Now}", now);
 
-        // 1. HARD RESET: Clear the entire logger table AND Hangfire pending jobs
-        // This stops "ghost" jobs from running after the logs are gone.
+        // 1. HARD RESET: Clear BackGroundJobLoggerEntity
         var allLogs = await _cinemaDbContext.BackGroundJobLoggerEntity.ToListAsync();
         if (allLogs.Any())
         {
             foreach (var log in allLogs)
             {
-                if (!log.JobId.StartsWith("SKIPPED_"))
+                try
                 {
-                    _backgroundJobClient.Delete(log.JobId);
+                    if (!log.JobId.StartsWith("SKIPPED_"))
+                        _backgroundJobClient.Delete(log.JobId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not delete Hangfire job {JobId}", log.JobId);
                 }
             }
             _cinemaDbContext.BackGroundJobLoggerEntity.RemoveRange(allLogs);
             await _cinemaDbContext.SaveChangesAsync();
         }
 
-        // 2. Process Movies: Only sync movies that haven't ended yet
+        // 2. Clear Hangfire internal tables (same DB)
+        try
+        {
+            await _cinemaDbContext.Database.ExecuteSqlRawAsync(@"
+                DELETE FROM [HangFire].[State];
+                DELETE FROM [HangFire].[JobParameter];
+                DELETE FROM [HangFire].[JobQueue];
+                DELETE FROM [HangFire].[Job];
+                DELETE FROM [HangFire].[Counter];
+                DELETE FROM [HangFire].[AggregatedCounter];
+                DELETE FROM [HangFire].[Set];
+                DELETE FROM [HangFire].[Hash];
+                DELETE FROM [HangFire].[List];
+            ");
+            _logger.LogInformation("SyncSeededJobs: Cleared all Hangfire internal tables");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "SyncSeededJobs: Could not clear Hangfire tables (may not exist yet on first run)");
+        }
+
+        // 3. Process Movies: Sync movies and set correct current status
         var movies = await _cinemaDbContext.MovieInfoEntity
-            .Where(m => m.EndedDate > now)
+            .Where(m => m.EndedDate > now && !m.IsDeleted)
             .ToListAsync();
 
         foreach (var movie in movies)
         {
+            // If the movie has already "started" (now is between ActiveAt and EndedDate), 
+            // set it active immediately so it shows up in "Now Showing".
+            if (movie.ActiveAt <= now)
+            {
+                movie.IsActive = true;
+                movie.IsCommingSoon = false;
+            }
+            else
+            {
+                movie.IsActive = false;
+                movie.IsCommingSoon = true;
+            }
+            _cinemaDbContext.MovieInfoEntity.Update(movie);
+            
             await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
         }
+        await _cinemaDbContext.SaveChangesAsync();
+        _logger.LogInformation("SyncSeededJobs: Synced and updated status for {Count} movie jobs", movies.Count);
 
-        // 3. Process Schedules: Only sync showtimes that haven't ended yet
+        // 4. Process Schedules: Sync and set correct current status
         var schedules = await _cinemaDbContext.MovieScheduleInfoEntity
-            .Where(s => s.EndedTime > now)
+            .Where(s => s.EndedTime > now && !s.IsDeleted)
             .ToListAsync();
 
         foreach (var schedule in schedules)
         {
+             // If the showtime has already "started", set it active immediately.
+            if (schedule.StartTime <= now)
+            {
+                schedule.IsActive = true;
+            }
+            else
+            {
+                schedule.IsActive = false; // Only becomes active when start job runs
+            }
+            _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
+
             await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
         }
+        await _cinemaDbContext.SaveChangesAsync();
+        _logger.LogInformation("SyncSeededJobs: Synced and updated status for {Count} schedule jobs", schedules.Count);
     }
 }

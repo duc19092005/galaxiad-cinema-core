@@ -35,7 +35,8 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
 
-        if (validAuditorium.CinemaInfoEntity.ManagerId != getCurrentUserId)
+        if (validAuditorium.CinemaInfoEntity.TheaterManagerId != getCurrentUserId && 
+            validAuditorium.CinemaInfoEntity.FacilitiesManagerId != getCurrentUserId)
         {
             throw new BadRequestException("Bạn không có quyền xem thông tin của rạp này.", "E01");
         }

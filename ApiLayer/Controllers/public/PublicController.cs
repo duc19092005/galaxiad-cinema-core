@@ -137,9 +137,9 @@ public class PublicController : ControllerBase
                      && x.ActiveAt < endDate)
             .GroupBy(x => new
             {
-                x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaName,
-                x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaLocation,
-                x.MovieFormatInfoEntity.MovieFormatName
+                CinemaName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CinemaInfoEntity != null ? x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaName : "" : "",
+                CinemaLocation = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CinemaInfoEntity != null ? x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaLocation : "" : "",
+                MovieFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : ""
             })
             .Select(g => new GetScheduleDetailsRes()
             {
