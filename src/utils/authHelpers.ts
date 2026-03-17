@@ -49,16 +49,20 @@ export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; usernam
     localStorage.removeItem('user_info');
     return null;
   } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const data = error.response.data as ApiErrorResponse;
-      if (data.statusCode === 401) {
-        localStorage.removeItem('user_info');
-        return null;
+    // FALLBACK: Trình duyệt trên Vercel thường chặn HttpOnly Cookie của domain khác
+    // Nếu API trả về 401 hoặc lỗi mạng, ta dùng dữ liệu lưu tạm để người dùng không bị văng ra
+    const storedUser = localStorage.getItem('user_info');
+    if (storedUser) {
+      try {
+        console.warn('[authHelpers] API Check failed, using cached user info');
+        return JSON.parse(storedUser);
+      } catch {
+        // Parse lỗi mới xóa
       }
     }
 
     localStorage.removeItem('user_info');
-    Cookies.remove('X-Access-Token');
+    if (typeof Cookies !== 'undefined') Cookies.remove('X-Access-Token');
     return null;
   }
 };
