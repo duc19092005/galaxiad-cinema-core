@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import TrashCan from './components/TrashCan';
 import { scheduleApi } from '../../api/scheduleApi';
 
+import { useCinema } from '../../contexts/CinemaContext';
+
 interface ScheduleManagerPageProps {
     embedded?: boolean;
 }
@@ -16,6 +18,7 @@ const colorPalette = ['#e11d48', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0
 
 const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = false }) => {
     const { t } = useTranslation();
+    const { activeCinemaId } = useCinema();
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
     const [draggingMovie, setDraggingMovie] = useState<ScheduleMovie | null>(null);
     const [selectedAuditoriumId, setSelectedAuditoriumId] = useState<string>('');
@@ -30,13 +33,13 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
 
     useEffect(() => {
         fetchInitialData();
-    }, []);
+    }, [activeCinemaId]);
 
     useEffect(() => {
         if (selectedAuditoriumId && auditoriumsList.length > 0) {
             fetchSchedulesForAuditorium(selectedAuditoriumId);
         }
-    }, [selectedAuditoriumId]);
+    }, [selectedAuditoriumId, auditoriumsList]);
 
     const fetchSchedulesForAuditorium = async (audId: string) => {
         try {
@@ -67,7 +70,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
         try {
             const [moviesRes, audsRes] = await Promise.all([
                 scheduleApi.getMoviesWithFormats(),
-                scheduleApi.getMyAuditoriums()
+                scheduleApi.getMyAuditoriums(activeCinemaId || undefined)
             ]);
 
             // Group movies by movieId
@@ -97,11 +100,14 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
             const mappedMovies = Array.from(moviesMap.values());
 
             const mappedAuds: ScheduleAuditorium[] = (audsRes.data?.auditoriums || []).map((a: any) => {
-                // Robust mapping of supported formats (look for multiple property names)
-                const formatsFromApi = a.formatInfos || a.movieFormatInfos || a.formats || [];
+                // ASP.NET returns lowercase property names: formats, formatId, formatName
+                const formatsFromApi = a.formats || a.formatInfos || [];
                 const supportedFormats = (Array.isArray(formatsFromApi) ? formatsFromApi : [])
-                    .map((f: any) => f.formatId || f.formatName || f.id || f)
-                    .filter(Boolean);
+                    .map((f: any) => ({
+                        id: f.formatId || f.id || '',
+                        name: f.formatName || f.name || ''
+                    }))
+                    .filter((f: any) => f.id);
 
                 return {
                     id: a.auditoriumId,
@@ -275,9 +281,14 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                             value={selectedAuditoriumId}
                             onChange={(e) => setSelectedAuditoriumId(e.target.value)}
                         >
-                            {auditoriumsList.map(aud => (
-                                <option key={aud.id} value={aud.id} className="text-slate-900 bg-white dark:text-white/90  dark:bg-slate-700">Auditorium {aud.name}</option>
-                            ))}
+                            {auditoriumsList.map(aud => {
+                                const formatNames = aud.supportedFormats.map(f => f.name).filter(Boolean).join(', ');
+                                return (
+                                    <option key={aud.id} value={aud.id} className="text-slate-900 bg-white dark:text-white/90  dark:bg-slate-700">
+                                        Auditorium {aud.name}{formatNames ? ` (${formatNames})` : ''}
+                                    </option>
+                                );
+                            })}
                         </select>
                     </div>
 

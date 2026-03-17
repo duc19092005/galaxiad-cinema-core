@@ -11,12 +11,15 @@ import {
   Moon,
   Sparkles,
   ArrowLeftRight,
+  Loader2
 } from 'lucide-react';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useCinema } from '../../contexts/CinemaContext';
+import CinemaSelector from '../../components/CinemaSelector';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import CinemaManagement from './components/CinemaManagement';
@@ -30,6 +33,7 @@ const FacilitiesManagerPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { theme, setTheme } = useTheme();
+  const { managedCinemas, activeCinemaId, loading: cinemaContextLoading } = useCinema();
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
@@ -160,6 +164,38 @@ const FacilitiesManagerPage: React.FC = () => {
 
   // Render content based on active tab
   const renderContent = () => {
+    if (cinemaContextLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
+                <Loader2 className="w-8 h-8 animate-spin text-red-600 mb-4" />
+                <p className="text-sm font-bold opacity-40 uppercase tracking-widest">Loading Cinema Context...</p>
+            </div>
+        );
+    }
+
+    if (managedCinemas.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
+                <div className="p-4 bg-red-600/10 rounded-full mb-6 border border-red-600/20 shadow-2xl shadow-red-600/10">
+                    <AlertCircle className="w-12 h-12 text-red-500" />
+                </div>
+                <h2 className="text-xl font-black mb-2 uppercase tracking-tight">Access Restricted</h2>
+                <p className={`max-w-md mx-auto text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`}>
+                    Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào. Vui lòng liên hệ Admin
+                </p>
+            </div>
+        );
+    }
+
+    if (!activeCinemaId) {
+        return (
+            <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
+                <Loader2 className="w-8 h-8 animate-spin text-red-600 mb-4" />
+                <p className="text-sm font-bold opacity-40 uppercase tracking-widest">Initializing Cinema Selection...</p>
+            </div>
+        );
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard cinemas={cinemas} loading={loading} />;
@@ -220,6 +256,7 @@ const FacilitiesManagerPage: React.FC = () => {
 
         {/* Theme Selector & User Menu */}
         <div className="flex items-center gap-3">
+          <CinemaSelector />
           <LanguageSwitcher />
           {/* Theme Dropdown */}
           <div className="relative" ref={themeDropdownRef}>

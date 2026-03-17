@@ -170,5 +170,40 @@
     "No movies found": "No movies found",
     "No movies yet": "No movies yet",
     "Movie Manager": "Movie Manager",
-    "Modern View" : "Modern View (Test)"
+    "Modern View" : "Modern View (Test)",
+    "account": {
+        "myAccount": "My Account",
+        "profileInfo": "Profile Info",
+        "bookingHistory": "Booking History",
+        "email": "Email Address",
+        "phone": "Phone Number",
+        "identityCode": "Identity Code",
+        "dob": "Date of Birth",
+        "changePassword": "Change Password",
+        "updateSuccess": "Profile updated successfully!",
+        "updateFailed": "Profile update failed",
+        "failedToLoad": "Failed to load user data",
+        "noBookings": "You haven't booked any movies yet.",
+        "dobFormatNote": "(Day / Month / Year)"
+    },
+    "common": {
+        "edit": "Edit",
+        "save": "Save",
+        "cancel": "Cancel",
+        "viewDetails": "View Details",
+        "goHome": "Go Home"
+    },
+    "validation": {
+        "phoneLength": "Phone number must be exactly 10 digits.",
+        "idLength": "Identity code must be exactly 12 digits.",
+        "nameSpecialChar": "Name cannot contain special characters.",
+        "dobRequired": "Date of birth is required.",
+        "ageLimit": "Age must be between 16 and 80."
+    },
+    "booking": {
+        "bookingDate": "Booking Date",
+        "showtime": "Showtime",
+        "seats": "Seats",
+        "amount": "Amount Paid"
+    }
 }

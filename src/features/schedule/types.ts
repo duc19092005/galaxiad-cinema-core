@@ -14,7 +14,7 @@ export interface Movie {
 export interface Auditorium {
   id: string;
   name: string;
-  supportedFormats: string[]; // Still IDs for matching
+  supportedFormats: FormatInfo[]; // Format objects with id and name
 }
 
 export interface ShowTimeSlot {

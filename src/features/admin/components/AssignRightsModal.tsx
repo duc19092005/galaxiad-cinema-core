@@ -1,76 +1,83 @@
-// src/components/CinemaAssignModal.tsx
 import React, { useEffect, useState } from 'react';
-import { X, MapPin, Loader2, AlertCircle, Check, Search } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
-import { adminApi } from '../api/adminApi';
-import { facilitiesApi } from '../api/facilitiesApi';
-import type { Cinema } from '../types/facilities.types';
+import { X, UserPlus, Loader2, AlertCircle, Check, Search, User } from 'lucide-react';
+import { useTheme } from '../../../contexts/ThemeContext';
+import { transferRightsApi } from '../../../api/transferRightsApi';
+import type { ManagerDto } from '../../../types/admin.types';
 import toast from 'react-hot-toast';
 
-interface CinemaAssignModalProps {
+interface AssignRightsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    userId: string;
-    currentUserEmail: string;
+    itemId: string;
+    itemName: string;
+    type: number; // 1: Facilities, 2: Theater, 3: Movie
     onSuccess: () => void;
 }
 
-const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
+const AssignRightsModal: React.FC<AssignRightsModalProps> = ({
     isOpen,
     onClose,
-    userId,
-    currentUserEmail,
+    itemId,
+    itemName,
+    type,
     onSuccess,
 }) => {
     const { theme } = useTheme();
-    const [cinemas, setCinemas] = useState<Cinema[]>([]);
+    const [managers, setManagers] = useState<ManagerDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [assigning, setAssigning] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [selectedCinemaId, setSelectedCinemaId] = useState<string>('');
+    const [selectedManagerId, setSelectedManagerId] = useState<string>('');
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         if (isOpen) {
-            fetchCinemas();
+            fetchManagers();
         }
-    }, [isOpen]);
+    }, [isOpen, type]);
 
-    const fetchCinemas = async () => {
+    const fetchManagers = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await facilitiesApi.getCinemaList();
-            setCinemas(res.data || []);
+            const res = await transferRightsApi.getManagers(type);
+            setManagers(res.data || []);
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load cinemas');
+            setError(err.response?.data?.message || 'Failed to load managers');
         } finally {
             setLoading(false);
         }
     };
 
     const handleAssign = async () => {
-        if (!selectedCinemaId) {
-            toast.error('Please select a cinema');
+        if (!selectedManagerId) {
+            toast.error('Please select a manager');
             return;
         }
         setAssigning(true);
         try {
-            await adminApi.assignTheaterManager(selectedCinemaId, userId);
-            toast.success('Theater manager assigned successfully');
+            await transferRightsApi.executeTransfer({
+                transferType: type,
+                sourceUserId: null, // As requested, null for individual assignment
+                targetUserId: selectedManagerId,
+                itemId: itemId
+            });
+            toast.success('Management rights assigned successfully');
             onSuccess();
             onClose();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to assign theater manager');
+            toast.error(err.response?.data?.message || 'Failed to assign management rights');
         } finally {
             setAssigning(false);
         }
     };
 
-    const filteredCinemas = cinemas.filter(c =>
-        c.cinemaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        c.cinemaLocation.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredManagers = managers.filter(m =>
+        m.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const typeLabel = type === 1 ? 'Cinema' : type === 2 ? 'Theater' : 'Movie';
 
     if (!isOpen) return null;
 
@@ -84,7 +91,7 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
 
             {/* Modal */}
             <div
-                className={`relative w-full max-w-lg rounded-xl border shadow-2xl transition-all ${theme === 'dark'
+                className={`relative w-full max-w-lg rounded-xl border shadow-2xl transition-all flex flex-col max-h-[90vh] ${theme === 'dark'
                     ? 'bg-gray-900 border-gray-800'
                     : theme === 'modern'
                         ? 'bg-[#15102B]/95 backdrop-blur-2xl border-indigo-500/30'
@@ -96,18 +103,18 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                     }`}>
                     <div className="flex items-center gap-3">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${theme === 'modern'
-                            ? 'bg-gradient-to-br from-pink-500 to-rose-600'
-                            : 'bg-pink-600'
+                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600'
+                            : 'bg-indigo-600'
                             }`}>
-                            <MapPin className="w-6 h-6 text-white" />
+                            <UserPlus className="w-6 h-6 text-white" />
                         </div>
                         <div>
                             <h2 className={`text-xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                                 }`}>
-                                Assign Cinema
+                                Assign Manager
                             </h2>
                             <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                                {currentUserEmail}
+                                to {typeLabel}: <span className="font-bold">{itemName}</span>
                             </p>
                         </div>
                     </div>
@@ -132,10 +139,10 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                         <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' || theme === 'modern' ? 'text-gray-500' : 'text-gray-400'}`} />
                         <input
                             type="text"
-                            placeholder="Search cinema name or address..."
+                            placeholder="Search by name or email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-pink-500/50 transition-all ${theme === 'dark'
+                            className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${theme === 'dark'
                                 ? 'bg-gray-800 border-gray-700 text-white'
                                 : theme === 'modern'
                                     ? 'bg-white/5 border-white/10 text-white'
@@ -146,11 +153,11 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-6 flex-1 overflow-hidden flex flex-col">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-8 gap-4">
-                            <Loader2 className="w-8 h-8 animate-spin text-pink-500" />
-                            <p className={theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-600'}>Fetching cinemas...</p>
+                        <div className="flex flex-col items-center justify-center py-12 gap-4">
+                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                            <p className={theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-600'}>Fetching managers...</p>
                         </div>
                     ) : error ? (
                         <div className={`p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern'
@@ -161,18 +168,18 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                             <span className="text-sm font-medium">{error}</span>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 gap-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {filteredCinemas.length === 0 ? (
-                                <div className="text-center py-8 opacity-50">No cinemas found.</div>
+                        <div className="grid grid-cols-1 gap-2 overflow-y-auto pr-2 custom-scrollbar">
+                            {filteredManagers.length === 0 ? (
+                                <div className="text-center py-12 opacity-50">No managers found.</div>
                             ) : (
-                                filteredCinemas.map((cinema) => (
+                                filteredManagers.map((m) => (
                                     <button
-                                        key={cinema.cinemaId}
-                                        onClick={() => setSelectedCinemaId(cinema.cinemaId)}
-                                        className={`flex flex-col items-start px-4 py-3 rounded-xl border transition-all ${selectedCinemaId === cinema.cinemaId
+                                        key={m.userId}
+                                        onClick={() => setSelectedManagerId(m.userId)}
+                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${selectedManagerId === m.userId
                                             ? theme === 'modern'
-                                                ? 'bg-pink-500/20 border-pink-500 text-pink-300 shadow-[0_0_15px_rgba(236,72,153,0.2)]'
-                                                : 'bg-pink-600 border-pink-600 text-white'
+                                                ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
+                                                : 'bg-indigo-600 border-indigo-600 text-white'
                                             : theme === 'dark'
                                                 ? 'bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-500'
                                                 : theme === 'modern'
@@ -180,13 +187,18 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                                                     : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
                                             }`}
                                     >
-                                        <div className="flex items-center justify-between w-full">
-                                            <span className="font-bold">{cinema.cinemaName}</span>
-                                            {selectedCinemaId === cinema.cinemaId && <Check className="w-4 h-4" />}
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                            selectedManagerId === m.userId ? 'bg-white/20' : 'bg-gray-500/20'
+                                        }`}>
+                                            <User className="w-4 h-4" />
                                         </div>
-                                        <span className={`text-xs mt-1 ${selectedCinemaId === cinema.cinemaId ? 'text-pink-100/70' : 'text-gray-500'}`}>
-                                            {cinema.cinemaLocation}
-                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-bold truncate">{m.userName}</p>
+                                            <p className={`text-[10px] truncate ${selectedManagerId === m.userId ? 'opacity-80' : 'opacity-50'}`}>
+                                                {m.userEmail}
+                                            </p>
+                                        </div>
+                                        {selectedManagerId === m.userId && <Check className="w-4 h-4 flex-shrink-0" />}
                                     </button>
                                 ))
                             )}
@@ -214,15 +226,23 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
                     </button>
                     <button
                         onClick={handleAssign}
-                        disabled={assigning || !selectedCinemaId || loading}
-                        className={`px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${assigning || !selectedCinemaId || loading
+                        disabled={assigning || !selectedManagerId || loading}
+                        className={`px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${assigning || !selectedManagerId || loading
                             ? 'opacity-50 cursor-not-allowed'
                             : ''
                             } ${theme === 'modern'
-                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white shadow-lg shadow-pink-500/25'
-                                : 'bg-pink-600 hover:bg-pink-700 text-white shadow-lg shadow-pink-600/20'
+                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20'
                             }`}
                     >
+                        {assigning ? (
+                            <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                Assigning...
+                            </>
+                        ) : (
+                            'Assign Manager'
+                        )}
                     </button>
                 </div>
             </div>
@@ -230,4 +250,4 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
     );
 };
 
-export default CinemaAssignModal;
+export default AssignRightsModal;

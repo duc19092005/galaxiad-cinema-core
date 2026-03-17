@@ -1,7 +1,7 @@
 // src/api/adminApi.ts
 import { identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { AdminUserDto, ScheduleJobDto, RoleDto } from '../types/admin.types';
+import type { AdminUserDto, GroupedScheduleJobDto, RoleDto } from '../types/admin.types';
 
 export const adminApi = {
     /** GET /api/v1/AdminManageUsers */
@@ -46,8 +46,8 @@ export const adminApi = {
     },
 
     /** GET /api/v1/ScheduleJobs */
-    getScheduleJobs: async (): Promise<ApiSuccessResponse<ScheduleJobDto[]>> => {
-        const response = await identityAxios.get<ApiSuccessResponse<ScheduleJobDto[]>>(
+    getScheduleJobs: async (): Promise<ApiSuccessResponse<GroupedScheduleJobDto[]>> => {
+        const response = await identityAxios.get<ApiSuccessResponse<GroupedScheduleJobDto[]>>(
             '/ScheduleJobs'
         );
         return response.data;

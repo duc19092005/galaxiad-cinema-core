@@ -34,6 +34,8 @@ export interface Movie {
     trailerUrl?: string;
     director?: string;
     actors?: string;
+    managerId?: string | null;
+    managerName?: string | null;
 }
 
 /** POST /api/movieManager/movies — multipart/form-data */

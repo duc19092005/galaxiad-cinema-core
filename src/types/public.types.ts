@@ -4,19 +4,27 @@ export interface PublicMovieListItem {
     movieId: string;
     movieName: string;
     movieImageUrl: string;
-    movieDescription: string;
     movieDuration: number;
     startedDate: string;
-    endedDate: string;
     movieRequiredAgeSymbol: string;
     movieGenres: string[];
-    movieFormats: string[];
+}
+
+export interface PaginatedResponse<T> {
+    items: T[];
+    totalCount: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
 }
 
 export interface PublicMovieDetail extends PublicMovieListItem {
     trailerUrl: string;
     director: string;
     actors: string;
+    movieDescription: string;
 }
 
 export interface PublicCity {
@@ -27,8 +35,6 @@ export interface PublicCity {
 export interface PublicShowtime {
     scheduleId: string;
     startTime: string;
-    endedTime: string;
-    auditoriumId: string;
     auditoriumNumber: string;
 }
 
@@ -80,4 +86,23 @@ export interface PublicGenre {
     genreId: string;
     genreName: string;
     description: string;
+}
+
+export interface ActiveCinema {
+    cinemaId: string;
+    cinemaName: string;
+}
+
+export interface ActiveMovie {
+    movieId: string;
+    movieName: string;
+}
+
+export interface SearchScheduleResult {
+    movieId: string;
+    movieName: string;
+    movieImageUrl: string;
+    movieRequiredAgeSymbol: string;
+    movieGenres: string[];
+    cinemas: PublicCinemaShowtimes[];
 }

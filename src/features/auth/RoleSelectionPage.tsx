@@ -89,7 +89,18 @@ const RoleSelectionPage: React.FC = () => {
   const testAuthentication = async () => {
     try {
       // Test authentication bằng cách gọi API profile
-      await authApi.getProfile();
+      const res = await authApi.getProfile();
+      if (res.isSuccess) {
+        // Cập nhật lại thông tin user từ profile (có thể có managedCinemaNames mới)
+        const currentStored = localStorage.getItem('user_info');
+        if (currentStored) {
+          const current = JSON.parse(currentStored);
+          const updated = { ...current, ...res.data };
+          localStorage.setItem('user_info', JSON.stringify(updated));
+          window.dispatchEvent(new Event('user_info_updated'));
+          setUser(updated);
+        }
+      }
       setLoading(false);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
@@ -116,6 +127,7 @@ const RoleSelectionPage: React.FC = () => {
       // Lưu role được chọn vào localStorage để sử dụng sau này
       const userData = { ...user, selectedRole: role };
       localStorage.setItem('user_info', JSON.stringify(userData));
+      window.dispatchEvent(new Event('user_info_updated'));
 
       // Navigate đến trang của role đó
       navigate(roleInfo.route);

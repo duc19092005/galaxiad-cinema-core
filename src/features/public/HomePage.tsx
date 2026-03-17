@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Settings, Shield } from 'lucide-react';
+import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Shield } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
@@ -11,6 +11,9 @@ import LogoutModal from '../../components/LogoutModal';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import AdvancedSearch from './components/AdvancedSearch';
+import PublicCinemaSelector from './components/PublicCinemaSelector';
+import { Play } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,25 +35,52 @@ const HomePage: React.FC = () => {
   const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('');
+
+  const [isScrolled, setIsScrolled] = useState(false);
+  const sectionsRef = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    
+    // Intersection Observer for reveal animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-reveal');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    sectionsRef.current.forEach(section => {
+      if (section) observer.observe(section);
+    });
+
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
     fetchMovies();
-  }, [navigate]);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      observer.disconnect();
+    };
+  }, [navigate, selectedCinemaId]);
 
   const fetchMovies = async () => {
     setLoading(true);
     setError(null);
     try {
       const [nowRes, comingRes] = await Promise.all([
-        publicApi.getNowShowing(),
-        publicApi.getComingSoon()
+        publicApi.getNowShowing({ cinemaId: selectedCinemaId || undefined, pageSize: 5 }),
+        publicApi.getComingSoon({ cinemaId: selectedCinemaId || undefined, pageSize: 5 })
       ]);
-      setNowShowing(nowRes.data || []);
-      setComingSoon(comingRes.data || []);
+      setNowShowing(nowRes.data.items || []);
+      setComingSoon(comingRes.data.items || []);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
@@ -117,8 +147,23 @@ const HomePage: React.FC = () => {
   return (
     <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'
       }`}>
+      {/* Dynamic Background for Modern Theme - Controlled and small */}
+      {theme === 'modern' && (
+        <div className="absolute inset-x-0 top-0 h-screen overflow-hidden pointer-events-none z-0 flex justify-center items-center opacity-70">
+          <div className="absolute top-[20%] left-[30%] w-[300px] h-[300px] bg-cyan-500/20 rounded-full mix-blend-screen filter blur-[90px] animate-blob"></div>
+          <div className="absolute top-[30%] right-[30%] w-[250px] h-[250px] bg-fuchsia-600/20 rounded-full mix-blend-screen filter blur-[90px] animate-blob animation-delay-2000"></div>
+          <div className="absolute bottom-[20%] left-[40%] w-[350px] h-[350px] bg-purple-600/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
+          
+          <div className="absolute top-[15%] right-[20%] w-20 h-20 bg-blue-400/20 rounded-full blur-2xl animate-float"></div>
+          <div className="absolute bottom-[25%] left-[20%] w-32 h-32 bg-pink-500/10 rounded-full blur-3xl animate-float stagger-2"></div>
+        </div>
+      )}
+
       {/* --- HEADER --- */}
-      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-6 shadow-lg transition-colors duration-300 ${theme === 'dark' ? 'bg-black/80 border-gray-800' : theme === 'modern' ? 'bg-gradient-to-r from-[#0E0A20]/90 shadow-2xl border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'bg-white/80 border-gray-200'
+      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-6 transition-all duration-300 ${
+          isScrolled 
+          ? (theme === 'dark' ? 'bg-black/95 border-gray-800 shadow-2xl' : theme === 'modern' ? 'bg-[#0E0A20]/95 border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'bg-white/95 border-gray-200 shadow-lg')
+          : (theme === 'dark' ? 'bg-transparent border-transparent' : theme === 'modern' ? 'bg-transparent border-transparent' : 'bg-transparent border-transparent')
         }`}>
         <div className={`text-2xl font-black tracking-widest uppercase cursor-pointer ${theme === 'modern' ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm' : 'text-red-600'
           }`}
@@ -128,6 +173,7 @@ const HomePage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
           <LanguageSwitcher />
           {/* Theme Dropdown */}
           <div className="relative" ref={themeDropdownRef}>
@@ -189,16 +235,13 @@ const HomePage: React.FC = () => {
                         </button>
                       )}
 
-                      <button 
+                      <button
                         onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
                         className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
                       >
                         <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                       </button>
 
-                      <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                        <Settings className="w-4 h-4" />{t('header.changePassword')}
-                      </button>
 
                       {user?.roles && user.roles.length > 1 && (
                         <button
@@ -256,10 +299,57 @@ const HomePage: React.FC = () => {
         </div>
       )}
 
+      {/* --- HERO SECTION --- */}
+      <section className="relative h-[80vh] w-full mt-16 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920"
+            className="w-full h-full object-cover brightness-50"
+            alt="Hero Background"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"></div>
+        </div>
+
+        <div className="relative z-10 h-full flex flex-col justify-center items-center text-center px-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 animate-float">
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-white">{t('Experience Local Cinema Better')}</span>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black mb-6 uppercase tracking-tighter leading-none animate-reveal text-white">
+            Cinematic<br />
+            <span className={theme === 'modern' ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]' : 'text-red-600'}>Adventure</span>
+          </h1>
+          <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-10 opacity-0 animate-reveal stagger-2">
+            {t('Discover the latest blockbusters and timeless classics at your favorite local theaters. Premium comfort, state-of-the-art sound, and endless magic.')}
+          </p>
+
+          <div className="flex gap-4 opacity-0 animate-reveal stagger-3">
+            <button className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl hover:scale-110 active:scale-95 ${theme === 'modern' ? 'bg-white text-black hover:shadow-cyan-500/40' : 'bg-red-600 text-white hover:bg-red-700'
+              }`}>
+              {t('Explore Now')}
+            </button>
+            <button className="px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm bg-white/5 backdrop-blur-md border border-white/20 hover:bg-white/10 transition-all flex items-center gap-2 text-white hover:scale-110 active:scale-95">
+              <Play className="w-4 h-4 fill-white" />
+              {t('Watch Trailer')}
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* --- ADVANCED SEARCH SECTION --- */}
+      <section className="-mt-12 relative z-20">
+        <AdvancedSearch />
+      </section>
+
       {/* --- BODY CONTENT --- */}
-      <main className="pt-24 px-6 container mx-auto mb-16">
-        <h2 className={`text-3xl font-black mb-6 border-l-4 pl-4 ${theme === 'modern' ? 'border-cyan-400 text-white shadow-md shadow-cyan-500/20' : 'border-red-600'
-          }`}>Now Showing</h2>
+      <main className="px-6 container mx-auto mb-16 relative z-10">
+        <h2 
+          ref={el => { sectionsRef.current[0] = el; }}
+          className={`text-4xl font-black mb-8 border-l-8 pl-6 flex items-center gap-4 opacity-0 ${theme === 'modern' ? 'border-cyan-400 text-white drop-shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'border-red-600 text-gray-900 dark:text-white'
+          }`}>
+          <div className={`w-3 h-3 rounded-full animate-pulse ${theme === 'modern' ? 'bg-cyan-400' : 'bg-red-600'}`}></div>
+          {t('Now Showing')}
+        </h2>
 
         {error && (
           <div className={`mb-6 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
@@ -282,10 +372,12 @@ const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-12">
-            {nowShowing.map((movie) => (
+            {nowShowing.map((movie, index) => (
               <div
                 key={movie.movieId}
-                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
+                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer opacity-0 animate-reveal ${
+                  `stagger-${(index % 5) + 1}`
+                } ${theme === 'dark'
                   ? 'bg-gray-900 border-gray-800 hover:border-red-600'
                   : theme === 'modern'
                     ? 'bg-gradient-to-br from-[#15102B]/80 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-400 text-white shadow-md shadow-cyan-500/20 backdrop-blur-2xl'
@@ -323,8 +415,13 @@ const HomePage: React.FC = () => {
           </div>
         )}
 
-        <h2 className={`text-3xl font-black mb-6 border-l-4 pl-4 ${theme === 'modern' ? 'border-pink-400 text-white shadow-md shadow-pink-500/20' : 'border-red-600'
-          }`}>Coming Soon</h2>
+        <h2 
+          ref={el => { sectionsRef.current[1] = el; }}
+          className={`text-4xl font-black mt-12 mb-8 border-l-8 pl-6 flex items-center gap-4 opacity-0 ${theme === 'modern' ? 'border-pink-400 text-white drop-shadow-[0_0_10px_rgba(236,72,153,0.2)]' : 'border-red-600 text-gray-900 dark:text-white'
+          }`}>
+          <div className={`w-3 h-3 rounded-full animate-pulse ${theme === 'modern' ? 'bg-pink-400' : 'bg-red-600'}`}></div>
+          {t('Coming Soon')}
+        </h2>
 
         {!loading && comingSoon.length === 0 ? (
           <div className={`text-center py-20 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
@@ -332,10 +429,12 @@ const HomePage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {comingSoon.map((movie) => (
+            {comingSoon.map((movie, index) => (
               <div
                 key={movie.movieId}
-                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
+                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer opacity-0 animate-reveal ${
+                  `stagger-${(index % 5) + 1}`
+                } ${theme === 'dark'
                   ? 'bg-gray-900 border-gray-800 hover:border-red-600'
                   : theme === 'modern'
                     ? 'bg-gradient-to-br from-[#15102B]/80 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-pink-400 text-white shadow-md shadow-pink-500/20 backdrop-blur-2xl'

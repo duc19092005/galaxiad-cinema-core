@@ -4,6 +4,7 @@ import type {
   RegisterRequest,
   LoginRequest,
   ChangePasswordRequest,
+  UpdateProfileRequest,
   ApiSuccessResponse,
   UserLoginData,
   UserProfileData,
@@ -39,6 +40,15 @@ export const authApi = {
   getProfile: async (): Promise<ApiSuccessResponse<UserProfileData>> => {
     const response = await identityAxios.get<ApiSuccessResponse<UserProfileData>>(
       '/IdentityAccess/get-profile'
+    );
+    return response.data;
+  },
+
+  /** PUT /api/v1/IdentityAccess/update-profile */
+  updateProfile: async (data: UpdateProfileRequest): Promise<ApiSuccessResponse> => {
+    const response = await identityAxios.put<ApiSuccessResponse>(
+      '/IdentityAccess/update-profile',
+      data
     );
     return response.data;
   },

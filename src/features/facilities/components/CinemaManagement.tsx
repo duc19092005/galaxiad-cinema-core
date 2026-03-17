@@ -1,10 +1,25 @@
 import React, { useState } from 'react';
-import { Building2, Plus, Search, Edit, Trash2, MapPin, Phone, Film, Eye, Loader2, AlertCircle, X, CheckCircle } from 'lucide-react';
+import { Building2, Plus, Search, Edit, MapPin, Phone, Film, Eye, Loader2, AlertCircle, X, CheckCircle } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { facilitiesApi, type Cinema, type CreateCinemaRequest } from '../../../api/facilitiesApi';
 import CinemaDetailModal from './CinemaDetailModal';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../../types/auth.types';
+import AssignRightsModal from '../../admin/components/AssignRightsModal';
+import { User as UserIcon, UserPlus } from 'lucide-react';
+
+const VIETNAM_CITIES = [
+  'Hồ Chí Minh',
+  'Hà Nội',
+  'Đà Nẵng',
+  'Hải Phòng',
+  'Cần Thơ',
+  'Bình Dương',
+  'Đồng Nai',
+  'Khánh Hòa',
+  'Quảng Ninh',
+  'Bà Rịa - Vũng Tàu'
+];
 
 interface CinemaManagementProps {
   cinemas: Cinema[];
@@ -29,8 +44,17 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
     cinemaDescription: '',
     cinemaHotlineNumber: '',
     cinemaLocation: '',
+    cinemaCity: '',
     activeAt: null,
   });
+
+  // Assign Rights Modal state
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [itemToAssign, setItemToAssign] = useState<{ id: string; name: string } | null>(null);
+
+  // Check if user is Admin
+  const storedUser = localStorage.getItem('user_info');
+  const isAdmin = storedUser ? JSON.parse(storedUser).roles?.includes('Admin') : false;
 
   const filteredCinemas = cinemas.filter(
     (cinema) =>
@@ -47,6 +71,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
       cinemaDescription: '',
       cinemaHotlineNumber: '',
       cinemaLocation: '',
+      cinemaCity: '',
       activeAt: null,
     });
   };
@@ -60,11 +85,12 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
       cinemaDescription: '',
       cinemaHotlineNumber: '',
       cinemaLocation: '',
+      cinemaCity: '',
       activeAt: null,
     });
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -93,6 +119,11 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
         setCreateLoading(false);
         return;
       }
+      if (!formData.cinemaCity) {
+        setCreateError('Please select a city');
+        setCreateLoading(false);
+        return;
+      }
       if (!formData.cinemaLocation.trim()) {
         setCreateError('Please enter cinema location');
         setCreateLoading(false);
@@ -110,6 +141,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
         cinemaDescription: formData.cinemaDescription.trim(),
         cinemaHotlineNumber: formData.cinemaHotlineNumber.trim(),
         cinemaLocation: formData.cinemaLocation.trim(),
+        cinemaCity: formData.cinemaCity,
         ...(formData.activeAt ? { activeAt: formData.activeAt } : {}),
       };
 
@@ -328,6 +360,19 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
                   {cinema.totalRooms} rooms
                 </span>
               </div>
+
+              <div className="flex items-center gap-2 text-sm">
+                <UserIcon className={`w-4 h-4 ${
+                  theme === 'dark' ? 'text-red-500' : theme === 'modern' ? 'text-white/60' : 'text-red-600'
+                }`} />
+                <span className={`font-semibold ${
+                  cinema.managerName 
+                    ? (theme === 'dark' || theme === 'modern' ? 'text-cyan-400' : 'text-indigo-600')
+                    : (theme === 'dark' || theme === 'modern' ? 'text-rose-400' : 'text-red-500')
+                }`}>
+                  {cinema.managerName || 'Chưa có quản lý'}
+                </span>
+              </div>
             </div>
 
             {/* Actions */}
@@ -375,13 +420,45 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
                      ? 'bg-red-900/40 hover:bg-red-900/60 text-red-400 border-red-800'
                      : 'bg-red-50 hover:bg-red-100 text-red-600 border-red-300'
                }`}>
-                 <Trash2 className="w-4 h-4" />
-                 <span className="hidden sm:inline">Delete</span>
-               </button>
+                <X className="w-4 h-4" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+
+              {isAdmin && (
+                <button
+                  onClick={() => {
+                    setItemToAssign({ id: cinema.cinemaId, name: cinema.cinemaName });
+                    setIsAssignModalOpen(true);
+                  }}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors text-sm border ${
+                    theme === 'modern'
+                      ? 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/30 font-bold'
+                      : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border-indigo-300 font-bold'
+                  }`}
+                >
+                  <UserPlus className="w-4 h-4 font-bold" />
+                  <span className="hidden sm:inline">Assign</span>
+                </button>
+              )}
             </div>
           </div>
           ))}
         </div>
+      )}
+
+      {/* Assign Rights Modal */}
+      {isAdmin && itemToAssign && (
+        <AssignRightsModal
+          isOpen={isAssignModalOpen}
+          onClose={() => {
+            setIsAssignModalOpen(false);
+            setItemToAssign(null);
+          }}
+          itemId={itemToAssign.id}
+          itemName={itemToAssign.name}
+          type={1} // 1: Facilities/Cinema
+          onSuccess={() => onRefresh && onRefresh()}
+        />
       )}
 
       {/* Empty State */}
@@ -543,6 +620,41 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
                     }`}
                     placeholder="Enter cinema location"
                   />
+                </div>
+
+                {/* Cinema City */}
+                <div>
+                  <label className={`block text-sm font-semibold mb-2 ${
+                    theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
+                  }`}>
+                    City <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="cinemaCity"
+                    value={formData.cinemaCity}
+                    onChange={handleInputChange}
+                    required
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors appearance-none ${
+                      theme === 'modern' 
+                        ? 'focus:border-indigo-500/30 text-white shadow-md' 
+                        : 'focus:border-indigo-500/50 focus:shadow-[0_0_15px_rgba(99,102,241,0.3)]'
+                    } ${
+                      theme === 'dark'
+                        ? 'bg-gray-800 border-gray-700 text-white'
+                        : theme === 'modern'
+                          ? 'bg-white/[0.08] backdrop-blur-md border-indigo-500/20 shadow-sm text-white'
+                          : 'bg-white border-gray-300 text-gray-900'
+                    }`}
+                  >
+                    <option value="" disabled className={theme === 'dark' || theme === 'modern' ? 'bg-gray-800 text-gray-500' : 'text-gray-400'}>
+                      Select a city
+                    </option>
+                    {VIETNAM_CITIES.map(city => (
+                      <option key={city} value={city} className={theme === 'dark' || theme === 'modern' ? 'bg-gray-800 text-white' : 'text-gray-900'}>
+                        {city}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Cinema Hotline */}

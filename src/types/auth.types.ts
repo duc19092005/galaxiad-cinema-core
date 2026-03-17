@@ -21,11 +21,18 @@ export interface LoginRequest {
   password: string;
 }
 
-/** POST /api/v1/IdentityAccess/change-password */
 export interface ChangePasswordRequest {
   oldPassword: string;
   newPassword: string;
   renewPassword: string;
+}
+
+/** PUT /api/v1/IdentityAccess/update-profile */
+export interface UpdateProfileRequest {
+  userName?: string;
+  phoneNumber?: string;
+  identityCode?: string;
+  dateOfBirth?: string; // ISO String
 }
 
 // =============================================
@@ -53,6 +60,12 @@ export interface LogoutResponse {
   message: string;
 }
 
+/** Details of a cinema managed by a user */
+export interface ManagedCinemaDto {
+  cinemaId: string;
+  cinemaName: string;
+}
+
 /** Data returned on successful login */
 export interface UserLoginData {
   userId: string;
@@ -60,13 +73,19 @@ export interface UserLoginData {
   userName?: string; // Backend actually sends userName instead of username
   roles: string[];
   accessToken?: string;
+  managedCinemaNames?: string[];
+  managedCinemas?: ManagedCinemaDto[];
 }
 
 /** Data returned from get-profile */
 export interface UserProfileData {
   userId: string;
   username: string;
+  userName: string;
   dateOfBirth: string;
   phoneNumber: string;
+  identityCode: string;
   roles: string[];
+  managedCinemaNames?: string[];
+  managedCinemas?: ManagedCinemaDto[];
 }

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    User,
+    User as UserIcon,
     ChevronDown,
     LogOut,
     Settings,
@@ -26,6 +26,7 @@ import {
     Image,
     Clapperboard,
     Trash2,
+    UserPlus,
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
@@ -40,6 +41,7 @@ import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { publicApi } from '../../api/publicApi';
+import AssignRightsModal from '../admin/components/AssignRightsModal';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -767,26 +769,100 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             if (formData.duration && parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
             if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
 
-            const submissionData = {
-                movieRequiredAgeId: formData.movieRequiredAgeId !== '00000000-0000-0000-0000-000000000000' ? formData.movieRequiredAgeId : undefined,
-                movieName: formData.movieName.trim(),
-                movieDescription: formData.movieDescription.trim(),
-                movieImage: formData.movieImage || undefined,
-                startedDate: formData.startedDate || null, // No conversion, send what user sees
-                endedDate: formData.endedDate || null,
-                duration: formData.duration ? parseInt(formData.duration) : undefined,
-                movieFormatIds: formData.movieFormatIds,
-                movieGenreIds: formData.movieGenreIds,
-                trailerUrl: formData.trailerUrl.trim() || undefined,
-                director: formData.director.trim() || undefined,
-                actors: formData.actors.trim() || undefined,
-            };
+            // Build sparse payload - only send changed fields
+            const submissionData: any = {};
+            let isChanged = false;
 
-            console.log("DEBUG: Update Movie Submission Date Check:", {
-                UI_Raw_Input: formData.startedDate,
-                Server_Raw_Started: movie.startedDate,
-                Final_Submission: submissionData.startedDate
-            });
+            // 1. Basic Strings
+            if (formData.movieName.trim() !== movie.movieName) {
+                submissionData.movieName = formData.movieName.trim();
+                isChanged = true;
+            }
+            if (formData.movieDescription.trim() !== movie.movieDescriptions) {
+                submissionData.movieDescription = formData.movieDescription.trim();
+                isChanged = true;
+            }
+
+            // 2. Dates (Compare using the same formatted string)
+            const originalStarted = formatDateForInput(movie.startedDate);
+            if (formData.startedDate !== originalStarted) {
+                submissionData.startedDate = formData.startedDate || null;
+                isChanged = true;
+            }
+            const originalEnded = formatDateForInput(movie.endedDate);
+            if (formData.endedDate !== originalEnded) {
+                submissionData.endedDate = formData.endedDate || null;
+                isChanged = true;
+            }
+
+            // 3. Numbers
+            if (parseInt(formData.duration) !== movie.duration) {
+                submissionData.duration = parseInt(formData.duration);
+                isChanged = true;
+            }
+
+            // 4. File
+            if (formData.movieImage) {
+                submissionData.movieImage = formData.movieImage;
+                isChanged = true;
+            }
+
+            // 5. Arrays (Formats)
+            const originalFormats = formats
+                .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+                .map((f: MovieFormat) => f.formatId)
+                .sort();
+            const currentFormats = [...formData.movieFormatIds].sort();
+            if (JSON.stringify(originalFormats) !== JSON.stringify(currentFormats)) {
+                submissionData.movieFormatIds = formData.movieFormatIds;
+                isChanged = true;
+            }
+
+            // 6. Arrays (Genres)
+            const originalGenres = genres
+                .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+                .map((g: MovieGenre) => g.movieGenreId)
+                .sort();
+            const currentGenres = [...formData.movieGenreIds].sort();
+            if (JSON.stringify(originalGenres) !== JSON.stringify(currentGenres)) {
+                submissionData.movieGenreIds = formData.movieGenreIds;
+                isChanged = true;
+            }
+
+            // 7. Age Rating
+            const originalAgeSymbolId = requiredAges.find((a: MovieRequiredAge) => 
+                movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol))
+            )?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000';
+            
+            if (formData.movieRequiredAgeId !== originalAgeSymbolId) {
+                submissionData.movieRequiredAgeId = formData.movieRequiredAgeId !== '00000000-0000-0000-0000-000000000000' 
+                    ? formData.movieRequiredAgeId 
+                    : undefined;
+                isChanged = true;
+            }
+
+            // 8. Optional Details
+            if (formData.trailerUrl.trim() !== (movie.trailerUrl || '')) {
+                submissionData.trailerUrl = formData.trailerUrl.trim() || undefined;
+                isChanged = true;
+            }
+            if (formData.director.trim() !== (movie.director || '')) {
+                submissionData.director = formData.director.trim() || undefined;
+                isChanged = true;
+            }
+            if (formData.actors.trim() !== (movie.actors || '')) {
+                submissionData.actors = formData.actors.trim() || undefined;
+                isChanged = true;
+            }
+
+            if (!isChanged) {
+                toast.success("No changes detected");
+                onClose();
+                setLoading(false);
+                return;
+            }
+
+            console.log("DEBUG: Sparse Submission Data:", submissionData);
 
             await movieApi.updateMovie(movie.movieId!, submissionData);
 
@@ -1046,6 +1122,13 @@ const MovieManagerPage: React.FC = () => {
     const [movieToUpdate, setMovieToUpdate] = useState<Movie | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+    // Assign Rights Modal state
+    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+    const [itemToAssign, setItemToAssign] = useState<{ id: string; name: string } | null>(null);
+
+    // Check if user is Admin
+    const isAdmin = user?.roles?.includes('Admin');
+
     const handleDeleteMovie = async (movie: Movie) => {
         if (!window.confirm(`Are you sure you want to delete movie "${movie.movieName}"?`)) return;
         try {
@@ -1226,7 +1309,7 @@ const MovieManagerPage: React.FC = () => {
                                 }`}
                         >
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
-                                <User className="w-5 h-5 text-white" />
+                                <UserIcon className="w-5 h-5 text-white" />
                             </div>
                             <span className={`hidden sm:block font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
                                 {user?.username || 'Guest'}
@@ -1380,6 +1463,11 @@ const MovieManagerPage: React.FC = () => {
                                                 <button onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-red-700 transition-colors">
                                                     <Trash2 className="w-3.5 h-3.5" /> Delete
                                                 </button>
+                                                {isAdmin && (
+                                                    <button onClick={(e) => { e.stopPropagation(); setItemToAssign({ id: movie.movieId!, name: movie.movieName }); setIsAssignModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors">
+                                                        <UserPlus className="w-3.5 h-3.5" /> Assign
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
 
@@ -1410,6 +1498,12 @@ const MovieManagerPage: React.FC = () => {
                                         <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-500'}`}>
                                             {formatDate(movie.startedDate)} — {formatDate(movie.endedDate)}
                                         </p>
+                                        <div className="flex items-center gap-1 mt-2 text-[10px]">
+                                            <UserIcon className="w-3 h-3 text-red-600" />
+                                            <span className={`font-bold ${movie.managerName ? (theme === 'modern' || theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600') : 'text-red-500'}`}>
+                                                {movie.managerName || 'Chưa có quản lý'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -1466,6 +1560,21 @@ const MovieManagerPage: React.FC = () => {
                 loading={logoutLoading}
                 error={logoutError}
             />
+
+            {/* Assign Rights Modal */}
+            {isAdmin && itemToAssign && (
+                <AssignRightsModal
+                    isOpen={isAssignModalOpen}
+                    onClose={() => {
+                        setIsAssignModalOpen(false);
+                        setItemToAssign(null);
+                    }}
+                    itemId={itemToAssign.id}
+                    itemName={itemToAssign.name}
+                    type={3} // 3: Movie
+                    onSuccess={() => fetchMovies()}
+                />
+            )}
         </div>
     );
 };

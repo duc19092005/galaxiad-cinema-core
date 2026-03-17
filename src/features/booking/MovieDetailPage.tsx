@@ -5,7 +5,7 @@ import {
     Play, Info, Loader2, AlertCircle, ChevronLeft
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
-import type { PublicMovieDetail, PublicCity, PublicCinemaShowtimes } from '../../types/public.types';
+import type { PublicMovieDetail, PublicCinemaShowtimes } from '../../types/public.types';
 import { useTheme } from '../../contexts/ThemeContext';
 
 const MovieDetailPage: React.FC = () => {
@@ -14,9 +14,16 @@ const MovieDetailPage: React.FC = () => {
     const { theme } = useTheme();
 
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
-    const [cities, setCities] = useState<PublicCity[]>([]);
+    const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState<string>('');
-    const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+    const getLocalDateString = (date = new Date()) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
     const [showtimes, setShowtimes] = useState<PublicCinemaShowtimes[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -33,18 +40,17 @@ const MovieDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [movieRes, citiesRes] = await Promise.all([
-                publicApi.getMovieDetail(movieId!),
-                publicApi.getCities()
-            ]);
+            const movieRes = await publicApi.getMovieDetail(movieId!);
             setMovie(movieRes.data);
-            setCities(citiesRes.data || []);
-
-            if (citiesRes.data && citiesRes.data.length > 0) {
-                setSelectedCity(citiesRes.data[0].cityName);
-            }
+            
+            // Hardcoded cities or fetch from a known endpoint
+            // Since publicApi doesn't have getCities currently, we use a sensible default
+            const commonCities = ['Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ'];
+            setCities(commonCities);
+            setSelectedCity(commonCities[0]);
         } catch (err) {
-            setError('Failed to load movie details.');
+            console.error('Error fetching movie detail:', err);
+            setError('Failed to load movie details. Please try again later.');
         } finally {
             setLoading(false);
         }
@@ -79,7 +85,7 @@ const MovieDetailPage: React.FC = () => {
         for (let i = 0; i < 7; i++) {
             const d = new Date();
             d.setDate(d.getDate() + i);
-            dates.push(d.toISOString().split('T')[0]);
+            dates.push(getLocalDateString(d));
         }
         return dates;
     };
@@ -261,8 +267,8 @@ const MovieDetailPage: React.FC = () => {
                                                 'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
                                             } `}
                                         >
-                                            {cities.map(city => (
-                                                <option key={city.cityName} value={city.cityName}>{city.cityName}</option>
+                                            {cities.map(cityName => (
+                                                <option key={cityName} value={cityName}>{cityName}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -320,7 +326,7 @@ const MovieDetailPage: React.FC = () => {
                                                                 <button
                                                                     key={showtime.scheduleId}
                                                                     onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
-                                                                    className={`px-4 py-2 rounded-lg border font-bold transition-all ${theme === 'dark' ? 'border-gray-700 hover:border-red-600 hover:bg-red-600/10' : 'border-gray-300 hover:border-red-600 hover:bg-red-600/5'
+                                                                    className={`px-4 py-2 rounded-lg border font-bold transition-all ${theme === 'dark' ? 'border-yellow-600/50 hover:border-yellow-500 hover:bg-yellow-500/20 text-yellow-500 hover:text-yellow-400' : theme === 'modern' ? 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20 text-yellow-400' : 'border-yellow-300 bg-yellow-50 hover:border-yellow-400 hover:bg-yellow-100 text-yellow-700 shadow-sm'
                                                                         } `}
                                                                 >
                                                                     {new Date(showtime.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}

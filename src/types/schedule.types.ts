@@ -35,6 +35,11 @@ export interface MyAuditorium {
     auditoriumId: string;
     auditoriumNumber: number;
     totalSeats: number;
+    formats?: {
+        formatId: string;
+        formatName: string;
+    }[];
+    // Legacy alias (kept for backward compatibility)
     formatInfos?: {
         formatId: string;
         formatName: string;

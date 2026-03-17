@@ -36,10 +36,9 @@ export const scheduleApi = {
     },
 
     /** GET /api/TheaterManager/Data/my-auditoriums */
-    getMyAuditoriums: async (): Promise<ApiSuccessResponse<MyCinemaAuditoriums>> => {
-        const response = await theaterAxios.get<ApiSuccessResponse<MyCinemaAuditoriums>>(
-            '/TheaterManager/Data/my-auditoriums'
-        );
+    getMyAuditoriums: async (cinemaId?: string): Promise<ApiSuccessResponse<MyCinemaAuditoriums>> => {
+        const url = cinemaId ? `/TheaterManager/Data/my-auditoriums?cinemaId=${cinemaId}` : '/TheaterManager/Data/my-auditoriums';
+        const response = await theaterAxios.get<ApiSuccessResponse<MyCinemaAuditoriums>>(url);
         return response.data;
     },
 

@@ -90,6 +90,7 @@ const LoginForm: React.FC = () => {
             if (res.isSuccess) {
                 // Lưu thông tin user để hiển thị ở Home
                 localStorage.setItem('user_info', JSON.stringify(res.data));
+                window.dispatchEvent(new Event('user_info_updated'));
 
                 // Lưu token vào cookie cho backend trích xuất
                 if (res.data.accessToken) {

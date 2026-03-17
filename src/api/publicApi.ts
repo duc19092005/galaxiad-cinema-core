@@ -4,23 +4,30 @@ import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
     PublicMovieListItem,
     PublicMovieDetail,
-    PublicCity,
     PublicCinemaShowtimes,
     PublicSeatMap,
     PublicPricing,
-    PublicGenre
+    PublicGenre,
+    ActiveCinema,
+    ActiveMovie,
+    SearchScheduleResult,
+    PaginatedResponse
 } from '../types/public.types';
 
 export const publicApi = {
-    /** 1. Get Now Showing Movies */
-    getNowShowing: async (): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/movies/now-showing');
+    /** 1. Get Now Showing Movies (Paginated) */
+    getNowShowing: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>>('/movies/now-showing', {
+            params
+        });
         return response.data;
     },
 
-    /** 2. Get Coming Soon Movies */
-    getComingSoon: async (): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/movies/coming-soon');
+    /** 2. Get Coming Soon Movies (Paginated) */
+    getComingSoon: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>>('/movies/coming-soon', {
+            params
+        });
         return response.data;
     },
 
@@ -30,13 +37,7 @@ export const publicApi = {
         return response.data;
     },
 
-    /** 4. Get Cities */
-    getCities: async (): Promise<ApiSuccessResponse<PublicCity[]>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PublicCity[]>>('/movies/cities');
-        return response.data;
-    },
-
-    /** 5. Get Showtimes by Movie and City (and optionally Date) */
+    /** 4. Get Showtimes by Movie and City (and optionally Date) */
     getShowtimes: async (movieId: string, city: string, date?: string): Promise<ApiSuccessResponse<PublicCinemaShowtimes[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicCinemaShowtimes[]>>(`/movies/${movieId}/showtimes`, {
             params: { city, date }
@@ -44,19 +45,39 @@ export const publicApi = {
         return response.data;
     },
 
-    /** 6. Get Seat Map for Schedule */
+    /** 5. Get Active Cinemas */
+    getActiveCinemas: async (): Promise<ApiSuccessResponse<ActiveCinema[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveCinema[]>>('/movies/active-cinemas');
+        return response.data;
+    },
+
+    /** 6. Get Active Movies */
+    getActiveMovies: async (): Promise<ApiSuccessResponse<ActiveMovie[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveMovie[]>>('/movies/active-movies');
+        return response.data;
+    },
+
+    /** 7. Search Schedules (Advanced Search) */
+    searchSchedules: async (date?: string, movieId?: string, cinemaId?: string): Promise<ApiSuccessResponse<SearchScheduleResult[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<SearchScheduleResult[]>>('/movies/search-schedules', {
+            params: { date, movieId, cinemaId }
+        });
+        return response.data;
+    },
+
+    /** 8. Get Seat Map for Schedule */
     getSeatMap: async (scheduleId: string): Promise<ApiSuccessResponse<PublicSeatMap>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicSeatMap>>(`/movies/schedules/${scheduleId}/seats`);
         return response.data;
     },
 
-    /** 7. Get Pricing Info */
+    /** 9. Get Pricing Info */
     getPricing: async (scheduleId: string): Promise<ApiSuccessResponse<PublicPricing>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`);
         return response.data;
     },
 
-    /** 8. Get Movie Genres */
+    /** 10. Get Movie Genres */
     getMovieGenres: async (): Promise<ApiSuccessResponse<PublicGenre[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicGenre[]>>('/movies/genres');
         return response.data;

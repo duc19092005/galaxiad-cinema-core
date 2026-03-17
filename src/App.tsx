@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { CinemaProvider } from './contexts/CinemaContext';
 import { Toaster } from 'react-hot-toast';
 import RegisterForm from './features/auth/RegisterForm';
 import LoginForm from './features/auth/LoginForm';
@@ -21,8 +22,9 @@ import AccountPage from './features/booking/AccountPage';
 function App() {
   return (
     <ThemeProvider>
-      <Toaster position="top-right" />
-      <Router>
+      <CinemaProvider>
+        <Toaster position="top-right" />
+        <Router>
         <Routes>
           {/* Route root - check token và redirect */}
           <Route path="/" element={<HomePage />} />
@@ -48,6 +50,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
+      </CinemaProvider>
     </ThemeProvider>
   );
 }

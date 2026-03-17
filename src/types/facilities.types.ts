@@ -10,7 +10,10 @@ export interface Cinema {
     cinemaDescription: string;
     cinemaHotlineNumber: string;
     cinemaLocation: string;
+    cinemaCity?: string;
     totalRooms: number;
+    managerId?: string | null;
+    managerName?: string | null;
 }
 
 export interface CreateCinemaRequest {
@@ -18,6 +21,7 @@ export interface CreateCinemaRequest {
     cinemaName: string;
     cinemaHotlineNumber: string;
     cinemaDescription: string;
+    cinemaCity: string;
     activeAt?: string | null; // ISO datetime string
 }
 
@@ -26,6 +30,7 @@ export interface UpdateCinemaRequest {
     cinemaName?: string;
     cinemaHotlineNumber?: string;
     cinemaDescription?: string;
+    cinemaCity?: string;
     activeAt?: string | null;
 }
 

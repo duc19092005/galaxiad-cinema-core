@@ -8,6 +8,7 @@ interface SidebarProps {
     onTabChange: (tab: string) => void;
     isOpen: boolean;
     onToggle: () => void;
+    managedCinemaNames?: string[];
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {

@@ -13,14 +13,41 @@ export interface ScheduleJobDto {
     jobId: string;
     targetId: string;
     jobStartedAt: string;
-    jobEndedAt: string;
+    jobEndedAt: string | null;
     scheduleJobCategory: string;
     scheduleJobStatus: string;
     scheduleJobStatusType: string;
     failedReason: string;
 }
 
+export interface GroupedScheduleJobDto {
+    targetId: string;
+    jobCategory: string;
+    startScheduleJob?: ScheduleJobDto;
+    endScheduleJob?: ScheduleJobDto;
+}
+
 export interface RoleDto {
     roleId: string;
     roleName: string;
+}
+
+export interface ManagerDto {
+    userId: string;
+    userEmail: string;
+    userName: string;
+}
+
+export interface ManagedItemDto {
+    itemId: string;
+    itemName: string;
+    description: string;
+    managerName?: string;
+}
+
+export interface TransferRightsRequest {
+    sourceUserId: string | null;
+    targetUserId: string;
+    transferType: number; // 1: Facilities (CSVC), 2: Theater (Vận hành), 3: Movie (Phim)
+    itemId: string | null;
 }

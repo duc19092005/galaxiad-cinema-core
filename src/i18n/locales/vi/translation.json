@@ -159,7 +159,7 @@
     "No cinemas found": "Không tìm thấy cụm rạp nào",
     "No cinemas available": "Chưa có cụm rạp nào",
     "Active": "Hoạt động",
-    "Cinema": "Cụm rạp",
+    "Cinema": "Rạp",
     "rooms": "phòng chiếu",
     "Retry": "Thử lại",
     "Movie Management": "Quản Lý Phim",
@@ -191,5 +191,56 @@
     "Job Type": "Thể loại công việc chạy ngầm",
     "Started Time": "Bắt Đầu",
     "Ended Time": "Kết Thúc",
-    "Job Status": "Trạng Thái"
+    "Job Status": "Trạng Thái",
+    "Experience Local Cinema Better": "Trải Nghiệm Điện Ảnh Tuyệt Vời Hơn",
+    "Discover the latest blockbusters and timeless classics at your favorite local theaters. Premium comfort, state-of-the-art sound, and endless magic.": "Khám phá những siêu phẩm mới nhất và những tác phẩm kinh điển tại cụm rạp yêu thích của bạn. Trải nghiệm cao cấp, âm thanh sống động.",
+    "Explore Now": "Khám Phá Ngay",
+    "Watch Trailer": "Xem Trailer",
+    "Search Now": "Tìm Kiếm Ngay",
+    "Date": "Ngày",
+    "Today": "Hôm nay",
+    "Tomorrow": "Ngày mai",
+    "Movie": "Phim",
+    "All Movies": "Tất Cả Phim",
+    "All Cinemas": "Tất Cả Rạp",
+    "Finding Your Magic...": "Đang tìm kiếm phim hay...",
+    "No showtimes found": "Không tìm thấy lịch chiếu",
+    "No showtimes found for these filters.": "Không tìm thấy lịch chiếu cho điều kiện lọc này.",
+    "Try adjusting your filters to find more options for your cinematic journey.": "Hãy thử điều chỉnh bộ lọc để tìm thêm nhiều lựa chọn thú vị khác.",
+    "Error searching schedules.": "Có lỗi khi tìm kiếm lịch chiếu.",
+    "account": {
+        "myAccount": "Tài khoản của tôi",
+        "profileInfo": "Thông tin cá nhân",
+        "bookingHistory": "Lịch sử đặt vé",
+        "email": "Địa chỉ Email",
+        "phone": "Số điện thoại",
+        "identityCode": "Mã định danh (CCCD)",
+        "dob": "Ngày sinh",
+        "changePassword": "Đổi mật khẩu",
+        "updateSuccess": "Cập nhật thông tin thành công!",
+        "updateFailed": "Cập nhật không thành công",
+        "failedToLoad": "Không tải được thông tin tài khoản",
+        "noBookings": "Bạn chưa có giao dịch nào.",
+        "dobFormatNote": "(Lưu ý: Ngày / Tháng / Năm)"
+    },
+    "common": {
+        "edit": "Chỉnh sửa",
+        "save": "Lưu",
+        "cancel": "Hủy",
+        "viewDetails": "Chi tiết",
+        "goHome": "Trang chủ"
+    },
+    "validation": {
+        "phoneLength": "Số điện thoại phải có đúng 10 chữ số.",
+        "idLength": "Mã định danh phải có đúng 12 chữ số.",
+        "nameSpecialChar": "Họ và tên không được chứa ký tự đặc biệt.",
+        "dobRequired": "Vui lòng nhập ngày tháng năm sinh.",
+        "ageLimit": "Độ tuổi yêu cầu từ 16 đến 80."
+    },
+    "booking": {
+        "bookingDate": "Ngày đặt",
+        "showtime": "Suất chiếu",
+        "seats": "Ghế",
+        "amount": "Tổng tiền"
+    }
 }

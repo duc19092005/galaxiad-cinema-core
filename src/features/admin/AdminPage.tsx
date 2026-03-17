@@ -25,12 +25,12 @@ import {
 import { useTheme } from '../../contexts/ThemeContext';
 import { adminApi } from '../../api/adminApi';
 import { authApi } from '../../api/authApi';
-import type { AdminUserDto, ScheduleJobDto } from '../../types/admin.types';
+import type { AdminUserDto, GroupedScheduleJobDto } from '../../types/admin.types';
 import toast from 'react-hot-toast';
 import LogoutModal from '../../components/LogoutModal';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
-import CinemaAssignModal from '../../components/CinemaAssignModal';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import TransferRightsView from './components/TransferRightsView';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 
@@ -38,8 +38,8 @@ import Cookies from 'js-cookie';
 // SIDEBAR COMPONENT
 // =============================================
 interface SidebarProps {
-    activeTab: 'users' | 'jobs';
-    onTabChange: (tab: 'users' | 'jobs') => void;
+    activeTab: 'users' | 'jobs' | 'transfer';
+    onTabChange: (tab: 'users' | 'jobs' | 'transfer') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
@@ -50,6 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     const menuItems = [
         { id: 'users', label: t('User Management'), icon: Users },
         { id: 'jobs', label: t('Background Jobs'), icon: Clock },
+        { id: 'transfer', label: t('Transfer Rights'), icon: Sparkles },
     ] as const;
 
     return (
@@ -123,9 +124,9 @@ const AdminPage: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
 
-    const [activeTab, setActiveTab] = useState<'users' | 'jobs'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'jobs' | 'transfer'>('users');
     const [users, setUsers] = useState<AdminUserDto[]>([]);
-    const [jobs, setJobs] = useState<ScheduleJobDto[]>([]);
+    const [jobs, setJobs] = useState<GroupedScheduleJobDto[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -143,11 +144,10 @@ const AdminPage: React.FC = () => {
     const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
     const [selectedUserRoles, setSelectedUserRoles] = useState<string>('');
 
-    const [isCinemaModalOpen, setIsCinemaModalOpen] = useState(false);
     const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
 
     // Background Jobs Filter & Sort
-    const [jobTypeFilter, setJobTypeFilter] = useState<'All' | 'StartSchedule' | 'EndSchedule'>('All');
+    const [jobCategoryFilter, setJobCategoryFilter] = useState<string>('All');
     const [jobSortOrder, setJobSortOrder] = useState<'asc' | 'desc'>('desc');
 
     // Click outside handler for action menu and dropdowns
@@ -181,12 +181,16 @@ const AdminPage: React.FC = () => {
     }, [activeTab]);
 
     const fetchData = async () => {
+        if (activeTab === 'transfer') {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             if (activeTab === 'users') {
                 const res = await adminApi.getUsers();
                 setUsers(res.data || []);
-            } else {
+            } else if (activeTab === 'jobs') {
                 const res = await adminApi.getScheduleJobs();
                 setJobs(res.data || []);
             }
@@ -212,12 +216,6 @@ const AdminPage: React.FC = () => {
         setSelectedUserEmail(email);
         setSelectedUserRoles(roles);
         setIsRoleModalOpen(true);
-    };
-
-    const handleAssignTheaterManager = (userId: string, email: string) => {
-        setSelectedUserId(userId);
-        setSelectedUserEmail(email);
-        setIsCinemaModalOpen(true);
     };
 
     const handleLogoutConfirm = async () => {
@@ -426,7 +424,7 @@ const AdminPage: React.FC = () => {
                                         <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
                                     </div>
 
-                                    <button 
+                                    <button
                                         onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
                                         className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
                                     >
@@ -558,16 +556,7 @@ const AdminPage: React.FC = () => {
                                                                             {t('Edit Roles')}
                                                                         </button>
 
-                                                                        {(u.userRoles || '').includes('TheaterManager') && (
-                                                                            <button
-                                                                                onClick={() => { handleAssignTheaterManager(u.userId, u.userEmail); setActiveActionMenu(null); }}
-                                                                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-[10px] font-semibold transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-white' : theme === 'modern' ? 'text-white hover:bg-pink-500/20 hover:text-pink-300' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                                                                    }`}
-                                                                            >
-                                                                                <Clapperboard className="w-3.5 h-3.5 text-pink-400" />
-                                                                                {t('Assign Cinema')}
-                                                                            </button>
-                                                                        )}
+
                                                                     </div>
                                                                 </div>
                                                             )}
@@ -586,18 +575,18 @@ const AdminPage: React.FC = () => {
                                     <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-4 ${theme === 'dark' ? 'bg-gray-950/50 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]/40 border-indigo-500/20' : 'bg-gray-50'}`}>
                                         <div className="flex items-center gap-2">
                                             <Filter className="w-4 h-4 text-indigo-400" />
-                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Filter Status:</span>
+                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Category:</span>
                                             <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
-                                                {(['All', 'StartSchedule', 'EndSchedule'] as const).map((type) => (
+                                                {['All', 'Movies', 'Showtimes', 'Schedules'].map((cat) => (
                                                     <button
-                                                        key={type}
-                                                        onClick={() => setJobTypeFilter(type)}
-                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobTypeFilter === type
+                                                        key={cat}
+                                                        onClick={() => setJobCategoryFilter(cat)}
+                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobCategoryFilter === cat
                                                             ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-red-600 text-white')
                                                             : 'text-gray-400 hover:text-white'
                                                             }`}
                                                     >
-                                                        {type === 'All' ? 'Tất cả' : type === 'StartSchedule' ? 'Start' : 'End'}
+                                                        {cat === 'All' ? 'Tất cả' : cat}
                                                     </button>
                                                 ))}
                                             </div>
@@ -605,7 +594,7 @@ const AdminPage: React.FC = () => {
 
                                         <div className="flex items-center gap-2">
                                             <ArrowUpDown className="w-4 h-4 text-indigo-400" />
-                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sort By ID:</span>
+                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sort:</span>
                                             <button
                                                 onClick={() => setJobSortOrder(jobSortOrder === 'asc' ? 'desc' : 'asc')}
                                                 className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-lg border transition-all ${theme === 'modern' ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20' : 'border-gray-700 bg-gray-800 text-gray-300'}`}
@@ -615,62 +604,101 @@ const AdminPage: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-
                                     <table className="w-full text-left text-sm">
                                         <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
                                             <tr>
-                                                <th className="px-4 py-4 font-bold">Job ID</th>
-                                                <th className="px-4 py-4 font-bold">{t('Job Type')}</th>
-                                                <th className="px-4 py-4 font-bold">{t('Actions')}</th>
-                                                <th className="px-4 py-4 font-bold">{t('Started Time')}</th>
-                                                <th className="px-4 py-4 font-bold">{t('Ended Time')}</th>
-                                                <th className="px-4 py-4 font-bold">{t('Job Status')}</th>
+                                                <th className="px-4 py-4 font-bold">Target & Category</th>
+                                                <th className="px-4 py-4 font-bold">Start Schedule</th>
+                                                <th className="px-4 py-4 font-bold">End Schedule</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 divide-opacity-20">
                                             {[...jobs]
-                                                .filter(job => jobTypeFilter === 'All' || job.scheduleJobStatusType === jobTypeFilter)
+                                                .filter(job => jobCategoryFilter === 'All' || job.jobCategory === jobCategoryFilter)
                                                 .sort((a, b) => {
-                                                    const idA = parseInt(a.jobId) || 0;
-                                                    const idB = parseInt(b.jobId) || 0;
-                                                    return jobSortOrder === 'asc' ? idA - idB : idB - idA;
+                                                    const idA = a.targetId || '';
+                                                    const idB = b.targetId || '';
+                                                    return jobSortOrder === 'asc' ? idA.localeCompare(idB) : idB.localeCompare(idA);
                                                 })
-                                                .map((job, idx) => (
-                                                    <tr key={job.jobId || idx} className={`hover:bg-black/5 transaction-colors`}>
-                                                        <td className="px-4 py-4 text-xs font-mono opacity-60">#{job.jobId}</td>
-                                                        <td className="px-4 py-4 font-bold">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`w-2 h-2 rounded-full ${job.scheduleJobCategory === 'Schedules' ? 'bg-blue-500' : job.scheduleJobCategory === 'Movies' ? 'bg-cyan-500' : 'bg-purple-500'}`}></span>
-                                                                {job.scheduleJobCategory}
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-4 py-4 text-xs font-medium">
-                                                            <span className={`px-2 py-0.5 rounded-full border text-[9px] ${job.scheduleJobStatusType === 'StartSchedule' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                                                                {job.scheduleJobStatusType}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-4 py-4 text-xs">{formatDate(job.jobStartedAt)}</td>
-                                                        <td className="px-4 py-4 text-xs">{formatDate(job.jobEndedAt)}</td>
+                                                .map((group, idx) => (
+                                                    <tr key={group.targetId + idx} className={`hover:bg-black/5 transaction-colors`}>
+                                                        {/* Target Info */}
                                                         <td className="px-4 py-4">
                                                             <div className="flex flex-col gap-1">
-                                                                <span className={`px-2 py-1 rounded text-[10px] border font-bold w-fit ${job.scheduleJobStatus === 'Completed' ? 'bg-green-500/20 text-green-500 border-green-500/30' :
-                                                                    job.scheduleJobStatus === 'Pending' ? 'bg-blue-500/20 text-blue-500 border-blue-500/30' :
-                                                                        'bg-red-500/20 text-red-500 border-red-500/30'
-                                                                    }`}>
-                                                                    {job.scheduleJobStatus}
-                                                                </span>
-                                                                {job.failedReason && (
-                                                                    <span className="text-[10px] text-red-400 font-medium truncate max-w-[150px]" title={job.failedReason}>
-                                                                        {job.failedReason}
-                                                                    </span>
-                                                                )}
+                                                                <span className="text-xs font-mono opacity-60 truncate max-w-[150px]" title={group.targetId}>{group.targetId}</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className={`w-2 h-2 rounded-full ${group.jobCategory === 'Schedules' ? 'bg-blue-500' : group.jobCategory === 'Movies' ? 'bg-cyan-500' : 'bg-purple-500'}`}></span>
+                                                                    <span className="text-xs font-bold">{group.jobCategory}</span>
+                                                                </div>
                                                             </div>
+                                                        </td>
+
+                                                        {/* Start Job Column */}
+                                                        <td className="px-4 py-4">
+                                                            {group.startScheduleJob ? (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span 
+                                                                            title={group.startScheduleJob.failedReason}
+                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${
+                                                                                group.startScheduleJob.scheduleJobStatus === 'Failed' 
+                                                                                    ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                                                                                    : group.startScheduleJob.scheduleJobStatus === 'Pending'
+                                                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                                                                                        : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                            }`}
+                                                                        >
+                                                                            {group.startScheduleJob.scheduleJobStatus}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-mono opacity-40">#{group.startScheduleJob.jobId}</span>
+                                                                    </div>
+                                                                    <span className="text-[10px] opacity-60 italic">{formatDate(group.startScheduleJob.jobStartedAt)}</span>
+                                                                    {group.startScheduleJob.failedReason && (
+                                                                        <span className="text-[9px] text-red-400/60 truncate max-w-[150px]">{group.startScheduleJob.failedReason}</span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[10px] opacity-20">N/A</span>
+                                                            )}
+                                                        </td>
+
+                                                        {/* End Job Column */}
+                                                        <td className="px-4 py-4">
+                                                            {group.endScheduleJob ? (
+                                                                <div className="flex flex-col gap-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span 
+                                                                            title={group.endScheduleJob.failedReason}
+                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${
+                                                                                group.endScheduleJob.scheduleJobStatus === 'Failed' 
+                                                                                    ? 'bg-red-500/10 text-red-400 border-red-500/20' 
+                                                                                    : group.endScheduleJob.scheduleJobStatus === 'Pending'
+                                                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
+                                                                                        : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                            }`}
+                                                                        >
+                                                                            {group.endScheduleJob.scheduleJobStatus}
+                                                                        </span>
+                                                                        <span className="text-[10px] font-mono opacity-40">#{group.endScheduleJob.jobId}</span>
+                                                                    </div>
+                                                                    <span className="text-[10px] opacity-60 italic">{formatDate(group.endScheduleJob.jobStartedAt)}</span>
+                                                                    {group.endScheduleJob.failedReason && (
+                                                                        <span className="text-[9px] text-red-400/60 truncate max-w-[150px]">{group.endScheduleJob.failedReason}</span>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-[10px] opacity-20">N/A</span>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))}
                                         </tbody>
                                     </table>
                                 </>
+                            )}
+
+                            {activeTab === 'transfer' && (
+                                <TransferRightsView />
                             )}
                         </div>
                     )}
@@ -699,13 +727,6 @@ const AdminPage: React.FC = () => {
                 onSuccess={fetchData}
             />
 
-            <CinemaAssignModal
-                isOpen={isCinemaModalOpen}
-                onClose={() => setIsCinemaModalOpen(false)}
-                userId={selectedUserId}
-                currentUserEmail={selectedUserEmail}
-                onSuccess={fetchData}
-            />
         </div>
     );
 };

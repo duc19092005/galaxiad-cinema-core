@@ -171,16 +171,16 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
         
         // If the room defines specific formats, the movie MUST match at least one.
         if (aud && aud.supportedFormats && aud.supportedFormats.length > 0) {
+            const roomFormatIds = aud.supportedFormats.map(sf => sf.id.toLowerCase());
+            
             if (draggingMovie) {
-                isFormatCompatible = draggingMovie.formats.some(f => {
-                    const roomFormats = aud.supportedFormats.map(sf => sf.toString().toLowerCase());
-                    return roomFormats.includes(f.id.toLowerCase()) || 
-                           roomFormats.includes(f.name.toLowerCase());
-                });
+                // Movie must have at least one format supported by this auditorium
+                isFormatCompatible = draggingMovie.formats.some(f => 
+                    roomFormatIds.includes(f.id.toLowerCase())
+                );
             } else if (movingSlot) {
-                const roomFormats = aud.supportedFormats.map(sf => sf.toString().toLowerCase());
-                isFormatCompatible = !!(roomFormats.includes(movingSlot.slot.formatId.toLowerCase()) || 
-                                     (movingSlot.slot.formatName && roomFormats.includes(movingSlot.slot.formatName.toLowerCase())));
+                // The slot's format must be supported by the target auditorium
+                isFormatCompatible = roomFormatIds.includes(movingSlot.slot.formatId.toLowerCase());
             }
         }
 
@@ -222,21 +222,12 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
 
         if (draggingMovie) {
             const aud = auditoriums.find(a => a.id === auditoriumId);
-            const audName = aud?.name || '';
+            const roomFormatIds = aud?.supportedFormats?.map(sf => sf.id.toLowerCase()) || [];
             
-            // Prioritize match: find format that appears in the room name (e.g., "2D" in "Phòng 1 (2D)")
-            const matchedFormat = draggingMovie.formats.find(f => {
-                const isSupported = aud?.supportedFormats?.some(sf => 
-                    sf.toString().toLowerCase() === f.id.toLowerCase() || 
-                    sf.toString().toLowerCase() === f.name.toLowerCase()
-                );
-                return isSupported && audName.toLowerCase().includes(f.name.toLowerCase());
-            }) || draggingMovie.formats.find(f => 
-                aud?.supportedFormats?.some(sf => 
-                    sf.toString().toLowerCase() === f.id.toLowerCase() || 
-                    sf.toString().toLowerCase() === f.name.toLowerCase()
-                )
-            ) || draggingMovie.formats[0];
+            // Find the first movie format that matches the auditorium's supported formats
+            const matchedFormat = draggingMovie.formats.find(f => 
+                roomFormatIds.includes(f.id.toLowerCase())
+            ) || draggingMovie.formats[0]; // Fallback to first format if no match (shouldn't happen due to validation)
             
             const newSlot: ShowTimeSlot = {
                 id: `new-${crypto.randomUUID()}`,
