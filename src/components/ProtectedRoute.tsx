@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
     const checkAuth = async () => {
       // Verify authentication bằng cách gọi API (cookie HttpOnly sẽ tự động được gửi)
       const userInfo = await verifyAuthAndGetUser();
-      
+
       if (!userInfo) {
         setIsAuthenticated(false);
         setIsChecking(false);

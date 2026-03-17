@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import RegisterForm from './features/auth/RegisterForm';
 import LoginForm from './features/auth/LoginForm';
 import RoleSelectionPage from './features/auth/RoleSelectionPage';
-import HomePage from '../src/features/public/HomePage';
+import HomePage from './features/public/HomePage';
 import FacilitiesManagerPage from './features/facilities/FacilitiesManagerPage';
 import MovieManagerPage from './features/movie/MovieManagerPage';
 import NotFound from './features/misc/NotFound';
