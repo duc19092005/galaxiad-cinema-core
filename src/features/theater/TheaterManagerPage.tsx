@@ -4,7 +4,6 @@ import {
     User,
     ChevronDown,
     LogOut,
-    Settings,
     UserCircle,
     AlertCircle,
     Sun,
@@ -360,9 +359,7 @@ const TheaterManagerPage: React.FC = () => {
                                         <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                                     </button>
 
-                                    <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                                        <Settings className="w-4 h-4" />Change Password
-                                    </button>
+
 
                                     {user?.roles && user.roles.length > 1 && (
                                         <button
