@@ -45,22 +45,32 @@ public class PublicMovieController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy chi tiết phim (bao gồm trailer, đạo diễn, diễn viên, ...)
-    /// </summary>
-    [HttpGet("{movieId}")]
-    public async Task<IActionResult> GetMovieDetail(Guid movieId)
-    {
-        var result = await _bookingService.GetMovieDetail(movieId);
-        return Ok(result);
-    }
-
-    /// <summary>
     /// Lấy danh sách thành phố có rạp
     /// </summary>
     [HttpGet("cities")]
     public async Task<IActionResult> GetCities()
     {
         var result = await _bookingService.GetCities();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy toàn bộ danh sách thể loại phim
+    /// </summary>
+    [HttpGet("genres")]
+    public async Task<IActionResult> GetGenres()
+    {
+        var result = await _bookingService.GetGenres();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy chi tiết phim (bao gồm trailer, đạo diễn, diễn viên, ...)
+    /// </summary>
+    [HttpGet("{movieId}")]
+    public async Task<IActionResult> GetMovieDetail(Guid movieId)
+    {
+        var result = await _bookingService.GetMovieDetail(movieId);
         return Ok(result);
     }
 
@@ -125,7 +135,6 @@ public class BookingController : ControllerBase
     /// <summary>
     /// Tạo đơn đặt vé và nhận VNPay URL để thanh toán
     /// </summary>
-    [Authorize]
     [HttpPost("create")]
     public async Task<IActionResult> CreateBooking([FromBody] ReqCreateBookingDto request)
     {
@@ -224,5 +233,27 @@ public class BookingController : ControllerBase
         {
             _sseManager.Unregister(orderId);
         }
+    }
+
+    /// <summary>
+    /// Lấy thông tin tài khoản người dùng đang đăng nhập
+    /// </summary>
+    [Authorize]
+    [HttpGet("account-info")]
+    public async Task<IActionResult> GetAccountInfo()
+    {
+        var result = await _bookingService.GetUserAccountInfo();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy lịch sử đặt vé của người dùng đang đăng nhập
+    /// </summary>
+    [Authorize]
+    [HttpGet("history")]
+    public async Task<IActionResult> GetBookingHistory()
+    {
+        var result = await _bookingService.GetUserBookingHistory();
+        return Ok(result);
     }
 }

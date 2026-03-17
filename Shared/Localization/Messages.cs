@@ -40,6 +40,7 @@ public static class Messages
         public const string ValidateSuccess = "Validate Successfully";
         public const string ChangePasswordCompleted = "Change Password Completed";
         public const string LogoutSuccess = "Logged out successfully";
+        public const string GetInfoSuccess = "Get user information successfully";
 
         // Errors
         public const string UserNotFound = "User Not Found";
@@ -116,6 +117,7 @@ public static class Messages
         public const string EditCompleted = "Edit Movie Completed";
         public const string GetListSuccess = "Get Movies Info Success";
         public const string GetInfoSuccess = "Get Movie Info Successfully";
+        public const string GetGenresSuccess = "Get Movie Genres Successfully";
 
         // Errors
         public const string NameAlreadyInUse = "Movie Name is already in use";
@@ -142,8 +144,8 @@ public static class Messages
         public const string GetDataSuccess = "Movie Format Datas";
 
         // Dynamic errors
-        public static string InvalidFormatForMovie(string movieName) =>
-            $"Format invalid or missing for movie '{movieName}'.";
+        public static string InvalidFormatForMovie(string movieName, string formatName) =>
+            $"Movie '{movieName}' does not support the format '{formatName}'.";
     }
 
     // =============================================================
@@ -182,6 +184,7 @@ public static class Messages
         public const string GetPricingSuccess = "Get pricing successfully";
         public const string CreateBookingSuccess = "Booking created successfully";
         public const string PaymentSuccess = "Payment completed successfully";
+        public const string GetHistorySuccess = "Get booking history successfully";
 
         // Errors
         public const string ScheduleNotFound = "Schedule not found";

@@ -6,6 +6,7 @@ using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 using DataAccess.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Shared.Enums;
 using Shared.Exceptions;
@@ -20,6 +21,7 @@ public class BookingService
     private readonly IUserContextService _userContextService;
     private readonly VnPayHelper _vnPayHelper;
     private readonly BusinessLayer.Services.ThirdPersonServices.IVnPayService _vnPayService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<BookingService> _logger;
 
     public BookingService(
@@ -27,12 +29,14 @@ public class BookingService
         IUserContextService userContextService,
         VnPayHelper vnPayHelper,
         BusinessLayer.Services.ThirdPersonServices.IVnPayService vnPayService,
+        IConfiguration configuration,
         ILogger<BookingService> logger)
     {
         _dbContext = dbContext;
         _userContextService = userContextService;
         _vnPayHelper = vnPayHelper;
         _vnPayService = vnPayService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -166,6 +170,29 @@ public class BookingService
             IsSuccess = true,
             Data = cities,
             Message = Messages.Booking.GetCitiesSuccess
+        };
+    }
+
+    // ==========================================
+    // 4.1 Lấy danh sách tất cả thể loại
+    // ==========================================
+    public async Task<BaseResponse<List<ResPublicGenreDto>>> GetGenres()
+    {
+        var genres = await _dbContext.Set<MovieGenreInfoEntity>()
+            .Select(x => new ResPublicGenreDto
+            {
+                GenreId = x.MovieGenreId,
+                GenreName = x.MovieGenreName,
+                Description = x.MovieGenreDescription
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new BaseResponse<List<ResPublicGenreDto>>
+        {
+            IsSuccess = true,
+            Data = genres,
+            Message = Messages.Movie.GetGenresSuccess
         };
     }
 
@@ -371,7 +398,7 @@ public class BookingService
         using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
-            var userId = _userContextService.GetUserId();
+            var userId = _userContextService.TryGetUserId();
 
             // Validate schedule
             var schedule = await _dbContext.MovieScheduleInfoEntity
@@ -420,6 +447,30 @@ public class BookingService
             var formatPrice = schedule.MovieFormatInfoEntity?.MovieFormatPrice ?? 0;
             var totalPrice = formatPrice * request.SeatIds.Count;
 
+            string? finalCustomerName = null;
+            string? finalCustomerEmail = null;
+
+            if (userId.HasValue)
+            {
+                // Authenticated user: fetch info from DB
+                var user = await _dbContext.UserInfoEntity
+                    .Include(u => u.UserProfileEntity)
+                    .FirstOrDefaultAsync(u => u.UserId == userId);
+                
+                finalCustomerName = user?.UserProfileEntity?.UserName;
+                finalCustomerEmail = user?.UserEmail;
+            }
+            else
+            {
+                // Guest user: must provide name and email
+                if (string.IsNullOrEmpty(request.CustomerName) || string.IsNullOrEmpty(request.CustomerEmail))
+                {
+                    throw new BadRequestException("Guest booking requires Customer Name and Email.", "BK05");
+                }
+                finalCustomerName = request.CustomerName;
+                finalCustomerEmail = request.CustomerEmail;
+            }
+
             // Create order
             var orderId = Guid.NewGuid();
             var order = new OrderInfoEntity
@@ -431,9 +482,9 @@ public class BookingService
                 TotalPrice = totalPrice,
                 OrderDate = DateTime.Now,
                 TotalQuantity = request.SeatIds.Count,
-                CustomerName = request.CustomerName,
-                CustomerAddress = request.CustomerAddress,
-                CustomerEmail = request.CustomerEmail
+                CustomerName = finalCustomerName,
+                CustomerEmail = finalCustomerEmail,
+                CustomerAddress = userId.HasValue ? null : request.CustomerAddress
             };
 
             var orderDetails = request.SeatIds.Select(seatId => new OrderDetailsInfo
@@ -533,5 +584,85 @@ public class BookingService
         await _dbContext.SaveChangesAsync();
 
         return (isSuccess, orderId);
+    }
+
+    // ==========================================
+    // 9. Lấy thông tin tài khoản đang đăng nhập
+    // ==========================================
+    public async Task<BaseResponse<ResUserAccountInfoDto>> GetUserAccountInfo()
+    {
+        var userId = _userContextService.GetUserId();
+        var user = await _dbContext.UserInfoEntity
+            .Include(u => u.UserProfileEntity)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        if (user == null)
+        {
+            throw new UnauthorizeException(null);
+        }
+
+        var key = _configuration["AES_256:Key"] ?? "";
+        var iv = _configuration["AES_256:IV"] ?? "";
+        var decryptedIdentityCode = AES256Helper.Decrypt(user.UserProfileEntity.IdentityCode, key, iv);
+
+        var res = new ResUserAccountInfoDto
+        {
+            UserId = user.UserId,
+            Email = user.UserEmail,
+            UserName = user.UserProfileEntity.UserName,
+            IdentityCode = decryptedIdentityCode,
+            DateOfBirth = user.UserProfileEntity.DateOfBirth,
+            PhoneNumber = user.UserProfileEntity.PhoneNumber
+        };
+
+        return new BaseResponse<ResUserAccountInfoDto>
+        {
+            IsSuccess = true,
+            Data = res,
+            Message = Messages.Auth.GetInfoSuccess
+        };
+    }
+
+    // ==========================================
+    // 10. Lấy lịch sử đặt vé của người dùng
+    // ==========================================
+    public async Task<BaseResponse<List<ResUserBookingHistoryDto>>> GetUserBookingHistory()
+    {
+        var userId = _userContextService.GetUserId();
+        var now = DateTime.Now;
+
+        var orders = await _dbContext.Set<OrderInfoEntity>()
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.OrderDate)
+            .Select(o => new ResUserBookingHistoryDto
+            {
+                OrderId = o.OrderId,
+                OrderDate = o.OrderDate,
+                TotalPrice = o.TotalPrice,
+                OrderStatus = o.OrderStatus.ToString(),
+                // Lấy thông tin phim từ record đầu tiên trong đơn hàng
+                MovieName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
+                MovieImageUrl = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieImageUrl).FirstOrDefault() ?? "",
+                CinemaName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
+                AuditoriumNumber = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
+                StartTime = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
+                Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList(),
+                
+                // Trạng thái phim
+                IsMovieAired = o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.StartTime <= now),
+                MovieAiringStatus = o.OrderDetailsInfo.Select(od => 
+                    now < od.MovieScheduleInfoEntity.StartTime ? "Upcoming" :
+                    (now >= od.MovieScheduleInfoEntity.StartTime && now <= od.MovieScheduleInfoEntity.EndedTime) ? "Airing" : "Finished"
+                ).FirstOrDefault() ?? ""
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        return new BaseResponse<List<ResUserBookingHistoryDto>>
+        {
+            IsSuccess = true,
+            Data = orders,
+            Message = Messages.Booking.GetHistorySuccess
+        };
     }
 }

@@ -109,7 +109,7 @@ public class ReqCreateBookingDto
     [Required(ErrorMessage = "Seat Ids are required")]
     [MinLength(1, ErrorMessage = "At least one seat must be selected")]
     public List<Guid> SeatIds { get; set; } = [];
-    
+
     [StringLength(50)]
     public string? CustomerName { get; set; }
     
@@ -161,4 +161,49 @@ public class ResPublicCityListDto
 {
     public string CityName { get; set; } = string.Empty;
     public int CinemaCount { get; set; }
+}
+
+public class ResPublicGenreDto
+{
+    public Guid GenreId { get; set; }
+    public string GenreName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+// ==========================================
+// USER - Account Info & History
+// ==========================================
+
+public class ResUserAccountInfoDto
+{
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string IdentityCode { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
+    public string PhoneNumber { get; set; } = string.Empty;
+}
+
+public class ResUserBookingHistoryDto
+{
+    public Guid OrderId { get; set; }
+    public DateTime OrderDate { get; set; }
+    public decimal TotalPrice { get; set; }
+    public string OrderStatus { get; set; } = string.Empty;
+    public string MovieName { get; set; } = string.Empty;
+    public string MovieImageUrl { get; set; } = string.Empty;
+    public string CinemaName { get; set; } = string.Empty;
+    public string AuditoriumNumber { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
+    public List<string> Seats { get; set; } = [];
+    
+    /// <summary>
+    /// true if Movie has already started or ended
+    /// </summary>
+    public bool IsMovieAired { get; set; }
+    
+    /// <summary>
+    /// Detailed status: "Upcoming", "Airing", "Finished"
+    /// </summary>
+    public string MovieAiringStatus { get; set; } = string.Empty;
 }

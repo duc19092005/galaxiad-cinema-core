@@ -67,10 +67,28 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(x => x.Key, y => y.Select(f => f.FormatId).ToList());
 
+            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
+
+            // Fetch existing schedules to skip duplicates
+            var existingMatchSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
+                .AsNoTracking()
+                .Where(x => x.AuditoriumId == request.AuditoriumId && !x.IsDeleted)
+                .ToListAsync();
 
             foreach (var slot in request.Slots)
             {
+                // check for exact match to skip
+                var isAlreadyExist = existingMatchSchedules.Any(x => 
+                    x.MovieId == slot.MovieId && 
+                    x.MovieFormatId == slot.FormatId && 
+                    x.StartTime == slot.StartedDate);
+                
+                if (isAlreadyExist) continue;
+
                 if (!validMovieDictionary.TryGetValue(slot.MovieId, out var movie))
                 {
                     throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
@@ -78,7 +96,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
                 if (!validMovieFormats.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
                 {
-                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName), "E01");
+                    var formatName = allFormats.TryGetValue(slot.FormatId, out var name) ? name : slot.FormatId.ToString();
+                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
                 }
 
                 if (slot.StartedDate < DateTime.Now)
@@ -105,6 +124,16 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     CreatedByUserId = getCurrentUserId,
                     IsActive = DateTime.Now >= slot.StartedDate && DateTime.Now < endTime,
                 });
+            }
+
+            if (!proposedSlots.Any())
+            {
+                return new BaseResponse<string>()
+                {
+                    Message = "No new schedules to add.",
+                    Data = null,
+                    IsSuccess = true
+                };
             }
 
             var sortedProposedSlots = proposedSlots.OrderBy(x => x.ActiveAt).ToList();
@@ -227,31 +256,46 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(m => m.Key, f => f.Select(x => x.FormatId).ToList());
 
+            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
 
             foreach (var slot in request.Slots)
             {
-                if (!moviesInfos.TryGetValue(slot.MovieId, out var movie))
+                var existingEntity = schedulesToUpdate.FirstOrDefault(x => x.MovieScheduleInfoId == slot.ScheduleId);
+                var isUnchanged = existingEntity != null && 
+                                  existingEntity.MovieId == slot.MovieId && 
+                                  existingEntity.MovieFormatId == slot.FormatId && 
+                                  existingEntity.StartTime == slot.StartedDate;
+
+                if (!isUnchanged)
                 {
-                    throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                    if (!moviesInfos.TryGetValue(slot.MovieId, out var movie))
+                    {
+                        throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                    }
+
+                    if (!findMoviesSupportedFormat.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
+                    {
+                        var formatName = allFormats.TryGetValue(slot.FormatId, out var name) ? name : slot.FormatId.ToString();
+                        throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
+                    }
+
+                    if (slot.StartedDate < DateTime.Now)
+                    {
+                        throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
+                    }
+
+                    if (slot.StartedDate < movie.ActiveAt || slot.StartedDate.Date > movie.EndedDate.Date)
+                    {
+                        throw new BadRequestException(Messages.Schedule.MovieAvailability(movie.MovieName, movie.ActiveAt.ToString("MM/dd/yyyy"), movie.EndedDate.ToString("MM/dd/yyyy")), "E01");
+                    }
                 }
 
-                if (!findMoviesSupportedFormat.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
-                {
-                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName), "E01");
-                }
-
-                if (slot.StartedDate < DateTime.Now)
-                {
-                    throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
-                }
-
-                if (slot.StartedDate < movie.ActiveAt || slot.StartedDate.Date > movie.EndedDate.Date)
-                {
-                    throw new BadRequestException(Messages.Schedule.MovieAvailability(movie.MovieName, movie.ActiveAt.ToString("MM/dd/yyyy"), movie.EndedDate.ToString("MM/dd/yyyy")), "E01");
-                }
-
-                var endTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
+                var targetMovieForDuration = moviesInfos[slot.MovieId];
+                var endTime = slot.StartedDate.AddMinutes(targetMovieForDuration.MovieDuration);
 
                 proposedSlots.Add(new MovieScheduleInfoEntity
                 {

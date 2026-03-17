@@ -8,6 +8,7 @@ namespace BusinessLayer.Services.IdentityAccess;
 public interface IUserContextService
 {
     Guid GetUserId();
+    Guid? TryGetUserId();
 }
 
 public class UserContextservice : IUserContextService
@@ -40,6 +41,26 @@ public class UserContextservice : IUserContextService
         {
             _logger.LogError(e, "Error retrieving User ID from context.");
             throw CustomSystemException.SystemExceptionCaller();
+        }
+    }
+    public Guid? TryGetUserId()
+    {
+        try
+        {
+            var user = _httpContextAccessor.HttpContext?.User;
+            var userIdClaim = user?.FindFirst(ClaimTypes.Sid) ?? user?.FindFirst(ClaimTypes.NameIdentifier);
+            var userIdValue = userIdClaim?.Value;
+
+            if (userIdValue != null && Guid.TryParse(userIdValue, out var guid))
+            {
+                return guid;
+            }
+
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 }
