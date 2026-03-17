@@ -115,7 +115,7 @@ const MovieDetailPage: React.FC = () => {
             'bg-gray-50 text-gray-900'
         }`}>
             {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-6 transition-all ${
+            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-4 sm:px-6 transition-all ${
                 theme === 'dark' ? 'bg-black/80 border-gray-800' : 
                 theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 
                 'bg-white/80 border-gray-200 shadow-sm'

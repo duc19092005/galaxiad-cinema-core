@@ -11,9 +11,10 @@ import {
     Calendar,
     Lock,
     Loader2,
-    AlertCircle,
-    CheckCircle
+    AlertCircle
 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import type { RegisterRequest, ApiErrorResponse } from '../../types/auth.types';
 
@@ -76,6 +77,7 @@ const InputField = ({
 
 // --- Main Component ---
 const RegisterForm: React.FC = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState<FormData>({
         fullName: '',
         email: '',
@@ -88,7 +90,6 @@ const RegisterForm: React.FC = () => {
 
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
-    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -98,7 +99,6 @@ const RegisterForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMsg(null);
-        setSuccessMsg(null);
 
         if (formData.password !== formData.confirmPassword) {
             setErrorMsg('Passwords do not match!');
@@ -120,11 +120,8 @@ const RegisterForm: React.FC = () => {
             const res = await authApi.regularRegister(payload);
 
             if (res.isSuccess) {
-                setSuccessMsg(res.message || 'Registration successful! Please check your email.');
-                setFormData({
-                    fullName: '', email: '', identityCard: '', phoneNumber: '',
-                    birthDate: '', password: '', confirmPassword: ''
-                });
+                toast.success(res.message || 'Registration successful!');
+                navigate('/login');
             }
 
         } catch (error: unknown) {
@@ -181,12 +178,6 @@ const RegisterForm: React.FC = () => {
                                 <div className="mb-6 p-4 rounded-lg bg-red-900/40 border border-red-500/50 flex items-center text-red-100 animate-pulse">
                                     <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
                                     <span className="text-sm font-medium">{errorMsg}</span>
-                                </div>
-                            )}
-                            {successMsg && (
-                                <div className="mb-6 p-4 rounded-lg bg-green-900/40 border border-green-500/50 flex items-center text-green-100">
-                                    <CheckCircle className="w-5 h-5 mr-3 shrink-0 text-green-500" />
-                                    <span className="text-sm font-medium">{successMsg}</span>
                                 </div>
                             )}
 

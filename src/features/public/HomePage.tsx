@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Shield } from 'lucide-react';
+import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Menu, X } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
@@ -25,6 +25,7 @@ const HomePage: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -160,71 +161,131 @@ const HomePage: React.FC = () => {
       )}
 
       {/* --- HEADER --- */}
-      <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-6 transition-all duration-300 ${
-          isScrolled 
-          ? (theme === 'dark' ? 'bg-black/95 border-gray-800 shadow-2xl' : theme === 'modern' ? 'bg-[#0E0A20]/95 border-indigo-500/40 shadow-[0_0_20px_rgba(99,102,241,0.2)]' : 'bg-white/95 border-gray-200 shadow-lg')
-          : (theme === 'dark' ? 'bg-transparent border-transparent' : theme === 'modern' ? 'bg-transparent border-transparent' : 'bg-transparent border-transparent')
+      <header className={`fixed top-0 left-0 right-0 z-[60] backdrop-blur-md border-b flex items-center justify-between h-16 px-4 sm:px-8 transition-all duration-500 ${isScrolled
+        ? theme === 'dark' ? 'bg-black/90 border-gray-800 shadow-2xl shadow-red-600/5' : theme === 'modern' ? 'bg-[#0E0A20]/95 border-indigo-500/30 shadow-2xl shadow-indigo-500/10' : 'bg-white/90 border-gray-200 shadow-lg'
+        : 'bg-transparent border-transparent'
         }`}>
-        <div className={`text-2xl font-black tracking-widest uppercase cursor-pointer ${theme === 'modern' ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm' : 'text-red-600'
-          }`}
-          onClick={() => navigate('/home')}
-        >
-          CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className={`lg:hidden p-2 rounded-lg transition-all active:scale-95 relative z-[70] ${
+              theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
+              theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
+              'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          
+          <div
+            className={`text-2xl sm:text-3xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern'
+              ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-[0_0_15px_rgba(165,180,252,0.3)]'
+              : 'text-red-600'
+              }`}
+            onClick={() => navigate('/home')}
+          >
+            CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
-          <LanguageSwitcher />
-          {/* Theme Dropdown */}
-          <div className="relative" ref={themeDropdownRef}>
-            <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-300' : theme === 'modern' ? 'hover:bg-indigo-800/40 text-white font-medium' : 'hover:bg-gray-100 text-gray-700'
-              }`}>
-              {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'modern' ? <Sparkles className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="hidden sm:inline-block text-sm font-medium">{theme === 'dark' ? 'Dark' : theme === 'modern' ? 'Modern' : 'Light'}</span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {isThemeDropdownOpen && (
-              <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0E0A20]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl' : 'bg-white border border-gray-200'
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <div className="hidden lg:flex items-center gap-3">
+            <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
+            <LanguageSwitcher />
+            {/* Theme Dropdown */}
+            <div className="relative" ref={themeDropdownRef}>
+              <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)} className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-300' : theme === 'modern' ? 'hover:bg-indigo-800/40 text-white font-medium' : 'hover:bg-gray-100 text-gray-700'
                 }`}>
-                {(['light', 'dark', 'modern'] as const).map((t) => (
-                  <button key={t} onClick={() => { setTheme(t); setIsThemeDropdownOpen(false); }} className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === t ? (theme === 'dark' ? 'bg-gray-800 text-white' : theme === 'modern' ? 'bg-[#15102B] text-white' : 'bg-gray-100 text-gray-900')
-                    : theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white font-medium hover:bg-indigo-800/40' : 'text-gray-700 hover:bg-gray-100'
-                    }`}>
-                    {t === 'light' ? <Sun className="w-4 h-4" /> : t === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                    {t === 'light' ? 'Light Mode' : t === 'dark' ? 'Dark Mode' : 'Modern View'}
-                  </button>
-                ))}
-              </div>
-            )}
+                {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'modern' ? <Sparkles className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                <span className="hidden sm:inline-block text-sm font-medium">{theme === 'dark' ? 'Dark' : theme === 'modern' ? 'Modern' : 'Light'}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {isThemeDropdownOpen && (
+                <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl overflow-hidden ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0E0A20]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl' : 'bg-white border border-gray-200'
+                  }`}>
+                  {(['light', 'dark', 'modern'] as const).map((t) => (
+                    <button key={t} onClick={() => { setTheme(t); setIsThemeDropdownOpen(false); }} className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === t ? (theme === 'dark' ? 'bg-gray-800 text-white' : theme === 'modern' ? 'bg-[#15102B] text-white' : 'bg-gray-100 text-gray-900')
+                      : theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white font-medium hover:bg-indigo-800/40' : 'text-gray-700 hover:bg-gray-100'
+                      }`}>
+                      {t === 'light' ? <Sun className="w-4 h-4" /> : t === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                      {t === 'light' ? 'Light Mode' : t === 'dark' ? 'Dark Mode' : 'Modern View'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center gap-3 p-2 rounded-lg transition-colors outline-none focus:ring-2 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
+          {/* User Section - Responsive */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Auth Access (Quick Login/User) */}
+            {!user ? (
+              <button 
+                onClick={() => navigate('/login')}
+                className={`lg:hidden px-3 py-1.5 rounded-lg font-bold text-xs transition-all active:scale-95 ${
+                  theme === 'modern' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'bg-red-600 text-white'
                 }`}
-            >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <span className={`hidden sm:block font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
-                {user?.username || 'Guest'}
-              </span>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
-            </button>
+              >
+                {t('header.login')}
+              </button>
+            ) : (
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
+                  theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+                }`}
+              >
+                <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
+              </button>
+            )}
 
-            {isDropdownOpen && (
-              <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
-                }`}>
-                <div className="py-2">
-                  {user ? (
-                    <>
+            {/* Desktop Full Menu */}
+            <div className="hidden lg:flex items-center">
+            {!user ? (
+              <div className="flex items-center gap-2 sm:gap-3">
+                <button 
+                  onClick={() => navigate('/login')}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all hover:scale-105 active:scale-95 ${
+                    theme === 'modern' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'bg-red-600 text-white'
+                  }`}
+                >
+                  {t('header.login')}
+                </button>
+                <button 
+                  onClick={() => navigate('/register')}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm border transition-all hover:scale-105 active:scale-95 ${
+                    theme === 'dark' || theme === 'modern' ? 'border-gray-700 text-white hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {t('header.register')}
+                </button>
+              </div>
+            ) : (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
+                    }`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <span className={`font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
+                    {user.username}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
+                </button>
+
+                {isDropdownOpen && (
+                  <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
+                    }`}>
+                    <div className="py-2">
                       <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
                         <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
-                        <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                        <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user.username}</p>
                       </div>
 
-                      {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
+                      {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
                         <button
                           onClick={() => navigate('/role-selection')}
                           className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-green-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
@@ -243,7 +304,7 @@ const HomePage: React.FC = () => {
                       </button>
 
 
-                      {user?.roles && user.roles.length > 1 && (
+                      {user.roles && user.roles.length > 1 && (
                         <button
                           onClick={() => navigate('/role-selection')}
                           className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
@@ -264,31 +325,142 @@ const HomePage: React.FC = () => {
                         <LogOut className="w-4 h-4" />
                         {t('header.logout')}
                       </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => { navigate('/login'); setIsDropdownOpen(false); }}
-                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
-                      >
-                        <UserCircle className="w-4 h-4" />
-                        Login / Sign In
-                      </button>
-                      <button
-                        onClick={() => { navigate('/register'); setIsDropdownOpen(false); }}
-                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
-                      >
-                        <Shield className="w-4 h-4" />
-                        Register / Sign Up
-                      </button>
-                    </>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+            </div>
           </div>
         </div>
       </header>
+
+      {/* MOBILE SIDEBAR */}
+      <div 
+        className={`fixed inset-0 z-[100] lg:hidden transition-all duration-500 ease-in-out ${
+          isMobileMenuOpen ? 'visible opacity-100 pointer-events-auto' : 'invisible opacity-0 pointer-events-none'
+        }`}
+      >
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+        <div className={`absolute inset-y-0 left-0 z-[110] w-[280px] transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) transform ${
+          isMobileMenuOpen ? 'translate-x-0 scale-100' : '-translate-x-full scale-95'
+        } ${
+          theme === 'dark' ? 'bg-black border-r border-gray-800' : theme === 'modern' ? 'bg-[#030712] border-r border-indigo-500/20 shadow-[10px_0_30px_rgba(0,0,0,0.5)]' : 'bg-white border-r border-gray-100'
+        } flex flex-col`}>
+          {/* Sidebar Header */}
+          <div className={`p-6 flex items-center justify-between border-b ${
+            theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'
+          }`}>
+            <div className={`text-xl font-black tracking-widest ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}>
+              CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
+            </div>
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`p-2 rounded-xl transition-all active:scale-90 ${theme === 'dark' || theme === 'modern' ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Sidebar Content */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+            {/* Auth for Mobile */}
+            {!user ? (
+              <div className="space-y-4 pb-4 border-b border-gray-500/10">
+                 <button 
+                  onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
+                  className="w-full py-4 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-600/20 active:scale-95 hover:bg-red-700 transition-all text-sm uppercase tracking-[0.1em]"
+                 >
+                   {t('header.login')}
+                 </button>
+                 <button 
+                  onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}
+                  className={`w-full py-4 rounded-xl font-bold border transition-all active:scale-95 text-sm uppercase tracking-[0.1em] ${
+                    theme === 'dark' || theme === 'modern' ? 'border-gray-700 text-white hover:bg-white/5' : 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                  }`}
+                 >
+                   {t('header.register')}
+                 </button>
+              </div>
+            ) : (
+              <div className="space-y-4 pb-4 border-b border-gray-500/10">
+                 <div className="flex items-center gap-4 mb-2 p-1">
+                   <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                      <User className="w-6 h-6 text-white" />
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
+                     <p className={`text-sm font-black truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                   </div>
+                 </div>
+                 <button 
+                  onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-100'}`}
+                 >
+                   <UserCircle className="w-5 h-5 text-indigo-400" />
+                   <span className="font-bold">{t('header.accountInfo')}</span>
+                 </button>
+                 {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
+                      <button
+                        onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-green-500 ${theme === 'dark' ? 'hover:bg-gray-800/50' : theme === 'modern' ? 'hover:bg-green-500/10' : 'hover:bg-green-50'}`}
+                      >
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span className="font-bold">Management Hub</span>
+                      </button>
+                    )}
+                 <button 
+                  onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-red-500 font-bold ${theme === 'dark' ? 'hover:bg-red-500/10' : theme === 'modern' ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}
+                 >
+                   <LogOut className="w-5 h-5" />
+                   <span>{t('header.logout')}</span>
+                 </button>
+              </div>
+            )}
+
+            {/* Cinema Selector */}
+            <div className="space-y-4">
+              <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                {t('Cinema Location')}
+              </h3>
+              <div className="p-1">
+                <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
+              </div>
+            </div>
+
+            {/* Preferences */}
+            <div className="space-y-4">
+              <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                {t('Preferences')}
+              </h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-sm font-bold tracking-tight">Language</span>
+                  <LanguageSwitcher />
+                </div>
+                <div className="flex items-center justify-between px-2">
+                  <span className="text-sm font-bold tracking-tight">Theme</span>
+                  <div className="flex gap-2">
+                     {(['light', 'dark', 'modern'] as const).map((t) => (
+                       <button 
+                         key={t}
+                         onClick={() => setTheme(t)}
+                         className={`p-2.5 rounded-xl transition-all transform active:scale-90 ${theme === t ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40' : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20'}`}
+                       >
+                         {t === 'light' ? <Sun className="w-4 h-4" /> : t === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                       </button>
+                     ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {logoutError && (
         <div className="pt-24 px-6 container mx-auto">
@@ -315,20 +487,20 @@ const HomePage: React.FC = () => {
             <Sparkles className="w-4 h-4 text-cyan-400" />
             <span className="text-xs font-black uppercase tracking-[0.2em] text-white">{t('Experience Local Cinema Better')}</span>
           </div>
-          <h1 className="text-6xl md:text-8xl font-black mb-6 uppercase tracking-tighter leading-none animate-reveal text-white">
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black mb-6 uppercase tracking-tighter leading-tight sm:leading-none animate-reveal text-white">
             Cinematic<br />
             <span className={theme === 'modern' ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-rose-400 drop-shadow-[0_0_15px_rgba(34,211,238,0.3)]' : 'text-red-600'}>Adventure</span>
           </h1>
-          <p className="text-lg md:text-xl text-white/70 max-w-2xl mb-10 opacity-0 animate-reveal stagger-2">
+          <p className="text-base sm:text-lg md:text-xl text-white/70 max-w-xl mx-auto mb-10 opacity-0 animate-reveal stagger-2 px-4">
             {t('Discover the latest blockbusters and timeless classics at your favorite local theaters. Premium comfort, state-of-the-art sound, and endless magic.')}
           </p>
 
-          <div className="flex gap-4 opacity-0 animate-reveal stagger-3">
-            <button className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl hover:scale-110 active:scale-95 ${theme === 'modern' ? 'bg-white text-black hover:shadow-cyan-500/40' : 'bg-red-600 text-white hover:bg-red-700'
+          <div className="flex flex-col sm:flex-row gap-4 opacity-0 animate-reveal stagger-3 w-full sm:w-auto px-6">
+            <button className={`w-full sm:w-auto px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm transition-all shadow-xl hover:scale-105 active:scale-95 ${theme === 'modern' ? 'bg-white text-black hover:shadow-cyan-500/40' : 'bg-red-600 text-white hover:bg-red-700'
               }`}>
               {t('Explore Now')}
             </button>
-            <button className="px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm bg-white/5 backdrop-blur-md border border-white/20 hover:bg-white/10 transition-all flex items-center gap-2 text-white hover:scale-110 active:scale-95">
+            <button className="w-full sm:w-auto px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs sm:text-sm bg-white/5 backdrop-blur-md border border-white/20 hover:bg-white/10 transition-all flex items-center justify-center gap-2 text-white hover:scale-105 active:scale-95">
               <Play className="w-4 h-4 fill-white" />
               {t('Watch Trailer')}
             </button>

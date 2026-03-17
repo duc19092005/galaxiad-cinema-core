@@ -130,7 +130,7 @@ const AdvancedSearch: React.FC = () => {
                         <select
                             value={selectedCinemaId}
                             onChange={(e) => setSelectedCinemaId(e.target.value)}
-                            className={`bg-transparent border-none p-0 text-sm font-black focus:ring-0 w-full outline-none cursor-pointer appearance-none ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}
+                            className={`bg-transparent border-none p-0 text-sm font-black focus:ring-0 w-full outline-none cursor-pointer appearance-none transition-colors ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}
                         >
                             <option value="" className="bg-slate-900 text-white">{t('All Cinemas')}</option>
                             {activeCinemas.map(c => (
@@ -171,7 +171,7 @@ const AdvancedSearch: React.FC = () => {
                     ) : searchResults && searchResults.length > 0 ? (
                         <div className="space-y-16">
                             {searchResults.map(movie => (
-                                <div key={movie.movieId} className={`p-8 rounded-[2rem] border transition-all duration-500 ${theme === 'modern' ? 'bg-white/5 border-white/10 hover:border-white/20' : theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100 shadow-2xl shadow-gray-200/50'}`}>
+                        <div key={movie.movieId} className={`p-5 sm:p-8 rounded-[2rem] border transition-all duration-500 ${theme === 'modern' ? 'bg-white/5 border-white/10 hover:border-white/20' : theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100 shadow-2xl shadow-gray-200/50'}`}>
                                     <div className="flex flex-col lg:flex-row gap-12">
                                         {/* Movie Sidebar */}
                                         <div className="w-full lg:w-72 flex-shrink-0">
@@ -212,9 +212,9 @@ const AdvancedSearch: React.FC = () => {
                                                                     <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
                                                                         {format.formatName}
                                                                     </div>
-                                                                    <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 to-transparent' : 'bg-gray-100'}`}></div>
+                                                                    <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
                                                                 </div>
-                                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+                                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                                                                     {format.showtimes.map(st => (
                                                                         <button
                                                                             key={st.scheduleId}

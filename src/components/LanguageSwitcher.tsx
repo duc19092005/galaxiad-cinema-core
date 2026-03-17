@@ -11,7 +11,7 @@ const LanguageSwitcher: React.FC = () => {
             }`}>
             <button
                 onClick={() => i18n.changeLanguage('vi')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i18n.language === 'vi'
+                className={`px-1.5 sm:px-3 py-1 text-xs font-bold rounded-md transition-all ${i18n.language === 'vi'
                     ? theme === 'modern'
                         ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)]'
                         : 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)]'
@@ -22,7 +22,7 @@ const LanguageSwitcher: React.FC = () => {
             </button>
             <button
                 onClick={() => i18n.changeLanguage('en')}
-                className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${i18n.language === 'en'
+                className={`px-1.5 sm:px-3 py-1 text-xs font-bold rounded-md transition-all ${i18n.language === 'en'
                     ? theme === 'modern'
                         ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-[0_0_10px_rgba(6,182,212,0.5)]'
                         : 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)]'

@@ -9,17 +9,17 @@ import {
     Sun,
     Moon,
     Sparkles,
-    Clapperboard,
     Loader2,
     Clock,
     CheckCircle,
-    XCircle,
     UserCog,
     ShieldCheck,
     Filter,
     ArrowUpDown,
     SortAsc,
-    SortDesc
+    SortDesc,
+    Menu,
+    XCircle,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { adminApi } from '../../api/adminApi';
@@ -39,9 +39,11 @@ import Cookies from 'js-cookie';
 interface SidebarProps {
     activeTab: 'users' | 'jobs' | 'transfer';
     onTabChange: (tab: 'users' | 'jobs' | 'transfer') => void;
+    isOpen: boolean;
+    onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClose }) => {
     const { theme } = useTheme();
     const { t } = useTranslation();
     const navigate = useNavigate();
@@ -53,63 +55,108 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     ] as const;
 
     return (
-        <aside className={`fixed top-0 left-0 h-full w-64 z-50 border-r transition-transform duration-300 ${theme === 'dark'
-            ? 'bg-gray-950 border-gray-800'
-            : theme === 'modern'
-                ? 'bg-[#0E0A20] border-indigo-500/30 shadow-sm shadow-indigo-500/10'
-                : 'bg-white border-gray-200'
-            }`}>
-            {/* Logo */}
-            <div className={`h-16 flex items-center px-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
+        <aside className={`fixed top-0 left-0 h-full w-72 z-[110] border-r transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) transform ${isOpen ? 'translate-x-0 scale-100' : '-translate-x-full lg:translate-x-0'
+            } ${theme === 'dark' ? 'bg-black border-gray-800' :
+                theme === 'modern' ? 'bg-[#030712] border-indigo-500/20 shadow-[10px_0_30px_rgba(0,0,0,0.5)]' :
+                    'bg-white border-gray-100'
+            } flex flex-col`}>
+            {/* Sidebar Header */}
+            <div className={`p-6 flex items-center justify-between border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'
                 }`}>
                 <div
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => navigate('/admin')}
+                    className={`text-xl font-black tracking-widest cursor-pointer transition-all active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
+                    onClick={() => navigate('/home')}
                 >
-                    <Clapperboard className={`w-7 h-7 ${theme === 'modern' ? 'text-cyan-400' : 'text-red-600'}`} />
-                    <span className={`text-xl font-black tracking-wider ${theme === 'modern'
-                        ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm'
-                        : 'text-red-600'
-                        }`}>
-                        CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
-                    </span>
+                    CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
+                </div>
+                <button
+                    onClick={onClose}
+                    className={`lg:hidden p-2 rounded-xl transition-all active:scale-90 ${theme === 'dark' || theme === 'modern' ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
+                >
+                    <XCircle className="w-6 h-6" />
+                </button>
+            </div>
+
+            {/* Sidebar Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                {/* Navigation Section */}
+                <div className="space-y-4">
+                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                        {t('Navigation')}
+                    </h3>
+                    <div className="space-y-2">
+                        {/* Always have a Home button */}
+                        <button
+                            onClick={() => navigate('/home')}
+                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
+                                    theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
+                                        'text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            <LayoutDashboard className="w-5 h-5 text-indigo-400" />
+                            <span className="font-bold">{t('Back To Home')}</span>
+                        </button>
+
+                        <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/10' : 'border-gray-100'}`}></div>
+
+                        {menuItems.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => {
+                                    onTabChange(item.id);
+                                    if (window.innerWidth < 1024) onClose();
+                                }}
+                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${activeTab === item.id
+                                        ? theme === 'modern'
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                            : 'bg-red-600 text-white shadow-lg shadow-red-600/20'
+                                        : theme === 'dark'
+                                            ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                            : theme === 'modern'
+                                                ? 'text-white/70 hover:bg-white/5 hover:text-white'
+                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    }`}
+                            >
+                                <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-indigo-400'}`} />
+                                <span className="font-bold">{item.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Account Actions Section */}
+                <div className="space-y-4">
+                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                        {t('System')}
+                    </h3>
+                    <div className="space-y-2">
+                        <button
+                            onClick={() => navigate('/account')}
+                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
+                                    theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
+                                        'text-gray-700 hover:bg-gray-100'
+                                }`}
+                        >
+                            <UserCircle className="w-5 h-5 text-cyan-400" />
+                            <span className="font-bold">{t('Account Info')}</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Role badge */}
-            <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
-                }`}>
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider ${theme === 'modern'
-                    ? 'bg-gradient-to-r from-[#1E293B] to-[#0F172A] text-cyan-400 border border-slate-700'
-                    : 'bg-red-600/10 text-red-500'
-                    }`}>
-                    <LayoutDashboard className="w-4 h-4" />
-                    {t('roles.admin')}
-                </div>
+            {/* Sidebar Footer */}
+            <div className={`p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
+                <button
+                    onClick={() => navigate('/role-selection')}
+                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-500/10' :
+                            theme === 'modern' ? 'text-cyan-400 hover:bg-cyan-500/10' :
+                                'text-blue-600 hover:bg-blue-50'
+                        }`}
+                >
+                    <Users className="w-5 h-5" />
+                    <span className="font-bold">{t('Switch Role')}</span>
+                </button>
             </div>
-
-            {/* Menu */}
-            <nav className="p-4 space-y-1">
-                {menuItems.map((item) => (
-                    <button
-                        key={item.id}
-                        onClick={() => onTabChange(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all ${activeTab === item.id
-                            ? theme === 'modern'
-                                ? 'bg-cyan-900/20 text-cyan-400 border border-cyan-500/50 shadow-[inset_0_0_20px_rgba(6,182,212,0.1),0_0_15px_rgba(6,182,212,0.2)]'
-                                : 'bg-red-600 text-white shadow-lg shadow-red-600/20'
-                            : theme === 'dark'
-                                ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                : theme === 'modern'
-                                    ? 'text-white font-medium hover:bg-[#15102B]/60 hover:text-white'
-                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                            }`}
-                    >
-                        <item.icon className="w-5 h-5" />
-                        {item.label}
-                    </button>
-                ))}
-            </nav>
         </aside>
     );
 };
@@ -138,6 +185,7 @@ const AdminPage: React.FC = () => {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [user, setUser] = useState<{ username: string; roles?: string[]; userId?: string } | null>(null);
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
@@ -217,6 +265,15 @@ const AdminPage: React.FC = () => {
         setIsRoleModalOpen(true);
     };
 
+    const handleRoleUpdateSuccess = (updatedUserId: string) => {
+        if (updatedUserId === user?.userId) {
+            toast.success('Your roles have been updated. Please log in again.');
+            handleLogoutConfirm();
+        } else {
+            fetchData();
+        }
+    };
+
     const handleLogoutConfirm = async () => {
         setLogoutLoading(true);
         try {
@@ -247,38 +304,46 @@ const AdminPage: React.FC = () => {
 
     return (
         <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+            {isSidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-[55] lg:hidden backdrop-blur-sm"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
 
             {/* HEADER */}
-            <header className={`fixed top-0 left-0 right-0 lg:left-64 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-6 shadow-lg transition-colors duration-300 ${theme === 'dark'
+            <header className={`fixed top-0 left-0 right-0 lg:left-64 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 sm:px-6 shadow-lg transition-colors duration-300 ${theme === 'dark'
                 ? 'bg-black/80 border-gray-800'
                 : theme === 'modern'
                     ? 'bg-gradient-to-r from-[#0E0A20]/90 shadow-2xl border-indigo-500/30 shadow-sm shadow-indigo-500/10'
                     : 'bg-white/80 border-gray-200'
                 }`}>
-                <div
-                    className="hidden lg:flex items-center gap-3 cursor-pointer"
-                    onClick={() => navigate('/home')}
-                >
-                    <div className={`text-2xl font-black tracking-widest uppercase ${theme === 'modern'
-                        ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm'
-                        : 'text-red-600'
-                        }`}>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsSidebarOpen(true)}
+                        className={`p-2 rounded-lg transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
+                                theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
+                                    'hover:bg-gray-100 text-gray-700'
+                            }`}
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+
+                    <div
+                        className={`text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern'
+                            ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm'
+                            : 'text-red-600'
+                            }`}
+                        onClick={() => navigate('/home')}
+                    >
                         CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
                     </div>
-                    <span className={`text-xs border-l pl-3 ${theme === 'dark'
-                        ? 'text-gray-400 border-gray-700'
-                        : theme === 'modern'
-                            ? 'text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10'
-                            : 'text-gray-600 border-gray-300'
-                        }`}>
-                        {t('User Management')}
-                    </span>
                 </div>
+                <div className="flex-1" />
 
-                <div className="lg:hidden flex-1" />
-
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 sm:gap-3">
                     <LanguageSwitcher />
                     <div className="relative" ref={themeDropdownRef}>
                         <button
@@ -402,13 +467,13 @@ const AdminPage: React.FC = () => {
                     <div className="relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className={`flex items-center gap-3 p-2 rounded-lg transition-colors outline-none focus:ring-2 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
+                            className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
                                 }`}
                         >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
                                 <UserCircle className="w-5 h-5 text-white" />
                             </div>
-                            <span className={`hidden sm:block font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
+                            <span className={`hidden md:block font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
                                 {user?.username || 'Guest'}
                             </span>
                             <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
@@ -456,7 +521,7 @@ const AdminPage: React.FC = () => {
                 </div>
             </header>
 
-            <main className="pt-24 lg:pl-64 min-h-screen p-6 flex justify-center">
+            <main className="pt-24 lg:pl-72 min-h-screen p-6 flex justify-center w-full overflow-hidden">
                 <div className={`w-full max-w-7xl rounded-xl border shadow-sm h-fit ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border-indigo-500/30 backdrop-blur-xl' : 'bg-white border-gray-200'}`}>
                     {loading ? (
                         <div className="p-12 text-center">
@@ -464,7 +529,7 @@ const AdminPage: React.FC = () => {
                             <p>Loading data...</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto pb-20">
+                        <div className="overflow-x-auto pb-20 custom-scrollbar w-full">
                             {activeTab === 'users' && (
                                 <table className="w-full text-left text-sm">
                                     <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
@@ -633,15 +698,14 @@ const AdminPage: React.FC = () => {
                                                             {group.startScheduleJob ? (
                                                                 <div className="flex flex-col gap-1">
                                                                     <div className="flex items-center gap-2">
-                                                                        <span 
+                                                                        <span
                                                                             title={group.startScheduleJob.failedReason}
-                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${
-                                                                                group.startScheduleJob.scheduleJobStatus === 'Failed' 
-                                                                                    ? 'bg-red-500/10 text-red-400 border-red-500/20' 
-                                                                                    : group.startScheduleJob.scheduleJobStatus === 'Pending'
-                                                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-                                                                                        : 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                                            }`}
+                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${group.startScheduleJob.scheduleJobStatus === 'Failed'
+                                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                                                : group.startScheduleJob.scheduleJobStatus === 'Pending'
+                                                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                                }`}
                                                                         >
                                                                             {group.startScheduleJob.scheduleJobStatus}
                                                                         </span>
@@ -662,15 +726,14 @@ const AdminPage: React.FC = () => {
                                                             {group.endScheduleJob ? (
                                                                 <div className="flex flex-col gap-1">
                                                                     <div className="flex items-center gap-2">
-                                                                        <span 
+                                                                        <span
                                                                             title={group.endScheduleJob.failedReason}
-                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${
-                                                                                group.endScheduleJob.scheduleJobStatus === 'Failed' 
-                                                                                    ? 'bg-red-500/10 text-red-400 border-red-500/20' 
-                                                                                    : group.endScheduleJob.scheduleJobStatus === 'Pending'
-                                                                                        ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' 
-                                                                                        : 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                                            }`}
+                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${group.endScheduleJob.scheduleJobStatus === 'Failed'
+                                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                                                : group.endScheduleJob.scheduleJobStatus === 'Pending'
+                                                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                                }`}
                                                                         >
                                                                             {group.endScheduleJob.scheduleJobStatus}
                                                                         </span>
@@ -719,7 +782,7 @@ const AdminPage: React.FC = () => {
                 userId={selectedUserId}
                 currentUserEmail={selectedUserEmail}
                 currentUserRoles={selectedUserRoles}
-                onSuccess={fetchData}
+                onSuccess={() => handleRoleUpdateSuccess(selectedUserId)}
             />
 
         </div>

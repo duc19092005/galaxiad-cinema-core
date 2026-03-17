@@ -124,7 +124,9 @@
         "accountInfo": "Account Information",
         "changePassword": "Change Password",
         "switchRole": "Switch Role",
-        "logout": "Logout"
+        "logout": "Logout",
+        "login": "Login",
+        "register": "Register"
     },
     "Facilities Manager Dashboard": "Facilities Manager Dashboard",
     "Theater Manager Dashboard": "Theater Manager Dashboard",
@@ -143,6 +145,8 @@
     "Change Password": "Change Password",
     "Switch Role": "Switch Role",
     "Logout": "Logout",
+    "Login / Sign In": "Login",
+    "Register / Sign Up": "Register",
     "Role:": "Role:",
     "Are you sure you want to log out of the system?": "Are you sure you want to log out of the system?",
     "Cancel": "Cancel",

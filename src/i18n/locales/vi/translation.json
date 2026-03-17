@@ -123,8 +123,11 @@
         "role": "Vai trò",
         "accountInfo": "Thông Tin Tài Khoản",
         "changePassword": "Đổi Mật Khẩu",
+        "selectRole": "Chọn Vai Trò",
         "switchRole": "Đổi Vai Trò",
-        "logout": "Đăng Xuất"
+        "logout": "Đăng Xuất",
+        "login": "Đăng Nhập",
+        "register": "Đăng Ký"
     },
     "Facilities Manager Dashboard": "Bảng Điều Khiển Cơ Sở",
     "Theater Manager Dashboard": "Bảng Điều Khiển Cụm Rạp",
@@ -143,6 +146,8 @@
     "Change Password": "Đổi Mật Khẩu",
     "Switch Role": "Đổi Vai Trò",
     "Logout": "Đăng Xuất",
+    "Login / Sign In": "Đăng Nhập",
+    "Register / Sign Up": "Đăng Ký",
     "Role:": "Vai trò:",
     "Are you sure you want to log out of the system?": "Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?",
     "Cancel": "Hủy",

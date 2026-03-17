@@ -12,7 +12,7 @@ interface RoleUpdateModalProps {
     userId: string;
     currentUserEmail: string;
     currentUserRoles: string; // Comma separated roles
-    onSuccess: () => void;
+    onSuccess: (userId: string) => void;
 }
 
 const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
@@ -96,8 +96,23 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
         setUpdating(true);
         try {
             await adminApi.updateUserRole(userId, selectedRoleIds);
+            
+            // CHECK: Is the user updating THEMSELVES?
+            const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+            if (storedUser.userId === userId) {
+                toast.success('Your permissions have changed. Logging out for security...', { duration: 3000 });
+                // Logout logic
+                setTimeout(() => {
+                    localStorage.removeItem('user_info');
+                    // Remove cookies
+                    document.cookie = 'X-Access-Token=; Max-Age=0; path=/;';
+                    window.location.href = '/login';
+                }, 1500);
+                return;
+            }
+
             toast.success('User roles updated successfully');
-            onSuccess();
+            onSuccess(userId);
             onClose();
         } catch (err: any) {
             toast.error(err.response?.data?.message || 'Failed to update user roles');

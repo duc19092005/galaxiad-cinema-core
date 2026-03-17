@@ -75,6 +75,26 @@
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(129, 140, 248, 0.2);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(129, 140, 248, 0.4);
+}
+
+/* Global Smooth Transitions */
+button, a {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Thêm đoạn này để đảm bảo full màn hình và background nhất quán */
 html, body, #root {
   width: 100%;
@@ -83,6 +103,8 @@ html, body, #root {
   padding: 0;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Đồng bộ màu nền của trình duyệt với theme để tránh khoảng trắng */
@@ -92,7 +114,7 @@ html.dark, body.dark {
 }
 
 html.modern, body.modern {
-  background-color: #050A14;
+  background-color: #030712;
   color: #ffffff;
 }
 
