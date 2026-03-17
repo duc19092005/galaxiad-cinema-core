@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    [Migration("20260227183940_Add_new_col_for_Schedule_Jobs_logger")]
-    partial class Add_new_col_for_Schedule_Jobs_logger
+    [Migration("20260317171804_RefactorManagerIdsAndSeedProfessionalData")]
+    partial class RefactorManagerIdsAndSeedProfessionalData
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -38,6 +38,23 @@ namespace DataAccess.Migrations
                     b.HasIndex("FormatId");
 
                     b.ToTable("AuditoriumFormatInfosEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            FormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612")
+                        },
+                        new
+                        {
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            FormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b")
+                        },
+                        new
+                        {
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9")
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.AuditoriumInfoEntities", b =>
@@ -100,6 +117,44 @@ namespace DataAccess.Migrations
                         .HasFilter("[isDeleted] = CAST(0 AS BIT)");
 
                     b.ToTable("AuditoriumInfoEntities");
+
+                    b.HasData(
+                        new
+                        {
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            AuditoriumNumber = "Cinema 1 (2D)",
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6480)
+                        },
+                        new
+                        {
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            AuditoriumNumber = "Cinema 2 (IMAX)",
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6483)
+                        },
+                        new
+                        {
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            AuditoriumNumber = "Cinema 3 (3D)",
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6485)
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.CinemaDiscountInfoEntity", b =>
@@ -166,6 +221,10 @@ namespace DataAccess.Migrations
                     b.Property<DateTime>("ActiveAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("CinemaCity")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<string>("CinemaDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -194,13 +253,16 @@ namespace DataAccess.Migrations
                     b.Property<Guid?>("DeletedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("FacilitiesManagerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("ManagerId")
+                    b.Property<Guid?>("TheaterManagerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("UpdatedAt")
@@ -222,11 +284,63 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("ManagerId");
+                    b.HasIndex("FacilitiesManagerId");
+
+                    b.HasIndex("TheaterManagerId");
 
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("CinemaInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CinemaCity = "Hồ Chí Minh",
+                            CinemaDescription = "Không gian điện ảnh trẻ trung, hiện đại bậc nhất Sài Gòn.",
+                            CinemaHotLineNumber = "19002235",
+                            CinemaLocation = "116 Nguyễn Du, Quận 1, TP. HCM",
+                            CinemaName = "Galaxy Cinema Nguyễn Du",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            TheaterManagerId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6431)
+                        },
+                        new
+                        {
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CinemaCity = "Hà Nội",
+                            CinemaDescription = "Cụm rạp cao cấp với công nghệ âm thanh Dolby Atmos.",
+                            CinemaHotLineNumber = "0243724666",
+                            CinemaLocation = "Tầng 4, Lotte Mall West Lake, 272 Võ Chí Công, Tây Hồ",
+                            CinemaName = "Lotte Cinema West Lake",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            TheaterManagerId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6436)
+                        },
+                        new
+                        {
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            ActiveAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CinemaCity = "Hồ Chí Minh",
+                            CinemaDescription = "Tọa lạc tại biểu tượng của thành phố, mang lại trải nghiệm đẳng cấp.",
+                            CinemaHotLineNumber = "19002099",
+                            CinemaLocation = "Tầng 3 & 4, Tòa nhà Bitexco, 2 Hải Triều, Quận 1",
+                            CinemaName = "BHD Star Bitexco",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            FacilitiesManagerId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
+                            IsActive = true,
+                            IsDeleted = false,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6439)
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.CinemaSurchargeInfosEntity", b =>
@@ -316,6 +430,968 @@ namespace DataAccess.Migrations
                     b.HasIndex("AuditoriumId");
 
                     b.ToTable("SeatsInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            SeatId = "56cb43db-4c0a-4e7a-9fae-77a54aec9b7b",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A1"
+                        },
+                        new
+                        {
+                            SeatId = "c49e24d9-02fe-4722-8f3a-31fe1cf8d3bc",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A2"
+                        },
+                        new
+                        {
+                            SeatId = "8a920867-7308-43b6-b269-136214d525b4",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A3"
+                        },
+                        new
+                        {
+                            SeatId = "437cf7de-7b03-42f3-9e43-063facf8eb7a",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A4"
+                        },
+                        new
+                        {
+                            SeatId = "ed84e2ed-a2c9-410e-80f4-c4de9e2a85b7",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A5"
+                        },
+                        new
+                        {
+                            SeatId = "0c247d3b-9a6c-4b81-8b29-bbdef38097bb",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A6"
+                        },
+                        new
+                        {
+                            SeatId = "cab5c7ba-a39c-4121-9e7c-66656b321745",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A7"
+                        },
+                        new
+                        {
+                            SeatId = "f035e269-9de6-42a7-8c70-62d53c934c87",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A8"
+                        },
+                        new
+                        {
+                            SeatId = "8c9bc55e-05fc-4a1d-84d1-d6aa67e300b1",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B1"
+                        },
+                        new
+                        {
+                            SeatId = "35f55d1b-37df-4098-bace-d6d7a7cb5aea",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B2"
+                        },
+                        new
+                        {
+                            SeatId = "ccfaf0e2-b364-443e-b6b1-e9d8d408ad7f",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B3"
+                        },
+                        new
+                        {
+                            SeatId = "120709c1-9f79-4471-b486-b6eada2216df",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B4"
+                        },
+                        new
+                        {
+                            SeatId = "3e8c9fc2-e86c-418b-8bac-db22f7d6242d",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B5"
+                        },
+                        new
+                        {
+                            SeatId = "a9499c4a-e52c-4f6a-bc4f-590f85fbd8af",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B6"
+                        },
+                        new
+                        {
+                            SeatId = "9c996384-405f-4a2f-95a3-5131b9991899",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B7"
+                        },
+                        new
+                        {
+                            SeatId = "fffc5367-ac9f-416e-8cdc-0437be8898f8",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B8"
+                        },
+                        new
+                        {
+                            SeatId = "9599701b-689a-446b-92f7-a29c268ad30d",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C1"
+                        },
+                        new
+                        {
+                            SeatId = "925d1eb5-7873-4f3f-a38c-c24d49ca92fa",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C2"
+                        },
+                        new
+                        {
+                            SeatId = "3e6cb6ef-e511-4e10-9007-ade017d52aed",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C3"
+                        },
+                        new
+                        {
+                            SeatId = "423313b8-6bfa-4233-accc-6a326638362d",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C4"
+                        },
+                        new
+                        {
+                            SeatId = "3958562b-4f90-4569-afcc-a160176494e0",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C5"
+                        },
+                        new
+                        {
+                            SeatId = "77e87867-75fe-4b16-8f7a-09a784d5b6cf",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C6"
+                        },
+                        new
+                        {
+                            SeatId = "74a4cc8a-4e2c-41e3-8724-2d82c4b2d912",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C7"
+                        },
+                        new
+                        {
+                            SeatId = "6bdeb9e0-e6d3-43bb-9f6a-f0236adf91ae",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C8"
+                        },
+                        new
+                        {
+                            SeatId = "b0025438-107e-478d-a201-bd6646f13c98",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D1"
+                        },
+                        new
+                        {
+                            SeatId = "b3fa9f27-e3bf-4ee1-a37f-f3fd1687da6c",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D2"
+                        },
+                        new
+                        {
+                            SeatId = "92a10d6a-caa0-4271-9462-fd29bd0cb735",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D3"
+                        },
+                        new
+                        {
+                            SeatId = "4391fba0-88c4-4942-9cb6-8769837d21fc",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D4"
+                        },
+                        new
+                        {
+                            SeatId = "b4dfe1f7-720f-48ed-8e78-77e1cac9a5f9",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D5"
+                        },
+                        new
+                        {
+                            SeatId = "7df37070-5d2f-4e1a-9c6c-9e95208c481d",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D6"
+                        },
+                        new
+                        {
+                            SeatId = "64a237b0-0428-4b31-949a-495a5ea2be34",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D7"
+                        },
+                        new
+                        {
+                            SeatId = "869f3fa9-a204-47cf-814b-66b0689ce0cf",
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D8"
+                        },
+                        new
+                        {
+                            SeatId = "93e52974-271a-4dad-a556-fa3ee428cd9a",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A1"
+                        },
+                        new
+                        {
+                            SeatId = "75f0b581-3ffc-49f4-aca9-c7b1f82e6928",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A2"
+                        },
+                        new
+                        {
+                            SeatId = "4860dd50-f9fc-49bb-a611-cf0dc5966815",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A3"
+                        },
+                        new
+                        {
+                            SeatId = "8f76aef9-aa4b-46d5-b7d2-9bab7d49735f",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A4"
+                        },
+                        new
+                        {
+                            SeatId = "e474c4a8-b208-40f9-8e07-449c7d925cc1",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A5"
+                        },
+                        new
+                        {
+                            SeatId = "510f1d0a-1150-475e-a60c-6c481f305b35",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A6"
+                        },
+                        new
+                        {
+                            SeatId = "4f5da076-3606-4c66-b071-ca9f28884b35",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A7"
+                        },
+                        new
+                        {
+                            SeatId = "52c7c0e7-f241-469f-92ba-beff843ca737",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A8"
+                        },
+                        new
+                        {
+                            SeatId = "7e0ffc09-e5fb-4f3a-a87c-395898124350",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B1"
+                        },
+                        new
+                        {
+                            SeatId = "413e42bb-a753-4947-b1f6-4126adc41e03",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B2"
+                        },
+                        new
+                        {
+                            SeatId = "2e51bf1c-6943-4e16-9eff-c751faa6f472",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B3"
+                        },
+                        new
+                        {
+                            SeatId = "c27b898b-8d57-4cea-ab23-5c096e442c2a",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B4"
+                        },
+                        new
+                        {
+                            SeatId = "1dd8610d-db39-4ab5-85af-50673dc46ac4",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B5"
+                        },
+                        new
+                        {
+                            SeatId = "415195d8-9540-4c95-9e2f-d8bff25c4498",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B6"
+                        },
+                        new
+                        {
+                            SeatId = "af9fadb3-37ba-4f91-8c51-90fd731af491",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B7"
+                        },
+                        new
+                        {
+                            SeatId = "728f8c3f-663c-40e7-aed4-a2cd7f2a6bb0",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B8"
+                        },
+                        new
+                        {
+                            SeatId = "9692bd41-8153-4888-a1d2-7a82ddb029fe",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C1"
+                        },
+                        new
+                        {
+                            SeatId = "85c237c8-be9b-4862-8d00-778e57d77144",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C2"
+                        },
+                        new
+                        {
+                            SeatId = "23e3b142-f451-4d8a-9a15-4da91dd796f9",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C3"
+                        },
+                        new
+                        {
+                            SeatId = "63ee6db0-5c9e-4b61-a4e7-f8d26c9c7915",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C4"
+                        },
+                        new
+                        {
+                            SeatId = "1d6c3bd5-8478-4e5f-a346-0c1f3a723bfb",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C5"
+                        },
+                        new
+                        {
+                            SeatId = "a870044d-539a-45ca-8b3d-94ebb70af92f",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C6"
+                        },
+                        new
+                        {
+                            SeatId = "fafee727-bc6d-4b80-8427-ab73fc0ae82c",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C7"
+                        },
+                        new
+                        {
+                            SeatId = "7261bae1-6ae4-4d33-9dcb-f422f9d5dbec",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C8"
+                        },
+                        new
+                        {
+                            SeatId = "356712d2-9fc7-458b-be03-592c397c344f",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D1"
+                        },
+                        new
+                        {
+                            SeatId = "eae7ae7c-2269-42e5-a052-80ab912cd26d",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D2"
+                        },
+                        new
+                        {
+                            SeatId = "7fa907ad-eeb3-466e-9e31-f5c33efcbd15",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D3"
+                        },
+                        new
+                        {
+                            SeatId = "f9e42d5d-9dcc-4a02-a84d-8808932608f7",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D4"
+                        },
+                        new
+                        {
+                            SeatId = "93d18932-9f83-4e5b-922b-995e9b0d6f32",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D5"
+                        },
+                        new
+                        {
+                            SeatId = "7fa3d12e-14b4-48d2-acd7-2828e5fbd164",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D6"
+                        },
+                        new
+                        {
+                            SeatId = "8bf48024-75a6-447e-b312-9d83c5c4eb22",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D7"
+                        },
+                        new
+                        {
+                            SeatId = "23568fff-0091-474d-ae2f-94f1a5a9d0fb",
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D8"
+                        },
+                        new
+                        {
+                            SeatId = "b0274b5a-fcb8-44f4-b75b-6f2c1ba46930",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A1"
+                        },
+                        new
+                        {
+                            SeatId = "759cd405-1291-4f05-be96-a546ea361b97",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A2"
+                        },
+                        new
+                        {
+                            SeatId = "f6b9191a-26db-4f8e-bde4-6b3fc0aff312",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A3"
+                        },
+                        new
+                        {
+                            SeatId = "fdc20e2c-f52a-4824-bbe3-ab72e78ff8e4",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A4"
+                        },
+                        new
+                        {
+                            SeatId = "c7c79f6f-de06-4301-afdf-a056ecce1621",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A5"
+                        },
+                        new
+                        {
+                            SeatId = "ccea2c5f-d152-4362-a376-906581e8f19e",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A6"
+                        },
+                        new
+                        {
+                            SeatId = "981bbbca-2efa-459c-8083-50724b438bc5",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A7"
+                        },
+                        new
+                        {
+                            SeatId = "0d6fb674-237e-4de4-bb84-610d3e3aa975",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 0.0,
+                            RowIndex = 0,
+                            SeatNumber = "A8"
+                        },
+                        new
+                        {
+                            SeatId = "f87e88c5-f248-4647-aa54-6ee36be479f4",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B1"
+                        },
+                        new
+                        {
+                            SeatId = "5245155b-ccd8-4cd9-b279-a086c929c6ad",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B2"
+                        },
+                        new
+                        {
+                            SeatId = "40ca824f-9d05-47dc-85fe-cf36e5bb26d5",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B3"
+                        },
+                        new
+                        {
+                            SeatId = "3dce0dbb-0c18-4e21-acb2-c5719acfd13e",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B4"
+                        },
+                        new
+                        {
+                            SeatId = "811f36f6-6448-4c56-95e1-92774723a60c",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B5"
+                        },
+                        new
+                        {
+                            SeatId = "94b01968-9e50-4eb4-8633-f17b732f6759",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B6"
+                        },
+                        new
+                        {
+                            SeatId = "3977ba88-1395-41fe-9451-52f4de2b9dd3",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B7"
+                        },
+                        new
+                        {
+                            SeatId = "ebe99864-5a94-4ec0-ba1d-820248bbefd0",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 60.0,
+                            RowIndex = 1,
+                            SeatNumber = "B8"
+                        },
+                        new
+                        {
+                            SeatId = "090f59b4-7a66-4845-b3af-deb1d442cf03",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C1"
+                        },
+                        new
+                        {
+                            SeatId = "8ba90016-96b1-4a0d-9f3b-3ff8888a897d",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C2"
+                        },
+                        new
+                        {
+                            SeatId = "be2906e6-39dd-4a4e-8176-cdb372562687",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C3"
+                        },
+                        new
+                        {
+                            SeatId = "3ccf69dc-7259-4f6a-a366-5d76fe418210",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C4"
+                        },
+                        new
+                        {
+                            SeatId = "60f2db16-9a47-4dc3-885a-f4c7349689b8",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C5"
+                        },
+                        new
+                        {
+                            SeatId = "e895c03e-819b-4053-b9fb-a08179949425",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C6"
+                        },
+                        new
+                        {
+                            SeatId = "d8e1f324-cfb5-4607-92e5-b44e80085284",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C7"
+                        },
+                        new
+                        {
+                            SeatId = "5ce06109-e85c-49aa-a4db-cb83c8d60281",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 120.0,
+                            RowIndex = 2,
+                            SeatNumber = "C8"
+                        },
+                        new
+                        {
+                            SeatId = "d7bbfa0c-12ba-456c-83d9-1d8d84dbc675",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 0,
+                            CoordX = 0.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D1"
+                        },
+                        new
+                        {
+                            SeatId = "90ef239a-5c70-46e8-b878-53fa219b4dca",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 1,
+                            CoordX = 60.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D2"
+                        },
+                        new
+                        {
+                            SeatId = "11fe78ab-95e4-477f-a9f2-1b0d3f715279",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 2,
+                            CoordX = 120.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D3"
+                        },
+                        new
+                        {
+                            SeatId = "d4497d2f-be3a-4e0b-91ca-6210c72f6680",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 3,
+                            CoordX = 180.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D4"
+                        },
+                        new
+                        {
+                            SeatId = "bb8abb9b-601f-4a62-87bd-3910cd4d542c",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 4,
+                            CoordX = 240.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D5"
+                        },
+                        new
+                        {
+                            SeatId = "247c65c7-103f-4df3-93f3-a7e007bf7890",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 5,
+                            CoordX = 300.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D6"
+                        },
+                        new
+                        {
+                            SeatId = "4f51b74f-c29a-476e-9049-a7afad7c04ff",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 6,
+                            CoordX = 360.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D7"
+                        },
+                        new
+                        {
+                            SeatId = "0d89096a-8b1b-4af0-8a3b-84cd837896ac",
+                            AuditoriumId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ColIndex = 7,
+                            CoordX = 420.0,
+                            CoordY = 180.0,
+                            RowIndex = 3,
+                            SeatNumber = "D8"
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>
@@ -579,6 +1655,23 @@ namespace DataAccess.Migrations
                     b.HasIndex("MovieId");
 
                     b.ToTable("MovieGenreMovieInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieGenreId = new Guid("f2a1b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c"),
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666")
+                        },
+                        new
+                        {
+                            MovieGenreId = new Guid("b2c3d4e5-f6a7-4b8c-9d0e-1f2a3b4c5d6e"),
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777")
+                        },
+                        new
+                        {
+                            MovieGenreId = new Guid("d4e5f6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a"),
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888")
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieInfoEntity", b =>
@@ -589,6 +1682,10 @@ namespace DataAccess.Migrations
 
                     b.Property<DateTime>("ActiveAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Actors")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -602,17 +1699,21 @@ namespace DataAccess.Migrations
                     b.Property<Guid?>("DeletedByUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Director")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<DateTime>("EndedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<bool>("IsDeleted")
+                    b.Property<bool>("IsCommingSoon")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("ManagerId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
 
                     b.Property<string>("MovieDescription")
                         .IsRequired()
@@ -625,12 +1726,19 @@ namespace DataAccess.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(2048)");
 
+                    b.Property<Guid?>("MovieManagerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("MovieName")
                         .IsRequired()
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("MovieRequiredAgeId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TrailerUrl")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -644,13 +1752,13 @@ namespace DataAccess.Migrations
 
                     b.HasIndex("DeletedByUserId");
 
-                    b.HasIndex("ManagerId");
-
                     b.HasIndex("MovieDescription")
                         .IsUnique();
 
                     b.HasIndex("MovieImageUrl")
                         .IsUnique();
+
+                    b.HasIndex("MovieManagerId");
 
                     b.HasIndex("MovieName")
                         .IsUnique();
@@ -660,6 +1768,71 @@ namespace DataAccess.Migrations
                     b.HasIndex("UpdatedByUserId");
 
                     b.ToTable("MovieInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            ActiveAt = new DateTime(2026, 3, 13, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            Actors = "Robert Pattinson, Zoë Kravitz, Paul Dano",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            Director = "Matt Reeves",
+                            EndedDate = new DateTime(2026, 4, 12, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            IsActive = true,
+                            IsCommingSoon = true,
+                            IsDeleted = false,
+                            MovieDescription = "Batman ventures into Gotham City's underworld when a sadistic killer leaves behind a trail of cryptic clues.",
+                            MovieDuration = 176,
+                            MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/the_batman_poster",
+                            MovieManagerId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            MovieName = "The Batman",
+                            MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
+                            TrailerUrl = "https://www.youtube.com/watch?v=mqqft239u6Q",
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7055)
+                        },
+                        new
+                        {
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            ActiveAt = new DateTime(2026, 3, 17, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            Actors = "Cillian Murphy, Emily Blunt, Matt Damon",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Director = "Christopher Nolan",
+                            EndedDate = new DateTime(2026, 4, 17, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            IsActive = true,
+                            IsCommingSoon = true,
+                            IsDeleted = false,
+                            MovieDescription = "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb.",
+                            MovieDuration = 180,
+                            MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/oppenheimer_poster",
+                            MovieManagerId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            MovieName = "Oppenheimer",
+                            MovieRequiredAgeId = new Guid("9f0e1d2c-3b4a-4d5e-6f7a-8b9c0d1e2f3a"),
+                            TrailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7067)
+                        },
+                        new
+                        {
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            ActiveAt = new DateTime(2026, 3, 28, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            Actors = "Sam Worthington, Zoe Saldana, Sigourney Weaver",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            Director = "James Cameron",
+                            EndedDate = new DateTime(2026, 4, 27, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(6390),
+                            IsActive = true,
+                            IsCommingSoon = true,
+                            IsDeleted = false,
+                            MovieDescription = "Jake Sully lives with his newfound family formed on the extrasolar moon Pandora.",
+                            MovieDuration = 192,
+                            MovieImageUrl = "https://res.cloudinary.com/dp6utffzy/image/upload/v171000000/avatar_poster",
+                            MovieManagerId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                            MovieName = "Avatar: The Way of Water",
+                            MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
+                            TrailerUrl = "https://www.youtube.com/watch?v=d9MyW72ELq0",
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7071)
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieScheduleInfoEntity", b =>
@@ -701,6 +1874,9 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("MovieId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
@@ -724,6 +1900,38 @@ namespace DataAccess.Migrations
                         .HasFilter("[isDeleted] = 0");
 
                     b.ToTable("MovieScheduleInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieScheduleInfoId = new Guid("98ee446e-c0df-4aa2-b96e-4ddaa9111116"),
+                            ActiveAt = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Local),
+                            AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7147),
+                            CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                            EndedTime = new DateTime(2026, 3, 19, 21, 56, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            IsDeleted = false,
+                            MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            StartTime = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7148)
+                        },
+                        new
+                        {
+                            MovieScheduleInfoId = new Guid("31ccca9e-3997-4e5e-80bc-aceca09d2566"),
+                            ActiveAt = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Local),
+                            AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7156),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            EndedTime = new DateTime(2026, 3, 19, 23, 0, 0, 0, DateTimeKind.Local),
+                            IsActive = true,
+                            IsDeleted = false,
+                            MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            StartTime = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Local),
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 18, 3, 396, DateTimeKind.Local).AddTicks(7157)
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.movieFormatMovieInfoEntity", b =>
@@ -739,6 +1947,23 @@ namespace DataAccess.Migrations
                     b.HasIndex("FormatId");
 
                     b.ToTable("MovieFormatMovieInfoEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            FormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            FormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            FormatId = new Guid("7a5e82b1-c4d3-4a92-9e11-3f4b52c1a8d9")
+                        });
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.movieRequiredAgeEntity", b =>
@@ -837,17 +2062,19 @@ namespace DataAccess.Migrations
                     b.Property<Guid>("MovieScheduleId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("SeatId")
+                        .HasColumnType("varchar(100)");
+
                     b.Property<decimal>("PriceEach")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("SeatId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("OrderId", "MovieScheduleId");
+                    b.HasKey("OrderId", "MovieScheduleId", "SeatId");
 
                     b.HasIndex("MovieScheduleId");
 
-                    b.ToTable("OrderDetailsInfo");
+                    b.HasIndex("SeatId");
+
+                    b.ToTable("OrderDetailsInfoEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderInfoEntity", b =>
@@ -885,6 +2112,9 @@ namespace DataAccess.Migrations
 
                     b.Property<Guid?>("UserId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("VnPayTransactionId")
+                        .HasColumnType("varchar(100)");
 
                     b.HasKey("OrderId");
 
@@ -998,7 +2228,7 @@ namespace DataAccess.Migrations
                             AccountStatus = 0,
                             Password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke",
                             RegisterMethod = 0,
-                            UserEmail = "moviemanager@cinema.com"
+                            UserEmail = "movie.manager@cinema.com"
                         },
                         new
                         {
@@ -1006,7 +2236,7 @@ namespace DataAccess.Migrations
                             AccountStatus = 0,
                             Password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m",
                             RegisterMethod = 0,
-                            UserEmail = "theater@cinema.com"
+                            UserEmail = "theater.manager@cinema.com"
                         },
                         new
                         {
@@ -1014,23 +2244,7 @@ namespace DataAccess.Migrations
                             AccountStatus = 0,
                             Password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2",
                             RegisterMethod = 0,
-                            UserEmail = "facilities@cinema.com"
-                        },
-                        new
-                        {
-                            UserId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
-                            AccountStatus = 0,
-                            Password = "$2a$12$HSYdRT84AjbFawIfnmluJ.AMrBqmqBtKyyn6kNZFTNW7olAMMgXPy",
-                            RegisterMethod = 0,
-                            UserEmail = "cashier@cinema.com"
-                        },
-                        new
-                        {
-                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0"),
-                            AccountStatus = 0,
-                            Password = "$2a$12$HSYdRT84AjbFawIfnmluJ.AMrBqmqBtKyyn6kNZFTNW7olAMMgXPy",
-                            RegisterMethod = 0,
-                            UserEmail = "testAdminFacilitiesManager@gmail.com"
+                            UserEmail = "facilities.manager@cinema.com"
                         });
                 });
 
@@ -1071,7 +2285,7 @@ namespace DataAccess.Migrations
                             DateOfBirth = new DateTime(1985, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IdentityCode = "NjItl/uAfIOjjzvtWPbnzg==",
                             PhoneNumber = "0988123456",
-                            UserName = "System Administrator"
+                            UserName = "Tổng Quản Trị Hệ Thống"
                         },
                         new
                         {
@@ -1079,7 +2293,7 @@ namespace DataAccess.Migrations
                             DateOfBirth = new DateTime(1990, 5, 10, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IdentityCode = "pxc5zG8sfEcsJrHg1AjV3w==",
                             PhoneNumber = "0911111111",
-                            UserName = "Movie Content Manager"
+                            UserName = "Quản Lý Nội Dung Phim"
                         },
                         new
                         {
@@ -1087,7 +2301,7 @@ namespace DataAccess.Migrations
                             DateOfBirth = new DateTime(1988, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IdentityCode = "Pk3VcB5Kk2xdhHerF74zBg==",
                             PhoneNumber = "0922222222",
-                            UserName = "Cinema Operations Manager"
+                            UserName = "Quản Lý Vận Hành Rạp"
                         },
                         new
                         {
@@ -1095,23 +2309,7 @@ namespace DataAccess.Migrations
                             DateOfBirth = new DateTime(1992, 8, 20, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             IdentityCode = "cFobMOQzli9Um8tWi/vJZg==",
                             PhoneNumber = "0933333333",
-                            UserName = "Technical Facilities Manager"
-                        },
-                        new
-                        {
-                            UserId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6"),
-                            DateOfBirth = new DateTime(1995, 12, 12, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IdentityCode = "pFoBRlv4RT1kyqKE1Ch3Hw==",
-                            PhoneNumber = "0944444444",
-                            UserName = "Main Cashier"
-                        },
-                        new
-                        {
-                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0"),
-                            DateOfBirth = new DateTime(1986, 3, 15, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            IdentityCode = "fByrPlhQbK2U5YNuCLR5rA==",
-                            PhoneNumber = "0955555555",
-                            UserName = "Test Multi Role Account"
+                            UserName = "Quản Lý Cơ Sở Vật Chất"
                         });
                 });
 
@@ -1138,6 +2336,21 @@ namespace DataAccess.Migrations
                         new
                         {
                             RoleId = new Guid("4d1e0f2a-b7c8-d9e0-f1a2-3b4c5d6e7f8a"),
+                            UserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b"),
+                            UserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("6f3a2b4c-d9e0-f1a2-b3c4-d5e6f7a8b9c0"),
+                            UserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("4d1e0f2a-b7c8-d9e0-f1a2-3b4c5d6e7f8a"),
                             UserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7")
                         },
                         new
@@ -1149,21 +2362,6 @@ namespace DataAccess.Migrations
                         {
                             RoleId = new Guid("6f3a2b4c-d9e0-f1a2-b3c4-d5e6f7a8b9c0"),
                             UserId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c"),
-                            UserId = new Guid("a1b2c3d4-e5f6-7a8b-c9d0-e1f2a3b4c5d6")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b"),
-                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0")
-                        },
-                        new
-                        {
-                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f"),
-                            UserId = new Guid("7e272a3a-6288-4589-9d0e-f4203a5f3fe0")
                         });
                 });
 
@@ -1376,11 +2574,15 @@ namespace DataAccess.Migrations
                         .HasForeignKey("DeletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "manager")
-                        .WithMany("ManagedCinemas")
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                    b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "FacilitiesManager")
+                        .WithMany("FacilitiesManagedCinemas")
+                        .HasForeignKey("FacilitiesManagerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "TheaterManager")
+                        .WithMany("TheaterManagedCinemas")
+                        .HasForeignKey("TheaterManagerId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "Updater")
                         .WithMany("UpdatedCinemas")
@@ -1391,9 +2593,11 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Deleter");
 
-                    b.Navigation("Updater");
+                    b.Navigation("FacilitiesManager");
 
-                    b.Navigation("manager");
+                    b.Navigation("TheaterManager");
+
+                    b.Navigation("Updater");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.CinemaSurchargeInfosEntity", b =>
@@ -1513,11 +2717,10 @@ namespace DataAccess.Migrations
                         .HasForeignKey("DeletedByUserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "Manager")
+                    b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "MovieManager")
                         .WithMany("ManagedMovieInfos")
-                        .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasForeignKey("MovieManagerId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DataAccess.Entities.MovieInfos.movieRequiredAgeEntity", "MovieRequiredAgeEntity")
                         .WithMany("movie_info_entity")
@@ -1534,7 +2737,7 @@ namespace DataAccess.Migrations
 
                     b.Navigation("Deleter");
 
-                    b.Navigation("Manager");
+                    b.Navigation("MovieManager");
 
                     b.Navigation("MovieRequiredAgeEntity");
 
@@ -1623,9 +2826,17 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", "SeatsInfoEntity")
+                        .WithMany("OrderDetailsInfo")
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("MovieScheduleInfoEntity");
 
                     b.Navigation("OrderInfoEntity");
+
+                    b.Navigation("SeatsInfoEntity");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderInfoEntity", b =>
@@ -1695,6 +2906,11 @@ namespace DataAccess.Migrations
                     b.Navigation("CinemaDiscountInfoEntity");
 
                     b.Navigation("CinemaSurchargeInfosEntity");
+                });
+
+            modelBuilder.Entity("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", b =>
+                {
+                    b.Navigation("OrderDetailsInfo");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>
@@ -1778,11 +2994,13 @@ namespace DataAccess.Migrations
 
                     b.Navigation("DeletedSchedules");
 
-                    b.Navigation("ManagedCinemas");
+                    b.Navigation("FacilitiesManagedCinemas");
 
                     b.Navigation("ManagedMovieInfos");
 
                     b.Navigation("OrderInfoEntity");
+
+                    b.Navigation("TheaterManagedCinemas");
 
                     b.Navigation("UpdatedAuditoriums");
 

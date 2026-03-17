@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.ThirdPersonServices;
 using BusinessLayer.Validators;
 using Shared.Enums;
+using Hangfire;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
 
@@ -96,8 +97,14 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 EndedDate = request.EndedDate,
                 IsActive = DateTime.Now >= request.StartedDate && request.EndedDate > DateTime.Now,
                 CreatedByUserId = getUserId,
-                ManagerId = getUserId,
+                MovieManagerId = getUserId,
                 MovieDuration = request.Duration,
+                TrailerUrl = request.TrailerUrl ?? string.Empty,
+                Director = request.Director ?? string.Empty,
+                Actors = request.Actors ?? string.Empty,
+                IsCommingSoon = DateTime.Now < request.StartedDate,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
             };
 
             var newMovieGenreMovieInfos = request.MovieGenreIds.Select(id => new MovieGenreMovieInfoEntity()
@@ -112,21 +119,16 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 FormatId = id
             });
 
-            string getJobStatus =
-                await _scheduleJobsService.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate , request.EndedDate);
-
-            if (String.IsNullOrEmpty(getJobStatus))
-            {
-                _logger.LogError("Error While Adding Jobs in Movie Service");
-                throw CustomSystemException.SystemExceptionCaller();
-            }
-
             await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
             
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            // Enqueue job registration to background AFTER transaction is committed
+            // This prevents race conditions where the job runs before the DB has the record.
+            BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));
 
             return new BaseResponse<string>()
             {
@@ -173,6 +175,15 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 var getUserId = _userContextService.GetUserId();
                 var validationsErrors = new List<string>();
 
+                var hasSuccessfulBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                    .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
+                                    (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+
+                if (hasSuccessfulBooking)
+                {
+                    throw new BadRequestException("Không thể sửa phim khi đã có khách hàng đặt vé thành công.", "E03");
+                }
+
                 if (!string.IsNullOrEmpty(request.MovieName))
                 {
                     if (await MovieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, itemId))
@@ -212,13 +223,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     throw new BadRequestException(validationsErrors, "S01");
                 }
 
-                bool UpdateJobStatus = await _scheduleJobsService.UpdatedJobIntoBackground
-                    (SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate , request.EndedDate);
-                if (!UpdateJobStatus)
-                {
-                    _logger.LogError("Error While Adding Jobs in Movie Service");
-                    throw CustomSystemException.SystemExceptionCaller();
-                }
+                // (Remove original position)
+                // BackgroundJob.Enqueue updated to move after commit
+
                 findTheMovie.MovieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.MovieRequiredAgeId;
                 findTheMovie.MovieDescription = request.MovieDescription ?? findTheMovie.MovieDescription;
                 findTheMovie.MovieName = request.MovieName ?? findTheMovie.MovieName;
@@ -228,7 +235,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.UpdatedByUserId = getUserId;
                 findTheMovie.IsActive =
                     (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.Now;
+                findTheMovie.IsCommingSoon = (request.StartedDate ?? findTheMovie.ActiveAt) > DateTime.Now;
                 findTheMovie.MovieDuration = request.Duration ?? findTheMovie.MovieDuration;
+                findTheMovie.TrailerUrl = request.TrailerUrl ?? findTheMovie.TrailerUrl;
+                findTheMovie.Director = request.Director ?? findTheMovie.Director;
+                findTheMovie.Actors = request.Actors ?? findTheMovie.Actors;
                 
                 if (request.MovieImage != null)
                 {
@@ -278,6 +289,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 await _dbContext.SaveChangesAsync();
                 await transactions.CommitAsync();
 
+                // Enqueue job update to background AFTER transaction is committed
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate, request.EndedDate));
+
                 if (fileUploadStatus.success && !string.IsNullOrEmpty(oldImageUrl))
                 {
                     try
@@ -321,7 +335,68 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
-        return null!;
+        var getCurrentUserId = _userContextService.GetUserId();
+        var movie = await _dbContext.MovieInfoEntity
+            .FirstOrDefaultAsync(x => x.MovieId == itemId);
+            
+        if (movie == null)
+        {
+            throw new NotFoundException(Messages.Movie.NotFoundById(itemId));
+        }
+
+        if (movie.IsDeleted)
+        {
+            throw new BadRequestException("Phim này đã bị xóa.", "D01");
+        }
+
+        var hasSuccessfulBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+            .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
+                            (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+
+        if (hasSuccessfulBooking)
+        {
+            movie.IsDeleted = true;
+            movie.DeletedByUserId = getCurrentUserId;
+            movie.DeletedAt = DateTime.Now;
+            _dbContext.MovieInfoEntity.Update(movie);
+        }
+        else
+        {
+            var hasAnyBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId);
+
+            if (hasAnyBooking)
+            {
+                // Soft delete to avoid foreign key conflict with failed/canceled orders
+                movie.IsDeleted = true;
+                movie.DeletedByUserId = getCurrentUserId;
+                movie.DeletedAt = DateTime.Now;
+                _dbContext.MovieInfoEntity.Update(movie);
+            }
+            else
+            {
+                // Hard delete
+                var schedules = await _dbContext.MovieScheduleInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
+                _dbContext.MovieScheduleInfoEntity.RemoveRange(schedules);
+
+                var movieFormats = await _dbContext.MovieFormatMovieInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
+                _dbContext.MovieFormatMovieInfoEntity.RemoveRange(movieFormats);
+
+                var movieGenres = await _dbContext.MovieGenreMovieInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
+                _dbContext.MovieGenreMovieInfoEntity.RemoveRange(movieGenres);
+
+                _dbContext.MovieInfoEntity.Remove(movie);
+            }
+        }
+        
+        await _dbContext.SaveChangesAsync();
+
+        return new BaseResponse<string>()
+        {
+            Message = "Xóa phim thành công",
+            Data = null,
+            IsSuccess = true
+        };
     }
 
     public async Task UpdatedComingMovieStatusJobs(Guid movieId)

@@ -1,3 +1,4 @@
+using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +19,6 @@ public static class OrderDetailsInfoRelationshipsKeys
             .WithMany(x => x.OrderDetailsInfos)
             .HasForeignKey(x => x.MovieScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
-
         modelBuilder.Entity<OrderDetailsInfo>()
             .HasOne(x => x.SeatsInfoEntity)
             .WithMany(x => x.OrderDetailsInfo)
@@ -29,7 +29,7 @@ public static class OrderDetailsInfoRelationshipsKeys
     public static void AddOrderDetailsInfoKeys(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<OrderDetailsInfo>()
-            .HasKey(x => new { orderId = x.OrderId, movieScheduleId = x.MovieScheduleId });
+            .HasKey(x => new { x.OrderId, x.MovieScheduleId, x.SeatId });
     }
 }
 

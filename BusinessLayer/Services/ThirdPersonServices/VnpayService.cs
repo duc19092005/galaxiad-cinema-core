@@ -85,66 +85,61 @@ public class VnpayService : IVnPayService
 
             //var paymentURL = vnpay.GetPaymentUrl(request);
 
-            if (_configuration["Vnpay:Tmd_Code"] == null || _configuration["Vnpay:vnp_ReturnUrl"] == null ||
-                _configuration["Vnpay:SecureHash"] == null)
+            string tmnCode = _configuration["VNPay:TmnCode"];
+            string secureHash = _configuration["VNPay:HashSecret"];
+            string returnUrl = _configuration["VNPay:ReturnUrl"];
+
+            if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(returnUrl) || string.IsNullOrEmpty(secureHash))
             {
                 _logger.LogError("Vnpay Secrect Key is null");
                 throw CustomSystemException.SystemExceptionCaller();
             }
 
-            var newUrlParams = new VnpayUrlParams
-            (_configuration["Vnpay:Tmd_Code"], amount, ipAddress
-                , $"Đây là đơn thanh toán cho đơn hàng số {orderId}", _configuration["Vnpay:vnp_ReturnUrl"], orderId);
+            string vnpaySandboxUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            string orderInfo = $"Thanh toan don hang {orderId}";
 
-            var vnpaySandboxUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-
-            // Các Params 
-
-            Dictionary<string, string> vnpayParams = new Dictionary<string, string>()
+            var vnpayParams = new Dictionary<string, string>
             {
-                { "vnp_Version", newUrlParams.VnpVersion },
-                { "vnp_Command", newUrlParams.VnpCommand },
-                { "vnp_TmnCode", newUrlParams.VnpTmnCode },
-                { "vnp_Amount", (newUrlParams.VnpAmount * 100).ToString() },
-                { "vnp_CreateDate", newUrlParams.VnpCreateDate },
-                { "vnp_CurrCode", newUrlParams.VnpCurrCode },
-                { "vnp_IpAddr", newUrlParams.VnpIpAddr },
-                { "vnp_Locale", newUrlParams.VnpLocale },
-                { "vnp_OrderInfo", WebUtility.UrlEncode(newUrlParams.VnpOrderInfo) },
-                { "vnp_OrderType", newUrlParams.VnpOrderType },
-                { "vnp_ReturnUrl", WebUtility.UrlEncode(newUrlParams.VnpReturnUrl) },
+                { "vnp_Version", "2.1.0" },
+                { "vnp_Command", "pay" },
+                { "vnp_TmnCode", tmnCode },
+                { "vnp_Amount", (amount * 100).ToString() },
+                { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
+                { "vnp_CurrCode", "VND" },
+                { "vnp_IpAddr", ipAddress },
+                { "vnp_Locale", "vn" },
+                { "vnp_OrderInfo", orderInfo },
+                { "vnp_OrderType", "other" },
+                { "vnp_ReturnUrl", returnUrl },
                 { "vnp_TxnRef", orderId }
             };
 
-            var orderByParams = vnpayParams.OrderBy(x => x.Key);
+            var sortedParams = vnpayParams.OrderBy(x => x.Key).ToList();
 
-            // Convert sang dạng Params của Vnpay Yêu cầu
+            System.Text.StringBuilder rawData = new System.Text.StringBuilder();
+            System.Text.StringBuilder queryString = new System.Text.StringBuilder();
 
-            var convertToParamsToVnpayRequireParams = orderByParams
-                .Select(x => x.Key + "=" + x.Value);
+            foreach (var vp in sortedParams)
+            {
+                if (!string.IsNullOrEmpty(vp.Value))
+                {
+                    string encodedKey = WebUtility.UrlEncode(vp.Key);
+                    string encodedValue = WebUtility.UrlEncode(vp.Value);
 
-            // ToURL
+                    queryString.Append(encodedKey + "=" + encodedValue + "&");
+                    rawData.Append(encodedKey + "=" + encodedValue + "&");
+                }
+            }
 
-            var convertParamsToUrl = String.Join("&", convertToParamsToVnpayRequireParams);
+            string rawDataStr = rawData.ToString().TrimEnd('&');
+            string queryStringStr = queryString.ToString().TrimEnd('&');
 
-            // Mã hóa
+            // Mã hóa (tận dụng hàm Encrypt ở project cũ có lõi là HMACSHA512 mặc dù tên file là SHA256)
+            var convertToSha512 = _sha256Services.Encrypt(rawDataStr, secureHash);
 
-            var convertToSha512 =
-                _sha256Services.Encrypt(convertParamsToUrl, _configuration["Vnpay:SecureHash"]);
+            string finalUrl = $"{vnpaySandboxUrl}?{queryStringStr}&vnp_SecureHash={convertToSha512}";
 
-            // Chuyển sang dạng URL của VNPAY để tạo yêu cầu request
-
-            var convertToUrl =
-                vnpaySandboxUrl +
-                "?" +
-                convertParamsToUrl
-                +
-                "&" +
-                "vnp_SecureHash" +
-                "=" +
-                convertToSha512;
-
-            return convertToUrl;
+            return finalUrl;
 
 
         }

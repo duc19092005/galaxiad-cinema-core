@@ -9,6 +9,9 @@ public class TheaterManagerAuditoriumRes
     public string CinemaHotLineNumber { get; set; } = String.Empty;
     
     public int TotalAuditoriums { get; set; } = 0;
+    
+    public string TheaterManagerName { get; set; } = string.Empty;
+    public string FacilitiesManagerName { get; set; } = string.Empty;
 
     public List<TheaterManagerAuditoriumInfos> AuditoriumInfosList { get; set; } = [];
 }

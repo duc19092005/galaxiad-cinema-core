@@ -27,4 +27,13 @@ public class ResGetMovieInfosMovieManagerDto
     public string CreatedBy { get; set; } = String.Empty;
     
     public int Duration { get; set; }
+    
+    public string TrailerUrl { get; set; } = string.Empty;
+    
+    public string Director { get; set; } = string.Empty;
+    
+    public string Actors { get; set; } = string.Empty;
+    
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
+    public string MovieManagerName { get; set; } = string.Empty;
 }

@@ -1,4 +1,4 @@
-﻿using BusinessLayer.Dtos;
+using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.TheaterManager.Auditoriums.Responses;
 using BusinessLayer.Interfaces.TheaterManager;
 using BusinessLayer.Services.IdentityAccess;
@@ -24,10 +24,20 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
     {
         Guid userId = GetUserId();
         // Checking Cinemas
-        var getCinemaByUserId =
-            await _cinemaDbContext.CinemaInfoEntity.AsNoTracking().Include(x => x.AuditoriumInfoEntities).FirstOrDefaultAsync
-            (x =>
-                x.ManagerId.Equals(userId));
+        var isAdmin = userContextservice.IsInRole("Admin");
+
+        var getCinemaByUserIdQuery = _cinemaDbContext.CinemaInfoEntity.AsNoTracking()
+                .Include(x => x.AuditoriumInfoEntities)
+                .Include(x => x.TheaterManager).ThenInclude(u => u.UserProfileEntity)
+                .Include(x => x.FacilitiesManager).ThenInclude(u => u.UserProfileEntity)
+                .AsQueryable();
+
+        if (!isAdmin)
+        {
+            getCinemaByUserIdQuery = getCinemaByUserIdQuery.Where(x => x.TheaterManagerId == userId);
+        }
+
+        var getCinemaByUserId = await getCinemaByUserIdQuery.FirstOrDefaultAsync();
 
         if (getCinemaByUserId == null)
         {
@@ -57,7 +67,11 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
             CinemaName = getCinemaByUserId.CinemaName,
             CinemaHotLineNumber = getCinemaByUserId.CinemaHotLineNumber,
             CinemaLocation = getCinemaByUserId.CinemaLocation,
-            TotalAuditoriums = getCinemaByUserId.AuditoriumInfoEntities.Count
+            TotalAuditoriums = getCinemaByUserId.AuditoriumInfoEntities.Count,
+            TheaterManagerName = getCinemaByUserId.TheaterManager != null && getCinemaByUserId.TheaterManager.UserProfileEntity != null 
+                ? getCinemaByUserId.TheaterManager.UserProfileEntity.UserName : "Chưa có",
+            FacilitiesManagerName = getCinemaByUserId.FacilitiesManager != null && getCinemaByUserId.FacilitiesManager.UserProfileEntity != null 
+                ? getCinemaByUserId.FacilitiesManager.UserProfileEntity.UserName : "Chưa có"
         };
         
         // Config For base Response

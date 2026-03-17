@@ -26,4 +26,10 @@ public class UserProfileService
         var results = await _profileBehavior.GetAccess();
         return results;
     }
+
+    public async Task<BaseResponse<string>> UpdateUserProfile(ReqUpdateUserProfileDto request)
+    {
+        var results = await _profileBehavior.UpdateUserProfile(request);
+        return results;
+    }
 }

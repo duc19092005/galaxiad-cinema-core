@@ -24,9 +24,15 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
     {
         // Find By User Id
         var findUserId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var getUserMovieInfos = await _dbContext.MovieInfoEntity
-            .Where(x => x.ManagerId.Equals(findUserId))
+        var query = _dbContext.MovieInfoEntity.AsQueryable();
+        if (!isAdmin)
+        {
+            query = query.Where(x => x.MovieManagerId == findUserId);
+        }
+
+        var getUserMovieInfos = await query
             .Select(x => new ResGetMovieInfosMovieManagerDto()
             {
                 MovieId = x.MovieId,
@@ -37,13 +43,18 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
-                CreatedBy =  _dbContext.UserProfileEntity
-                    .FirstOrDefault(x => x
-                        .UserId.Equals
-                            (GetUserId())).UserName,
                 Duration = x.MovieDuration ,
-                EndedDate = x.EndedDate,
-                StartedDate = x.ActiveAt
+                EndedDate = DateTime.SpecifyKind(x.EndedDate, DateTimeKind.Utc),
+                StartedDate = DateTime.SpecifyKind(x.ActiveAt, DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(x.CreatedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(x.UpdatedAt, DateTimeKind.Utc),
+                CreatedBy = x.Creator != null ? x.Creator.UserProfileEntity.UserName : "System Administrator",
+                UpdatedBy = x.Updater != null ? x.Updater.UserProfileEntity.UserName : "",
+                TrailerUrl = x.TrailerUrl,
+                Director = x.Director,
+                Actors = x.Actors,
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
+                MovieManagerName = x.MovieManager != null && x.MovieManager.UserProfileEntity != null ? x.MovieManager.UserProfileEntity.UserName : "Chưa có"
             })
             .AsNoTracking()
             .ToListAsync();
@@ -59,9 +70,15 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
     public async Task<BaseResponse<ResGetMovieInfosMovieManagerDto>> GetById(Guid id)
     {
         Guid currentUserId = GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var findMovieInfos = await _dbContext.MovieInfoEntity
-            .Where(x => x.ManagerId == currentUserId)
+        var query = _dbContext.MovieInfoEntity.Where(x => x.MovieId == id);
+        if (!isAdmin)
+        {
+            query = query.Where(x => x.MovieManagerId == currentUserId);
+        }
+
+        var findMovieInfos = await query
             .Select(m => new ResGetMovieInfosMovieManagerDto()
             {
                 MovieId = m.MovieId,
@@ -73,8 +90,17 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 Duration = m.MovieDuration,
-                EndedDate = m.EndedDate,
-                StartedDate = m.ActiveAt
+                EndedDate = DateTime.SpecifyKind(m.EndedDate, DateTimeKind.Utc),
+                StartedDate = DateTime.SpecifyKind(m.ActiveAt, DateTimeKind.Utc),
+                CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc),
+                UpdatedAt = DateTime.SpecifyKind(m.UpdatedAt, DateTimeKind.Utc),
+                CreatedBy = m.Creator != null ? m.Creator.UserProfileEntity.UserName : "System Administrator",
+                UpdatedBy = m.Updater != null ? m.Updater.UserProfileEntity.UserName : "",
+                TrailerUrl = m.TrailerUrl,
+                Director = m.Director,
+                Actors = m.Actors,
+                MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
+                MovieManagerName = m.MovieManager != null && m.MovieManager.UserProfileEntity != null ? m.MovieManager.UserProfileEntity.UserName : "Chưa có"
             }).FirstOrDefaultAsync();
         
         return new BaseResponse<ResGetMovieInfosMovieManagerDto>()

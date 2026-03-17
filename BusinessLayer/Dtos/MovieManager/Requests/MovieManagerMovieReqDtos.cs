@@ -33,6 +33,15 @@ public class ReqAddMovieManagerMovieDto
     
     [Required(ErrorMessage = "Movie Duration is Required")]
     public int Duration { get; set; }
+    
+    [StringLength(2048)]
+    public string TrailerUrl { get; set; } = string.Empty;
+    
+    [StringLength(200)]
+    public string Director { get; set; } = string.Empty;
+    
+    [StringLength(500)]
+    public string Actors { get; set; } = string.Empty;
 }
 
 public class ReqEditMovieManagerMovieDto
@@ -40,7 +49,7 @@ public class ReqEditMovieManagerMovieDto
     public Guid? MovieRequiredAgeId { get; set; }
     
     [StringLength(50, MinimumLength = 1 , ErrorMessage = "Movie Name length must be between 1 and 50 characters")]
-    public string? MovieName { get; set; } = string.Empty;
+    public string? MovieName { get; set; }
     
     [StringLength(200, MinimumLength = 1 , ErrorMessage = "Movie Descriptions length must be between 1 and 200 characters")]
     public string? MovieDescription { get; set; } 
@@ -56,4 +65,14 @@ public class ReqEditMovieManagerMovieDto
     public List<Guid>? MovieGenreIds { get; set; } = [];
     
     public int? Duration { get; set; }
+    
+    [StringLength(2048)]
+    public string? TrailerUrl { get; set; }
+    
+    [StringLength(200)]
+    public string? Director { get; set; }
+    
+    [StringLength(500)]
+    public string? Actors { get; set; }
 }
+

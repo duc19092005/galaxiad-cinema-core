@@ -1,4 +1,4 @@
-﻿using BusinessLayer.Dtos;
+using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
 using BusinessLayer.UseCases.Admin;
 
@@ -13,7 +13,7 @@ public class AdminReadScheduleJobService
         _iAdminReadScheduleBehavior = iAdminReadScheduleBehavior;
     }
 
-    public async Task<BaseResponse<List<ResponseScheduleJobDto>>> GetAllSchedulesJobs()
+    public async Task<BaseResponse<List<ResponseScheduleJobGroupDto>>> GetAllSchedulesJobs()
     {
         var results = await _iAdminReadScheduleBehavior.ListScheduleJob();
         return results;

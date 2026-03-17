@@ -24,10 +24,8 @@ public static class CinemaSurchargeInfoRelationshipsKeys
     
     public static void AddCinemaSurchargeInfoKeys(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<CinemaSurchargeInfosEntity>().HasKey(x => new { cinemaId = x.CinemaId, movieFormatId = x.MovieFormatId });
-        modelBuilder.Entity<CinemaSurchargeInfosEntity>()
-            .HasIndex(x => new { movieFormatId = x.MovieFormatId, userSegmentId = x.UserSegmentId })
-            .IsUnique();
+        // Composite key: Cinema + Format + UserSegment allows different surcharges per user type
+        modelBuilder.Entity<CinemaSurchargeInfosEntity>().HasKey(x => new { cinemaId = x.CinemaId, movieFormatId = x.MovieFormatId, userSegmentId = x.UserSegmentId });
     }
 }
 

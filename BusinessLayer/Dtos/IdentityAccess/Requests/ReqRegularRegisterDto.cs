@@ -13,7 +13,7 @@ public class ReqRegularRegisterDto
     [Length(8, 50, ErrorMessage = "Password length is invalid must between 8 and 50 characters")]
     public string UserPassword { get; set; }= string.Empty;
 
-    [Compare("userPassword", ErrorMessage = "Passwords do not match")]
+    [Compare("UserPassword", ErrorMessage = "Passwords do not match")]
     public string UserRepassword { get; set; }= string.Empty;
 
     [Required(ErrorMessage = "User Name is required")]

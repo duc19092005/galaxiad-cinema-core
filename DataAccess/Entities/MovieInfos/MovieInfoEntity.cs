@@ -26,19 +26,28 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     [Column(TypeName = "varchar(2048)")]
     public string MovieImageUrl { get; set; } = string.Empty;
     
+    [Column(TypeName = "varchar(2048)")]
+    public string TrailerUrl { get; set; } = string.Empty;
+    
+    [Column(TypeName = "nvarchar(200)")]
+    public string Director { get; set; } = string.Empty;
+    
+    [Column(TypeName = "nvarchar(500)")]
+    public string Actors { get; set; } = string.Empty;
+    
     public int MovieDuration { get; set; }
 
     public bool IsCommingSoon { get; set; } = true;
 
     public DateTime EndedDate {get;set;}
 
-    public Guid ManagerId { get; set; }
+    public Guid? MovieManagerId { get; set; }
 
-    public UserInfoEntity Manager { get; set; } = null!;
+    public UserInfoEntity? MovieManager { get; set; } = null!;
 
-    public List<MovieGenreMovieInfoEntity> MovieGenreMovieInfoEntity = [];
+    public List<MovieGenreMovieInfoEntity> MovieGenreMovieInfoEntity { get; set; } = [];
 
-    public List<MovieScheduleInfoEntity> MovieScheduleInfoEntity = [];
+    public List<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; } = [];
     public movieRequiredAgeEntity MovieRequiredAgeEntity { get; set; } = null!;
 
     public List<movieFormatMovieInfoEntity> MovieFormatMovieInfoEntity { get; set; } = [];

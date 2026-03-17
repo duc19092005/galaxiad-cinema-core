@@ -11,6 +11,9 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     public Guid CinemaId { get; set; } 
     
     [Column(TypeName = "nvarchar(100)")]
+    public string CinemaCity { get; set; } = null!;
+    
+    [Column(TypeName = "nvarchar(100)")]
     public string CinemaLocation { get; set; } = null!;
     
     [Column(TypeName = "nvarchar(1000)")]
@@ -22,7 +25,11 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     [Column(TypeName = "nvarchar(max)")]
     public string CinemaDescription { get; set; } = null!;
     
-    public Guid ManagerId { get; set; }
+    public Guid? TheaterManagerId { get; set; }
+    public UserInfoEntity? TheaterManager { get; set; }
+
+    public Guid? FacilitiesManagerId { get; set; }
+    public UserInfoEntity? FacilitiesManager { get; set; }
 
 
     public List<AuditoriumInfoEntities> AuditoriumInfoEntities { get; set; } = [];
@@ -30,7 +37,6 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     public List<CinemaDiscountInfoEntity> CinemaDiscountInfoEntity { get; set; } = [];
 
     public List<CinemaSurchargeInfosEntity> CinemaSurchargeInfosEntity { get; set; } = [];
-    public UserInfoEntity? manager { get; set; }
     
     
 

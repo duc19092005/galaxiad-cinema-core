@@ -7,8 +7,10 @@ using DataAccess;
 using DataAccess.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shared.Enums;
 using Shared.Exceptions;
 using Shared.Localization;
+using Hangfire;
 
 namespace BusinessLayer.UseCases.TheaterManager.MovieSchedules;
 
@@ -41,7 +43,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
-            .AnyAsync(x => x.AuditoriumId == request.AuditoriumId);
+            .AnyAsync(x => x.AuditoriumId == request.AuditoriumId && 
+                           x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId);
             
         if (!isAuditoriumExist)
         {
@@ -65,10 +68,28 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(x => x.Key, y => y.Select(f => f.FormatId).ToList());
 
+            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
+
+            // Fetch existing schedules to skip duplicates
+            var existingMatchSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
+                .AsNoTracking()
+                .Where(x => x.AuditoriumId == request.AuditoriumId && !x.IsDeleted)
+                .ToListAsync();
 
             foreach (var slot in request.Slots)
             {
+                // check for exact match to skip
+                var isAlreadyExist = existingMatchSchedules.Any(x => 
+                    x.MovieId == slot.MovieId && 
+                    x.MovieFormatId == slot.FormatId && 
+                    x.StartTime == slot.StartedDate);
+                
+                if (isAlreadyExist) continue;
+
                 if (!validMovieDictionary.TryGetValue(slot.MovieId, out var movie))
                 {
                     throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
@@ -76,7 +97,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
                 if (!validMovieFormats.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
                 {
-                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName), "E01");
+                    var formatName = allFormats.TryGetValue(slot.FormatId, out var name) ? name : slot.FormatId.ToString();
+                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
                 }
 
                 if (slot.StartedDate < DateTime.Now)
@@ -98,46 +120,63 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     AuditoriumId = request.AuditoriumId,
                     MovieFormatId = slot.FormatId,
                     ActiveAt = slot.StartedDate,
+                    StartTime = slot.StartedDate,
                     EndedTime = endTime,
                     CreatedByUserId = getCurrentUserId,
                     IsActive = DateTime.Now >= slot.StartedDate && DateTime.Now < endTime,
                 });
             }
 
+            if (!proposedSlots.Any())
+            {
+                return new BaseResponse<string>()
+                {
+                    Message = "No new schedules to add.",
+                    Data = null,
+                    IsSuccess = true
+                };
+            }
+
             var sortedProposedSlots = proposedSlots.OrderBy(x => x.ActiveAt).ToList();
             
             for (int i = 0; i < sortedProposedSlots.Count - 1; i++)
             {
-                if (sortedProposedSlots[i].EndedTime > sortedProposedSlots[i + 1].ActiveAt)
+                if (sortedProposedSlots[i].EndedTime.AddMinutes(15) > sortedProposedSlots[i + 1].ActiveAt)
                 {
-                    throw new BadRequestException(Messages.Schedule.OverlappingSchedules, "E02");
+                    throw new BadRequestException("Phải có khoảng trống 15 phút giữa 2 lịch chiếu để dọn dẹp phòng rạp.", "E02");
                 }
             }
 
             var minStartTime = sortedProposedSlots.First().ActiveAt;
-            var maxEndTime = sortedProposedSlots.Last().EndedTime;
+            var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
             var existingSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == request.AuditoriumId 
-                         && x.EndedTime > minStartTime 
-                         && x.ActiveAt < maxEndTime)
+                         && x.EndedTime.AddMinutes(15) > minStartTime 
+                         && x.ActiveAt < maxEndTime
+                         && !x.IsDeleted)
                 .ToListAsync();
 
             foreach (var newSlot in proposedSlots)
             {
                 var hasConflict = existingSchedules.Any(existing => 
-                    newSlot.ActiveAt < existing.EndedTime && existing.ActiveAt < newSlot.EndedTime);
+                    newSlot.ActiveAt < existing.EndedTime.AddMinutes(15) && existing.ActiveAt < newSlot.EndedTime.AddMinutes(15));
 
                 if (hasConflict)
                 {
-                    throw new BadRequestException(Messages.Schedule.TimeSlotConflict(newSlot.ActiveAt.ToString("HH:mm"), newSlot.EndedTime.ToString("HH:mm")), "E02");
+                    throw new BadRequestException("Bị trùng lịch với một suất chiếu khác (Chưa tính 15 phút dọn dẹp).", "E02");
                 }
             }
 
             await _cinemaDbContext.MovieScheduleInfoEntity.AddRangeAsync(proposedSlots);
             await _cinemaDbContext.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            foreach (var slot in proposedSlots)
+            {
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime));
+            }
 
             return new BaseResponse<string>()
             {
@@ -174,7 +213,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
-            .AnyAsync(x => x.AuditoriumId == auditoriumId);
+            .AnyAsync(x => x.AuditoriumId == auditoriumId && 
+                           (x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId || 
+                            x.CinemaInfoEntity.FacilitiesManagerId == getCurrentUserId));
 
         if (!isAuditoriumExist)
         {
@@ -205,6 +246,15 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 throw new BadRequestException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated, "E01");
             }
 
+            var hasSuccessfulBookingOnUpdatingSchedules = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                .AnyAsync(od => updatingScheduleIds.Contains(od.MovieScheduleId) &&
+                                od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked);
+
+            if (hasSuccessfulBookingOnUpdatingSchedules)
+            {
+                throw new BadRequestException("Không thể sửa các suất chiếu đã có người đặt vé thành công.", "E03");
+            }
+
             var movieIdsToCheck = request.Slots.Select(s => s.MovieId).Distinct().ToList();
 
             var moviesInfos = await _cinemaDbContext.MovieInfoEntity
@@ -218,31 +268,46 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(m => m.Key, f => f.Select(x => x.FormatId).ToList());
 
+            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+                .AsNoTracking()
+                .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
 
             foreach (var slot in request.Slots)
             {
-                if (!moviesInfos.TryGetValue(slot.MovieId, out var movie))
+                var existingEntity = schedulesToUpdate.FirstOrDefault(x => x.MovieScheduleInfoId == slot.ScheduleId);
+                var isUnchanged = existingEntity != null && 
+                                  existingEntity.MovieId == slot.MovieId && 
+                                  existingEntity.MovieFormatId == slot.FormatId && 
+                                  existingEntity.StartTime == slot.StartedDate;
+
+                if (!isUnchanged)
                 {
-                    throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                    if (!moviesInfos.TryGetValue(slot.MovieId, out var movie))
+                    {
+                        throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                    }
+
+                    if (!findMoviesSupportedFormat.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
+                    {
+                        var formatName = allFormats.TryGetValue(slot.FormatId, out var name) ? name : slot.FormatId.ToString();
+                        throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
+                    }
+
+                    if (slot.StartedDate < DateTime.Now)
+                    {
+                        throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
+                    }
+
+                    if (slot.StartedDate < movie.ActiveAt || slot.StartedDate.Date > movie.EndedDate.Date)
+                    {
+                        throw new BadRequestException(Messages.Schedule.MovieAvailability(movie.MovieName, movie.ActiveAt.ToString("MM/dd/yyyy"), movie.EndedDate.ToString("MM/dd/yyyy")), "E01");
+                    }
                 }
 
-                if (!findMoviesSupportedFormat.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
-                {
-                    throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName), "E01");
-                }
-
-                if (slot.StartedDate < DateTime.Now)
-                {
-                    throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
-                }
-
-                if (slot.StartedDate < movie.ActiveAt || slot.StartedDate.Date > movie.EndedDate.Date)
-                {
-                    throw new BadRequestException(Messages.Schedule.MovieAvailability(movie.MovieName, movie.ActiveAt.ToString("MM/dd/yyyy"), movie.EndedDate.ToString("MM/dd/yyyy")), "E01");
-                }
-
-                var endTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
+                var targetMovieForDuration = moviesInfos[slot.MovieId];
+                var endTime = slot.StartedDate.AddMinutes(targetMovieForDuration.MovieDuration);
 
                 proposedSlots.Add(new MovieScheduleInfoEntity
                 {
@@ -256,19 +321,19 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             
             for (int i = 0; i < sortedProposedSlots.Count - 1; i++)
             {
-                if (sortedProposedSlots[i].EndedTime > sortedProposedSlots[i + 1].ActiveAt)
+                if (sortedProposedSlots[i].EndedTime.AddMinutes(15) > sortedProposedSlots[i + 1].ActiveAt)
                 {
-                    throw new BadRequestException(Messages.Schedule.OverlappingSchedules, "E02");
+                    throw new BadRequestException("Phải có khoảng trống 15 phút giữa 2 lịch chiếu để dọn dẹp phòng rạp.", "E02");
                 }
             }
 
             var minStartTime = sortedProposedSlots.First().ActiveAt;
-            var maxEndTime = sortedProposedSlots.Last().EndedTime;
+            var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
             var existingDbSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == auditoriumId 
-                         && x.EndedTime > minStartTime 
+                         && x.EndedTime.AddMinutes(15) > minStartTime 
                          && x.ActiveAt < maxEndTime
                          && !x.IsDeleted
                          && !updatingScheduleIds.Contains(x.MovieScheduleInfoId)) 
@@ -277,11 +342,11 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             foreach (var newSlot in proposedSlots)
             {
                 var hasConflict = existingDbSchedules.Any(existing => 
-                    newSlot.ActiveAt < existing.EndedTime && existing.ActiveAt < newSlot.EndedTime);
+                    newSlot.ActiveAt < existing.EndedTime.AddMinutes(15) && existing.ActiveAt < newSlot.EndedTime.AddMinutes(15));
 
                 if (hasConflict)
                 {
-                    throw new BadRequestException(Messages.Schedule.TimeSlotConflict(newSlot.ActiveAt.ToString("HH:mm"), newSlot.EndedTime.ToString("HH:mm")), "E02");
+                    throw new BadRequestException("Bị trùng lịch với một suất chiếu khác (Chưa tính 15 phút dọn dẹp).", "E02");
                 }
             }
 
@@ -293,6 +358,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 entity.MovieId = slot.MovieId;
                 entity.MovieFormatId = slot.FormatId;
                 entity.ActiveAt = slot.StartedDate;
+                entity.StartTime = slot.StartedDate;
                 entity.EndedTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
                 entity.UpdatedByUserId = getCurrentUserId;
                 entity.UpdatedAt = DateTime.Now;
@@ -300,6 +366,12 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
             await _cinemaDbContext.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            foreach (var slot in request.Slots)
+            {
+                var movie = moviesInfos[slot.MovieId];
+                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration)));
+            }
 
             return new BaseResponse<string>()
             {
@@ -322,37 +394,96 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
+        var getCurrentUserId = _userContextService.GetUserId();
+        var schedule = await _cinemaDbContext.MovieScheduleInfoEntity
+            .FirstOrDefaultAsync(x => x.MovieScheduleInfoId == itemId);
+            
+        if (schedule == null)
+        {
+            throw new NotFoundException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated);
+        }
+
+        if (schedule.IsDeleted)
+        {
+            throw new BadRequestException("Lịch chiếu này đã bị xóa.", "D01");
+        }
+
+        var hasSuccessfulBooking = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+            .AnyAsync(od => od.MovieScheduleId == itemId &&
+                            (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+
+        if (hasSuccessfulBooking)
+        {
+            throw new BadRequestException("Không thể xóa lịch chiếu đã có người đặt vé thành công.", "D03");
+        }
+
+        schedule.IsDeleted = true;
+        schedule.DeletedByUserId = getCurrentUserId;
+        schedule.DeletedAt = DateTime.Now;
+        
+        _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
+        await _cinemaDbContext.SaveChangesAsync();
+
         return new BaseResponse<string>()
         {
-            Message = "Create Movie Schedule Completed",
+            Message = "Xóa lịch chiếu thành công.",
             Data = null,
             IsSuccess = true
         };
     }
 
-    public async Task<bool> SetScheduleStatus(Guid scheduleId)
+    /// <summary>
+    /// Called by Hangfire when showtime STARTS - sets IsActive = true
+    /// </summary>
+    public async Task<bool> SetScheduleActiveStatus(Guid scheduleId)
     {
         var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
         if (findSchedule == null)
         {
+            _logger.LogWarning("Schedule {ScheduleId} not found for activation", scheduleId);
             return false;
         }
-        else
+
+        try
         {
-            try
-            {
-                findSchedule.IsActive = false;
-                _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
-                await _cinemaDbContext.SaveChangesAsync();
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error Updating Movie Schedule Status");
-                return false;
-            }
+            findSchedule.IsActive = true;
+            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
+            await _cinemaDbContext.SaveChangesAsync();
+            _logger.LogInformation("Schedule {ScheduleId} activated (IsActive=true)", scheduleId);
+            return true;
         }
-        
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error activating Movie Schedule {ScheduleId}", scheduleId);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Called by Hangfire when showtime ENDS - sets IsActive = false
+    /// </summary>
+    public async Task<bool> SetScheduleInactiveStatus(Guid scheduleId)
+    {
+        var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
+        if (findSchedule == null)
+        {
+            _logger.LogWarning("Schedule {ScheduleId} not found for deactivation", scheduleId);
+            return false;
+        }
+
+        try
+        {
+            findSchedule.IsActive = false;
+            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
+            await _cinemaDbContext.SaveChangesAsync();
+            _logger.LogInformation("Schedule {ScheduleId} deactivated (IsActive=false)", scheduleId);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deactivating Movie Schedule {ScheduleId}", scheduleId);
+            return false;
+        }
     }
 
 }

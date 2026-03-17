@@ -32,6 +32,7 @@ public class UserProfileUseCase : IProfileBehavior
         {
             var userId = _userContextService.GetUserId();
             
+            // Get user basic info
             var result = await _dbContext.UserInfoEntity
                 .AsNoTracking()
                 .Where(x => x.UserId == userId)
@@ -58,6 +59,24 @@ public class UserProfileUseCase : IProfileBehavior
 
             if (result.Roles == null || result.Roles.Length == 0)
                 throw new AppException(Messages.Auth.RoleNotFound, 403, "UN02");
+
+            // Look up managed cinemas if the user is a manager
+            if (result.Roles.Contains("TheaterManager") || result.Roles.Contains("FacilitiesManager"))
+            {
+                var managedCinemas = await _dbContext.CinemaInfoEntity
+                    .Where(c => !c.IsDeleted && (c.TheaterManagerId == userId || c.FacilitiesManagerId == userId))
+                    .Select(c => new ManagedCinemaInfoDto
+                    {
+                        CinemaId = c.CinemaId,
+                        CinemaName = c.CinemaName
+                    })
+                    .ToListAsync();
+
+                if (managedCinemas.Any())
+                {
+                    result.ManagedCinemas = managedCinemas;
+                }
+            }
 
             return new BaseResponse<ResRegularLoginDto>()
             {
@@ -124,6 +143,62 @@ public class UserProfileUseCase : IProfileBehavior
     public async Task<BaseResponse<ResGetUserInfo>> GetUserProfile()
     {
         return null!;
+    }
+
+    public async Task<BaseResponse<string>> UpdateUserProfile(ReqUpdateUserProfileDto request)
+    {
+        try
+        {
+            var userId = _userContextService.GetUserId();
+            var profile = await _dbContext.UserProfileEntity.FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (profile == null)
+            {
+                throw new AppException(Messages.Auth.UserInfoNotFound, 404, "Error01");
+            }
+
+            if (request.DateOfBirth.HasValue)
+            {
+                var today = DateTime.Today;
+                var age = today.Year - request.DateOfBirth.Value.Year;
+                if (request.DateOfBirth.Value.Date > today.AddYears(-age)) age--;
+
+                if (age < 16 || age > 80)
+                {
+                    throw new BadRequestException("Tuổi phải từ 16 đến 80.", "V01");
+                }
+                profile.DateOfBirth = request.DateOfBirth.Value;
+            }
+
+            if (!string.IsNullOrEmpty(request.UserName))
+            {
+                profile.UserName = request.UserName;
+            }
+
+            if (!string.IsNullOrEmpty(request.PhoneNumber))
+            {
+                profile.PhoneNumber = request.PhoneNumber;
+            }
+
+            if (!string.IsNullOrEmpty(request.IdentityCode))
+            {
+                profile.IdentityCode = request.IdentityCode;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            return new BaseResponse<string>
+            {
+                IsSuccess = true,
+                Message = "Cập nhật thông tin cá nhân thành công."
+            };
+        }
+        catch (AppException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user profile");
+            throw CustomSystemException.SystemExceptionCaller();
+        }
     }
 }
 
