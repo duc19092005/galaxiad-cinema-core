@@ -1,6 +1,6 @@
 // src/components/RoleUpdateModal.tsx
 import React, { useEffect, useState } from 'react';
-import { X, Shield, Loader2, AlertCircle, Check } from 'lucide-react';
+import { X, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { adminApi } from '../api/adminApi';
 import type { RoleDto } from '../types/admin.types';

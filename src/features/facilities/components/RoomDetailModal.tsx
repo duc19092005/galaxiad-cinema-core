@@ -33,53 +33,6 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, isOpen, onClo
     }
   }, [isOpen, roomId]);
 
-  // Seed data cho chi tiết phòng (mock data để test)
-  const getSeedRoomDetail = (id: string): Room | null => {
-    const seedRooms: Record<string, any> = {
-      'a1b2c3d4-e5f6-7890-abcd-ef1234567890': {
-        auditoriumId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-        auditoriumNumber: 'Phòng 1',
-        totalSeats: 120,
-      },
-      'b2c3d4e5-f6a7-8901-bcde-f12345678901': {
-        auditoriumId: 'b2c3d4e5-f6a7-8901-bcde-f12345678901',
-        auditoriumNumber: 'Phòng 2',
-        totalSeats: 150,
-      },
-      'c3d4e5f6-a7b8-9012-cdef-123456789012': {
-        auditoriumId: 'c3d4e5f6-a7b8-9012-cdef-123456789012',
-        auditoriumNumber: 'Phòng 3',
-        totalSeats: 100,
-      },
-      'd4e5f6a7-b8c9-0123-defa-234567890123': {
-        auditoriumId: 'd4e5f6a7-b8c9-0123-defa-234567890123',
-        auditoriumNumber: 'Phòng VIP 1',
-        totalSeats: 80,
-      },
-      'e5f6a7b8-c9d0-1234-efab-345678901234': {
-        auditoriumId: 'e5f6a7b8-c9d0-1234-efab-345678901234',
-        auditoriumNumber: 'Phòng 4',
-        totalSeats: 200,
-      },
-      'f6a7b8c9-d0e1-2345-fabc-456789012345': {
-        auditoriumId: 'f6a7b8c9-d0e1-2345-fabc-456789012345',
-        auditoriumNumber: 'Phòng 5',
-        totalSeats: 130,
-      },
-      'a7b8c9d0-e1f2-3456-abcd-567890123456': {
-        auditoriumId: 'a7b8c9d0-e1f2-3456-abcd-567890123456',
-        auditoriumNumber: 'Phòng IMAX',
-        totalSeats: 300,
-      },
-      'b8c9d0e1-f2a3-4567-bcde-678901234567': {
-        auditoriumId: 'b8c9d0e1-f2a3-4567-bcde-678901234567',
-        auditoriumNumber: 'Phòng 6',
-        totalSeats: 110,
-      },
-    };
-    return seedRooms[id] || null;
-  };
-
   const fetchRoomDetail = async () => {
     setLoading(true);
     setError(null);
@@ -87,18 +40,11 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, isOpen, onClo
       const res = await facilitiesApi.getAuditoriumDetail(roomId);
       setRoom(res.data as any);
     } catch (err) {
-      // Nếu API lỗi, thử dùng seed data
-      const seedRoom = getSeedRoomDetail(roomId);
-      if (seedRoom) {
-        setRoom(seedRoom);
-        console.warn('API error, using seed data for room:', roomId);
+      if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as ApiErrorResponse;
+        setError(data.message || 'Cannot load room information.');
       } else {
-        if (axios.isAxiosError(err) && err.response) {
-          const data = err.response.data as ApiErrorResponse;
-          setError(data.message || 'Cannot load room information.');
-        } else {
-          setError('Cannot connect to server.');
-        }
+        setError('Cannot connect to server.');
       }
     } finally {
       setLoading(false);
