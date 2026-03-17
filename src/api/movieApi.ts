@@ -1,7 +1,7 @@
 // src/api/movieApi.ts
-import { movieAxios } from './axiosClient';
+import { movieAxios, API_BASE_URL } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { Movie, MovieRequiredAge, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
+import type { Movie, MovieRequiredAge, MovieGenre, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
 
 export const movieApi = {
@@ -13,19 +13,27 @@ export const movieApi = {
         return response.data;
     },
 
-    /** GET http://localhost:5032/MovieFormats */
+    /** GET {API_BASE_URL}/MovieFormats */
     getMovieFormats: async (): Promise<ApiSuccessResponse<MovieFormat[]>> => {
         // Fetch using absolute URL
         const response = await movieAxios.get<ApiSuccessResponse<MovieFormat[]>>(
-            'http://localhost:5032/MovieFormats'
+            `${API_BASE_URL}/MovieFormats`
         );
         return response.data;
     },
 
-    /** GET http://localhost:5032/MovieRequiredAge */
+    /** GET {API_BASE_URL}/MovieRequiredAge */
     getMovieRequiredAges: async (): Promise<ApiSuccessResponse<MovieRequiredAge[]>> => {
         const response = await movieAxios.get<ApiSuccessResponse<MovieRequiredAge[]>>(
-            'http://localhost:5032/MovieRequiredAge'
+            `${API_BASE_URL}/MovieRequiredAge`
+        );
+        return response.data;
+    },
+
+    /** GET {API_BASE_URL}/MovieGenres */
+    getMovieGenres: async (): Promise<ApiSuccessResponse<MovieGenre[]>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<MovieGenre[]>>(
+            `${API_BASE_URL}/MovieGenres`
         );
         return response.data;
     },
@@ -45,9 +53,12 @@ export const movieApi = {
         formData.append('movieName', data.movieName);
         formData.append('movieDescription', data.movieDescription);
         formData.append('movieImage', data.movieImage);
-        formData.append('endedDate', data.endedDate);
-        formData.append('startedDate', data.startedDate);
+        formData.append('EndedDate', data.endedDate);
+        formData.append('StartedDate', data.startedDate);
         formData.append('duration', data.duration.toString());
+        if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
+        if (data.director) formData.append('Director', data.director);
+        if (data.actors) formData.append('Actors', data.actors);
 
         // Append arrays
         data.movieFormatIds.forEach((id) => {
@@ -73,13 +84,16 @@ export const movieApi = {
     updateMovie: async (movieId: string, data: UpdateMovieFormData): Promise<ApiSuccessResponse> => {
         const formData = new FormData();
 
-        if (data.movieRequiredAgeId) formData.append('movieRequiredAgeId', data.movieRequiredAgeId);
+        if (data.movieRequiredAgeId) formData.append('MovieRequiredAgeId', data.movieRequiredAgeId);
         if (data.movieName) formData.append('movieName', data.movieName);
         if (data.movieDescription) formData.append('movieDescription', data.movieDescription);
         if (data.movieImage) formData.append('movieImage', data.movieImage);
-        if (data.endedDate) formData.append('endedDate', data.endedDate);
-        if (data.startedDate) formData.append('startedDate', data.startedDate);
+        if (data.endedDate) formData.append('EndedDate', data.endedDate);
+        if (data.startedDate) formData.append('StartedDate', data.startedDate);
         if (data.duration !== undefined) formData.append('duration', data.duration.toString());
+        if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
+        if (data.director) formData.append('Director', data.director);
+        if (data.actors) formData.append('Actors', data.actors);
 
         if (data.movieFormatIds) {
             data.movieFormatIds.forEach((id) => {
@@ -100,6 +114,14 @@ export const movieApi = {
                     'Content-Type': 'multipart/form-data',
                 },
             }
+        );
+        return response.data;
+    },
+
+    /** DELETE /api/movieManager/movies/{movieId} */
+    deleteMovie: async (movieId: string): Promise<ApiSuccessResponse> => {
+        const response = await movieAxios.delete<ApiSuccessResponse>(
+            `/movieManager/movies/${movieId}`
         );
         return response.data;
     },

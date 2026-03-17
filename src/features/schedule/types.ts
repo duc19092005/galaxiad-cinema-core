@@ -1,24 +1,31 @@
+export interface FormatInfo {
+  id: string;
+  name: string;
+}
+
 export interface Movie {
   id: string;
   title: string;
   durationMinutes: number;
-  formats: string[]; // e.g., ['2D', '3D', 'IMAX']
+  formats: FormatInfo[];
   color?: string;
 }
 
 export interface Auditorium {
   id: string;
   name: string;
-  supportedFormats: string[];
+  supportedFormats: string[]; // Still IDs for matching
 }
 
 export interface ShowTimeSlot {
   id: string; // unique instance id
   movieId: string;
-  formatId: string; // e.g., '2D'
+  formatId: string;
+  formatName?: string;
   start: string; // ISO8601
   end: string; // ISO8601
   price: number;
+  isDirty?: boolean;
 }
 
 export interface AuditoriumSchedule {

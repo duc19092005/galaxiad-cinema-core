@@ -1,11 +1,11 @@
-// src/api/axiosClient.ts
 import axios from 'axios';
+import Cookies from 'js-cookie';
 
-const API_BASE_URL = 'http://localhost:5032';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5032';
 
 /**
  * Axios instance for Identity Access APIs
- * Base URL: http://localhost:5032/api/v1
+ * Base URL: {API_BASE_URL}/api/v1
  */
 export const identityAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
@@ -18,7 +18,7 @@ export const identityAxios = axios.create({
 
 /**
  * Axios instance for Facilities Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const facilitiesAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -31,7 +31,7 @@ export const facilitiesAxios = axios.create({
 
 /**
  * Axios instance for Movie Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const movieAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -44,7 +44,7 @@ export const movieAxios = axios.create({
 
 /**
  * Axios instance for Theater Manager APIs
- * Base URL: http://localhost:5032/api
+ * Base URL: {API_BASE_URL}/api
  */
 export const theaterAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
@@ -59,7 +59,34 @@ export const theaterAxios = axios.create({
 // SHARED INTERCEPTORS
 // =============================================
 
-const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios];
+/**
+ * Axios instance for Booking APIs
+ * Base URL: {API_BASE_URL}/api/v1/booking
+ */
+export const bookingAxios = axios.create({
+  baseURL: `${API_BASE_URL}/api/v1/booking`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+  timeout: 10000,
+});
+
+/**
+ * Axios instance for Public APIs
+ * Base URL: {API_BASE_URL}/api/v1/public
+ * Notice: No withCredentials since it is public, but you can include interceptors for Language
+ */
+export const publicAxios = axios.create({
+  baseURL: `${API_BASE_URL}/api/v1/public`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+  timeout: 10000,
+});
+
+const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios, bookingAxios, publicAxios];
 
 allInstances.forEach((instance) => {
   // Request interceptor — attach language header
@@ -85,8 +112,9 @@ allInstances.forEach((instance) => {
     (response) => response,
     (error) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        // Token expired or invalid — clear local storage
+        // Token expired or invalid — clear local storage and cookies
         localStorage.removeItem('user_info');
+        Cookies.remove('X-Access-Token');
         // Redirect to login if not already there
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';

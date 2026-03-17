@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Settings } from 'lucide-react';
+import { User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2, Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Settings, Shield } from 'lucide-react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
-import { movieApi } from '../../api/movieApi';
+import { publicApi } from '../../api/publicApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { Movie } from '../../types/movie.types';
+import type { PublicMovieListItem } from '../../types/public.types';
 import LogoutModal from '../../components/LogoutModal';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
@@ -27,7 +28,8 @@ const HomePage: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // Movies state
-  const [movies, setMovies] = useState<Movie[]>([]);
+  const [nowShowing, setNowShowing] = useState<PublicMovieListItem[]>([]);
+  const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,23 +37,26 @@ const HomePage: React.FC = () => {
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      fetchMovies();
-    } else {
-      navigate('/login');
     }
+    fetchMovies();
   }, [navigate]);
 
   const fetchMovies = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await movieApi.getMovieList();
-      setMovies(res.data || []);
+      const [nowRes, comingRes] = await Promise.all([
+        publicApi.getNowShowing(),
+        publicApi.getComingSoon()
+      ]);
+      setNowShowing(nowRes.data || []);
+      setComingSoon(comingRes.data || []);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
         if (data.statusCode === 401) {
           localStorage.removeItem('user_info');
+          Cookies.remove('X-Access-Token');
           navigate('/login');
           return;
         }
@@ -88,6 +93,7 @@ const HomePage: React.FC = () => {
     try {
       await authApi.logout();
       localStorage.removeItem('user_info');
+      Cookies.remove('X-Access-Token');
       setIsLogoutModalOpen(false);
       navigate('/login');
     } catch (error: unknown) {
@@ -165,51 +171,75 @@ const HomePage: React.FC = () => {
               <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
                 }`}>
                 <div className="py-2">
-                  <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
-                    <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
-                    <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
-                  </div>
+                  {user ? (
+                    <>
+                      <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
+                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('header.signedInAs')}</p>
+                        <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                      </div>
 
-                  {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
-                    <button
-                      onClick={() => navigate('/role-selection')}
-                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-green-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
-                        }`}
-                    >
-                      <LayoutDashboard className="w-4 h-4" />
-                      Go To The Home Management Page
-                    </button>
+                      {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
+                        <button
+                          onClick={() => navigate('/role-selection')}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-green-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-green-600'
+                            }`}
+                        >
+                          <LayoutDashboard className="w-4 h-4" />
+                          Go To The Home Management Page
+                        </button>
+                      )}
+
+                      <button 
+                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                      >
+                        <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
+                      </button>
+
+                      <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
+                        <Settings className="w-4 h-4" />{t('header.changePassword')}
+                      </button>
+
+                      {user?.roles && user.roles.length > 1 && (
+                        <button
+                          onClick={() => navigate('/role-selection')}
+                          className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
+                            }`}
+                        >
+                          <ArrowLeftRight className="w-4 h-4" />
+                          {t('header.switchRole')}
+                        </button>
+                      )}
+
+                      <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
+
+                      <button
+                        onClick={handleLogoutClick}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]' : 'text-red-600 hover:bg-red-50'
+                          }`}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {t('header.logout')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => { navigate('/login'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        Login / Sign In
+                      </button>
+                      <button
+                        onClick={() => { navigate('/register'); setIsDropdownOpen(false); }}
+                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20' : 'text-gray-700 hover:bg-gray-100'}`}
+                      >
+                        <Shield className="w-4 h-4" />
+                        Register / Sign Up
+                      </button>
+                    </>
                   )}
-
-                  <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                    <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
-                  </button>
-
-                  <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
-                    <Settings className="w-4 h-4" />{t('header.changePassword')}
-                  </button>
-
-                  {user?.roles && user.roles.length > 1 && (
-                    <button
-                      onClick={() => navigate('/role-selection')}
-                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                        }`}
-                    >
-                      <ArrowLeftRight className="w-4 h-4" />
-                      {t('header.switchRole')}
-                    </button>
-                  )}
-
-                  <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
-
-                  <button
-                    onClick={handleLogoutClick}
-                    className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]' : 'text-red-600 hover:bg-red-50'
-                      }`}
-                  >
-                    <LogOut className="w-4 h-4" />
-                    {t('header.logout')}
-                  </button>
                 </div>
               </div>
             )}
@@ -228,7 +258,7 @@ const HomePage: React.FC = () => {
 
       {/* --- BODY CONTENT --- */}
       <main className="pt-24 px-6 container mx-auto mb-16">
-        <h2 className={`text-3xl font-black mb-6 border-l-4 pl-4 ${theme === 'modern' ? 'border-pink-400 text-white shadow-md shadow-pink-500/20 text-white' : 'border-red-600'
+        <h2 className={`text-3xl font-black mb-6 border-l-4 pl-4 ${theme === 'modern' ? 'border-cyan-400 text-white shadow-md shadow-cyan-500/20' : 'border-red-600'
           }`}>Now Showing</h2>
 
         {error && (
@@ -246,19 +276,23 @@ const HomePage: React.FC = () => {
             <Loader2 className={`w-12 h-12 animate-spin mx-auto mb-4 ${theme === 'modern' ? 'text-indigo-300' : 'text-red-600'}`} />
             <p className={theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'}>Loading movies...</p>
           </div>
-        ) : movies.length === 0 ? (
+        ) : nowShowing.length === 0 ? (
           <div className={`text-center py-20 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
             <p className="text-xl">No movies currently showing.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {movies.map((movie) => (
-              <div key={movie.movieId} className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
-                ? 'bg-gray-900 border-gray-800 hover:border-red-600'
-                : theme === 'modern'
-                  ? 'bg-gradient-to-br from-[#15102B]/80 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-pink-400 text-white shadow-md shadow-pink-500/20 backdrop-blur-2xl'
-                  : 'bg-white border-gray-200 hover:border-red-600 shadow-sm'
-                }`}>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mb-12">
+            {nowShowing.map((movie) => (
+              <div
+                key={movie.movieId}
+                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
+                  ? 'bg-gray-900 border-gray-800 hover:border-red-600'
+                  : theme === 'modern'
+                    ? 'bg-gradient-to-br from-[#15102B]/80 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-400 text-white shadow-md shadow-cyan-500/20 backdrop-blur-2xl'
+                    : 'bg-white border-gray-200 hover:border-red-600 shadow-sm'
+                  }`}
+                onClick={() => navigate(`/movie/${movie.movieId}`)}
+              >
                 <div className="aspect-[2/3] relative">
                   <img
                     src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
@@ -267,7 +301,7 @@ const HomePage: React.FC = () => {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
                     <div className="p-4 w-full">
-                      <button className={`w-full py-2 rounded font-bold text-sm ${theme === 'modern' ? 'bg-pink-600 shadow-md shadow-pink-500/20 text-white' : 'bg-red-600 text-white'}`}>Book Ticket</button>
+                      <button className={`w-full py-2 rounded font-bold text-sm ${theme === 'modern' ? 'bg-cyan-600 shadow-md shadow-cyan-500/20 text-white' : 'bg-red-600 text-white'}`}>Book Ticket</button>
                     </div>
                   </div>
                 </div>
@@ -275,13 +309,63 @@ const HomePage: React.FC = () => {
                   <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                     }`}>{movie.movieName}</h3>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {movie.movieGenresInfos.slice(0, 2).map((genre, i) => (
+                    {movie.movieGenres.slice(0, 2).map((genre, i) => (
                       <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-indigo-800/40 text-white font-medium' : 'bg-gray-100 text-gray-600'
                         }`}>{genre}</span>
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.duration} min • {formatDate(movie.startedDate)}
+                    {movie.movieDuration} min • {formatDate(movie.startedDate)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <h2 className={`text-3xl font-black mb-6 border-l-4 pl-4 ${theme === 'modern' ? 'border-pink-400 text-white shadow-md shadow-pink-500/20' : 'border-red-600'
+          }`}>Coming Soon</h2>
+
+        {!loading && comingSoon.length === 0 ? (
+          <div className={`text-center py-20 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
+            <p className="text-xl">No movies coming soon.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            {comingSoon.map((movie) => (
+              <div
+                key={movie.movieId}
+                className={`group rounded-xl overflow-hidden shadow-lg border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
+                  ? 'bg-gray-900 border-gray-800 hover:border-red-600'
+                  : theme === 'modern'
+                    ? 'bg-gradient-to-br from-[#15102B]/80 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-pink-400 text-white shadow-md shadow-pink-500/20 backdrop-blur-2xl'
+                    : 'bg-white border-gray-200 hover:border-red-600 shadow-sm'
+                  }`}
+                onClick={() => navigate(`/movie/${movie.movieId}`)}
+              >
+                <div className="aspect-[2/3] relative">
+                  <img
+                    src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
+                    className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
+                    alt={movie.movieName}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
+                    <div className="p-4 w-full text-center">
+                      <span className={`px-4 py-2 rounded font-bold text-sm bg-gray-800/80 text-white`}>Coming Soon</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+                    }`}>{movie.movieName}</h3>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {movie.movieGenres.slice(0, 2).map((genre, i) => (
+                      <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-indigo-800/40 text-white font-medium' : 'bg-gray-100 text-gray-600'
+                        }`}>{genre}</span>
+                    ))}
+                  </div>
+                  <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
+                    Starting: {formatDate(movie.startedDate)}
                   </p>
                 </div>
               </div>

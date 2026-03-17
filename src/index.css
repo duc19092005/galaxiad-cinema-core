@@ -6,11 +6,27 @@
 /* Tailwind v4: bật dark mode theo class `.dark` (ThemeContext đang set class trên <html>) */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Thêm đoạn này để đảm bảo full màn hình */
+/* Thêm đoạn này để đảm bảo full màn hình và background nhất quán */
 html, body, #root {
   width: 100%;
-  height: 100%;
+  min-height: 100vh;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; /* Chặn thanh cuộn ngang */
+  overflow-x: hidden;
+}
+
+/* Đồng bộ màu nền của trình duyệt với theme để tránh khoảng trắng */
+html.dark, body.dark {
+  background-color: #000000;
+  color: #ffffff;
+}
+
+html.modern, body.modern {
+  background-color: #050A14;
+  color: #ffffff;
+}
+
+html.light, body.light {
+  background-color: #f9fafb;
+  color: #111827;
 }

@@ -174,5 +174,22 @@
     "Coming Soon": "Sắp Chiếu",
     "Expired": "Hết Hạn",
     "Modern View": "Giao diện Nhám (Test)",
-    "Go To The Home Management Page": "Đi đến trang quản lý"
+    "Go To The Home Management Page": "Đi đến trang quản lý",
+    "Status": "Trạng Thái",
+    "Actions": "Hành Động",
+    "Roles": "Vai Trò",
+    "Current Roles": "Vai trò hiện tại",
+    "Add Roles": "Thêm vai trò",
+    "Block": "Chặn",
+    "Activate": "Kích hoạt",
+    "Locked (2)": "Đang khóa",
+    "Assign Cinema": "Đăng ký rạp",
+    "Full Name": "Tên đầy đủ",
+    "User Management": "Quản lý người dùng",
+    "Background Jobs": "Quản lý việc chạy ngằm",
+    "Edit Roles": "Sửa Vai Trò",
+    "Job Type": "Thể loại công việc chạy ngầm",
+    "Started Time": "Bắt Đầu",
+    "Ended Time": "Kết Thúc",
+    "Job Status": "Trạng Thái"
 }

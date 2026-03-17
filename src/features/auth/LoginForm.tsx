@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom'; // Dùng để chuyển trang
 import axios from 'axios';
 import { Clapperboard, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
 import type { LoginRequest, ApiErrorResponse } from '../../types/auth.types';
 // Removed cookie reading logic - using HttpOnly cookie
@@ -88,8 +89,12 @@ const LoginForm: React.FC = () => {
 
             if (res.isSuccess) {
                 // Lưu thông tin user để hiển thị ở Home
-                // Token đã được set trong HttpOnly cookie bởi backend
                 localStorage.setItem('user_info', JSON.stringify(res.data));
+
+                // Lưu token vào cookie cho backend trích xuất
+                if (res.data.accessToken) {
+                    Cookies.set('X-Access-Token', res.data.accessToken, { expires: 7, sameSite: 'Lax' });
+                }
 
                 // Chuyển hướng sang trang chọn role
                 navigate('/role-selection');

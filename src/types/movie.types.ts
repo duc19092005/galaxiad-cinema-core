@@ -10,6 +10,12 @@ export interface MovieRequiredAge {
     movieRequiredAgeDescription: string;
 }
 
+export interface MovieGenre {
+    movieGenreId: string;
+    movieGenreName: string;
+    movieGenreDescription?: string;
+}
+
 /** Movie list item / detail (from GET /api/movieManager/movies) */
 export interface Movie {
     movieId: string;
@@ -25,6 +31,9 @@ export interface Movie {
     updatedBy: string;
     createdBy: string;
     duration: number; // minutes
+    trailerUrl?: string;
+    director?: string;
+    actors?: string;
 }
 
 /** POST /api/movieManager/movies — multipart/form-data */
@@ -38,6 +47,9 @@ export interface CreateMovieFormData {
     movieFormatIds: string[];
     movieGenreIds: string[];
     duration: number;
+    trailerUrl?: string;
+    director?: string;
+    actors?: string;
 }
 
 /** PUT /api/movieManager/movies/{movieId} — multipart/form-data */
@@ -46,9 +58,12 @@ export interface UpdateMovieFormData {
     movieName?: string;
     movieDescription?: string;
     movieImage?: File;
-    endedDate?: string;
-    startedDate?: string;
+    endedDate?: string | null;
+    startedDate?: string | null;
     movieFormatIds?: string[];
     movieGenreIds?: string[];
     duration?: number;
+    trailerUrl?: string;
+    director?: string;
+    actors?: string;
 }

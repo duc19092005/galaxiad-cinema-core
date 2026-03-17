@@ -25,17 +25,21 @@ import {
     CheckCircle,
     Image,
     Clapperboard,
+    Trash2,
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { Movie, MovieRequiredAge } from '../../types/movie.types';
+import type { Movie, MovieRequiredAge, MovieGenre } from '../../types/movie.types';
 import type { MovieFormat } from '../../types/facilities.types';
 import { useTheme } from '../../contexts/ThemeContext';
 import LogoutModal from '../../components/LogoutModal';
 import { useTranslation } from 'react-i18next';
+import Cookies from 'js-cookie';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import { publicApi } from '../../api/publicApi';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -241,14 +245,46 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                         </div>
                     </div>
 
-                    {/* Description */}
-                    <div>
-                        <h3 className={`text-sm font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                            }`}>Description</h3>
-                        <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-gray-300' : theme === 'modern' ? 'text-indigo-100 ' : 'text-gray-700'
-                            }`}>
-                            {movie.movieDescriptions || 'No description available.'}
-                        </p>
+                    <div className="space-y-4">
+                        {/* Description */}
+                        <div>
+                            <h3 className={`text-sm font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
+                                }`}>Description</h3>
+                            <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-gray-300' : theme === 'modern' ? 'text-indigo-100 ' : 'text-gray-700'
+                                }`}>
+                                {movie.movieDescriptions || 'No description available.'}
+                            </p>
+                        </div>
+
+                        {(movie.director || movie.actors) && (
+                            <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
+                                }`}>
+                                {movie.director && (
+                                    <div className="mb-2">
+                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
+                                            }`}>Director</h3>
+                                        <p className={`text-sm ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{movie.director}</p>
+                                    </div>
+                                )}
+                                {movie.actors && (
+                                    <div>
+                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
+                                            }`}>Actors</h3>
+                                        <p className={`text-sm ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{movie.actors}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {movie.trailerUrl && (
+                            <div>
+                                <h3 className={`text-sm font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
+                                    }`}>Trailer</h3>
+                                <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-500 hover:underline">
+                                    Watch Trailer on YouTube
+                                </a>
+                            </div>
+                        )}
                     </div>
 
                     {/* Metadata */}
@@ -273,9 +309,10 @@ interface CreateMovieModalProps {
     onSuccess: () => void;
     formats: MovieFormat[];
     requiredAges: MovieRequiredAge[];
+    genres: MovieGenre[];
 }
 
-const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges }) => {
+const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres }) => {
     const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -293,6 +330,9 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         movieFormatIds: [] as string[],
         movieGenreIds: [] as string[],
         movieRequiredAgeId: '00000000-0000-0000-0000-000000000000', // Default placeholder
+        trailerUrl: '',
+        director: '',
+        actors: '',
     });
 
     if (!isOpen) return null;
@@ -316,8 +356,17 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         setFormData(prev => ({
             ...prev,
             movieFormatIds: prev.movieFormatIds.includes(formatId)
-                ? prev.movieFormatIds.filter(id => id !== formatId)
+                ? prev.movieFormatIds.filter((id: string) => id !== formatId)
                 : [...prev.movieFormatIds, formatId],
+        }));
+    };
+
+    const handleGenreToggle = (genreId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            movieGenreIds: prev.movieGenreIds.includes(genreId)
+                ? prev.movieGenreIds.filter((id: string) => id !== genreId)
+                : [...prev.movieGenreIds, genreId],
         }));
     };
 
@@ -336,17 +385,27 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
             if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { setError('Please select a required age rating'); setLoading(false); return; }
 
-            await movieApi.createMovie({
+            const submissionData = {
                 movieRequiredAgeId: formData.movieRequiredAgeId,
                 movieName: formData.movieName.trim(),
                 movieDescription: formData.movieDescription.trim(),
                 movieImage: formData.movieImage,
-                startedDate: new Date(formData.startedDate).toISOString(),
-                endedDate: new Date(formData.endedDate).toISOString(),
+                startedDate: formData.startedDate, // Send local string as-is
+                endedDate: formData.endedDate,     // Send local string as-is
                 duration: parseInt(formData.duration),
                 movieFormatIds: formData.movieFormatIds,
                 movieGenreIds: formData.movieGenreIds,
+                trailerUrl: formData.trailerUrl.trim() || undefined,
+                director: formData.director.trim() || undefined,
+                actors: formData.actors.trim() || undefined,
+            };
+
+            console.log("DEBUG: Creating Movie -> Sending Local Time:", {
+                UI_Started: formData.startedDate,
+                UI_Ended: formData.endedDate
             });
+
+            await movieApi.createMovie(submissionData);
 
             setSuccess(true);
             onSuccess();
@@ -469,12 +528,28 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className={`${inputClass} resize-none`} placeholder="Enter movie description" maxLength={200} />
                         </div>
 
+                        {/* Additional Info */}
+                        <div>
+                            <label className={labelClass}>Trailer URL</label>
+                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className={inputClass} placeholder="Enter YouTube trailer URL" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Director</label>
+                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={inputClass} placeholder="Enter director name" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Actors</label>
+                                <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className={inputClass} placeholder="Enter actors (comma separated)" />
+                            </div>
+                        </div>
+
                         {/* Required Age */}
                         <div>
                             <label className={labelClass}>Required Age <span className="text-red-500">*</span></label>
                             <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className={inputClass}>
                                 <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
-                                {requiredAges.map(age => (
+                                {requiredAges.map((age: MovieRequiredAge) => (
                                     <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
                                         {age.movieRequiredAgeSymbol} - {age.movieRequiredAgeDescription}
                                     </option>
@@ -486,7 +561,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                         <div>
                             <label className={labelClass}>Visual Formats <span className="text-red-500">*</span></label>
                             <div className="flex flex-wrap gap-2">
-                                {formats.map((f) => (
+                                {formats.map((f: MovieFormat) => (
                                     <button
                                         key={f.formatId}
                                         type="button"
@@ -513,6 +588,37 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             </div>
                         </div>
 
+                        {/* Movie Genres */}
+                        <div>
+                            <label className={labelClass}>Genres</label>
+                            <div className="flex flex-wrap gap-2">
+                                {genres.map((g: MovieGenre) => (
+                                    <button
+                                        key={g.movieGenreId}
+                                        type="button"
+                                        onClick={() => handleGenreToggle(g.movieGenreId)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieGenreIds.includes(g.movieGenreId)
+                                            ? theme === 'modern'
+                                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white border-pink-300 shadow-md shadow-pink-500/20'
+                                                : 'bg-red-600 text-white border-red-600'
+                                            : theme === 'dark'
+                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
+                                            }`}
+                                    >
+                                        {g.movieGenreName}
+                                    </button>
+                                ))}
+                                {genres.length === 0 && (
+                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
+                                        No genres available.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Submit */}
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -521,6 +627,379 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                                 } ${theme === 'modern' ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 shadow-lg shadow-pink-500/20 text-white border border-pink-400/50' : 'bg-red-600 hover:bg-red-700 text-white'
                                 }`}>
                                 {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>) : (<><Plus className="w-4 h-4" /> Create Movie</>)}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// =============================================
+// UPDATE MOVIE MODAL
+// =============================================
+
+interface UpdateMovieModalProps {
+    movie: Movie;
+    isOpen: boolean;
+    onClose: () => void;
+    onSuccess: () => void;
+    formats: MovieFormat[];
+    requiredAges: MovieRequiredAge[];
+    genres: MovieGenre[];
+}
+
+const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres }) => {
+    const { theme } = useTheme();
+    const [loading, setLoading] = useState(false);
+
+    // Helper to format ISO date to local YYYY-MM-DDTHH:mm ignoring Z (treating as Wall Time)
+    const formatDateForInput = (dateStr: string | null | undefined) => {
+        if (!dateStr) return '';
+        // Strip 'Z' to prevent browser from adding timezone offset
+        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
+        const d = new Date(wallTimeStr);
+        if (isNaN(d.getTime())) return '';
+        
+        // Use local time methods to fill the <input type="datetime-local">
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(movie.movieImageUrl);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [formData, setFormData] = useState({
+        movieName: movie.movieName,
+        movieDescription: movie.movieDescriptions,
+        movieImage: null as File | null,
+        startedDate: formatDateForInput(movie.startedDate),
+        endedDate: formatDateForInput(movie.endedDate),
+        duration: movie.duration.toString(),
+        movieFormatIds: formats
+            .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+            .map((f: MovieFormat) => f.formatId),
+        movieGenreIds: genres
+            .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+            .map((g: MovieGenre) => g.movieGenreId),
+        movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
+        trailerUrl: movie.trailerUrl || '',
+        director: movie.director || '',
+        actors: movie.actors || '',
+    });
+
+    // Re-sync if movie changes or modal opens
+    useEffect(() => {
+        if (!isOpen) return;
+        
+        console.log("DEBUG: Official Opening Modal with Movie:", movie);
+        
+        setFormData({
+            movieName: movie.movieName,
+            movieDescription: movie.movieDescriptions,
+            movieImage: null as File | null,
+            startedDate: formatDateForInput(movie.startedDate),
+            endedDate: formatDateForInput(movie.endedDate),
+            duration: movie.duration.toString(),
+            movieFormatIds: formats
+                .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+                .map((f: MovieFormat) => f.formatId),
+            movieGenreIds: genres
+                .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+                .map((g: MovieGenre) => g.movieGenreId),
+            movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
+            trailerUrl: movie.trailerUrl || '',
+            director: movie.director || '',
+            actors: movie.actors || '',
+        });
+        setImagePreview(movie.movieImageUrl);
+    }, [movie, formats, requiredAges, genres, isOpen]);
+
+    if (!isOpen) return null;
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({ ...prev, movieImage: file }));
+            const reader = new FileReader();
+            reader.onloadend = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleFormatToggle = (formatId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            movieFormatIds: prev.movieFormatIds.includes(formatId)
+                ? prev.movieFormatIds.filter((id: string) => id !== formatId)
+                : [...prev.movieFormatIds, formatId],
+        }));
+    };
+
+    const handleGenreToggle = (genreId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            movieGenreIds: prev.movieGenreIds.includes(genreId)
+                ? prev.movieGenreIds.filter((id: string) => id !== genreId)
+                : [...prev.movieGenreIds, genreId],
+        }));
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setSuccess(false);
+        setLoading(true);
+
+        try {
+            if (!formData.movieName.trim()) { setError('Please enter movie name'); setLoading(false); return; }
+            if (formData.duration && parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
+            if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
+
+            const submissionData = {
+                movieRequiredAgeId: formData.movieRequiredAgeId !== '00000000-0000-0000-0000-000000000000' ? formData.movieRequiredAgeId : undefined,
+                movieName: formData.movieName.trim(),
+                movieDescription: formData.movieDescription.trim(),
+                movieImage: formData.movieImage || undefined,
+                startedDate: formData.startedDate || null, // No conversion, send what user sees
+                endedDate: formData.endedDate || null,
+                duration: formData.duration ? parseInt(formData.duration) : undefined,
+                movieFormatIds: formData.movieFormatIds,
+                movieGenreIds: formData.movieGenreIds,
+                trailerUrl: formData.trailerUrl.trim() || undefined,
+                director: formData.director.trim() || undefined,
+                actors: formData.actors.trim() || undefined,
+            };
+
+            console.log("DEBUG: Update Movie Submission Date Check:", {
+                UI_Raw_Input: formData.startedDate,
+                Server_Raw_Started: movie.startedDate,
+                Final_Submission: submissionData.startedDate
+            });
+
+            await movieApi.updateMovie(movie.movieId!, submissionData);
+
+            setSuccess(true);
+            onSuccess();
+            setTimeout(() => onClose(), 1200);
+        } catch (err) {
+            if (axios.isAxiosError(err) && err.response) {
+                const data = err.response.data as ApiErrorResponse;
+                setError(data.errors?.join(', ') || data.message || 'Failed to update movie');
+            } else {
+                setError('Unable to connect to server');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const inputClass = `w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors ${theme === 'modern' ? 'focus:border-cyan-300 shadow-md shadow-cyan-500/20' : 'focus:border-red-600'
+        } ${theme === 'dark'
+            ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
+            : theme === 'modern'
+                ? 'bg-[#15102B]/60 border-indigo-500/30 shadow-sm shadow-indigo-500/10 text-white placeholder-slate-500'
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+        }`;
+
+    const labelClass = `block text-sm font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+        }`;
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+            <div className={`relative w-full max-w-2xl max-h-[90vh] rounded-xl border shadow-2xl flex flex-col ${theme === 'dark'
+                ? 'bg-gray-900 border-gray-800'
+                : theme === 'modern'
+                    ? 'bg-[#15102B]/95 border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
+                    : 'bg-white border-gray-200'
+                }`} onClick={(e) => e.stopPropagation()}>
+                {/* Header */}
+                <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
+                    }`}>
+                    <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
+                        Update Movie
+                    </h2>
+                    <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-400' : theme === 'modern' ? 'hover:bg-[#15102B]/60 text-white font-medium' : 'hover:bg-gray-100 text-gray-600'
+                        }`}>
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6">
+                    {success && (
+                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-green-900/40 border-green-500/50 text-green-100' : 'bg-green-50 border-green-200 text-green-800'
+                            }`}>
+                            <CheckCircle className="w-5 h-5 mr-3 text-green-500" />
+                            <span className="text-sm font-medium">Movie updated successfully!</span>
+                        </div>
+                    )}
+                    {error && (
+                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
+                            }`}>
+                            <AlertCircle className="w-5 h-5 mr-3 text-red-500" />
+                            <span className="text-sm font-medium">{error}</span>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Movie Name */}
+                        <div>
+                            <label className={labelClass}>Movie Name <span className="text-red-500">*</span></label>
+                            <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className={inputClass} placeholder="Enter movie name" maxLength={50} />
+                        </div>
+
+                        {/* Image Upload */}
+                        <div>
+                            <label className={labelClass}>Poster Image (Leave empty to keep current)</label>
+                            <div
+                                onClick={() => fileInputRef.current?.click()}
+                                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${theme === 'dark'
+                                    ? 'border-gray-700 hover:border-red-600 bg-gray-800/50'
+                                    : theme === 'modern'
+                                        ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20 bg-[#15102B]/40'
+                                        : 'border-gray-300 hover:border-red-500 bg-gray-50'
+                                    }`}
+                            >
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto bg-black/20" />
+                                ) : (
+                                    <>
+                                        <Image className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`} />
+                                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
+                                            Click to update poster image
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        </div>
+
+                        {/* Dates */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Start Date</label>
+                                <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className={inputClass} />
+                            </div>
+                            <div>
+                                <label className={labelClass}>End Date</label>
+                                <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className={inputClass} />
+                            </div>
+                        </div>
+
+                        {/* Duration */}
+                        <div>
+                            <label className={labelClass}>Duration (minutes) <span className="text-red-500">*</span></label>
+                            <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className={inputClass} placeholder="e.g. 120" min={1} />
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                            <label className={labelClass}>Description</label>
+                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className={`${inputClass} resize-none`} placeholder="Enter movie description" maxLength={200} />
+                        </div>
+
+                        {/* Additional Info */}
+                        <div>
+                            <label className={labelClass}>Trailer URL</label>
+                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className={inputClass} placeholder="Enter YouTube trailer URL" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className={labelClass}>Director</label>
+                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={inputClass} placeholder="Enter director name" />
+                            </div>
+                            <div>
+                                <label className={labelClass}>Actors</label>
+                                <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className={inputClass} placeholder="Enter actors (comma separated)" />
+                            </div>
+                        </div>
+
+                        {/* Required Age */}
+                        <div>
+                            <label className={labelClass}>Required Age</label>
+                            <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className={inputClass}>
+                                <option value="00000000-0000-0000-0000-000000000000">Current Rating</option>
+                                {requiredAges.map((age: MovieRequiredAge) => (
+                                    <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
+                                        {age.movieRequiredAgeSymbol} - {age.movieRequiredAgeDescription}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Movie Formats */}
+                        <div>
+                            <label className={labelClass}>Visual Formats <span className="text-red-500">*</span></label>
+                            <div className="flex flex-wrap gap-2">
+                                {formats.map((f: MovieFormat) => (
+                                    <button
+                                        key={f.formatId}
+                                        type="button"
+                                        onClick={() => handleFormatToggle(f.formatId)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieFormatIds.includes(f.formatId)
+                                            ? theme === 'modern'
+                                                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                : 'bg-red-600 text-white border-red-600'
+                                            : theme === 'dark'
+                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
+                                            }`}
+                                    >
+                                        {f.formatName}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Movie Genres */}
+                        <div>
+                            <label className={labelClass}>Genres</label>
+                            <div className="flex flex-wrap gap-2">
+                                {genres.map((g: MovieGenre) => (
+                                    <button
+                                        key={g.movieGenreId}
+                                        type="button"
+                                        onClick={() => handleGenreToggle(g.movieGenreId)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieGenreIds.includes(g.movieGenreId)
+                                            ? theme === 'modern'
+                                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white border-pink-300 shadow-md shadow-pink-500/20'
+                                                : 'bg-red-600 text-white border-red-600'
+                                            : theme === 'dark'
+                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
+                                            }`}
+                                    >
+                                        {g.movieGenreName}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Submit */}
+                        <div className="flex justify-end gap-3 pt-4">
+                            <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
+                            <button type="submit" disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''
+                                } ${theme === 'modern' ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 shadow-lg shadow-pink-500/20 text-white border border-pink-400/50' : 'bg-red-600 hover:bg-red-700 text-white'
+                                }`}>
+                                {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Updating...</>) : (<><Edit className="w-4 h-4" /> Save Changes</>)}
                             </button>
                         </div>
                     </form>
@@ -544,9 +1023,11 @@ const MovieManagerPage: React.FC = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+
     const [movies, setMovies] = useState<Movie[]>([]);
     const [formats, setFormats] = useState<MovieFormat[]>([]);
     const [requiredAges, setRequiredAges] = useState<MovieRequiredAge[]>([]);
+    const [genres, setGenres] = useState<MovieGenre[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -560,8 +1041,22 @@ const MovieManagerPage: React.FC = () => {
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+    const [movieToUpdate, setMovieToUpdate] = useState<Movie | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    const handleDeleteMovie = async (movie: Movie) => {
+        if (!window.confirm(`Are you sure you want to delete movie "${movie.movieName}"?`)) return;
+        try {
+            await movieApi.deleteMovie(movie.movieId!);
+            toast.success('Xóa phim thành công');
+            fetchMovies();
+        } catch (err: any) {
+            const msg = err.response?.data?.message || 'Không thể xóa phim này';
+            toast.error(msg);
+        }
+    };
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
@@ -574,6 +1069,7 @@ const MovieManagerPage: React.FC = () => {
             fetchMovies();
             fetchFormats();
             fetchRequiredAges();
+            fetchGenres();
         } catch { navigate('/login'); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
@@ -592,11 +1088,17 @@ const MovieManagerPage: React.FC = () => {
         setError(null);
         try {
             const res = await movieApi.getMovieList();
+            console.log("DEBUG: API getMovieList Response ->", res.data);
             setMovies(res.data || []);
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
                 const data = err.response.data as ApiErrorResponse;
-                if (data.statusCode === 401) { localStorage.removeItem('user_info'); navigate('/login'); return; }
+                if (data.statusCode === 401) { 
+                    localStorage.removeItem('user_info'); 
+                    Cookies.remove('X-Access-Token');
+                    navigate('/login'); 
+                    return; 
+                }
                 setError(data.message || 'Cannot load movies list.');
             } else if (axios.isAxiosError(err) && err.request) {
                 setError('Cannot connect to server. Please check your network connection.');
@@ -626,6 +1128,21 @@ const MovieManagerPage: React.FC = () => {
         }
     };
 
+    const fetchGenres = async () => {
+        try {
+            const res = await publicApi.getMovieGenres();
+            // Map PublicGenre to MovieGenre format if needed (they should be compatible)
+            const genresData: MovieGenre[] = (res.data || []).map(g => ({
+                movieGenreId: g.genreId,
+                movieGenreName: g.genreName,
+                movieGenreDescription: g.description
+            }));
+            setGenres(genresData);
+        } catch {
+            /* silently ignore */
+        }
+    };
+
     const handleLogoutClick = () => { setIsLogoutModalOpen(true); setLogoutError(null); };
 
     const handleLogoutConfirm = async () => {
@@ -634,6 +1151,7 @@ const MovieManagerPage: React.FC = () => {
         try {
             await authApi.logout();
             localStorage.removeItem('user_info');
+            Cookies.remove('X-Access-Token');
             setIsLogoutModalOpen(false);
             navigate('/login');
         } catch (error: unknown) {
@@ -650,7 +1168,11 @@ const MovieManagerPage: React.FC = () => {
     );
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        // Strip 'Z' to display as Wall Time
+        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
+        return new Date(wallTimeStr).toLocaleDateString('vi-VN', { 
+            day: '2-digit', month: '2-digit', year: 'numeric' 
+        });
     };
 
     return (
@@ -720,7 +1242,10 @@ const MovieManagerPage: React.FC = () => {
                                         <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>SIGNED IN AS</p>
                                         <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
                                     </div>
-                                    <button className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}>
+                                    <button 
+                                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                                    >
                                         <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
                                     </button>
 
@@ -846,11 +1371,14 @@ const MovieManagerPage: React.FC = () => {
                                         {/* Hover Actions */}
                                         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                                             <div className="flex gap-2">
-                                                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors">
+                                                <button onClick={(e) => { e.stopPropagation(); setSelectedMovie(movie); setIsDetailModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-white/30 transition-colors">
                                                     <Eye className="w-3.5 h-3.5" /> View
                                                 </button>
-                                                <button className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-xs font-semibold hover:bg-white/30 transition-colors">
+                                                <button onClick={(e) => { e.stopPropagation(); setMovieToUpdate(movie); setIsUpdateModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-blue-700 transition-colors">
                                                     <Edit className="w-3.5 h-3.5" /> Edit
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-red-700 transition-colors">
+                                                    <Trash2 className="w-3.5 h-3.5" /> Delete
                                                 </button>
                                             </div>
                                         </div>
@@ -911,10 +1439,22 @@ const MovieManagerPage: React.FC = () => {
                 onSuccess={fetchMovies}
                 formats={formats}
                 requiredAges={requiredAges}
+                genres={genres}
             />
+            {movieToUpdate && (
+                <UpdateMovieModal
+                    movie={movieToUpdate as Movie}
+                    isOpen={isUpdateModalOpen}
+                    onClose={() => { setIsUpdateModalOpen(false); setMovieToUpdate(null); }}
+                    onSuccess={fetchMovies}
+                    formats={formats}
+                    requiredAges={requiredAges}
+                    genres={genres}
+                />
+            )}
             {selectedMovie && (
                 <MovieDetailModal
-                    movie={selectedMovie}
+                    movie={selectedMovie as Movie}
                     isOpen={isDetailModalOpen}
                     onClose={() => { setIsDetailModalOpen(false); setSelectedMovie(null); }}
                 />

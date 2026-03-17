@@ -17,3 +17,43 @@ export interface CreateScheduleRequest {
     auditoriumId: string;
     slots: ScheduleSlot[];
 }
+
+export interface UpdateScheduleRequest {
+    slots: ScheduleSlot[];
+}
+
+export interface MovieWithFormat {
+    movieId: string;
+    movieName: string;
+    formatId: string;
+    formatName: string;
+    formatVersion: string;
+    formatCaption: string;
+}
+
+export interface MyAuditorium {
+    auditoriumId: string;
+    auditoriumNumber: number;
+    totalSeats: number;
+    formatInfos?: {
+        formatId: string;
+        formatName: string;
+    }[];
+}
+
+export interface MyCinemaAuditoriums {
+    cinemaName: string;
+    auditoriums: MyAuditorium[];
+}
+
+export interface ScheduleDetail {
+    scheduleId: string;
+    movieId: string;
+    movieName: string;
+    formatId: string;
+    formatName: string;
+    auditoriumId: string;
+    startedDate: string;
+    endedTime: string; // From API docs
+    isDeleted: boolean;
+}

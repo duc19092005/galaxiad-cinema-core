@@ -59,6 +59,7 @@ export interface UserLoginData {
   username: string;
   userName?: string; // Backend actually sends userName instead of username
   roles: string[];
+  accessToken?: string;
 }
 
 /** Data returned from get-profile */
