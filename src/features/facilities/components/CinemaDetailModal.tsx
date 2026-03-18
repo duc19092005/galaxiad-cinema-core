@@ -351,10 +351,18 @@ const CinemaDetailModal: React.FC<CinemaDetailModalProps> = ({ cinemaId, isOpen,
                                     <Eye className="w-3 h-3" />
                                     View
                                   </button>
-                                  <button className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${theme === 'dark'
-                                    ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-                                    }`}>
+                                  <button 
+                                    onClick={() => {
+                                      if (auditorium.auditoriumId) {
+                                        setSelectedRoomId(auditorium.auditoriumId);
+                                        setIsRoomDetailModalOpen(true);
+                                      }
+                                    }}
+                                    className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs transition-colors ${theme === 'dark'
+                                      ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+                                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
+                                      }`}
+                                  >
                                     <Edit className="w-3 h-3" />
                                     Edit
                                   </button>

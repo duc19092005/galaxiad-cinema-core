@@ -15,6 +15,7 @@ import {
     UserCog,
     ShieldCheck,
     Filter,
+    ArrowLeftRight,
     ArrowUpDown,
     SortAsc,
     SortDesc,
@@ -44,7 +45,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClose }) => {
-    const { theme } = useTheme();
+    const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -53,6 +54,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
         { id: 'jobs', label: t('Background Jobs'), icon: Clock },
         { id: 'transfer', label: t('Transfer Rights'), icon: Sparkles },
     ] as const;
+
+    const storedUserStr = localStorage.getItem('user_info');
+    const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+    const handleLogout = async () => {
+        try {
+            await authApi.logout();
+        } catch (e) {}
+        localStorage.removeItem('user_info');
+        import('js-cookie').then(Cookies => Cookies.default.remove('X-Access-Token'));
+        navigate('/login');
+    };
 
     return (
         <aside className={`fixed top-0 left-0 h-full w-72 z-[110] border-r transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) transform ${isOpen ? 'translate-x-0 scale-100' : '-translate-x-full lg:translate-x-0'
@@ -79,6 +92,42 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
 
             {/* Sidebar Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                
+                {/* -------------------- MOBILE ONLY VIEW -------------------- */}
+                {user && (
+                    <div className="lg:hidden space-y-4 pb-4 border-b border-gray-500/10">
+                        <div className="flex items-center gap-4 mb-2 p-1">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                                <UserCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('ĐĂNG NHẬP BỞI')}</p>
+                                <p className={`text-sm font-black truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user.username}</p>
+                            </div>
+                        </div>
+                        <button onClick={() => { navigate('/account'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-100'}`}>
+                            <UserCircle className="w-5 h-5 text-indigo-400" />
+                            <span className="font-bold">{t('Thông Tin Tài Khoản')}</span>
+                        </button>
+                        {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
+                            <button onClick={() => { navigate('/role-selection'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-green-500 ${theme === 'dark' ? 'hover:bg-gray-800/50' : theme === 'modern' ? 'hover:bg-green-500/10' : 'hover:bg-green-50'}`}>
+                                <LayoutDashboard className="w-5 h-5" />
+                                <span className="font-bold">Management Hub</span>
+                            </button>
+                        )}
+                        {user.roles && user.roles.length > 1 && (
+                            <button onClick={() => { navigate('/role-selection'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-blue-500 border-t ${theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/50' : theme === 'modern' ? 'border-indigo-500/20 hover:bg-blue-500/10' : 'border-gray-100 hover:bg-blue-50'}`}>
+                                <ArrowLeftRight className="w-5 h-5" />
+                                <span className="font-bold">{t('Đổi Vai Trò')}</span>
+                            </button>
+                        )}
+                        <button onClick={() => { handleLogout(); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-red-500 font-bold ${theme === 'dark' ? 'hover:bg-red-500/10' : theme === 'modern' ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}>
+                            <LogOut className="w-5 h-5" />
+                            <span>{t('Đăng Xuất')}</span>
+                        </button>
+                    </div>
+                )}
+
                 {/* Navigation Section */}
                 <div className="space-y-4">
                     <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
@@ -124,8 +173,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                     </div>
                 </div>
 
-                {/* Account Actions Section */}
-                <div className="space-y-4">
+                {/* Account Actions Section (Desktop only) */}
+                <div className="hidden lg:block space-y-4">
                     <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
                         {t('System')}
                     </h3>
@@ -142,10 +191,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                         </button>
                     </div>
                 </div>
+
+                {/* Preferences Section (Mobile Only) */}
+                <div className="lg:hidden space-y-4">
+                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                        {t('Preferences')}
+                    </h3>
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center justify-between px-2">
+                            <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Language')}</span>
+                            <LanguageSwitcher />
+                        </div>
+                        <div className="flex items-center justify-between px-2">
+                            <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Theme')}</span>
+                            <div className="flex gap-2">
+                                {(['light', 'dark', 'modern'] as const).map((tMode) => (
+                                    <button
+                                        key={tMode}
+                                        onClick={() => setTheme(tMode)}
+                                        className={`p-2.5 rounded-xl transition-all transform active:scale-90 ${theme === tMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40' : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20'}`}
+                                        title={`Switch to ${tMode}`}
+                                    >
+                                        {tMode === 'light' ? <Sun className="w-4 h-4" /> : tMode === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            {/* Sidebar Footer */}
-            <div className={`p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
+            {/* Sidebar Footer (Desktop only) */}
+            <div className={`hidden lg:block p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
                 <button
                     onClick={() => navigate('/role-selection')}
                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-500/10' :
@@ -153,10 +230,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                                 'text-blue-600 hover:bg-blue-50'
                         }`}
                 >
-                    <Users className="w-5 h-5" />
+                    <ArrowLeftRight className="w-5 h-5" />
                     <span className="font-bold">{t('Switch Role')}</span>
                 </button>
             </div>
+
         </aside>
     );
 };
@@ -323,7 +401,7 @@ const AdminPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className={`p-2 rounded-lg transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
+                        className={`lg:hidden p-2 rounded-lg transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
                                 theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
                                     'hover:bg-gray-100 text-gray-700'
                             }`}
@@ -344,8 +422,10 @@ const AdminPage: React.FC = () => {
                 <div className="flex-1" />
 
                 <div className="flex items-center gap-1.5 sm:gap-3">
-                    <LanguageSwitcher />
-                    <div className="relative" ref={themeDropdownRef}>
+                    <div className="hidden lg:block">
+                        <LanguageSwitcher />
+                    </div>
+                    <div className="hidden lg:block relative" ref={themeDropdownRef}>
                         <button
                             onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
                             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark'
@@ -464,7 +544,7 @@ const AdminPage: React.FC = () => {
                         )}
                     </div>
 
-                    <div className="relative" ref={dropdownRef}>
+                    <div className="hidden lg:block relative" ref={dropdownRef}>
                         <button
                             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                             className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
@@ -500,28 +580,37 @@ const AdminPage: React.FC = () => {
                                         className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
                                             }`}
                                     >
-                                        <Users className="w-4 h-4" />
-                                        {t('Switch Role')}
+                                        <ArrowLeftRight className="w-4 h-4" />
+                                        {t('header.switchRole')}
                                     </button>
 
                                     <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
 
                                     <button
                                         onClick={() => setIsLogoutModalOpen(true)}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20 hover:drop-shadow-[0_0_4px_rgba(239,68,68,0.4)]' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 hover:drop-shadow-[0_0_4px_rgba(248,113,113,0.4)]' : 'text-red-600 hover:bg-red-50'
+                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
                                             }`}
                                     >
                                         <LogOut className="w-4 h-4" />
-                                        {t('Logout')}
+                                        {t('header.logout')}
                                     </button>
                                 </div>
                             </div>
                         )}
                     </div>
+                
+                    <button 
+                        onClick={() => setIsSidebarOpen(true)}
+                        className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
+                            theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+                        }`}
+                    >
+                        <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
+                    </button>
                 </div>
             </header>
 
-            <main className="pt-24 lg:pl-72 min-h-screen p-6 flex justify-center w-full overflow-hidden">
+            <main className="pt-24 lg:pl-72 min-h-screen p-4 sm:p-6 w-full overflow-hidden">
                 <div className={`w-full max-w-7xl rounded-xl border shadow-sm h-fit ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border-indigo-500/30 backdrop-blur-xl' : 'bg-white border-gray-200'}`}>
                     {loading ? (
                         <div className="p-12 text-center">
@@ -529,16 +618,16 @@ const AdminPage: React.FC = () => {
                             <p>Loading data...</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto pb-20 custom-scrollbar w-full">
+                        <div className="overflow-x-auto pb-10 sm:pb-20 custom-scrollbar w-full">
                             {activeTab === 'users' && (
-                                <table className="w-full text-left text-sm">
+                                <table className="w-full min-w-[900px] text-left text-sm">
                                     <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
                                         <tr>
-                                            <th className="px-6 py-4 font-bold">Email</th>
-                                            <th className="px-6 py-4 font-bold">{t('Full Name')}</th>
-                                            <th className="px-6 py-4 font-bold">{t('Roles')}</th>
-                                            <th className="px-6 py-4 font-bold">{t('Status')}</th>
-                                            <th className="px-6 py-4 font-bold text-right pr-8">{t('Actions')}</th>
+                                            <th className="px-6 py-4 font-bold whitespace-nowrap">Email</th>
+                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Full Name')}</th>
+                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Roles')}</th>
+                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Status')}</th>
+                                            <th className="px-6 py-4 font-bold whitespace-nowrap text-right pr-8">{t('Actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 divide-opacity-20">
@@ -664,12 +753,12 @@ const AdminPage: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-                                    <table className="w-full text-left text-sm">
+                                    <table className="w-full min-w-[800px] text-left text-sm">
                                         <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
                                             <tr>
-                                                <th className="px-4 py-4 font-bold">Target & Category</th>
-                                                <th className="px-4 py-4 font-bold">Start Schedule</th>
-                                                <th className="px-4 py-4 font-bold">End Schedule</th>
+                                                <th className="px-4 py-4 font-bold whitespace-nowrap">Target & Category</th>
+                                                <th className="px-4 py-4 font-bold whitespace-nowrap">Start Schedule</th>
+                                                <th className="px-4 py-4 font-bold whitespace-nowrap">End Schedule</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-200 divide-opacity-20">

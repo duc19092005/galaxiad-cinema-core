@@ -169,8 +169,13 @@ const LoginForm: React.FC = () => {
                                 </button>
                             </form>
 
-                            <div className="mt-6 text-center text-lg text-gray-500">
-                                Don't have an account? <Link to="/register" className="text-red-500 hover:text-red-400 font-bold transition-colors">Register now</Link>
+                            <div className="mt-6 text-center text-sm sm:text-base text-gray-500 flex flex-col gap-3">
+                                <div>
+                                    Don't have an account? <Link to="/register" className="text-red-500 hover:text-red-400 font-bold transition-colors">Register now</Link>
+                                </div>
+                                <div className="border-t border-gray-800 pt-3">
+                                    <span className="opacity-70">Bạn không muốn đăng nhập?</span> <Link to="/home" className="text-white hover:text-red-400 font-bold transition-colors ml-1">Vào trang xem phim</Link>
+                                </div>
                             </div>
                         </div>
                     </div>

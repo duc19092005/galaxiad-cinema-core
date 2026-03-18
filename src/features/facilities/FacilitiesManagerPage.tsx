@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Loader2,
   Menu,
+  UserCircle,
 } from 'lucide-react';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
@@ -200,7 +201,7 @@ const FacilitiesManagerPage: React.FC = () => {
           <div className="flex items-center gap-3">
               <button
                   onClick={() => setSidebarOpen(true)}
-                  className={`p-2 rounded-xl transition-all active:scale-95 z-[70] ${
+                  className={`lg:hidden p-2 rounded-xl transition-all active:scale-95 z-[70] ${
                       theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
                       theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
                       'hover:bg-gray-100 text-gray-700'
@@ -221,30 +222,41 @@ const FacilitiesManagerPage: React.FC = () => {
           <div className="flex-1" />
 
           <div className="flex items-center gap-2 sm:gap-4">
-              {/* Cinema Selector Integrated */}
-              <div className="hidden md:block">
-                  <CinemaSelector />
-              </div>
-              
-              <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-              <LanguageSwitcher />
-              <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-              
-              <div className="flex items-center gap-3 pr-2">
-                  <div className="hidden sm:block text-right">
-                        <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Facilities Manager</p>
-                        <p className={`text-sm font-black truncate max-w-[150px] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+              <div className="hidden lg:flex items-center gap-2 sm:gap-4">
+                  {/* Cinema Selector Integrated */}
+                  <div className="hidden md:block">
+                      <CinemaSelector />
                   </div>
-                  <button
-                      onClick={handleLogoutClick}
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                          theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 shadow-indigo-500/20' : 'bg-red-600 shadow-red-600/20'
-                      }`}
-                      title="Logout"
-                  >
-                      <LogOut className="w-5 h-5 text-white" />
-                  </button>
+                  
+                  <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
+                  <LanguageSwitcher />
+                  <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
+                  
+                  <div className="flex items-center gap-3 pr-2">
+                      <div className="hidden sm:block text-right">
+                            <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Facilities Manager</p>
+                            <p className={`text-sm font-black truncate max-w-[150px] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                      </div>
+                      <button
+                          onClick={handleLogoutClick}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
+                              theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 shadow-indigo-500/20' : 'bg-red-600 shadow-red-600/20'
+                          }`}
+                          title="Logout"
+                      >
+                          <LogOut className="w-5 h-5 text-white" />
+                      </button>
+                  </div>
               </div>
+
+              <button 
+                  onClick={() => setSidebarOpen(true)}
+                  className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
+                      theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+                  }`}
+              >
+                  <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
+              </button>
           </div>
       </header>
 

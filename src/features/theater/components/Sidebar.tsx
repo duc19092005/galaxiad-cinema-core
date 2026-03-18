@@ -5,11 +5,18 @@ import {
     CalendarDays, 
     XCircle, 
     UserCircle, 
-    UserPlus 
+    ArrowLeftRight,
+    LogOut,
+    Sun,
+    Moon,
+    Sparkles
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { authApi } from '../../../api/authApi';
+import Cookies from 'js-cookie';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 
 interface SidebarProps {
     activeTab: string;
@@ -20,7 +27,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
-    const { theme } = useTheme();
+    const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
     const navigate = useNavigate();
 
@@ -29,6 +36,18 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
         { id: 'employees', label: t('Employee Management'), icon: Users },
         { id: 'schedule', label: t('Schedule'), icon: CalendarDays },
     ];
+
+    const storedUserStr = localStorage.getItem('user_info');
+    const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+    const handleLogout = async () => {
+        try {
+            await authApi.logout();
+        } catch (e) {}
+        localStorage.removeItem('user_info');
+        Cookies.remove('X-Access-Token');
+        navigate('/login');
+    };
 
     return (
         <>
@@ -74,6 +93,42 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
 
                 {/* Sidebar Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+                    {/* -------------------- MOBILE ONLY VIEW -------------------- */}
+                    {user && (
+                        <div className="lg:hidden space-y-4 pb-4 border-b border-gray-500/10">
+                            <div className="flex items-center gap-4 mb-2 p-1">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                                    <UserCircle className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('ĐĂNG NHẬP BỞI')}</p>
+                                    <p className={`text-sm font-black truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user.username}</p>
+                                </div>
+                            </div>
+                            <button onClick={() => { navigate('/account'); onToggle(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                <UserCircle className="w-5 h-5 text-indigo-400" />
+                                <span className="font-bold">{t('Thông Tin Tài Khoản')}</span>
+                            </button>
+                            {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
+                                <button onClick={() => { navigate('/role-selection'); onToggle(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-green-500 ${theme === 'dark' ? 'hover:bg-gray-800/50' : theme === 'modern' ? 'hover:bg-green-500/10' : 'hover:bg-green-50'}`}>
+                                    <LayoutDashboard className="w-5 h-5" />
+                                    <span className="font-bold">Management Hub</span>
+                                </button>
+                            )}
+                            {user.roles && user.roles.length > 1 && (
+                                <button onClick={() => { navigate('/role-selection'); onToggle(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-blue-500 border-t ${theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/50' : theme === 'modern' ? 'border-indigo-500/20 hover:bg-blue-500/10' : 'border-gray-100 hover:bg-blue-50'}`}>
+                                    <ArrowLeftRight className="w-5 h-5" />
+                                    <span className="font-bold">{t('Đổi Vai Trò')}</span>
+                                </button>
+                            )}
+                            <button onClick={() => { handleLogout(); onToggle(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-red-500 font-bold ${theme === 'dark' ? 'hover:bg-red-500/10' : theme === 'modern' ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}>
+                                <LogOut className="w-5 h-5" />
+                                <span>{t('Đăng Xuất')}</span>
+                            </button>
+                        </div>
+                    )}
+
                     {/* Navigation Section */}
                     <div className="space-y-4">
                         <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
@@ -121,8 +176,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
                         </div>
                     </div>
 
-                    {/* System Section */}
-                    <div className="space-y-4">
+                    {/* System Section (Desktop only) */}
+                    <div className="hidden lg:block space-y-4">
                         <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
                             {t('System')}
                         </h3>
@@ -140,10 +195,38 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
                             </button>
                         </div>
                     </div>
+
+                    {/* Preferences Section (Mobile Only) */}
+                    <div className="lg:hidden space-y-4">
+                        <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
+                            {t('Preferences')}
+                        </h3>
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between px-2">
+                                <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Language')}</span>
+                                <LanguageSwitcher />
+                            </div>
+                            <div className="flex items-center justify-between px-2">
+                                <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Theme')}</span>
+                                <div className="flex gap-2">
+                                    {(['light', 'dark', 'modern'] as const).map((tMode) => (
+                                        <button
+                                            key={tMode}
+                                            onClick={() => setTheme(tMode)}
+                                            className={`p-2.5 rounded-xl transition-all transform active:scale-90 ${theme === tMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40' : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20'}`}
+                                            title={`Switch to ${tMode}`}
+                                        >
+                                            {tMode === 'light' ? <Sun className="w-4 h-4" /> : tMode === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Sidebar Footer */}
-                <div className={`p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
+                <div className={`hidden lg:block p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
                     <button
                         onClick={() => navigate('/role-selection')}
                         className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${
@@ -152,7 +235,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
                             'text-blue-600 hover:bg-blue-50'
                         }`}
                     >
-                        <UserPlus className="w-5 h-5" />
+                        <ArrowLeftRight className="w-5 h-5" />
                         <span className="font-bold">{t('Switch Role')}</span>
                     </button>
                     <p className={`text-[10px] text-center mt-4 uppercase font-black tracking-widest ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-indigo-500/40' : 'text-gray-400'}`}>

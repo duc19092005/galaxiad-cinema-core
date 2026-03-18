@@ -7,7 +7,7 @@ import {
 import * as signalR from '@microsoft/signalr';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
-import type { PublicSeatMap, PublicSeat, PublicPricing, PublicSegmentPrice } from '../../types/public.types';
+import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import { useTheme } from '../../contexts/ThemeContext';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../../api/axiosClient';
@@ -19,16 +19,18 @@ const BookingPage: React.FC = () => {
 
     const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
+    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({}); // seatId -> userSegmentId
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [pricing, setPricing] = useState<PublicPricing | null>(null);
-    const [selectedSegment, setSelectedSegment] = useState<PublicSegmentPrice | null>(null);
+
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [customerInfo, setCustomerInfo] = useState({
         name: '',
         email: '',
+        phone: '',
         address: ''
     });
 
@@ -104,9 +106,7 @@ const BookingPage: React.FC = () => {
             ]);
             setSeatMap(seatRes.data);
             setPricing(priceRes.data);
-            if (priceRes.data.segmentPrices && priceRes.data.segmentPrices.length > 0) {
-                setSelectedSegment(priceRes.data.segmentPrices[0]);
-            }
+
         } catch (err) {
             setError('Failed to load booking information.');
         } finally {
@@ -124,6 +124,11 @@ const BookingPage: React.FC = () => {
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+            setSeatSegmentMap(prev => {
+                const next = { ...prev };
+                delete next[seat.seatId];
+                return next;
+            });
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
                 try {
                     await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId);
@@ -137,6 +142,11 @@ const BookingPage: React.FC = () => {
                 return;
             }
             setSelectedSeats(prev => [...prev, seat]);
+            // Initial segment should be the first one in the list (Adult usually)
+            if (pricing && pricing.segmentPrices.length > 0) {
+                setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
+            }
+
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
                 try {
                     await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName);
@@ -145,6 +155,7 @@ const BookingPage: React.FC = () => {
                 }
             }
         }
+
     };
 
     const handleBooking = async () => {
@@ -154,8 +165,8 @@ const BookingPage: React.FC = () => {
         }
 
         if (!isLoggedIn) {
-            if (!customerInfo.name.trim() || !customerInfo.email.trim()) {
-                toast.error('Please provide your name and email');
+            if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
+                toast.error('Please provide name, email and phone number');
                 return;
             }
         }
@@ -164,14 +175,15 @@ const BookingPage: React.FC = () => {
         try {
             const payload: any = {
                 scheduleId: scheduleId!.trim(),
-                seatIds: selectedSeats.map(s => s.seatId.trim())
+                seatSelections: selectedSeats.map(s => ({
+                    seatId: s.seatId,
+                    userSegmentId: seatSegmentMap[s.seatId]
+                })),
+                customerName: isLoggedIn ? undefined : customerInfo.name.trim(),
+                customerEmail: isLoggedIn ? undefined : customerInfo.email.trim(),
+                customerPhone: isLoggedIn ? undefined : customerInfo.phone.trim(),
+                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim()
             };
-
-            if (!isLoggedIn) {
-                payload.customerName = customerInfo.name.trim();
-                payload.customerEmail = customerInfo.email.trim();
-                payload.customerAddress = customerInfo.address.trim();
-            }
 
             const res = await bookingApi.createBooking(payload);
 
@@ -208,8 +220,12 @@ const BookingPage: React.FC = () => {
     }
 
     // Calculate total
-    const unitPrice = selectedSegment ? selectedSegment.finalPrice : (pricing?.basePrice || 0);
-    const totalPrice = selectedSeats.length * unitPrice;
+    const totalPrice = selectedSeats.reduce((sum, seat) => {
+        const segmentId = seatSegmentMap[seat.seatId];
+        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
+        return sum + (segment?.finalPrice || 0);
+    }, 0);
+
 
     return (
         <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
@@ -299,28 +315,43 @@ const BookingPage: React.FC = () => {
                                     <span className="opacity-60">Format</span>
                                     <span className="font-bold">{seatMap.formatName}</span>
                                 </div>
-                                <div className="flex justify-between items-start text-sm">
-                                    <span className="opacity-60">Seats ({selectedSeats.length})</span>
-                                    <span className="font-bold text-red-600">{selectedSeats.map(s => s.seatNumber).join(', ') || 'None'}</span>
+                                <div className="space-y-4">
+                                    <span className="opacity-60 text-sm block">Selected Seats</span>
+                                    {selectedSeats.length === 0 ? (
+                                        <p className="text-xs italic opacity-40">No seats selected yet</p>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {selectedSeats.map(seat => (
+                                                <div key={seat.seatId} className={`p-3 rounded-xl border transition-all ${
+                                                    theme === 'dark' ? 'bg-black/40 border-gray-800' : 
+                                                    theme === 'modern' ? 'bg-white/5 border-white/10' : 
+                                                    'bg-gray-50 border-gray-200'
+                                                }`}>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="font-bold text-red-600">Seat {seat.seatNumber}</span>
+                                                        <span className="text-sm font-black">
+                                                            {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
+                                                        </span>
+                                                    </div>
+                                                    <select
+                                                        value={seatSegmentMap[seat.seatId]}
+                                                        onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
+                                                        className={`w-full bg-transparent border-none text-xs opacity-80 focus:ring-0 cursor-pointer ${
+                                                            theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+                                                        }`}
+                                                    >
+                                                        {pricing?.segmentPrices.map(segment => (
+                                                            <option key={segment.userSegmentId} value={segment.userSegmentId} className="bg-gray-900 text-white">
+                                                                {segment.segmentName}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="space-y-2">
-                                    <span className="opacity-60 text-sm block">Ticket Type</span>
-                                    <div className="grid grid-cols-1 gap-2">
-                                        {pricing?.segmentPrices.map(segment => (
-                                            <button
-                                                key={segment.userSegmentId}
-                                                onClick={() => setSelectedSegment(segment)}
-                                                className={`px-3 py-2 rounded-lg border text-xs text-left transition-all ${selectedSegment?.userSegmentId === segment.userSegmentId
-                                                    ? 'bg-red-600/10 border-red-600 text-red-600'
-                                                    : 'border-white/10 hover:border-white/30'
-                                                    }`}
-                                            >
-                                                <div className="font-bold">{segment.description || segment.segmentName}</div>
-                                                <div className="opacity-60">{segment.finalPrice.toLocaleString('vi-VN')}đ</div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+
                             </div>
 
                             <div className="pt-4 border-t border-dashed border-white/20 mb-8">
@@ -354,17 +385,30 @@ const BookingPage: React.FC = () => {
                                                 'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
                                             }`}
                                         />
-                                        <input 
-                                            type="email" 
-                                            placeholder="Email Address *" 
-                                            value={customerInfo.email}
-                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            }`}
-                                        />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input 
+                                                type="email" 
+                                                placeholder="Email Address *" 
+                                                value={customerInfo.email}
+                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
+                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
+                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
+                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                                }`}
+                                            />
+                                            <input 
+                                                type="tel" 
+                                                placeholder="Phone Number *" 
+                                                value={customerInfo.phone}
+                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
+                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
+                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
+                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
+                                                }`}
+                                            />
+                                        </div>
                                         <input 
                                             type="text" 
                                             placeholder="Address (Optional)" 

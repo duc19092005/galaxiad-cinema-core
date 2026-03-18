@@ -102,7 +102,10 @@ const TransferRightsView: React.FC = () => {
             toast.success(t('Transferred "{0}" successfully', { 0: itemName }));
             
             // Refresh managed items for the source user to reflect the change
-            const resItems = await transferRightsApi.getManagedItems(transferType, sourceUserId);
+            const resItems = await transferRightsApi.getManagedItems(
+                transferType, 
+                sourceUserId === 'unmanaged' ? undefined : (sourceUserId || undefined)
+            );
             setManagedItems(resItems.data || []);
         } catch (error: any) {
             toast.error(error.response?.data?.message || t('Transfer failed'));

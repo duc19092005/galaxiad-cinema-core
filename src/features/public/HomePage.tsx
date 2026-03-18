@@ -412,6 +412,17 @@ const HomePage: React.FC = () => {
                         <span className="font-bold">Management Hub</span>
                       </button>
                     )}
+                    
+                 {user?.roles && user.roles.length > 1 && (
+                      <button
+                        onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                        className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-blue-500 border-t ${theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/50' : theme === 'modern' ? 'border-indigo-500/20 hover:bg-blue-500/10' : 'border-gray-100 hover:bg-blue-50'}`}
+                      >
+                        <ArrowLeftRight className="w-5 h-5" />
+                        <span className="font-bold">{t('header.switchRole')}</span>
+                      </button>
+                 )}
+
                  <button 
                   onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
                   className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-red-500 font-bold ${theme === 'dark' ? 'hover:bg-red-500/10' : theme === 'modern' ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}

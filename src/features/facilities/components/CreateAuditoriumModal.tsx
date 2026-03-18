@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Plus, Loader2, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Grid3x3, Move, DoorOpen, Square } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { facilitiesApi, type MovieFormat, type CreateAuditoriumRequest, type SeatPosition } from '../../../api/facilitiesApi';
+import { facilitiesApi, type MovieFormat, type SeatPosition } from '../../../api/facilitiesApi';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../../types/auth.types';
@@ -149,28 +149,33 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
 
   // Auto fill all empty cells with seats
   const handleAutoFillSeats = () => {
-    const newSeats: SeatPosition[] = [];
-    for (let row = 0; row < gridSize.rows; row++) {
-      for (let col = 0; col < gridSize.cols; col++) {
-        // Check if seat already exists at this position
-        const existingSeat = seats.find(
-          s => s.colIndex === col && s.rowIndex === row
-        );
-        // Check if position is in an aisle - skip if it is
-        const isInAisle = isPositionInAisle(col, row);
-        if (!existingSeat && !isInAisle) {
-          const seatNumber = `${String.fromCharCode(65 + row)}${col + 1}`;
-          newSeats.push({
-            seatNumber,
-            coordX: col * cellSize.width,
-            coordY: row * cellSize.height,
-            colIndex: col,
-            rowIndex: row,
-          });
+    setSeats((currentSeats) => {
+      const newSeats: SeatPosition[] = [];
+      for (let row = 0; row < gridSize.rows; row++) {
+        for (let col = 0; col < gridSize.cols; col++) {
+          // Check if seat already exists at this position
+          const existingSeat = currentSeats.find(
+            s => s.colIndex === col && s.rowIndex === row
+          );
+          // Check if position is in an aisle - skip if it is
+          const isInAisle = isPositionInAisle(col, row);
+          
+          if (!existingSeat && !isInAisle) {
+            const seatNumber = `${String.fromCharCode(65 + row)}${col + 1}`;
+            newSeats.push({
+              seatNumber,
+              coordX: col * cellSize.width,
+              coordY: row * cellSize.height,
+              colIndex: col,
+              rowIndex: row,
+            });
+          }
         }
       }
-    }
-    setSeats([...seats, ...newSeats]);
+      const updatedSeats = [...currentSeats, ...newSeats];
+      console.log(`Auto-filled ${newSeats.length} seats. Total seats: ${updatedSeats.length}`);
+      return updatedSeats;
+    });
   };
 
   // Clear all seats
@@ -674,15 +679,21 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     setCreateLoading(true);
 
     try {
-      const requestData: CreateAuditoriumRequest = {
+      const requestData = {
         auditoriumNumber: auditoriumNumber.trim(),
         movieFormatId: [selectedFormat.formatId],
         cinemaId,
+        // Backend often expects singular or plural, or simply 'seats'
+        // We provide the official type name and a common fallback
         addReqSeatsAuditoriumDto: seats,
+        seats: seats // Fallback just in case
       };
 
-      console.log('Creating auditorium:', requestData);
-      const response = await facilitiesApi.createAuditorium(requestData);
+      console.log('--- CREATING AUDITORIUM PAYLOAD ---');
+      console.log('Data:', JSON.stringify(requestData, null, 2));
+      console.log('Seats count:', seats.length);
+      
+      const response = await facilitiesApi.createAuditorium(requestData as any);
       console.log('Create auditorium response:', response);
 
       if (response.isSuccess) {
