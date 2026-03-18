@@ -53,12 +53,12 @@ public class AdminManagementTransferService
 
     /// <summary>
     /// Lấy danh sách các mục đang được quản lý.
-    /// Nếu truyền userId thì lọc theo manager đó, không truyền thì lấy hết theo loại.
+    /// Nếu truyền userId thì lọc theo manager đó, không truyền thì mặc định lấy các mục CHƯA CÓ người quản lý.
     /// Ngoài ra hỗ trợ keyword "unmanaged" để lọc những mục chưa có người quản lý.
     /// </summary>
     public async Task<BaseResponse<List<ManagedItemDto>>> GetManagedItemsAsync(string? userId, TransferTypeEnum transferType)
     {
-        bool filterUnmanaged = !string.IsNullOrEmpty(userId) && userId.ToLower() == "unmanaged";
+        bool filterUnmanaged = string.IsNullOrEmpty(userId) || userId.ToLower() == "unmanaged";
         Guid? userGuid = null;
         if (!filterUnmanaged && !string.IsNullOrEmpty(userId))
         {

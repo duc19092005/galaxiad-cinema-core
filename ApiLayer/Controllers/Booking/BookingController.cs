@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Booking;
 using BusinessLayer.Services.Booking;
 using Microsoft.AspNetCore.Authorization;
@@ -180,6 +181,32 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy thông tin vé (JSON) - Không cần đăng nhập, dùng orderId
+    /// </summary>
+    [HttpGet("ticket/{orderId}")]
+    public async Task<IActionResult> GetTicketData(Guid orderId)
+    {
+        var ticket = await _bookingService.GetTicketData(orderId);
+        return Ok(new BaseResponse<ResTicketPdfDto>
+        {
+            IsSuccess = true,
+            Data = ticket,
+            Message = "Lấy thông tin vé thành công."
+        });
+    }
+
+    /// <summary>
+    /// Tải vé dưới dạng file text - Không cần đăng nhập, dùng orderId
+    /// </summary>
+    [HttpGet("ticket/{orderId}/download")]
+    public async Task<IActionResult> DownloadTicket(Guid orderId)
+    {
+        var ticket = await _bookingService.GetTicketData(orderId);
+        var fileBytes = _bookingService.GenerateTicketPdf(ticket);
+        return File(fileBytes, "text/plain", $"ticket_{orderId}.txt");
+    }
+
+    /// <summary>
     /// VNPay gọi callback sau khi thanh toán xong
     /// </summary>
     [HttpGet("vnpay-callback")]
@@ -209,8 +236,8 @@ public class BookingController : ControllerBase
 
         // Redirect user về FE
         var frontendUrl = success
-            ? $"http://localhost:5173/booking/success?orderId={orderId}"
-            : $"http://localhost:5173/booking/failed?orderId={orderId}";
+            ? $"https://renewcinemaprojectfrontend.vercel.app/booking/success?orderId={orderId}"
+            : $"https://renewcinemaprojectfrontend.vercel.app/booking/failed?orderId={orderId}";
 
         return Redirect(frontendUrl);
     }

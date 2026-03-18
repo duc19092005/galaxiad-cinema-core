@@ -9,7 +9,7 @@ namespace BusinessLayer.Services.ThirdPersonServices;
 
 public interface IVnPayService
 {
-    string GenerateVnpayUrl(long amount, string orderId);
+    string GenerateVnpayUrl(long amount, string orderId, string ipAddress);
 }
 
 public class VnpayUrlParams
@@ -66,11 +66,10 @@ public class VnpayService : IVnPayService
         this._sha256Services = sha256Services;
         this._logger = logger;
     }
-    public string GenerateVnpayUrl(long amount, string orderId)
+    public string GenerateVnpayUrl(long amount, string orderId, string ipAddress)
     {
         try
         {
-            string ipAddress = GetCurrentIpAddressHelper.GetIpAddress();
             //var request = new PaymentRequest()
             //{
             //    PaymentId = DateTime.Now.Ticks,
