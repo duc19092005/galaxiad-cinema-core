@@ -1,4 +1,3 @@
-# Đây là Branch Vibe Coder để test xem AI làm như nào và để thuyết trình môn tiếng anh nhưng nếu code tay thì ko kịp nên tạo nhánh này để Vibe Coder đỡ sau khi thuyết trình xong sẽ xóa nhánh này =-)
 
 # React + TypeScript + Vite
 
