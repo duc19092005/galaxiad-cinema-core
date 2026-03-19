@@ -106,9 +106,9 @@ public class ReqCreateBookingDto
     [Required(ErrorMessage = "Schedule Id is required")]
     public Guid ScheduleId { get; set; }
     
-    [Required(ErrorMessage = "Seat Ids are required")]
+    [Required(ErrorMessage = "Seat selections are required")]
     [MinLength(1, ErrorMessage = "At least one seat must be selected")]
-    public List<Guid> SeatIds { get; set; } = [];
+    public List<SeatSelectionDto> SeatSelections { get; set; } = [];
 
     [StringLength(50)]
     public string? CustomerName { get; set; }
@@ -119,6 +119,15 @@ public class ReqCreateBookingDto
     [StringLength(40)]
     [EmailAddress(ErrorMessage = "Invalid email format")]
     public string? CustomerEmail { get; set; }
+}
+
+public class SeatSelectionDto
+{
+    [Required(ErrorMessage = "Seat Id is required")]
+    public Guid SeatId { get; set; }
+    
+    [Required(ErrorMessage = "User Segment Id is required")]
+    public Guid UserSegmentId { get; set; }
 }
 
 // ==========================================
@@ -151,6 +160,36 @@ public class ResCreateBookingDto
     public decimal TotalPrice { get; set; }
     public int TotalQuantity { get; set; }
     public DateTime OrderDate { get; set; }
+}
+
+// ==========================================
+// BOOKING - Ticket PDF Data
+// ==========================================
+
+public class ResTicketPdfDto
+{
+    public Guid OrderId { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerEmail { get; set; }
+    public string MovieName { get; set; } = string.Empty;
+    public string MovieImageUrl { get; set; } = string.Empty;
+    public string CinemaName { get; set; } = string.Empty;
+    public string CinemaAddress { get; set; } = string.Empty;
+    public string AuditoriumNumber { get; set; } = string.Empty;
+    public string FormatName { get; set; } = string.Empty;
+    public DateTime ShowTime { get; set; }
+    public DateTime EndedTime { get; set; }
+    public DateTime OrderDate { get; set; }
+    public decimal TotalPrice { get; set; }
+    public string? VnPayTransactionId { get; set; }
+    public List<TicketSeatDetail> Seats { get; set; } = [];
+}
+
+public class TicketSeatDetail
+{
+    public string SeatNumber { get; set; } = string.Empty;
+    public string SegmentName { get; set; } = string.Empty;
+    public decimal PriceEach { get; set; }
 }
 
 // ==========================================

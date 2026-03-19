@@ -12,6 +12,8 @@ public class OrderDetailsInfo
     
     public Guid MovieScheduleId { get; set; }
     
+    public Guid UserSegmentId { get; set; }
+    
     [Column(TypeName = "decimal(18,2)")]
     public decimal PriceEach { get; set; }
 
@@ -20,5 +22,7 @@ public class OrderDetailsInfo
     public MovieScheduleInfoEntity MovieScheduleInfoEntity { get; set; } = null!;
     
     public OrderInfoEntity OrderInfoEntity { get; set; }= null!;
+    
+    public UserSegmentsInfoEntity UserSegmentsInfoEntity { get; set; } = null!;
 }
 

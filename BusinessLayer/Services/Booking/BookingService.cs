@@ -245,6 +245,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<List<ResAdvancedSearchMovieDto>>> GetAdvancedSearchSchedules(DateTime? date, Guid? movieId, Guid? cinemaId)
     {
+        var now = DateTime.Now;
         var targetDate = date ?? DateTime.Today;
         var startOfDay = targetDate.Date;
         var endOfDay = startOfDay.AddDays(1);
@@ -252,7 +253,8 @@ public class BookingService
         var query = _dbContext.MovieScheduleInfoEntity
             .Where(s => !s.IsDeleted 
                         && s.StartTime >= startOfDay 
-                        && s.StartTime < endOfDay);
+                        && s.StartTime < endOfDay
+                        && s.StartTime > now);
 
         if (movieId.HasValue)
             query = query.Where(s => s.MovieId == movieId.Value);
@@ -400,7 +402,8 @@ public class BookingService
                         .Where(s => s.MovieId == movieId
                                     && !s.IsDeleted
                                     && s.StartTime >= startOfDay
-                                    && s.StartTime < endOfDay)
+                                    && s.StartTime < endOfDay
+                                    && s.StartTime > now)
                         .Select(s => new
                         {
                             s.MovieFormatId,
@@ -581,6 +584,7 @@ public class BookingService
             var schedule = await _dbContext.MovieScheduleInfoEntity
                 .Include(s => s.MovieFormatInfoEntity)
                 .Include(s => s.MovieInfoEntity)
+                .Include(s => s.AuditoriumInfoEntities)
                 .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == request.ScheduleId
                                           && !s.IsDeleted);
 
@@ -594,21 +598,34 @@ public class BookingService
                 throw new BadRequestException(Messages.Booking.ShowtimeAlreadyStarted, "BK02");
             }
 
+            var seatIds = request.SeatSelections.Select(s => s.SeatId).ToList();
+            var segmentIds = request.SeatSelections.Select(s => s.UserSegmentId).Distinct().ToList();
+
             // Validate seats belong to the auditorium
             var validSeats = await _dbContext.SeatsInfoEntity
                 .Where(s => s.AuditoriumId == schedule.AuditoriumId
-                            && request.SeatIds.Contains(s.SeatId))
+                            && seatIds.Contains(s.SeatId))
                 .ToListAsync();
 
-            if (validSeats.Count != request.SeatIds.Count)
+            if (validSeats.Count != seatIds.Count)
             {
                 throw new BadRequestException(Messages.Booking.InvalidSeats, "BK03");
+            }
+
+            // Validate all segment IDs exist
+            var validSegments = await _dbContext.Set<UserSegmentsInfoEntity>()
+                .Where(seg => segmentIds.Contains(seg.UserSegmentId))
+                .ToListAsync();
+            
+            if (validSegments.Count != segmentIds.Count)
+            {
+                throw new BadRequestException("Loại khách hàng không hợp lệ.", "BK06");
             }
 
             // Check seats aren't already booked
             var alreadyBooked = await _dbContext.Set<OrderDetailsInfo>()
                 .Where(od => od.MovieScheduleId == request.ScheduleId
-                             && request.SeatIds.Contains(od.SeatId)
+                             && seatIds.Contains(od.SeatId)
                              && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                                  || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
                 .Select(od => od.SeatId)
@@ -620,16 +637,45 @@ public class BookingService
                 throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
             }
 
-            // Calculate price
-            var formatPrice = schedule.MovieFormatInfoEntity?.MovieFormatPrice ?? 0;
-            var totalPrice = formatPrice * request.SeatIds.Count;
+            // Calculate price per seat based on segment surcharge
+            var basePrice = schedule.MovieFormatInfoEntity?.MovieFormatPrice ?? 0;
+            var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
+            var formatId = schedule.MovieFormatId;
+
+            var surcharges = await _dbContext.Set<CinemaSurchargeInfosEntity>()
+                .Where(s => s.CinemaId == cinemaId && s.MovieFormatId == formatId)
+                .ToListAsync();
+
+            decimal totalPrice = 0;
+            var orderDetails = new List<OrderDetailsInfo>();
+            var orderId = Guid.NewGuid();
+
+            foreach (var sel in request.SeatSelections)
+            {
+                var surcharge = surcharges.FirstOrDefault(s => s.UserSegmentId == sel.UserSegmentId);
+                var priceEach = basePrice;
+                if (surcharge != null)
+                {
+                    priceEach = basePrice * (1 + (surcharge.SurchangePercent / 100));
+                }
+                priceEach = Math.Round(priceEach, 0);
+                totalPrice += priceEach;
+
+                orderDetails.Add(new OrderDetailsInfo
+                {
+                    OrderId = orderId,
+                    SeatId = sel.SeatId,
+                    MovieScheduleId = request.ScheduleId,
+                    UserSegmentId = sel.UserSegmentId,
+                    PriceEach = priceEach
+                });
+            }
 
             string? finalCustomerName = null;
             string? finalCustomerEmail = null;
 
             if (userId.HasValue)
             {
-                // Authenticated user: fetch info from DB
                 var user = await _dbContext.UserInfoEntity
                     .Include(u => u.UserProfileEntity)
                     .FirstOrDefaultAsync(u => u.UserId == userId);
@@ -639,7 +685,6 @@ public class BookingService
             }
             else
             {
-                // Guest user: must provide name and email
                 if (string.IsNullOrEmpty(request.CustomerName) || string.IsNullOrEmpty(request.CustomerEmail))
                 {
                     throw new BadRequestException("Guest booking requires Customer Name and Email.", "BK05");
@@ -648,8 +693,6 @@ public class BookingService
                 finalCustomerEmail = request.CustomerEmail;
             }
 
-            // Create order
-            var orderId = Guid.NewGuid();
             var order = new OrderInfoEntity
             {
                 OrderId = orderId,
@@ -658,28 +701,18 @@ public class BookingService
                 PaymentMethod = PaymentMethodEnum.VNPAY,
                 TotalPrice = totalPrice,
                 OrderDate = DateTime.Now,
-                TotalQuantity = request.SeatIds.Count,
+                TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
                 CustomerEmail = finalCustomerEmail,
                 CustomerAddress = userId.HasValue ? null : request.CustomerAddress
             };
-
-            var orderDetails = request.SeatIds.Select(seatId => new OrderDetailsInfo
-            {
-                OrderId = orderId,
-                SeatId = seatId,
-                MovieScheduleId = request.ScheduleId,
-                PriceEach = formatPrice
-            }).ToList();
 
             await _dbContext.Set<OrderInfoEntity>().AddAsync(order);
             await _dbContext.Set<OrderDetailsInfo>().AddRangeAsync(orderDetails);
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            // Generate VNPay payment URL
-            // Sử dụng logic Vnpay nguyên bản của dự án cũ
-            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)totalPrice, orderId.ToString());
+            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)totalPrice, orderId.ToString(), ipAddress);
 
             return new BaseResponse<ResCreateBookingDto>
             {
@@ -689,7 +722,7 @@ public class BookingService
                     OrderId = orderId,
                     PaymentUrl = paymentUrl,
                     TotalPrice = totalPrice,
-                    TotalQuantity = request.SeatIds.Count,
+                    TotalQuantity = seatIds.Count,
                     OrderDate = order.OrderDate
                 },
                 Message = Messages.Booking.CreateBookingSuccess
@@ -702,6 +735,105 @@ public class BookingService
             _logger.LogError(ex, "Error creating booking");
             throw CustomSystemException.SystemExceptionCaller();
         }
+    }
+
+    // ==========================================
+    // 8b. Lấy thông tin vé (cho tải PDF)
+    // ==========================================
+    public async Task<ResTicketPdfDto> GetTicketData(Guid orderId)
+    {
+        var order = await _dbContext.Set<OrderInfoEntity>()
+            .Where(o => o.OrderId == orderId && o.OrderStatus == OrderStatusEnum.Booked)
+            .Select(o => new ResTicketPdfDto
+            {
+                OrderId = o.OrderId,
+                CustomerName = o.CustomerName,
+                CustomerEmail = o.CustomerEmail,
+                OrderDate = o.OrderDate,
+                TotalPrice = o.TotalPrice,
+                VnPayTransactionId = o.VnPayTransactionId,
+                MovieName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
+                MovieImageUrl = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieImageUrl).FirstOrDefault() ?? "",
+                CinemaName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
+                CinemaAddress = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaLocation).FirstOrDefault() ?? "",
+                AuditoriumNumber = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
+                FormatName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieFormatInfoEntity!.MovieFormatName).FirstOrDefault() ?? "",
+                ShowTime = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
+                EndedTime = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.EndedTime).FirstOrDefault(),
+                Seats = o.OrderDetailsInfo.Select(od => new TicketSeatDetail
+                {
+                    SeatNumber = od.SeatsInfoEntity.SeatNumber,
+                    SegmentName = od.UserSegmentsInfoEntity.UserSegmentName,
+                    PriceEach = od.PriceEach
+                }).ToList()
+            })
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+
+        if (order == null)
+        {
+            throw new NotFoundException("Không tìm thấy vé hoặc đơn hàng chưa thanh toán thành công.");
+        }
+
+        return order;
+    }
+
+    // ==========================================
+    // 8c. Tạo file PDF vé
+    // ==========================================
+    public byte[] GenerateTicketPdf(ResTicketPdfDto ticket)
+    {
+        // Simple text-based PDF generation without external library
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("==============================================");
+        sb.AppendLine("           VE XEM PHIM / MOVIE TICKET         ");
+        sb.AppendLine("==============================================");
+        sb.AppendLine();
+        sb.AppendLine($"Ma don hang:    {ticket.OrderId}");
+        sb.AppendLine($"Ngay dat:       {ticket.OrderDate:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Ma giao dich:   {ticket.VnPayTransactionId ?? "N/A"}");
+        sb.AppendLine();
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine("THONG TIN KHACH HANG");
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine($"Ho ten:         {ticket.CustomerName ?? "N/A"}");
+        sb.AppendLine($"Email:          {ticket.CustomerEmail ?? "N/A"}");
+        sb.AppendLine();
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine("THONG TIN PHIM");
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine($"Phim:           {ticket.MovieName}");
+        sb.AppendLine($"Dinh dang:      {ticket.FormatName}");
+        sb.AppendLine($"Rap:            {ticket.CinemaName}");
+        sb.AppendLine($"Dia chi:        {ticket.CinemaAddress}");
+        sb.AppendLine($"Phong:          {ticket.AuditoriumNumber}");
+        sb.AppendLine($"Gio chieu:      {ticket.ShowTime:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Gio ket thuc:   {ticket.EndedTime:dd/MM/yyyy HH:mm}");
+        sb.AppendLine();
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine("CHI TIET GHE");
+        sb.AppendLine("----------------------------------------------");
+        foreach (var seat in ticket.Seats)
+        {
+            sb.AppendLine($"  Ghe {seat.SeatNumber,-8} | {seat.SegmentName,-15} | {seat.PriceEach:N0} VND");
+        }
+        sb.AppendLine();
+        sb.AppendLine("----------------------------------------------");
+        sb.AppendLine($"TONG TIEN:      {ticket.TotalPrice:N0} VND");
+        sb.AppendLine("==============================================");
+        sb.AppendLine("Cam on quy khach! Chuc quy khach xem phim vui ve!");
+        sb.AppendLine();
+
+        var text = sb.ToString();
+        return System.Text.Encoding.UTF8.GetBytes(text);
     }
 
     // ==========================================
