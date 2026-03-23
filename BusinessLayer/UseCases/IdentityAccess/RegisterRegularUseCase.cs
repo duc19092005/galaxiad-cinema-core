@@ -78,7 +78,8 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 UserId = generateUserId,
                 UserEmail = dto.UserEmail,
                 Password = BCrypt_helper.Hash(dto.UserPassword),
-                RegisterMethod = RegisterMethodEnum.UsernamePassword
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active
             });
 
             await _dbContext.UserProfileEntity.AddAsync(new UserProfileEntity()
@@ -87,7 +88,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 DateOfBirth = dto.DateOfBirth,
                 IdentityCode = AES256Helper.Encrypt(dto.IdentityCode, getAESKey, getAESIV),
                 PhoneNumber = dto.PhoneNumber,
-                UserName = dto.UserName,
+                UserName = dto.UserName
             });
 
             await _dbContext.UserRoleInfoEntity.AddAsync(new UserRoleInfoEntity()

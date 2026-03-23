@@ -17,10 +17,10 @@ public static class SeedDataUserInfos
 
         // 2. Seed Data cho bảng UserInfoEntity (Tài khoản)
         modelBuilder.Entity<UserInfoEntity>().HasData(
-            new UserInfoEntity { UserId = adminId, UserEmail = "admin@cinema.com", Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi" }, // Password: 123
-            new UserInfoEntity { UserId = movieManagerId, UserEmail = "movie.manager@cinema.com", Password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke" },
-            new UserInfoEntity { UserId = theaterManagerId, UserEmail = "theater.manager@cinema.com", Password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m" },
-            new UserInfoEntity { UserId = facilitiesManagerId, UserEmail = "facilities.manager@cinema.com", Password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2" }
+            new UserInfoEntity { UserId = adminId, UserEmail = "admin@cinema.com", Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi", AccountStatus = (Shared.Enums.AccountStatusEnum)1 }, // Password: 123
+            new UserInfoEntity { UserId = movieManagerId, UserEmail = "movie.manager@cinema.com", Password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke", AccountStatus = (Shared.Enums.AccountStatusEnum)1 },
+            new UserInfoEntity { UserId = theaterManagerId, UserEmail = "theater.manager@cinema.com", Password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m", AccountStatus = (Shared.Enums.AccountStatusEnum)1 },
+            new UserInfoEntity { UserId = facilitiesManagerId, UserEmail = "facilities.manager@cinema.com", Password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2", AccountStatus = (Shared.Enums.AccountStatusEnum)1 }
         );
 
         modelBuilder.Entity<UserProfileEntity>().HasData(

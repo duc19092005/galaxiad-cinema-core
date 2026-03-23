@@ -195,25 +195,28 @@ public class ScheduleJobsService : IScheduleJobsService
             await _cinemaDbContext.SaveChangesAsync();
         }
 
-        // 2. Clear Hangfire internal tables (same DB)
+        // 2. Clear Hangfire internal tables (same DB) - with safety check
         try
         {
             await _cinemaDbContext.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM [HangFire].[State];
-                DELETE FROM [HangFire].[JobParameter];
-                DELETE FROM [HangFire].[JobQueue];
-                DELETE FROM [HangFire].[Job];
-                DELETE FROM [HangFire].[Counter];
-                DELETE FROM [HangFire].[AggregatedCounter];
-                DELETE FROM [HangFire].[Set];
-                DELETE FROM [HangFire].[Hash];
-                DELETE FROM [HangFire].[List];
+                IF OBJECT_ID('[HangFire].[Job]', 'U') IS NOT NULL
+                BEGIN
+                    DELETE FROM [HangFire].[State];
+                    DELETE FROM [HangFire].[JobParameter];
+                    DELETE FROM [HangFire].[JobQueue];
+                    DELETE FROM [HangFire].[Job];
+                    DELETE FROM [HangFire].[Counter];
+                    DELETE FROM [HangFire].[AggregatedCounter];
+                    DELETE FROM [HangFire].[Set];
+                    DELETE FROM [HangFire].[Hash];
+                    DELETE FROM [HangFire].[List];
+                END
             ");
-            _logger.LogInformation("SyncSeededJobs: Cleared all Hangfire internal tables");
+            _logger.LogInformation("SyncSeededJobs: Cleared all Hangfire internal tables (if they existed)");
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "SyncSeededJobs: Could not clear Hangfire tables (may not exist yet on first run)");
+            _logger.LogWarning(ex, "SyncSeededJobs: Could not clear Hangfire tables");
         }
 
         // 3. Process Movies: Sync movies and set correct current status
@@ -237,7 +240,14 @@ public class ScheduleJobsService : IScheduleJobsService
             }
             _cinemaDbContext.MovieInfoEntity.Update(movie);
             
-            await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
+            try 
+            {
+                await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "SyncSeededJobs: Could not register Hangfire job for movie {MovieId}. This is expected if Hangfire tables don't exist yet on first boot.", movie.MovieId);
+            }
         }
         await _cinemaDbContext.SaveChangesAsync();
         _logger.LogInformation("SyncSeededJobs: Synced and updated status for {Count} movie jobs", movies.Count);
@@ -260,7 +270,14 @@ public class ScheduleJobsService : IScheduleJobsService
             }
             _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
 
-            await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
+            try 
+            {
+                await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "SyncSeededJobs: Could not register Hangfire job for schedule {ScheduleId}.", schedule.MovieScheduleInfoId);
+            }
         }
         await _cinemaDbContext.SaveChangesAsync();
         _logger.LogInformation("SyncSeededJobs: Synced and updated status for {Count} schedule jobs", schedules.Count);

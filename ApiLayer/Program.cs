@@ -116,18 +116,15 @@ app.UseCors("web");
 app.UseErrorMiddleware();
 app.UseLocalizationMiddleware();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1-user/swagger.json", "User API");
-        c.SwaggerEndpoint("/swagger/v1-facilities-manager/swagger.json", "facilities-manager API");
-        c.SwaggerEndpoint("/swagger/v1-movie-manager/swagger.json", "movie-manager API");
-        c.SwaggerEndpoint("/swagger/v1-theater-manager/swagger.json", "theater-manager API");
-        c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1-user/swagger.json", "User API");
+    c.SwaggerEndpoint("/swagger/v1-facilities-manager/swagger.json", "facilities-manager API");
+    c.SwaggerEndpoint("/swagger/v1-movie-manager/swagger.json", "movie-manager API");
+    c.SwaggerEndpoint("/swagger/v1-theater-manager/swagger.json", "theater-manager API");
+    c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
+});
 
 app.UseHttpsRedirection();
 
@@ -139,9 +136,12 @@ app.UseHangfireDashboard();
 app.MapControllers();
 app.MapHub<SeatHub>("/ws/seat");
 
-// Seed Jobs
+// Migrations & Seed Jobs
 using (var scope = app.Services.CreateScope())
 {
+    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
+    await dbContext.Database.MigrateAsync();
+
     var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
     await scheduleJobsService.SyncSeededJobs();
 }

@@ -239,7 +239,7 @@ public class BookingController : ControllerBase
             ? $"https://renewcinemaprojectfrontend.vercel.app/booking/success?orderId={orderId}"
             : $"https://renewcinemaprojectfrontend.vercel.app/booking/failed?orderId={orderId}";
 
-        return Redirect(frontendUrl);
+        return Redirect(frontendUrl); 
     }
 
     /// <summary>
