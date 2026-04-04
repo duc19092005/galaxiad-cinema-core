@@ -39,11 +39,15 @@ public class GetPriceInfos
 
 public class GetAuditoriumInfosRes
 {
+    public string MovieName { get; set; } = string.Empty;
+
+    public string MovieVisualFormatName { get; set; } = string.Empty;
+
     public string AuditoriumName {get;set;} = string.Empty;
 
     public string AuditoriumId {get;set;} = string.Empty;
 
-    public List<GetSeatsRes> SeatsInfos {get;set;} = [];
+    public List<GetSeatsRes> SeatMap {get;set;} = [];
 }
 
 // Schedule Time Response LƯU Ý : NÓ CHỈ LÀ CON ĐỂ TRẢ VỀ TH CHỨ KO TRẢ VỀ THẰNG NÀY RIÊNG LẺ

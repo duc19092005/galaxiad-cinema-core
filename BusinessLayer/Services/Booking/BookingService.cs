@@ -531,7 +531,19 @@ public class BookingService
         var formatId = schedule.MovieFormatId;
 
         // Lấy tất cả các segments
-        var segments = await _dbContext.Set<UserSegmentsInfoEntity>().ToListAsync();
+        var segmentsQuery = _dbContext.Set<UserSegmentsInfoEntity>().AsQueryable();
+
+        bool hasHighRole = _userContextService.IsInRole("Admin") || 
+                           _userContextService.IsInRole("MovieManager") || 
+                           _userContextService.IsInRole("TheaterManager") || 
+                           _userContextService.IsInRole("FacilitiesManager");
+
+        if (!hasHighRole)
+        {
+            segmentsQuery = segmentsQuery.Where(seg => seg.UserSegmentName == "Adult" || seg.UserSegmentName == "Child");
+        }
+
+        var segments = await segmentsQuery.ToListAsync();
 
         // Lấy surcharges của rạp này và format này
         var surcharges = await _dbContext.Set<CinemaSurchargeInfosEntity>()

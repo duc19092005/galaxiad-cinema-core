@@ -8,7 +8,7 @@ using Shared.Localization;
 namespace ApiLayer.Controllers.Public;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]/")]
 public class PublicController : ControllerBase
 {
     // Đây là Controller Public ai cũng có thể Access được
@@ -22,7 +22,24 @@ public class PublicController : ControllerBase
         this._cinemaDbContext = cinemaDbContext;
     }
 
-    [HttpGet("/MovieFormats")]
+    /// <summary>
+    /// Lấy thời gian hiện tại theo múi giờ Việt Nam (UTC+7)
+    /// </summary>
+    private static DateTime GetVietnamNow()
+    {
+        TimeZoneInfo vietnamTimeZone;
+        try
+        {
+            vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Windows
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); // Linux/Mac
+        }
+        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
+    }
+
+    [HttpGet("MovieFormats")]
     public async Task<IActionResult> GetMovieFormats()
     {
         var getMovieFormats = await _cinemaDbContext.MovieFormatInfoEntity.Select(x => new BaseFormatInfo()
@@ -39,7 +56,7 @@ public class PublicController : ControllerBase
         return Ok(baseRes);
     }
 
-    [HttpGet("/MovieRequiredAge")]
+    [HttpGet("MovieRequiredAge")]
     public async Task<IActionResult> GetMovieRequiredAge()
     {
         var getMovieRequiredAge = await _cinemaDbContext.MovieRequiredAgeEntity.Select(x => new BaseRequiredAge()
@@ -59,12 +76,20 @@ public class PublicController : ControllerBase
 
     // Cái này để truy vấn thông tin những phim sắp chiếu hoặc đang chiếu Public
 
-    [HttpGet("/Movies")]
-    public async Task<IActionResult> GetMovies()
+    [HttpGet("Movies")]
+    public async Task<IActionResult> GetMovies([FromQuery] string? city)
     {
-        // MovieInfoRes
+        var query = _cinemaDbContext.MovieInfoEntity
+            .Where(x => !x.IsDeleted && x.IsActive);
 
-        var getMovies = await _cinemaDbContext.MovieInfoEntity.Where(x => !x.IsDeleted && x.IsActive).Select(x => new MovieInfoRes()
+        // Lọc phim theo thành phố: chỉ lấy phim có liên kết với rạp ở thành phố được chọn
+        if (!string.IsNullOrEmpty(city))
+        {
+            query = query.Where(x => x.MovieCinemaEntities
+                .Any(mc => mc.CinemaInfoEntity.CinemaCity.Contains(city)));
+        }
+
+        var getMovies = await query.Select(x => new MovieInfoRes()
         {
             MovieId = x.MovieId,
             MovieName = x.MovieName,
@@ -79,11 +104,11 @@ public class PublicController : ControllerBase
         {
             Data = getMovies,
             IsSuccess = true,
-            Message = "Response Here"
+            Message = "Thành công"
         });
     }
 
-    [HttpGet("/MovieDetail/{MovieId}")]
+    [HttpGet("MovieDetail/{MovieId}")]
     public async Task<IActionResult> GetMovieDetail(Guid MovieId)
     {
         var GetMovieDetail = await _cinemaDbContext.MovieInfoEntity.Where(x => !x.IsDeleted && x.IsActive && x.MovieId == MovieId).Select(x => new MovieDetailInfoRes()
@@ -109,37 +134,80 @@ public class PublicController : ControllerBase
         });
     }
 
-    [HttpGet("/ScheduleDates/{MovieId}")]
-    public async Task<IActionResult> GetScheduleDates(Guid MovieId)
+    [HttpGet("ScheduleDates/{MovieId}")]
+    public async Task<IActionResult> GetScheduleDates(Guid MovieId, [FromQuery] string? city)
     {
-        // Find 
-        var findSchedulesDates = await _cinemaDbContext.MovieScheduleInfoEntity.Where(x => !x.IsDeleted && x.IsActive && x.MovieId == MovieId)
-        .Select(x => x.ActiveAt.ToString("dd/MM")).Distinct().ToListAsync();
+        var now = GetVietnamNow();
+        var query = _cinemaDbContext.MovieScheduleInfoEntity
+            .Where(x => !x.IsDeleted && x.MovieId == MovieId && x.StartTime > now);
+
+        // Lọc lịch chiếu theo thành phố
+        if (!string.IsNullOrEmpty(city))
+        {
+            query = query.Where(x => x.AuditoriumInfoEntities != null
+                && x.AuditoriumInfoEntities.CinemaInfoEntity != null
+                && x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity.Contains(city));
+        }
+
+        var schedulesDatesObj = await query
+            .Select(x => x.StartTime.Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToListAsync();
+
+        var findSchedulesDates = schedulesDatesObj.Select(x => x.ToString("yyyy-MM-dd")).ToList();
+
         return Ok(new BaseResponse<List<string>>()
         {
             Data = findSchedulesDates,
             IsSuccess = true,
-            Message = "Response Here"
+            Message = "Thành công"
         });
     }
 
-    [HttpGet("/ScheduleDetails/{MovieId}/{ScheduleDate}")]
-    public async Task<IActionResult> GetScheduleDetails(Guid MovieId, DateTime ScheduleDate)
+    [HttpGet("ScheduleDetails/{MovieId}/{ScheduleDate}")]
+    public async Task<IActionResult> GetScheduleDetails(Guid MovieId, DateTime ScheduleDate, [FromQuery] string? city)
     {
         var startDate = ScheduleDate.Date;
         var endDate = startDate.AddDays(1);
 
-        var getScheduleDetails = await _cinemaDbContext.MovieScheduleInfoEntity
+        _logger.LogInformation(
+            "GetScheduleDetails: MovieId={MovieId}, Date={ScheduleDate}, city={City}, range=[{Start}, {End})",
+            MovieId, ScheduleDate, city, startDate, endDate);
+
+        var now = GetVietnamNow();
+
+        // Step 1: Build base query with Include to load navigation properties
+        var query = _cinemaDbContext.MovieScheduleInfoEntity
+            .Include(x => x.AuditoriumInfoEntities)
+                .ThenInclude(a => a!.CinemaInfoEntity)
+            .Include(x => x.MovieFormatInfoEntity)
             .Where(x => !x.IsDeleted
-                     && x.IsActive
                      && x.MovieId == MovieId
-                     && x.ActiveAt >= startDate
-                     && x.ActiveAt < endDate)
+                     && x.StartTime >= startDate
+                     && x.StartTime < endDate
+                     && x.StartTime > now);
+
+        // Step 2: Filter by city using CinemaCity field (not CinemaLocation)
+        if (!string.IsNullOrEmpty(city))
+        {
+            query = query.Where(x => x.AuditoriumInfoEntities != null
+                                  && x.AuditoriumInfoEntities.CinemaInfoEntity != null
+                                  && x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity.Contains(city));
+        }
+
+        // Step 3: Materialize to flat list first (avoid complex GroupBy in SQL)
+        var flatSchedules = await query.ToListAsync();
+
+        _logger.LogInformation("GetScheduleDetails: found {Count} raw schedules", flatSchedules.Count);
+
+        // Step 4: Group in memory — EF Core GroupBy with navigation properties is unreliable
+        var getScheduleDetails = flatSchedules
             .GroupBy(x => new
             {
-                CinemaName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CinemaInfoEntity != null ? x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaName : "" : "",
-                CinemaLocation = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CinemaInfoEntity != null ? x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaLocation : "" : "",
-                MovieFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : ""
+                CinemaName = x.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaName ?? "",
+                CinemaLocation = x.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaLocation ?? "",
+                MovieFormatName = x.MovieFormatInfoEntity?.MovieFormatName ?? ""
             })
             .Select(g => new GetScheduleDetailsRes()
             {
@@ -149,31 +217,33 @@ public class PublicController : ControllerBase
                 ScheduleTimesInfos = g.Select(s => new GetScheduleTimeRes()
                 {
                     ScheduleId = s.MovieScheduleInfoId,
-                    ShowTime = s.ActiveAt 
+                    ShowTime = s.StartTime
                 })
                 .OrderBy(t => t.ShowTime)
                 .ToList()
             })
-            .ToListAsync();
+            .ToList();
 
         return Ok(new BaseResponse<List<GetScheduleDetailsRes>>
         {
             Data = getScheduleDetails,
             IsSuccess = true,
-            Message = "Response Here"
+            Message = "Thành công"
         });
     }
 
-    [HttpGet("/AuditoriumDetails/{ScheduleId}")]
+    [HttpGet("AuditoriumDetails/{ScheduleId}")]
     public async Task<IActionResult> GetAuditoriumDetails(Guid ScheduleId)
     {
         var getAuditoriumDetails = await _cinemaDbContext.MovieScheduleInfoEntity
-            .Where(x => !x.IsDeleted && x.IsActive && x.MovieScheduleInfoId == ScheduleId)
+            .Where(x => !x.IsDeleted && x.MovieScheduleInfoId == ScheduleId)
             .Select(x => new GetAuditoriumInfosRes()
             {
-                AuditoriumName = x.AuditoriumInfoEntities.AuditoriumNumber,
+                MovieName = x.MovieInfoEntity != null ? x.MovieInfoEntity.MovieName : "",
+                MovieVisualFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : "",
+                AuditoriumName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.AuditoriumNumber : "",
                 AuditoriumId = x.AuditoriumId.ToString(),
-                SeatsInfos = x.AuditoriumInfoEntities.SeatsInfoEntity.Select(s => new GetSeatsRes()
+                SeatMap = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.SeatsInfoEntity.Select(s => new GetSeatsRes()
                 {
                     SeatId = s.SeatId,
                     SeatName = s.SeatNumber,
@@ -181,16 +251,26 @@ public class PublicController : ControllerBase
                     CoordY = s.CoordY,
                     ColIndex = s.ColIndex,
                     RowIndex = s.RowIndex,
-                    IsBooked = s.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.MovieScheduleInfoId == ScheduleId && od.SeatId == s.SeatId)
-                }).ToList()
+                    IsBooked = s.OrderDetailsInfo.Any(od => od.MovieScheduleId == ScheduleId && od.SeatId == s.SeatId &&
+                        (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked || od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Pending))
+                }).ToList() : new List<GetSeatsRes>()
             })
             .FirstOrDefaultAsync();
+
+        if (getAuditoriumDetails == null)
+        {
+            return Ok(new BaseResponse<GetAuditoriumInfosRes>
+            {
+                IsSuccess = false,
+                Message = "Không tìm thấy thông tin phòng chiếu cho suất chiếu này."
+            });
+        }
 
         return Ok(new BaseResponse<GetAuditoriumInfosRes>
         {
             Data = getAuditoriumDetails,
             IsSuccess = true,
-            Message = "Response Here"
+            Message = "Thành công"
         });
     }
 }
