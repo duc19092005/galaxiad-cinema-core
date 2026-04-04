@@ -12,7 +12,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import AdvancedSearch from './components/AdvancedSearch';
-import PublicCinemaSelector from './components/PublicCinemaSelector';
+import PublicCitySelector from './components/PublicCitySelector';
 import { Play } from 'lucide-react';
 
 const HomePage: React.FC = () => {
@@ -36,7 +36,7 @@ const HomePage: React.FC = () => {
   const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
 
   const [isScrolled, setIsScrolled] = useState(false);
   const sectionsRef = useRef<(HTMLElement | null)[]>([]);
@@ -70,13 +70,13 @@ const HomePage: React.FC = () => {
       window.removeEventListener('scroll', handleScroll);
       observer.disconnect();
     };
-  }, [navigate, selectedCinemaId]);
+  }, [navigate, selectedCity]);
 
   const fetchMovies = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await publicApi.getNowShowing({ cinemaId: selectedCinemaId || undefined, pageSize: 20 });
+      const response = await publicApi.getNowShowing({ city: selectedCity || undefined, pageSize: 20 });
       const items = response.data || [];
       setNowShowing(items.filter(m => !m.isCommingSoon));
       setComingSoon(items.filter(m => m.isCommingSoon));
@@ -187,7 +187,7 @@ const HomePage: React.FC = () => {
 
         <div className="flex items-center gap-1.5 sm:gap-3">
           <div className="hidden lg:flex items-center gap-3">
-            <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
+            <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
             <LanguageSwitcher />
             {/* Theme Dropdown */}
             <div className="relative" ref={themeDropdownRef}>
@@ -421,13 +421,12 @@ const HomePage: React.FC = () => {
               </div>
             )}
 
-            {/* Cinema Selector */}
             <div className="space-y-4">
               <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
-                {t('Cinema Location')}
+                {t('City')}
               </h3>
               <div className="p-1">
-                <PublicCinemaSelector selectedCinemaId={selectedCinemaId} onCinemaChange={setSelectedCinemaId} />
+                <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
               </div>
             </div>
 
@@ -578,7 +577,7 @@ const HomePage: React.FC = () => {
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.movieDuration} min  {movie.startedDate ? `• ${formatDate(movie.startedDate)}` : ''}
+                    {movie.movieDuration} min  {movie.releaseDate ? `• ${formatDate(movie.releaseDate)}` : ''}
                   </p>
                 </div>
               </div>
@@ -635,7 +634,7 @@ const HomePage: React.FC = () => {
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.startedDate ? `Starting: ${formatDate(movie.startedDate)}` : 'Coming Soon'}
+                    {movie.releaseDate ? `Starting: ${formatDate(movie.releaseDate)}` : 'Coming Soon'}
                   </p>
                 </div>
               </div>

@@ -177,20 +177,20 @@ const AdvancedSearch: React.FC = () => {
                                         <div className="w-full lg:w-72 flex-shrink-0">
                                             <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl mb-6 group">
                                                 <img 
-                                                    src={movie.moviePosterURL} 
+                                                    src={movie.movieImageUrl} 
                                                     alt={movie.movieName} 
                                                     onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'; }}
                                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                                                 />
                                                 <div className="absolute top-4 left-4 flex items-center gap-2">
                                                     <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-xl border border-white/20">
-                                                        {movie.movieRequiredAge}
+                                                        {movie.movieRequiredAgeSymbol}
                                                     </div>
                                                 </div>
                                             </div>
                                             <h3 className={`text-2xl font-black mb-4 leading-tight uppercase tracking-tighter ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{movie.movieName}</h3>
                                             <div className="flex flex-wrap gap-2">
-                                                {(movie.movieCategoryInfos ? movie.movieCategoryInfos.split(',').map((g: string) => g.trim()).filter(Boolean) : []).map((g: string) => (
+                                                {(movie.movieGenres || []).map((g: string) => (
                                                     <span key={g} className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider ${theme === 'modern' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-gray-100 text-gray-600'}`}>{g}</span>
                                                 ))}
                                             </div>
@@ -206,37 +206,42 @@ const AdvancedSearch: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <h4 className={`text-xl font-black uppercase tracking-tight ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{cinema.cinemaName}</h4>
-                                                            <p className={`text-sm font-medium ${theme === 'light' ? 'text-gray-500' : 'opacity-50 text-white'}`}>{cinema.cinemaAddress}</p>
+                                                            <p className={`text-sm font-medium ${theme === 'light' ? 'text-gray-500' : 'opacity-50 text-white'}`}>{cinema.cinemaLocation}</p>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-8 pl-0 sm:pl-16">
-                                                        <div className="space-y-5">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
-                                                                    {cinema.movieFormatName}
+                                                        {cinema.formatShowtimes?.map((format, fIdx) => (
+                                                            <div key={fIdx} className="space-y-5">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+                                                                        {format.formatName}
+                                                                    </div>
+                                                                    <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
                                                                 </div>
-                                                                <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
+                                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                                                                    {format.showtimes?.map(st => (
+                                                                        <button
+                                                                            key={st.scheduleId}
+                                                                            onClick={() => handleTimeClick(st.scheduleId)}
+                                                                            className={`group flex flex-col items-center justify-center gap-1 p-4 rounded-[1.5rem] border transition-all duration-300 active:scale-95 ${theme === 'modern'
+                                                                                    ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20'
+                                                                                    : theme === 'dark'
+                                                                                    ? 'bg-yellow-600/20 border-yellow-600/40 hover:bg-yellow-500/30 border-yellow-500/50'
+                                                                                    : 'bg-yellow-50 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 shadow-sm'
+                                                                                }`}
+                                                                        >
+                                                                            <span className={`text-xl font-black tracking-tighter ${theme === 'modern' ? 'text-yellow-400 group-hover:text-yellow-300' : theme === 'dark' ? 'text-yellow-500 group-hover:text-yellow-400' : 'text-yellow-700 group-hover:text-yellow-600'}`}>
+                                                                                {new Date(st.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                                            </span>
+                                                                            <span className={`text-[10px] font-bold opacity-50 uppercase tracking-[0.1em] group-hover:opacity-80 transition-opacity ${theme === 'light' ? 'text-yellow-800' : 'text-yellow-200'}`}>
+                                                                                {st.auditoriumNumber}
+                                                                            </span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
                                                             </div>
-                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                                                                {(cinema.scheduleTimesInfos || []).map(st => (
-                                                                    <button
-                                                                        key={st.scheduleId}
-                                                                        onClick={() => handleTimeClick(st.scheduleId)}
-                                                                        className={`group flex flex-col items-center justify-center gap-1 p-4 rounded-[1.5rem] border transition-all duration-300 active:scale-95 ${theme === 'modern'
-                                                                                ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20'
-                                                                                : theme === 'dark'
-                                                                                ? 'bg-yellow-600/20 border-yellow-600/40 hover:bg-yellow-500/30 border-yellow-500/50'
-                                                                                : 'bg-yellow-50 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 shadow-sm'
-                                                                            }`}
-                                                                    >
-                                                                        <span className={`text-xl font-black tracking-tighter ${theme === 'modern' ? 'text-yellow-400 group-hover:text-yellow-300' : theme === 'dark' ? 'text-yellow-500 group-hover:text-yellow-400' : 'text-yellow-700 group-hover:text-yellow-600'}`}>
-                                                                            {new Date(st.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                                        </span>
-                                                                    </button>
-                                                                ))}
-                                                            </div>
-                                                        </div>
+                                                        ))}
                                                     </div>
                                                 </div>
                                             ))}

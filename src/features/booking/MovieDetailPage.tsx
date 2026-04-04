@@ -16,14 +16,10 @@ const MovieDetailPage: React.FC = () => {
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState<string>('');
-    const getLocalDateString = (date = new Date()) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
 
-    const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
+
+    const [selectedDate, setSelectedDate] = useState<string>('');
+    const [scheduleDates, setScheduleDates] = useState<string[]>([]);
     const [showtimes, setShowtimes] = useState<PublicCinemaShowtimes[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -45,7 +41,7 @@ const MovieDetailPage: React.FC = () => {
             
             // Hardcoded cities or fetch from a known endpoint
             // Since publicApi doesn't have getCities currently, we use a sensible default
-            const commonCities = ['Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ'];
+            const commonCities = ['Hồ Chí Minh', 'Hà Nội'];
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
         } catch (err) {
@@ -58,7 +54,34 @@ const MovieDetailPage: React.FC = () => {
 
     useEffect(() => {
         if (movieId && selectedCity) {
+            fetchScheduleDates();
+        }
+    }, [movieId, selectedCity]);
+
+    const fetchScheduleDates = async () => {
+        try {
+            const res = await publicApi.getScheduleDates(movieId!, selectedCity);
+            const dates = res.data || [];
+            setScheduleDates(dates);
+            if (dates.length > 0) {
+                if (!dates.includes(selectedDate)) {
+                    setSelectedDate(dates[0]);
+                }
+            } else {
+                setSelectedDate('');
+            }
+        } catch (err) {
+            console.error('Failed to load schedule dates');
+            setScheduleDates([]);
+            setSelectedDate('');
+        }
+    };
+
+    useEffect(() => {
+        if (movieId && selectedCity && selectedDate) {
             fetchShowtimes();
+        } else if (!selectedDate) {
+            setShowtimes([]);
         }
     }, [movieId, selectedCity, selectedDate]);
 
@@ -80,15 +103,7 @@ const MovieDetailPage: React.FC = () => {
         });
     };
 
-    const generateDates = () => {
-        const dates = [];
-        for (let i = 0; i < 7; i++) {
-            const d = new Date();
-            d.setDate(d.getDate() + i);
-            dates.push(getLocalDateString(d));
-        }
-        return dates;
-    };
+    // We no longer need generateDates since dates come from backend
 
     if (loading) {
         return (
@@ -183,7 +198,7 @@ const MovieDetailPage: React.FC = () => {
                                     <Clock className="w-4 h-4 text-red-600" /> {movie.movieDuration} mins
                                 </span>
                                 <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                                    <Calendar className="w-4 h-4 text-red-600" /> {movie.startedDate ? formatDate(movie.startedDate) : 'Coming Soon'}
+                                    <Calendar className="w-4 h-4 text-red-600" /> {movie.releaseDate ? formatDate(movie.releaseDate) : 'Coming Soon'}
                                 </span>
                                 <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black shadow-lg shadow-red-600/30">
                                     {movie.movieRequiredAge}
@@ -215,7 +230,7 @@ const MovieDetailPage: React.FC = () => {
                                 <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
                                     theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
                                 }`}>Cast</h4>
-                                <p className="font-bold">{movie.actors || 'N/A'}</p>
+                                <p className="font-bold">{movie.actor || 'N/A'}</p>
                             </div>
                             <div>
                                 <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
@@ -276,7 +291,9 @@ const MovieDetailPage: React.FC = () => {
                                 <div className="flex-1">
                                     <label className="block text-xs uppercase font-bold opacity-60 mb-2 tracking-widest">Select Date</label>
                                     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                        {generateDates().map((date) => {
+                                        {scheduleDates.length === 0 ? (
+                                            <div className="text-sm opacity-50 py-2">No dates available</div>
+                                        ) : scheduleDates.map((date) => {
                                             const d = new Date(date);
                                             const isSelected = selectedDate === date;
                                             return (

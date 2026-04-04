@@ -15,7 +15,7 @@ import type {
 
 export const publicApi = {
     /** 1. Get Now Showing Movies */
-    getNowShowing: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+    getNowShowing: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });
@@ -23,7 +23,7 @@ export const publicApi = {
     },
 
     /** 2. Get Coming Soon Movies */
-    getComingSoon: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+    getComingSoon: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });
@@ -33,6 +33,14 @@ export const publicApi = {
     /** 3. Get Movie Detail */
     getMovieDetail: async (movieId: string): Promise<ApiSuccessResponse<PublicMovieDetail>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieDetail>>(`/MovieDetail/${movieId}`);
+        return response.data;
+    },
+
+    /** 3.1 Get Schedule Dates */
+    getScheduleDates: async (movieId: string, city?: string): Promise<ApiSuccessResponse<string[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<string[]>>(`/ScheduleDates/${movieId}`, {
+            params: { city }
+        });
         return response.data;
     },
 
@@ -46,19 +54,27 @@ export const publicApi = {
 
     /** 5. Get Active Cinemas */
     getActiveCinemas: async (): Promise<ApiSuccessResponse<ActiveCinema[]>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<ActiveCinema[]>>('/movies/active-cinemas');
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveCinema[]>>('/movies/active-cinemas', {
+            baseURL: `${API_BASE_URL}/api/v1/public`
+        });
         return response.data;
     },
 
     /** 6. Get Active Movies */
     getActiveMovies: async (): Promise<ApiSuccessResponse<ActiveMovie[]>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<ActiveMovie[]>>('/movies/active-movies');
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveMovie[]>>('/movies/active-movies', {
+            baseURL: `${API_BASE_URL}/api/v1/public`
+        });
         return response.data;
     },
 
     /** 7. Search Schedules (Advanced Search) */
     searchSchedules: async (date?: string, movieId?: string, cinemaId?: string): Promise<ApiSuccessResponse<SearchScheduleResult[]>> => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
         const response = await publicAxios.get<ApiSuccessResponse<SearchScheduleResult[]>>('/movies/search-schedules', {
+            baseURL: `${API_BASE_URL}/api/v1/public`,
             params: { date, movieId, cinemaId }
         });
         return response.data;
@@ -72,7 +88,10 @@ export const publicApi = {
 
     /** 9. Get Pricing Info */
     getPricing: async (scheduleId: string): Promise<ApiSuccessResponse<PublicPricing>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`);
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`, {
+            baseURL: `${API_BASE_URL}/api/v1/public`
+        });
         return response.data;
     },
 

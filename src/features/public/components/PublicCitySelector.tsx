@@ -2,33 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MapPin, ChevronDown, Check } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { publicApi } from '../../../api/publicApi';
-import type { ActiveCinema } from '../../../types/public.types';
 
-interface PublicCinemaSelectorProps {
-  selectedCinemaId: string;
-  onCinemaChange: (cinemaId: string) => void;
+interface PublicCitySelectorProps {
+  selectedCity: string;
+  onCityChange: (city: string) => void;
 }
 
-const PublicCinemaSelector: React.FC<PublicCinemaSelectorProps> = ({ selectedCinemaId, onCinemaChange }) => {
+const CITIES = ['Hồ Chí Minh', 'Hà Nội'];
+
+const PublicCitySelector: React.FC<PublicCitySelectorProps> = ({ selectedCity, onCityChange }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
   
   const [isOpen, setIsOpen] = useState(false);
-  const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const fetchCinemas = async () => {
-      try {
-        const res = await publicApi.getActiveCinemas();
-        setCinemas(res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch cinemas', err);
-      }
-    };
-    fetchCinemas();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,8 +26,6 @@ const PublicCinemaSelector: React.FC<PublicCinemaSelectorProps> = ({ selectedCin
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const selectedCinema = cinemas.find(c => c.cinemaId === selectedCinemaId);
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -56,7 +41,7 @@ const PublicCinemaSelector: React.FC<PublicCinemaSelectorProps> = ({ selectedCin
       >
         <MapPin className={`w-4 h-4 ${theme === 'modern' ? 'text-cyan-400' : 'text-red-500'}`} />
         <span className="hidden md:inline-block text-xs font-bold truncate max-w-[150px]">
-          {selectedCinema?.cinemaName || t('All Cinemas')}
+          {selectedCity || t('All Cities')}
         </span>
         <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -71,31 +56,31 @@ const PublicCinemaSelector: React.FC<PublicCinemaSelectorProps> = ({ selectedCin
         }`}>
           <div className="py-1 max-h-64 overflow-y-auto custom-scrollbar">
             <button
-               onClick={() => { onCinemaChange(''); setIsOpen(false); }}
+               onClick={() => { onCityChange(''); setIsOpen(false); }}
                className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors ${
-                selectedCinemaId === ''
+                selectedCity === ''
                   ? theme === 'modern' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-red-50 text-red-600'
                   : theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <span className="font-bold">{t('All Cinemas')}</span>
-              {selectedCinemaId === '' && <Check className="w-4 h-4" />}
+              <span className="font-bold">{t('All Cities')}</span>
+              {selectedCity === '' && <Check className="w-4 h-4" />}
             </button>
-            {cinemas.map((cinema) => (
+            {CITIES.map((city) => (
               <button
-                key={cinema.cinemaId}
+                key={city}
                 onClick={() => {
-                  onCinemaChange(cinema.cinemaId);
+                  onCityChange(city);
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors ${
-                  selectedCinemaId === cinema.cinemaId
+                  selectedCity === city
                     ? theme === 'modern' ? 'bg-cyan-500/10 text-cyan-400' : 'bg-red-50 text-red-600'
                     : theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                <span className="font-bold truncate pr-2">{cinema.cinemaName}</span>
-                {selectedCinemaId === cinema.cinemaId && (
+                <span className="font-bold truncate pr-2">{city}</span>
+                {selectedCity === city && (
                   <Check className="w-4 h-4 shrink-0" />
                 )}
               </button>
@@ -107,4 +92,4 @@ const PublicCinemaSelector: React.FC<PublicCinemaSelectorProps> = ({ selectedCin
   );
 };
 
-export default PublicCinemaSelector;
+export default PublicCitySelector;

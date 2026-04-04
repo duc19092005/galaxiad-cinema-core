@@ -9,7 +9,7 @@ export interface PublicMovieListItem {
     movieDuration: number;
     movieRequiredAge: string;
     movieCategoryInfos: string;
-    startedDate?: string;
+    releaseDate?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -23,9 +23,9 @@ export interface PaginatedResponse<T> {
 }
 
 export interface PublicMovieDetail extends PublicMovieListItem {
-    trailerUrl: string;
+    trailerUrl?: string;
     director: string;
-    actors: string;
+    actor: string;
     movieDescription: string;
 }
 
@@ -104,11 +104,35 @@ export interface ActiveMovie {
     movieName: string;
 }
 
+export interface SearchShowtime {
+    scheduleId: string;
+    startTime: string;
+    endedTime: string;
+    auditoriumId: string;
+    auditoriumNumber: string;
+}
+
+export interface SearchFormatShowtimes {
+    formatId: string;
+    formatName: string;
+    showtimes: SearchShowtime[];
+}
+
+export interface SearchCinemaShowtimes {
+    cinemaId: string;
+    cinemaName: string;
+    cinemaLocation: string;
+    cinemaCity: string;
+    formatShowtimes: SearchFormatShowtimes[];
+}
+
 export interface SearchScheduleResult {
     movieId: string;
     movieName: string;
-    moviePosterURL: string;
-    movieRequiredAge: string;
-    movieCategoryInfos: string;
-    cinemas: PublicCinemaShowtimes[];
+    movieImageUrl: string;
+    movieDescription: string;
+    movieDuration: number;
+    movieRequiredAgeSymbol: string;
+    movieGenres: string[];
+    cinemas: SearchCinemaShowtimes[];
 }
