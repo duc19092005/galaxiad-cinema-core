@@ -318,11 +318,11 @@ const MovieDetailPage: React.FC = () => {
                                                 <span className="text-xs opacity-60">— {cinema.cinemaLocation}</span>
                                             </div>
                                             <div className="space-y-6 pl-6">
-                                                {cinema.formatShowtimes.map((format) => (
+                                                {(cinema.formatShowtimes || []).map((format) => (
                                                     <div key={format.formatId}>
                                                         <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3 block">{format.formatName}</span>
                                                         <div className="flex flex-wrap gap-3">
-                                                            {format.showtimes.map((showtime) => (
+                                                            {(format.showtimes || []).map((showtime) => (
                                                                 <button
                                                                     key={showtime.scheduleId}
                                                                     onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
