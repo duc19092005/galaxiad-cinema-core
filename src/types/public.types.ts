@@ -47,28 +47,32 @@ export interface PublicFormatShowtimes {
 }
 
 export interface PublicCinemaShowtimes {
-    cinemaId: string;
     cinemaName: string;
-    cinemaLocation: string;
-    cinemaCity: string;
-    formatShowtimes: PublicFormatShowtimes[];
+    cinemaAddress: string;
+    movieFormatName: string;
+    scheduleTimesInfos: {
+        scheduleId: string;
+        showTime: string;
+    }[];
 }
 
 export interface PublicSeat {
     seatId: string;
-    seatNumber: string;
+    seatName: string;
+    coordX: number;
+    coordY: number;
     colIndex: number;
     rowIndex: number;
-    isOccupied: boolean;
+    isBooked: boolean;
 }
 
 export interface PublicSeatMap {
     scheduleId: string;
-    auditoriumNumber: string;
+    auditoriumName: string;
     movieName: string;
-    formatName: string;
+    movieVisualFormatName: string;
     startTime: string;
-    seats: PublicSeat[];
+    seatMap: PublicSeat[];
 }
 
 export interface PublicSegmentPrice {

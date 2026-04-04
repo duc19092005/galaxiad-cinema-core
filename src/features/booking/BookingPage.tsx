@@ -102,12 +102,14 @@ const BookingPage: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const [seatRes, priceRes] = await Promise.all([
-                publicApi.getSeatMap(scheduleId!),
-                publicApi.getPricing(scheduleId!)
-            ]);
+            const seatRes = await publicApi.getSeatMap(scheduleId!);
             setSeatMap(seatRes.data);
-            setPricing(priceRes.data);
+            try {
+                const priceRes = await publicApi.getPricing(scheduleId!);
+                setPricing(priceRes.data);
+            } catch (err) {
+                console.warn('Pricing not found, skipping for now', err);
+            }
 
         } catch (err) {
             setError('Failed to load booking information.');
@@ -117,7 +119,7 @@ const BookingPage: React.FC = () => {
     };
 
     const toggleSeat = async (seat: PublicSeat) => {
-        if (seat.isOccupied) return;
+        if (seat.isBooked) return;
 
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
         
@@ -239,7 +241,7 @@ const BookingPage: React.FC = () => {
                 <div>
                     <h2 className="font-black truncate">{seatMap.movieName}</h2>
                     <p className="text-xs opacity-60">
-                        {seatMap.formatName} • {seatMap.auditoriumNumber} • {new Date(seatMap.startTime).toLocaleString('vi-VN', {
+                        {seatMap.movieVisualFormatName} • {seatMap.auditoriumName} • {new Date(seatMap.startTime).toLocaleString('vi-VN', {
                             weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
                         })}
                     </p>
@@ -259,9 +261,9 @@ const BookingPage: React.FC = () => {
 
                             {/* Seats Grid */}
                             <div className="inline-grid gap-2" style={{
-                                gridTemplateColumns: `repeat(${Math.max(...(seatMap.seats?.map(s => s.colIndex) || [0])) + 1}, minmax(0, 1fr))`
+                                gridTemplateColumns: `repeat(${Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1}, minmax(0, 1fr))`
                             }}>
-                                {seatMap.seats?.map((seat) => {
+                                {seatMap.seatMap?.map((seat) => {
                                     const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
                                     const lockedBy = lockedSeats[seat.seatId];
                                     const isLockedByOther = lockedBy && !isSelected;
@@ -269,9 +271,9 @@ const BookingPage: React.FC = () => {
                                     return (
                                         <button
                                             key={seat.seatId}
-                                            disabled={seat.isOccupied || !!isLockedByOther}
+                                            disabled={seat.isBooked || !!isLockedByOther}
                                             onClick={() => toggleSeat(seat)}
-                                            className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all ${seat.isOccupied
+                                            className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all ${seat.isBooked
                                                 ? 'bg-gray-800 text-gray-600 cursor-not-allowed opacity-30'
                                                 : isLockedByOther
                                                     ? 'bg-yellow-600 border border-yellow-500 text-white cursor-not-allowed opacity-80'
@@ -279,9 +281,9 @@ const BookingPage: React.FC = () => {
                                                         ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 transform scale-110 z-10'
                                                         : theme === 'dark' ? 'bg-gray-900 border border-gray-800 hover:border-gray-500 text-gray-400' : 'bg-gray-100 border border-gray-300 hover:border-gray-500 text-gray-600'
                                                 }`}
-                                            title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatNumber}
+                                            title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
                                         >
-                                            <span className="text-[10px] font-bold">{seat.seatNumber}</span>
+                                            <span className="text-[10px] font-bold">{seat.seatName}</span>
                                         </button>
                                     );
                                 })}
@@ -311,11 +313,11 @@ const BookingPage: React.FC = () => {
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="opacity-60">Venue</span>
-                                    <span className="font-bold">{seatMap.auditoriumNumber}</span>
+                                    <span className="font-bold">{seatMap.auditoriumName}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="opacity-60">Format</span>
-                                    <span className="font-bold">{seatMap.formatName}</span>
+                                    <span className="font-bold">{seatMap.movieVisualFormatName}</span>
                                 </div>
                                 <div className="space-y-4">
                                     <span className="opacity-60 text-sm block">Selected Seats</span>
@@ -330,7 +332,7 @@ const BookingPage: React.FC = () => {
                                                     'bg-gray-50 border-gray-200'
                                                 }`}>
                                                     <div className="flex justify-between items-center mb-2">
-                                                        <span className="font-bold text-red-600">Seat {seat.seatNumber}</span>
+                                                        <span className="font-bold text-red-600">Seat {seat.seatName}</span>
                                                         <span className="text-sm font-black">
                                                             {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
                                                         </span>

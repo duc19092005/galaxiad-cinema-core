@@ -206,42 +206,37 @@ const AdvancedSearch: React.FC = () => {
                                                         </div>
                                                         <div>
                                                             <h4 className={`text-xl font-black uppercase tracking-tight ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{cinema.cinemaName}</h4>
-                                                            <p className={`text-sm font-medium ${theme === 'light' ? 'text-gray-500' : 'opacity-50 text-white'}`}>{cinema.cinemaLocation}</p>
+                                                            <p className={`text-sm font-medium ${theme === 'light' ? 'text-gray-500' : 'opacity-50 text-white'}`}>{cinema.cinemaAddress}</p>
                                                         </div>
                                                     </div>
 
                                                     <div className="space-y-8 pl-0 sm:pl-16">
-                                                        {cinema.formatShowtimes?.map((format, fIdx) => (
-                                                            <div key={fIdx} className="space-y-5">
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
-                                                                        {format.formatName}
-                                                                    </div>
-                                                                    <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
+                                                        <div className="space-y-5">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+                                                                    {cinema.movieFormatName}
                                                                 </div>
-                                                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                                                                    {format.showtimes?.map(st => (
-                                                                        <button
-                                                                            key={st.scheduleId}
-                                                                            onClick={() => handleTimeClick(st.scheduleId)}
-                                                                            className={`group flex flex-col items-center justify-center gap-1 p-4 rounded-[1.5rem] border transition-all duration-300 active:scale-95 ${theme === 'modern'
-                                                                                    ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20'
-                                                                                    : theme === 'dark'
-                                                                                    ? 'bg-yellow-600/20 border-yellow-600/40 hover:bg-yellow-500/30 border-yellow-500/50'
-                                                                                    : 'bg-yellow-50 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 shadow-sm'
-                                                                                }`}
-                                                                        >
-                                                                            <span className={`text-xl font-black tracking-tighter ${theme === 'modern' ? 'text-yellow-400 group-hover:text-yellow-300' : theme === 'dark' ? 'text-yellow-500 group-hover:text-yellow-400' : 'text-yellow-700 group-hover:text-yellow-600'}`}>
-                                                                                {new Date(st.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                                            </span>
-                                                                            <span className={`text-[10px] font-bold opacity-50 uppercase tracking-[0.1em] group-hover:opacity-80 transition-opacity ${theme === 'light' ? 'text-yellow-800' : 'text-yellow-200'}`}>
-                                                                                {st.auditoriumNumber}
-                                                                            </span>
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
+                                                                <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
                                                             </div>
-                                                        ))}
+                                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+                                                                {(cinema.scheduleTimesInfos || []).map(st => (
+                                                                    <button
+                                                                        key={st.scheduleId}
+                                                                        onClick={() => handleTimeClick(st.scheduleId)}
+                                                                        className={`group flex flex-col items-center justify-center gap-1 p-4 rounded-[1.5rem] border transition-all duration-300 active:scale-95 ${theme === 'modern'
+                                                                                ? 'bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20'
+                                                                                : theme === 'dark'
+                                                                                ? 'bg-yellow-600/20 border-yellow-600/40 hover:bg-yellow-500/30 border-yellow-500/50'
+                                                                                : 'bg-yellow-50 border-yellow-200 hover:border-yellow-400 hover:bg-yellow-100 shadow-sm'
+                                                                            }`}
+                                                                    >
+                                                                        <span className={`text-xl font-black tracking-tighter ${theme === 'modern' ? 'text-yellow-400 group-hover:text-yellow-300' : theme === 'dark' ? 'text-yellow-500 group-hover:text-yellow-400' : 'text-yellow-700 group-hover:text-yellow-600'}`}>
+                                                                            {new Date(st.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                                        </span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             ))}

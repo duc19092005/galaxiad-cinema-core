@@ -310,31 +310,29 @@ const MovieDetailPage: React.FC = () => {
                                         <p>No showtimes found for this location and date.</p>
                                     </div>
                                 ) : (
-                                    showtimes.map((cinema) => (
-                                        <div key={cinema.cinemaId} className="space-y-4">
+                                    showtimes.map((cinema, idx) => (
+                                        <div key={idx} className="space-y-4">
                                             <div className="flex items-center gap-2 border-b border-white/10 pb-2">
                                                 <MapPin className="w-4 h-4 text-red-600" />
                                                 <h4 className="font-bold">{cinema.cinemaName}</h4>
-                                                <span className="text-xs opacity-60">— {cinema.cinemaLocation}</span>
+                                                <span className="text-xs opacity-60">— {cinema.cinemaAddress}</span>
                                             </div>
                                             <div className="space-y-6 pl-6">
-                                                {(cinema.formatShowtimes || []).map((format) => (
-                                                    <div key={format.formatId}>
-                                                        <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3 block">{format.formatName}</span>
-                                                        <div className="flex flex-wrap gap-3">
-                                                            {(format.showtimes || []).map((showtime) => (
-                                                                <button
-                                                                    key={showtime.scheduleId}
-                                                                    onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
-                                                                    className={`px-4 py-2 rounded-lg border font-bold transition-all ${theme === 'dark' ? 'border-yellow-600/50 hover:border-yellow-500 hover:bg-yellow-500/20 text-yellow-500 hover:text-yellow-400' : theme === 'modern' ? 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20 text-yellow-400' : 'border-yellow-300 bg-yellow-50 hover:border-yellow-400 hover:bg-yellow-100 text-yellow-700 shadow-sm'
-                                                                        } `}
-                                                                >
-                                                                    {new Date(showtime.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                                </button>
-                                                            ))}
-                                                        </div>
+                                                <div>
+                                                    <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3 block">{cinema.movieFormatName}</span>
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {(cinema.scheduleTimesInfos || []).map((showtime) => (
+                                                            <button
+                                                                key={showtime.scheduleId}
+                                                                onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
+                                                                className={`px-4 py-2 rounded-lg border font-bold transition-all ${theme === 'dark' ? 'border-yellow-600/50 hover:border-yellow-500 hover:bg-yellow-500/20 text-yellow-500 hover:text-yellow-400' : theme === 'modern' ? 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20 text-yellow-400' : 'border-yellow-300 bg-yellow-50 hover:border-yellow-400 hover:bg-yellow-100 text-yellow-700 shadow-sm'
+                                                                    }`}
+                                                            >
+                                                                {new Date(showtime.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                            </button>
+                                                        ))}
                                                     </div>
-                                                ))}
+                                                </div>
                                             </div>
                                         </div>
                                     ))
