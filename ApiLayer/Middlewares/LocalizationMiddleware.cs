@@ -35,7 +35,7 @@ public class LocalizationMiddleware
             await _next(httpContext);
 
             // Only translate JSON responses
-            if (httpContext.Response.ContentType?.Contains("application/json") == true)
+            if (httpContext.Response.ContentType?.Contains("application/json") == true && !httpContext.Response.HasStarted)
             {
                 memoryStream.Seek(0, SeekOrigin.Begin);
                 var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
@@ -45,20 +45,25 @@ public class LocalizationMiddleware
                     try
                     {
                         var translatedBody = TranslateJsonResponse(responseBody, localizationService);
+                        var bytes = Encoding.UTF8.GetBytes(translatedBody);
 
                         httpContext.Response.Body = originalBodyStream;
-                        httpContext.Response.ContentLength = Encoding.UTF8.GetByteCount(translatedBody);
+                        
+                        // Let the framework handle Content-Length or chunking
                         await httpContext.Response.WriteAsync(translatedBody, Encoding.UTF8);
                         return;
                     }
                     catch
                     {
-                        // If translation fails, return original response
+                        // If translation fails, fallback to original
                     }
                 }
             }
 
-            // Fallback: write original response
+            // Fallback: write original response if no translation was done
+            if (originalBodyStream == httpContext.Response.Body) return; // Already written
+            
+            httpContext.Response.Body = originalBodyStream;
             memoryStream.Seek(0, SeekOrigin.Begin);
             await memoryStream.CopyToAsync(originalBodyStream);
         }
