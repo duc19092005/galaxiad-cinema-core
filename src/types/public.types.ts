@@ -7,6 +7,7 @@ export interface PublicMovieListItem {
     moviePosterURL: string;
     movieFormatInfos: string;
     movieDuration: number;
+    movieRequiredAge: string;
     movieCategoryInfos: string;
     releaseDate?: string;
     expectedReleaseDate?: string;
