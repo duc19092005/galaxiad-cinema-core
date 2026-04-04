@@ -315,7 +315,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                     <div className="absolute bottom-4 left-6 right-6">
                         <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">{movie.movieName}</h2>
                         <div className="flex flex-wrap gap-2">
-                            {movie.movieGenresInfos.map((genre, i) => (
+                            {(movie.movieGenresInfos || []).map((genre, i) => (
                                 <span key={i} className="px-2 py-1 rounded-full text-xs font-semibold bg-red-600/80 text-white">
                                     {genre}
                                 </span>
@@ -366,7 +366,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                                 <Tag className="w-3.5 h-3.5" /> Formats
                             </div>
                             <div className="flex flex-wrap gap-1">
-                                {movie.movieVisualFormatInfos.map((f, i) => (
+                                {(movie.movieVisualFormatInfos || []).map((f, i) => (
                                     <span key={i} className={`px-2 py-0.5 rounded text-xs font-semibold ${theme === 'modern' ? 'bg-cyan-600/30 text-cyan-400 drop-shadow-md' : 'bg-red-600/20 text-red-400'
                                         }`}>{f}</span>
                                 ))}
@@ -857,12 +857,12 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         endedDate: formatDateForInput(movie.endedDate),
         duration: movie.duration.toString(),
         movieFormatIds: formats
-            .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+            .filter((f: MovieFormat) => (movie.movieVisualFormatInfos || []).includes(f.formatName))
             .map((f: MovieFormat) => f.formatId),
         movieGenreIds: genres
-            .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+            .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
             .map((g: MovieGenre) => g.movieGenreId),
-        movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
+        movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
         trailerUrl: movie.trailerUrl || '',
         director: movie.director || '',
         actors: movie.actors || '',
@@ -883,12 +883,12 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             endedDate: formatDateForInput(movie.endedDate),
             duration: movie.duration.toString(),
             movieFormatIds: formats
-                .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+                .filter((f: MovieFormat) => (movie.movieVisualFormatInfos || []).includes(f.formatName))
                 .map((f: MovieFormat) => f.formatId),
             movieGenreIds: genres
-                .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+                .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
                 .map((g: MovieGenre) => g.movieGenreId),
-            movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
+            movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
             trailerUrl: movie.trailerUrl || '',
             director: movie.director || '',
             actors: movie.actors || '',
@@ -992,7 +992,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 
             // 5. Arrays (Formats)
             const originalFormats = formats
-                .filter((f: MovieFormat) => movie.movieVisualFormatInfos.includes(f.formatName))
+                .filter((f: MovieFormat) => (movie.movieVisualFormatInfos || []).includes(f.formatName))
                 .map((f: MovieFormat) => f.formatId)
                 .sort();
             const currentFormats = [...formData.movieFormatIds].sort();
@@ -1003,7 +1003,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 
             // 6. Arrays (Genres)
             const originalGenres = genres
-                .filter((g: MovieGenre) => movie.movieGenresInfos.includes(g.movieGenreName))
+                .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
                 .map((g: MovieGenre) => g.movieGenreId)
                 .sort();
             const currentGenres = [...formData.movieGenreIds].sort();
@@ -1022,7 +1022,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 
             // 7. Age Rating
             const originalAgeSymbolId = requiredAges.find((a: MovieRequiredAge) => 
-                movie.movieVisualFormatInfos.some((info: string) => info.includes(a.movieRequiredAgeSymbol))
+                (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol))
             )?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000';
             
             if (formData.movieRequiredAgeId !== originalAgeSymbolId) {
@@ -1477,7 +1477,7 @@ const MovieManagerPage: React.FC = () => {
 
     const filteredMovies = movies.filter((m) =>
         m.movieName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.movieDescriptions.toLowerCase().includes(searchTerm.toLowerCase())
+        (m.movieDescriptions || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const formatDate = (dateStr: string) => {
@@ -1818,7 +1818,7 @@ const MovieManagerPage: React.FC = () => {
 
                                         {/* Format Tags */}
                                         <div className="absolute top-2 left-2 flex flex-col gap-1">
-                                            {movie.movieVisualFormatInfos.slice(0, 2).map((format, i) => (
+                                            {(movie.movieVisualFormatInfos || []).slice(0, 2).map((format, i) => (
                                                 <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold ${theme === 'modern' ? 'bg-blue-600/80 text-white' : 'bg-red-600/80 text-white'
                                                     }`}>{format}</span>
                                             ))}
@@ -1830,7 +1830,7 @@ const MovieManagerPage: React.FC = () => {
                                         <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                                             }`}>{movie.movieName}</h3>
                                         <div className="flex flex-wrap gap-1 mb-2">
-                                            {movie.movieGenresInfos.slice(0, 2).map((genre, i) => (
+                                            {(movie.movieGenresInfos || []).slice(0, 2).map((genre, i) => (
                                                 <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-[#15102B]/80 text-white font-medium' : 'bg-gray-100 text-gray-600'
                                                     }`}>{genre}</span>
                                             ))}

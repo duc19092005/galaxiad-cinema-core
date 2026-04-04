@@ -30,7 +30,7 @@ const DraggableMovie: React.FC<DraggableMovieProps> = ({ movie, onDragStart, onD
                 <div className="text-xs text-slate-500 dark:text-white/60 mt-1 flex justify-between">
                     <span>{movie.durationMinutes} min</span>
                     <div className="flex gap-1">
-                        {movie.formats.map(f => (
+                        {(movie.formats || []).map(f => (
                             <span key={f.id} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-[10px] uppercase font-bold tracking-wider">
                                 {f.name}
                             </span>
