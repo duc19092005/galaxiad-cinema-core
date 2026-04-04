@@ -76,12 +76,10 @@ const HomePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const [nowRes, comingRes] = await Promise.all([
-        publicApi.getNowShowing({ cinemaId: selectedCinemaId || undefined, pageSize: 5 }),
-        publicApi.getComingSoon({ cinemaId: selectedCinemaId || undefined, pageSize: 5 })
-      ]);
-      setNowShowing(nowRes.data.items || []);
-      setComingSoon(comingRes.data.items || []);
+      const response = await publicApi.getNowShowing({ cinemaId: selectedCinemaId || undefined, pageSize: 20 });
+      const items = response.data || [];
+      setNowShowing(items.filter(m => !m.isCommingSoon));
+      setComingSoon(items.filter(m => m.isCommingSoon));
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
@@ -559,7 +557,7 @@ const HomePage: React.FC = () => {
               >
                 <div className="aspect-[2/3] relative">
                   <img
-                    src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
+                    src={movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                     alt={movie.movieName}
                   />
@@ -573,13 +571,13 @@ const HomePage: React.FC = () => {
                   <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                     }`}>{movie.movieName}</h3>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {movie.movieGenres.slice(0, 2).map((genre, i) => (
+                    {movie.movieCategoryInfos && movie.movieCategoryInfos.split(',').slice(0, 2).map((genre: string, i: number) => (
                       <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-indigo-800/40 text-white font-medium' : 'bg-gray-100 text-gray-600'
-                        }`}>{genre}</span>
+                        }`}>{genre.trim()}</span>
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.movieDuration} min • {formatDate(movie.startedDate)}
+                    {movie.movieDuration} min  {movie.startedDate ? `• ${formatDate(movie.startedDate)}` : ''}
                   </p>
                 </div>
               </div>
@@ -615,7 +613,7 @@ const HomePage: React.FC = () => {
               >
                 <div className="aspect-[2/3] relative">
                   <img
-                    src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
+                    src={movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                     alt={movie.movieName}
                   />
@@ -629,13 +627,13 @@ const HomePage: React.FC = () => {
                   <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                     }`}>{movie.movieName}</h3>
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {movie.movieGenres.slice(0, 2).map((genre, i) => (
+                    {movie.movieCategoryInfos && movie.movieCategoryInfos.split(',').slice(0, 2).map((genre: string, i: number) => (
                       <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-indigo-800/40 text-white font-medium' : 'bg-gray-100 text-gray-600'
-                        }`}>{genre}</span>
+                        }`}>{genre.trim()}</span>
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    Starting: {formatDate(movie.startedDate)}
+                    {movie.startedDate ? `Starting: ${formatDate(movie.startedDate)}` : 'Coming Soon'}
                   </p>
                 </div>
               </div>

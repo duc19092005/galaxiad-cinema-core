@@ -1,13 +1,15 @@
 // src/types/public.types.ts
 
 export interface PublicMovieListItem {
+    isCommingSoon: boolean;
     movieId: string;
     movieName: string;
-    movieImageUrl: string;
+    moviePosterURL: string;
+    movieFormatInfos: string;
     movieDuration: number;
-    startedDate: string;
-    movieRequiredAgeSymbol: string;
-    movieGenres: string[];
+    movieRequiredAge: string;
+    movieCategoryInfos: string;
+    startedDate?: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -101,8 +103,8 @@ export interface ActiveMovie {
 export interface SearchScheduleResult {
     movieId: string;
     movieName: string;
-    movieImageUrl: string;
-    movieRequiredAgeSymbol: string;
-    movieGenres: string[];
+    moviePosterURL: string;
+    movieRequiredAge: string;
+    movieCategoryInfos: string;
     cinemas: PublicCinemaShowtimes[];
 }

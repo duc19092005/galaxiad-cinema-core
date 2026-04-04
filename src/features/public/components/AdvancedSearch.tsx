@@ -176,16 +176,16 @@ const AdvancedSearch: React.FC = () => {
                                         {/* Movie Sidebar */}
                                         <div className="w-full lg:w-72 flex-shrink-0">
                                             <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl mb-6 group">
-                                                <img src={movie.movieImageUrl} alt={movie.movieName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <img src={movie.moviePosterURL} alt={movie.movieName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                 <div className="absolute top-4 left-4 flex items-center gap-2">
                                                     <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-xl border border-white/20">
-                                                        {movie.movieRequiredAgeSymbol}
+                                                        {movie.movieRequiredAge}
                                                     </div>
                                                 </div>
                                             </div>
                                             <h3 className={`text-2xl font-black mb-4 leading-tight uppercase tracking-tighter ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}>{movie.movieName}</h3>
                                             <div className="flex flex-wrap gap-2">
-                                                {movie.movieGenres.map(g => (
+                                                {(movie.movieCategoryInfos ? movie.movieCategoryInfos.split(',').map((g: string) => g.trim()).filter(Boolean) : []).map((g: string) => (
                                                     <span key={g} className={`text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-wider ${theme === 'modern' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-gray-100 text-gray-600'}`}>{g}</span>
                                                 ))}
                                             </div>

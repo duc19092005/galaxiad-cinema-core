@@ -10,22 +10,21 @@ import type {
     PublicGenre,
     ActiveCinema,
     ActiveMovie,
-    SearchScheduleResult,
-    PaginatedResponse
+    SearchScheduleResult
 } from '../types/public.types';
 
 export const publicApi = {
-    /** 1. Get Now Showing Movies (Paginated) */
-    getNowShowing: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>>('/Movies', {
+    /** 1. Get Now Showing Movies */
+    getNowShowing: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });
         return response.data;
     },
 
-    /** 2. Get Coming Soon Movies (Paginated) */
-    getComingSoon: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>> => {
-        const response = await publicAxios.get<ApiSuccessResponse<PaginatedResponse<PublicMovieListItem>>>('/Movies', {
+    /** 2. Get Coming Soon Movies */
+    getComingSoon: async (params: { keyword?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });
         return response.data;

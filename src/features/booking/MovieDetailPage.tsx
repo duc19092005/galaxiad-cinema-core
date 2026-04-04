@@ -142,7 +142,7 @@ const MovieDetailPage: React.FC = () => {
                 {/* Backdrop Image */}
                 <div className="absolute inset-0">
                     <img
-                        src={movie.movieImageUrl}
+                        src={movie.moviePosterURL}
                         alt=""
                         className="w-full h-full object-cover opacity-30 scale-110 blur-xl"
                     />
@@ -160,7 +160,7 @@ const MovieDetailPage: React.FC = () => {
                             theme === 'modern' ? 'border-cyan-400/30' : 'border-white/10'
                         }`}>
                             <img 
-                                src={movie.movieImageUrl} 
+                                src={movie.moviePosterURL} 
                                 alt={movie.movieName} 
                                 className="w-full h-auto object-cover"
                                 onError={(e) => {
@@ -183,10 +183,10 @@ const MovieDetailPage: React.FC = () => {
                                     <Clock className="w-4 h-4 text-red-600" /> {movie.movieDuration} mins
                                 </span>
                                 <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                                    <Calendar className="w-4 h-4 text-red-600" /> {formatDate(movie.startedDate)}
+                                    <Calendar className="w-4 h-4 text-red-600" /> {movie.startedDate ? formatDate(movie.startedDate) : 'Coming Soon'}
                                 </span>
                                 <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black shadow-lg shadow-red-600/30">
-                                    {movie.movieRequiredAgeSymbol}
+                                    {movie.movieRequiredAge}
                                 </span>
                             </div>
                         </div>
@@ -222,7 +222,7 @@ const MovieDetailPage: React.FC = () => {
                                     theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
                                 }`}>Genres</h4>
                                 <div className="flex flex-wrap gap-2 mt-2">
-                                    {movie.movieGenres.map((g, i) => (
+                                    {movie.movieCategoryInfos && movie.movieCategoryInfos.split(',').map(g => g.trim()).filter(Boolean).map((g: string, i: number) => (
                                         <span key={i} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
                                             theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-300' : 
                                             theme === 'modern' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 
