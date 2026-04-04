@@ -179,6 +179,21 @@ public static class CinemaAndMovieSeedData
             new movieFormatMovieInfoEntity { MovieId = movieId3, FormatId = movie_visual_constant.Format3D }
         );
 
+        // 4.1 Seed Movie - Cinema Authorization (Many-to-Many)
+        modelBuilder.Entity<MovieCinemaEntity>().HasData(
+            // Galaxy Cinema HCM (cinemaHCMId) chiếu Batman (movieId1) và Avatar (movieId3)
+            new MovieCinemaEntity { MovieId = movieId1, CinemaId = cinemaHCMId },
+            new MovieCinemaEntity { MovieId = movieId3, CinemaId = cinemaHCMId },
+
+            // Lotte Cinema West Lake (cinemaHNId) chiếu Oppenheimer (movieId2) và Batman (movieId1)
+            new MovieCinemaEntity { MovieId = movieId1, CinemaId = cinemaHNId },
+            new MovieCinemaEntity { MovieId = movieId2, CinemaId = cinemaHNId },
+
+            // BHD Star Bitexco (cinemaBHDId) chiếu Avatar (movieId3) và Batman (movieId1)
+            new MovieCinemaEntity { MovieId = movieId1, CinemaId = cinemaBHDId },
+            new MovieCinemaEntity { MovieId = movieId3, CinemaId = cinemaBHDId }
+        );
+
         // 5. Seed Movie Schedules (Lịch chiếu) - Chỉ tạo 1 vài slot tiêu biểu
         var schedules = new List<MovieScheduleInfoEntity>();
         var scheduleDate = now.Date.AddDays(1); // Ưu tiên ngày mai

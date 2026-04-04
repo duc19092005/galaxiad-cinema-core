@@ -36,4 +36,12 @@ public class ResGetMovieInfosMovieManagerDto
     
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public string MovieManagerName { get; set; } = string.Empty;
+
+    public List<ResMovieCinemaDto> MovieCinemas { get; set; } = [];
+}
+
+public class ResMovieCinemaDto
+{
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
 }

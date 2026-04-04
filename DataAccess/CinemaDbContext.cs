@@ -57,6 +57,8 @@ public class CinemaDbContext : DbContext
     public DbSet<movieRequiredAgeEntity> MovieRequiredAgeEntity { get; set; }
     
     public DbSet<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; }
+
+    public DbSet<MovieCinemaEntity> MovieCinemaEntities { get; set; }
     
     public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
     

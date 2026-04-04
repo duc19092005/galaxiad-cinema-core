@@ -119,9 +119,16 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 FormatId = id
             });
 
+            var newMovieCinemaInfos = request.CinemaIds.Select(id => new MovieCinemaEntity()
+            {
+                MovieId = newMovieId,
+                CinemaId = id
+            });
+
             await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
+            await _dbContext.MovieCinemaEntities.AddRangeAsync(newMovieCinemaInfos);
             
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
@@ -270,7 +277,6 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                         FormatId = id
                     }));
                 }
-
                 if (request.MovieGenreIds != null && request.MovieGenreIds.Any())
                 {
                     // Truy Van trong dbo
@@ -278,11 +284,22 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     _dbContext.MovieGenreMovieInfoEntity.RemoveRange(findTheGenres);
 
                     // Add Again in databases
-
                     _dbContext.MovieGenreMovieInfoEntity.AddRange(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
                     {
                         MovieId = itemId,
                         MovieGenreId = id
+                    }));
+                }
+
+                if (request.CinemaIds != null && request.CinemaIds.Any())
+                {
+                    var existingCinemas = _dbContext.MovieCinemaEntities.Where(x => x.MovieId == itemId);
+                    _dbContext.MovieCinemaEntities.RemoveRange(existingCinemas);
+
+                    _dbContext.MovieCinemaEntities.AddRange(request.CinemaIds.Distinct().Select(id => new MovieCinemaEntity()
+                    {
+                        MovieId = itemId,
+                        CinemaId = id
                     }));
                 }
 
@@ -384,6 +401,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 var movieGenres = await _dbContext.MovieGenreMovieInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
                 _dbContext.MovieGenreMovieInfoEntity.RemoveRange(movieGenres);
+
+                var movieCinemas = await _dbContext.MovieCinemaEntities.Where(x => x.MovieId == itemId).ToListAsync();
+                _dbContext.MovieCinemaEntities.RemoveRange(movieCinemas);
 
                 _dbContext.MovieInfoEntity.Remove(movie);
             }

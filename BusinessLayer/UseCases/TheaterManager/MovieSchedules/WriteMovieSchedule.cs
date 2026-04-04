@@ -40,16 +40,22 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     public async Task<BaseResponse<string>> AddItem(TheaterManagerAddMovieSchedulesRequest request)
     {
         var getCurrentUserId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
             .AnyAsync(x => x.AuditoriumId == request.AuditoriumId && 
-                           x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId);
+                           (isAdmin || x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId));
             
         if (!isAuditoriumExist)
         {
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
+
+        var cinemaId = await _cinemaDbContext.AuditoriumInfoEntities
+            .Where(x => x.AuditoriumId == request.AuditoriumId)
+            .Select(x => x.CinemaId)
+            .FirstOrDefaultAsync();
 
         var transactions = await _cinemaDbContext.Database.BeginTransactionAsync();
 
@@ -72,6 +78,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
 
+            // Kiểm tra phim đã được ủy quyền tại rạp chưa
+            var authorizedMovies = await _cinemaDbContext.MovieCinemaEntities
+                .AsNoTracking()
+                .Where(x => x.CinemaId == cinemaId && reqMovieIds.Contains(x.MovieId))
+                .Select(x => x.MovieId)
+                .ToListAsync();
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
 
             // Fetch existing schedules to skip duplicates
@@ -93,6 +106,11 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 if (!validMovieDictionary.TryGetValue(slot.MovieId, out var movie))
                 {
                     throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                }
+
+                if (!authorizedMovies.Contains(slot.MovieId))
+                {
+                    throw new BadRequestException($"Phim '{movie.MovieName}' chưa được ủy quyền chiếu tại rạp này.", "E01");
                 }
 
                 if (!validMovieFormats.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))
@@ -210,17 +228,23 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             }
         }
         var getCurrentUserId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
         var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
             .AsNoTracking()
             .AnyAsync(x => x.AuditoriumId == auditoriumId && 
-                           (x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId || 
+                           (isAdmin || x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId || 
                             x.CinemaInfoEntity.FacilitiesManagerId == getCurrentUserId));
 
         if (!isAuditoriumExist)
         {
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
+
+        var cinemaId = await _cinemaDbContext.AuditoriumInfoEntities
+            .Where(x => x.AuditoriumId == auditoriumId)
+            .Select(x => x.CinemaId)
+            .FirstOrDefaultAsync();
 
         if (request.Slots == null || !request.Slots.Any())
         {
@@ -272,6 +296,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
 
+            // Kiểm tra phim đã được ủy quyền tại rạp chưa
+            var authorizedMovies = await _cinemaDbContext.MovieCinemaEntities
+                .AsNoTracking()
+                .Where(x => x.CinemaId == cinemaId && movieIdsToCheck.Contains(x.MovieId))
+                .Select(x => x.MovieId)
+                .ToListAsync();
+
             var proposedSlots = new List<MovieScheduleInfoEntity>();
 
             foreach (var slot in request.Slots)
@@ -287,6 +318,11 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     if (!moviesInfos.TryGetValue(slot.MovieId, out var movie))
                     {
                         throw new BadRequestException(Messages.Movie.IdNotExistOrInactive(slot.MovieId), "E01");
+                    }
+
+                    if (!authorizedMovies.Contains(slot.MovieId))
+                    {
+                        throw new BadRequestException($"Phim '{movie.MovieName}' chưa được ủy quyền chiếu tại rạp này.", "E01");
                     }
 
                     if (!findMoviesSupportedFormat.TryGetValue(slot.MovieId, out var movieFormat) || !movieFormat.Contains(slot.FormatId))

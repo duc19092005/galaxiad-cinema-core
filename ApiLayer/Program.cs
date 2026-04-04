@@ -57,6 +57,9 @@ builder.Services.AddMovieFactories();
 builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
 
+// Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
+builder.Services.AddHostedService<BusinessLayer.Services.ApplicationServices.MovieStatusSyncBackgroundService>();
+
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);
 builder.Services.AddSingleton<cloudinaryHelper>();

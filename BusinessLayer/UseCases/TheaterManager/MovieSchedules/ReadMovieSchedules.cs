@@ -23,6 +23,7 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
     public async Task<BaseResponse<List<TheaterManagerMovieScheduleResDto>>> GetSchedulesByAuditoriumId(Guid auditoriumId)
     {
         var getCurrentUserId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
         
         // Ensure auditorium belongs to a cinema this manager manages
         var validAuditorium = await _cinemaDbContext.AuditoriumInfoEntities
@@ -35,7 +36,7 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
 
-        if (validAuditorium.CinemaInfoEntity.TheaterManagerId != getCurrentUserId && 
+        if (!isAdmin && validAuditorium.CinemaInfoEntity.TheaterManagerId != getCurrentUserId && 
             validAuditorium.CinemaInfoEntity.FacilitiesManagerId != getCurrentUserId)
         {
             throw new BadRequestException("Bạn không có quyền xem thông tin của rạp này.", "E01");

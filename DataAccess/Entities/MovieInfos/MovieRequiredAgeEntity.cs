@@ -14,5 +14,5 @@ public class movieRequiredAgeEntity
     [Column(TypeName = "nvarchar(2000)")]
     public string MovieRequiredAgeDescription { get; set; } = string.Empty;
 
-    public List<MovieInfoEntity> movie_info_entity { get; set; } = [];
+    public List<MovieInfoEntity> MovieInfoEntities { get; set; } = [];
 }
