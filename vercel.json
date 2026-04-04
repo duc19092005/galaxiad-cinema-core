@@ -3,11 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "http://apicinestartplus.runasp.net/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    { "handle": "filesystem" },
-    { "src": "/.*", "dest": "/index.html" }
   ]
 }
-
