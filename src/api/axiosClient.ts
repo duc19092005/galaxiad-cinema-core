@@ -11,6 +11,7 @@ export const identityAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -24,6 +25,7 @@ export const facilitiesAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -37,6 +39,7 @@ export const movieAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 30000, // Longer timeout for file uploads
@@ -50,6 +53,7 @@ export const theaterAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -67,6 +71,7 @@ export const bookingAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1/booking`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -81,6 +86,7 @@ export const publicAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1/public`,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
