@@ -1,8 +1,9 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5032';
-console.log('Current API_BASE_URL:', API_BASE_URL);
+// In Production (Vercel): empty string → requests go to same-origin /api/... → proxied by vercel.json rewrites
+// In Development: fallback to localhost:5032
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
 
 /**
  * Axios instance for Identity Access APIs
@@ -12,7 +13,6 @@ export const identityAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -26,7 +26,6 @@ export const facilitiesAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -40,7 +39,6 @@ export const movieAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 30000, // Longer timeout for file uploads
@@ -54,7 +52,6 @@ export const theaterAxios = axios.create({
   baseURL: `${API_BASE_URL}/api`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -72,7 +69,6 @@ export const bookingAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1/booking`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
@@ -87,7 +83,6 @@ export const publicAxios = axios.create({
   baseURL: `${API_BASE_URL}/api/v1/public`,
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   },
   withCredentials: true,
   timeout: 10000,
