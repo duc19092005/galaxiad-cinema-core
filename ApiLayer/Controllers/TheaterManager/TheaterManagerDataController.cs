@@ -32,14 +32,39 @@ public class TheaterManagerDataController : ControllerBase
 
     /// <summary>
     /// Lấy danh sách Phim kèm theo định dạng (Dành cho chức năng Add/Edit lịch chiếu để chọn Option)
+    /// Đã cập nhật: Chỉ lấy phim đã được ủy quyền chiếu tại Rạp này.
     /// </summary>
     [HttpGet("movies-with-formats")]
-    public async Task<IActionResult> GetMoviesWithFormats()
+    public async Task<IActionResult> GetMoviesWithFormats([FromQuery] Guid cinemaId)
     {
+        var userId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
+
+        // 1. Kiểm tra xem TheaterManager có quyền quản lý rạp này không
+        var isManagerOfCinema = await _dbContext.CinemaInfoEntity
+            .AnyAsync(c => c.CinemaId == cinemaId && (c.TheaterManagerId == userId || c.FacilitiesManagerId == userId));
+
+        if (!isAdmin && !isManagerOfCinema)
+        {
+            return BadRequest(new BaseResponse<object>
+            {
+                IsSuccess = false,
+                Message = "Bạn không có quyền quản lý rạp này."
+            });
+        }
+
+        // 2. Lấy danh sách phim đã được ủy quyền cho rạp này
+        var authorizedMovieIds = await _dbContext.MovieCinemaEntities
+            .Where(mc => mc.CinemaId == cinemaId)
+            .Select(mc => mc.MovieId)
+            .ToListAsync();
+
+        // 3. Truy vấn các định dạng của các phim đó
         var movies = await _dbContext.MovieFormatMovieInfoEntity
             .Include(mf => mf.MovieInfoEntity)
             .Include(mf => mf.MovieFormatInfoEntity)
-            .Where(mf => mf.MovieInfoEntity.IsActive && !mf.MovieInfoEntity.IsDeleted &&
+            .Where(mf => authorizedMovieIds.Contains(mf.MovieId) &&
+                         mf.MovieInfoEntity.IsActive && !mf.MovieInfoEntity.IsDeleted &&
                          mf.MovieFormatInfoEntity.IsActive && !mf.MovieFormatInfoEntity.IsDeleted)
             .Select(mf => new TheaterManagerMovieOptionDto
             {
@@ -65,8 +90,14 @@ public class TheaterManagerDataController : ControllerBase
     public async Task<IActionResult> GetMyAuditoriums([FromQuery] Guid? cinemaId)
     {
         var userId = _userContextService.GetUserId();
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var query = _dbContext.CinemaInfoEntity.AsNoTracking().Where(c => c.TheaterManagerId == userId);
+        var query = _dbContext.CinemaInfoEntity.AsNoTracking().AsQueryable();
+        
+        if (!isAdmin)
+        {
+            query = query.Where(c => c.TheaterManagerId == userId);
+        }
         
         if (cinemaId.HasValue)
         {

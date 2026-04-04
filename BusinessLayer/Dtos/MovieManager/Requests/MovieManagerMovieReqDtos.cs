@@ -42,6 +42,9 @@ public class ReqAddMovieManagerMovieDto
     
     [StringLength(500)]
     public string Actors { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Cinema Ids are required")]
+    public List<Guid> CinemaIds { get; set; } = [];
 }
 
 public class ReqEditMovieManagerMovieDto
@@ -74,5 +77,7 @@ public class ReqEditMovieManagerMovieDto
     
     [StringLength(500)]
     public string? Actors { get; set; }
+
+    public List<Guid>? CinemaIds { get; set; } = [];
 }
 

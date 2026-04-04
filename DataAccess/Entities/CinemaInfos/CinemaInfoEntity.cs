@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using DataAccess.Entities.UserInfos;
+using DataAccess.Entities.MovieInfos;
 
 namespace DataAccess.Entities.CinemaInfos;
 // ReSharper disable All
@@ -36,9 +37,8 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     public List<CinemaDiscountInfoEntity> CinemaDiscountInfoEntity { get; set; } = [];
 
-    public List<CinemaSurchargeInfosEntity> CinemaSurchargeInfosEntity { get; set; } = [];
-    
-    
+    public List<MovieCinemaEntity> MovieCinemaEntities { get; set; } = [];
 
+    public List<CinemaSurchargeInfosEntity> CinemaSurchargeInfosEntity { get; set; } = [];
 }
 

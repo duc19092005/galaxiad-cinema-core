@@ -43,6 +43,12 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                MovieCinemas = _dbContext.MovieCinemaEntities
+                    .Where(mc => mc.MovieId == x.MovieId)
+                    .Select(mc => new ResMovieCinemaDto { 
+                        CinemaId = mc.CinemaId, 
+                        CinemaName = mc.CinemaInfoEntity.CinemaName 
+                    }).ToList(),
                 Duration = x.MovieDuration ,
                 EndedDate = DateTime.SpecifyKind(x.EndedDate, DateTimeKind.Utc),
                 StartedDate = DateTime.SpecifyKind(x.ActiveAt, DateTimeKind.Utc),
@@ -89,6 +95,12 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieName = m.MovieName,
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                MovieCinemas = _dbContext.MovieCinemaEntities
+                    .Where(mc => mc.MovieId == m.MovieId)
+                    .Select(mc => new ResMovieCinemaDto { 
+                        CinemaId = mc.CinemaId, 
+                        CinemaName = mc.CinemaInfoEntity.CinemaName 
+                    }).ToList(),
                 Duration = m.MovieDuration,
                 EndedDate = DateTime.SpecifyKind(m.EndedDate, DateTimeKind.Utc),
                 StartedDate = DateTime.SpecifyKind(m.ActiveAt, DateTimeKind.Utc),

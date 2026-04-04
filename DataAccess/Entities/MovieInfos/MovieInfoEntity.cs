@@ -51,6 +51,8 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     public movieRequiredAgeEntity MovieRequiredAgeEntity { get; set; } = null!;
 
     public List<movieFormatMovieInfoEntity> MovieFormatMovieInfoEntity { get; set; } = [];
+
+    public List<MovieCinemaEntity> MovieCinemaEntities { get; set; } = [];
 }
 
 

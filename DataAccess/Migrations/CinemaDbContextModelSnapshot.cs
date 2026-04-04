@@ -126,7 +126,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2246)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4216)
                         },
                         new
                         {
@@ -138,7 +138,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2251)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4218)
                         },
                         new
                         {
@@ -150,7 +150,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2351)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4221)
                         });
                 });
 
@@ -304,7 +304,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2169)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4167)
                         },
                         new
                         {
@@ -320,7 +320,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2181)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4172)
                         },
                         new
                         {
@@ -336,7 +336,7 @@ namespace DataAccess.Migrations
                             FacilitiesManagerId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(2185)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(4175)
                         });
                 });
 
@@ -2094,6 +2094,53 @@ namespace DataAccess.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieCinemaEntity", b =>
+                {
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MovieId", "CinemaId");
+
+                    b.HasIndex("CinemaId");
+
+                    b.ToTable("MovieCinemaEntities");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+                        },
+                        new
+                        {
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+                        });
+                });
+
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>
                 {
                     b.Property<Guid>("MovieFormatId")
@@ -2489,7 +2536,7 @@ namespace DataAccess.Migrations
                             MovieName = "The Batman",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=mqqft239u6Q",
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(3979)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5088)
                         },
                         new
                         {
@@ -2510,7 +2557,7 @@ namespace DataAccess.Migrations
                             MovieName = "Oppenheimer",
                             MovieRequiredAgeId = new Guid("9f0e1d2c-3b4a-4d5e-6f7a-8b9c0d1e2f3a"),
                             TrailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4020)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5118)
                         },
                         new
                         {
@@ -2531,7 +2578,7 @@ namespace DataAccess.Migrations
                             MovieName = "Avatar: The Way of Water",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=d9MyW72ELq0",
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4026)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5122)
                         });
                 });
 
@@ -2604,10 +2651,10 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            MovieScheduleInfoId = new Guid("4085e6e5-5fb5-4f99-a8ec-4ca0ad356ea2"),
+                            MovieScheduleInfoId = new Guid("4bd1d1ce-b458-41ea-ba86-51c98b210309"),
                             ActiveAt = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4154),
+                            CreatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5258),
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             EndedTime = new DateTime(2026, 3, 19, 21, 56, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
@@ -2615,14 +2662,14 @@ namespace DataAccess.Migrations
                             MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
                             MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
                             StartTime = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4155)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5259)
                         },
                         new
                         {
-                            MovieScheduleInfoId = new Guid("b9dc5c43-a725-46cb-8bda-1db95444d1a5"),
+                            MovieScheduleInfoId = new Guid("5d54c117-7b08-4587-a159-f70e4f35e4b5"),
                             ActiveAt = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4293),
+                            CreatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5295),
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             EndedTime = new DateTime(2026, 3, 19, 23, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
@@ -2630,7 +2677,7 @@ namespace DataAccess.Migrations
                             MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
                             MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
                             StartTime = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 3, 23, 22, 9, 5, 161, DateTimeKind.Local).AddTicks(4294)
+                            UpdatedAt = new DateTime(2026, 4, 4, 18, 50, 16, 59, DateTimeKind.Local).AddTicks(5295)
                         });
                 });
 
@@ -3365,6 +3412,25 @@ namespace DataAccess.Migrations
                     b.Navigation("AuditoriumInfoEntities");
                 });
 
+            modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieCinemaEntity", b =>
+                {
+                    b.HasOne("DataAccess.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany("MovieCinemaEntities")
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("DataAccess.Entities.MovieInfos.MovieInfoEntity", "MovieInfoEntity")
+                        .WithMany("MovieCinemaEntities")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CinemaInfoEntity");
+
+                    b.Navigation("MovieInfoEntity");
+                });
+
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieFormatInfoEntity", b =>
                 {
                     b.HasOne("DataAccess.Entities.UserInfos.UserInfoEntity", "Creator")
@@ -3428,7 +3494,7 @@ namespace DataAccess.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("DataAccess.Entities.MovieInfos.movieRequiredAgeEntity", "MovieRequiredAgeEntity")
-                        .WithMany("movie_info_entity")
+                        .WithMany("MovieInfoEntities")
                         .HasForeignKey("MovieRequiredAgeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -3619,6 +3685,8 @@ namespace DataAccess.Migrations
                     b.Navigation("CinemaDiscountInfoEntity");
 
                     b.Navigation("CinemaSurchargeInfosEntity");
+
+                    b.Navigation("MovieCinemaEntities");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.CinemaInfos.SeatsInfoEntity", b =>
@@ -3648,6 +3716,8 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.MovieInfoEntity", b =>
                 {
+                    b.Navigation("MovieCinemaEntities");
+
                     b.Navigation("MovieFormatMovieInfoEntity");
 
                     b.Navigation("MovieGenreMovieInfoEntity");
@@ -3662,7 +3732,7 @@ namespace DataAccess.Migrations
 
             modelBuilder.Entity("DataAccess.Entities.MovieInfos.movieRequiredAgeEntity", b =>
                 {
-                    b.Navigation("movie_info_entity");
+                    b.Navigation("MovieInfoEntities");
                 });
 
             modelBuilder.Entity("DataAccess.Entities.UserInfos.OrderInfoEntity", b =>

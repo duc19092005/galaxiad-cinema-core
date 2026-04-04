@@ -146,13 +146,12 @@ public class PublicController : ControllerBase
                 CinemaName = g.Key.CinemaName,
                 CinemaAddress = g.Key.CinemaLocation,
                 MovieFormatName = g.Key.MovieFormatName,
-                // Gom tất cả các ActiveAt của nhóm này thành danh sách giờ chiếu
                 ScheduleTimesInfos = g.Select(s => new GetScheduleTimeRes()
                 {
                     ScheduleId = s.MovieScheduleInfoId,
-                    ShowTime = s.ActiveAt // Đây là cột chứa giờ chiếu (14:50, 15:45...)
+                    ShowTime = s.ActiveAt 
                 })
-                .OrderBy(t => t.ShowTime) // Sắp xếp giờ chiếu từ sớm đến muộn
+                .OrderBy(t => t.ShowTime)
                 .ToList()
             })
             .ToListAsync();
