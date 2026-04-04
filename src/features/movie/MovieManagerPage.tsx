@@ -26,7 +26,8 @@ import {
     LayoutDashboard,
     Sun,
     Moon,
-    Sparkles
+    Sparkles,
+    ChevronDown
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
@@ -34,7 +35,8 @@ import { toast } from 'react-hot-toast';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import type { Movie, MovieRequiredAge, MovieGenre } from '../../types/movie.types';
-import type { MovieFormat } from '../../types/facilities.types';
+import type { MovieFormat, Cinema } from '../../types/facilities.types';
+import { facilitiesApi } from '../../api/facilitiesApi';
 import { useTheme } from '../../contexts/ThemeContext';
 import LogoutModal from '../../components/LogoutModal';
 import { useTranslation } from 'react-i18next';
@@ -317,6 +319,11 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                                     {genre}
                                 </span>
                             ))}
+                            {movie.movieCinemas?.map((cinema) => (
+                                <span key={cinema.cinemaId} className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-600/80 text-white">
+                                    {cinema.cinemaName}
+                                </span>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -431,9 +438,10 @@ interface CreateMovieModalProps {
     formats: MovieFormat[];
     requiredAges: MovieRequiredAge[];
     genres: MovieGenre[];
+    cinemas: Cinema[];
 }
 
-const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres }) => {
+const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
     const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -454,6 +462,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         trailerUrl: '',
         director: '',
         actors: '',
+        cinemaIds: [] as string[],
     });
 
     if (!isOpen) return null;
@@ -491,6 +500,15 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         }));
     };
 
+    const handleCinemaToggle = (cinemaId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            cinemaIds: prev.cinemaIds.includes(cinemaId)
+                ? prev.cinemaIds.filter((id: string) => id !== cinemaId)
+                : [...prev.cinemaIds, cinemaId],
+        }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -505,6 +523,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             if (!formData.duration || parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
             if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
             if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { setError('Please select a required age rating'); setLoading(false); return; }
+            if (formData.cinemaIds.length === 0) { setError('Please select at least one cinema'); setLoading(false); return; }
 
             const submissionData = {
                 movieRequiredAgeId: formData.movieRequiredAgeId,
@@ -519,6 +538,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 trailerUrl: formData.trailerUrl.trim() || undefined,
                 director: formData.director.trim() || undefined,
                 actors: formData.actors.trim() || undefined,
+                cinemaIds: formData.cinemaIds,
             };
 
             console.log("DEBUG: Creating Movie -> Sending Local Time:", {
@@ -740,6 +760,37 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             </div>
                         </div>
 
+                        {/* Cinemas */}
+                        <div>
+                            <label className={labelClass}>Authorized Cinemas <span className="text-red-500">*</span></label>
+                            <div className="flex flex-wrap gap-2">
+                                {cinemas.map((c: Cinema) => (
+                                    <button
+                                        key={c.cinemaId}
+                                        type="button"
+                                        onClick={() => handleCinemaToggle(c.cinemaId)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.cinemaIds.includes(c.cinemaId)
+                                            ? theme === 'modern'
+                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300 shadow-md shadow-blue-500/20'
+                                                : 'bg-blue-600 text-white border-blue-600'
+                                            : theme === 'dark'
+                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-blue-600'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
+                                            }`}
+                                    >
+                                        {c.cinemaName}
+                                    </button>
+                                ))}
+                                {cinemas.length === 0 && (
+                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
+                                        No cinemas available. Please configure cinemas in Facilities Manager.
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+
                         {/* Submit */}
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -769,9 +820,10 @@ interface UpdateMovieModalProps {
     formats: MovieFormat[];
     requiredAges: MovieRequiredAge[];
     genres: MovieGenre[];
+    cinemas: Cinema[];
 }
 
-const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres }) => {
+const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
     const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
 
@@ -813,6 +865,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         trailerUrl: movie.trailerUrl || '',
         director: movie.director || '',
         actors: movie.actors || '',
+        cinemaIds: movie.movieCinemas?.map(c => c.cinemaId) || [] as string[],
     });
 
     // Re-sync if movie changes or modal opens
@@ -838,6 +891,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             trailerUrl: movie.trailerUrl || '',
             director: movie.director || '',
             actors: movie.actors || '',
+            cinemaIds: movie.movieCinemas?.map(c => c.cinemaId) || [] as string[],
         });
         setImagePreview(movie.movieImageUrl);
     }, [movie, formats, requiredAges, genres, isOpen]);
@@ -874,6 +928,15 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             movieGenreIds: prev.movieGenreIds.includes(genreId)
                 ? prev.movieGenreIds.filter((id: string) => id !== genreId)
                 : [...prev.movieGenreIds, genreId],
+        }));
+    };
+
+    const handleCinemaToggle = (cinemaId: string) => {
+        setFormData(prev => ({
+            ...prev,
+            cinemaIds: prev.cinemaIds.includes(cinemaId)
+                ? prev.cinemaIds.filter((id: string) => id !== cinemaId)
+                : [...prev.cinemaIds, cinemaId],
         }));
     };
 
@@ -945,6 +1008,14 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             const currentGenres = [...formData.movieGenreIds].sort();
             if (JSON.stringify(originalGenres) !== JSON.stringify(currentGenres)) {
                 submissionData.movieGenreIds = formData.movieGenreIds;
+                isChanged = true;
+            }
+
+            // 6.5 Arrays (Cinemas)
+            const originalCinemaIds = (movie.movieCinemas?.map(c => c.cinemaId) || []).sort();
+            const currentCinemaIds = [...formData.cinemaIds].sort();
+            if (JSON.stringify(originalCinemaIds) !== JSON.stringify(currentCinemaIds)) {
+                submissionData.cinemaIds = formData.cinemaIds;
                 isChanged = true;
             }
 
@@ -1187,6 +1258,32 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             </div>
                         </div>
 
+                        {/* Authorized Cinemas */}
+                        <div>
+                            <label className={labelClass}>Authorized Cinemas <span className="text-red-500">*</span></label>
+                            <div className="flex flex-wrap gap-2">
+                                {cinemas.map((c: Cinema) => (
+                                    <button
+                                        key={c.cinemaId}
+                                        type="button"
+                                        onClick={() => handleCinemaToggle(c.cinemaId)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.cinemaIds.includes(c.cinemaId)
+                                            ? theme === 'modern'
+                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300 shadow-md shadow-blue-500/20'
+                                                : 'bg-blue-600 text-white border-blue-600'
+                                            : theme === 'dark'
+                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-blue-600'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
+                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
+                                            }`}
+                                    >
+                                        {c.cinemaName}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* Submit */}
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
@@ -1210,13 +1307,15 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 
 const MovieManagerPage: React.FC = () => {
     const navigate = useNavigate();
-    const { theme } = useTheme();
+    const { theme, setTheme } = useTheme();
+    const { t } = useTranslation();
     const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
     const [movies, setMovies] = useState<Movie[]>([]);
     const [formats, setFormats] = useState<MovieFormat[]>([]);
     const [requiredAges, setRequiredAges] = useState<MovieRequiredAge[]>([]);
     const [genres, setGenres] = useState<MovieGenre[]>([]);
+    const [cinemas, setCinemas] = useState<Cinema[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -1266,14 +1365,23 @@ const MovieManagerPage: React.FC = () => {
             fetchFormats();
             fetchRequiredAges();
             fetchGenres();
+            fetchCinemas();
         } catch { navigate('/login'); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
+    // Dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+    const themeDropdownRef = useRef<HTMLDivElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     // Close dropdowns when clicking outside
     useEffect(() => {
-        const handleClickOutside = (_event: MouseEvent) => {
-            // Nothing to close here anymore
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
+            if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -1339,6 +1447,15 @@ const MovieManagerPage: React.FC = () => {
         }
     };
 
+    const fetchCinemas = async () => {
+        try {
+            const res = await facilitiesApi.getCinemaList();
+            setCinemas(res.data || []);
+        } catch {
+            /* silently ignore */
+        }
+    };
+
 
     const handleLogoutConfirm = async () => {
         setLogoutError(null);
@@ -1375,7 +1492,7 @@ const MovieManagerPage: React.FC = () => {
             }`}>
             <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
             {/* HEADER */}
-            <header className={`fixed top-0 left-0 right-0 z-[100] h-20 border-b flex items-center justify-between px-6 transition-all duration-300 backdrop-blur-xl ${
+            <header className={`fixed top-0 left-0 right-0 lg:left-72 z-[100] h-20 border-b flex items-center justify-between px-6 transition-all duration-300 backdrop-blur-xl ${
                 theme === 'dark' 
                     ? 'bg-black/80 border-gray-800' 
                     : theme === 'modern'
@@ -1396,7 +1513,7 @@ const MovieManagerPage: React.FC = () => {
                     </button>
                     
                     <div
-                        className={`text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
+                        className={`flex-shrink-0 ml-4 text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
                         onClick={() => navigate('/home')}
                     >
                         CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
@@ -1408,21 +1525,170 @@ const MovieManagerPage: React.FC = () => {
                 <div className="flex items-center gap-2 sm:gap-4">
                     <div className="hidden lg:flex items-center gap-2 sm:gap-4">
                         <LanguageSwitcher />
-                        <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-                        <div className="flex items-center gap-3 pr-2">
-                            <div className="hidden sm:block text-right">
-                                <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Movie Manager</p>
-                                <p className={`text-sm font-black truncate max-w-[150px] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
-                            </div>
+                        
+                        {/* Theme Switcher */}
+                        <div className="relative" ref={themeDropdownRef}>
                             <button
-                                onClick={() => setIsLogoutModalOpen(true)}
-                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                                    theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 shadow-indigo-500/20' : 'bg-red-600 shadow-red-600/20'
-                                }`}
-                                title="Logout"
+                                onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark'
+                                    ? 'hover:bg-gray-800 text-gray-300'
+                                    : theme === 'modern'
+                                        ? 'hover:bg-indigo-800/40 text-white font-medium'
+                                        : 'hover:bg-gray-100 text-gray-700'
+                                    }`}
+                                aria-label="Select theme"
                             >
-                                <LogOut className="w-5 h-5 text-white" />
+                                {theme === 'dark' ? (
+                                    <Moon className="w-5 h-5" />
+                                ) : theme === 'modern' ? (
+                                    <Sparkles className="w-5 h-5" />
+                                ) : (
+                                    <Sun className="w-5 h-5" />
+                                )}
+                                <span className="hidden sm:inline-block text-sm font-medium">
+                                    {theme === 'dark' ? t('Dark Mode') : theme === 'modern' ? t('Modern View') : t('Light Mode')}
+                                </span>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
                             </button>
+
+                            {isThemeDropdownOpen && (
+                                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark'
+                                    ? 'bg-gray-900 border border-gray-700'
+                                    : theme === 'modern'
+                                        ? 'bg-gradient-to-br from-[#15102B]/95 to-[#0b061c]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
+                                        : 'bg-white border border-gray-200'} ${theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20' : ''}'
+                                    }`}>
+                                    <div className="py-2">
+                                        <div className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
+                                            }`}>
+                                            <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-400'
+                                                }`}>
+                                                {t('Select Theme')}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => {
+                                                setTheme('light');
+                                                setIsThemeDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'light'
+                                                ? 'bg-gray-100 text-gray-900'
+                                                : theme === 'dark'
+                                                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                                    : theme === 'modern'
+                                                        ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
+                                                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            <Sun className="w-4 h-4" />
+                                            <div className="flex-1">
+                                                <div className="font-semibold">{t('Light Mode')}</div>
+                                            </div>
+                                            {theme === 'light' && <div className="w-2 h-2 rounded-full bg-red-600" />}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setTheme('dark');
+                                                setIsThemeDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark'
+                                                ? 'bg-gray-800 text-white'
+                                                : theme === 'modern'
+                                                    ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
+                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            <Moon className="w-4 h-4" />
+                                            <div className="flex-1">
+                                                <div className="font-semibold">{t('Dark Mode')}</div>
+                                            </div>
+                                            {theme === 'dark' && <div className="w-2 h-2 rounded-full bg-red-600" />}
+                                        </button>
+
+                                        <button
+                                            onClick={() => {
+                                                setTheme('modern');
+                                                setIsThemeDropdownOpen(false);
+                                            }}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'modern'
+                                                ? 'bg-[#15102B] text-white'
+                                                : theme === 'dark'
+                                                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                                                }`}
+                                        >
+                                            <Sparkles className="w-4 h-4" />
+                                            <div className="flex-1">
+                                                <div className="font-semibold">{t('Modern View')}</div>
+                                            </div>
+                                            {theme === 'modern' && <div className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" />}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
+
+                        {/* User Profile Dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
+                                    }`}
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                                    <UserCircle className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="hidden sm:block text-left">
+                                    <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Movie Manager</p>
+                                    <span className={`font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
+                                        {user?.username || 'Guest'}
+                                    </span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
+                            </button>
+
+                            {isDropdownOpen && (
+                                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
+                                    }`}>
+                                    <div className="py-2">
+                                        <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
+                                            <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('SIGNED IN AS')}</p>
+                                            <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                                        >
+                                            <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
+                                        </button>
+
+                                        <button
+                                            onClick={() => navigate('/role-selection')}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
+                                                }`}
+                                        >
+                                            <ArrowLeftRight className="w-4 h-4" />
+                                            {t('header.switchRole')}
+                                        </button>
+
+                                        <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
+
+                                        <button
+                                            onClick={() => setIsLogoutModalOpen(true)}
+                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
+                                                }`}
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            {t('header.logout')}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -1439,7 +1705,7 @@ const MovieManagerPage: React.FC = () => {
 
             {/* MAIN CONTENT */}
             <main className="pt-24 lg:pl-72 min-h-screen">
-                <div className="p-4 lg:p-6 container mx-auto max-w-7xl">
+                <div className="p-4 lg:p-6 mx-auto max-w-7xl">
                     {logoutError && (
                         <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
                             }`}>
@@ -1607,16 +1873,18 @@ const MovieManagerPage: React.FC = () => {
                 formats={formats}
                 requiredAges={requiredAges}
                 genres={genres}
+                cinemas={cinemas}
             />
-            {movieToUpdate && (
+            {isUpdateModalOpen && movieToUpdate && (
                 <UpdateMovieModal
-                    movie={movieToUpdate as Movie}
                     isOpen={isUpdateModalOpen}
                     onClose={() => { setIsUpdateModalOpen(false); setMovieToUpdate(null); }}
                     onSuccess={fetchMovies}
+                    movie={movieToUpdate}
                     formats={formats}
                     requiredAges={requiredAges}
                     genres={genres}
+                    cinemas={cinemas}
                 />
             )}
             {selectedMovie && (

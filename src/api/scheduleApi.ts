@@ -27,10 +27,10 @@ export const scheduleApi = {
         return response.data;
     },
 
-    /** GET /api/TheaterManager/Data/movies-with-formats */
-    getMoviesWithFormats: async (): Promise<ApiSuccessResponse<MovieWithFormat[]>> => {
+    /** GET /api/TheaterManager/Data/movies-with-formats?cinemaId={id} */
+    getMoviesWithFormats: async (cinemaId: string): Promise<ApiSuccessResponse<MovieWithFormat[]>> => {
         const response = await theaterAxios.get<ApiSuccessResponse<MovieWithFormat[]>>(
-            '/TheaterManager/Data/movies-with-formats'
+            `/TheaterManager/Data/movies-with-formats?cinemaId=${cinemaId}`
         );
         return response.data;
     },

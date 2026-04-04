@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
     const handleLogout = async () => {
         try {
             await authApi.logout();
-        } catch (e) {}
+        } catch (e) { }
         localStorage.removeItem('user_info');
         import('js-cookie').then(Cookies => Cookies.default.remove('X-Access-Token'));
         navigate('/login');
@@ -92,7 +92,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
 
             {/* Sidebar Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                
+
                 {/* -------------------- MOBILE ONLY VIEW -------------------- */}
                 {user && (
                     <div className="lg:hidden space-y-4 pb-4 border-b border-gray-500/10">
@@ -138,8 +138,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                         <button
                             onClick={() => navigate('/home')}
                             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
-                                    theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
-                                        'text-gray-700 hover:bg-gray-100'
+                                theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
+                                    'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             <LayoutDashboard className="w-5 h-5 text-indigo-400" />
@@ -156,14 +156,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                                     if (window.innerWidth < 1024) onClose();
                                 }}
                                 className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${activeTab === item.id
-                                        ? theme === 'modern'
-                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                                            : 'bg-red-600 text-white shadow-lg shadow-red-600/20'
-                                        : theme === 'dark'
-                                            ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                            : theme === 'modern'
-                                                ? 'text-white/70 hover:bg-white/5 hover:text-white'
-                                                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                                    ? theme === 'modern'
+                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                        : 'bg-red-600 text-white shadow-lg shadow-red-600/20'
+                                    : theme === 'dark'
+                                        ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                                        : theme === 'modern'
+                                            ? 'text-white/70 hover:bg-white/5 hover:text-white'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     }`}
                             >
                                 <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-indigo-400'}`} />
@@ -182,8 +182,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                         <button
                             onClick={() => navigate('/account')}
                             className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
-                                    theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
-                                        'text-gray-700 hover:bg-gray-100'
+                                theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
+                                    'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             <UserCircle className="w-5 h-5 text-cyan-400" />
@@ -226,8 +226,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
                 <button
                     onClick={() => navigate('/role-selection')}
                     className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-500/10' :
-                            theme === 'modern' ? 'text-cyan-400 hover:bg-cyan-500/10' :
-                                'text-blue-600 hover:bg-blue-50'
+                        theme === 'modern' ? 'text-cyan-400 hover:bg-cyan-500/10' :
+                            'text-blue-600 hover:bg-blue-50'
                         }`}
                 >
                     <ArrowLeftRight className="w-5 h-5" />
@@ -392,7 +392,7 @@ const AdminPage: React.FC = () => {
             )}
 
             {/* HEADER */}
-            <header className={`fixed top-0 left-0 right-0 lg:left-64 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 sm:px-6 shadow-lg transition-colors duration-300 ${theme === 'dark'
+            <header className={`fixed top-0 left-0 right-0 lg:left-72 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 sm:px-6 shadow-lg transition-colors duration-300 ${theme === 'dark'
                 ? 'bg-black/80 border-gray-800'
                 : theme === 'modern'
                     ? 'bg-gradient-to-r from-[#0E0A20]/90 shadow-2xl border-indigo-500/30 shadow-sm shadow-indigo-500/10'
@@ -402,15 +402,15 @@ const AdminPage: React.FC = () => {
                     <button
                         onClick={() => setIsSidebarOpen(true)}
                         className={`lg:hidden p-2 rounded-lg transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
-                                theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
-                                    'hover:bg-gray-100 text-gray-700'
+                            theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
+                                'hover:bg-gray-100 text-gray-700'
                             }`}
                     >
                         <Menu className="w-6 h-6" />
                     </button>
 
                     <div
-                        className={`text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern'
+                        className={`flex-shrink-0 ml-4 text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern'
                             ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm'
                             : 'text-red-600'
                             }`}
@@ -598,12 +598,11 @@ const AdminPage: React.FC = () => {
                             </div>
                         )}
                     </div>
-                
-                    <button 
+
+                    <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
-                            theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
-                        }`}
+                        className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+                            }`}
                     >
                         <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
                     </button>
@@ -611,54 +610,85 @@ const AdminPage: React.FC = () => {
             </header>
 
             <main className="pt-24 lg:pl-72 min-h-screen p-4 sm:p-6 w-full overflow-hidden">
-                <div className={`w-full max-w-7xl rounded-xl border shadow-sm h-fit ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border-indigo-500/30 backdrop-blur-xl' : 'bg-white border-gray-200'}`}>
+                <div className={`mx-auto w-full max-w-7xl rounded-xl border shadow-sm h-fit ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border-indigo-500/30 backdrop-blur-xl' : 'bg-white border-gray-200'}`}>
                     {loading ? (
                         <div className="p-12 text-center">
                             <Loader2 className="w-10 h-10 animate-spin mx-auto text-red-600 mb-4" />
                             <p>Loading data...</p>
                         </div>
                     ) : (
-                        <div className="overflow-x-auto pb-10 sm:pb-20 custom-scrollbar w-full">
+                        <div className="overflow-x-auto pb-10 sm:pb-20 custom-scrollbar w-full relative">
                             {activeTab === 'users' && (
-                                <table className="w-full min-w-[900px] text-left text-sm">
-                                    <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
+                                <table className="w-full min-w-[900px] text-center text-sm border-separate border-spacing-0">
+                                    <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
+                                            ? 'bg-gray-950/95 border-gray-800 text-gray-400'
+                                            : theme === 'modern'
+                                                ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
+                                                : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
+                                        }`}>
                                         <tr>
-                                            <th className="px-6 py-4 font-bold whitespace-nowrap">Email</th>
-                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Full Name')}</th>
-                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Roles')}</th>
-                                            <th className="px-6 py-4 font-bold whitespace-nowrap">{t('Status')}</th>
-                                            <th className="px-6 py-4 font-bold whitespace-nowrap text-right pr-8">{t('Actions')}</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[250px] text-center">{t('Email')}</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[180px] text-center">{t('Full Name')}</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[150px] text-center">{t('Roles')}</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[120px] text-center">{t('Status')}</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[220px] text-center">{t('Actions')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-gray-200 divide-opacity-20">
+                                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
                                         {users.map(u => (
-                                            <tr key={u.userId} className={`hover:bg-black/5 transaction-colors`}>
-                                                <td className="px-6 py-4 break-all max-w-[200px]">{u.userEmail}</td>
-                                                <td className="px-6 py-4 break-words max-w-[150px]">{u.userName || u.fullName || 'N/A'}</td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-wrap gap-1 min-w-[120px]">
+                                            <tr key={u.userId} className={`group transition-all duration-300 relative ${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'
+                                                }`}>
+                                                <td className="px-6 py-6 transition-all duration-300">
+                                                    <div className="flex flex-col items-center gap-0.5 text-center">
+                                                        <span className={`font-black text-sm tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 font-bold'}`}>{u.userEmail}</span>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <span className="text-[9px] opacity-30 font-mono tracking-tighter uppercase">{t('ID')}: {u.userId}</span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <span className={`font-medium ${theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                                        {u.userName || u.fullName || 'N/A'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5 text-center">
+                                                    <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[120px] mx-auto">
                                                         {(u.userRoles || '').split(',').map((role, idx) => (
-                                                            <span key={idx} className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${role.trim() === 'Admin' ? 'bg-red-500/10 text-red-500 border-red-500/30' :
-                                                                role.trim() === 'TheaterManager' ? 'bg-pink-500/10 text-pink-500 border-pink-500/30' :
-                                                                    role.trim() === 'Customer' ? 'bg-blue-500/10 text-blue-500 border-blue-500/30' :
-                                                                        'bg-gray-500/10 text-gray-400 border-gray-500/30'
+                                                            <span key={idx} className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm transition-all group-hover:scale-105 ${role.trim() === 'Admin'
+                                                                    ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                                                    : role.trim() === 'TheaterManager'
+                                                                        ? 'bg-pink-500/10 text-pink-500 border-pink-500/20'
+                                                                        : role.trim() === 'Customer'
+                                                                            ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20'
+                                                                            : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
                                                                 }`}>
                                                                 {role.trim()}
                                                             </span>
                                                         ))}
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    {u.accountStatus === 1 && <span className="px-2 py-1 rounded text-[10px] bg-green-500/20 text-green-500 font-bold border border-green-500/30 whitespace-nowrap"><CheckCircle className="inline w-3 h-3 mr-1" /> Active</span>}
-                                                    {u.accountStatus !== 1 && <span className="px-2 py-1 rounded text-[10px] bg-red-500/20 text-red-500 font-bold border border-red-500/30 whitespace-nowrap"><XCircle className="inline w-3 h-3 mr-1" /> Locked ({u.accountStatus})</span>}
+                                                <td className="px-6 py-5 text-center">
+                                                    {u.accountStatus === 1 && (
+                                                        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] bg-emerald-500/10 text-emerald-500 font-black border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)] mx-auto">
+                                                            <CheckCircle className="w-3.5 h-3.5" /> {t('Active')}
+                                                        </span>
+                                                    )}
+                                                    {u.accountStatus !== 1 && (
+                                                        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] bg-rose-500/10 text-rose-500 font-black border border-rose-500/20 mx-auto">
+                                                            <XCircle className="w-3.5 h-3.5" /> {t('Locked')} ({u.accountStatus})
+                                                        </span>
+                                                    )}
                                                 </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-end gap-2 pr-4">
+                                                <td className="px-6 py-5 text-center">
+                                                    <div className="flex items-center justify-center gap-2">
                                                         {u.accountStatus === 1 ? (
                                                             u.userId !== user?.userId && (
                                                                 <button
                                                                     onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 2); }}
-                                                                    className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern' ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' : 'bg-red-600 hover:bg-red-700 text-white shadow-sm'}`}
+                                                                    className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
+                                                                            ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20'
+                                                                            : 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20'
+                                                                        }`}
                                                                 >
                                                                     {t('Block')}
                                                                 </button>
@@ -666,7 +696,10 @@ const AdminPage: React.FC = () => {
                                                         ) : (
                                                             <button
                                                                 onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 1); }}
-                                                                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern' ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-green-600 hover:bg-green-700 text-white shadow-sm'}`}
+                                                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
+                                                                        ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
+                                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
+                                                                    }`}
                                                             >
                                                                 {t('Activate')}
                                                             </button>
@@ -678,19 +711,23 @@ const AdminPage: React.FC = () => {
                                                                     e.stopPropagation();
                                                                     setActiveActionMenu(activeActionMenu === u.userId ? null : u.userId);
                                                                 }}
-                                                                className={`flex items-center gap-2 px-3 py-1.5 text-[10px] font-bold rounded-lg transition-all ${theme === 'modern'
-                                                                    ? 'bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border border-indigo-500/30'
-                                                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'
+                                                                className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
+                                                                        ? 'bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30'
+                                                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20'
                                                                     }`}
                                                             >
                                                                 <UserCog className="w-3.5 h-3.5" />
-                                                                Manage
-                                                                <ChevronDown className={`w-3 h-3 transition-transform ${activeActionMenu === u.userId ? 'rotate-180' : ''}`} />
+                                                                {t('Manage')}
+                                                                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${activeActionMenu === u.userId ? 'rotate-180' : ''}`} />
                                                             </button>
 
                                                             {activeActionMenu === u.userId && (
                                                                 <div
-                                                                    className={`absolute right-0 top-full mt-1 w-40 rounded-xl shadow-2xl z-[100] border overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#1e1a3a] border-indigo-500/40 shadow-indigo-500/20' : 'bg-white border-gray-200'
+                                                                    className={`absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-2xl z-[100] border overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300 ${theme === 'dark'
+                                                                            ? 'bg-gray-900 border-gray-700'
+                                                                            : theme === 'modern'
+                                                                                ? 'bg-[#1e1a3a]/95 backdrop-blur-xl border-indigo-500/40 shadow-indigo-500/30'
+                                                                                : 'bg-white border-gray-200'
                                                                         }`}
                                                                     onMouseDown={(e) => e.stopPropagation()}
                                                                     onClick={(e) => e.stopPropagation()}
@@ -721,47 +758,64 @@ const AdminPage: React.FC = () => {
                             {activeTab === 'jobs' && (
                                 <>
                                     {/* Jobs Control Bar */}
-                                    <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-4 ${theme === 'dark' ? 'bg-gray-950/50 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]/40 border-indigo-500/20' : 'bg-gray-50'}`}>
-                                        <div className="flex items-center gap-2">
-                                            <Filter className="w-4 h-4 text-indigo-400" />
-                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Category:</span>
-                                            <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+                                    <div className={`p-16 border-b flex flex-wrap items-center justify-between gap-6 transition-all ${theme === 'dark'
+                                            ? 'bg-gray-950/80 border-gray-800'
+                                            : theme === 'modern'
+                                                ? 'bg-[#0E0A20]/60 border-indigo-500/20'
+                                                : 'bg-gray-50/80 border-gray-200'
+                                        }`}>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <Filter className="w-4 h-4 text-indigo-400" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('Category')}:</span>
+                                            </div>
+                                            <div className="flex bg-black/30 p-1.5 rounded-xl border border-white/5 shadow-inner">
                                                 {['All', 'Movies', 'Showtimes', 'Schedules'].map((cat) => (
                                                     <button
                                                         key={cat}
                                                         onClick={() => setJobCategoryFilter(cat)}
-                                                        className={`px-3 py-1 text-[10px] font-bold rounded-md transition-all ${jobCategoryFilter === cat
-                                                            ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/20' : 'bg-red-600 text-white')
-                                                            : 'text-gray-400 hover:text-white'
+                                                        className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${jobCategoryFilter === cat
+                                                            ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/20')
+                                                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
                                                             }`}
                                                     >
-                                                        {cat === 'All' ? 'Tất cả' : cat}
+                                                        {cat === 'All' ? t('Tất cả') : cat}
                                                     </button>
                                                 ))}
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
-                                            <ArrowUpDown className="w-4 h-4 text-indigo-400" />
-                                            <span className="text-xs font-bold uppercase tracking-wider opacity-60">Sort:</span>
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <ArrowUpDown className="w-4 h-4 text-indigo-400" />
+                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('Sort')}:</span>
+                                            </div>
                                             <button
                                                 onClick={() => setJobSortOrder(jobSortOrder === 'asc' ? 'desc' : 'asc')}
-                                                className={`flex items-center gap-1.5 px-3 py-1 text-[10px] font-bold rounded-lg border transition-all ${theme === 'modern' ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20' : 'border-gray-700 bg-gray-800 text-gray-300'}`}
+                                                className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all duration-300 ${theme === 'modern'
+                                                        ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/10'
+                                                        : 'border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
+                                                    }`}
                                             >
-                                                {jobSortOrder === 'asc' ? <SortAsc className="w-3.5 h-3.5" /> : <SortDesc className="w-3.5 h-3.5" />}
-                                                {jobSortOrder === 'asc' ? 'Cũ nhất' : 'Mới nhất'}
+                                                {jobSortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
+                                                {jobSortOrder === 'asc' ? t('Cũ nhất') : t('Mới nhất')}
                                             </button>
                                         </div>
                                     </div>
-                                    <table className="w-full min-w-[800px] text-left text-sm">
-                                        <thead className={`border-b ${theme === 'dark' ? 'bg-gray-950 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]' : 'bg-gray-50'}`}>
+                                    <table className="w-full min-w-[800px] text-center text-sm border-separate border-spacing-0">
+                                        <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
+                                                ? 'bg-gray-950/95 border-gray-800 text-gray-400'
+                                                : theme === 'modern'
+                                                    ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
+                                                    : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
+                                            }`}>
                                             <tr>
-                                                <th className="px-4 py-4 font-bold whitespace-nowrap">Target & Category</th>
-                                                <th className="px-4 py-4 font-bold whitespace-nowrap">Start Schedule</th>
-                                                <th className="px-4 py-4 font-bold whitespace-nowrap">End Schedule</th>
+                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[300px] text-center">{t('Target & Category')}</th>
+                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[200px] text-center">{t('Start Schedule')}</th>
+                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[200px] text-center">{t('End Schedule')}</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-200 divide-opacity-20">
+                                        <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
                                             {[...jobs]
                                                 .filter(job => jobCategoryFilter === 'All' || job.jobCategory === jobCategoryFilter)
                                                 .sort((a, b) => {
@@ -770,30 +824,34 @@ const AdminPage: React.FC = () => {
                                                     return jobSortOrder === 'asc' ? idA.localeCompare(idB) : idB.localeCompare(idA);
                                                 })
                                                 .map((group, idx) => (
-                                                    <tr key={group.targetId + idx} className={`hover:bg-black/5 transaction-colors`}>
+                                                    <tr key={group.targetId + idx} className={`group transition-all duration-300 ${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'
+                                                        }`}>
                                                         {/* Target Info */}
-                                                        <td className="px-4 py-4">
-                                                            <div className="flex flex-col gap-1">
-                                                                <span className="text-xs font-mono opacity-60 truncate max-w-[150px]" title={group.targetId}>{group.targetId}</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className={`w-2 h-2 rounded-full ${group.jobCategory === 'Schedules' ? 'bg-blue-500' : group.jobCategory === 'Movies' ? 'bg-cyan-500' : 'bg-purple-500'}`}></span>
-                                                                    <span className="text-xs font-bold">{group.jobCategory}</span>
+                                                        <td className="px-6 py-6 transition-all duration-300">
+                                                            <div className="flex flex-col items-center justify-center gap-2 text-center">
+                                                                <div className="flex items-center justify-center gap-3">
+                                                                    <div className={`w-3 h-3 rounded-full border-2 transition-all duration-300 group-hover:scale-125 ${group.jobCategory === 'Schedules' ? 'bg-blue-500 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : group.jobCategory === 'Movies' ? 'bg-cyan-500 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'bg-purple-500 border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.5)]'
+                                                                        }`}></div>
+                                                                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{group.jobCategory}</span>
+                                                                </div>
+                                                                <div className="flex items-center justify-center gap-2 mx-auto">
+                                                                    <span className="text-[9px] font-mono opacity-20 group-hover:opacity-60 transition-all uppercase tracking-tighter truncate max-w-[200px]" title={group.targetId}>{t('Target')}: {group.targetId}</span>
                                                                 </div>
                                                             </div>
                                                         </td>
 
                                                         {/* Start Job Column */}
-                                                        <td className="px-4 py-4">
+                                                        <td className="px-6 py-5 text-center">
                                                             {group.startScheduleJob ? (
-                                                                <div className="flex flex-col gap-1">
-                                                                    <div className="flex items-center gap-2">
+                                                                <div className="flex flex-col items-center justify-center gap-2 text-center mx-auto">
+                                                                    <div className="flex items-center justify-center gap-2">
                                                                         <span
                                                                             title={group.startScheduleJob.failedReason}
-                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${group.startScheduleJob.scheduleJobStatus === 'Failed'
-                                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                                                : group.startScheduleJob.scheduleJobStatus === 'Pending'
-                                                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
+                                                                            className={`text-[9px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border shadow-sm transition-all ${group.startScheduleJob.scheduleJobStatus === 'Failed'
+                                                                                    ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                                                                    : group.startScheduleJob.scheduleJobStatus === 'Pending'
+                                                                                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse'
+                                                                                        : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                                                                                 }`}
                                                                         >
                                                                             {group.startScheduleJob.scheduleJobStatus}
@@ -811,10 +869,10 @@ const AdminPage: React.FC = () => {
                                                         </td>
 
                                                         {/* End Job Column */}
-                                                        <td className="px-4 py-4">
+                                                        <td className="px-4 py-4 text-center">
                                                             {group.endScheduleJob ? (
-                                                                <div className="flex flex-col gap-1">
-                                                                    <div className="flex items-center gap-2">
+                                                                <div className="flex flex-col items-center justify-center gap-1 text-center mx-auto">
+                                                                    <div className="flex items-center justify-center gap-2">
                                                                         <span
                                                                             title={group.endScheduleJob.failedReason}
                                                                             className={`text-[9px] px-2 py-0.5 rounded-full border ${group.endScheduleJob.scheduleJobStatus === 'Failed'

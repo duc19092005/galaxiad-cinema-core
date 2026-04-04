@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { BarChart3, Download, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
 
 const SeatReport: React.FC = () => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [selectedPeriod, setSelectedPeriod] = useState('month');
 
   // Mock data - sẽ thay bằng API call sau
@@ -154,49 +156,61 @@ const SeatReport: React.FC = () => {
           }`}>
           Report History
         </h2>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {reports.map((report) => (
             <div
               key={report.id}
-              className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border transition-colors ${theme === 'dark'
-                  ? 'bg-gray-800 border-gray-700 hover:border-red-600'
-                  : 'bg-gray-50 border-gray-200 hover:border-red-600'
+              className={`group flex flex-col lg:flex-row lg:items-center justify-between p-5 rounded-2xl border transition-all duration-300 ${
+                theme === 'dark'
+                  ? 'bg-gray-900 border-gray-800 hover:border-indigo-500/50 hover:bg-gray-800/50'
+                  : theme === 'modern'
+                    ? 'bg-[#15102B]/40 border-indigo-500/20 hover:border-indigo-500/50 hover:bg-indigo-500/5 backdrop-blur-xl'
+                    : 'bg-white border-gray-100 hover:border-red-600/50 shadow-sm hover:shadow-md'
                 }`}
             >
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className={theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'}>{report.period}</h3>
-                  {report.status === 'warning' && (
-                    <span className="px-2 py-1 rounded-full text-xs bg-yellow-900/40 text-yellow-400 border border-yellow-700">
-                      Cần chú ý
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Tổng ghế:</span>
-                    <span className={`font-semibold ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>{report.totalSeats.toLocaleString()}</span>
+                <div className="flex items-center gap-4 mb-4 lg:mb-0">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+                    theme === 'modern' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-red-500/10 text-red-500'
+                  }`}>
+                    <Calendar className="w-6 h-6" />
                   </div>
                   <div>
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Đã sử dụng:</span>
-                    <span className={`font-semibold ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>{report.occupiedSeats.toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Tỷ lệ:</span>
-                    <span className={`font-semibold ml-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>{report.utilizationRate}%</span>
+                    <div className="flex items-center gap-3">
+                      <h3 className={`font-black text-base ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{report.period}</h3>
+                      {report.status === 'warning' && (
+                        <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          {t('Attention Required')}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-1 mt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('Total')}:</span>
+                        <span className={`text-xs font-bold ${theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-700'}`}>{report.totalSeats.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('Occupied')}:</span>
+                        <span className={`text-xs font-bold ${theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-700'}`}>{report.occupiedSeats.toLocaleString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-widest opacity-40">{t('Utility')}:</span>
+                        <span className={`text-xs font-bold ${
+                          report.utilizationRate > 40 ? 'text-emerald-500' : 'text-amber-500'
+                        }`}>{report.utilizationRate}%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="mt-4 sm:mt-0 sm:ml-4">
-                <button className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm ${theme === 'dark'
-                    ? 'bg-gray-700 hover:bg-gray-600 text-white'
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 modern:text-gray-200'
+              <div className="flex items-center gap-3 self-end lg:self-center">
+                <button className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 ${
+                  theme === 'modern'
+                    ? 'bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/20'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
                   }`}>
                   <Download className="w-4 h-4" />
-                  Tải xuống
+                  {t('Download')}
                 </button>
               </div>
             </div>

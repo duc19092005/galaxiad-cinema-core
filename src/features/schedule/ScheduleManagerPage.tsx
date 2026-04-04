@@ -6,6 +6,7 @@ import { Calendar, Save, Menu, X, Film, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import TrashCan from './components/TrashCan';
+import ManualAddModal from './components/ManualAddModal';
 import { scheduleApi } from '../../api/scheduleApi';
 
 import { useCinema } from '../../contexts/CinemaContext';
@@ -21,6 +22,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
     const { activeCinemaId } = useCinema();
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
     const [draggingMovie, setDraggingMovie] = useState<ScheduleMovie | null>(null);
+    const [manualAddMovie, setManualAddMovie] = useState<ScheduleMovie | null>(null);
     const [selectedAuditoriumId, setSelectedAuditoriumId] = useState<string>('');
     const [selectedDate] = useState<Date>(new Date());
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -66,11 +68,15 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
     };
 
     const fetchInitialData = async () => {
+        if (!activeCinemaId) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const [moviesRes, audsRes] = await Promise.all([
-                scheduleApi.getMoviesWithFormats(),
-                scheduleApi.getMyAuditoriums(activeCinemaId || undefined)
+                scheduleApi.getMoviesWithFormats(activeCinemaId),
+                scheduleApi.getMyAuditoriums(activeCinemaId)
             ]);
 
             // Group movies by movieId
@@ -258,18 +264,19 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
 
     return (
         <div className={`flex flex-col text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300 ${embedded ? 'flex-1 h-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shadow-md' : 'h-screen bg-slate-50 dark:bg-slate-900'}`}>
-            <header className={`h-16 flex items-center justify-between px-4 sm:px-6 z-30 transition-colors duration-300 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm w-full shrink-0 overflow-x-auto scrollbar-hide`}>
+            {/* Header - shrink-0 so it never collapses */}
+            <header className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 z-30 transition-colors duration-300 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm w-full shrink-0">
                 <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                     <button
                         className="md:hidden p-2 text-slate-600 dark:text-white font-medium hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                     >
-                        {isSidebarOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
+                        {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
                     </button>
-                    <div className="p-1.5 sm:p-2 bg-red-600 rounded-lg hidden sm:block">
-                        <Calendar className="text-white w-5 h-5 sm:w-6 sm:h-6" />
+                    <div className="p-1.5 bg-red-600 rounded-lg hidden sm:block">
+                        <Calendar className="text-white w-5 h-5" />
                     </div>
-                    <h1 className="text-base sm:text-xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent hidden sm:block">
+                    <h1 className="text-sm sm:text-xl font-bold bg-gradient-to-r from-red-600 to-red-800 bg-clip-text text-transparent hidden sm:block whitespace-nowrap">
                         {t('scheduleManager.title')}
                     </h1>
                 </div>
@@ -277,14 +284,14 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 <div className="flex items-center pl-2 gap-2 sm:gap-3 shrink-0">
                     <div className="flex items-center bg-slate-100 dark:bg-slate-700 rounded-lg p-1 sm:mr-2">
                         <select
-                            className="bg-transparent border-none text-xs sm:text-sm font-bold focus:ring-0 text-slate-700 dark:text-white/90  py-1 pl-2 pr-8 cursor-pointer"
+                            className="bg-transparent border-none text-xs sm:text-sm font-bold focus:ring-0 text-slate-700 dark:text-white/90 py-1 pl-2 pr-6 sm:pr-8 cursor-pointer max-w-[160px] sm:max-w-none"
                             value={selectedAuditoriumId}
                             onChange={(e) => setSelectedAuditoriumId(e.target.value)}
                         >
                             {auditoriumsList.map(aud => {
                                 const formatNames = aud.supportedFormats.map(f => f.name).filter(Boolean).join(', ');
                                 return (
-                                    <option key={aud.id} value={aud.id} className="text-slate-900 bg-white dark:text-white/90  dark:bg-slate-700">
+                                    <option key={aud.id} value={aud.id} className="text-slate-900 bg-white dark:text-white/90 dark:bg-slate-700">
                                         Auditorium {aud.name}{formatNames ? ` (${formatNames})` : ''}
                                     </option>
                                 );
@@ -304,10 +311,12 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 </div>
             </header>
 
+            {/* Body: sidebar + timeline, flex-1 fills remaining height */}
             <div
-                className="flex flex-1 overflow-hidden relative"
+                className="flex flex-1 min-h-0 relative"
                 onDragEnd={() => setDraggingMovie(null)}
             >
+                {/* Mobile overlay */}
                 {isSidebarOpen && (
                     <div
                         className="absolute inset-0 bg-black/50 z-30 md:hidden backdrop-blur-sm"
@@ -315,9 +324,10 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                     />
                 )}
 
-                <aside className={`absolute inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 z-40 w-72 sm:w-80 flex flex-col transition-transform duration-300 ease-in-out bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-2xl md:shadow-xl`}>
-                    <div className={`p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between`}>
-                        <h2 className="font-bold text-slate-700 dark:text-white/90  mb-2 flex items-center gap-2">
+                {/* Movie Sidebar - fixed height, does NOT scroll with timeline */}
+                <aside className={`absolute inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 z-40 w-64 sm:w-72 md:w-72 lg:w-80 flex flex-col shrink-0 transition-transform duration-300 ease-in-out bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-2xl md:shadow-xl`}>
+                    <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
+                        <h2 className="font-bold text-slate-700 dark:text-white/90 flex items-center gap-2 text-sm">
                             <Film className="w-4 h-4 text-red-500" />
                             {t('scheduleManager.dragMoviesTitle')}
                         </h2>
@@ -327,15 +337,15 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                             </button>
                         )}
                     </div>
-                    <div className="p-3">
+                    <div className="p-3 shrink-0">
                         <input
                             type="text"
                             placeholder={t('scheduleManager.search')}
-                            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border-none rounded-md text-sm ring-2 ring-transparent focus:ring-red-500 transition-all text-slate-800 dark:text-white/90 "
+                            className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border-none rounded-md text-sm ring-2 ring-transparent focus:ring-red-500 transition-all text-slate-800 dark:text-white/90"
                         />
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-4 custom-scrollbar min-h-0">
                         {moviesList.length === 0 && (
                             <div className="text-center text-sm text-slate-500 p-4">No movies available</div>
                         )}
@@ -345,16 +355,18 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                                 movie={movie}
                                 onDragStart={() => setDraggingMovie(movie)}
                                 onDragEnd={() => setDraggingMovie(null)}
+                                onManualAdd={setManualAddMovie}
                             />
                         ))}
                     </div>
 
-                    <div className={`p-4 border-t text-xs text-slate-500 text-center transition-colors duration-300 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700`}>
+                    <div className="p-3 border-t text-xs text-slate-500 text-center transition-colors duration-300 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 shrink-0">
                         {t('scheduleManager.dragMoviesDesc')}
                     </div>
                 </aside>
 
-                <main className="flex-1 overflow-hidden relative flex flex-col">
+                {/* Timeline Grid - this is the only area that scrolls */}
+                <main className="flex-1 overflow-hidden relative flex flex-col min-w-0">
                     <TimelineGrid
                         auditoriums={filteredAuditoriums}
                         scheduleData={scheduleData}
@@ -368,6 +380,18 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                     <TrashCan onDeleteSlot={handleDeleteSlot} />
                 </main>
             </div>
+
+            {/* Manual Add Form Modal */}
+            {manualAddMovie && activeAuditorium && (
+                <ManualAddModal
+                    movie={manualAddMovie}
+                    auditorium={activeAuditorium}
+                    scheduleSlots={scheduleData.data.find(d => d.auditoriumId === selectedAuditoriumId)?.slots || []}
+                    selectedDate={selectedDate}
+                    onClose={() => setManualAddMovie(null)}
+                    onAdd={(newSlot) => handleAddSlot(selectedAuditoriumId, newSlot)}
+                />
+            )}
         </div>
     );
 };

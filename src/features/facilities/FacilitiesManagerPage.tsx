@@ -6,6 +6,11 @@ import {
   Loader2,
   Menu,
   UserCircle,
+  ChevronDown,
+  Sun,
+  Moon,
+  Sparkles,
+  ArrowLeftRight,
 } from 'lucide-react';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
@@ -26,7 +31,7 @@ import Cookies from 'js-cookie';
 const FacilitiesManagerPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { managedCinemas, activeCinemaId, loading: cinemaContextLoading } = useCinema();
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
@@ -40,6 +45,23 @@ const FacilitiesManagerPage: React.FC = () => {
   // Sidebar state
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Dropdown state
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = React.useRef<HTMLDivElement>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Click outside handler for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Load user info và check quyền FacilitiesManager
   useEffect(() => {
@@ -191,108 +213,254 @@ const FacilitiesManagerPage: React.FC = () => {
       />
 
       {/* HEADER */}
-      <header className={`fixed top-0 left-0 right-0 z-[100] h-20 border-b flex items-center justify-between px-6 transition-all duration-300 backdrop-blur-xl ${
-          theme === 'dark' 
-              ? 'bg-black/80 border-gray-800' 
-              : theme === 'modern'
-                  ? 'bg-[#030712]/80 border-indigo-500/20 shadow-2xl shadow-indigo-500/5'
-                  : 'bg-white/80 border-gray-100'
-      }`}>
-          <div className="flex items-center gap-3">
+      <header className={`fixed top-0 left-0 right-0 lg:left-72 z-[100] h-20 border-b flex items-center justify-between px-6 transition-all duration-300 backdrop-blur-xl ${theme === 'dark'
+        ? 'bg-black/80 border-gray-800'
+        : theme === 'modern'
+          ? 'bg-[#030712]/80 border-indigo-500/20 shadow-2xl shadow-indigo-500/5'
+          : 'bg-white/80 border-gray-100'
+        }`}>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className={`lg:hidden p-2 rounded-xl transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
+              theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
+                'hover:bg-gray-100 text-gray-700'
+              }`}
+            title="Open Menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          <div
+            className={`flex-shrink-0 ml-4 text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
+            onClick={() => navigate('/home')}
+          >
+            CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
+          </div>
+        </div>
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden lg:flex items-center gap-2 sm:gap-4">
+            {/* Cinema Selector Integrated */}
+            <div className="hidden md:block">
+              <CinemaSelector />
+            </div>
+
+            <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
+            <LanguageSwitcher />
+
+            {/* Theme Switcher */}
+            <div className="relative" ref={themeDropdownRef}>
               <button
-                  onClick={() => setSidebarOpen(true)}
-                  className={`lg:hidden p-2 rounded-xl transition-all active:scale-95 z-[70] ${
-                      theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
-                      theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
-                      'hover:bg-gray-100 text-gray-700'
+                onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark'
+                  ? 'hover:bg-gray-800 text-gray-300'
+                  : theme === 'modern'
+                    ? 'hover:bg-indigo-800/40 text-white font-medium'
+                    : 'hover:bg-gray-100 text-gray-700'
                   }`}
-                  title="Open Menu"
+                aria-label="Select theme"
               >
-                  <Menu className="w-6 h-6" />
+                {theme === 'dark' ? (
+                  <Moon className="w-5 h-5" />
+                ) : theme === 'modern' ? (
+                  <Sparkles className="w-5 h-5" />
+                ) : (
+                  <Sun className="w-5 h-5" />
+                )}
+                <span className="hidden sm:inline-block text-sm font-medium">
+                  {theme === 'dark' ? 'Dark Mode' : theme === 'modern' ? 'Modern View' : 'Light Mode'}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
-              
-              <div
-                  className={`text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
-                  onClick={() => navigate('/home')}
-              >
-                  CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
-              </div>
-          </div>
 
-          <div className="flex-1" />
+              {isThemeDropdownOpen && (
+                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark'
+                  ? 'bg-gray-900 border border-gray-700'
+                  : theme === 'modern'
+                    ? 'bg-gradient-to-br from-[#15102B]/95 to-[#0b061c]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
+                    : 'bg-white border border-gray-200'} ${theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20' : ''}'
+                              }`}>
+                  <div className="py-2">
+                    <div className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
+                      }`}>
+                      <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-400'
+                        }`}>
+                        Select Theme
+                      </p>
+                    </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-              <div className="hidden lg:flex items-center gap-2 sm:gap-4">
-                  {/* Cinema Selector Integrated */}
-                  <div className="hidden md:block">
-                      <CinemaSelector />
-                  </div>
-                  
-                  <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-                  <LanguageSwitcher />
-                  <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-                  
-                  <div className="flex items-center gap-3 pr-2">
-                      <div className="hidden sm:block text-right">
-                            <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Facilities Manager</p>
-                            <p className={`text-sm font-black truncate max-w-[150px] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                    <button
+                      onClick={() => {
+                        setTheme('light');
+                        setIsThemeDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'light'
+                        ? 'bg-gray-100 text-gray-900'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          : theme === 'modern'
+                            ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                    >
+                      <Sun className="w-4 h-4" />
+                      <div className="flex-1">
+                        <div className="font-semibold">Light Mode</div>
                       </div>
-                      <button
-                          onClick={handleLogoutClick}
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-lg ${
-                              theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 shadow-indigo-500/20' : 'bg-red-600 shadow-red-600/20'
-                          }`}
-                          title="Logout"
-                      >
-                          <LogOut className="w-5 h-5 text-white" />
-                      </button>
-                  </div>
-              </div>
+                      {theme === 'light' && <div className="w-2 h-2 rounded-full bg-red-600" />}
+                    </button>
 
-              <button 
-                  onClick={() => setSidebarOpen(true)}
-                  className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
-                      theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+                    <button
+                      onClick={() => {
+                        setTheme('dark');
+                        setIsThemeDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark'
+                        ? 'bg-gray-800 text-white'
+                        : theme === 'modern'
+                          ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                    >
+                      <Moon className="w-4 h-4" />
+                      <div className="flex-1">
+                        <div className="font-semibold">Dark Mode</div>
+                      </div>
+                      {theme === 'dark' && <div className="w-2 h-2 rounded-full bg-red-600" />}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setTheme('modern');
+                        setIsThemeDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'modern'
+                        ? 'bg-[#15102B] text-white'
+                        : theme === 'dark'
+                          ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                          : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                        }`}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      <div className="flex-1">
+                        <div className="font-semibold">Modern View</div>
+                      </div>
+                      {theme === 'modern' && <div className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+            <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
+
+            {/* User Profile Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
                   }`}
               >
-                  <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
+                  <UserCircle className="w-5 h-5 text-white" />
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Facilities Manager</p>
+                  <span className={`font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
+                    {user?.username || 'Guest'}
+                  </span>
+                </div>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
               </button>
+
+              {isDropdownOpen && (
+                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
+                  }`}>
+                  <div className="py-2">
+                    <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
+                      <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>SIGNED IN AS</p>
+                      <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
+                    </div>
+
+                    <button
+                      onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
+                    >
+                      <UserCircle className="w-4 h-4" />Account Info
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/role-selection')}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
+                        }`}
+                    >
+                      <ArrowLeftRight className="w-4 h-4" />
+                      Switch Role
+                    </button>
+
+                    <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
+
+                    <button
+                      onClick={handleLogoutClick}
+                      className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
+                        }`}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
+              }`}
+          >
+            <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
+          </button>
+        </div>
       </header>
 
       {/* MAIN CONTENT */}
       <main className="pt-24 lg:pl-72 min-h-screen">
-          <div className="p-4 lg:p-10 w-full overflow-hidden">
-              {/* Mobile Cinema Selector */}
-              <div className="md:hidden mb-6">
-                  <CinemaSelector />
-              </div>
-
-              {/* Thông báo lỗi Logout */}
-              {logoutError && (
-                <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark'
-                  ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                  : 'bg-red-50 border-red-200 text-red-800'
-                  }`}>
-                  <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-                  <span className="text-sm font-medium">{logoutError}</span>
-                </div>
-              )}
-
-              {/* Error state */}
-              {error && activeTab === 'dashboard' && (
-                <div className={`mb-6 p-4 rounded-lg border flex items-center ${theme === 'dark'
-                  ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                  : 'bg-red-50 border-red-200 text-red-800'
-                  }`}>
-                  <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-                  <span className="text-sm font-medium">{error}</span>
-                </div>
-              )}
-
-              {/* Render content based on active tab */}
-              {renderContent()}
+        <div className="p-4 lg:p-10 mx-auto max-w-7xl w-full overflow-hidden">
+          {/* Mobile Cinema Selector */}
+          <div className="md:hidden mb-6">
+            <CinemaSelector />
           </div>
+
+          {/* Thông báo lỗi Logout */}
+          {logoutError && (
+            <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark'
+              ? 'bg-red-900/40 border-red-500/50 text-red-100'
+              : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+              <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
+              <span className="text-sm font-medium">{logoutError}</span>
+            </div>
+          )}
+
+          {/* Error state */}
+          {error && activeTab === 'dashboard' && (
+            <div className={`mb-6 p-4 rounded-lg border flex items-center ${theme === 'dark'
+              ? 'bg-red-900/40 border-red-500/50 text-red-100'
+              : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+              <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
+              <span className="text-sm font-medium">{error}</span>
+            </div>
+          )}
+
+          {/* Render content based on active tab */}
+          {renderContent()}
+        </div>
       </main>
 
       {/* Logout Modal */}

@@ -1,4 +1,8 @@
 // src/types/movie.types.ts
+export interface MovieCinema {
+    cinemaId: string;
+    cinemaName: string;
+}
 
 // =============================================
 // MOVIE TYPES
@@ -36,6 +40,7 @@ export interface Movie {
     actors?: string;
     managerId?: string | null;
     managerName?: string | null;
+    movieCinemas: MovieCinema[];
 }
 
 /** POST /api/movieManager/movies — multipart/form-data */
@@ -52,6 +57,7 @@ export interface CreateMovieFormData {
     trailerUrl?: string;
     director?: string;
     actors?: string;
+    cinemaIds: string[];
 }
 
 /** PUT /api/movieManager/movies/{movieId} — multipart/form-data */
@@ -68,4 +74,5 @@ export interface UpdateMovieFormData {
     trailerUrl?: string;
     director?: string;
     actors?: string;
+    cinemaIds?: string[];
 }

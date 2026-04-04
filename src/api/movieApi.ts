@@ -58,7 +58,13 @@ export const movieApi = {
         formData.append('duration', data.duration.toString());
         if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
         if (data.director) formData.append('Director', data.director);
+        if (data.director) formData.append('Director', data.director);
         if (data.actors) formData.append('Actors', data.actors);
+        if (data.cinemaIds) {
+            data.cinemaIds.forEach((id) => {
+                formData.append('CinemaIds', id);
+            });
+        }
 
         // Append arrays
         data.movieFormatIds.forEach((id) => {
@@ -103,6 +109,11 @@ export const movieApi = {
         if (data.movieGenreIds) {
             data.movieGenreIds.forEach((id) => {
                 formData.append('movieGenreIds', id);
+            });
+        }
+        if (data.cinemaIds) {
+            data.cinemaIds.forEach((id) => {
+                formData.append('CinemaIds', id);
             });
         }
 
