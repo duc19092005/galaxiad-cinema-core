@@ -54,7 +54,9 @@ const BookingPage: React.FC = () => {
 
             // Set up SignalR
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_BASE_URL}/ws/seat`)
+                .withUrl(`${API_BASE_URL}/ws/seat`, {
+                    transport: signalR.HttpTransportType.ServerSentEvents
+                })
                 .withAutomaticReconnect()
                 .build();
 
