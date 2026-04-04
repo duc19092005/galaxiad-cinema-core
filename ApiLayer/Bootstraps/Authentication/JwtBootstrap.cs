@@ -38,19 +38,38 @@ public static class JwtBootstrap
                     OnChallenge = async context => 
                     {
                         context.HandleResponse();
-                        context.Response.StatusCode = 401;
+                        
+                        var statusCode = 401;
+                        var errorCode = "AuthE01";
+                        var msg = Shared.Localization.Messages.Auth.Unauthorized;
+
+                        // Check if the challenge was caused by an expired token
+                        if (context.AuthenticateFailure is SecurityTokenExpiredException)
+                        {
+                            msg = Shared.Localization.Messages.Auth.TokenExpired;
+                        }
+                        else if (context.Error == "forbidden" || context.Response.StatusCode == 403)
+                        {
+                            statusCode = 403;
+                            msg = Shared.Localization.Messages.Auth.Forbidden;
+                        }
+
+                        context.Response.StatusCode = statusCode;
                         context.Response.ContentType = "application/json";
+                        
                         var response = new {
-                            StatusCode = 401,
-                            ErrorCode = "AuthE01",
-                            Message = Shared.Localization.Messages.Auth.Unauthorized,
-                            Errors = new List<string> { Shared.Localization.Messages.Auth.Unauthorized },
+                            StatusCode = statusCode,
+                            ErrorCode = errorCode,
+                            Message = msg,
+                            Errors = new List<string> { msg },
                             Timestamp = DateTime.Now
                         };
+                        
                         await context.Response.WriteAsJsonAsync(response);
                     },
                     OnForbidden = async context => 
                     {
+                        // OnForbidden is typically called AFTER OnChallenge or directly if roles don't match
                         context.Response.StatusCode = 403;
                         context.Response.ContentType = "application/json";
                         var response = new {
@@ -63,21 +82,7 @@ public static class JwtBootstrap
                         await context.Response.WriteAsJsonAsync(response);
                     },
                     OnTokenValidated = context => Task.CompletedTask,
-                    OnAuthenticationFailed = async context => 
-                    {
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        var isExpired = context.Exception.GetType() == typeof(SecurityTokenExpiredException);
-                        var msg = isExpired ? Shared.Localization.Messages.Auth.TokenExpired : Shared.Localization.Messages.Auth.Unauthorized;
-                        var response = new {
-                            StatusCode = 401,
-                            ErrorCode = "AuthE01",
-                            Message = msg,
-                            Errors = new List<string> { msg },
-                            Timestamp = DateTime.Now
-                        };
-                        await context.Response.WriteAsJsonAsync(response);
-                    }                
+                    OnAuthenticationFailed = context => Task.CompletedTask // Do not block request here
                 };
             });
         

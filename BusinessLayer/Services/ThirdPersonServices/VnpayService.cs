@@ -97,20 +97,24 @@ public class VnpayService : IVnPayService
             string vnpaySandboxUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
             string orderInfo = $"Thanh toan don hang {orderId}";
 
+            // VNPAY requires time in GMT+7 (Vietnam Time)
+            DateTime vietnamTime = DateTime.UtcNow.AddHours(7);
+
             var vnpayParams = new Dictionary<string, string>
             {
                 { "vnp_Version", "2.1.0" },
                 { "vnp_Command", "pay" },
                 { "vnp_TmnCode", tmnCode },
                 { "vnp_Amount", (amount * 100).ToString() },
-                { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
+                { "vnp_CreateDate", vietnamTime.ToString("yyyyMMddHHmmss") },
                 { "vnp_CurrCode", "VND" },
                 { "vnp_IpAddr", ipAddress },
                 { "vnp_Locale", "vn" },
                 { "vnp_OrderInfo", orderInfo },
                 { "vnp_OrderType", "other" },
                 { "vnp_ReturnUrl", returnUrl },
-                { "vnp_TxnRef", orderId }
+                { "vnp_TxnRef", orderId },
+                { "vnp_ExpireDate", vietnamTime.AddMinutes(15).ToString("yyyyMMddHHmmss") }
             };
 
             var sortedParams = vnpayParams.OrderBy(x => x.Key).ToList();
