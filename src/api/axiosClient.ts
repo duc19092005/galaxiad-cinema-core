@@ -76,11 +76,11 @@ export const bookingAxios = axios.create({
 
 /**
  * Axios instance for Public APIs
- * Base URL: {API_BASE_URL}/api/v1/public
+ * Base URL: {API_BASE_URL}/api/v1/Public
  * Notice: No withCredentials since it is public, but you can include interceptors for Language
  */
 export const publicAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1/public`,
+  baseURL: `${API_BASE_URL}/api/v1/Public`,
   headers: {
     'Content-Type': 'application/json',
   },

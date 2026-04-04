@@ -1,5 +1,5 @@
 // src/api/movieApi.ts
-import { movieAxios, API_BASE_URL } from './axiosClient';
+import { movieAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type { Movie, MovieRequiredAge, MovieGenre, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
@@ -13,27 +13,26 @@ export const movieApi = {
         return response.data;
     },
 
-    /** GET {API_BASE_URL}/MovieFormats */
+    /** GET {API_BASE_URL}/api/v1/Public/MovieFormats */
     getMovieFormats: async (): Promise<ApiSuccessResponse<MovieFormat[]>> => {
-        // Fetch using absolute URL
         const response = await movieAxios.get<ApiSuccessResponse<MovieFormat[]>>(
-            `${API_BASE_URL}/MovieFormats`
+            `/v1/Public/MovieFormats`
         );
         return response.data;
     },
 
-    /** GET {API_BASE_URL}/MovieRequiredAge */
+    /** GET {API_BASE_URL}/api/v1/Public/MovieRequiredAge */
     getMovieRequiredAges: async (): Promise<ApiSuccessResponse<MovieRequiredAge[]>> => {
         const response = await movieAxios.get<ApiSuccessResponse<MovieRequiredAge[]>>(
-            `${API_BASE_URL}/MovieRequiredAge`
+            `/v1/Public/MovieRequiredAge`
         );
         return response.data;
     },
 
-    /** GET {API_BASE_URL}/MovieGenres */
+    /** GET {API_BASE_URL}/api/v1/public/movies/genres */
     getMovieGenres: async (): Promise<ApiSuccessResponse<MovieGenre[]>> => {
         const response = await movieAxios.get<ApiSuccessResponse<MovieGenre[]>>(
-            `${API_BASE_URL}/MovieGenres`
+            `/v1/public/movies/genres`
         );
         return response.data;
     },
