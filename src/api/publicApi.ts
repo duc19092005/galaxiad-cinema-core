@@ -17,13 +17,21 @@ export const publicApi = {
     /** 1. Get Now Showing Movies */
     getNowShowing: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
-            params
+            params: { ...params, status: 'now-showing' }
         });
         return response.data;
     },
 
     /** 2. Get Coming Soon Movies */
     getComingSoon: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
+            params: { ...params, status: 'coming-soon' }
+        });
+        return response.data;
+    },
+
+    /** 2.1 Get All Movies */
+    getAllMovies: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });

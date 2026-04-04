@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await publicApi.getNowShowing({ city: selectedCity || undefined, pageSize: 20 });
+      const response = await publicApi.getAllMovies({ city: selectedCity || undefined, pageSize: 20 });
       const items = response.data || [];
       setNowShowing(items.filter(m => !m.isCommingSoon));
       setComingSoon(items.filter(m => m.isCommingSoon));
@@ -577,7 +577,7 @@ const HomePage: React.FC = () => {
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.movieDuration} min  {movie.releaseDate ? `• ${formatDate(movie.releaseDate)}` : ''}
+                    {movie.movieDuration} min  {(movie.releaseDate || movie.expectedReleaseDate) ? `• ${formatDate((movie.releaseDate || movie.expectedReleaseDate) as string)}` : ''}
                   </p>
                 </div>
               </div>
@@ -634,7 +634,7 @@ const HomePage: React.FC = () => {
                     ))}
                   </div>
                   <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                    {movie.releaseDate ? `Starting: ${formatDate(movie.releaseDate)}` : 'Coming Soon'}
+                    {(movie.releaseDate || movie.expectedReleaseDate) ? `Starting: ${formatDate((movie.releaseDate || movie.expectedReleaseDate) as string)}` : 'Coming Soon'}
                   </p>
                 </div>
               </div>
