@@ -1,7 +1,8 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:5032';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5032';
+console.log('Current API_BASE_URL:', API_BASE_URL);
 
 /**
  * Axios instance for Identity Access APIs
