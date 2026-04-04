@@ -115,7 +115,7 @@ const AdvancedSearch: React.FC = () => {
                             className={`bg-transparent border-none p-0 text-sm font-black focus:ring-0 w-full outline-none cursor-pointer appearance-none ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}
                         >
                             <option value="" className="bg-slate-900 text-white">{t('All Movies')}</option>
-                            {activeMovies.map(m => (
+                            {activeMovies?.map(m => (
                                 <option key={m.movieId} value={m.movieId} className="bg-slate-900 text-white">{m.movieName}</option>
                             ))}
                         </select>
@@ -133,7 +133,7 @@ const AdvancedSearch: React.FC = () => {
                             className={`bg-transparent border-none p-0 text-sm font-black focus:ring-0 w-full outline-none cursor-pointer appearance-none transition-colors ${theme === 'light' ? 'text-gray-900' : 'text-white'}`}
                         >
                             <option value="" className="bg-slate-900 text-white">{t('All Cinemas')}</option>
-                            {activeCinemas.map(c => (
+                            {activeCinemas?.map(c => (
                                 <option key={c.cinemaId} value={c.cinemaId} className="bg-slate-900 text-white">{c.cinemaName}</option>
                             ))}
                         </select>
@@ -170,13 +170,18 @@ const AdvancedSearch: React.FC = () => {
                         </div>
                     ) : searchResults && searchResults.length > 0 ? (
                         <div className="space-y-16">
-                            {searchResults.map(movie => (
+                            {searchResults?.map(movie => (
                         <div key={movie.movieId} className={`p-5 sm:p-8 rounded-[2rem] border transition-all duration-500 ${theme === 'modern' ? 'bg-white/5 border-white/10 hover:border-white/20' : theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100 shadow-2xl shadow-gray-200/50'}`}>
                                     <div className="flex flex-col lg:flex-row gap-12">
                                         {/* Movie Sidebar */}
                                         <div className="w-full lg:w-72 flex-shrink-0">
                                             <div className="relative aspect-[2/3] rounded-3xl overflow-hidden shadow-2xl mb-6 group">
-                                                <img src={movie.moviePosterURL} alt={movie.movieName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <img 
+                                                    src={movie.moviePosterURL} 
+                                                    alt={movie.movieName} 
+                                                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'; }}
+                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                                />
                                                 <div className="absolute top-4 left-4 flex items-center gap-2">
                                                     <div className="px-3 py-1.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-black rounded-xl border border-white/20">
                                                         {movie.movieRequiredAge}
@@ -193,7 +198,7 @@ const AdvancedSearch: React.FC = () => {
 
                                         {/* Cinemas Grid */}
                                         <div className="flex-1 space-y-12">
-                                            {movie.cinemas.map((cinema, cIdx) => (
+                                            {movie.cinemas?.map((cinema, cIdx) => (
                                                 <div key={cIdx} className="space-y-6">
                                                     <div className="flex items-center gap-5">
                                                         <div className={`p-4 rounded-2xl ${theme === 'modern' ? 'bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/5' : 'bg-gray-100'}`}>
@@ -206,7 +211,7 @@ const AdvancedSearch: React.FC = () => {
                                                     </div>
 
                                                     <div className="space-y-8 pl-0 sm:pl-16">
-                                                        {cinema.formatShowtimes.map((format, fIdx) => (
+                                                        {cinema.formatShowtimes?.map((format, fIdx) => (
                                                             <div key={fIdx} className="space-y-5">
                                                                 <div className="flex items-center gap-4">
                                                                     <div className={`px-4 py-1.5 rounded-xl text-[10px] font-black tracking-widest uppercase border ${theme === 'modern' ? 'bg-white/5 border-white/10 text-indigo-300' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
@@ -215,7 +220,7 @@ const AdvancedSearch: React.FC = () => {
                                                                     <div className={`h-px flex-1 ${theme === 'modern' ? 'bg-gradient-to-r from-white/10 via-white/5 to-transparent' : 'bg-gray-100'}`}></div>
                                                                 </div>
                                                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
-                                                                    {format.showtimes.map(st => (
+                                                                    {format.showtimes?.map(st => (
                                                                         <button
                                                                             key={st.scheduleId}
                                                                             onClick={() => handleTimeClick(st.scheduleId)}

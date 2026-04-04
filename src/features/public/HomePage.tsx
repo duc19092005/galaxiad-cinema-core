@@ -558,6 +558,7 @@ const HomePage: React.FC = () => {
                 <div className="aspect-[2/3] relative">
                   <img
                     src={movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'; }}
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                     alt={movie.movieName}
                   />
@@ -614,6 +615,7 @@ const HomePage: React.FC = () => {
                 <div className="aspect-[2/3] relative">
                   <img
                     src={movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'; }}
                     className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity"
                     alt={movie.movieName}
                   />

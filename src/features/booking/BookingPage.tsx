@@ -257,9 +257,9 @@ const BookingPage: React.FC = () => {
 
                             {/* Seats Grid */}
                             <div className="inline-grid gap-2" style={{
-                                gridTemplateColumns: `repeat(${Math.max(...seatMap.seats.map(s => s.colIndex)) + 1}, minmax(0, 1fr))`
+                                gridTemplateColumns: `repeat(${Math.max(...(seatMap.seats?.map(s => s.colIndex) || [0])) + 1}, minmax(0, 1fr))`
                             }}>
-                                {seatMap.seats.map((seat) => {
+                                {seatMap.seats?.map((seat) => {
                                     const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
                                     const lockedBy = lockedSeats[seat.seatId];
                                     const isLockedByOther = lockedBy && !isSelected;
