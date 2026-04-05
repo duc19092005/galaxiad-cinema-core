@@ -218,7 +218,7 @@ public class GoogleLoginUseCase
                     UserName = username,
                     IdentityCode = encryptedIdentity, // Phải được mã hóa để GetUserAccountInfo có thể giải mã
                     DateOfBirth = DateTime.MinValue, // User có thể cập nhật sau
-                    PhoneNumber = "0000000000" // User có thể cập nhật sau
+                    PhoneNumber = $"0{Random.Shared.Next(100000000, 999999999)}" // Random để tránh lỗi Unique Index Constraint
                 });
 
                 // Gán role Customer
