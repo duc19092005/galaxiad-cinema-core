@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
-    CheckCircle, Home, Download, Loader2, AlertCircle
+    CheckCircle, Home, Download, Loader2, AlertCircle,
+    Film, MapPin, Clock, Armchair, Receipt
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { bookingApi } from '../../api/bookingApi';
-import type { PaymentEvent } from '../../types/booking.types';
+import type { TicketInfo } from '../../types/booking.types';
 import toast from 'react-hot-toast';
 import jsPDF from 'jspdf';
 
@@ -16,10 +17,10 @@ const BookingSuccessPage: React.FC = () => {
     const navigate = useNavigate();
     const { theme } = useTheme();
 
-    const [paymentStatus, setPaymentStatus] = useState<'waiting' | 'success' | 'failed'>('waiting');
-    const [eventData, setEventData] = useState<PaymentEvent | null>(null);
+    const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
-
 
     useEffect(() => {
         if (!orderId) {
@@ -27,42 +28,24 @@ const BookingSuccessPage: React.FC = () => {
             return;
         }
 
-        // Subscribe to SSE for the final confirmation
-        const eventSource = new EventSource(
-            bookingApi.getPaymentStatusUrl(orderId),
-            { withCredentials: true }
-        );
-
-        eventSource.addEventListener('payment-result', (event: MessageEvent) => {
-            const data: PaymentEvent = JSON.parse(event.data);
-            setEventData(data);
-            if (data.status === 'success') {
-                setPaymentStatus('success');
-                toast.success('Payment verified successfully!');
-            } else {
-                setPaymentStatus('failed');
-                toast.error('Payment verification failed.');
+        // Backend already verified VNPAY + updated DB before redirecting here.
+        // We just fetch the ticket details directly.
+        const fetchTicket = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const res = await bookingApi.getTicketInfo(orderId);
+                setTicketInfo(res.data);
+            } catch (err: any) {
+                console.error('Failed to fetch ticket info:', err);
+                setError('Could not load ticket information. Please check your order history.');
+            } finally {
+                setLoading(false);
             }
-            eventSource.close();
-        });
-
-        eventSource.onerror = (err) => {
-            console.error('SSE Error:', err);
-            eventSource.close();
         };
 
-        // Fallback: If no event after 10 seconds (VNPAY is usually faster)
-        const timer = setTimeout(() => {
-            if (paymentStatus === 'waiting') {
-                setPaymentStatus('success');
-            }
-        }, 15000);
-
-        return () => {
-            eventSource.close();
-            clearTimeout(timer);
-        };
-    }, [orderId, navigate, paymentStatus]);
+        fetchTicket();
+    }, [orderId, navigate]);
 
     const handleDownloadTicket = () => {
         if (!orderId) return;
@@ -71,24 +54,13 @@ const BookingSuccessPage: React.FC = () => {
     };
 
     const handleGeneratePdf = async () => {
-        if (!orderId) return;
+        if (!orderId || !ticketInfo) return;
         setPdfLoading(true);
         try {
-            const res = await bookingApi.getTicketInfo(orderId);
-            const data = res.data;
+            const data = ticketInfo;
 
-            if (!data) {
-                toast.error("Failed to fetch ticket info");
-                return;
-            }
-
-            // To support UTF-8 (Vietnamese) and better design, we'll use html2canvas if possible,
-            // or we'll ensure the jsPDF approach is more robust.
-            // Since we can't easily rely on an external font file, 
-            // html2canvas + jsPDF is the standard way to handle UTF-8/Vietnamese in client-side PDF generation.
-            
             const html2canvas = (await import('html2canvas')).default;
-            
+
             // Create a temporary element for the ticket
             const ticketContainer = document.createElement('div');
             ticketContainer.style.position = 'absolute';
@@ -175,7 +147,7 @@ const BookingSuccessPage: React.FC = () => {
             document.body.appendChild(ticketContainer);
 
             const canvas = await html2canvas(ticketContainer, {
-                scale: 2, // High quality
+                scale: 2,
                 useCORS: true,
                 backgroundColor: '#ffffff'
             });
@@ -191,10 +163,10 @@ const BookingSuccessPage: React.FC = () => {
 
             const imgWidth = 190;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
-            
+
             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
             pdf.save(`ticket_${orderId.substring(0, 8)}.pdf`);
-            
+
             toast.success("PDF generated successfully!");
         } catch (err) {
             console.error("PDF generation error:", err);
@@ -204,80 +176,176 @@ const BookingSuccessPage: React.FC = () => {
         }
     };
 
+    // --- Loading State ---
+    if (loading) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
+                <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20' : 'bg-white border-gray-100'}`}>
+                    <Loader2 className="w-20 h-20 animate-spin text-red-600 mx-auto mb-6" />
+                    <h2 className="text-2xl font-black mb-2">Loading Your Ticket...</h2>
+                    <p className="opacity-60 text-sm">Retrieving your booking details.</p>
+                </div>
+            </div>
+        );
+    }
 
+    // --- Error State ---
+    if (error || !ticketInfo) {
+        return (
+            <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
+                <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20' : 'bg-white border-gray-100'}`}>
+                    <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <AlertCircle className="w-16 h-16 text-yellow-500" />
+                    </div>
+                    <h2 className="text-2xl font-black mb-2">Unable to Load Ticket</h2>
+                    <p className="opacity-60 text-sm mb-2">{error || 'Ticket information is not available.'}</p>
+                    {orderId && <p className="text-xs opacity-40 mb-8">Order ID: {orderId}</p>}
+                    <button
+                        onClick={() => navigate('/home')}
+                        className="w-full py-4 bg-red-600 text-white rounded-xl font-bold transition-all hover:bg-red-700"
+                    >
+                        Return to Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // --- Success State with full ticket details ---
     return (
         <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+            <div className={`max-w-lg w-full p-8 rounded-3xl border shadow-2xl ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20 backdrop-blur-xl' : 'bg-white border-gray-100'}`}>
 
-                {paymentStatus === 'waiting' ? (
-                    <>
-                        <Loader2 className="w-20 h-20 animate-spin text-red-600 mx-auto mb-6" />
-                        <h2 className="text-2xl font-black mb-2">Verifying Payment...</h2>
-                        <p className="opacity-60 text-sm">Please wait while we confirm your transaction with the bank.</p>
-                    </>
-                ) : paymentStatus === 'success' ? (
-                    <>
-                        <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <CheckCircle className="w-16 h-16 text-green-500" />
+                {/* Header */}
+                <div className="text-center mb-8">
+                    <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
+                        <CheckCircle className="w-12 h-12 text-green-500" />
+                    </div>
+                    <h2 className="text-3xl font-black mb-1">Booking Successful!</h2>
+                    <p className="opacity-60 text-sm">Your tickets have been confirmed. Enjoy your movie!</p>
+                </div>
+
+                {/* Movie Card */}
+                <div className={`rounded-2xl overflow-hidden mb-6 ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex gap-4 p-4">
+                        {ticketInfo.movieImageUrl && (
+                            <img
+                                src={ticketInfo.movieImageUrl}
+                                alt={ticketInfo.movieName}
+                                className="w-20 h-28 object-cover rounded-xl shadow-lg"
+                            />
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <h3 className="font-black text-lg leading-tight mb-2 truncate">{ticketInfo.movieName}</h3>
+                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                                theme === 'dark' || theme === 'modern' ? 'bg-red-600/20 text-red-400' : 'bg-red-100 text-red-600'
+                            }`}>
+                                {ticketInfo.formatName}
+                            </span>
                         </div>
-                        <h2 className="text-3xl font-black mb-2">Booking Successful!</h2>
-                        <p className="opacity-60 text-sm mb-8">Your tickets have been confirmed. Enjoy your movie!</p>
+                    </div>
+                </div>
 
-                        <div className={`p-6 rounded-2xl mb-8 text-left space-y-3 ${theme === 'dark' ? 'bg-black/40' : 'bg-gray-50'}`}>
-                            <div className="flex justify-between items-center text-xs opacity-50 uppercase tracking-widest font-bold">
-                                <span>Ticket Details</span>
-                                <span>ID: {orderId?.substring(0, 8)}...</span>
-                            </div>
-                            {eventData && (
-                                <div className="flex justify-between font-bold">
-                                    <span>Total Paid</span>
-                                    <span className="text-green-500">{eventData.totalPrice?.toLocaleString('vi-VN')}đ</span>
+                {/* Details Grid */}
+                <div className={`grid grid-cols-2 gap-4 mb-6 p-4 rounded-2xl ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-start gap-2">
+                        <MapPin className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Cinema</p>
+                            <p className="text-sm font-bold leading-tight">{ticketInfo.cinemaName}</p>
+                            <p className="text-[11px] opacity-50 leading-tight">{ticketInfo.cinemaAddress}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                        <Film className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Auditorium</p>
+                            <p className="text-sm font-bold">{ticketInfo.auditoriumNumber}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-start gap-2 col-span-2">
+                        <Clock className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                        <div>
+                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Showtime</p>
+                            <p className="text-sm font-bold">
+                                {new Date(ticketInfo.showTime).toLocaleString('vi-VN', {
+                                    weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                })}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Seats Table */}
+                <div className={`p-4 rounded-2xl mb-6 ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <Armchair className="w-4 h-4 text-red-500" />
+                            <span className="text-[10px] uppercase tracking-wider font-bold opacity-50">Tickets</span>
+                        </div>
+                        <span className="text-[10px] opacity-40 font-mono">ID: {orderId?.substring(0, 8)}...</span>
+                    </div>
+                    <div className="space-y-2">
+                        {ticketInfo.seats.map((seat, idx) => (
+                            <div key={idx} className={`flex items-center justify-between py-2 px-3 rounded-xl ${
+                                theme === 'dark' ? 'bg-white/5' : theme === 'modern' ? 'bg-white/5' : 'bg-white'
+                            }`}>
+                                <div className="flex items-center gap-3">
+                                    <span className="font-black text-red-600 text-sm">{seat.seatNumber}</span>
+                                    <span className="text-xs opacity-60">{seat.segmentName}</span>
                                 </div>
-                            )}
-                            <div className="pt-2 flex flex-col gap-3 text-sm">
-                                <button 
-                                    onClick={handleDownloadTicket}
-                                    className="w-full py-3 bg-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-700 transition-colors"
-                                >
-                                    <Download className="w-4 h-4" /> Download Ticket (.txt)
-                                </button>
-                                <button 
-                                    onClick={handleGeneratePdf}
-                                    disabled={pdfLoading}
-                                    className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 border border-red-600/30 transition-all ${
-                                        theme === 'dark' ? 'bg-white/5 hover:bg-white/10 text-red-500' : 'bg-red-50 hover:bg-red-100 text-red-600'
-                                    }`}
-                                >
-                                    {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4" /> Export to PDF</>}
-                                </button>
+                                <span className="font-bold text-sm">{seat.priceEach.toLocaleString('vi-VN')}đ</span>
                             </div>
+                        ))}
+                    </div>
+                    {/* Total */}
+                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-dashed border-white/10">
+                        <div className="flex items-center gap-2">
+                            <Receipt className="w-4 h-4 text-red-500" />
+                            <span className="font-bold text-sm">Total Paid</span>
                         </div>
+                        <span className="text-xl font-black text-red-600">
+                            {ticketInfo.totalPrice.toLocaleString('vi-VN')}đ
+                        </span>
+                    </div>
+                    {ticketInfo.vnPayTransactionId && (
+                        <p className="text-[10px] opacity-40 text-right mt-1">
+                            VNPAY Txn: {ticketInfo.vnPayTransactionId}
+                        </p>
+                    )}
+                </div>
 
-
-                        <div className="flex flex-col gap-3">
-                            <button
-                                onClick={() => navigate('/home')}
-                                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 border border-white/10 transition-all text-sm ${theme === 'dark' || theme === 'modern' ? 'bg-white/5 hover:bg-white/10' : 'bg-gray-100 hover:bg-gray-200'}`}
-                            >
-                                <Home className="w-4 h-4" /> Return to Home
-                            </button>
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <AlertCircle className="w-16 h-16 text-red-500" />
-                        </div>
-                        <h2 className="text-3xl font-black mb-2">Payment Failed</h2>
-                        <p className="opacity-60 text-sm mb-8">We couldn't verify your payment. If you were charged, please contact support.</p>
-                        <button
-                            onClick={() => navigate('/home')}
-                            className="w-full py-4 bg-red-600 text-white rounded-xl font-bold transition-all"
-                        >
-                            Try Again
-                        </button>
-                    </>
-                )}
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3">
+                    <button
+                        onClick={handleDownloadTicket}
+                        className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30"
+                    >
+                        <Download className="w-4 h-4" /> Download Ticket
+                    </button>
+                    <button
+                        onClick={handleGeneratePdf}
+                        disabled={pdfLoading}
+                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 border border-red-600/30 transition-all ${
+                            theme === 'dark' || theme === 'modern'
+                                ? 'bg-white/5 hover:bg-white/10 text-red-500'
+                                : 'bg-red-50 hover:bg-red-100 text-red-600'
+                        }`}
+                    >
+                        {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4" /> Export to PDF</>}
+                    </button>
+                    <button
+                        onClick={() => navigate('/home')}
+                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 border border-white/10 transition-all text-sm ${
+                            theme === 'dark' || theme === 'modern'
+                                ? 'bg-white/5 hover:bg-white/10'
+                                : 'bg-gray-100 hover:bg-gray-200'
+                        }`}
+                    >
+                        <Home className="w-4 h-4" /> Return to Home
+                    </button>
+                </div>
             </div>
         </div>
     );

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import type { UserLoginData } from '../../types/auth.types';
 import { identityAxios } from '../../api/axiosClient';
+import Cookies from 'js-cookie';
 
 const GoogleCallback: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -17,8 +18,19 @@ const GoogleCallback: React.FC = () => {
             const state = searchParams.get('state');
             const error = searchParams.get('error');
 
+            // Google trả về error (user cancel, access_denied, etc.)
             if (error) {
-                navigate('/login', { replace: true });
+                const errorMessages: Record<string, string> = {
+                    access_denied: 'Bạn đã từ chối quyền truy cập Google. Vui lòng thử lại.',
+                    invalid_scope: 'Phạm vi truy cập không hợp lệ. Vui lòng liên hệ hỗ trợ.',
+                    server_error: 'Máy chủ Google gặp sự cố. Vui lòng thử lại sau.',
+                    temporarily_unavailable: 'Dịch vụ Google tạm thời không khả dụng. Vui lòng thử lại sau.',
+                };
+                const message = errorMessages[error] || `Đăng nhập Google thất bại (${error}). Vui lòng thử lại.`;
+                navigate('/login', { 
+                    replace: true, 
+                    state: { googleError: message } 
+                });
                 return;
             }
 
@@ -41,8 +53,13 @@ const GoogleCallback: React.FC = () => {
                         // Lưu data user vào localstorage
                         localStorage.setItem('user_info', JSON.stringify(userInfo));
                         window.dispatchEvent(new Event('user_info_updated'));
+
+                        // Lưu token vào cookie
+                        if (userInfo.accessToken) {
+                            Cookies.set('X-Access-Token', userInfo.accessToken, { expires: 7, sameSite: 'Lax' });
+                        }
                         
-                        // Xử lý chuyển hướng giống như LoginForm (Role selection hoặc HomePage)
+                        // Xử lý chuyển hướng giống như LoginForm
                         if (userInfo.roles && userInfo.roles.length > 0) {
                             if (userInfo.roles.length === 1) {
                                 const roleConfig: Record<string, string> = {
@@ -62,15 +79,39 @@ const GoogleCallback: React.FC = () => {
                              navigate('/home', { replace: true });
                         }
                     } else {
-                        // Xử lý báo lỗi đăng nhập Google thất bại
-                        navigate('/login', { replace: true });
+                        // Backend trả về isSuccess = false
+                        const serverMsg = response.data?.message || 'Xác thực Google thất bại. Vui lòng thử lại.';
+                        navigate('/login', { 
+                            replace: true, 
+                            state: { googleError: serverMsg } 
+                        });
                     }
-                } catch (err) {
+                } catch (err: any) {
                     console.error("Xác thực auth backend thất bại", err);
-                    navigate('/login', { replace: true });
+                    
+                    // Lấy message lỗi chi tiết từ backend response
+                    let errorMessage = 'Không thể kết nối đến máy chủ xác thực. Vui lòng thử lại.';
+                    if (err.response?.data?.message) {
+                        errorMessage = err.response.data.message;
+                    } else if (err.response?.status === 400) {
+                        errorMessage = 'Yêu cầu xác thực không hợp lệ. Vui lòng thử đăng nhập lại.';
+                    } else if (err.response?.status === 500) {
+                        errorMessage = 'Máy chủ gặp sự cố khi xử lý đăng nhập Google. Vui lòng thử lại sau.';
+                    } else if (!err.response) {
+                        errorMessage = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
+                    }
+
+                    navigate('/login', { 
+                        replace: true, 
+                        state: { googleError: errorMessage } 
+                    });
                 }
             } else {
-                navigate('/login', { replace: true });
+                // Thiếu code hoặc state — URL không hợp lệ
+                navigate('/login', { 
+                    replace: true, 
+                    state: { googleError: 'Phiên đăng nhập Google không hợp lệ. Vui lòng thử lại.' } 
+                });
             }
         };
 

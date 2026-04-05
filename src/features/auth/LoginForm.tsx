@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom'; // Dùng để chuyển trang
+import { useNavigate, useLocation, Link } from 'react-router-dom'; // Dùng để chuyển trang
 import axios from 'axios';
 import { Clapperboard, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
@@ -34,9 +34,20 @@ const InputField = ({ label, name, type = 'text', icon: Icon, placeholder, value
 
 const LoginForm: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    // Nhận thông báo lỗi từ Google OAuth callback
+    useEffect(() => {
+        const state = location.state as { googleError?: string } | null;
+        if (state?.googleError) {
+            setErrorMsg(state.googleError);
+            // Xóa state để tránh hiện lại lỗi khi back/refresh
+            window.history.replaceState({}, '');
+        }
+    }, [location.state]);
 
     // Check user info từ localStorage - nếu đã có thì có thể đã login
     // (Không check cookie vì là HttpOnly)
