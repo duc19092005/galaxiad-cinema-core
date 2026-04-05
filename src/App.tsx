@@ -4,6 +4,7 @@ import { CinemaProvider } from './contexts/CinemaContext';
 import { Toaster } from 'react-hot-toast';
 import RegisterForm from './features/auth/RegisterForm';
 import LoginForm from './features/auth/LoginForm';
+import GoogleCallback from './features/auth/GoogleCallback';
 import RoleSelectionPage from './features/auth/RoleSelectionPage';
 import HomePage from './features/public/HomePage';
 import FacilitiesManagerPage from './features/facilities/FacilitiesManagerPage';
@@ -31,6 +32,7 @@ function App() {
 
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/auth/google-callback" element={<GoogleCallback />} />
 
           {/* Protected Routes */}
           <Route path="/role-selection" element={<ProtectedRoute><RoleSelectionPage /></ProtectedRoute>} />

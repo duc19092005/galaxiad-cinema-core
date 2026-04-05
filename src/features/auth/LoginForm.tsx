@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Clapperboard, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
+import { identityAxios } from '../../api/axiosClient';
 import type { LoginRequest, ApiErrorResponse } from '../../types/auth.types';
 // Removed cookie reading logic - using HttpOnly cookie
 
@@ -118,6 +119,29 @@ const LoginForm: React.FC = () => {
                 setErrorMsg('An unexpected error occurred.');
             }
         } finally {
+            if (!formData.email && !formData.password) {
+                 // Prevent clearing loader early if redirecting
+            } else {
+                setLoading(false);
+            }
+        }
+    };
+
+    const handleGoogleLogin = async () => {
+        try {
+            setLoading(true);
+            const response = await identityAxios.get('/IdentityAccess/google-login?platform=web');
+            const data = response.data;
+            
+            if (data.isSuccess) {
+                window.location.href = data.data.redirectUrl; 
+            } else {
+                setErrorMsg('Failed to initialize Google Login.');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error("Login init fail", error);
+            setErrorMsg('Failed to connect to Google Login service.');
             setLoading(false);
         }
     };
@@ -168,6 +192,39 @@ const LoginForm: React.FC = () => {
                                     </div>
                                 </button>
                             </form>
+
+                            <div className="relative flex items-center justify-center mt-6 mb-6">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-gray-700/80"></div>
+                                </div>
+                                <div className="relative px-4 text-xs font-semibold tracking-widest text-gray-400 uppercase bg-black">
+                                    OR CONTINUE WITH
+                                </div>
+                            </div>
+
+                            <button 
+                                type="button" 
+                                disabled={loading} 
+                                onClick={handleGoogleLogin} 
+                                className={`relative flex items-center justify-center w-full py-3.5 mb-2 overflow-hidden rounded-xl bg-white text-gray-900 font-bold uppercase tracking-wider shadow-[0_4px_20px_rgba(255,255,255,0.1)] ring-1 ring-white/20 transition-all hover:scale-[1.02] hover:bg-gray-100 hover:shadow-[0_4px_20px_rgba(255,255,255,0.2)] ${loading ? 'cursor-not-allowed opacity-80' : ''}`}
+                            >
+                                <div className="flex items-center justify-center gap-3 w-full">
+                                    {loading ? (
+                                        <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
+                                    ) : (
+                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 48 48">
+                                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+                                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+                                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+                                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+                                            <path fill="none" d="M0 0h48v48H0z"></path>
+                                        </svg>
+                                    )}
+                                    <span className="text-sm font-bold uppercase tracking-wider">
+                                        {loading ? 'Processing...' : 'Google Account'}
+                                    </span>
+                                </div>
+                            </button>
 
                             <div className="mt-6 text-center text-sm sm:text-base text-gray-500 flex flex-col gap-3">
                                 <div>
