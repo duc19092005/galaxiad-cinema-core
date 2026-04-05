@@ -57,6 +57,12 @@ public static class Messages
         // Registration Errors
         public const string EmailAlreadyExists = "Email Already Exits";
         public const string IdentityCodeAlreadyExists = "Identity Code is already Exits";
+        
+        // Google OAuth Errors
+        public const string GoogleAuthFailed = "Google authentication failed";
+        public const string GoogleAccountExists = "Account with this email already exists. Please login using your original method.";
+        public const string GoogleTokenExchangeFailed = "Failed to exchange Google authorization code";
+        public const string GoogleUserInfoFailed = "Failed to get user information from Google";
     }
 
     // =============================================================

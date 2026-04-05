@@ -10,6 +10,7 @@
     <ItemGroup>
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
       <PackageReference Include="CloudinaryDotNet" Version="1.27.9" />
+      <PackageReference Include="Google.Apis.Auth" Version="1.68.0" />
       <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
       <PackageReference Include="Hangfire.SqlServer" Version="1.8.23" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />

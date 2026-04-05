@@ -24,7 +24,7 @@ namespace DataAccess.Entities.UserInfos
         [Column(TypeName = "varchar(100)")]
         public string Password { get; set; } = String.Empty;
 
-        [Column(TypeName = "varchar(100)")]
+        [Column(TypeName = "varchar(500)")]
         public string? RefreshToken { get; set; } = null;
         
         [Column(TypeName = "varchar(50)")]

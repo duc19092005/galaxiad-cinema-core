@@ -3,6 +3,8 @@ namespace BusinessLayer.Dtos.Public.Responses;
 public class MovieInfoRes : BaseMovieInfoRes
 {
     public bool IsCommingSoon { get; set; }
+    
+    public DateTime ExpectedReleaseDate { get; set; }
 }
 
 public class MovieDetailInfoRes : BaseMovieInfoRes

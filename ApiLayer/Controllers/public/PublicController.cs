@@ -75,12 +75,33 @@ public class PublicController : ControllerBase
     }
 
     // Cái này để truy vấn thông tin những phim sắp chiếu hoặc đang chiếu Public
+    // Query param "status":
+    //   - "now-showing"  : Phim đang chiếu (IsActive=true, IsCommingSoon=false)
+    //   - "coming-soon"  : Phim sắp chiếu  (IsCommingSoon=true, chưa bị xóa)
+    //   - không truyền   : Trả tất cả phim chưa bị xóa & (đang chiếu HOẶC sắp chiếu)
 
     [HttpGet("Movies")]
-    public async Task<IActionResult> GetMovies([FromQuery] string? city)
+    public async Task<IActionResult> GetMovies([FromQuery] string? city, [FromQuery] string? status)
     {
         var query = _cinemaDbContext.MovieInfoEntity
-            .Where(x => !x.IsDeleted && x.IsActive);
+            .Where(x => !x.IsDeleted);
+
+        // Lọc theo trạng thái phim
+        switch (status?.ToLower())
+        {
+            case "now-showing":
+                // Phim đang chiếu: IsActive = true VÀ IsCommingSoon = false
+                query = query.Where(x => x.IsActive && !x.IsCommingSoon);
+                break;
+            case "coming-soon":
+                // Phim sắp chiếu: IsCommingSoon = true (không cần IsActive vì phim sắp chiếu có thể chưa active)
+                query = query.Where(x => x.IsCommingSoon);
+                break;
+            default:
+                // Mặc định: trả tất cả phim đang chiếu hoặc sắp chiếu
+                query = query.Where(x => x.IsActive || x.IsCommingSoon);
+                break;
+        }
 
         // Lọc phim theo thành phố: chỉ lấy phim có liên kết với rạp ở thành phố được chọn
         if (!string.IsNullOrEmpty(city))
@@ -97,7 +118,8 @@ public class PublicController : ControllerBase
             MoviePosterURL = x.MovieImageUrl,
             MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
             MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
-            IsCommingSoon = x.IsCommingSoon
+            IsCommingSoon = x.IsCommingSoon,
+            ExpectedReleaseDate = x.ActiveAt
         }).ToListAsync();
 
         return Ok(new BaseResponse<List<MovieInfoRes>>()
