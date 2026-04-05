@@ -158,15 +158,18 @@ public class BookingController : ControllerBase
     private readonly BookingService _bookingService;
     private readonly SseConnectionManager _sseManager;
     private readonly ILogger<BookingController> _logger;
+    private readonly IConfiguration _configuration;
 
     public BookingController(
         BookingService bookingService,
         SseConnectionManager sseManager,
-        ILogger<BookingController> logger)
+        ILogger<BookingController> logger,
+        IConfiguration configuration)
     {
         _bookingService = bookingService;
         _sseManager = sseManager;
         _logger = logger;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -207,39 +210,60 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
-    /// VNPay gọi callback sau khi thanh toán xong
+    /// VNPay gọi callback sau khi thanh toán xong.
+    /// Luôn redirect về FE bất kể kết quả xử lý.
     /// </summary>
     [HttpGet("vnpay-callback")]
     public async Task<IActionResult> VnPayCallback()
     {
-        var vnpParams = new Dictionary<string, string>();
-        foreach (var (key, value) in Request.Query)
+        var frontendBaseUrl = _configuration["FrontendBaseUrl"] ?? "https://renewcinemaprojectfrontend.vercel.app";
+        
+        try
         {
-            if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+            var vnpParams = new Dictionary<string, string>();
+            foreach (var (key, value) in Request.Query)
             {
-                vnpParams[key] = value.ToString();
+                if (!string.IsNullOrEmpty(key) && key.StartsWith("vnp_"))
+                {
+                    vnpParams[key] = value.ToString();
+                }
             }
+
+            _logger.LogInformation("VNPay callback received with {ParamCount} params: {Params}", 
+                vnpParams.Count, string.Join(", ", vnpParams.Select(p => $"{p.Key}={p.Value}")));
+
+            var (success, orderId) = await _bookingService.ProcessVnPayCallback(vnpParams);
+
+            // Gửi SSE event cho FE
+            var paymentEvent = new PaymentStatusEvent
+            {
+                OrderId = orderId,
+                Status = success ? "success" : "failed",
+                Message = success ? Messages.Booking.PaymentSuccess : Messages.Booking.PaymentFailed,
+                TransactionId = vnpParams.TryGetValue("vnp_TransactionNo", out var txnNo) ? txnNo : null
+            };
+
+            _sseManager.NotifyPaymentResult(orderId, paymentEvent);
+
+            // Redirect user về FE
+            var frontendUrl = success
+                ? $"{frontendBaseUrl}/booking/success?orderId={orderId}"
+                : $"{frontendBaseUrl}/booking/failed?orderId={orderId}";
+
+            _logger.LogInformation("VNPay callback processed. Success={Success}, OrderId={OrderId}. Redirecting to {Url}", 
+                success, orderId, frontendUrl);
+
+            return Redirect(frontendUrl);
         }
-
-        var (success, orderId) = await _bookingService.ProcessVnPayCallback(vnpParams);
-
-        // Gửi SSE event cho FE
-        var paymentEvent = new PaymentStatusEvent
+        catch (Exception ex)
         {
-            OrderId = orderId,
-            Status = success ? "success" : "failed",
-            Message = success ? Messages.Booking.PaymentSuccess : Messages.Booking.PaymentFailed,
-            TransactionId = vnpParams.TryGetValue("vnp_TransactionNo", out var txnNo) ? txnNo : null
-        };
-
-        _sseManager.NotifyPaymentResult(orderId, paymentEvent);
-
-        // Redirect user về FE
-        var frontendUrl = success
-            ? $"https://renewcinemaprojectfrontend.vercel.app/booking/success?orderId={orderId}"
-            : $"https://renewcinemaprojectfrontend.vercel.app/booking/failed?orderId={orderId}";
-
-        return Redirect(frontendUrl); 
+            _logger.LogError(ex, "Error processing VNPay callback. Redirecting to FE failed page.");
+            
+            // Luôn redirect về FE dù có lỗi, không bao giờ để user thấy trang lỗi backend
+            var orderId = Request.Query.TryGetValue("vnp_TxnRef", out var txnRef) ? txnRef.ToString() : "";
+            var failedUrl = $"{frontendBaseUrl}/booking/failed?orderId={orderId}&error=processing_error";
+            return Redirect(failedUrl);
+        }
     }
 
     /// <summary>
