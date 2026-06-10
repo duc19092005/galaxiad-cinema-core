@@ -13,7 +13,8 @@ import {
     Loader2,
     AlertCircle
 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';
 import { identityAxios } from '../../api/axiosClient';
@@ -79,6 +80,7 @@ const InputField = ({
 // --- Main Component ---
 const RegisterForm: React.FC = () => {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [formData, setFormData] = useState<FormData>({
         fullName: '',
         email: '',
@@ -121,7 +123,7 @@ const RegisterForm: React.FC = () => {
             const res = await authApi.regularRegister(payload);
 
             if (res.isSuccess) {
-                toast.success(res.message || 'Registration successful!');
+                showSuccess(res.message || t('toast.registrationSuccess'));
                 navigate('/login');
             }
 

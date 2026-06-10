@@ -9,13 +9,16 @@ import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import { useTheme } from '../../contexts/ThemeContext';
-import toast from 'react-hot-toast';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import { showSuccess, showError, toast } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useTranslation();
 
     const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
@@ -142,7 +145,7 @@ const BookingPage: React.FC = () => {
             }
         } else {
             if (selectedSeats.length >= 8) {
-                toast.error('Maximum 8 seats per booking');
+                showError(t('toast.maxSeats'));
                 return;
             }
             setSelectedSeats(prev => [...prev, seat]);
@@ -164,13 +167,13 @@ const BookingPage: React.FC = () => {
 
     const handleBooking = async () => {
         if (selectedSeats.length === 0) {
-            toast.error('Please select at least one seat');
+            showError(t('toast.selectSeat'));
             return;
         }
 
         if (!isLoggedIn) {
             if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
-                toast.error('Please provide name, email and phone number');
+                showError(t('toast.fillContactInfo'));
                 return;
             }
         }
@@ -195,11 +198,11 @@ const BookingPage: React.FC = () => {
                 // Open VNPay URL
                 window.location.href = res.data.paymentUrl;
             } else {
-                toast.error('Booking failed: No payment URL received');
+                showError(t('toast.paymentUrlError'));
             }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Booking failed';
-            toast.error(errorMsg);
+            const errorMsg = err.response?.data?.message || t('toast.scheduleSaveFailed');
+            showError(errorMsg);
         } finally {
             setBookingLoading(false);
         }

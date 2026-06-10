@@ -27,7 +27,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { adminApi } from '../../api/adminApi';
 import { authApi } from '../../api/authApi';
 import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto } from '../../types/admin.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
 import LogoutModal from '../../components/LogoutModal';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
@@ -327,7 +327,7 @@ const AdminPage: React.FC = () => {
                 setAuditLogs(res.data || []);
             }
         } catch (err) {
-            toast.error('Failed to load data.');
+            showError(t('toast.loadDataFailed'));
         } finally {
             setLoading(false);
         }
@@ -336,10 +336,10 @@ const AdminPage: React.FC = () => {
     const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
         try {
             await adminApi.updateUserStatus(userId, newStatus);
-            toast.success('User status updated successfully');
+            showSuccess(t('toast.userStatusUpdated'));
             fetchData();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to update user status');
+            showError(err.response?.data?.message || t('toast.userStatusUpdateFailed'));
         }
     };
 
@@ -352,7 +352,7 @@ const AdminPage: React.FC = () => {
 
     const handleRoleUpdateSuccess = (updatedUserId: string) => {
         if (updatedUserId === user?.userId) {
-            toast.success('Your roles have been updated. Please log in again.');
+            showSuccess(t('toast.rolesRefreshLogin'));
             handleLogoutConfirm();
         } else {
             fetchData();

@@ -15,7 +15,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { transferRightsApi } from '../../../api/transferRightsApi';
 import type { ManagerDto, ManagedItemDto } from '../../../types/admin.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../../utils/ToastUtils';
 
 const TransferRightsView: React.FC = () => {
     const { theme } = useTheme();
@@ -41,7 +41,7 @@ const TransferRightsView: React.FC = () => {
                 setTargetUserId('');
                 setManagedItems([]);
             } catch (error) {
-                toast.error(t('Failed to load managers'));
+                showError(t('toast.loadManagersFailed'));
             }
         };
         fetchManagers();
@@ -59,7 +59,7 @@ const TransferRightsView: React.FC = () => {
                 );
                 setManagedItems(res.data || []);
             } catch (error) {
-                toast.error(t('Failed to load managed items'));
+                showError(t('toast.loadItemsFailed'));
             } finally {
                 setLoadingItems(false);
             }
@@ -76,7 +76,7 @@ const TransferRightsView: React.FC = () => {
 
     const handleExecute = async (itemId: string, itemName: string) => {
         if (!targetUserId) {
-            toast.error(t('Please select target manager'));
+            showError(t('toast.selectTargetManager'));
             return;
         }
 
@@ -84,7 +84,7 @@ const TransferRightsView: React.FC = () => {
         const apiSourceUserId = sourceUserId === 'unmanaged' ? null : sourceUserId;
 
         if (apiSourceUserId === targetUserId) {
-            toast.error(t('Source and target cannot be the same person'));
+            showError(t('toast.samePersonError'));
             return;
         }
 
@@ -99,7 +99,7 @@ const TransferRightsView: React.FC = () => {
                 transferType,
                 itemId
             });
-            toast.success(t('Transferred "{0}" successfully', { 0: itemName }));
+            showSuccess(t('toast.transferSuccess', { itemName }));
 
             // Refresh managed items for the source user to reflect the change
             const resItems = await transferRightsApi.getManagedItems(
@@ -108,7 +108,7 @@ const TransferRightsView: React.FC = () => {
             );
             setManagedItems(resItems.data || []);
         } catch (error: any) {
-            toast.error(error.response?.data?.message || t('Transfer failed'));
+            showError(error.response?.data?.message || t('toast.transferFailed'));
         } finally {
             setExecuting(false);
         }

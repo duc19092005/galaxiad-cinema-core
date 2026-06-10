@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { Movie, ShowTimeSlot, Auditorium } from '../types';
-import { toast } from 'react-hot-toast';
+import { showSuccess, showError } from '../../../utils/ToastUtils';
 import { checkCollision } from '../utils';
 
 interface ManualAddModalProps {
@@ -24,6 +25,7 @@ const getNowVietnam = (): Date => {
 };
 
 const ManualAddModal: React.FC<ManualAddModalProps> = ({ movie, auditorium, scheduleSlots, selectedDate, onClose, onAdd }) => {
+    const { t } = useTranslation();
     // Ensure we start with formats that overlap with the auditorium's supported formats
     const roomFormatIds = auditorium.supportedFormats.map(f => f.id.toLowerCase());
     const validFormats = movie.formats.filter(f => roomFormatIds.includes(f.id.toLowerCase()));
@@ -44,12 +46,12 @@ const ManualAddModal: React.FC<ManualAddModalProps> = ({ movie, auditorium, sche
         e.preventDefault();
 
         if (validFormats.length === 0) {
-            toast.error("Phim này không có định dạng phù hợp với phòng chiếu hiện tại (ví dụ phim 3D nhưng phòng chỉ hỗ trợ 2D).");
+            showError(t('toast.formatNotSupported'));
             return;
         }
 
         if (!selectedFormat || !dateVal || !timeVal) {
-            toast.error("Vui lòng điền đủ thông tin.");
+            showError(t('toast.missingInfo'));
             return;
         }
 
@@ -69,12 +71,12 @@ const ManualAddModal: React.FC<ManualAddModalProps> = ({ movie, auditorium, sche
         // Past time check
         const nowVN = getNowVietnam();
         if (startRaw < nowVN) {
-            toast.error("Không thể xếp lịch chiếu trong quá khứ.");
+            showError(t('toast.pastSchedule'));
             return;
         }
 
         if (isColliding) {
-            toast.error("Thời gian này trùng với một suất chiếu khác (hoặc chưa đủ 20 phút dọn rạp). Vui lòng chọn giờ khác.");
+            showError(t('toast.overlapSchedule'));
             return;
         }
 
@@ -92,7 +94,7 @@ const ManualAddModal: React.FC<ManualAddModalProps> = ({ movie, auditorium, sche
         };
 
         onAdd(newSlot);
-        toast.success("Thêm suất chiếu thành công.");
+        showSuccess(t('toast.addScheduleSuccess'));
         onClose();
     };
 

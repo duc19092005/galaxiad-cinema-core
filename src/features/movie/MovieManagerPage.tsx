@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import type { Movie, MovieRequiredAge, MovieGenre } from '../../types/movie.types';
@@ -1031,7 +1031,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             }
 
             if (!isChanged) {
-                toast.success("No changes detected");
+                showError(t('toast.noChanges'));
                 onClose();
                 setLoading(false);
                 return;
@@ -1330,11 +1330,11 @@ const MovieManagerPage: React.FC = () => {
         if (!window.confirm(`Are you sure you want to delete movie "${movie.movieName}"?`)) return;
         try {
             await movieApi.deleteMovie(movie.movieId!);
-            toast.success('Xóa phim thành công');
+            showSuccess(t('toast.deleteMovieSuccess'));
             fetchMovies();
         } catch (err: any) {
             const msg = err.response?.data?.message || 'Không thể xóa phim này';
-            toast.error(msg);
+            showError(msg);
         }
     };
 

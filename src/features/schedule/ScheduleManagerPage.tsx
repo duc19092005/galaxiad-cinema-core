@@ -3,7 +3,7 @@ import TimelineGrid from './components/TimelineGrid';
 import DraggableMovie from './components/DraggableMovie';
 import type { Movie as ScheduleMovie, ScheduleData, ShowTimeSlot, Auditorium as ScheduleAuditorium } from './types';
 import { Calendar, Save, Menu, X, Film, Loader2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
@@ -132,7 +132,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
             }
         } catch (error) {
             console.error("Failed to fetch schedule dependencies", error);
-            toast.error("Failed to load dependencies");
+            showError(t('toast.loadDepsFailed'));
         } finally {
             setLoading(false);
         }
@@ -170,13 +170,13 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
         try {
             if (slotId !== "00000000-0000-0000-0000-000000000000" && !slotId.startsWith('new-')) {
                 await scheduleApi.deleteSchedule(slotId);
-                toast.success('Xóa lịch chiếu thành công.');
+                showSuccess(t('toast.deleteScheduleSuccess'));
             }
         } catch (error: any) {
             // If already deleted or move to archive, just remove locally without error toast if it's 404
             if (error.response?.status !== 404) {
                 const msg = error.response?.data?.message || 'Lỗi khi xóa lịch chiếu.';
-                toast.error(msg);
+                showError(msg);
             }
         } finally {
             // Xóa ở local
@@ -219,7 +219,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
         const slotsToSave = allSlots.filter(s => s.id.startsWith('new-') || s.isDirty);
         
         if (slotsToSave.length === 0) {
-            toast("Không có thay đổi nào để lưu.");
+            showError(t('toast.noChanges'));
             return;
         }
 
@@ -238,14 +238,14 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
             };
 
             await scheduleApi.createSchedule(payload);
-            toast.success('Schedule saved successfully!');
+            showSuccess(t('toast.scheduleSaved'));
         } catch (error: any) {
             console.error("Save schedule error", error);
             const msg = error.response?.data?.message || "";
             if (msg.includes("15 phút") || msg.includes("trùng lịch") || error.response?.data?.errorCode === 'E02') {
-                toast.error("Vui lòng để trống 15 phút giữa các suất chiếu để dọn dẹp phòng rạp.");
+                showError(t('toast.schedule15minGapToast'));
             } else {
-                toast.error(msg || "Failed to save schedule");
+                showError(msg || t('toast.scheduleSaveFailed'));
             }
         } finally {
             setSaving(false);

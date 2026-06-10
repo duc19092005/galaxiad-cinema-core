@@ -7,7 +7,8 @@ import {
 import { useTheme } from '../../contexts/ThemeContext';
 import { bookingApi } from '../../api/bookingApi';
 import type { TicketInfo } from '../../types/booking.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
+import { useTranslation } from 'react-i18next';
 import jsPDF from 'jspdf';
 
 
@@ -16,6 +17,7 @@ const BookingSuccessPage: React.FC = () => {
     const orderId = searchParams.get('orderId');
     const navigate = useNavigate();
     const { theme } = useTheme();
+    const { t } = useTranslation();
 
     const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
     const [loading, setLoading] = useState(true);
@@ -167,10 +169,10 @@ const BookingSuccessPage: React.FC = () => {
             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
             pdf.save(`ticket_${orderId.substring(0, 8)}.pdf`);
 
-            toast.success("PDF generated successfully!");
+            showSuccess(t('toast.pdfGenerated'));
         } catch (err) {
             console.error("PDF generation error:", err);
-            toast.error("Failed to generate PDF");
+            showError(t('toast.pdfFailed'));
         } finally {
             setPdfLoading(false);
         }

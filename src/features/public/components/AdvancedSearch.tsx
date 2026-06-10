@@ -5,7 +5,7 @@ import { publicApi } from '../../../api/publicApi';
 import type { ActiveCinema, ActiveMovie, SearchScheduleResult } from '../../../types/public.types';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { toast } from 'react-hot-toast';
+import { showError } from '../../../utils/ToastUtils';
 
 const AdvancedSearch: React.FC = () => {
     const { t } = useTranslation();
@@ -62,10 +62,10 @@ const AdvancedSearch: React.FC = () => {
             const res = await publicApi.searchSchedules(selectedDate, selectedMovieId || undefined, selectedCinemaId || undefined);
             setSearchResults(res.data || []);
             if (res.data?.length === 0) {
-                toast.error(t('No showtimes found for these filters.'));
+                showError(t('toast.noShowtimesFound'));
             }
         } catch (err) {
-            toast.error(t('Error searching schedules.'));
+            showError(t('toast.searchError'));
             console.error(err);
         } finally {
             setLoading(false);

@@ -1,11 +1,12 @@
 // src/components/CinemaAssignModal.tsx
 import React, { useEffect, useState } from 'react';
 import { X, MapPin, Loader2, AlertCircle, Check, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { adminApi } from '../api/adminApi';
 import { facilitiesApi } from '../api/facilitiesApi';
 import type { Cinema } from '../types/facilities.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../utils/ToastUtils';
 
 interface CinemaAssignModalProps {
     isOpen: boolean;
@@ -23,6 +24,7 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
     onSuccess,
 }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [cinemas, setCinemas] = useState<Cinema[]>([]);
     const [loading, setLoading] = useState(false);
     const [assigning, setAssigning] = useState(false);
@@ -51,17 +53,17 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
 
     const handleAssign = async () => {
         if (!selectedCinemaId) {
-            toast.error('Please select a cinema');
+            showError(t('toast.selectCinema'));
             return;
         }
         setAssigning(true);
         try {
             await adminApi.assignTheaterManager(selectedCinemaId, userId);
-            toast.success('Theater manager assigned successfully');
+            showSuccess(t('toast.assignManagerSuccess'));
             onSuccess();
             onClose();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to assign theater manager');
+            showError(err.response?.data?.message || t('toast.assignManagerFailed'));
         } finally {
             setAssigning(false);
         }

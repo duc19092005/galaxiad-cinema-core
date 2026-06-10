@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { X, UserPlus, Loader2, AlertCircle, Check, Search, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { transferRightsApi } from '../../../api/transferRightsApi';
 import type { ManagerDto } from '../../../types/admin.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../../../utils/ToastUtils';
 
 interface AssignRightsModalProps {
     isOpen: boolean;
@@ -23,6 +24,7 @@ const AssignRightsModal: React.FC<AssignRightsModalProps> = ({
     onSuccess,
 }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [managers, setManagers] = useState<ManagerDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [assigning, setAssigning] = useState(false);
@@ -51,7 +53,7 @@ const AssignRightsModal: React.FC<AssignRightsModalProps> = ({
 
     const handleAssign = async () => {
         if (!selectedManagerId) {
-            toast.error('Please select a manager');
+            showError(t('toast.selectManager'));
             return;
         }
         setAssigning(true);
@@ -62,11 +64,11 @@ const AssignRightsModal: React.FC<AssignRightsModalProps> = ({
                 targetUserId: selectedManagerId,
                 itemId: itemId
             });
-            toast.success('Management rights assigned successfully');
+            showSuccess(t('toast.assignRightsSuccess'));
             onSuccess();
             onClose();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to assign management rights');
+            showError(err.response?.data?.message || t('toast.assignRightsFailed'));
         } finally {
             setAssigning(false);
         }

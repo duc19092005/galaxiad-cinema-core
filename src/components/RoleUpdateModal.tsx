@@ -1,10 +1,11 @@
 // src/components/RoleUpdateModal.tsx
 import React, { useEffect, useState } from 'react';
 import { X, Shield, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../contexts/ThemeContext';
 import { adminApi } from '../api/adminApi';
 import type { RoleDto } from '../types/admin.types';
-import toast from 'react-hot-toast';
+import { showSuccess, showError } from '../utils/ToastUtils';
 
 interface RoleUpdateModalProps {
     isOpen: boolean;
@@ -24,6 +25,7 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
     onSuccess,
 }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [roles, setRoles] = useState<RoleDto[]>([]);
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState(false);
@@ -81,7 +83,7 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
         const isAdminRole = role.roleName === 'Admin';
 
         if (isSelf && isAdminRole && selectedRoleIds.includes(role.roleId)) {
-            toast.error("You cannot remove your own Admin role.");
+            showError(t('toast.removeOwnAdmin'));
             return;
         }
 
@@ -100,7 +102,7 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
             // CHECK: Is the user updating THEMSELVES?
             const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
             if (storedUser.userId === userId) {
-                toast.success('Your permissions have changed. Logging out for security...', { duration: 3000 });
+                showSuccess(t('toast.permissionsChanged'), { duration: 3000 });
                 // Logout logic
                 setTimeout(() => {
                     localStorage.removeItem('user_info');
@@ -111,11 +113,11 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                 return;
             }
 
-            toast.success('User roles updated successfully');
+            showSuccess(t('toast.rolesUpdated'));
             onSuccess(userId);
             onClose();
         } catch (err: any) {
-            toast.error(err.response?.data?.message || 'Failed to update user roles');
+            showError(err.response?.data?.message || t('toast.rolesUpdateFailed'));
         } finally {
             setUpdating(false);
         }

@@ -5,11 +5,11 @@ import {
     History, ChevronLeft, Loader2, AlertCircle,
     Ticket, MapPin, Clock, CheckCircle2, Timer,
     ExternalLink, Lock, Edit2, Check, X,
-    Sun, Moon, Sparkles, ChevronDown
+    Sun, Moon, Sparkles, ChevronDown, PlayCircle
 } from 'lucide-react';
 import { bookingApi } from '../../api/bookingApi';
 import { authApi } from '../../api/authApi';
-import { toast } from 'react-hot-toast';
+import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import ChangePasswordModal from './components/ChangePasswordModal';
@@ -104,31 +104,31 @@ const AccountPage: React.FC = () => {
         // 1. Validation Logic
         if (field === 'phoneNumber') {
             if (tempValue.length !== 10 || !/^\d+$/.test(tempValue)) {
-                toast.error(t('validation.phoneLength'));
+                showError(t('validation.phoneLength'));
                 return;
             }
         }
         if (field === 'identityCode') {
             if (tempValue.length !== 12 || !/^\d+$/.test(tempValue)) {
-                toast.error(t('validation.idLength'));
+                showError(t('validation.idLength'));
                 return;
             }
         }
         if (field === 'userName') {
             if (/[^a-zA-Z0-9\sÀ-ỹ]/.test(tempValue)) {
-                toast.error(t('validation.nameSpecialChar'));
+                showError(t('validation.nameSpecialChar'));
                 return;
             }
         }
         if (field === 'dateOfBirth') {
             if (!tempValue) {
-                toast.error(t('validation.dobRequired'));
+                showError(t('validation.dobRequired'));
                 return;
             }
             // Parse DD/MM/YYYY
             const parts = tempValue.split('/');
             if (parts.length !== 3) {
-                toast.error(t('validation.dobInvalidFormat') || "Định dạng ngày không hợp lệ (DD/MM/YYYY)");
+                showError(t('validation.dobInvalidFormat') || "Định dạng ngày không hợp lệ (DD/MM/YYYY)");
                 return;
             }
             const day = parseInt(parts[0], 10);
@@ -137,7 +137,7 @@ const AccountPage: React.FC = () => {
             const birth = new Date(year, month, day);
 
             if (isNaN(birth.getTime()) || birth.getDate() !== day || birth.getMonth() !== month) {
-                toast.error(t('validation.dobInvalidDate') || "Ngày tháng không hợp lệ");
+                showError(t('validation.dobInvalidDate') || "Ngày tháng không hợp lệ");
                 return;
             }
 
@@ -147,7 +147,7 @@ const AccountPage: React.FC = () => {
             if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
             
             if (age < 16 || age > 80) {
-                toast.error(t('validation.ageLimit'));
+                showError(t('validation.ageLimit'));
                 return;
             }
         }
@@ -177,12 +177,12 @@ const AccountPage: React.FC = () => {
                 [field]: finalValue
             };
             await authApi.updateProfile(updatePayload);
-            toast.success(t('account.updateSuccess'));
+            showSuccess(t('account.updateSuccess'));
             await fetchAllData(); 
             handleCancelEdit();
         } catch (err: any) {
             const msg = err.response?.data?.message || err.response?.data?.errors?.[0] || t('account.updateFailed');
-            toast.error(msg);
+            showError(msg);
         } finally {
             setUpdating(false);
         }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Lock, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { authApi } from '../../../api/authApi';
-import { toast } from 'react-hot-toast';
+import { showSuccess } from '../../../utils/ToastUtils';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../../types/auth.types';
@@ -13,6 +14,7 @@ interface ChangePasswordModalProps {
 
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -58,7 +60,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         try {
             await authApi.changePassword(formData);
             setSuccess(true);
-            toast.success("Mật khẩu đã được thay đổi thành công!");
+            showSuccess(t('toast.passwordChanged'));
             setTimeout(() => {
                 onClose();
                 setFormData({ oldPassword: '', newPassword: '', renewPassword: '' });
