@@ -35,7 +35,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
-import AppSidebar, { SidebarSection } from '../../components/AppSidebar';
+import AppSidebar from '../../components/AppSidebar';
+import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';

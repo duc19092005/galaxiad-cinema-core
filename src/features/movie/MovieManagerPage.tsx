@@ -44,7 +44,8 @@ import Cookies from 'js-cookie';
 import { publicApi } from '../../api/publicApi';
 import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
-import AppSidebar, { SidebarSection } from '../../components/AppSidebar';
+import AppSidebar from '../../components/AppSidebar';
+import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 

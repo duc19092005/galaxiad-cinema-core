@@ -35,30 +35,13 @@ const TRENDING_DATA = [
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
 
-// ===== THEME TOGGLE (simple class-based, no context needed) =====
-type ThemeMode = 'light' | 'dark' | 'modern';
-
-const applyTheme = (mode: ThemeMode) => {
-  document.documentElement.classList.remove('theme-light', 'theme-dark', 'theme-modern');
-  document.documentElement.classList.add(`theme-${mode}`);
-  localStorage.setItem('theme_preference', mode);
-};
-
-const getStoredTheme = (): ThemeMode => {
-  const stored = localStorage.getItem('theme_preference') as ThemeMode | null;
-  return stored && ['light', 'dark', 'modern'].includes(stored) ? stored : 'dark';
-};
-
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const [currentTheme, setCurrentTheme] = useState<ThemeMode>(getStoredTheme);
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
-  const themeDropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -72,10 +55,6 @@ const HomePage: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<string>('');
 
   const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    applyTheme(currentTheme);
-  }, [currentTheme]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -114,7 +93,6 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
-      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) setIsThemeDropdownOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -136,12 +114,6 @@ const HomePage: React.FC = () => {
     } finally { setLogoutLoading(false); }
   };
 
-  const getThemeIcon = () => {
-    if (currentTheme === 'dark') return <Moon size={14} />;
-    if (currentTheme === 'modern') return <Sparkles size={14} />;
-    return <Sun size={14} />;
-  };
-
   return (
     <>
       <style>{`
@@ -157,14 +129,14 @@ const HomePage: React.FC = () => {
           to { transform: rotate(360deg); }
         }
       `}</style>
-      <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)', overflowX: 'hidden' }}>
+      <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
       {/* ===== NAVBAR ===== */}
       <nav
         style={{
           position: 'fixed', width: '100%', top: 0, zIndex: 50,
-          backgroundColor: isScrolled ? 'var(--color-surface)' : 'rgba(255,255,255,0.03)',
+          backgroundColor: isScrolled ? 'var(--bg-surface)' : 'rgba(255,255,255,0.03)',
           backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: isScrolled ? '1px solid var(--color-border)' : '1px solid rgba(255,255,255,0.06)',
+          borderBottom: isScrolled ? '1px solid var(--border-color)' : '1px solid rgba(255,255,255,0.06)',
           paddingLeft: 'var(--space-24)', paddingRight: 'var(--space-24)',
           transition: 'background-color 0.3s ease, border-color 0.3s ease',
           height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -176,11 +148,11 @@ const HomePage: React.FC = () => {
           </button>
           <div
             onClick={() => navigate('/home')}
-            style={{ cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 800, letterSpacing: '-0.3px', background: 'linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-cta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            style={{ cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 800, letterSpacing: '-0.3px', background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
             CINEMA
           </div>
           <div style={{ display: 'none', alignItems: 'center', gap: 'var(--space-32)', marginLeft: 'var(--space-40)' }} className="md:flex">
-            <a href="#" style={{ color: 'var(--color-accent-cta)', fontWeight: 600, fontSize: 'var(--text-sm)', textDecoration: 'none', borderBottom: '2px solid var(--color-accent-cta)', paddingBottom: 2 }}>{t('home.moviesNav')}</a>
+            <a href="#" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 'var(--text-sm)', textDecoration: 'none', borderBottom: '2px solid var(--accent)', paddingBottom: 2 }}>{t('home.moviesNav')}</a>
             <a href="#" className="nav-link">{t('home.showtimesNav')}</a>
             <a href="#" className="nav-link">{t('home.theatersNav')}</a>
             <a href="#" className="nav-link">{t('home.offersNav')}</a>
@@ -192,27 +164,6 @@ const HomePage: React.FC = () => {
             <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
           </div>
           <LanguageSwitcher />
-          
-          <div className="relative" ref={themeDropdownRef}>
-            <button onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)} className="btn-icon" style={{ border: 'none' }}>
-              {getThemeIcon()}
-            </button>
-            {isThemeDropdownOpen && (
-              <div className="glass-card" style={{ position: 'absolute', right: 0, marginTop: 'var(--space-8)', width: 180, padding: 'var(--space-4)', zIndex: 100, borderRadius: 'var(--radius-md)' }}>
-                {(['light', 'dark', 'modern'] as const).map(t => (
-                  <button key={t} onClick={() => { setCurrentTheme(t); setIsThemeDropdownOpen(false); }}
-                    className="btn-ghost" style={{
-                      width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)',
-                      backgroundColor: currentTheme === t ? 'var(--color-surface)' : 'transparent',
-                      color: currentTheme === t ? 'var(--color-accent-primary)' : 'var(--color-text-secondary)',
-                    }}>
-                    {t === 'light' ? <Sun size={14} /> : t === 'dark' ? <Moon size={14} /> : <Sparkles size={14} />}
-                    <span>{t === 'light' ? 'Light' : t === 'dark' ? 'Dark' : 'Modern'}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
             {!user ? (
@@ -222,16 +173,16 @@ const HomePage: React.FC = () => {
             ) : (
               <div className="relative" ref={dropdownRef}>
                 <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="btn-secondary" style={{ gap: 'var(--space-8)', padding: '4px 12px 4px 4px', height: 'auto', borderRadius: 'var(--radius-full)' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-surface)' }}>
-                    <User size={14} style={{ color: 'var(--color-accent-primary)' }} />
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)' }}>
+                    <User size={14} style={{ color: 'var(--accent)' }} />
                   </div>
                   <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{user.username}</span>
-                  <ChevronDown size={12} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 300ms ease', color: 'var(--color-text-secondary)' }} />
+                  <ChevronDown size={12} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 300ms ease', color: 'var(--text-secondary)' }} />
                 </button>
                 {isDropdownOpen && (
                   <div className="glass-card" style={{ position: 'absolute', right: 0, marginTop: 'var(--space-8)', width: 220, padding: 'var(--space-4)', zIndex: 100, borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ padding: 'var(--space-12) var(--space-16)', borderBottom: '1px solid var(--color-border)' }}>
-                      <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--color-text-secondary)' }}>{t('header.signedInAs')}</p>
+                    <div style={{ padding: 'var(--space-12) var(--space-16)', borderBottom: '1px solid var(--border-color)' }}>
+                      <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--text-secondary)' }}>{t('header.signedInAs')}</p>
                       <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, margin: 0 }}>{user.username}</p>
                     </div>
                     {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
@@ -247,8 +198,8 @@ const HomePage: React.FC = () => {
                         <ArrowLeftRight size={14} /> {t('header.switchRole')}
                       </button>
                     )}
-                    <div style={{ height: 1, backgroundColor: 'var(--color-border)', margin: 'var(--space-4) 0' }} />
-                    <button onClick={handleLogoutClick} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--color-accent-error)' }}>
+                    <div style={{ height: 1, backgroundColor: 'var(--border-color)', margin: 'var(--space-4) 0' }} />
+                    <button onClick={handleLogoutClick} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--danger)' }}>
                       <LogOut size={14} /> {t('header.logout')}
                     </button>
                   </div>
@@ -268,9 +219,9 @@ const HomePage: React.FC = () => {
         pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
       }}>
         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setIsMobileMenuOpen(false)} />
-        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 280, backgroundColor: 'var(--color-surface)', borderRight: '1px solid var(--color-border)', transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 400ms ease', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-24)', borderBottom: '1px solid var(--color-border)' }}>
-            <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 800, background: 'linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-cta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CINEMA</span>
+        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 280, backgroundColor: 'var(--bg-surface)', borderRight: '1px solid var(--border-color)', transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 400ms ease', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-24)', borderBottom: '1px solid var(--border-color)' }}>
+            <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 800, background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CINEMA</span>
             <button className="btn-icon" onClick={() => setIsMobileMenuOpen(false)}><X size={18} /></button>
           </div>
           <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-24)', display: 'flex', flexDirection: 'column', gap: 'var(--space-24)' }}>
@@ -282,11 +233,11 @@ const HomePage: React.FC = () => {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)', marginBottom: 'var(--space-16)' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-surface)' }}>
-                    <User size={20} style={{ color: 'var(--color-accent-primary)' }} />
+                  <div style={{ width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)' }}>
+                    <User size={20} style={{ color: 'var(--accent)' }} />
                   </div>
                   <div>
-                    <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--color-text-secondary)' }}>{t('header.signedInAs')}</p>
+                    <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--text-secondary)' }}>{t('header.signedInAs')}</p>
                     <p style={{ fontWeight: 500, margin: 0 }}>{user?.username}</p>
                   </div>
                 </div>
@@ -298,27 +249,13 @@ const HomePage: React.FC = () => {
                     <LayoutDashboard size={16} /> Management hub
                   </button>
                 )}
-                <button className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--color-accent-error)' }} onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}>
+                <button className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--danger)' }} onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}>
                   <LogOut size={16} /> {t('header.logout')}
                 </button>
               </div>
             )}
             <div>
-              <p style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-12)', letterSpacing: '0.3px', color: 'var(--color-text-secondary)' }}>City</p>
-              <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
-            </div>
-            <div>
-              <p style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-12)', letterSpacing: '0.3px', color: 'var(--color-text-secondary)' }}>Theme</p>
-              <div style={{ display: 'flex', gap: 'var(--space-8)' }}>
-                {(['light', 'dark', 'modern'] as const).map(t => (
-                  <button key={t} onClick={() => setCurrentTheme(t)} className="btn-icon" style={{ backgroundColor: currentTheme === t ? 'var(--color-surface)' : 'transparent', color: currentTheme === t ? 'var(--color-accent-primary)' : 'var(--color-text-secondary)' }}>
-                    {t === 'light' ? <Sun size={14} /> : t === 'dark' ? <Moon size={14} /> : <Sparkles size={14} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <p style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-12)', letterSpacing: '0.3px', color: 'var(--color-text-secondary)' }}>Language</p>
+              <p style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-12)', letterSpacing: '0.3px', color: 'var(--text-secondary)' }}>Language</p>
               <LanguageSwitcher />
             </div>
           </div>
@@ -328,8 +265,8 @@ const HomePage: React.FC = () => {
       {/* ===== LOGOUT ERROR ===== */}
       {logoutError && (
         <div style={{ paddingTop: 80, paddingLeft: 'var(--space-24)', paddingRight: 'var(--space-24)', maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ padding: 'var(--space-12) var(--space-16)', border: '1px solid var(--color-accent-error)', backgroundColor: 'rgba(255,180,171,0.06)', display: 'flex', alignItems: 'center', gap: 'var(--space-12)', borderRadius: 'var(--radius-md)' }}>
-            <AlertCircle size={16} style={{ color: 'var(--color-accent-error)', flexShrink: 0 }} />
+          <div style={{ padding: 'var(--space-12) var(--space-16)', border: '1px solid var(--danger)', backgroundColor: 'rgba(255,180,171,0.06)', display: 'flex', alignItems: 'center', gap: 'var(--space-12)', borderRadius: 'var(--radius-md)' }}>
+            <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
             <span style={{ fontSize: 'var(--text-sm)' }}>{logoutError}</span>
           </div>
         </div>
@@ -339,15 +276,15 @@ const HomePage: React.FC = () => {
       <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 80, paddingLeft: 20, paddingRight: 20, minHeight: 600 }} className="hero-section">
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img alt="Cinema theater" src={HERO_IMG} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.3)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--color-bg-base) 0%, rgba(5,20,36,0.4) 40%, rgba(5,20,36,0.8) 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-base) 0%, rgba(5,20,36,0.4) 40%, rgba(5,20,36,0.8) 100%)' }} />
         </div>
         <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', maxWidth: 900, margin: '0 auto', paddingTop: 60 }}>
-          <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--color-accent-cta)', fontWeight: 700, display: 'block', marginBottom: 24 }}>
+          <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, display: 'block', marginBottom: 24 }}>
             {t('home.experienceBadge')}
           </span>
           <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'white' }}>
             {t('home.cinematic')}<br />
-            <span style={{ color: 'var(--color-accent-cta)' }}>{t('home.adventure')}</span>
+            <span style={{ color: 'var(--accent)' }}>{t('home.adventure')}</span>
           </h1>
           <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.65)', maxWidth: 600, margin: '24px auto' }}>
             {t('home.heroDesc')}
@@ -368,7 +305,7 @@ const HomePage: React.FC = () => {
             <div className="booking-grid-items" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
               {[{ step: '1', label: 'home.date', value: 'home.today' }, { step: '2', label: 'home.movie', value: 'home.allMovies' }, { step: '3', label: 'home.cinema', value: 'home.allCinemas' }].map((item, idx) => (
                 <div key={idx} style={{ padding: '16px 24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: 8, borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none', transition: 'background 0.3s ease' }}>
-                  <span style={{ fontSize: 10, color: 'var(--color-accent-cta)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.step}. {t(item.label)}</span>
+                  <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.step}. {t(item.label)}</span>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontWeight: 500, color: 'white' }}>{t(item.value)}</span>
                     <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
@@ -388,8 +325,8 @@ const HomePage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-              <Sparkles size={16} style={{ color: 'var(--color-accent-primary)' }} />
-              <span style={{ fontSize: 11, color: 'var(--color-accent-primary)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600 }}>{t('home.weeklyLeaders')}</span>
+              <Sparkles size={16} style={{ color: 'var(--accent)' }} />
+              <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600 }}>{t('home.weeklyLeaders')}</span>
             </div>
             <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
               {t('home.topTrending')}
@@ -420,7 +357,7 @@ const HomePage: React.FC = () => {
       <section style={{ maxWidth: 1280, margin: '0 auto', padding: '60px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48 }}>
           <div>
-            <span style={{ fontSize: 11, color: 'var(--color-accent-primary)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
               {t('home.nowShowingBadge')}
             </span>
             <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
@@ -431,13 +368,13 @@ const HomePage: React.FC = () => {
 
         {loading ? (
           <div className="state-center" style={{ minHeight: 300 }}>
-            <Loader2 size={32} style={{ color: 'var(--color-accent-primary)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ color: 'var(--color-text-secondary)', marginTop: 'var(--space-16)' }}>Loading movies...</p>
+            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-16)' }}>Loading movies...</p>
           </div>
         ) : error ? (
           <div className="state-center" style={{ minHeight: 300 }}>
-            <AlertCircle size={40} style={{ color: 'var(--color-accent-error)' }} />
-            <p style={{ color: 'var(--color-accent-error)', marginTop: 'var(--space-16)' }}>{error}</p>
+            <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
+            <p style={{ color: 'var(--danger)', marginTop: 'var(--space-16)' }}>{error}</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
@@ -449,7 +386,7 @@ const HomePage: React.FC = () => {
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 'var(--space-8)' }}>{movie.movieName}</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
-                      <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--color-surface)', color: 'var(--color-accent-primary)', border: '1px solid var(--color-border)' }}>
+                      <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
                         {f}
                       </span>
                     ))}
@@ -465,7 +402,7 @@ const HomePage: React.FC = () => {
       {comingSoon.length > 0 && (
         <section style={{ maxWidth: 1280, margin: '0 auto', padding: '60px 20px 100px' }}>
           <div style={{ marginBottom: 48 }}>
-            <span style={{ fontSize: 11, color: 'var(--color-accent-info)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
               {t('home.comingSoonBadge')}
             </span>
             <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
@@ -479,7 +416,7 @@ const HomePage: React.FC = () => {
                 <img src={movie.moviePosterURL || PLACEHOLDER_POSTER} alt={movie.movieName} style={{ width: '100%', height: 400, objectFit: 'cover' }} />
                 <div style={{ padding: 'var(--space-16)' }}>
                   <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 'var(--space-8)' }}>{movie.movieName}</h3>
-                  <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--color-surface)', color: 'var(--color-accent-info)' }}>
+                  <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)' }}>
                     Coming Soon
                   </span>
                 </div>
@@ -490,13 +427,13 @@ const HomePage: React.FC = () => {
       )}
 
       {/* ===== FOOTER ===== */}
-      <footer style={{ borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', padding: '60px 20px 40px' }}>
+      <footer style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: '60px 20px 40px' }}>
         <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 40, maxWidth: 1280, margin: '0 auto' }}>
           <div>
-            <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg, var(--color-accent-primary), var(--color-accent-cta))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 16 }}>
+            <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 16 }}>
               CINEMA PRO
             </h3>
-            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
               Bringing the magic of cinema to life. Premium experiences, unforgettable stories.
             </p>
           </div>
@@ -504,20 +441,20 @@ const HomePage: React.FC = () => {
             <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Quick Links</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {['Movies', 'Showtimes', 'Theaters', 'Offers'].map(link => (
-                <a key={link} href="#" style={{ fontSize: 13, color: 'var(--color-text-secondary)', textDecoration: 'none' }}>{link}</a>
+                <a key={link} href="#" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{link}</a>
               ))}
             </div>
           </div>
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Contact</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: 'var(--color-text-secondary)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
               <span>support@cinemapro.com</span>
               <span>1800-123-456</span>
               <span>123 Cinema Boulevard</span>
             </div>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 40, paddingTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--color-text-secondary)' }}>
+        <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 40, paddingTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
           © 2024 CinemaPro. All rights reserved.
         </div>
       </footer>
