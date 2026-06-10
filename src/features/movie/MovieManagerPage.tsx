@@ -45,6 +45,7 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { publicApi } from '../../api/publicApi';
 import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
+import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToUtcString } from '../../utils/dateTimeUtils';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -284,11 +285,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
 
     if (!isOpen) return null;
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric'
-        });
-    };
+    const formatDate = formatVietnamDate;
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -533,8 +530,8 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 movieName: formData.movieName.trim(),
                 movieDescription: formData.movieDescription.trim(),
                 movieImage: formData.movieImage,
-                startedDate: formData.startedDate, // Send local string as-is
-                endedDate: formData.endedDate,     // Send local string as-is
+                startedDate: vietnamDateTimeLocalToUtcString(formData.startedDate) ?? formData.startedDate,
+                endedDate: vietnamDateTimeLocalToUtcString(formData.endedDate) ?? formData.endedDate,
                 duration: parseInt(formData.duration),
                 movieFormatIds: formData.movieFormatIds,
                 movieGenreIds: formData.movieGenreIds,
@@ -544,7 +541,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 cinemaIds: formData.cinemaIds,
             };
 
-            console.log("DEBUG: Creating Movie -> Sending Local Time:", {
+            console.log("DEBUG: Creating Movie -> Sending Vietnam time as UTC:", {
                 UI_Started: formData.startedDate,
                 UI_Ended: formData.endedDate
             });
@@ -830,22 +827,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
     const { theme } = useTheme();
     const [loading, setLoading] = useState(false);
 
-    // Helper to format ISO date to local YYYY-MM-DDTHH:mm ignoring Z (treating as Wall Time)
-    const formatDateForInput = (dateStr: string | null | undefined) => {
-        if (!dateStr) return '';
-        // Strip 'Z' to prevent browser from adding timezone offset
-        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
-        const d = new Date(wallTimeStr);
-        if (isNaN(d.getTime())) return '';
-        
-        // Use local time methods to fill the <input type="datetime-local">
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
+    const formatDateForInput = toVietnamDateTimeLocalValue;
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(movie.movieImageUrl);
@@ -971,12 +953,12 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             // 2. Dates (Compare using the same formatted string)
             const originalStarted = formatDateForInput(movie.startedDate);
             if (formData.startedDate !== originalStarted) {
-                submissionData.startedDate = formData.startedDate || null;
+                submissionData.startedDate = vietnamDateTimeLocalToUtcString(formData.startedDate) || null;
                 isChanged = true;
             }
             const originalEnded = formatDateForInput(movie.endedDate);
             if (formData.endedDate !== originalEnded) {
-                submissionData.endedDate = formData.endedDate || null;
+                submissionData.endedDate = vietnamDateTimeLocalToUtcString(formData.endedDate) || null;
                 isChanged = true;
             }
 
@@ -1482,13 +1464,7 @@ const MovieManagerPage: React.FC = () => {
         (m.movieDescriptions || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const formatDate = (dateStr: string) => {
-        // Strip 'Z' to display as Wall Time
-        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
-        return new Date(wallTimeStr).toLocaleDateString('vi-VN', { 
-            day: '2-digit', month: '2-digit', year: 'numeric' 
-        });
-    };
+    const formatDate = formatVietnamDate;
 
     return (
         <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'

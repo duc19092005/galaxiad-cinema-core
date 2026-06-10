@@ -3,6 +3,21 @@ import { identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, RoleDto } from '../types/admin.types';
 
+const normalizeAuditLog = (log: any): AuditLogDto => ({
+    auditLogId: log.auditLogId ?? log.AuditLogId,
+    action: log.action ?? log.Action ?? '',
+    entityType: log.entityType ?? log.EntityType ?? '',
+    entityId: log.entityId ?? log.EntityId ?? null,
+    entityName: log.entityName ?? log.EntityName ?? '',
+    description: log.description ?? log.Description ?? '',
+    actorUserId: log.actorUserId ?? log.ActorUserId ?? '',
+    actorName: log.actorName ?? log.ActorName ?? '',
+    actorPrimaryRole: log.actorPrimaryRole ?? log.ActorPrimaryRole ?? '',
+    isAdminAction: log.isAdminAction ?? log.IsAdminAction ?? false,
+    cinemaId: log.cinemaId ?? log.CinemaId ?? null,
+    createdAt: log.createdAt ?? log.CreatedAt ?? '',
+});
+
 export const adminApi = {
     /** GET /api/v1/AdminManageUsers */
     getUsers: async (): Promise<ApiSuccessResponse<AdminUserDto[]>> => {
@@ -55,17 +70,44 @@ export const adminApi = {
 
     /** GET /api/v1/admin/audit-logs/recent */
     getRecentAuditLogs: async (take = 30): Promise<ApiSuccessResponse<AuditLogDto[]>> => {
-        const response = await identityAxios.get<ApiSuccessResponse<AuditLogDto[]>>(
+        const response = await identityAxios.get<any>(
             `/admin/audit-logs/recent?take=${take}`
         );
+        if (Array.isArray(response.data)) {
+            return {
+                isSuccess: true,
+                message: 'Success',
+                data: response.data.map(normalizeAuditLog)
+            };
+        }
+        if (Array.isArray(response.data?.Data)) {
+            return {
+                isSuccess: response.data.IsSuccess ?? true,
+                message: response.data.Message ?? 'Success',
+                data: response.data.Data.map(normalizeAuditLog)
+            };
+        }
+        if (Array.isArray(response.data?.data)) {
+            return {
+                ...response.data,
+                data: response.data.data.map(normalizeAuditLog)
+            };
+        }
         return response.data;
     },
 
     /** GET /api/v1/admin/dashboard/management */
     getManagementDashboard: async (): Promise<ApiSuccessResponse<ManagementDashboardDto>> => {
-        const response = await identityAxios.get<ApiSuccessResponse<ManagementDashboardDto>>(
+        const response = await identityAxios.get<any>(
             '/admin/dashboard/management'
         );
+        if (response.data?.Data) {
+            return {
+                isSuccess: response.data.IsSuccess ?? true,
+                message: response.data.Message ?? 'Success',
+                data: response.data.Data
+            };
+        }
         return response.data;
     },
 

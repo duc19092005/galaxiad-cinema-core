@@ -34,6 +34,7 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import TransferRightsView from './components/TransferRightsView';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
+import { formatVietnamDateTime } from '../../utils/dateTimeUtils';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -372,19 +373,7 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    const formatDate = (dateStr: string | null) => {
-        if (!dateStr || dateStr.startsWith('0001-01-01')) return 'N/A';
-        // Strip 'Z' to treat as Wall Time (prevent local offset shifting)
-        const wallTimeStr = dateStr.endsWith('Z') ? dateStr.slice(0, -1) : dateStr;
-        return new Date(wallTimeStr).toLocaleString('vi-VN', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-    };
+    const formatDate = formatVietnamDateTime;
 
     return (
         <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'}`}>

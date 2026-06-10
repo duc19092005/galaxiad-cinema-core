@@ -3,6 +3,7 @@ import { Activity, Building2, Clock, Film, Loader2, ReceiptText, Star, Ticket } 
 import { adminApi } from '../api/adminApi';
 import { useTheme } from '../contexts/ThemeContext';
 import type { ManagementDashboardDto } from '../types/admin.types';
+import { formatVietnamDateTime } from '../utils/dateTimeUtils';
 
 interface ManagementDashboardProps {
   role: 'theater' | 'movie' | 'facilities';
@@ -45,11 +46,7 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
   const formatMoney = (value: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(value || 0);
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    if (Number.isNaN(date.getTime())) return 'N/A';
-    return date.toLocaleString('vi-VN');
-  };
+  const formatDate = formatVietnamDateTime;
 
   if (loading) {
     return (
