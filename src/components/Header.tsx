@@ -4,12 +4,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useCinema } from '../contexts/CinemaContext';
 import {
   UserCircle,
   LogOut,
   ArrowLeftRight,
-  LayoutDashboard,
   ChevronDown,
   Menu,
   Bell,

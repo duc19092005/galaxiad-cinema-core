@@ -5,18 +5,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  LayoutDashboard,
-  Film,
-  Calendar,
-  Building2,
-  Activity,
-  Users,
-  Settings,
   X,
-  LogOut,
   UserCircle,
-  ArrowLeftRight,
   ChevronRight,
+  Settings,
+  ArrowLeftRight,
+  LogOut,
 } from 'lucide-react';
 import { authApi } from '../api/authApi';
 import Cookies from 'js-cookie';

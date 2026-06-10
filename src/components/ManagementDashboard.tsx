@@ -9,7 +9,6 @@ import {
   Calendar,
   Users,
   Building2,
-  TrendingUp,
   Ticket,
   DollarSign,
   Activity,

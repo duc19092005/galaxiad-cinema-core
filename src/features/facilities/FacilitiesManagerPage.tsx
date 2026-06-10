@@ -4,8 +4,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LogOut, AlertCircle, Loader2, Menu, UserCircle, ChevronDown,
-  ArrowLeftRight, LayoutDashboard, Building2, BarChart3,
+  AlertCircle, Loader2,
+  LayoutDashboard, Building2, BarChart3,
 } from 'lucide-react';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
@@ -38,8 +38,7 @@ const FacilitiesManagerPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
+    const handleClickOutside = (_event: MouseEvent) => {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -74,8 +73,6 @@ const FacilitiesManagerPage: React.FC = () => {
       } else { setError('Cannot connect to server.'); }
     } finally { setLoading(false); }
   };
-
-  const handleLogoutClick = () => { setIsLogoutModalOpen(true); setLogoutError(null); };
 
   const handleLogoutConfirm = async () => {
     setLogoutError(null); setLogoutLoading(true);

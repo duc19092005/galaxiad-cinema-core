@@ -5,8 +5,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     User as UserIcon,
-    LogOut,
-    UserCircle,
     AlertCircle,
     Film,
     Plus,
@@ -22,13 +20,7 @@ import {
     Image,
     Trash2,
     UserPlus,
-    Menu,
-    ChevronDown,
     LayoutDashboard,
-    DollarSign,
-    Ticket,
-    TrendingUp,
-    Building2,
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
@@ -60,6 +52,7 @@ interface MovieDetailModalProps {
 }
 
 const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onClose }) => {
+    const { t } = useTranslation();
     if (!isOpen) return null;
 
     const formatDate = formatVietnamDate;
@@ -173,7 +166,6 @@ interface CreateMovieModalProps {
 }
 
 const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
-    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -473,7 +465,6 @@ interface UpdateMovieModalProps {
 }
 
 const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
-    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const formatDateForInput = toVietnamDateTimeLocalValue;
@@ -575,7 +566,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                 cinemaIds: formData.cinemaIds,
             };
 
-            await movieApi.updateMovie(submissionData);
+            await movieApi.updateMovie(movie.movieId!, submissionData);
             setSuccess(true);
             onSuccess();
             setTimeout(() => onClose(), 1200);
@@ -910,7 +901,7 @@ const MovieManagerPage: React.FC = () => {
     const [genres, setGenres] = useState<MovieGenre[]>([]);
     const [cinemas, setCinemas] = useState<Cinema[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [_error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [logoutError, setLogoutError] = useState<string | null>(null);
     const [logoutLoading, setLogoutLoading] = useState(false);
@@ -932,16 +923,15 @@ const MovieManagerPage: React.FC = () => {
     const [itemToAssign, setItemToAssign] = useState<{ id: string; name: string } | null>(null);
 
     // Check if user is Admin
-    const isAdmin = user?.roles?.includes('Admin');
-
+    const isAdmin = !!user?.roles?.includes('Admin');
     const handleDeleteMovie = async (movie: Movie) => {
         if (!window.confirm(`Are you sure you want to delete movie "${movie.movieName}"?`)) return;
         try {
             await movieApi.deleteMovie(movie.movieId!);
-            showSuccess(t('toast.deleteMovieSuccess'));
+            showSuccess('Movie deleted successfully');
             fetchMovies();
-        } catch (err: any) {
-            const msg = err.response?.data?.message || 'Không thể xóa phim này';
+        } catch (_err: any) {
+            const msg = _err.response?.data?.message || 'Không thể xóa phim này';
             showError(msg);
         }
     };

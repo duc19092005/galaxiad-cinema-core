@@ -1,8 +1,7 @@
 // src/features/admin/AdminPage.tsx
 // Complete redesign with dark cinema theme
 
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Users,
@@ -11,30 +10,18 @@ import {
   Activity,
   Film,
   Calendar,
-  TrendingUp,
   DollarSign,
   Ticket,
   Search,
   MoreHorizontal,
-  ChevronDown,
   Loader2,
   RefreshCw,
   UserPlus,
   UserCircle,
-  ArrowLeftRight,
-  LogOut,
-  Menu,
-  X,
-  Bell,
-  Settings,
   CheckCircle,
   XCircle,
-  Clock,
-  Eye,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import Cookies from 'js-cookie';
-import { authApi } from '../../api/authApi';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
@@ -44,13 +31,6 @@ import TransferRightsView from './components/TransferRightsView';
 // ============================================
 // CONSTANTS
 // ============================================
-const TABS = {
-  DASHBOARD: 'dashboard',
-  USERS: 'users',
-  FACILITIES: 'facilities',
-  RIGHTS: 'rights',
-  AUDIT: 'audit',
-} as const;
 
 const statsCardStyle: React.CSSProperties = {
   padding: '20px 24px',
@@ -364,7 +344,6 @@ const AuditSection: React.FC = () => {
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);

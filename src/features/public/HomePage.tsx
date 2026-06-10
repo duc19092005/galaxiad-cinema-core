@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2,
-  Sun, Moon, Sparkles, LayoutDashboard, UserCircle, Menu, X, Play, Ticket,
+  Sparkles, LayoutDashboard, UserCircle, Menu, X, Play, Ticket,
   Search,
 } from 'lucide-react';
 import axios from 'axios';
