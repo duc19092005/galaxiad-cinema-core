@@ -1,10 +1,13 @@
 using System;
+using DataAccess;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace DataAccess.Migrations
 {
+    [DbContext(typeof(CinemaDbContext))]
     [Migration("20260610170000_AddAuditLogs")]
     public partial class AddAuditLogs : Migration
     {

@@ -12,6 +12,7 @@ using Shared.Exceptions;
 using DataAccess;
 using DataAccess.Constants;
 using Hangfire;
+using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -106,7 +107,12 @@ builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+    .UseSqlServerStorage(
+        builder.Configuration.GetConnectionString("HangfireConnection"),
+        new SqlServerStorageOptions
+        {
+            PrepareSchemaIfNecessary = true
+        }));
 
 builder.Services.AddHangfireServer();
 
@@ -144,9 +150,47 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
     await dbContext.Database.MigrateAsync();
+    await EnsureAuditLogTableAsync(dbContext);
 
     var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
     await scheduleJobsService.SyncSeededJobs();
 }
 
 app.Run();
+
+static async Task EnsureAuditLogTableAsync(CinemaDbContext dbContext)
+{
+    await dbContext.Database.ExecuteSqlRawAsync("""
+IF OBJECT_ID(N'[dbo].[AuditLogEntity]', N'U') IS NULL
+BEGIN
+    CREATE TABLE [dbo].[AuditLogEntity] (
+        [AuditLogId] uniqueidentifier NOT NULL,
+        [Action] varchar(50) NOT NULL,
+        [EntityType] varchar(80) NOT NULL,
+        [EntityId] uniqueidentifier NULL,
+        [EntityName] nvarchar(300) NOT NULL,
+        [Description] nvarchar(1000) NOT NULL,
+        [ActorUserId] uniqueidentifier NOT NULL,
+        [ActorName] nvarchar(100) NOT NULL,
+        [ActorPrimaryRole] varchar(50) NOT NULL,
+        [IsAdminAction] bit NOT NULL,
+        [CinemaId] uniqueidentifier NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        CONSTRAINT [PK_AuditLogEntity] PRIMARY KEY ([AuditLogId]),
+        CONSTRAINT [FK_AuditLogEntity_UserInfoEntity_ActorUserId] FOREIGN KEY ([ActorUserId]) REFERENCES [dbo].[UserInfoEntity] ([UserId]) ON DELETE NO ACTION
+    );
+END;
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_ActorUserId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
+    CREATE INDEX [IX_AuditLogEntity_ActorUserId] ON [dbo].[AuditLogEntity] ([ActorUserId]);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_CinemaId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
+    CREATE INDEX [IX_AuditLogEntity_CinemaId] ON [dbo].[AuditLogEntity] ([CinemaId]);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_CreatedAt' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
+    CREATE INDEX [IX_AuditLogEntity_CreatedAt] ON [dbo].[AuditLogEntity] ([CreatedAt]);
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_EntityType_EntityId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
+    CREATE INDEX [IX_AuditLogEntity_EntityType_EntityId] ON [dbo].[AuditLogEntity] ([EntityType], [EntityId]);
+""");
+}
