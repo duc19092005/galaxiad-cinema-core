@@ -1,3 +1,6 @@
+// src/contexts/ThemeContext.tsx
+// Simplified: toggles .dark class on <html>, persists to localStorage
+
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
@@ -10,38 +13,37 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const THEME_STORAGE_KEY = 'cinema-theme';
+
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Migration: if 'web3' was saved, automatically migrate to 'modern'
-    let savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'web3') {
-      savedTheme = 'modern';
-      localStorage.setItem('theme', 'modern');
-    }
-    return (savedTheme && ['light', 'dark', 'modern'].includes(savedTheme)) ? (savedTheme as Theme) : 'dark';
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
+    if (saved && ['light', 'dark', 'modern'].includes(saved)) return saved;
+    return 'dark'; // default
   });
 
-  const setTheme = useCallback((newTheme: Theme) => {
-    // Step 1: Add transitioning class to trigger CSS transitions
-    document.documentElement.classList.add('theme-transitioning');
-
-    // Step 2: Update theme state
-    setThemeState(newTheme);
-
-    // Step 3: Remove transitioning class after animation completes
-    setTimeout(() => {
-      document.documentElement.classList.remove('theme-transitioning');
-    }, 700);
-  }, []);
-
+  // Apply theme classes to <html>
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    document.documentElement.classList.remove('light', 'dark', 'modern', 'web3');
-    document.documentElement.classList.add(theme);
-    if (theme === 'modern') {
-      document.documentElement.classList.add('dark');
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark', 'modern');
+    root.classList.add(theme);
+    // .modern extends .dark
+    if (theme === 'modern' || theme === 'dark') {
+      root.classList.add('dark');
     }
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    root.style.colorScheme = theme === 'light' ? 'light' : 'dark';
   }, [theme]);
+
+  const setTheme = useCallback((newTheme: Theme) => {
+    // Add transitioning class for smooth animation
+    document.documentElement.classList.add('no-theme-transition');
+    setThemeState(newTheme);
+    // Remove the no-transition class after a microtask to let the DOM settle
+    requestAnimationFrame(() => {
+      document.documentElement.classList.remove('no-theme-transition');
+    });
+  }, []);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>
@@ -51,9 +53,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 };
 
 export const useTheme = () => {
-  const context = useContext(ThemeContext);
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
+  const ctx = useContext(ThemeContext);
+  if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
+  return ctx;
 };

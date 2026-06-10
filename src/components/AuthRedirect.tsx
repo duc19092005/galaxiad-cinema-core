@@ -19,42 +19,26 @@ const AuthRedirect: React.FC = () => {
 
   useEffect(() => {
     const checkAndRedirect = async () => {
-      // Verify authentication bằng cách gọi API (cookie HttpOnly sẽ tự động được gửi)
       const userInfo = await verifyAuthAndGetUser();
+      if (!userInfo) { setRedirectPath('/login'); setIsChecking(false); return; }
 
-      if (!userInfo) {
-        setRedirectPath('/login');
-        setIsChecking(false);
-        return;
-      }
-
-      // Redirect dựa trên số lượng roles
       if (userInfo.roles.length === 1) {
-        // Nếu chỉ có 1 role, redirect thẳng đến trang của role đó
-        const singleRole = userInfo.roles[0];
-        const route = roleConfig[singleRole] || '/role-selection';
-        setRedirectPath(route);
+        setRedirectPath(roleConfig[userInfo.roles[0]] || '/role-selection');
       } else if (userInfo.roles.length > 1) {
-        // Nếu có nhiều roles, redirect đến trang chọn role
         setRedirectPath('/role-selection');
       } else {
-        // Không có role, về login
         setRedirectPath('/login');
       }
-
       setIsChecking(false);
     };
-
     checkAndRedirect();
   }, []);
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
-          <p className="text-gray-400">Đang kiểm tra xác thực...</p>
-        </div>
+      <div className="state-center" style={{ minHeight: '100vh' }}>
+        <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+        <p className="text-secondary">Đang kiểm tra xác thực...</p>
       </div>
     );
   }

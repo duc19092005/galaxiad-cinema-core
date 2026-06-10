@@ -16,7 +16,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Verify authentication bằng cách gọi API (cookie HttpOnly sẽ tự động được gửi)
       const userInfo = await verifyAuthAndGetUser();
 
       if (!userInfo) {
@@ -25,7 +24,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
         return;
       }
 
-      // Check role nếu có yêu cầu
       if (requiredRole) {
         const roles = userInfo.roles || [];
         if (!roles.includes(requiredRole) && !roles.includes('Admin')) {
@@ -44,11 +42,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
-          <p className="text-gray-400">Đang kiểm tra xác thực...</p>
-        </div>
+      <div className="state-center" style={{ minHeight: '100vh' }}>
+        <Loader2 className="w-8 h-8" style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+        <p className="text-secondary">Kiểm tra xác thực...</p>
       </div>
     );
   }
