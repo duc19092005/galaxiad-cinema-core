@@ -1,12 +1,13 @@
 // src/components/CinemaSelector.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { Building2, ChevronDown, Check } from 'lucide-react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { useCinema } from '../contexts/CinemaContext';
 import { useTranslation } from 'react-i18next';
+import { Building2, ChevronDown, Loader2 } from 'lucide-react';
 
 const CinemaSelector: React.FC = () => {
+  const { managedCinemas, activeCinemaId, setActiveCinemaId, loading } = useCinema();
   const { t } = useTranslation();
-  const { managedCinemas, activeCinemaId, setActiveCinemaId, activeCinemaName } = useCinema();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -20,59 +21,84 @@ const CinemaSelector: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (managedCinemas.length <= 1) return null;
+  const activeCinema = managedCinemas.find(c => c.cinemaId === activeCinemaId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
+        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading...</span>
+      </div>
+    );
+  }
+
+  if (managedCinemas.length === 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
+        <Building2 size={14} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>No cinemas</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="btn btn-secondary"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200"
         style={{
-          padding: '6px 12px',
-          gap: 'var(--space-2)',
-          fontSize: 'var(--text-sm)',
-          height: 'auto',
+          background: 'var(--bg-elevated)',
+          border: `1px solid ${isOpen ? 'var(--accent)' : 'var(--border-color)'}`,
         }}
       >
-        <Building2 size={14} />
-        <span style={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {activeCinemaName || t('Select Cinema')}
+        <Building2 size={14} style={{ color: 'var(--accent)' }} />
+        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif" }}>
+          {activeCinema ? activeCinema.cinemaName : t('Select Cinema')}
         </span>
-        <ChevronDown size={14} style={{ transition: 'transform 300ms var(--ease)', transform: isOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+        <ChevronDown
+          size={12}
+          style={{
+            color: 'var(--text-muted)',
+            transition: 'transform 0.2s ease',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
       </button>
 
       {isOpen && (
         <div
-          className="card surface-elevated"
+          className="absolute right-0 mt-2 py-1 rounded-xl z-50"
           style={{
-            position: 'absolute', right: 0, marginTop: 'var(--space-2)',
-            width: 256, padding: 0, overflow: 'hidden',
-            boxShadow: 'var(--shadow-lg)', zIndex: 100,
+            minWidth: 240,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
           }}
         >
-          <div style={{ padding: 'var(--space-2) var(--space-3)', borderBottom: '1px solid var(--border)' }}>
-            <p className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px', margin: 0 }}>
-              {t('Switch Cinema')}
-            </p>
+          <div style={{ padding: '8px 12px 4px', fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            {t('Select Cinema')}
           </div>
-          <div style={{ maxHeight: 256, overflowY: 'auto' }}>
-            {managedCinemas.map(cinema => (
+          <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+            {managedCinemas.map((cinema) => (
               <button
                 key={cinema.cinemaId}
-                onClick={() => { setActiveCinemaId(cinema.cinemaId); setIsOpen(false); }}
-                className="btn-ghost"
-                style={{
-                  width: '100%', justifyContent: 'space-between', textAlign: 'left',
-                  padding: 'var(--space-3) var(--space-4)',
-                  fontSize: 'var(--text-sm)',
-                  borderBottom: '1px solid var(--border)',
-                  backgroundColor: activeCinemaId === cinema.cinemaId ? 'var(--accent-soft)' : 'transparent',
-                  color: activeCinemaId === cinema.cinemaId ? 'var(--accent)' : 'var(--text-secondary)',
-                  borderRadius: 0,
+                onClick={() => {
+                  setActiveCinemaId(cinema.cinemaId);
+                  setIsOpen(false);
                 }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 transition-all duration-150"
+                style={{
+                  background: cinema.cinemaId === activeCinemaId ? 'rgba(255, 138, 0, 0.08)' : 'transparent',
+                  borderLeft: cinema.cinemaId === activeCinemaId ? '2px solid var(--accent)' : '2px solid transparent',
+                }}
+                onMouseEnter={e => { if (cinema.cinemaId !== activeCinemaId) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                onMouseLeave={e => { if (cinema.cinemaId !== activeCinemaId) e.currentTarget.style.background = 'transparent'; }}
               >
-                <span style={{ fontWeight: 500 }}>{cinema.cinemaName}</span>
-                {activeCinemaId === cinema.cinemaId && <Check size={14} />}
+                <Building2 size={14} style={{ color: cinema.cinemaId === activeCinemaId ? 'var(--accent)' : 'var(--text-muted)' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{cinema.cinemaName}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{cinema.cinemaId}</div>
+                </div>
               </button>
             ))}
           </div>

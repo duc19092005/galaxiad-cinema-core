@@ -1,61 +1,14 @@
 // src/features/auth/LoginForm.tsx
+// Cinema dark theme login page
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Clapperboard, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Clapperboard, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
 import { identityAxios } from '../../api/axiosClient';
 import type { LoginRequest, ApiErrorResponse } from '../../types/auth.types';
-
-const InputField = ({ label, name, type = 'text', icon: Icon, placeholder, value, onChange }: any) => (
-  <div className="flex flex-col">
-    <label htmlFor={name} style={{
-      marginBottom: 'var(--space-2)', fontSize: 'var(--text-sm)', fontWeight: 500,
-      color: 'var(--text-secondary)', letterSpacing: '0.3px',
-    }}>
-      {label}
-    </label>
-    <div className="relative group">
-      <div style={{
-        position: 'absolute', left: 0, top: 0, bottom: 0,
-        display: 'flex', alignItems: 'center', paddingLeft: 'var(--space-4)',
-        pointerEvents: 'none',
-      }}>
-        <Icon size={18} style={{ color: 'var(--text-muted)' }} />
-      </div>
-      <input
-        type={type}
-        id={name}
-        name={name}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        style={{
-          width: '100%',
-          padding: '12px 16px 12px 44px',
-          backgroundColor: 'var(--bg-surface)',
-          color: 'var(--text-primary)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)',
-          outline: 'none',
-          fontSize: 'var(--text-sm)',
-          fontFamily: 'var(--font-body)',
-          transition: 'border-color var(--duration) var(--ease), box-shadow var(--duration) var(--ease)',
-        }}
-        onFocus={e => {
-          e.currentTarget.style.borderColor = 'var(--accent)';
-          e.currentTarget.style.boxShadow = '0 0 0 3px var(--accent-ring)';
-        }}
-        onBlur={e => {
-          e.currentTarget.style.borderColor = 'var(--border)';
-          e.currentTarget.style.boxShadow = 'none';
-        }}
-        required
-      />
-    </div>
-  </div>
-);
 
 const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -63,6 +16,7 @@ const LoginForm: React.FC = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const state = location.state as { googleError?: string } | null;
@@ -123,90 +77,169 @@ const LoginForm: React.FC = () => {
   return (
     <div style={{
       width: '100%', minHeight: '100vh', overflow: 'hidden',
-      backgroundColor: 'var(--bg-base)',
+      background: 'var(--bg-base)',
+      position: 'relative',
     }}>
-      {/* Background */}
+      {/* Cinematic Background */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 0,
-        backgroundImage: "url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop')",
-        backgroundSize: 'cover', backgroundPosition: 'center',
-        opacity: 0.15,
+        background: `
+          radial-gradient(ellipse at 20% 50%, rgba(255,138,0,0.08) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 20%, rgba(255,138,0,0.04) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 80%, rgba(255,138,0,0.03) 0%, transparent 50%),
+          #0a0a0a
+        `,
       }} />
-      <div style={{ position: 'absolute', inset: 0, zIndex: 0, background: 'linear-gradient(to top, var(--bg-base) 0%, transparent 100%)' }} />
+
+      {/* Decorative grid lines */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+        `,
+        backgroundSize: '60px 60px',
+        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+      }} />
 
       <div style={{
         position: 'relative', zIndex: 10,
         display: 'flex', minHeight: '100vh', width: '100%',
         alignItems: 'center', justifyContent: 'center',
-        padding: 'var(--space-4)',
+        padding: 16,
       }}>
-        <div className="card" style={{
-          width: '100%', maxWidth: 420,
-          padding: 'var(--space-8)',
-          boxShadow: 'var(--shadow-xl)',
-        }}>
-          {/* Header */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 'var(--space-8)' }}>
+        {/* Login Card */}
+        <div
+          className="glass-card"
+          style={{
+            width: '100%', maxWidth: 420,
+            padding: '40px 36px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Subtle top gradient accent */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+            background: 'linear-gradient(90deg, #ff8a00, #ea580c, #ff8a00)',
+            backgroundSize: '200% 100%',
+            animation: 'gradientShift 3s ease-in-out infinite',
+          }} />
+
+          {/* Logo & Title */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36 }}>
             <div style={{
-              width: 56, height: 56, borderRadius: 'var(--radius-xl)',
+              width: 64, height: 64, borderRadius: 16,
+              background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              backgroundColor: 'var(--accent-soft)',
-              marginBottom: 'var(--space-4)',
+              marginBottom: 20,
+              boxShadow: '0 8px 32px rgba(255,138,0,0.3)',
             }}>
-              <Clapperboard size={24} style={{ color: 'var(--accent)' }} />
+              <Clapperboard size={28} style={{ color: '#fff' }} />
             </div>
             <h1 style={{
-              fontSize: 'var(--text-2xl)', fontWeight: 500, letterSpacing: '-0.3px',
-              margin: 0,
+              fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em',
+              color: 'var(--text-primary)', margin: 0,
             }}>
-              Welcome back
-          </h1>
-            <p className="text-secondary" style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-2)' }}>
-              Please sign in to continue
+              CINEMA
+            </h1>
+            <p style={{
+              fontSize: 12, color: 'var(--text-muted)', marginTop: 4,
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
+              The Ultimate Cinematic Experience
             </p>
           </div>
 
           {errorMsg && (
-            <div className="card" style={{
-              padding: 'var(--space-3) var(--space-4)',
-              marginBottom: 'var(--space-6)',
-              display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
-              borderColor: 'var(--danger)',
-              backgroundColor: 'var(--danger-soft)',
+            <div style={{
+              padding: '10px 14px', marginBottom: 20, borderRadius: 10,
+              display: 'flex', alignItems: 'center', gap: 10,
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              background: 'rgba(239, 68, 68, 0.08)',
+              fontSize: 12, color: 'var(--danger)',
             }}>
-              <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span style={{ fontSize: 'var(--text-sm)' }}>{errorMsg}</span>
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
-            <InputField label="Email address" name="email" type="email" icon={Mail} placeholder="name@cinema.com" value={formData.email} onChange={handleChange} />
-            <InputField label="Password" name="password" type="password" icon={Lock} placeholder="••••••••" value={formData.password} onChange={handleChange} />
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Email address
+              </label>
+              <div className="relative">
+                <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@cinema.com"
+                  className="input"
+                  style={{ paddingLeft: 40 }}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Password
+              </label>
+              <div className="relative">
+                <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="input"
+                  style={{ paddingLeft: 40, paddingRight: 40 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="btn-icon"
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
 
             <button
               type="submit"
               disabled={loading}
               className="btn btn-primary"
               style={{
-                width: '100%', padding: '12px 20px', fontSize: 'var(--text-base)',
-                justifyContent: 'center', marginTop: 'var(--space-2)',
+                width: '100%', padding: '12px 20px', fontSize: 14,
+                justifyContent: 'center', marginTop: 4,
               }}
             >
-              {loading ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Signing in...</> : 'Login'}
+              {loading ? (
+                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Signing in...</>
+              ) : 'Login'}
             </button>
           </form>
 
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: 'var(--space-6) 0',
+            margin: '24px 0',
             position: 'relative',
           }}>
-            <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, backgroundColor: 'var(--border)' }} />
+            <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: 'var(--border-color)' }} />
             <span style={{
-              position: 'relative', padding: '0 var(--space-4)',
-              fontSize: 'var(--text-xs)', color: 'var(--text-muted)',
-              backgroundColor: 'var(--bg-surface)',
-              letterSpacing: '0.3px',
+              position: 'relative', padding: '0 16px',
+              fontSize: 10, color: 'var(--text-muted)',
+              background: 'var(--bg-surface)',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+              textTransform: 'uppercase',
             }}>
               OR CONTINUE WITH
             </span>
@@ -218,11 +251,11 @@ const LoginForm: React.FC = () => {
             onClick={handleGoogleLogin}
             className="btn btn-secondary"
             style={{
-              width: '100%', padding: '12px 20px', fontSize: 'var(--text-base)',
-              justifyContent: 'center',
+              width: '100%', padding: '12px 20px', fontSize: 13,
+              justifyContent: 'center', gap: 10,
             }}
           >
-            <svg className="w-5 h-5" viewBox="0 0 48 48">
+            <svg className="w-5 h-5" viewBox="0 0 48 48" style={{ width: 18, height: 18 }}>
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
               <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
@@ -233,17 +266,17 @@ const LoginForm: React.FC = () => {
           </button>
 
           <div style={{
-            marginTop: 'var(--space-6)', textAlign: 'center',
-            fontSize: 'var(--text-sm)', color: 'var(--text-muted)',
-            display: 'flex', flexDirection: 'column', gap: 'var(--space-3)',
+            marginTop: 24, textAlign: 'center',
+            fontSize: 12, color: 'var(--text-muted)',
+            display: 'flex', flexDirection: 'column', gap: 12,
           }}>
             <div>
-              Don&apos;t have an account?{' '}
-              <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 500 }}>Register now</Link>
+              Don't have an account?{' '}
+              <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Register now</Link>
             </div>
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-3)' }}>
-              <span style={{ opacity: 0.7 }}>Không muốn đăng nhập? </span>
-              <Link to="/home" style={{ color: 'var(--text-primary)', fontWeight: 500 }}>Vào xem phim</Link>
+            <div>
+              <span style={{ opacity: 0.6 }}>Không muốn đăng nhập? </span>
+              <Link to="/home" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Vào xem phim</Link>
             </div>
           </div>
         </div>

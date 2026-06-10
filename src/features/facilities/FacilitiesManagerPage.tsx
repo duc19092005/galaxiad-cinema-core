@@ -1,22 +1,23 @@
 // src/features/facilities/FacilitiesManagerPage.tsx
+// Complete redesign with dark cinema theme
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   LogOut, AlertCircle, Loader2, Menu, UserCircle, ChevronDown,
-  ArrowLeftRight,
+  ArrowLeftRight, LayoutDashboard, Building2, BarChart3,
 } from 'lucide-react';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import { useCinema } from '../../contexts/CinemaContext';
-import CinemaSelector from '../../components/CinemaSelector';
-import Sidebar from './components/Sidebar';
+import AppSidebar, { SidebarSection } from '../../components/AppSidebar';
+import Header from '../../components/Header';
 import CinemaManagement from './components/CinemaManagement';
 import SeatReport from './components/SeatReport';
 import LogoutModal from '../../components/LogoutModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
 import Cookies from 'js-cookie';
 
 const FacilitiesManagerPage: React.FC = () => {
@@ -35,13 +36,9 @@ const FacilitiesManagerPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -94,6 +91,16 @@ const FacilitiesManagerPage: React.FC = () => {
     } finally { setLogoutLoading(false); }
   };
 
+  const sidebarSections: SidebarSection[] = [
+    {
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
+        { id: 'cinemas', label: 'Cinemas', icon: <Building2 size={18} /> },
+        { id: 'seat-reports', label: 'Seat Reports', icon: <BarChart3 size={18} /> },
+      ],
+    },
+  ];
+
   const renderContent = () => {
     const isAdmin = user?.roles?.includes('Admin') ?? false;
 
@@ -101,7 +108,7 @@ const FacilitiesManagerPage: React.FC = () => {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span className="text-muted">Loading Cinema Context...</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading Cinema Context...</span>
         </div>
       );
     }
@@ -110,8 +117,8 @@ const FacilitiesManagerPage: React.FC = () => {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
-          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 500 }}>Access Restricted</h2>
-          <p className="text-secondary" style={{ fontSize: 'var(--text-sm)', maxWidth: 400 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '12px 0 4px' }}>Access Restricted</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 400 }}>
             Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào. Vui lòng liên hệ Admin
           </p>
         </div>
@@ -122,7 +129,7 @@ const FacilitiesManagerPage: React.FC = () => {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span className="text-muted">Initializing Cinema Selection...</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Initializing Cinema Selection...</span>
         </div>
       );
     }
@@ -136,88 +143,36 @@ const FacilitiesManagerPage: React.FC = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+      <AppSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        sections={sidebarSections}
+        role="Facilities Manager"
+      />
 
-      {/* HEADER */}
-      <header className="navbar" style={{ position: 'fixed', left: 288, height: 64 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <button onClick={() => setSidebarOpen(true)} className="btn-icon">
-            <Menu size={20} />
-          </button>
-          <div className="navbar-brand" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
-            CinemaPro
-          </div>
-        </div>
+      <Header
+        title="Facilities Manager"
+        role="Facilities Manager"
+        showSidebarToggle
+        onMenuToggle={() => setSidebarOpen(true)}
+      />
 
-        <div style={{ flex: 1 }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-          <div className="hidden lg:flex" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-            <CinemaSelector />
-            <div style={{ width: 1, height: 20, backgroundColor: 'var(--border)' }} />
-            <LanguageSwitcher />
-
-            {/* User dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="btn btn-secondary" style={{ padding: '2px 12px 2px 2px', gap: 'var(--space-2)', height: 'auto', borderRadius: 'var(--radius-full)', borderColor: 'var(--border)' }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent-soft)' }}>
-                  <UserCircle size={16} style={{ color: 'var(--accent)' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span className="text-muted" style={{ fontSize: '10px', letterSpacing: '0.3px', lineHeight: 1.2 }}>Facilities Manager</span>
-                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, lineHeight: 1.3 }}>{user?.username || 'Guest'}</span>
-                </div>
-                <ChevronDown size={12} style={{ color: 'var(--text-muted)', transition: 'transform 300ms var(--ease)', transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="card surface-elevated" style={{ position: 'absolute', right: 0, marginTop: 'var(--space-2)', width: 200, padding: 'var(--space-1)', boxShadow: 'var(--shadow-lg)', zIndex: 100 }}>
-                  <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border)' }}>
-                    <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>SIGNED IN AS</p>
-                    <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)', margin: 0 }}>{user?.username}</p>
-                  </div>
-                  <button onClick={() => { navigate('/account'); setIsDropdownOpen(false); }} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                    <UserCircle size={14} />Account Info
-                  </button>
-                  <button onClick={() => navigate('/role-selection')} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                    <ArrowLeftRight size={14} />Switch Role
-                  </button>
-                  <div style={{ height: 1, backgroundColor: 'var(--border)', margin: 'var(--space-1) 0' }} />
-                  <button onClick={handleLogoutClick} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--danger)' }}>
-                    <LogOut size={14} />Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button onClick={() => setSidebarOpen(true)} className="btn-icon">
-            <UserCircle size={20} />
-          </button>
-        </div>
-      </header>
-
-      {/* MAIN CONTENT */}
-      <main style={{ paddingTop: 64, paddingLeft: 288, minHeight: '100vh' }}>
-        <div style={{ padding: 'var(--space-6)', maxWidth: 1280, margin: '0 auto' }}>
-          {/* Mobile Cinema Selector */}
-          <div style={{ marginBottom: 'var(--space-6)' }}>
-            <CinemaSelector />
-          </div>
-
+      <main className="main-content">
+        <div className="page-container">
           {logoutError && (
-            <div className="card" style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3) var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)' }}>
-              <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span style={{ fontSize: 'var(--text-sm)' }}>{logoutError}</span>
+            <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              <AlertCircle size={16} />
+              <span>{logoutError}</span>
             </div>
           )}
 
           {error && activeTab === 'dashboard' && (
-            <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-3) var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)' }}>
-              <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span style={{ fontSize: 'var(--text-sm)' }}>{error}</span>
+            <div className="alert alert-error" style={{ marginBottom: 16 }}>
+              <AlertCircle size={16} />
+              <span>{error}</span>
             </div>
           )}
 

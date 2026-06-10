@@ -1,255 +1,190 @@
+// src/features/admin/components/AssignRightsModal.tsx
+
 import React, { useEffect, useState } from 'react';
 import { X, UserPlus, Loader2, AlertCircle, Check, Search, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../../contexts/ThemeContext';
 import { transferRightsApi } from '../../../api/transferRightsApi';
 import type { ManagerDto } from '../../../types/admin.types';
 import { showSuccess, showError } from '../../../utils/ToastUtils';
 
 interface AssignRightsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    itemId: string;
-    itemName: string;
-    type: number; // 1: Facilities, 2: Theater, 3: Movie
-    onSuccess: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  itemId: string;
+  itemName: string;
+  type: number;
+  onSuccess: () => void;
 }
 
 const AssignRightsModal: React.FC<AssignRightsModalProps> = ({
-    isOpen,
-    onClose,
-    itemId,
-    itemName,
-    type,
-    onSuccess,
+  isOpen, onClose, itemId, itemName, type, onSuccess,
 }) => {
-    const { theme } = useTheme();
-    const { t } = useTranslation();
-    const [managers, setManagers] = useState<ManagerDto[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [assigning, setAssigning] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedManagerId, setSelectedManagerId] = useState<string>('');
-    const [searchTerm, setSearchTerm] = useState('');
+  const { t } = useTranslation();
+  const [managers, setManagers] = useState<ManagerDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchManagers();
-        }
-    }, [isOpen, type]);
+  useEffect(() => {
+    if (isOpen) fetchManagers();
+  }, [isOpen, type]);
 
-    const fetchManagers = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await transferRightsApi.getManagers(type);
-            setManagers(res.data || []);
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to load managers');
-        } finally {
-            setLoading(false);
-        }
-    };
+  const fetchManagers = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await transferRightsApi.getManagers(type);
+      setManagers(res.data || []);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to load managers');
+    } finally { setLoading(false); }
+  };
 
-    const handleAssign = async () => {
-        if (!selectedManagerId) {
-            showError(t('toast.selectManager'));
-            return;
-        }
-        setAssigning(true);
-        try {
-            await transferRightsApi.executeTransfer({
-                transferType: type,
-                sourceUserId: null, // As requested, null for individual assignment
-                targetUserId: selectedManagerId,
-                itemId: itemId
-            });
-            showSuccess(t('toast.assignRightsSuccess'));
-            onSuccess();
-            onClose();
-        } catch (err: any) {
-            showError(err.response?.data?.message || t('toast.assignRightsFailed'));
-        } finally {
-            setAssigning(false);
-        }
-    };
+  const handleAssign = async () => {
+    if (!selectedManagerId) { showError(t('toast.selectManager')); return; }
+    setAssigning(true);
+    try {
+      await transferRightsApi.executeTransfer({
+        transferType: type, sourceUserId: null, targetUserId: selectedManagerId, itemId,
+      });
+      showSuccess(t('toast.assignRightsSuccess'));
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      showError(err.response?.data?.message || t('toast.assignRightsFailed'));
+    } finally { setAssigning(false); }
+  };
 
-    const filteredManagers = managers.filter(m =>
-        m.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const filteredManagers = managers.filter(m =>
+    m.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.userEmail.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-    const typeLabel = type === 1 ? 'Cinema' : type === 2 ? 'Theater' : 'Movie';
+  const typeLabel = type === 1 ? 'Cinema' : type === 2 ? 'Theater' : 'Movie';
 
-    if (!isOpen) return null;
+  if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Overlay */}
-            <div
-                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-                onClick={onClose}
-            />
-
-            {/* Modal */}
-            <div
-                className={`relative w-full max-w-lg rounded-xl border shadow-2xl transition-all flex flex-col max-h-[90vh] ${theme === 'dark'
-                    ? 'bg-gray-900 border-gray-800'
-                    : theme === 'modern'
-                        ? 'bg-[#15102B]/95 backdrop-blur-2xl border-indigo-500/30'
-                        : 'bg-white border-gray-200'
-                    }`}
-            >
-                {/* Header */}
-                <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-                    }`}>
-                    <div className="flex items-center gap-3">
-                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${theme === 'modern'
-                            ? 'bg-gradient-to-br from-cyan-500 to-blue-600'
-                            : 'bg-indigo-600'
-                            }`}>
-                            <UserPlus className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                            <h2 className={`text-xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                                }`}>
-                                Assign Manager
-                            </h2>
-                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'}`}>
-                                to {typeLabel}: <span className="font-bold">{itemName}</span>
-                            </p>
-                        </div>
-                    </div>
-                    {!assigning && (
-                        <button
-                            onClick={onClose}
-                            className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                                ? 'hover:bg-gray-800 text-gray-400'
-                                : theme === 'modern'
-                                    ? 'hover:bg-white/10 text-white'
-                                    : 'hover:bg-gray-100 text-gray-600'
-                                }`}
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    )}
-                </div>
-
-                {/* Search */}
-                <div className="px-6 pt-4">
-                    <div className="relative">
-                        <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' || theme === 'modern' ? 'text-gray-500' : 'text-gray-400'}`} />
-                        <input
-                            type="text"
-                            placeholder="Search by name or email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-10 pr-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all ${theme === 'dark'
-                                ? 'bg-gray-800 border-gray-700 text-white'
-                                : theme === 'modern'
-                                    ? 'bg-white/5 border-white/10 text-white'
-                                    : 'bg-gray-50 border-gray-200 text-gray-900'
-                                }`}
-                        />
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 flex-1 overflow-hidden flex flex-col">
-                    {loading ? (
-                        <div className="flex flex-col items-center justify-center py-12 gap-4">
-                            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                            <p className={theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-600'}>Fetching managers...</p>
-                        </div>
-                    ) : error ? (
-                        <div className={`p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern'
-                            ? 'bg-red-900/20 border-red-500/50 text-red-100'
-                            : 'bg-red-50 border-red-200 text-red-800'
-                            }`}>
-                            <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-                            <span className="text-sm font-medium">{error}</span>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 gap-2 overflow-y-auto pr-2 custom-scrollbar">
-                            {filteredManagers.length === 0 ? (
-                                <div className="text-center py-12 opacity-50">No managers found.</div>
-                            ) : (
-                                filteredManagers.map((m) => (
-                                    <button
-                                        key={m.userId}
-                                        onClick={() => setSelectedManagerId(m.userId)}
-                                        className={`flex items-center gap-3 px-4 py-3 rounded-xl border transition-all text-left ${selectedManagerId === m.userId
-                                            ? theme === 'modern'
-                                                ? 'bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-[0_0_15px_rgba(6,182,212,0.2)]'
-                                                : 'bg-indigo-600 border-indigo-600 text-white'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800/50 border-gray-700 text-gray-300 hover:border-gray-500'
-                                                : theme === 'modern'
-                                                    ? 'bg-white/5 border-white/10 text-gray-300 hover:bg-white/10'
-                                                    : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
-                                            }`}
-                                    >
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                                            selectedManagerId === m.userId ? 'bg-white/20' : 'bg-gray-500/20'
-                                        }`}>
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold truncate">{m.userName}</p>
-                                            <p className={`text-[10px] truncate ${selectedManagerId === m.userId ? 'opacity-80' : 'opacity-50'}`}>
-                                                {m.userEmail}
-                                            </p>
-                                        </div>
-                                        {selectedManagerId === m.userId && <Check className="w-4 h-4 flex-shrink-0" />}
-                                    </button>
-                                ))
-                            )}
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer */}
-                <div className={`flex justify-end gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'
-                    }`}>
-                    <button
-                        onClick={onClose}
-                        disabled={assigning}
-                        className={`px-4 py-2 rounded-lg font-semibold transition-colors ${assigning
-                            ? 'opacity-50 cursor-not-allowed'
-                            : ''
-                            } ${theme === 'dark'
-                                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                                : theme === 'modern'
-                                    ? 'bg-white/5 hover:bg-white/10 text-white'
-                                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                            }`}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={handleAssign}
-                        disabled={assigning || !selectedManagerId || loading}
-                        className={`px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${assigning || !selectedManagerId || loading
-                            ? 'opacity-50 cursor-not-allowed'
-                            : ''
-                            } ${theme === 'modern'
-                                ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20'
-                            }`}
-                    >
-                        {assigning ? (
-                            <>
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                Assigning...
-                            </>
-                        ) : (
-                            'Assign Manager'
-                        )}
-                    </button>
-                </div>
+  return (
+    <div className="modal-overlay" onClick={loading || assigning ? undefined : onClose}>
+      <div className="modal-content" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="modal-header">
+          <div className="flex items-center gap-3">
+            <div style={{
+              width: 44, height: 44, borderRadius: 12,
+              background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <UserPlus className="w-5 h-5 text-white" />
             </div>
+            <div>
+              <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                {t('Assign Manager')}
+              </h2>
+              <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                {t('to')} {typeLabel}: <span style={{ fontWeight: 600, color: 'var(--accent)' }}>{itemName}</span>
+              </p>
+            </div>
+          </div>
+          {!assigning && (
+            <button onClick={onClose} className="btn-icon">
+              <X size={18} />
+            </button>
+          )}
         </div>
-    );
+
+        {/* Search */}
+        <div style={{ padding: '12px 24px 0' }}>
+          <div className="relative">
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="input"
+              style={{ paddingLeft: 32 }}
+            />
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="modal-body">
+          {loading ? (
+            <div className="state-center py-12">
+              <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+              <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>Fetching managers...</p>
+            </div>
+          ) : error ? (
+            <div style={{ padding: '12px 16px', borderRadius: 10, background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger)', fontSize: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{error}</span>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {filteredManagers.length === 0 ? (
+                <div className="state-center py-12 opacity-50">
+                  <User size={28} />
+                  <p style={{ fontSize: 12 }}>No managers found.</p>
+                </div>
+              ) : (
+                filteredManagers.map((m) => (
+                  <button
+                    key={m.userId}
+                    onClick={() => setSelectedManagerId(m.userId)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 14px', borderRadius: 12,
+                      border: `1px solid ${selectedManagerId === m.userId ? 'var(--accent)' : 'var(--border-color)'}`,
+                      background: selectedManagerId === m.userId ? 'rgba(255, 138, 0, 0.08)' : 'transparent',
+                      cursor: 'pointer', textAlign: 'left', width: '100%',
+                      transition: 'all 0.15s ease',
+                    }}
+                    onMouseEnter={e => { if (selectedManagerId !== m.userId) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                    onMouseLeave={e => { if (selectedManagerId !== m.userId) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: selectedManagerId === m.userId ? 'rgba(255, 138, 0, 0.2)' : 'rgba(255,255,255,0.05)',
+                    }}>
+                      <User size={14} style={{ color: selectedManagerId === m.userId ? 'var(--accent)' : 'var(--text-muted)' }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{m.userName}</p>
+                      <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.userEmail}</p>
+                    </div>
+                    {selectedManagerId === m.userId && (
+                      <Check size={14} style={{ color: 'var(--accent)' }} />
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="modal-footer">
+          <button onClick={onClose} disabled={assigning} className="btn btn-secondary">
+            {t('Cancel')}
+          </button>
+          <button
+            onClick={handleAssign}
+            disabled={assigning || !selectedManagerId || loading}
+            className="btn btn-primary"
+          >
+            {assigning ? (
+              <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Assigning...</>
+            ) : (
+              <><UserPlus size={14} /> {t('Assign Manager')}</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default AssignRightsModal;

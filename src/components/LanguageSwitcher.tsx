@@ -1,53 +1,28 @@
 // src/components/LanguageSwitcher.tsx
+
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Languages } from 'lucide-react';
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n } = useTranslation();
 
+  const toggleLanguage = () => {
+    const next = i18n.language === 'vi' ? 'en' : 'vi';
+    i18n.changeLanguage(next);
+  };
+
   return (
-    <div
-      className="btn btn-secondary"
-      style={{
-        padding: '2px',
-        gap: 0,
-        height: 'auto',
-        borderRadius: 'var(--radius-md)',
-      }}
+    <button
+      onClick={toggleLanguage}
+      className="btn-icon group relative"
+      title={i18n.language === 'vi' ? 'Switch to English' : 'Chuyển sang tiếng Việt'}
     >
-      <button
-        onClick={() => i18n.changeLanguage('vi')}
-        className="badge"
-        style={{
-          backgroundColor: i18n.language === 'vi' ? 'var(--accent)' : 'transparent',
-          color: i18n.language === 'vi' ? 'white' : 'var(--text-muted)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '2px 8px',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 500,
-          border: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        VI
-      </button>
-      <button
-        onClick={() => i18n.changeLanguage('en')}
-        className="badge"
-        style={{
-          backgroundColor: i18n.language === 'en' ? 'var(--accent)' : 'transparent',
-          color: i18n.language === 'en' ? 'white' : 'var(--text-muted)',
-          borderRadius: 'var(--radius-sm)',
-          padding: '2px 8px',
-          fontSize: 'var(--text-xs)',
-          fontWeight: 500,
-          border: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        EN
-      </button>
-    </div>
+      <Languages className="w-4 h-4" />
+      <span className="absolute -bottom-1 right-0 text-[9px] font-bold font-mono uppercase tracking-wider text-accent">
+        {i18n.language === 'vi' ? 'VI' : 'EN'}
+      </span>
+    </button>
   );
 };
 

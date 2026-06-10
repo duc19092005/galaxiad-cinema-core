@@ -1,6 +1,8 @@
 // src/components/LogoutModal.tsx
+
 import React from 'react';
-import { X, LogOut, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
 
 interface LogoutModalProps {
   isOpen: boolean;
@@ -10,81 +12,61 @@ interface LogoutModalProps {
   error?: string | null;
 }
 
-const LogoutModal: React.FC<LogoutModalProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  loading = false,
-  error = null,
-}) => {
+const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm, loading, error }) => {
+  const { t } = useTranslation();
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-panel" onClick={e => e.stopPropagation()}>
-        {/* Header */}
+    <div className="modal-overlay" onClick={loading ? undefined : onClose}>
+      <div className="modal-content" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div className="flex items-center gap-3">
             <div style={{
-              width: 40,
-              height: 40,
-              borderRadius: 'var(--radius-md)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'var(--danger-soft)',
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <LogOut size={18} style={{ color: 'var(--danger)' }} />
+              <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
             </div>
             <div>
-              <h2 className="heading-md" style={{ margin: 0 }}>Confirm logout</h2>
-              <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>
-                You will be redirected to login
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                {t('Confirm Logout')}
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                {t('Are you sure you want to logout?')}
               </p>
             </div>
           </div>
           {!loading && (
-            <button className="btn-icon" onClick={onClose}>
-              <X size={16} />
+            <button onClick={onClose} className="btn-icon">
+              <X size={18} />
             </button>
           )}
         </div>
 
-        {/* Body */}
-        <div className="modal-body">
-          {error && (
-            <div className="card" style={{
-              padding: 'var(--space-3) var(--space-4)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-3)',
-              marginBottom: 'var(--space-4)',
-              borderColor: 'var(--danger)',
-              backgroundColor: 'var(--danger-soft)',
-            }}>
-              <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{error}</span>
-            </div>
-          )}
+        {error && (
+          <div style={{
+            margin: '0 24px', padding: '10px 14px', borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+            color: 'var(--danger)', fontSize: 12,
+          }}>
+            {error}
+          </div>
+        )}
 
-          <p className="text-body" style={{ fontSize: 'var(--text-base)', marginBottom: 'var(--space-3)' }}>
-            Are you sure you want to log out?
-          </p>
-          <p className="text-muted" style={{ fontSize: 'var(--text-sm)' }}>
-            After logging out, you will need to log back in to continue using the service.
-          </p>
-        </div>
-
-        {/* Footer */}
         <div className="modal-footer">
-          <button className="btn btn-secondary" onClick={onClose} disabled={loading}>
-            Cancel
+          <button onClick={onClose} disabled={loading} className="btn btn-secondary">
+            {t('Cancel')}
           </button>
-          <button className="btn btn-danger" onClick={onConfirm} disabled={loading}>
+          <button onClick={onConfirm} disabled={loading} className="btn btn-danger flex items-center gap-2">
             {loading ? (
-              <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Logging out...</>
+              <>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                {t('Logging out...')}
+              </>
             ) : (
-              <><LogOut size={14} /> Logout</>
+              t('Logout')
             )}
           </button>
         </div>

@@ -1,14 +1,31 @@
+// src/components/GlassCard.tsx
+// Glassmorphism card component with cinema dark theme
+
 import React from 'react';
 
-/**
- * GlassCard – generic container with the glass‑card effect.
- *   background: rgba(255,255,255,0.05) + backdrop‑blur-xl
- *   border‑top & left: 1px solid rgba(255,255,255,0.1)
- *   can be used for modals, summary panels, etc.
- */
-const GlassCard: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
+interface GlassCardProps {
+  children: React.ReactNode;
+  className?: string;
+  onClick?: () => void;
+  hover?: boolean;
+  glow?: boolean;
+  style?: React.CSSProperties;
+}
+
+const GlassCard: React.FC<GlassCardProps> = ({
+  children,
+  className = '',
+  onClick,
+  hover = true,
+  glow = false,
+  style,
+}) => {
   return (
-    <div className={`glass-card ${className}`} style={{ padding: 'var(--space-4)' }}>
+    <div
+      onClick={onClick}
+      className={`glass-card ${hover ? 'transition-all duration-300' : ''} ${glow ? 'shadow-[0_0_30px_rgba(255,138,0,0.15)]' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={style}
+    >
       {children}
     </div>
   );

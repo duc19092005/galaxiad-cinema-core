@@ -1,10 +1,13 @@
+// src/features/theater/TheaterManagerPage.tsx
+// Complete redesign with dark cinema theme
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import Sidebar from './components/Sidebar';
+import AppSidebar, { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ScheduleManagerPage from '../schedule/ScheduleManagerPage';
 import DragMovieCard from './components/DragMovieCard';
@@ -14,10 +17,11 @@ import { useCinema } from '../../contexts/CinemaContext';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar, Search } from 'lucide-react';
 
 /**
- * TheaterManagerPage – UI for theater schedule management using the new design system.
+ * TheaterManagerPage – UI for theater schedule management with dark cinema theme.
+ * IMPORTANT: Keep the drag-and-drop logic intact for theater management.
  */
 const TheaterManagerPage: React.FC = () => {
   const { t } = useTranslation();
@@ -59,17 +63,25 @@ const TheaterManagerPage: React.FC = () => {
       } else {
         setLogoutError('Unable to connect to server');
       }
-    } finally {
-      setLogoutLoading(false);
-    }
+    } finally { setLogoutLoading(false); }
   };
+
+  const sidebarSections: SidebarSection[] = [
+    {
+      items: [
+        { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
+        { id: 'employees', label: t('Employees'), icon: <Users size={18} /> },
+        { id: 'schedule', label: t('Schedule'), icon: <Calendar size={18} /> },
+      ],
+    },
+  ];
 
   const renderContent = () => {
     if (cinemaLoading) {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
-          <Loader2 size={24} className="text-primary spin" />
-          <p className="text-muted mt-2">{t('Loading cinema data...')}</p>
+          <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{t('Loading cinema data...')}</p>
         </div>
       );
     }
@@ -79,9 +91,9 @@ const TheaterManagerPage: React.FC = () => {
     if (!isAdmin && managedCinemas.length === 0) {
       return (
         <GlassCard className="flex flex-col items-center justify-center p-8">
-          <AlertCircle size={48} className="text-error" />
-          <h2 className="heading-md mt-4">{t('Access Restricted')}</h2>
-          <p className="text-secondary mt-2 max-w-md text-center">
+          <AlertCircle size={48} style={{ color: 'var(--danger)' }} />
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '12px 0 4px' }}>{t('Access Restricted')}</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', textAlign: 'center', maxWidth: 400 }}>
             {t('Your account is not assigned to any theater. Contact admin.')}
           </p>
         </GlassCard>
@@ -90,8 +102,8 @@ const TheaterManagerPage: React.FC = () => {
     if (!isAdmin && !activeCinemaId) {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
-          <Loader2 size={24} className="text-primary spin" />
-          <p className="text-muted mt-2">{t('Initializing selection…')}</p>
+          <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{t('Initializing selection…')}</p>
         </div>
       );
     }
@@ -99,20 +111,35 @@ const TheaterManagerPage: React.FC = () => {
       case 'dashboard':
         return <ManagementDashboard role="theater" />;
       case 'employees':
-        return <div className="p-6">Employee Management coming soon…</div>;
+        return (
+          <div className="state-center" style={{ minHeight: 300 }}>
+            <Users size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
+            <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('Employee Management coming soon…')}</p>
+          </div>
+        );
       case 'schedule':
         return (
-          <div className="flex gap-4">
+          <div style={{ display: 'flex', gap: 16, minHeight: '60vh' }}>
             {/* Drag list */}
-            <aside className="w-80 bg-surface-low border-r border-base p-4 overflow-y-auto custom-scrollbar">
-              <h4 className="text-secondary text-sm uppercase mb-4">{t('Drag Movies')}</h4>
-              <input placeholder={t('Filter films...')} className="w-full bg-surface-high border border-base rounded-lg py-2.5 px-4 text-body-md focus:ring-1 focus:ring-primary outline-none mb-4" />
-              {/* Example movie cards */}
+            <aside
+              className="glass-card"
+              style={{
+                width: 320, padding: 16, overflowY: 'auto', flexShrink: 0,
+                display: 'flex', flexDirection: 'column', gap: 12,
+              }}
+            >
+              <h4 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                {t('Drag Movies')}
+              </h4>
+              <div className="relative">
+                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input placeholder={t('Filter films...')} className="input" style={{ paddingLeft: 32 }} />
+              </div>
               <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="Dune: Part Three" duration="120 min" />
               <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="The Dark Knight" duration="152 min" />
             </aside>
             {/* Calendar grid */}
-            <div className="flex-1 relative bg-surface-low/30 overflow-hidden">
+            <div style={{ flex: 1, overflow: 'hidden' }}>
               <ScheduleManagerPage embedded={true} />
             </div>
           </div>
@@ -123,25 +150,38 @@ const TheaterManagerPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-bg-base text-primary relative">
-      {/* Sidebar */}
-      <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as 'dashboard' | 'employees' | 'schedule')} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-      {/* Header */}
-      <Header />
-      {/* Main */}
-      <main className="pt-16 pl-72 px-8 pb-8">
-        {renderContent()}
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+      <AppSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab as 'dashboard' | 'employees' | 'schedule')}
+        sections={sidebarSections}
+        role="Theater Manager"
+      />
+
+      <Header
+        title={t('Theater Manager')}
+        role="Theater Manager"
+        showSidebarToggle
+        onMenuToggle={() => setSidebarOpen(true)}
+      />
+
+      <main className="main-content">
+        <div className="page-container">
+          {renderContent()}
+        </div>
       </main>
+
       {/* FABs – only on schedule tab */}
       {activeTab === 'schedule' && (
         <FloatingActionButtons
-          onAdd={() => console.log('Add')}
-          onZoomIn={() => console.log('Zoom In')}
-          onZoomOut={() => console.log('Zoom Out')}
-          onDelete={() => console.log('Delete')}
+          buttons={[
+            { icon: <Calendar size={18} />, label: 'Add', onClick: () => {} },
+          ]}
         />
       )}
-      {/* Logout modal */}
+
       <LogoutModal
         isOpen={logoutModalOpen}
         onClose={() => setLogoutModalOpen(false)}

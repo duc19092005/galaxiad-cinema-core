@@ -1,4 +1,6 @@
 // src/features/movie/MovieManagerPage.tsx
+// Complete redesign with dark cinema theme - keeps all business logic
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,13 +23,12 @@ import {
     Trash2,
     UserPlus,
     Menu,
-    XCircle,
-    ArrowLeftRight,
-    LayoutDashboard,
     ChevronDown,
-    Sun,
-    Moon,
-    Sparkles,
+    LayoutDashboard,
+    DollarSign,
+    Ticket,
+    TrendingUp,
+    Building2,
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
@@ -37,158 +38,15 @@ import type { ApiErrorResponse } from '../../types/auth.types';
 import type { Movie, MovieRequiredAge, MovieGenre } from '../../types/movie.types';
 import type { MovieFormat, Cinema } from '../../types/facilities.types';
 import { facilitiesApi } from '../../api/facilitiesApi';
-import { useTheme } from '../../contexts/ThemeContext';
 import LogoutModal from '../../components/LogoutModal';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { publicApi } from '../../api/publicApi';
 import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
+import AppSidebar, { SidebarSection } from '../../components/AppSidebar';
+import Header from '../../components/Header';
 import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
-
-// =============================================
-// SIDEBAR COMPONENT
-// =============================================
-
-interface SidebarProps {
-    activeTab: string;
-    onTabChange: (tab: string) => void;
-    isOpen: boolean;
-    onToggle: () => void;
-}
-
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onToggle }) => {
-    const navigate = useNavigate();
-    const { t } = useTranslation();
-
-    const menuItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'movies', label: 'Movies', icon: Film },
-    ];
-
-    const storedUserStr = localStorage.getItem('user_info');
-    const user = storedUserStr ? JSON.parse(storedUserStr) : null;
-
-    const handleLogout = async () => {
-        try {
-            await authApi.logout();
-        } catch (e) {}
-        localStorage.removeItem('user_info');
-        Cookies.remove('X-Access-Token');
-        navigate('/login');
-    };
-
-    return (
-        <>
-            <div style={{
-                position: 'fixed', inset: 0, zIndex: 100,
-                transition: 'opacity 500ms var(--ease), visibility 500ms var(--ease)',
-                opacity: isOpen ? 1 : 0, visibility: isOpen ? 'visible' : 'hidden',
-                pointerEvents: isOpen ? 'auto' : 'none',
-            }}>
-                <div className="overlay" onClick={onToggle} />
-            </div>
-
-            <aside className="surface-elevated" style={{
-                position: 'fixed', top: 0, left: 0, height: '100%', width: 288, zIndex: 110,
-                borderRight: '1px solid var(--border)',
-                transition: 'transform var(--duration) var(--ease)',
-                transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
-                display: 'flex', flexDirection: 'column',
-            }}>
-                <div style={{ padding: 'var(--space-6)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-                    <div>
-                        <div className="navbar-brand" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
-                            Cinema<span style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>Pro</span>
-                        </div>
-                        <p className="text-muted" style={{ fontSize: '10px', letterSpacing: '0.3em', margin: 0 }}>{t('Movie Manager')}</p>
-                    </div>
-                    <button onClick={onToggle} className="btn-icon">
-                        <XCircle size={20} />
-                    </button>
-                </div>
-
-                <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-                    {user && (
-                        <div className="lg:hidden" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', borderBottom: '1px solid var(--border)', paddingBottom: 'var(--space-4)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-                                <div style={{ width: 40, height: 40, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent-soft)' }}>
-                                    <UserCircle size={20} style={{ color: 'var(--accent)' }} />
-                                </div>
-                                <div>
-                                    <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>{t('ĐĂNG NHẬP BỞI')}</p>
-                                    <p style={{ fontWeight: 500, margin: 0 }}>{user.username}</p>
-                                </div>
-                            </div>
-                            <button onClick={() => { navigate('/account'); onToggle(); }} className="btn-ghost" style={{ justifyContent: 'flex-start' }}>
-                                <UserCircle size={16} />{t('Thông Tin Tài Khoản')}
-                            </button>
-                            {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
-                                <button onClick={() => { navigate('/role-selection'); onToggle(); }} className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--success)' }}>
-                                    <LayoutDashboard size={16} />Management Hub
-                                </button>
-                            )}
-                            <button onClick={() => { navigate('/role-selection'); onToggle(); }} className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--info)' }}>
-                                <ArrowLeftRight size={16} />{t('Đổi Vai Trò')}
-                            </button>
-                            <button onClick={() => { handleLogout(); onToggle(); }} className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--danger)' }}>
-                                <LogOut size={16} />{t('Đăng Xuất')}
-                            </button>
-                            <div style={{ borderTop: '1px solid var(--border)', paddingTop: 'var(--space-3)', marginTop: 'var(--space-1)' }}>
-                                <p className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px', marginBottom: 'var(--space-3)' }}>{t('Preferences')}</p>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{t('Language')}</span>
-                                    <LanguageSwitcher />
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div>
-                        <p className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px', marginBottom: 'var(--space-3)' }}>
-                            {t('Navigation')}
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
-                            <button onClick={() => navigate('/home')} className="btn-ghost" style={{ justifyContent: 'flex-start' }}>
-                                <LayoutDashboard size={16} />{t('Back To Home')}
-                            </button>
-                            <div style={{ height: 1, backgroundColor: 'var(--border)', margin: 'var(--space-2) 0' }} />
-                            {menuItems.map(item => (
-                                <button key={item.id}
-                                    onClick={() => { onTabChange(item.id); if (window.innerWidth < 1024) onToggle(); }}
-                                    className="btn-ghost"
-                                    style={{
-                                        justifyContent: 'flex-start',
-                                        backgroundColor: activeTab === item.id ? 'var(--accent-soft)' : 'transparent',
-                                        color: activeTab === item.id ? 'var(--accent)' : 'var(--text-secondary)',
-                                    }}>
-                                    <item.icon size={16} />{item.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="hidden lg:block" style={{ marginTop: 'auto' }}>
-                        <p className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px', marginBottom: 'var(--space-3)' }}>
-                            {t('System')}
-                        </p>
-                        <button onClick={() => navigate('/account')} className="btn-ghost" style={{ justifyContent: 'flex-start' }}>
-                            <UserCircle size={16} />{t('Account Info')}
-                        </button>
-                    </div>
-                </div>
-
-                <div className="hidden lg:block" style={{ padding: 'var(--space-6)', borderTop: '1px solid var(--border)' }}>
-                    <button onClick={() => navigate('/role-selection')} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', color: 'var(--info)' }}>
-                        <ArrowLeftRight size={16} />{t('Switch Role')}
-                    </button>
-                    <p className="text-muted" style={{ fontSize: '10px', textAlign: 'center', marginTop: 'var(--space-4)' }}>© 2024 CinemaPro</p>
-                </div>
-            </aside>
-        </>
-    );
-};
 
 // =============================================
 // MOVIE DETAIL MODAL
@@ -201,145 +59,98 @@ interface MovieDetailModalProps {
 }
 
 const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onClose }) => {
-    const { theme } = useTheme();
     if (!isOpen) return null;
 
     const formatDate = formatVietnamDate;
 
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-3xl max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden flex flex-col ${theme === 'dark'
-                ? 'bg-gray-900 border-gray-800'
-                : theme === 'modern'
-                    ? 'bg-[#15102B]/95 border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
-                    : 'bg-white border-gray-200'
-                }`} onClick={(e) => e.stopPropagation()}>
-                {/* Movie Image Banner */}
-                <div className="relative h-48 sm:h-64 overflow-hidden bg-black/40">
+        <div className="modal-overlay" style={{ zIndex: 70 }}>
+            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+                <div className="relative h-48 sm:h-56 overflow-hidden" style={{ background: 'rgba(0,0,0,0.4)' }}>
                     <img
                         src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800'}
                         alt={movie.movieName}
                         onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800'; }}
                         className="w-full h-full object-contain object-center"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white transition-colors"
-                    >
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] via-black/30 to-transparent" />
+                    <button onClick={onClose} className="absolute top-4 right-4 btn-icon" style={{ background: 'rgba(0,0,0,0.5)' }}>
                         <X className="w-5 h-5" />
                     </button>
                     <div className="absolute bottom-4 left-6 right-6">
-                        <h2 className="text-2xl sm:text-3xl font-black text-white mb-2">{movie.movieName}</h2>
+                        <h2 className="text-2xl font-black" style={{ color: 'var(--text-primary)', marginBottom: 8 }}>
+                            {movie.movieName}
+                        </h2>
                         <div className="flex flex-wrap gap-2">
                             {(movie.movieGenresInfos || []).map((genre, i) => (
-                                <span key={i} className="px-2 py-1 rounded-full text-xs font-semibold bg-red-600/80 text-white">
-                                    {genre}
-                                </span>
+                                <span key={i} className="badge" style={{ background: 'var(--accent)', color: '#fff' }}>{genre}</span>
                             ))}
                             {movie.movieCinemas?.map((cinema) => (
-                                <span key={cinema.cinemaId} className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-600/80 text-white">
-                                    {cinema.cinemaName}
-                                </span>
+                                <span key={cinema.cinemaId} className="badge" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd' }}>{cinema.cinemaName}</span>
                             ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                    {/* Info Grid */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
-                            }`}>
-                            <div className={`flex items-center gap-2 text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                <Clock className="w-3.5 h-3.5" /> Duration
+                <div className="modal-body">
+                    <div style={{
+                        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                        gap: 12, marginBottom: 24,
+                    }}>
+                        {[
+                            { icon: <Clock size={14} />, label: 'Duration', value: `${movie.duration} min` },
+                            { icon: <Calendar size={14} />, label: 'Start Date', value: formatDate(movie.startedDate) },
+                            { icon: <Calendar size={14} />, label: 'End Date', value: formatDate(movie.endedDate) },
+                            {
+                                icon: <Tag size={14} />, label: 'Formats',
+                                value: (movie.movieVisualFormatInfos || []).join(', ') || 'N/A',
+                            },
+                        ].map((item, i) => (
+                            <div key={i} className="glass-card" style={{ padding: '12px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                    <span style={{ color: 'var(--accent)' }}>{item.icon}</span>
+                                    <span style={{ fontSize: 10, color: 'var(--text-secondary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                                        {item.label}
+                                    </span>
+                                </div>
+                                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{item.value}</p>
                             </div>
-                            <p className={`text-lg font-bold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                                {movie.duration} min
-                            </p>
-                        </div>
-                        <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
-                            }`}>
-                            <div className={`flex items-center gap-2 text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                <Calendar className="w-3.5 h-3.5" /> Start Date
-                            </div>
-                            <p className={`text-lg font-bold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                                {formatDate(movie.startedDate)}
-                            </p>
-                        </div>
-                        <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
-                            }`}>
-                            <div className={`flex items-center gap-2 text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                <Calendar className="w-3.5 h-3.5" /> End Date
-                            </div>
-                            <p className={`text-lg font-bold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                                {formatDate(movie.endedDate)}
-                            </p>
-                        </div>
-                        <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
-                            }`}>
-                            <div className={`flex items-center gap-2 text-xs font-semibold mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                <Tag className="w-3.5 h-3.5" /> Formats
-                            </div>
-                            <div className="flex flex-wrap gap-1">
-                                {(movie.movieVisualFormatInfos || []).map((f, i) => (
-                                    <span key={i} className={`px-2 py-0.5 rounded text-xs font-semibold ${theme === 'modern' ? 'bg-cyan-600/30 text-cyan-400 drop-shadow-md' : 'bg-red-600/20 text-red-400'
-                                        }`}>{f}</span>
-                                ))}
-                            </div>
-                        </div>
+                        ))}
                     </div>
 
-                    <div className="space-y-4">
-                        {/* Description */}
-                        <div>
-                            <h3 className={`text-sm font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                                }`}>Description</h3>
-                            <p className={`text-sm leading-relaxed ${theme === 'dark' ? 'text-gray-300' : theme === 'modern' ? 'text-indigo-100 ' : 'text-gray-700'
-                                }`}>
-                                {movie.movieDescriptions || 'No description available.'}
-                            </p>
+                    <div>
+                        <h3 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            Description
+                        </h3>
+                        <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
+                            {movie.movieDescriptions || 'No description available.'}
+                        </p>
+                    </div>
+
+                    {(movie.director || movie.actors) && (
+                        <div style={{ marginTop: 16, display: 'flex', gap: 24 }}>
+                            {movie.director && (
+                                <div>
+                                    <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: 2 }}>
+                                        Director
+                                    </p>
+                                    <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, margin: 0 }}>{movie.director}</p>
+                                </div>
+                            )}
+                            {movie.actors && (
+                                <div>
+                                    <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: 2 }}>
+                                        Actors
+                                    </p>
+                                    <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, margin: 0 }}>{movie.actors}</p>
+                                </div>
+                            )}
                         </div>
+                    )}
+                </div>
 
-                        {(movie.director || movie.actors) && (
-                            <div className={`p-4 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : theme === 'modern' ? 'bg-[#15102B]/60 border-indigo-500/20' : 'bg-gray-50 border-gray-200'
-                                }`}>
-                                {movie.director && (
-                                    <div className="mb-2">
-                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                                            }`}>Director</h3>
-                                        <p className={`text-sm ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{movie.director}</p>
-                                    </div>
-                                )}
-                                {movie.actors && (
-                                    <div>
-                                        <h3 className={`text-xs font-bold uppercase tracking-wider mb-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                                            }`}>Actors</h3>
-                                        <p className={`text-sm ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{movie.actors}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {movie.trailerUrl && (
-                            <div>
-                                <h3 className={`text-sm font-bold uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                                    }`}>Trailer</h3>
-                                <a href={movie.trailerUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-500 hover:underline">
-                                    Watch Trailer on YouTube
-                                </a>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Metadata */}
-                    <div className={`text-xs space-y-1 pt-4 border-t ${theme === 'dark' ? 'border-gray-800 text-gray-500' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10 text-cyan-400' : 'border-gray-200 text-gray-400'
-                        }`}>
-                        <p>Created by: {movie.createdBy} • {formatDate(movie.createdAt)}</p>
-                        <p>Updated by: {movie.updatedBy} • {formatDate(movie.updatedAt)}</p>
-                    </div>
+                <div className="modal-footer">
+                    <button onClick={onClose} className="btn btn-secondary">{t('close')}</button>
                 </div>
             </div>
         </div>
@@ -361,7 +172,7 @@ interface CreateMovieModalProps {
 }
 
 const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
-    const { theme } = useTheme();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -377,7 +188,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         duration: '',
         movieFormatIds: [] as string[],
         movieGenreIds: [] as string[],
-        movieRequiredAgeId: '00000000-0000-0000-0000-000000000000', // Default placeholder
+        movieRequiredAgeId: '00000000-0000-0000-0000-000000000000',
         trailerUrl: '',
         director: '',
         actors: '',
@@ -405,7 +216,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         setFormData(prev => ({
             ...prev,
             movieFormatIds: prev.movieFormatIds.includes(formatId)
-                ? prev.movieFormatIds.filter((id: string) => id !== formatId)
+                ? prev.movieFormatIds.filter(id => id !== formatId)
                 : [...prev.movieFormatIds, formatId],
         }));
     };
@@ -414,7 +225,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         setFormData(prev => ({
             ...prev,
             movieGenreIds: prev.movieGenreIds.includes(genreId)
-                ? prev.movieGenreIds.filter((id: string) => id !== genreId)
+                ? prev.movieGenreIds.filter(id => id !== genreId)
                 : [...prev.movieGenreIds, genreId],
         }));
     };
@@ -423,7 +234,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         setFormData(prev => ({
             ...prev,
             cinemaIds: prev.cinemaIds.includes(cinemaId)
-                ? prev.cinemaIds.filter((id: string) => id !== cinemaId)
+                ? prev.cinemaIds.filter(id => id !== cinemaId)
                 : [...prev.cinemaIds, cinemaId],
         }));
     };
@@ -460,13 +271,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 cinemaIds: formData.cinemaIds,
             };
 
-            console.log("DEBUG: Creating Movie -> Sending Vietnam time with +07:00 offset:", {
-                UI_Started: formData.startedDate,
-                UI_Ended: formData.endedDate
-            });
-
             await movieApi.createMovie(submissionData);
-
             setSuccess(true);
             onSuccess();
             setTimeout(() => onClose(), 1200);
@@ -477,137 +282,108 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             } else {
                 setError('Unable to connect to server');
             }
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
-    const inputClass = `w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors ${theme === 'modern' ? 'focus:border-cyan-300 shadow-md shadow-cyan-500/20' : 'focus:border-red-600'
-        } ${theme === 'dark'
-            ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
-            : theme === 'modern'
-                ? 'bg-[#15102B]/60 border-indigo-500/30 shadow-sm shadow-indigo-500/10 text-white placeholder-slate-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-        }`;
-
-    const labelClass = `block text-sm font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-        }`;
-
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-2xl max-h-[90vh] rounded-xl border shadow-2xl flex flex-col ${theme === 'dark'
-                ? 'bg-gray-900 border-gray-800'
-                : theme === 'modern'
-                    ? 'bg-[#15102B]/95 border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
-                    : 'bg-white border-gray-200'
-                }`} onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
-                    }`}>
-                    <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                        Add New Movie
-                    </h2>
-                    <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-400' : theme === 'modern' ? 'hover:bg-[#15102B]/60 text-white font-medium' : 'hover:bg-gray-100 text-gray-600'
-                        }`}>
-                        <X className="w-5 h-5" />
-                    </button>
+        <div className="modal-overlay" style={{ zIndex: 70 }}>
+            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <div className="flex items-center gap-3">
+                        <div style={{
+                            width: 44, height: 44, borderRadius: 12,
+                            background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            <Plus className="w-5 h-5 text-white" />
+                        </div>
+                        <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)', margin: 0 }}>Add New Movie</h2>
+                    </div>
+                    {!loading && (
+                        <button onClick={onClose} className="btn-icon">
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="modal-body" style={{ overflowY: 'auto' }}>
                     {success && (
-                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-green-900/40 border-green-500/50 text-green-100' : 'bg-green-50 border-green-200 text-green-800'
-                            }`}>
-                            <CheckCircle className="w-5 h-5 mr-3 text-green-500" />
-                            <span className="text-sm font-medium">Movie added successfully!</span>
+                        <div className="alert alert-success">
+                            <CheckCircle size={16} />
+                            <span>Movie added successfully!</span>
                         </div>
                     )}
                     {error && (
-                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
-                            }`}>
-                            <AlertCircle className="w-5 h-5 mr-3 text-red-500" />
-                            <span className="text-sm font-medium">{error}</span>
+                        <div className="alert alert-error">
+                            <AlertCircle size={16} />
+                            <span>{error}</span>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Movie Name */}
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div>
-                            <label className={labelClass}>Movie Name <span className="text-red-500">*</span></label>
-                            <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className={inputClass} placeholder="Enter movie name" maxLength={50} />
+                            <label className="input-label">Movie Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
-                        {/* Image Upload */}
                         <div>
-                            <label className={labelClass}>Poster Image <span className="text-red-500">*</span></label>
+                            <label className="input-label">Poster Image <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <div
                                 onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${theme === 'dark'
-                                    ? 'border-gray-700 hover:border-red-600 bg-gray-800/50'
-                                    : theme === 'modern'
-                                        ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20 bg-[#15102B]/40'
-                                        : 'border-gray-300 hover:border-red-500 bg-gray-50'
-                                    }`}
+                                className="upload-zone"
                             >
                                 {imagePreview ? (
-                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto bg-black/20" />
+                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto" />
                                 ) : (
                                     <>
-                                        <Image className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`} />
-                                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                            Click to upload poster image
-                                        </p>
+                                        <Image size={40} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+                                        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Click to upload poster image</p>
                                     </>
                                 )}
                             </div>
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                         </div>
 
-                        {/* Dates */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className={labelClass}>Start Date <span className="text-red-500">*</span></label>
-                                <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className={inputClass} />
+                                <label className="input-label">Start Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className="input" />
                             </div>
                             <div>
-                                <label className={labelClass}>End Date <span className="text-red-500">*</span></label>
-                                <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className={inputClass} />
-                            </div>
-                        </div>
-
-                        {/* Duration */}
-                        <div>
-                            <label className={labelClass}>Duration (minutes) <span className="text-red-500">*</span></label>
-                            <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className={inputClass} placeholder="e.g. 120" min={1} />
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <label className={labelClass}>Description</label>
-                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className={`${inputClass} resize-none`} placeholder="Enter movie description" maxLength={200} />
-                        </div>
-
-                        {/* Additional Info */}
-                        <div>
-                            <label className={labelClass}>Trailer URL</label>
-                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className={inputClass} placeholder="Enter YouTube trailer URL" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Director</label>
-                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={inputClass} placeholder="Enter director name" />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Actors</label>
-                                <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className={inputClass} placeholder="Enter actors (comma separated)" />
+                                <label className="input-label">End Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className="input" />
                             </div>
                         </div>
 
-                        {/* Required Age */}
                         <div>
-                            <label className={labelClass}>Required Age <span className="text-red-500">*</span></label>
-                            <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className={inputClass}>
+                            <label className="input-label">Duration (minutes) <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
+                        </div>
+
+                        <div>
+                            <label className="input-label">Description</label>
+                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder="Enter movie description" maxLength={200} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                                <label className="input-label">Trailer URL</label>
+                                <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
+                            </div>
+                            <div>
+                                <label className="input-label">Director</label>
+                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="input-label">Actors</label>
+                            <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
+                        </div>
+
+                        <div>
+                            <label className="input-label">Required Age <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
                                 <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
                                     <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
@@ -617,107 +393,60 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             </select>
                         </div>
 
-                        {/* Movie Formats */}
                         <div>
-                            <label className={labelClass}>Visual Formats <span className="text-red-500">*</span></label>
+                            <label className="input-label">Visual Formats <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <div className="flex flex-wrap gap-2">
                                 {formats.map((f: MovieFormat) => (
                                     <button
-                                        key={f.formatId}
-                                        type="button"
+                                        key={f.formatId} type="button"
                                         onClick={() => handleFormatToggle(f.formatId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieFormatIds.includes(f.formatId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                : 'bg-red-600 text-white border-red-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
-                                            }`}
+                                        className={`chip ${formData.movieFormatIds.includes(f.formatId) ? 'chip-active' : ''}`}
                                     >
                                         {f.formatName}
                                     </button>
                                 ))}
-                                {formats.length === 0 && (
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
-                                        No formats available. Please configure formats in Facilities Manager.
-                                    </p>
-                                )}
+                                {formats.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No formats available.</p>}
                             </div>
                         </div>
 
-                        {/* Movie Genres */}
                         <div>
-                            <label className={labelClass}>Genres</label>
+                            <label className="input-label">Genres</label>
                             <div className="flex flex-wrap gap-2">
                                 {genres.map((g: MovieGenre) => (
                                     <button
-                                        key={g.movieGenreId}
-                                        type="button"
+                                        key={g.movieGenreId} type="button"
                                         onClick={() => handleGenreToggle(g.movieGenreId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieGenreIds.includes(g.movieGenreId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white border-pink-300 shadow-md shadow-pink-500/20'
-                                                : 'bg-red-600 text-white border-red-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
-                                            }`}
+                                        className={`chip ${formData.movieGenreIds.includes(g.movieGenreId) ? 'chip-active' : ''}`}
                                     >
                                         {g.movieGenreName}
                                     </button>
                                 ))}
-                                {genres.length === 0 && (
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
-                                        No genres available.
-                                    </p>
-                                )}
+                                {genres.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No genres available.</p>}
                             </div>
                         </div>
 
-                        {/* Cinemas */}
                         <div>
-                            <label className={labelClass}>Authorized Cinemas <span className="text-red-500">*</span></label>
+                            <label className="input-label">Authorized Cinemas <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <div className="flex flex-wrap gap-2">
                                 {cinemas.map((c: Cinema) => (
                                     <button
-                                        key={c.cinemaId}
-                                        type="button"
+                                        key={c.cinemaId} type="button"
                                         onClick={() => handleCinemaToggle(c.cinemaId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.cinemaIds.includes(c.cinemaId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300 shadow-md shadow-blue-500/20'
-                                                : 'bg-blue-600 text-white border-blue-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-blue-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
-                                            }`}
+                                        className={`chip ${formData.cinemaIds.includes(c.cinemaId) ? 'chip-active' : ''}`}
                                     >
                                         {c.cinemaName}
                                     </button>
                                 ))}
-                                {cinemas.length === 0 && (
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
-                                        No cinemas available. Please configure cinemas in Facilities Manager.
-                                    </p>
-                                )}
+                                {cinemas.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No cinemas available.</p>}
                             </div>
                         </div>
 
-                        {/* Submit */}
                         <div className="flex justify-end gap-3 pt-4">
-                            <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
-                            <button type="submit" disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''
-                                } ${theme === 'modern' ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 shadow-lg shadow-pink-500/20 text-white border border-pink-400/50' : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}>
-                                {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Creating...</>) : (<><Plus className="w-4 h-4" /> Create Movie</>)}
+                            <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
+                                Cancel
+                            </button>
+                            <button type="submit" disabled={loading} className="btn btn-primary">
+                                {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Creating...</> : <><Plus size={14} /> Create Movie</>}
                             </button>
                         </div>
                     </form>
@@ -743,7 +472,6 @@ interface UpdateMovieModalProps {
 }
 
 const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
-    const { theme } = useTheme();
     const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
@@ -773,34 +501,6 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         cinemaIds: movie.movieCinemas?.map(c => c.cinemaId) || [] as string[],
     });
 
-    // Re-sync if movie changes or modal opens
-    useEffect(() => {
-        if (!isOpen) return;
-        
-        console.log("DEBUG: Official Opening Modal with Movie:", movie);
-        
-        setFormData({
-            movieName: movie.movieName,
-            movieDescription: movie.movieDescriptions,
-            movieImage: null as File | null,
-            startedDate: formatDateForInput(movie.startedDate),
-            endedDate: formatDateForInput(movie.endedDate),
-            duration: movie.duration.toString(),
-            movieFormatIds: formats
-                .filter((f: MovieFormat) => (movie.movieVisualFormatInfos || []).includes(f.formatName))
-                .map((f: MovieFormat) => f.formatId),
-            movieGenreIds: genres
-                .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
-                .map((g: MovieGenre) => g.movieGenreId),
-            movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
-            trailerUrl: movie.trailerUrl || '',
-            director: movie.director || '',
-            actors: movie.actors || '',
-            cinemaIds: movie.movieCinemas?.map(c => c.cinemaId) || [] as string[],
-        });
-        setImagePreview(movie.movieImageUrl);
-    }, [movie, formats, requiredAges, genres, isOpen]);
-
     if (!isOpen) return null;
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -822,7 +522,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         setFormData(prev => ({
             ...prev,
             movieFormatIds: prev.movieFormatIds.includes(formatId)
-                ? prev.movieFormatIds.filter((id: string) => id !== formatId)
+                ? prev.movieFormatIds.filter(id => id !== formatId)
                 : [...prev.movieFormatIds, formatId],
         }));
     };
@@ -831,7 +531,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         setFormData(prev => ({
             ...prev,
             movieGenreIds: prev.movieGenreIds.includes(genreId)
-                ? prev.movieGenreIds.filter((id: string) => id !== genreId)
+                ? prev.movieGenreIds.filter(id => id !== genreId)
                 : [...prev.movieGenreIds, genreId],
         }));
     };
@@ -840,7 +540,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         setFormData(prev => ({
             ...prev,
             cinemaIds: prev.cinemaIds.includes(cinemaId)
-                ? prev.cinemaIds.filter((id: string) => id !== cinemaId)
+                ? prev.cinemaIds.filter(id => id !== cinemaId)
                 : [...prev.cinemaIds, cinemaId],
         }));
     };
@@ -850,117 +550,31 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         setError(null);
         setSuccess(false);
         setLoading(true);
-
         try {
             if (!formData.movieName.trim()) { setError('Please enter movie name'); setLoading(false); return; }
-            if (formData.duration && parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
+            if (!formData.startedDate) { setError('Please select start date'); setLoading(false); return; }
+            if (!formData.endedDate) { setError('Please select end date'); setLoading(false); return; }
+            if (!formData.duration || parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
             if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
 
-            // Build sparse payload - only send changed fields
-            const submissionData: any = {};
-            let isChanged = false;
+            const submissionData = {
+                movieId: movie.movieId,
+                movieRequiredAgeId: formData.movieRequiredAgeId,
+                movieName: formData.movieName.trim(),
+                movieDescription: formData.movieDescription.trim(),
+                movieImage: formData.movieImage || undefined,
+                startedDate: vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate,
+                endedDate: vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate,
+                duration: parseInt(formData.duration),
+                movieFormatIds: formData.movieFormatIds,
+                movieGenreIds: formData.movieGenreIds,
+                trailerUrl: formData.trailerUrl.trim() || undefined,
+                director: formData.director.trim() || undefined,
+                actors: formData.actors.trim() || undefined,
+                cinemaIds: formData.cinemaIds,
+            };
 
-            // 1. Basic Strings
-            if (formData.movieName.trim() !== movie.movieName) {
-                submissionData.movieName = formData.movieName.trim();
-                isChanged = true;
-            }
-            if (formData.movieDescription.trim() !== movie.movieDescriptions) {
-                submissionData.movieDescription = formData.movieDescription.trim();
-                isChanged = true;
-            }
-
-            // 2. Dates (Compare using the same formatted string)
-            const originalStarted = formatDateForInput(movie.startedDate);
-            if (formData.startedDate !== originalStarted) {
-                submissionData.startedDate = vietnamDateTimeLocalToOffsetString(formData.startedDate) || null;
-                isChanged = true;
-            }
-            const originalEnded = formatDateForInput(movie.endedDate);
-            if (formData.endedDate !== originalEnded) {
-                submissionData.endedDate = vietnamDateTimeLocalToOffsetString(formData.endedDate) || null;
-                isChanged = true;
-            }
-
-            // 3. Numbers
-            if (parseInt(formData.duration) !== movie.duration) {
-                submissionData.duration = parseInt(formData.duration);
-                isChanged = true;
-            }
-
-            // 4. File
-            if (formData.movieImage) {
-                submissionData.movieImage = formData.movieImage;
-                isChanged = true;
-            }
-
-            // 5. Arrays (Formats)
-            const originalFormats = formats
-                .filter((f: MovieFormat) => (movie.movieVisualFormatInfos || []).includes(f.formatName))
-                .map((f: MovieFormat) => f.formatId)
-                .sort();
-            const currentFormats = [...formData.movieFormatIds].sort();
-            if (JSON.stringify(originalFormats) !== JSON.stringify(currentFormats)) {
-                submissionData.movieFormatIds = formData.movieFormatIds;
-                isChanged = true;
-            }
-
-            // 6. Arrays (Genres)
-            const originalGenres = genres
-                .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
-                .map((g: MovieGenre) => g.movieGenreId)
-                .sort();
-            const currentGenres = [...formData.movieGenreIds].sort();
-            if (JSON.stringify(originalGenres) !== JSON.stringify(currentGenres)) {
-                submissionData.movieGenreIds = formData.movieGenreIds;
-                isChanged = true;
-            }
-
-            // 6.5 Arrays (Cinemas)
-            const originalCinemaIds = (movie.movieCinemas?.map(c => c.cinemaId) || []).sort();
-            const currentCinemaIds = [...formData.cinemaIds].sort();
-            if (JSON.stringify(originalCinemaIds) !== JSON.stringify(currentCinemaIds)) {
-                submissionData.cinemaIds = formData.cinemaIds;
-                isChanged = true;
-            }
-
-            // 7. Age Rating
-            const originalAgeSymbolId = requiredAges.find((a: MovieRequiredAge) => 
-                (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol))
-            )?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000';
-            
-            if (formData.movieRequiredAgeId !== originalAgeSymbolId) {
-                submissionData.movieRequiredAgeId = formData.movieRequiredAgeId !== '00000000-0000-0000-0000-000000000000' 
-                    ? formData.movieRequiredAgeId 
-                    : undefined;
-                isChanged = true;
-            }
-
-            // 8. Optional Details
-            if (formData.trailerUrl.trim() !== (movie.trailerUrl || '')) {
-                submissionData.trailerUrl = formData.trailerUrl.trim() || undefined;
-                isChanged = true;
-            }
-            if (formData.director.trim() !== (movie.director || '')) {
-                submissionData.director = formData.director.trim() || undefined;
-                isChanged = true;
-            }
-            if (formData.actors.trim() !== (movie.actors || '')) {
-                submissionData.actors = formData.actors.trim() || undefined;
-                isChanged = true;
-            }
-
-            if (!isChanged) {
-                showError(t('toast.noChanges'));
-                onClose();
-                setLoading(false);
-                return;
-            }
-
-            console.log("DEBUG: Sparse Submission Data:", submissionData);
-
-            await movieApi.updateMovie(movie.movieId!, submissionData);
-
+            await movieApi.updateMovie(submissionData);
             setSuccess(true);
             onSuccess();
             setTimeout(() => onClose(), 1200);
@@ -968,141 +582,107 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             if (axios.isAxiosError(err) && err.response) {
                 const data = err.response.data as ApiErrorResponse;
                 setError(data.errors?.join(', ') || data.message || 'Failed to update movie');
-            } else {
-                setError('Unable to connect to server');
-            }
-        } finally {
-            setLoading(false);
-        }
+            } else { setError('Unable to connect to server'); }
+        } finally { setLoading(false); }
     };
 
-    const inputClass = `w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors ${theme === 'modern' ? 'focus:border-cyan-300 shadow-md shadow-cyan-500/20' : 'focus:border-red-600'
-        } ${theme === 'dark'
-            ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-500'
-            : theme === 'modern'
-                ? 'bg-[#15102B]/60 border-indigo-500/30 shadow-sm shadow-indigo-500/10 text-white placeholder-slate-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-        }`;
-
-    const labelClass = `block text-sm font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-        }`;
-
     return (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-            <div className={`relative w-full max-w-2xl max-h-[90vh] rounded-xl border shadow-2xl flex flex-col ${theme === 'dark'
-                ? 'bg-gray-900 border-gray-800'
-                : theme === 'modern'
-                    ? 'bg-[#15102B]/95 border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
-                    : 'bg-white border-gray-200'
-                }`} onClick={(e) => e.stopPropagation()}>
-                {/* Header */}
-                <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
-                    }`}>
-                    <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                        Update Movie
-                    </h2>
-                    <button onClick={onClose} className={`p-2 rounded-lg transition-colors ${theme === 'dark' ? 'hover:bg-gray-800 text-gray-400' : theme === 'modern' ? 'hover:bg-[#15102B]/60 text-white font-medium' : 'hover:bg-gray-100 text-gray-600'
-                        }`}>
-                        <X className="w-5 h-5" />
-                    </button>
+        <div className="modal-overlay" style={{ zIndex: 70 }}>
+            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                    <div className="flex items-center gap-3">
+                        <div style={{
+                            width: 44, height: 44, borderRadius: 12,
+                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                            <Edit className="w-5 h-5 text-white" />
+                        </div>
+                        <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)', margin: 0 }}>Update Movie</h2>
+                    </div>
+                    {!loading && (
+                        <button onClick={onClose} className="btn-icon">
+                            <X size={18} />
+                        </button>
+                    )}
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
+                <div className="modal-body" style={{ overflowY: 'auto' }}>
                     {success && (
-                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-green-900/40 border-green-500/50 text-green-100' : 'bg-green-50 border-green-200 text-green-800'
-                            }`}>
-                            <CheckCircle className="w-5 h-5 mr-3 text-green-500" />
-                            <span className="text-sm font-medium">Movie updated successfully!</span>
+                        <div className="alert alert-success">
+                            <CheckCircle size={16} />
+                            <span>Movie updated successfully!</span>
                         </div>
                     )}
                     {error && (
-                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
-                            }`}>
-                            <AlertCircle className="w-5 h-5 mr-3 text-red-500" />
-                            <span className="text-sm font-medium">{error}</span>
+                        <div className="alert alert-error">
+                            <AlertCircle size={16} />
+                            <span>{error}</span>
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* Movie Name */}
+                    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div>
-                            <label className={labelClass}>Movie Name <span className="text-red-500">*</span></label>
-                            <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className={inputClass} placeholder="Enter movie name" maxLength={50} />
+                            <label className="input-label">Movie Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
-                        {/* Image Upload */}
                         <div>
-                            <label className={labelClass}>Poster Image (Leave empty to keep current)</label>
-                            <div
-                                onClick={() => fileInputRef.current?.click()}
-                                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${theme === 'dark'
-                                    ? 'border-gray-700 hover:border-red-600 bg-gray-800/50'
-                                    : theme === 'modern'
-                                        ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20 bg-[#15102B]/40'
-                                        : 'border-gray-300 hover:border-red-500 bg-gray-50'
-                                    }`}
-                            >
+                            <label className="input-label">Poster Image</label>
+                            <div onClick={() => fileInputRef.current?.click()} className="upload-zone">
                                 {imagePreview ? (
-                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto bg-black/20" />
+                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto" />
                                 ) : (
                                     <>
-                                        <Image className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`} />
-                                        <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'}`}>
-                                            Click to update poster image
-                                        </p>
+                                        <Image size={40} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
+                                        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Click to change poster image</p>
                                     </>
                                 )}
                             </div>
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                         </div>
 
-                        {/* Dates */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className={labelClass}>Start Date</label>
-                                <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className={inputClass} />
+                                <label className="input-label">Start Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className="input" />
                             </div>
                             <div>
-                                <label className={labelClass}>End Date</label>
-                                <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className={inputClass} />
-                            </div>
-                        </div>
-
-                        {/* Duration */}
-                        <div>
-                            <label className={labelClass}>Duration (minutes) <span className="text-red-500">*</span></label>
-                            <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className={inputClass} placeholder="e.g. 120" min={1} />
-                        </div>
-
-                        {/* Description */}
-                        <div>
-                            <label className={labelClass}>Description</label>
-                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className={`${inputClass} resize-none`} placeholder="Enter movie description" maxLength={200} />
-                        </div>
-
-                        {/* Additional Info */}
-                        <div>
-                            <label className={labelClass}>Trailer URL</label>
-                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className={inputClass} placeholder="Enter YouTube trailer URL" />
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className={labelClass}>Director</label>
-                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className={inputClass} placeholder="Enter director name" />
-                            </div>
-                            <div>
-                                <label className={labelClass}>Actors</label>
-                                <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className={inputClass} placeholder="Enter actors (comma separated)" />
+                                <label className="input-label">End Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className="input" />
                             </div>
                         </div>
 
-                        {/* Required Age */}
                         <div>
-                            <label className={labelClass}>Required Age</label>
-                            <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className={inputClass}>
-                                <option value="00000000-0000-0000-0000-000000000000">Current Rating</option>
+                            <label className="input-label">Duration (minutes) <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
+                        </div>
+
+                        <div>
+                            <label className="input-label">Description</label>
+                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder="Enter movie description" maxLength={200} />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                                <label className="input-label">Trailer URL</label>
+                                <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
+                            </div>
+                            <div>
+                                <label className="input-label">Director</label>
+                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="input-label">Actors</label>
+                            <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
+                        </div>
+
+                        <div>
+                            <label className="input-label">Required Age <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
+                                <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
                                     <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
                                         {age.movieRequiredAgeSymbol} - {age.movieRequiredAgeDescription}
@@ -1111,92 +691,46 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             </select>
                         </div>
 
-                        {/* Movie Formats */}
                         <div>
-                            <label className={labelClass}>Visual Formats <span className="text-red-500">*</span></label>
+                            <label className="input-label">Visual Formats <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <div className="flex flex-wrap gap-2">
                                 {formats.map((f: MovieFormat) => (
-                                    <button
-                                        key={f.formatId}
-                                        type="button"
-                                        onClick={() => handleFormatToggle(f.formatId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieFormatIds.includes(f.formatId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-cyan-500 to-cyan-600 text-white border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                : 'bg-red-600 text-white border-red-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
-                                            }`}
-                                    >
+                                    <button key={f.formatId} type="button" onClick={() => handleFormatToggle(f.formatId)}
+                                        className={`chip ${formData.movieFormatIds.includes(f.formatId) ? 'chip-active' : ''}`}>
                                         {f.formatName}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Movie Genres */}
                         <div>
-                            <label className={labelClass}>Genres</label>
+                            <label className="input-label">Genres</label>
                             <div className="flex flex-wrap gap-2">
                                 {genres.map((g: MovieGenre) => (
-                                    <button
-                                        key={g.movieGenreId}
-                                        type="button"
-                                        onClick={() => handleGenreToggle(g.movieGenreId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.movieGenreIds.includes(g.movieGenreId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white border-pink-300 shadow-md shadow-pink-500/20'
-                                                : 'bg-red-600 text-white border-red-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-red-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-red-500'
-                                            }`}
-                                    >
+                                    <button key={g.movieGenreId} type="button" onClick={() => handleGenreToggle(g.movieGenreId)}
+                                        className={`chip ${formData.movieGenreIds.includes(g.movieGenreId) ? 'chip-active' : ''}`}>
                                         {g.movieGenreName}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Authorized Cinemas */}
                         <div>
-                            <label className={labelClass}>Authorized Cinemas <span className="text-red-500">*</span></label>
+                            <label className="input-label">Authorized Cinemas <span style={{ color: 'var(--danger)' }}>*</span></label>
                             <div className="flex flex-wrap gap-2">
                                 {cinemas.map((c: Cinema) => (
-                                    <button
-                                        key={c.cinemaId}
-                                        type="button"
-                                        onClick={() => handleCinemaToggle(c.cinemaId)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${formData.cinemaIds.includes(c.cinemaId)
-                                            ? theme === 'modern'
-                                                ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-blue-300 shadow-md shadow-blue-500/20'
-                                                : 'bg-blue-600 text-white border-blue-600'
-                                            : theme === 'dark'
-                                                ? 'bg-gray-800 text-gray-300 border-gray-700 hover:border-blue-600'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#15102B]/60 text-white font-medium border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20'
-                                                    : 'bg-gray-100 text-gray-700 border-gray-300 hover:border-blue-500'
-                                            }`}
-                                    >
+                                    <button key={c.cinemaId} type="button" onClick={() => handleCinemaToggle(c.cinemaId)}
+                                        className={`chip ${formData.cinemaIds.includes(c.cinemaId) ? 'chip-active' : ''}`}>
                                         {c.cinemaName}
                                     </button>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Submit */}
                         <div className="flex justify-end gap-3 pt-4">
-                            <button type="button" onClick={onClose} disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-gray-300' : theme === 'modern' ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}>Cancel</button>
-                            <button type="submit" disabled={loading} className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${loading ? 'opacity-50 cursor-not-allowed' : ''
-                                } ${theme === 'modern' ? 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 shadow-lg shadow-pink-500/20 text-white border border-pink-400/50' : 'bg-red-600 hover:bg-red-700 text-white'
-                                }`}>
-                                {loading ? (<><Loader2 className="w-4 h-4 animate-spin" /> Updating...</>) : (<><Edit className="w-4 h-4" /> Save Changes</>)}
+                            <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">Cancel</button>
+                            <button type="submit" disabled={loading} className="btn btn-primary">
+                                {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Updating...</> : <><Edit size={14} /> Save Changes</>}
                             </button>
                         </div>
                     </form>
@@ -1207,12 +741,165 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 };
 
 // =============================================
+// MOVIES LIST TAB
+// =============================================
+
+interface MoviesListTabProps {
+    movies: Movie[];
+    loading: boolean;
+    searchTerm: string;
+    onSearchChange: (v: string) => void;
+    onCreateClick: () => void;
+    onMovieClick: (movie: Movie) => void;
+    onEditClick: (movie: Movie) => void;
+    onDeleteClick: (movie: Movie) => void;
+    onAssignClick: (id: string, name: string) => void;
+    isAdmin: boolean;
+    formatDate: (d: string) => string;
+}
+
+const MoviesListTab: React.FC<MoviesListTabProps> = ({
+    movies, loading, searchTerm, onSearchChange,
+    onCreateClick, onMovieClick, onEditClick, onDeleteClick, onAssignClick,
+    isAdmin, formatDate,
+}) => {
+    const { t } = useTranslation();
+
+    if (loading) {
+        return (
+            <div className="state-center" style={{ minHeight: 400 }}>
+                <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading movies...</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="animate-in">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div className="relative" style={{ flex: 1, maxWidth: 320 }}>
+                    <Search size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                    <input
+                        type="text"
+                        placeholder={t('Search movies...')}
+                        value={searchTerm}
+                        onChange={e => onSearchChange(e.target.value)}
+                        className="input"
+                        style={{ paddingLeft: 36 }}
+                    />
+                </div>
+                <button onClick={onCreateClick} className="btn btn-primary">
+                    <Plus size={14} />
+                    {t('Add New Movie')}
+                </button>
+            </div>
+
+            {movies.length === 0 ? (
+                <div className="state-center" style={{ minHeight: 400 }}>
+                    <Film size={48} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 16 }} />
+                    <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>
+                        {searchTerm ? 'No movies found' : 'No movies yet'}
+                    </p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
+                        {searchTerm ? 'Try adjusting your search' : 'Click "Add New Movie" to get started'}
+                    </p>
+                </div>
+            ) : (
+                <div style={{
+                    display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                    gap: 16,
+                }}>
+                    {movies.map((movie) => (
+                        <div
+                            key={movie.movieId}
+                            className="glass-card"
+                            style={{
+                                overflow: 'hidden', cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                            }}
+                            onClick={() => onMovieClick(movie)}
+                        >
+                            {/* Poster */}
+                            <div className="relative" style={{ height: 200, overflow: 'hidden', background: '#000' }}>
+                                <img
+                                    src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400'}
+                                    alt={movie.movieName}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400'; }}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] via-transparent to-transparent opacity-60" />
+
+                                {/* Overlay on hover */}
+                                <div className="absolute inset-0 flex items-center justify-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-200" style={{ background: 'rgba(0,0,0,0.6)' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); onMovieClick(movie); }} className="btn-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
+                                        <Eye size={16} />
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); onEditClick(movie); }} className="btn-icon" style={{ background: 'rgba(59, 130, 246, 0.2)' }}>
+                                        <Edit size={16} />
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); onDeleteClick(movie); }} className="btn-icon" style={{ background: 'rgba(239, 68, 68, 0.2)' }}>
+                                        <Trash2 size={16} />
+                                    </button>
+                                    {isAdmin && (
+                                        <button onClick={(e) => { e.stopPropagation(); onAssignClick(movie.movieId!, movie.movieName); }} className="btn-icon" style={{ background: 'rgba(139, 92, 246, 0.2)' }}>
+                                            <UserPlus size={16} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Duration Badge */}
+                                <div className="absolute top-3 right-3 px-2 py-1 rounded-lg" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        <Clock size={12} /> {movie.duration}m
+                                    </span>
+                                </div>
+
+                                {/* Format Tags */}
+                                <div className="absolute top-3 left-3 flex flex-col gap-1">
+                                    {(movie.movieVisualFormatInfos || []).slice(0, 2).map((format, i) => (
+                                        <span key={i} className="badge" style={{ background: 'var(--accent)', color: '#fff', fontSize: 9 }}>
+                                            {format}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Info */}
+                            <div style={{ padding: '14px 16px' }}>
+                                <h3 className="truncate" style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 8px' }}>
+                                    {movie.movieName}
+                                </h3>
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {(movie.movieGenresInfos || []).slice(0, 3).map((genre, i) => (
+                                        <span key={i} className="badge" style={{ background: 'rgba(255,255,255,0.04)', color: 'var(--text-secondary)', fontSize: 9 }}>
+                                            {genre}
+                                        </span>
+                                    ))}
+                                </div>
+                                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 4px' }}>
+                                    {formatDate(movie.startedDate)} — {formatDate(movie.endedDate)}
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                    <UserIcon size={11} style={{ color: movie.managerName ? 'var(--accent)' : 'var(--danger)' }} />
+                                    <span className="truncate" style={{ fontSize: 11, fontWeight: 600, color: movie.managerName ? 'var(--accent)' : 'var(--danger)' }}>
+                                        {movie.managerName || 'No manager'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// =============================================
 // MAIN MOVIE MANAGER PAGE
 // =============================================
 
 const MovieManagerPage: React.FC = () => {
     const navigate = useNavigate();
-    const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
     const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
@@ -1275,38 +962,20 @@ const MovieManagerPage: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
-    // Dropdown state
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
-    const themeDropdownRef = useRef<HTMLDivElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as HTMLElement;
-            if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
-            if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
     const fetchMovies = async () => {
         setLoading(true);
         setError(null);
         try {
             const res = await movieApi.getMovieList();
-            console.log("DEBUG: API getMovieList Response ->", res.data);
             setMovies(res.data || []);
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
                 const data = err.response.data as ApiErrorResponse;
-                if (data.statusCode === 401) { 
-                    localStorage.removeItem('user_info'); 
+                if (data.statusCode === 401) {
+                    localStorage.removeItem('user_info');
                     Cookies.remove('X-Access-Token');
-                    navigate('/login'); 
-                    return; 
+                    navigate('/login');
+                    return;
                 }
                 setError(data.message || 'Cannot load movies list.');
             } else if (axios.isAxiosError(err) && err.request) {
@@ -1314,53 +983,32 @@ const MovieManagerPage: React.FC = () => {
             } else {
                 setError('An unknown error occurred.');
             }
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     const fetchFormats = async () => {
-        try {
-            const res = await movieApi.getMovieFormats();
-            setFormats(res.data || []);
-        } catch {
-            /* formats are non-critical, silently ignore */
-        }
+        try { const res = await movieApi.getMovieFormats(); setFormats(res.data || []); } catch { }
     };
 
     const fetchRequiredAges = async () => {
-        try {
-            const res = await movieApi.getMovieRequiredAges();
-            setRequiredAges(res.data || []);
-        } catch {
-            /* silently ignore */
-        }
+        try { const res = await movieApi.getMovieRequiredAges(); setRequiredAges(res.data || []); } catch { }
     };
 
     const fetchGenres = async () => {
         try {
             const res = await publicApi.getMovieGenres();
-            // Map PublicGenre to MovieGenre format if needed (they should be compatible)
             const genresData: MovieGenre[] = (res.data || []).map(g => ({
                 movieGenreId: g.genreId,
                 movieGenreName: g.genreName,
-                movieGenreDescription: g.description
+                movieGenreDescription: g.description,
             }));
             setGenres(genresData);
-        } catch {
-            /* silently ignore */
-        }
+        } catch { }
     };
 
     const fetchCinemas = async () => {
-        try {
-            const res = await facilitiesApi.getCinemaList();
-            setCinemas(res.data || []);
-        } catch {
-            /* silently ignore */
-        }
+        try { const res = await facilitiesApi.getCinemaList(); setCinemas(res.data || []); } catch { }
     };
-
 
     const handleLogoutConfirm = async () => {
         setLogoutError(null);
@@ -1386,387 +1034,61 @@ const MovieManagerPage: React.FC = () => {
 
     const formatDate = formatVietnamDate;
 
+    const sidebarSections: SidebarSection[] = [
+        {
+            items: [
+                { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
+                { id: 'movies', label: t('Movies'), icon: <Film size={18} /> },
+            ],
+        },
+    ];
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'dashboard':
+                return <ManagementDashboard role="movie" />;
+            case 'movies':
+                return (
+                    <MoviesListTab
+                        movies={filteredMovies}
+                        loading={loading}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        onCreateClick={() => setIsCreateModalOpen(true)}
+                        onMovieClick={(movie) => { setSelectedMovie(movie); setIsDetailModalOpen(true); }}
+                        onEditClick={(movie) => { setMovieToUpdate(movie); setIsUpdateModalOpen(true); }}
+                        onDeleteClick={handleDeleteMovie}
+                        onAssignClick={(id, name) => { setItemToAssign({ id, name }); setIsAssignModalOpen(true); }}
+                        isAdmin={isAdmin}
+                        formatDate={formatDate}
+                    />
+                );
+            default:
+                return <ManagementDashboard role="movie" />;
+        }
+    };
+
     return (
-        <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'
-            }`}>
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-            {/* HEADER */}
-            <header className={`fixed top-0 left-0 right-0 lg:left-72 z-[100] h-20 border-b flex items-center justify-between px-6 transition-all duration-300 backdrop-blur-xl ${
-                theme === 'dark' 
-                    ? 'bg-black/80 border-gray-800' 
-                    : theme === 'modern'
-                        ? 'bg-[#030712]/80 border-indigo-500/20 shadow-2xl shadow-indigo-500/5'
-                        : 'bg-white/80 border-gray-100'
-            }`}>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className={`lg:hidden p-2 rounded-xl transition-all active:scale-95 z-[70] ${
-                            theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
-                            theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
-                            'hover:bg-gray-100 text-gray-700'
-                        }`}
-                        title="Open Menu"
-                    >
-                        <Menu className="w-6 h-6" />
-                    </button>
-                    
-                    <div
-                        className={`flex-shrink-0 ml-4 text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
-                        onClick={() => navigate('/home')}
-                    >
-                        CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
-                    </div>
-                </div>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+            <AppSidebar
+                isOpen={sidebarOpen}
+                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                sections={sidebarSections}
+                role="Movie Manager"
+            />
 
-                <div className="flex-1" />
+            <Header
+                title={t('Movie Manager')}
+                role="Movie Manager"
+                showSidebarToggle
+                onMenuToggle={() => setSidebarOpen(true)}
+            />
 
-                <div className="flex items-center gap-2 sm:gap-4">
-                    <div className="hidden lg:flex items-center gap-2 sm:gap-4">
-                        <LanguageSwitcher />
-                        
-                        {/* Theme Switcher */}
-                        <div className="relative" ref={themeDropdownRef}>
-                            <button
-                                onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark'
-                                    ? 'hover:bg-gray-800 text-gray-300'
-                                    : theme === 'modern'
-                                        ? 'hover:bg-indigo-800/40 text-white font-medium'
-                                        : 'hover:bg-gray-100 text-gray-700'
-                                    }`}
-                                aria-label="Select theme"
-                            >
-                                {theme === 'dark' ? (
-                                    <Moon className="w-5 h-5" />
-                                ) : theme === 'modern' ? (
-                                    <Sparkles className="w-5 h-5" />
-                                ) : (
-                                    <Sun className="w-5 h-5" />
-                                )}
-                                <span className="hidden sm:inline-block text-sm font-medium">
-                                    {theme === 'dark' ? t('Dark Mode') : theme === 'modern' ? t('Modern View') : t('Light Mode')}
-                                </span>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {isThemeDropdownOpen && (
-                                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark'
-                                    ? 'bg-gray-900 border border-gray-700'
-                                    : theme === 'modern'
-                                        ? 'bg-gradient-to-br from-[#15102B]/95 to-[#0b061c]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
-                                        : 'bg-white border border-gray-200'} ${theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20' : ''}'
-                                    }`}>
-                                    <div className="py-2">
-                                        <div className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
-                                            }`}>
-                                            <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-400'
-                                                }`}>
-                                                {t('Select Theme')}
-                                            </p>
-                                        </div>
-
-                                        <button
-                                            onClick={() => {
-                                                setTheme('light');
-                                                setIsThemeDropdownOpen(false);
-                                            }}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'light'
-                                                ? 'bg-gray-100 text-gray-900'
-                                                : theme === 'dark'
-                                                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                                    : theme === 'modern'
-                                                        ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
-                                                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                                }`}
-                                        >
-                                            <Sun className="w-4 h-4" />
-                                            <div className="flex-1">
-                                                <div className="font-semibold">{t('Light Mode')}</div>
-                                            </div>
-                                            {theme === 'light' && <div className="w-2 h-2 rounded-full bg-red-600" />}
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                setTheme('dark');
-                                                setIsThemeDropdownOpen(false);
-                                            }}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark'
-                                                ? 'bg-gray-800 text-white'
-                                                : theme === 'modern'
-                                                    ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                                }`}
-                                        >
-                                            <Moon className="w-4 h-4" />
-                                            <div className="flex-1">
-                                                <div className="font-semibold">{t('Dark Mode')}</div>
-                                            </div>
-                                            {theme === 'dark' && <div className="w-2 h-2 rounded-full bg-red-600" />}
-                                        </button>
-
-                                        <button
-                                            onClick={() => {
-                                                setTheme('modern');
-                                                setIsThemeDropdownOpen(false);
-                                            }}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'modern'
-                                                ? 'bg-[#15102B] text-white'
-                                                : theme === 'dark'
-                                                    ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                                }`}
-                                        >
-                                            <Sparkles className="w-4 h-4" />
-                                            <div className="flex-1">
-                                                <div className="font-semibold">{t('Modern View')}</div>
-                                            </div>
-                                            {theme === 'modern' && <div className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" />}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="h-8 w-[1px] bg-gray-500/20 mx-2" />
-
-                        {/* User Profile Dropdown */}
-                        <div className="relative" ref={dropdownRef}>
-                            <button
-                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
-                                    }`}
-                            >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
-                                    <UserCircle className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="hidden sm:block text-left">
-                                    <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>Movie Manager</p>
-                                    <span className={`font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
-                                        {user?.username || 'Guest'}
-                                    </span>
-                                </div>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
-                            </button>
-
-                            {isDropdownOpen && (
-                                <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
-                                    }`}>
-                                    <div className="py-2">
-                                        <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
-                                            <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('SIGNED IN AS')}</p>
-                                            <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
-                                        </div>
-
-                                        <button
-                                            onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
-                                        >
-                                            <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
-                                        </button>
-
-                                        <button
-                                            onClick={() => navigate('/role-selection')}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                                                }`}
-                                        >
-                                            <ArrowLeftRight className="w-4 h-4" />
-                                            {t('header.switchRole')}
-                                        </button>
-
-                                        <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
-
-                                        <button
-                                            onClick={() => setIsLogoutModalOpen(true)}
-                                            className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
-                                                }`}
-                                        >
-                                            <LogOut className="w-4 h-4" />
-                                            {t('header.logout')}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <button 
-                        onClick={() => setSidebarOpen(true)}
-                        className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${
-                            theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
-                        }`}
-                    >
-                        <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
-                    </button>
-                </div>
-            </header>
-
-            {/* MAIN CONTENT */}
-            <main className="pt-24 lg:pl-72 min-h-screen">
-                <div className="p-4 lg:p-6 mx-auto max-w-7xl">
-                    {logoutError && (
-                        <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
-                            }`}>
-                            <AlertCircle className="w-5 h-5 mr-3 text-red-500" />
-                            <span className="text-sm font-medium">{logoutError}</span>
-                        </div>
-                    )}
-
-                    {activeTab === 'dashboard' ? (
-                        <ManagementDashboard role="movie" />
-                    ) : (
-                        <>
-                    {/* Page Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-                        <div className="flex-1 min-w-0">
-                            <h1 className={`text-2xl sm:text-3xl font-black mb-2 border-l-4 pl-4 ${theme === 'modern' ? 'border-cyan-300 shadow-md shadow-cyan-500/20' : 'border-red-600'
-                                } ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                                Movie Management
-                            </h1>
-                            <p className={`text-sm sm:text-base ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'}`}>
-                                Manage all movies in the system — add, edit and track movie schedules
-                            </p>
-                        </div>
-                        <button onClick={() => setIsCreateModalOpen(true)} className={`inline-flex items-center justify-center gap-2 px-4 py-2 text-white font-semibold rounded-lg transition-colors whitespace-nowrap ${theme === 'modern' ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-[0_0_15px_rgba(6,182,212,0.3)]' : 'bg-red-600 hover:bg-red-700'
-                            }`}>
-                            <Plus className="w-5 h-5" />
-                            <span className="hidden sm:inline">Add New Movie</span>
-                            <span className="sm:hidden">Add</span>
-                        </button>
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className={`mb-6 p-4 rounded-lg border flex items-center ${theme === 'dark' || theme === 'modern' ? 'bg-red-900/40 border-red-500/50 text-red-100' : 'bg-red-50 border-red-200 text-red-800'
-                            }`}>
-                            <AlertCircle className="w-5 h-5 mr-3 text-red-500" />
-                            <span className="text-sm font-medium flex-1">{error}</span>
-                            <button onClick={fetchMovies} className="ml-3 px-3 py-1 rounded text-sm font-semibold bg-red-600 hover:bg-red-700 text-white">Retry</button>
-                        </div>
-                    )}
-
-                    {/* Search */}
-                    <div className="relative mb-6">
-                        <Search className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-500'
-                            }`} />
-                        <input
-                            type="text" placeholder="Search movies..." value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full pl-12 pr-4 py-3 border rounded-lg focus:outline-none transition-colors ${theme === 'modern' ? 'focus:border-cyan-300 shadow-md shadow-cyan-500/20' : 'focus:border-red-600'
-                                } ${theme === 'dark' ? 'bg-gray-900 border-gray-800 text-white placeholder-gray-500'
-                                    : theme === 'modern' ? 'bg-[#0E0A20]/60 border-indigo-500/30 shadow-sm shadow-indigo-500/10 text-white placeholder-slate-500 backdrop-blur-2xl'
-                                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
-                                }`}
-                        />
-                    </div>
-
-                    {/* Loading */}
-                    {loading && (
-                        <div className={`text-center py-12 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'bg-white border-gray-200'
-                            }`}>
-                            <Loader2 className={`w-12 h-12 animate-spin mx-auto mb-4 ${theme === 'modern' ? 'text-cyan-400' : 'text-red-600'}`} />
-                            <p className={theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'}>Loading movies...</p>
-                        </div>
-                    )}
-
-                    {/* Movie Cards Grid */}
-                    {!loading && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-7">
-                            {filteredMovies.map((movie) => (
-                                <div
-                                    key={movie.movieId}
-                                    className={`group rounded-xl overflow-hidden border transition-all hover:-translate-y-1 cursor-pointer ${theme === 'dark'
-                                        ? 'bg-gray-900 border-gray-800 hover:border-red-600'
-                                        : theme === 'modern'
-                                            ? 'bg-[#15102B]/80 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 border-indigo-500/30 shadow-sm shadow-indigo-500/10 hover:border-cyan-300 shadow-md shadow-cyan-500/20 backdrop-blur-2xl'
-                                            : 'bg-white border-gray-200 hover:border-red-600 shadow-sm'
-                                        }`}
-                                    onClick={() => { setSelectedMovie(movie); setIsDetailModalOpen(true); }}
-                                >
-                                    {/* Poster */}
-                                    <div className="aspect-[2/3] relative overflow-hidden bg-black/20">
-                                        <img
-                                            src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=400'}
-                                            alt={movie.movieName}
-                                            className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-                                        {/* Hover Actions */}
-                                        <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                            <div className="flex gap-1.5">
-                                                <button onClick={(e) => { e.stopPropagation(); setSelectedMovie(movie); setIsDetailModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-white/30 transition-colors">
-                                                    <Eye className="w-3.5 h-3.5 shrink-0" /> View
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); setMovieToUpdate(movie); setIsUpdateModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-blue-700 transition-colors">
-                                                    <Edit className="w-3.5 h-3.5 shrink-0" /> Edit
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-red-700 transition-colors">
-                                                    <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
-                                                </button>
-                                                {isAdmin && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setItemToAssign({ id: movie.movieId!, name: movie.movieName }); setIsAssignModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-indigo-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors">
-                                                        <UserPlus className="w-3.5 h-3.5 shrink-0" /> Assign
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        {/* Duration Badge */}
-                                        <div className="absolute top-2.5 right-2.5 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-semibold text-white flex items-center gap-1">
-                                            <Clock className="w-3 h-3" /> {movie.duration}m
-                                        </div>
-
-                                        {/* Format Tags */}
-                                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
-                                            {(movie.movieVisualFormatInfos || []).slice(0, 2).map((format, i) => (
-                                                <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold ${theme === 'modern' ? 'bg-blue-600/80 text-white' : 'bg-red-600/80 text-white'
-                                                    }`}>{format}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Info */}
-                                    <div className="p-4 sm:p-5">
-                                        <h3 className={`font-bold text-sm sm:text-base truncate mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                                            }`}>{movie.movieName}</h3>
-                                        <div className="flex flex-wrap gap-1.5 mb-3">
-                                            {(movie.movieGenresInfos || []).map((genre, i) => (
-                                                <span key={i} className={`text-[10px] px-2 py-0.5 rounded-full ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-[#15102B]/80 text-white font-medium' : 'bg-gray-100 text-gray-600'
-                                                    }`}>{genre}</span>
-                                            ))}
-                                        </div>
-                                        <p className={`text-xs leading-relaxed ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-500'}`}>
-                                            {formatDate(movie.startedDate)} — {formatDate(movie.endedDate)}
-                                        </p>
-                                        <div className="flex items-center gap-1.5 mt-2.5 text-[11px]">
-                                            <UserIcon className="w-3.5 h-3.5 text-red-600" />
-                                            <span className={`font-bold truncate ${movie.managerName ? (theme === 'modern' || theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600') : 'text-red-500'}`}>
-                                                {movie.managerName || 'Chưa có quản lý'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Empty State */}
-                    {!loading && filteredMovies.length === 0 && (
-                        <div className={`text-center py-16 rounded-xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border border-indigo-500/40 shadow-sm shadow-indigo-500/10 border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'bg-white border-gray-200'
-                            }`}>
-                            <Film className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-cyan-500' : 'text-gray-400'}`} />
-                            <p className={`text-lg font-semibold mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>
-                                {searchTerm ? 'No movies found' : 'No movies yet'}
-                            </p>
-                            <p className={`text-sm ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'}`}>
-                                {searchTerm ? 'Try adjusting your search' : 'Click "Add New Movie" to get started'}
-                            </p>
-                        </div>
-                    )}
-                        </>
-                    )}
+            <main className="main-content">
+                <div className="page-container">
+                    {renderContent()}
                 </div>
             </main>
 
@@ -1794,7 +1116,7 @@ const MovieManagerPage: React.FC = () => {
             )}
             {selectedMovie && (
                 <MovieDetailModal
-                    movie={selectedMovie as Movie}
+                    movie={selectedMovie}
                     isOpen={isDetailModalOpen}
                     onClose={() => { setIsDetailModalOpen(false); setSelectedMovie(null); }}
                 />
@@ -1811,13 +1133,10 @@ const MovieManagerPage: React.FC = () => {
             {isAdmin && itemToAssign && (
                 <AssignRightsModal
                     isOpen={isAssignModalOpen}
-                    onClose={() => {
-                        setIsAssignModalOpen(false);
-                        setItemToAssign(null);
-                    }}
+                    onClose={() => { setIsAssignModalOpen(false); setItemToAssign(null); }}
                     itemId={itemToAssign.id}
                     itemName={itemToAssign.name}
-                    type={3} // 3: Movie
+                    type={3}
                     onSuccess={() => fetchMovies()}
                 />
             )}

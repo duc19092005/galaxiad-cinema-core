@@ -1,35 +1,50 @@
-import React from 'react';
-import { Plus, ZoomIn, ZoomOut, Delete } from 'lucide-react';
+// src/components/FloatingActionButtons.tsx
 
-/**
- * FloatingActionButtons – group of four circular FABs in the bottom‑right corner.
- *   • Add (primary #ff8a00)
- *   • Zoom In (secondary #2a2a2a with border)
- *   • Zoom Out (secondary #2a2a2a with border)
- *   • Delete (red #7f1d1d)
- *
- * Props receive callbacks for each action.
- */
-const FloatingActionButtons: React.FC<{
-  onAdd: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onDelete: () => void;
-}> = ({ onAdd, onZoomIn, onZoomOut, onDelete }) => {
+import React from 'react';
+
+interface FloatingActionButtonsProps {
+  buttons: {
+    icon: React.ReactNode;
+    onClick?: () => void;
+    label?: string;
+    color?: 'accent' | 'danger' | 'success';
+  }[];
+}
+
+const FloatingActionButtons: React.FC<FloatingActionButtonsProps> = ({ buttons }) => {
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col gap-2" style={{ transform: 'translate(0,0)' }}>
-      <button className="fab fab-primary" onClick={onAdd}>
-        <Plus size={20} className="text-white" />
-      </button>
-      <button className="fab fab-secondary" onClick={onZoomIn}>
-        <ZoomIn size={20} className="text-secondary" />
-      </button>
-      <button className="fab fab-secondary" onClick={onZoomOut}>
-        <ZoomOut size={20} className="text-secondary" />
-      </button>
-      <button className="fab fab-delete" onClick={onDelete}>
-        <Delete size={20} className="text-white" />
-      </button>
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24,
+      display: 'flex', flexDirection: 'column', gap: 8,
+      zIndex: 40,
+    }}>
+      {buttons.map((btn, i) => (
+        <button
+          key={i}
+          onClick={btn.onClick}
+          title={btn.label}
+          className="flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95"
+          style={{
+            width: 48, height: 48, borderRadius: '50%',
+            border: '1px solid var(--border-color)',
+            background: btn.color === 'danger'
+              ? 'rgba(239, 68, 68, 0.15)'
+              : btn.color === 'success'
+                ? 'rgba(34, 197, 94, 0.15)'
+                : 'rgba(255, 138, 0, 0.15)',
+            color: btn.color === 'danger'
+              ? 'var(--danger)'
+              : btn.color === 'success'
+                ? 'var(--success)'
+                : 'var(--accent)',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+            backdropFilter: 'blur(12px)',
+          }}
+        >
+          {btn.icon}
+        </button>
+      ))}
     </div>
   );
 };

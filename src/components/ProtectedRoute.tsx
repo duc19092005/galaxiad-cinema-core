@@ -42,9 +42,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 
   if (isChecking) {
     return (
-      <div className="state-center" style={{ minHeight: '100vh' }}>
-        <Loader2 className="w-8 h-8" style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-        <p className="text-secondary">Kiểm tra xác thực...</p>
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 16,
+        background: '#0a0a0a',
+        color: '#a1a1aa',
+      }}>
+        <Loader2 size={28} style={{ color: '#ff8a00', animation: 'spin 1s linear infinite' }} />
+        <p style={{ fontSize: 13, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em' }}>
+          Verifying authentication...
+        </p>
       </div>
     );
   }
