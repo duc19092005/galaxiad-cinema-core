@@ -85,10 +85,10 @@ builder.Services.AddCors(options =>
 
 // Authorization Policies
 builder.Services.AddAuthorization(options => {
-    options.AddPolicy("FacilitiesManager", policy => policy.RequireRole("FacilitiesManager"));
+    options.AddPolicy("FacilitiesManager", policy => policy.RequireRole("FacilitiesManager", "Admin"));
     options.AddPolicy("Admin" , policy => policy.RequireRole("Admin"));
-    options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager"));
-    options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager"));
+    options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager", "Admin"));
+    options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager", "Admin"));
 });
 
 // Swagger Config

@@ -4,6 +4,7 @@ using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using DataAccess;
@@ -19,14 +20,17 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     private readonly CinemaDbContext _dbContext;
     private readonly ILogger<FacilitiesManagerWriteCinemaUseCase> _logger;
     private readonly IUserContextService _userContext;
+    private readonly AuditLogService _auditLogService;
 
     public FacilitiesManagerWriteCinemaUseCase(CinemaDbContext dbContext,
         ILogger<FacilitiesManagerWriteCinemaUseCase> logger,
-        IUserContextService userContext)
+        IUserContextService userContext,
+        AuditLogService auditLogService)
     {
         this._dbContext = dbContext;
         this._logger = logger;
         _userContext = userContext;
+        _auditLogService = auditLogService;
     }
 
     public async Task<BaseResponse<string>> AddItem(AddCinemaReqDto request)
@@ -79,6 +83,13 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 IsActive = request.ActiveAt < DateTime.Now
             };
             await _dbContext.CinemaInfoEntity.AddAsync(newCinemaInfoEntity);
+            await _auditLogService.WriteAsync(
+                "Create",
+                "Cinema",
+                cinemaId,
+                request.CinemaName,
+                $"Created cinema {request.CinemaName}.",
+                cinemaId);
             await _dbContext.SaveChangesAsync();
 
             return new BaseResponse<string>()
@@ -105,7 +116,10 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         try
         {
             var userId = GetUserId();
-            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x => x.CinemaId.Equals(itemId) && (x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
+            var isAdmin = _userContext.IsInRole("Admin");
+            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x =>
+                x.CinemaId.Equals(itemId) &&
+                (isAdmin || x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
             if (findCinema == null)
             {
                 throw new AppException(Messages.Cinema.NotFoundById(itemId),
@@ -191,6 +205,14 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 findCinema.IsActive = findCinema.ActiveAt < DateTime.Now;
 
                 findCinema.UpdatedByUserId = userId;
+
+                await _auditLogService.WriteAsync(
+                    "Update",
+                    "Cinema",
+                    findCinema.CinemaId,
+                    findCinema.CinemaName,
+                    $"Updated cinema {findCinema.CinemaName}.",
+                    findCinema.CinemaId);
 
                 await _dbContext.SaveChangesAsync();
 

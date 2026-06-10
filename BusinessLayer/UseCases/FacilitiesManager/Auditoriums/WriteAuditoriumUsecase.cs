@@ -3,6 +3,7 @@ using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
 using DataAccess;
@@ -19,15 +20,18 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
     private readonly ILogger<FacilitiesManagerWriteAuditoriumUseCase> _logger;
 
     private readonly IUserContextService _userContextService;
+    private readonly AuditLogService _auditLogService;
 
 
     public FacilitiesManagerWriteAuditoriumUseCase(CinemaDbContext dbContext
     ,  ILogger<FacilitiesManagerWriteAuditoriumUseCase> logger ,
-    IUserContextService userContextService)
+    IUserContextService userContextService,
+    AuditLogService auditLogService)
     {
         this._dbContext = dbContext;
         this._logger = logger;
         this._userContextService = userContextService;
+        _auditLogService = auditLogService;
     }
     public async Task<BaseResponse<string>> AddItem(AddReqAuditoriumDto request)
     {
@@ -79,6 +83,13 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             }
 
             await _dbContext.SeatsInfoEntity.AddRangeAsync(seatsInfoEntities);
+            await _auditLogService.WriteAsync(
+                "Create",
+                "Auditorium",
+                generateAuditoriumId,
+                request.AuditoriumNumber,
+                $"Created auditorium {request.AuditoriumNumber}.",
+                request.CinemaId);
             
             await _dbContext.SaveChangesAsync();
             
@@ -137,6 +148,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                     AuditoriumId = itemId,
                     FormatId = x
                 });
+                await _dbContext.AuditoriumFormatInfosEntity.AddRangeAsync(newLists);
                 await _dbContext.SaveChangesAsync();
             }
             
@@ -170,6 +182,13 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             {
                 await _dbContext.SeatsInfoEntity.AddRangeAsync(newSeatsInfos);
             }
+            await _auditLogService.WriteAsync(
+                "Update",
+                "Auditorium",
+                itemId,
+                findAuditorium.AuditoriumNumber,
+                $"Updated auditorium {findAuditorium.AuditoriumNumber}.",
+                findAuditorium.CinemaId);
             await _dbContext.SaveChangesAsync();
             await  transactions.CommitAsync();
 

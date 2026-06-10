@@ -1,4 +1,5 @@
 using BusinessLayer.Dtos;
+using BusinessLayer.Services.Admin.Audit;
 using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
@@ -23,11 +24,13 @@ public class AdminManageUserService
 {
     private readonly CinemaDbContext _dbContext;
     private readonly ILogger<AdminManageUserService> _logger;
+    private readonly AuditLogService _auditLogService;
 
-    public AdminManageUserService(CinemaDbContext dbContext, ILogger<AdminManageUserService> logger)
+    public AdminManageUserService(CinemaDbContext dbContext, ILogger<AdminManageUserService> logger, AuditLogService auditLogService)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _auditLogService = auditLogService;
     }
 
     public async Task<BaseResponse<List<AdminUserDto>>> GetAllUsersAsync()
@@ -68,6 +71,12 @@ public class AdminManageUserService
 
         user.AccountStatus = status;
         _dbContext.UserInfoEntity.Update(user);
+        await _auditLogService.WriteAsync(
+            "Update",
+            "User",
+            user.UserId,
+            user.UserEmail,
+            $"Updated user status to {status}.");
         await _dbContext.SaveChangesAsync();
 
         return new BaseResponse<string>
@@ -117,6 +126,13 @@ public class AdminManageUserService
                 await _dbContext.UserRoleInfoEntity.AddRangeAsync(rolesToAdd);
             }
 
+            await _auditLogService.WriteAsync(
+                "Update",
+                "UserRole",
+                user.UserId,
+                user.UserEmail,
+                "Updated user roles.");
+
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
 
@@ -157,6 +173,13 @@ public class AdminManageUserService
         }
         
         _dbContext.CinemaInfoEntity.Update(cinema);
+        await _auditLogService.WriteAsync(
+            "Update",
+            "Cinema",
+            cinema.CinemaId,
+            cinema.CinemaName,
+            $"Assigned {userRole.RoleListInfoEntity.RoleName} to cinema {cinema.CinemaName}.",
+            cinema.CinemaId);
         await _dbContext.SaveChangesAsync();
 
         return new BaseResponse<string> { IsSuccess = true, Message = "Assigned cinema successfully." };

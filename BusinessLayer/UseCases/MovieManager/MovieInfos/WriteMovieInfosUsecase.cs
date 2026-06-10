@@ -3,6 +3,7 @@ using Shared.Localization;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.MovieManager.Requests;
+using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators.MovieManager;
@@ -24,16 +25,18 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     private readonly CinemaDbContext _dbContext;
     private readonly cloudinaryHelper _cloudinaryHelper;
     private readonly IScheduleJobsService _scheduleJobsService;
+    private readonly AuditLogService _auditLogService;
 
 
     public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, CinemaDbContext dbContext,
-        cloudinaryHelper cloudinaryHelper , IScheduleJobsService scheduleJobService)
+        cloudinaryHelper cloudinaryHelper , IScheduleJobsService scheduleJobService, AuditLogService auditLogService)
     {
         _userContextService = userContextService;
         _logger = logger;
         _dbContext = dbContext;
         _cloudinaryHelper = cloudinaryHelper;
         _scheduleJobsService = scheduleJobService;
+        _auditLogService = auditLogService;
     }
 
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
@@ -129,6 +132,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
             await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
             await _dbContext.MovieCinemaEntities.AddRangeAsync(newMovieCinemaInfos);
+            await _auditLogService.WriteAsync(
+                "Create",
+                "Movie",
+                newMovieId,
+                request.MovieName,
+                $"Created movie {request.MovieName}.",
+                request.CinemaIds.FirstOrDefault());
             
             await _dbContext.SaveChangesAsync();
             await transactions.CommitAsync();
@@ -303,6 +313,17 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     }));
                 }
 
+                await _auditLogService.WriteAsync(
+                    "Update",
+                    "Movie",
+                    itemId,
+                    findTheMovie.MovieName,
+                    $"Updated movie {findTheMovie.MovieName}.",
+                    request.CinemaIds?.FirstOrDefault() ?? await _dbContext.MovieCinemaEntities
+                        .Where(x => x.MovieId == itemId)
+                        .Select(x => (Guid?)x.CinemaId)
+                        .FirstOrDefaultAsync());
+
                 await _dbContext.SaveChangesAsync();
                 await transactions.CommitAsync();
 
@@ -409,6 +430,17 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             }
         }
         
+        await _auditLogService.WriteAsync(
+            "Delete",
+            "Movie",
+            movie.MovieId,
+            movie.MovieName,
+            $"Deleted movie {movie.MovieName}.",
+            await _dbContext.MovieCinemaEntities
+                .Where(x => x.MovieId == itemId)
+                .Select(x => (Guid?)x.CinemaId)
+                .FirstOrDefaultAsync());
+
         await _dbContext.SaveChangesAsync();
 
         return new BaseResponse<string>()

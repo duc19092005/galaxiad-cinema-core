@@ -1,6 +1,7 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
+using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using DataAccess;
@@ -26,16 +27,19 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     private readonly IScheduleJobsService _scheduleJobsService;
 
     private readonly TheaterManagerValidate _theaterManagerValidate;
+    private readonly AuditLogService _auditLogService;
 
     public WriteMovieSchedulesUseCase(CinemaDbContext cinemaDbContext , ILogger<WriteMovieSchedulesUseCase> logger ,
         IUserContextService userContextService , IScheduleJobsService scheduleJobsService ,
-        TheaterManagerValidate theaterManagerValidate)
+        TheaterManagerValidate theaterManagerValidate,
+        AuditLogService auditLogService)
     {
         _cinemaDbContext = cinemaDbContext;
         _logger = logger;
         _userContextService = userContextService;
         _scheduleJobsService = scheduleJobsService;
         _theaterManagerValidate = theaterManagerValidate;
+        _auditLogService = auditLogService;
     }
     public async Task<BaseResponse<string>> AddItem(TheaterManagerAddMovieSchedulesRequest request)
     {
@@ -188,6 +192,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             }
 
             await _cinemaDbContext.MovieScheduleInfoEntity.AddRangeAsync(proposedSlots);
+            await _auditLogService.WriteAsync(
+                "Create",
+                "MovieSchedule",
+                request.AuditoriumId,
+                $"Auditorium {request.AuditoriumId}",
+                $"Created {proposedSlots.Count} movie schedule(s).",
+                cinemaId);
             await _cinemaDbContext.SaveChangesAsync();
             await transactions.CommitAsync();
 
@@ -400,6 +411,14 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 entity.UpdatedAt = DateTime.Now;
             }
 
+            await _auditLogService.WriteAsync(
+                "Update",
+                "MovieSchedule",
+                auditoriumId,
+                $"Auditorium {auditoriumId}",
+                $"Updated {request.Slots.Count} movie schedule(s).",
+                cinemaId);
+
             await _cinemaDbContext.SaveChangesAsync();
             await transactions.CommitAsync();
 
@@ -432,6 +451,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     {
         var getCurrentUserId = _userContextService.GetUserId();
         var schedule = await _cinemaDbContext.MovieScheduleInfoEntity
+            .Include(x => x.AuditoriumInfoEntities)
+            .Include(x => x.MovieInfoEntity)
             .FirstOrDefaultAsync(x => x.MovieScheduleInfoId == itemId);
             
         if (schedule == null)
@@ -458,6 +479,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         schedule.DeletedAt = DateTime.Now;
         
         _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
+        await _auditLogService.WriteAsync(
+            "Delete",
+            "MovieSchedule",
+            schedule.MovieScheduleInfoId,
+            schedule.MovieInfoEntity.MovieName,
+            $"Deleted schedule for movie {schedule.MovieInfoEntity.MovieName}.",
+            schedule.AuditoriumInfoEntities.CinemaId);
         await _cinemaDbContext.SaveChangesAsync();
 
         return new BaseResponse<string>()

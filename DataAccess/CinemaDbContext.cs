@@ -1,4 +1,5 @@
 using DataAccess.Constants;
+using DataAccess.Entities.AuditLogs;
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 using DataAccess.Entities.ScheduleJob;
@@ -68,6 +69,7 @@ public class CinemaDbContext : DbContext
 
     public DbSet<OrderDetailsInfo> OrderDetailsInfoEntity { get; set; }
 
+    public DbSet<AuditLogEntity> AuditLogEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -77,6 +79,17 @@ public class CinemaDbContext : DbContext
         // Status Management status
 
         StatusManagementRelationships.AddRelationshipsCinemaInfo(modelBuilder);
+
+        modelBuilder.Entity<AuditLogEntity>(entity =>
+        {
+            entity.HasIndex(x => x.CreatedAt);
+            entity.HasIndex(x => x.CinemaId);
+            entity.HasIndex(x => new { x.EntityType, x.EntityId });
+            entity.HasOne(x => x.Actor)
+                .WithMany()
+                .HasForeignKey(x => x.ActorUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
         
         // User Infos 
         
