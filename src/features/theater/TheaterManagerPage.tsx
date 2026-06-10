@@ -1,219 +1,151 @@
-// src/features/theater/TheaterManagerPage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Loader2, Menu, LogOut, AlertCircle, UserCircle, ChevronDown,
-  ArrowLeftRight,
-} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import Sidebar from './components/Sidebar';
-import LogoutModal from '../../components/LogoutModal';
+import Header from '../../components/Header';
 import ScheduleManagerPage from '../schedule/ScheduleManagerPage';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
-import Cookies from 'js-cookie';
+import DragMovieCard from './components/DragMovieCard';
+import FloatingActionButtons from '../../components/FloatingActionButtons';
+import GlassCard from '../../components/GlassCard';
 import { useCinema } from '../../contexts/CinemaContext';
-import CinemaSelector from '../../components/CinemaSelector';
 import ManagementDashboard from '../../components/ManagementDashboard';
+import LogoutModal from '../../components/LogoutModal';
+import Cookies from 'js-cookie';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-const EmployeeManagementPlaceholder = () => <div className="p-6">Employee Management functionality coming soon...</div>;
-
+/**
+ * TheaterManagerPage – UI for theater schedule management using the new design system.
+ */
 const TheaterManagerPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { managedCinemas, activeCinemaId, loading: cinemaContextLoading } = useCinema();
-  const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
-
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-  const [logoutLoading, setLogoutLoading] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { managedCinemas, activeCinemaId, loading: cinemaLoading } = useCinema();
+  const [user, setUser] = useState<{ username: string; roles?: string[] } | null>(null);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'schedule'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
-
+  // Load user information & permissions
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('user_info');
-    if (!storedUser) { navigate('/login'); return; }
+    const raw = localStorage.getItem('user_info');
+    if (!raw) { navigate('/login'); return; }
     try {
-      const parsed = JSON.parse(storedUser) as { username: string; roles?: string[]; selectedRole?: string };
+      const parsed = JSON.parse(raw) as { username: string; roles?: string[] };
       const roles = parsed.roles || [];
-      if (!roles.includes('TheaterManager') && !roles.includes('Admin')) { navigate('/role-selection'); return; }
+      if (!roles.includes('TheaterManager') && !roles.includes('Admin')) {
+        navigate('/role-selection');
+        return;
+      }
       setUser(parsed);
     } catch { navigate('/login'); }
   }, [navigate]);
 
-  const handleLogoutClick = () => { setIsLogoutModalOpen(true); setLogoutError(null); };
-
-  const handleLogoutConfirm = async () => {
-    setLogoutError(null); setLogoutLoading(true);
+  const handleLogout = async () => {
+    setLogoutError(null);
+    setLogoutLoading(true);
     try {
       await authApi.logout();
       localStorage.removeItem('user_info');
       Cookies.remove('X-Access-Token');
-      setIsLogoutModalOpen(false);
       navigate('/login');
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response) {
-        setLogoutError((error.response.data as ApiErrorResponse).message || 'Logout failed.');
-      } else { setLogoutError('Unable to connect to server.'); }
-    } finally { setLogoutLoading(false); }
+    } catch (e: unknown) {
+      if (axios.isAxiosError(e) && e.response) {
+        setLogoutError((e.response.data as ApiErrorResponse).message || 'Logout failed');
+      } else {
+        setLogoutError('Unable to connect to server');
+      }
+    } finally {
+      setLogoutLoading(false);
+    }
   };
 
   const renderContent = () => {
-    if (cinemaContextLoading) {
+    if (cinemaLoading) {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
-          <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span className="text-muted">{t('Loading Cinema Context...')}</span>
+          <Loader2 size={24} className="text-primary spin" />
+          <p className="text-muted mt-2">{t('Loading cinema data...')}</p>
         </div>
       );
     }
 
-    const isAdmin = user?.roles?.includes('Admin') ?? false;
-
+    if (!user) return null;
+    const isAdmin = user.roles?.includes('Admin') ?? false;
     if (!isAdmin && managedCinemas.length === 0) {
       return (
-        <div className="state-center" style={{ minHeight: 200 }}>
-          <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
-          <h2 style={{ fontSize: 'var(--text-xl)', fontWeight: 500 }}>{t('Access Restricted')}</h2>
-          <p className="text-secondary" style={{ fontSize: 'var(--text-sm)', maxWidth: 400 }}>
-            {t('Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào. Vui lòng liên hệ Admin')}
+        <GlassCard className="flex flex-col items-center justify-center p-8">
+          <AlertCircle size={48} className="text-error" />
+          <h2 className="heading-md mt-4">{t('Access Restricted')}</h2>
+          <p className="text-secondary mt-2 max-w-md text-center">
+            {t('Your account is not assigned to any theater. Contact admin.')}
           </p>
-        </div>
+        </GlassCard>
       );
     }
-
     if (!isAdmin && !activeCinemaId) {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
-          <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span className="text-muted">{t('Initializing Cinema Selection...')}</span>
+          <Loader2 size={24} className="text-primary spin" />
+          <p className="text-muted mt-2">{t('Initializing selection…')}</p>
         </div>
       );
     }
-
     switch (activeTab) {
-      case 'dashboard': return <ManagementDashboard role="theater" />;
-      case 'employees': return <EmployeeManagementPlaceholder />;
-      case 'schedule': return <ScheduleManagerPage embedded={true} />;
-      default: return <ManagementDashboard role="theater" />;
+      case 'dashboard':
+        return <ManagementDashboard role="theater" />;
+      case 'employees':
+        return <div className="p-6">Employee Management coming soon…</div>;
+      case 'schedule':
+        return (
+          <div className="flex gap-4">
+            {/* Drag list */}
+            <aside className="w-80 bg-surface-low border-r border-base p-4 overflow-y-auto custom-scrollbar">
+              <h4 className="text-secondary text-sm uppercase mb-4">{t('Drag Movies')}</h4>
+              <input placeholder={t('Filter films...')} className="w-full bg-surface-high border border-base rounded-lg py-2.5 px-4 text-body-md focus:ring-1 focus:ring-primary outline-none mb-4" />
+              {/* Example movie cards */}
+              <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="Dune: Part Three" duration="120 min" />
+              <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="The Dark Knight" duration="152 min" />
+            </aside>
+            {/* Calendar grid */}
+            <div className="flex-1 relative bg-surface-low/30 overflow-hidden">
+              <ScheduleManagerPage embedded={true} />
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
-
-      {/* HEADER */}
-      <header className="navbar" style={{ position: 'fixed', left: 288, height: 64 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
-          <button onClick={() => setSidebarOpen(true)} className="btn-icon">
-            <Menu size={20} />
-          </button>
-          <div className="navbar-brand" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
-            CinemaPro
-          </div>
-        </div>
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-          <div className="hidden lg:flex" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
-            <CinemaSelector />
-            <div style={{ width: 1, height: 20, backgroundColor: 'var(--border)' }} />
-            <LanguageSwitcher />
-
-            {/* User dropdown */}
-            <div className="relative" ref={dropdownRef}>
-              <button onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="btn btn-secondary" style={{ padding: '2px 12px 2px 2px', gap: 'var(--space-2)', height: 'auto', borderRadius: 'var(--radius-full)', borderColor: 'var(--border)' }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--accent-soft)' }}>
-                  <UserCircle size={16} style={{ color: 'var(--accent)' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span className="text-muted" style={{ fontSize: '10px', letterSpacing: '0.3px', lineHeight: 1.2 }}>Theater Manager</span>
-                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500, lineHeight: 1.3 }}>{user?.username || 'Guest'}</span>
-                </div>
-                <ChevronDown size={12} style={{ color: 'var(--text-muted)', transition: 'transform 300ms var(--ease)', transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-              </button>
-
-              {isDropdownOpen && (
-                <div className="card surface-elevated" style={{ position: 'absolute', right: 0, marginTop: 'var(--space-2)', width: 200, padding: 'var(--space-1)', boxShadow: 'var(--shadow-lg)', zIndex: 100 }}>
-                  <div style={{ padding: 'var(--space-3) var(--space-4)', borderBottom: '1px solid var(--border)' }}>
-                    <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>{t('SIGNED IN AS')}</p>
-                    <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)', margin: 0 }}>{user?.username}</p>
-                  </div>
-                  <button onClick={() => { navigate('/account'); setIsDropdownOpen(false); }} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                    <UserCircle size={14} />{t('header.accountInfo')}
-                  </button>
-                  <button onClick={() => navigate('/role-selection')} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                    <ArrowLeftRight size={14} />{t('header.switchRole')}
-                  </button>
-                  <div style={{ height: 1, backgroundColor: 'var(--border)', margin: 'var(--space-1) 0' }} />
-                  <button onClick={handleLogoutClick} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--danger)' }}>
-                    <LogOut size={14} />{t('header.logout')}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <button onClick={() => setSidebarOpen(true)} className="btn-icon">
-            <UserCircle size={20} />
-          </button>
-        </div>
-      </header>
-
-      {/* MAIN CONTENT */}
-      <main style={{
-        paddingTop: 64,
-        paddingLeft: 288,
-        display: 'flex', flexDirection: 'column',
-        height: activeTab === 'schedule' ? '100vh' : 'auto',
-        minHeight: activeTab === 'schedule' ? undefined : '100vh',
-      }}>
-        <div style={{
-          display: 'flex', flexDirection: 'column',
-          overflow: activeTab === 'schedule' ? 'hidden' : 'visible',
-          flex: activeTab === 'schedule' ? 1 : undefined,
-          padding: activeTab === 'schedule' ? 'var(--space-4)' : 'var(--space-6)',
-        }}>
-          {/* Mobile Cinema Selector */}
-          {activeTab !== 'schedule' && (
-            <div style={{ marginBottom: 'var(--space-6)' }}>
-              <CinemaSelector />
-            </div>
-          )}
-
-          {logoutError && (
-            <div className="card" style={{ marginBottom: 'var(--space-4)', padding: 'var(--space-3) var(--space-4)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)' }}>
-              <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span style={{ fontSize: 'var(--text-sm)' }}>{logoutError}</span>
-            </div>
-          )}
-
-          {renderContent()}
-        </div>
+    <div className="min-h-screen bg-bg-base text-primary relative">
+      {/* Sidebar */}
+      <Sidebar activeTab={activeTab} onTabChange={(tab: string) => setActiveTab(tab as 'dashboard' | 'employees' | 'schedule')} isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
+      {/* Header */}
+      <Header />
+      {/* Main */}
+      <main className="pt-16 pl-72 px-8 pb-8">
+        {renderContent()}
       </main>
-
+      {/* FABs – only on schedule tab */}
+      {activeTab === 'schedule' && (
+        <FloatingActionButtons
+          onAdd={() => console.log('Add')}
+          onZoomIn={() => console.log('Zoom In')}
+          onZoomOut={() => console.log('Zoom Out')}
+          onDelete={() => console.log('Delete')}
+        />
+      )}
+      {/* Logout modal */}
       <LogoutModal
-        isOpen={isLogoutModalOpen}
-        onClose={() => setIsLogoutModalOpen(false)}
-        onConfirm={handleLogoutConfirm}
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+        onConfirm={handleLogout}
         loading={logoutLoading}
         error={logoutError}
       />

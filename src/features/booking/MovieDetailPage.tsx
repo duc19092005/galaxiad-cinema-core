@@ -2,21 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Clock, Calendar, MapPin,
-    Play, Info, Loader2, AlertCircle, ChevronLeft
+    Play, Info, Loader2, AlertCircle, ChevronLeft,
+    ChevronRight
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes } from '../../types/public.types';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
-    const { theme } = useTheme();
 
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState<string>('');
-
 
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [scheduleDates, setScheduleDates] = useState<string[]>([]);
@@ -25,6 +23,14 @@ const MovieDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadingShowtimes, setLoadingShowtimes] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 50);
+        window.addEventListener('scroll', handleScroll);
+        return () => { window.removeEventListener('scroll', handleScroll); };
+    }, []);
 
     useEffect(() => {
         if (movieId) {
@@ -39,8 +45,7 @@ const MovieDetailPage: React.FC = () => {
             const movieRes = await publicApi.getMovieDetail(movieId!);
             setMovie(movieRes.data);
             
-            // Hardcoded cities or fetch from a known endpoint
-            // Since publicApi doesn't have getCities currently, we use a sensible default
+            // Hardcoded cities
             const commonCities = ['Hồ Chí Minh', 'Hà Nội'];
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
@@ -98,109 +103,122 @@ const MovieDetailPage: React.FC = () => {
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('vi-VN', {
-            day: '2-digit', month: '2-digit', year: 'numeric'
+        return new Date(dateStr).toLocaleDateString('en-US', {
+            day: '2-digit', month: 'short', year: 'numeric'
         });
     };
 
-    // We no longer need generateDates since dates come from backend
-
     if (loading) {
         return (
-            <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'} `}>
-                <Loader2 className="w-12 h-12 animate-spin text-red-600" />
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 size={48} style={{ color: 'var(--color-accent-primary)', animation: 'spin 1s linear infinite' }} />
             </div>
         );
     }
 
     if (error || !movie) {
         return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'} `}>
-                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-xl font-bold mb-4">{error || 'Movie not found'}</p>
-                <button onClick={() => navigate('/home')} className="px-6 py-2 bg-red-600 text-white rounded-lg">Go Home</button>
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+                <AlertCircle size={64} style={{ color: '#ffb4ab', marginBottom: 'var(--space-16)' }} />
+                <p style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text-primary)', marginBottom: 'var(--space-24)' }}>{error || 'Movie not found'}</p>
+                <button className="btn-primary cta-glow" onClick={() => navigate('/home')}>Go Home</button>
             </div>
         );
     }
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${
-            theme === 'dark' ? 'bg-black text-white' : 
-            theme === 'modern' ? 'bg-[#0D081D] text-white' : 
-            'bg-gray-50 text-gray-900'
-        }`}>
-            {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-4 sm:px-6 transition-all ${
-                theme === 'dark' ? 'bg-black/80 border-gray-800' : 
-                theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 
-                'bg-white/80 border-gray-200 shadow-sm'
-            }`}>
-                <button 
-                    onClick={() => navigate(-1)} 
-                    className={`p-2 mr-4 rounded-lg transition-colors ${
-                        theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
-                        theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
-                        'hover:bg-gray-100 text-gray-700'
-                    }`}
-                >
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <h2 className={`font-black truncate ${
-                    theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                }`}>
-                    {movie.movieName}
-                </h2>
-            </header>
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', color: 'var(--color-text-primary)' }}>
+            {/* Navbar Glass */}
+            <nav style={{
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+                height: 72, padding: '0 var(--space-24)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                backgroundColor: isScrolled ? 'var(--color-surface)' : 'rgba(255,255,255,0.03)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderBottom: isScrolled ? '1px solid var(--color-border)' : '1px solid rgba(255,255,255,0.06)',
+                transition: 'background-color 0.3s ease, border-color 0.3s ease'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-16)' }}>
+                    <button 
+                        onClick={() => navigate(-1)} 
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--color-glass)', border: '1px solid var(--color-border)', borderRadius: '50%', width: 40, height: 40, color: 'var(--color-text-primary)', cursor: 'pointer', transition: 'all 0.3s ease' }}
+                        className="interactive"
+                    >
+                        <ChevronLeft size={20} />
+                    </button>
+                    <div
+                        onClick={() => navigate('/home')}
+                        style={{
+                            cursor: 'pointer',
+                            fontFamily: "'Montserrat', sans-serif",
+                            fontSize: '24px', fontWeight: 800,
+                            letterSpacing: '-0.3px',
+                            background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                        }}
+                    >
+                        CINEMA
+                    </div>
+                </div>
+            </nav>
 
             {/* Hero Section */}
-            <div className="relative pt-16 h-[50vh] sm:h-[70vh] overflow-hidden">
-                {/* Backdrop Image */}
-                <div className="absolute inset-0">
+            <div style={{ position: 'relative', height: '65vh', minHeight: 500, overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', inset: 0 }}>
                     <img
                         src={movie.moviePosterURL}
                         alt=""
-                        className="w-full h-full object-cover opacity-30 scale-110 blur-xl"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'blur(20px) brightness(0.4)', transform: 'scale(1.1)' }}
+                        onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                        }}
                     />
-                    <div className={`absolute inset-0 ${
-                        theme === 'dark' ? 'bg-gradient-to-t from-black via-black/40 to-transparent' : 
-                        theme === 'modern' ? 'bg-gradient-to-t from-[#0D081D] via-[#0D081D]/60 to-transparent' : 
-                        'bg-gradient-to-t from-gray-50 via-gray-50/20 to-transparent'
-                    }`} />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--color-bg-base) 0%, rgba(10,10,10,0.5) 60%, transparent 100%)' }} />
                 </div>
 
-                <div className="absolute inset-0 flex items-end">
-                    <div className="container mx-auto px-6 pb-12 flex flex-col md:flex-row gap-8 items-center md:items-end">
-                        {/* Movie Poster */}
-                        <div className={`w-40 sm:w-56 lg:w-64 shrink-0 rounded-2xl overflow-hidden shadow-2xl border-4 transition-transform hover:scale-[1.02] duration-300 ${
-                            theme === 'modern' ? 'border-cyan-400/30' : 'border-white/10'
-                        }`}>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end' }}>
+                    <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'var(--space-24)', display: 'flex', gap: 'var(--space-32)', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        {/* Poster Card */}
+                        <div style={{
+                            width: 240, flexShrink: 0,
+                            borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            transform: 'translateY(var(--space-40))',
+                            zIndex: 10
+                        }}>
                             <img 
                                 src={movie.moviePosterURL} 
                                 alt={movie.movieName} 
-                                className="w-full h-auto object-cover"
+                                style={{ width: '100%', height: 'auto', display: 'block' }}
                                 onError={(e) => {
                                     (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
                                 }}
                             />
                         </div>
 
-                        {/* Movie Basic Info */}
-                        <div className="flex-1 text-center md:text-left">
-                            <h1 className={`text-4xl sm:text-6xl font-black mb-4 drop-shadow-2xl leading-tight ${
-                                theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                            }`}>
+                        {/* Basic Info */}
+                        <div style={{ flex: 1, minWidth: 300, paddingBottom: 'var(--space-24)', zIndex: 10 }}>
+                            <h1 style={{
+                                fontFamily: "'Montserrat', sans-serif",
+                                fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+                                fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em',
+                                color: 'white', marginBottom: 'var(--space-16)',
+                                textShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                            }}>
                                 {movie.movieName}
                             </h1>
-                            <div className={`flex flex-wrap justify-center md:justify-start gap-4 text-sm sm:text-base font-medium ${
-                                theme === 'dark' || theme === 'modern' ? 'text-white/80' : 'text-gray-600'
-                            }`}>
-                                <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                                    <Clock className="w-4 h-4 text-red-600" /> {movie.movieDuration} mins
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-12)', fontSize: 14, fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                                <span className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 'var(--radius-full)' }}>
+                                    <Clock size={16} style={{ color: 'var(--color-accent-primary)' }} /> {movie.movieDuration} mins
                                 </span>
-                                <span className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-                                    <Calendar className="w-4 h-4 text-red-600" /> {movie.releaseDate ? formatDate(movie.releaseDate) : 'Coming Soon'}
+                                <span className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 'var(--radius-full)' }}>
+                                    <Calendar size={16} style={{ color: 'var(--color-accent-primary)' }} /> {movie.releaseDate ? formatDate(movie.releaseDate) : 'Coming Soon'}
                                 </span>
-                                <span className="px-3 py-1 bg-red-600 text-white rounded-full text-xs font-black shadow-lg shadow-red-600/30">
+                                <span style={{ padding: '6px 16px', backgroundColor: 'var(--color-accent-cta)', color: 'black', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: 13, boxShadow: '0 0 16px rgba(255,138,0,0.3)' }}>
                                     {movie.movieRequiredAge}
                                 </span>
                             </div>
@@ -210,151 +228,158 @@ const MovieDetailPage: React.FC = () => {
             </div>
 
             {/* Content Section */}
-            <div className="container mx-auto px-6 py-12">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-                    {/* Movie Info */}
-                    <div className="lg:col-span-1 space-y-8">
-                        <div>
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2"><Info className="w-5 h-5 text-red-600" /> Storyline</h3>
-                            <p className="opacity-80 leading-relaxed">{movie.movieDescription}</p>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
-                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
-                                }`}>Director</h4>
-                                <p className="font-bold">{movie.director || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
-                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
-                                }`}>Cast</h4>
-                                <p className="font-bold">{movie.actor || 'N/A'}</p>
-                            </div>
-                            <div>
-                                <h4 className={`text-xs uppercase font-bold tracking-widest mb-1 ${
-                                    theme === 'modern' ? 'text-cyan-400' : 'text-red-600'
-                                }`}>Genres</h4>
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {movie.movieCategoryInfos && movie.movieCategoryInfos.split(',').map(g => g.trim()).filter(Boolean).map((g: string, i: number) => (
-                                        <span key={i} className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
-                                            theme === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-300' : 
-                                            theme === 'modern' ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300' : 
-                                            'bg-gray-100 border-gray-200 text-gray-700'
-                                        }`}>
-                                            {g}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {movie.trailerUrl && (
-                            <a
-                                href={movie.trailerUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center justify-center gap-3 w-full py-4 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all border border-white/10"
-                            >
-                                <Play className="w-5 h-5 fill-current" /> Watch Trailer
-                            </a>
-                        )}
+            <div style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'calc(var(--space-40) + var(--space-40)) var(--space-24) var(--space-80)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 'var(--space-40)' }}>
+                {/* Storyline & Details */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-32)' }}>
+                    <div>
+                        <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 'var(--space-12)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <Info size={20} style={{ color: 'var(--color-accent-primary)' }} /> Storyline
+                        </h3>
+                        <p style={{ color: 'var(--color-text-secondary)', lineHeight: 1.7 }}>{movie.movieDescription}</p>
                     </div>
 
-                    {/* Showtime Booking */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <div className={`p-6 rounded-2xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20' : 'bg-white border-gray-200 shadow-sm'} `}>
-                            <h3 className="text-2xl font-black mb-8">Book Tickets</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-20)' }}>
+                        <div>
+                            <h4 style={{ fontSize: 11, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent-primary)', marginBottom: 'var(--space-4)' }}>Director</h4>
+                            <p style={{ fontWeight: 600 }}>{movie.director || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: 11, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent-primary)', marginBottom: 'var(--space-4)' }}>Cast</h4>
+                            <p style={{ fontWeight: 600 }}>{movie.actor || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <h4 style={{ fontSize: 11, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-accent-primary)', marginBottom: 'var(--space-8)' }}>Genres</h4>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-8)' }}>
+                                {movie.movieCategoryInfos && movie.movieCategoryInfos.split(',').map(g => g.trim()).filter(Boolean).map((g: string, i: number) => (
+                                    <span key={i} style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', fontSize: 12, fontWeight: 500 }}>
+                                        {g}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* City & Date Selection */}
-                            <div className="flex flex-col sm:flex-row gap-6 mb-8">
-                                <div className="flex-1">
-                                    <label className="block text-xs uppercase font-bold opacity-60 mb-2 tracking-widest">Select City</label>
-                                    <div className="relative">
-                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-red-600" />
-                                        <select
-                                            value={selectedCity}
-                                            onChange={(e) => setSelectedCity(e.target.value)}
-                                            className={`w-full pl-11 pr-4 py-3 rounded-xl appearance-none focus:outline-none border transition-all ${
-                                                theme === 'dark' ? 'bg-black border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-black/50 border-indigo-500/30 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            } `}
-                                        >
-                                            {cities.map(cityName => (
-                                                <option key={cityName} value={cityName}>{cityName}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="flex-1">
-                                    <label className="block text-xs uppercase font-bold opacity-60 mb-2 tracking-widest">Select Date</label>
-                                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                                        {scheduleDates.length === 0 ? (
-                                            <div className="text-sm opacity-50 py-2">No dates available</div>
-                                        ) : scheduleDates.map((date) => {
-                                            const d = new Date(date);
-                                            const isSelected = selectedDate === date;
-                                            return (
-                                                <button
-                                                    key={date}
-                                                    onClick={() => setSelectedDate(date)}
-                                                    className={`shrink-0 w-16 py-2 rounded-xl border flex flex-col items-center transition-all ${isSelected
-                                                        ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/30'
-                                                        : theme === 'dark' ? 'bg-black border-gray-700 hover:border-gray-500' : 'bg-gray-50 border-gray-300'
-                                                        } `}
-                                                >
-                                                    <span className="text-[10px] uppercase font-bold opacity-70">{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                                                    <span className="text-lg font-black">{d.getDate()}</span>
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                    {movie.trailerUrl && (
+                        <a
+                            href={movie.trailerUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="glass-card interactive"
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: 'var(--space-16)', borderRadius: 'var(--radius-md)', fontWeight: 700, color: 'var(--color-text-primary)', textDecoration: 'none' }}
+                        >
+                            <Play size={20} style={{ color: 'var(--color-accent-cta)' }} /> Watch Trailer
+                        </a>
+                    )}
+                </div>
+
+                {/* Showtimes Booking */}
+                <div style={{ gridColumn: 'span 2' }}>
+                    <div style={{ backgroundColor: 'var(--color-card)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-lg)', padding: 'var(--space-32)' }}>
+                        <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 28, fontWeight: 800, marginBottom: 'var(--space-32)' }}>Book Tickets</h3>
+
+                        {/* Filters */}
+                        <div style={{ display: 'flex', gap: 'var(--space-24)', marginBottom: 'var(--space-32)', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 200 }}>
+                                <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)' }}>Select City</label>
+                                <div style={{ position: 'relative' }}>
+                                    <MapPin size={18} style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-accent-primary)' }} />
+                                    <select
+                                        value={selectedCity}
+                                        onChange={(e) => setSelectedCity(e.target.value)}
+                                        style={{ width: '100%', padding: '14px 16px 14px 48px', backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text-primary)', fontSize: 14, outline: 'none', appearance: 'none', cursor: 'pointer' }}
+                                    >
+                                        {cities.map(cityName => (
+                                            <option key={cityName} value={cityName}>{cityName}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronRight size={18} style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%) rotate(90deg)', color: 'var(--color-text-secondary)', pointerEvents: 'none' }} />
                                 </div>
                             </div>
 
-                            {/* Showtimes List */}
-                            <div className="space-y-6">
-                                {loadingShowtimes ? (
-                                    <div className="flex flex-col items-center py-12 opacity-50">
-                                        <Loader2 className="w-8 h-8 animate-spin mb-2" />
-                                        <p>Searching for showtimes...</p>
-                                    </div>
-                                ) : showtimes.length === 0 ? (
-                                    <div className="text-center py-12 opacity-50">
-                                        <AlertCircle className="w-12 h-12 mx-auto mb-4" />
-                                        <p>No showtimes found for this location and date.</p>
-                                    </div>
-                                ) : (
-                                    showtimes.map((cinema, idx) => (
-                                        <div key={idx} className="space-y-4">
-                                            <div className="flex items-center gap-2 border-b border-white/10 pb-2">
-                                                <MapPin className="w-4 h-4 text-red-600" />
-                                                <h4 className="font-bold">{cinema.cinemaName}</h4>
-                                                <span className="text-xs opacity-60">— {cinema.cinemaAddress}</span>
-                                            </div>
-                                            <div className="space-y-6 pl-6">
-                                                <div>
-                                                    <span className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3 block">{cinema.movieFormatName}</span>
-                                                    <div className="flex flex-wrap gap-3">
-                                                        {(cinema.scheduleTimesInfos || []).map((showtime) => (
-                                                            <button
-                                                                key={showtime.scheduleId}
-                                                                onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
-                                                                className={`px-4 py-2 rounded-lg border font-bold transition-all ${theme === 'dark' ? 'border-yellow-600/50 hover:border-yellow-500 hover:bg-yellow-500/20 text-yellow-500 hover:text-yellow-400' : theme === 'modern' ? 'border-yellow-500/30 bg-yellow-500/10 hover:bg-yellow-500/20 hover:border-yellow-400/50 hover:shadow-lg hover:shadow-yellow-500/20 text-yellow-400' : 'border-yellow-300 bg-yellow-50 hover:border-yellow-400 hover:bg-yellow-100 text-yellow-700 shadow-sm'
-                                                                    }`}
-                                                            >
-                                                                {new Date(showtime.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                            <div style={{ flex: 2, minWidth: 300 }}>
+                                <label style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)' }}>Select Date</label>
+                                <div style={{ display: 'flex', gap: 'var(--space-8)', overflowX: 'auto', paddingBottom: 'var(--space-8)' }}>
+                                    {scheduleDates.length === 0 ? (
+                                        <div style={{ fontSize: 14, color: 'var(--color-text-secondary)', padding: 'var(--space-12) 0' }}>No dates available</div>
+                                    ) : scheduleDates.map((date) => {
+                                        const d = new Date(date);
+                                        const isSelected = selectedDate === date;
+                                        return (
+                                            <button
+                                                key={date}
+                                                onClick={() => setSelectedDate(date)}
+                                                style={{
+                                                    flexShrink: 0, width: 72, padding: 'var(--space-12) 0',
+                                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
+                                                    borderRadius: 'var(--radius-md)', cursor: 'pointer', transition: 'all 0.3s ease',
+                                                    backgroundColor: isSelected ? 'var(--color-accent-cta)' : 'var(--color-surface)',
+                                                    border: isSelected ? '1px solid var(--color-accent-cta)' : '1px solid var(--color-border)',
+                                                    color: isSelected ? 'black' : 'var(--color-text-primary)',
+                                                    boxShadow: isSelected ? '0 0 16px rgba(255,138,0,0.3)' : 'none'
+                                                }}
+                                            >
+                                                <span style={{ fontSize: 11, textTransform: 'uppercase', fontWeight: 700, opacity: isSelected ? 0.8 : 0.6 }}>{d.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                                                <span style={{ fontSize: 20, fontWeight: 800 }}>{d.getDate()}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Showtimes List */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-24)' }}>
+                            {loadingShowtimes ? (
+                                <div style={{ padding: 'var(--space-40) 0', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                    <Loader2 size={32} style={{ margin: '0 auto var(--space-16)', color: 'var(--color-accent-primary)', animation: 'spin 1s linear infinite' }} />
+                                    <p>Searching for showtimes...</p>
+                                </div>
+                            ) : showtimes.length === 0 ? (
+                                <div style={{ padding: 'var(--space-40) 0', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+                                    <AlertCircle size={48} style={{ margin: '0 auto var(--space-16)', opacity: 0.5 }} />
+                                    <p>No showtimes found for this location and date.</p>
+                                </div>
+                            ) : (
+                                showtimes.map((cinema, idx) => (
+                                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-16)' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)', borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--space-12)' }}>
+                                            <MapPin size={20} style={{ color: 'var(--color-accent-primary)' }} />
+                                            <h4 style={{ fontSize: 18, fontWeight: 700 }}>{cinema.cinemaName}</h4>
+                                            <span style={{ fontSize: 13, color: 'var(--color-text-secondary)' }}>— {cinema.cinemaAddress}</span>
+                                        </div>
+                                        <div style={{ paddingLeft: 'var(--space-32)' }}>
+                                            <span style={{ display: 'block', fontSize: 11, textTransform: 'uppercase', fontWeight: 700, color: 'var(--color-accent-primary)', letterSpacing: '0.1em', marginBottom: 'var(--space-12)' }}>{cinema.movieFormatName}</span>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-12)' }}>
+                                                {(cinema.scheduleTimesInfos || []).map((showtime) => (
+                                                    <button
+                                                        key={showtime.scheduleId}
+                                                        onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
+                                                        className="interactive"
+                                                        style={{
+                                                            padding: '10px 20px', borderRadius: 'var(--radius-sm)',
+                                                            backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-accent-primary)',
+                                                            color: 'var(--color-accent-primary)', fontWeight: 700, fontSize: 14,
+                                                            cursor: 'pointer', transition: 'all 0.3s ease'
+                                                        }}
+                                                        onMouseEnter={e => {
+                                                            e.currentTarget.style.backgroundColor = 'var(--color-accent-primary)';
+                                                            e.currentTarget.style.color = 'black';
+                                                            e.currentTarget.style.boxShadow = '0 0 16px rgba(255,183,127,0.4)';
+                                                        }}
+                                                        onMouseLeave={e => {
+                                                            e.currentTarget.style.backgroundColor = 'var(--color-surface)';
+                                                            e.currentTarget.style.color = 'var(--color-accent-primary)';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                        }}
+                                                    >
+                                                        {new Date(showtime.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                    </button>
+                                                ))}
                                             </div>
                                         </div>
-                                    ))
-                                )}
-                            </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

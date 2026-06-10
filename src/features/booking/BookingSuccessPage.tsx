@@ -4,19 +4,16 @@ import {
     CheckCircle, Home, Download, Loader2, AlertCircle,
     Film, MapPin, Clock, Armchair, Receipt
 } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
 import { bookingApi } from '../../api/bookingApi';
 import type { TicketInfo } from '../../types/booking.types';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
 import jsPDF from 'jspdf';
 
-
 const BookingSuccessPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('orderId');
     const navigate = useNavigate();
-    const { theme } = useTheme();
     const { t } = useTranslation();
 
     const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
@@ -30,8 +27,6 @@ const BookingSuccessPage: React.FC = () => {
             return;
         }
 
-        // Backend already verified VNPAY + updated DB before redirecting here.
-        // We just fetch the ticket details directly.
         const fetchTicket = async () => {
             setLoading(true);
             setError(null);
@@ -60,10 +55,8 @@ const BookingSuccessPage: React.FC = () => {
         setPdfLoading(true);
         try {
             const data = ticketInfo;
-
             const html2canvas = (await import('html2canvas')).default;
 
-            // Create a temporary element for the ticket
             const ticketContainer = document.createElement('div');
             ticketContainer.style.position = 'absolute';
             ticketContainer.style.left = '-9999px';
@@ -178,33 +171,47 @@ const BookingSuccessPage: React.FC = () => {
         }
     };
 
-    // --- Loading State ---
+    // Loading State
     if (loading) {
         return (
-            <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20' : 'bg-white border-gray-100'}`}>
-                    <Loader2 className="w-20 h-20 animate-spin text-red-600 mx-auto mb-6" />
-                    <h2 className="text-2xl font-black mb-2">Loading Your Ticket...</h2>
-                    <p className="opacity-60 text-sm">Retrieving your booking details.</p>
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+                <div style={{
+                    maxWidth: 420, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
+                    border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
+                    backgroundColor: 'var(--color-card)', textAlign: 'center',
+                }}>
+                    <Loader2 size={56} style={{ color: 'var(--color-accent-primary)', animation: 'spin 1s linear infinite', margin: '0 auto var(--space-24)' }} />
+                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 'var(--space-8)' }}>Loading Your Ticket...</h2>
+                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Retrieving your booking details.</p>
                 </div>
             </div>
         );
     }
 
-    // --- Error State ---
+    // Error State
     if (error || !ticketInfo) {
         return (
-            <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20' : 'bg-white border-gray-100'}`}>
-                    <div className="w-24 h-24 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <AlertCircle className="w-16 h-16 text-yellow-500" />
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+                <div style={{
+                    maxWidth: 420, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
+                    border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
+                    backgroundColor: 'var(--color-card)', textAlign: 'center',
+                }}>
+                    <div style={{
+                        width: 96, height: 96, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        margin: '0 auto var(--space-24)',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                    }}>
+                        <AlertCircle size={56} style={{ color: 'var(--color-accent-warning)' }} />
                     </div>
-                    <h2 className="text-2xl font-black mb-2">Unable to Load Ticket</h2>
-                    <p className="opacity-60 text-sm mb-2">{error || 'Ticket information is not available.'}</p>
-                    {orderId && <p className="text-xs opacity-40 mb-8">Order ID: {orderId}</p>}
+                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 'var(--space-8)' }}>Unable to Load Ticket</h2>
+                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)' }}>{error || 'Ticket information is not available.'}</p>
+                    {orderId && <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-24)', fontFamily: 'var(--font-mono)' }}>Order ID: {orderId}</p>}
                     <button
                         onClick={() => navigate('/home')}
-                        className="w-full py-4 bg-red-600 text-white rounded-xl font-bold transition-all hover:bg-red-700"
+                        className="btn-primary cta-glow"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontWeight: 700 }}
                     >
                         Return to Home
                     </button>
@@ -213,35 +220,48 @@ const BookingSuccessPage: React.FC = () => {
         );
     }
 
-    // --- Success State with full ticket details ---
+    // Success State
     return (
-        <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            <div className={`max-w-lg w-full p-8 rounded-3xl border shadow-2xl ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20 backdrop-blur-xl' : 'bg-white border-gray-100'}`}>
-
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+            <div style={{
+                maxWidth: 500, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
+                border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
+                backgroundColor: 'var(--color-card)',
+            }}>
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-5">
-                        <CheckCircle className="w-12 h-12 text-green-500" />
+                <div style={{ textAlign: 'center', marginBottom: 'var(--space-32)' }}>
+                    <div style={{
+                        width: 80, height: 80, borderRadius: '50%',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        margin: '0 auto var(--space-20)',
+                        background: 'rgba(16, 185, 129, 0.12)',
+                    }}>
+                        <CheckCircle size={48} style={{ color: 'var(--color-accent-success)' }} />
                     </div>
-                    <h2 className="text-3xl font-black mb-1">Booking Successful!</h2>
-                    <p className="opacity-60 text-sm">Your tickets have been confirmed. Enjoy your movie!</p>
+                    <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 'var(--space-4)' }}>Booking Successful!</h2>
+                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Your tickets have been confirmed. Enjoy your movie!</p>
                 </div>
 
                 {/* Movie Card */}
-                <div className={`rounded-2xl overflow-hidden mb-6 ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
-                    <div className="flex gap-4 p-4">
+                <div style={{
+                    borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 'var(--space-24)',
+                    backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-16)', padding: 'var(--space-16)' }}>
                         {ticketInfo.movieImageUrl && (
                             <img
                                 src={ticketInfo.movieImageUrl}
                                 alt={ticketInfo.movieName}
-                                className="w-20 h-28 object-cover rounded-xl shadow-lg"
+                                style={{ width: 80, height: 112, objectFit: 'cover', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)' }}
                             />
                         )}
-                        <div className="flex-1 min-w-0">
-                            <h3 className="font-black text-lg leading-tight mb-2 truncate">{ticketInfo.movieName}</h3>
-                            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                                theme === 'dark' || theme === 'modern' ? 'bg-red-600/20 text-red-400' : 'bg-red-100 text-red-600'
-                            }`}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 'var(--space-8)' }}>{ticketInfo.movieName}</h3>
+                            <span style={{
+                                display: 'inline-block', padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                                fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
+                                color: 'var(--color-accent-cta)', backgroundColor: 'rgba(255,138,0,0.12)',
+                            }}>
                                 {ticketInfo.formatName}
                             </span>
                         </div>
@@ -249,27 +269,32 @@ const BookingSuccessPage: React.FC = () => {
                 </div>
 
                 {/* Details Grid */}
-                <div className={`grid grid-cols-2 gap-4 mb-6 p-4 rounded-2xl ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
-                    <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                <div style={{
+                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-16)',
+                    marginBottom: 'var(--space-24)', padding: 'var(--space-16)',
+                    borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)' }}>
+                        <MapPin size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Cinema</p>
-                            <p className="text-sm font-bold leading-tight">{ticketInfo.cinemaName}</p>
-                            <p className="text-[11px] opacity-50 leading-tight">{ticketInfo.cinemaAddress}</p>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Cinema</p>
+                            <p style={{ fontSize: 13, fontWeight: 700 }}>{ticketInfo.cinemaName}</p>
+                            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{ticketInfo.cinemaAddress}</p>
                         </div>
                     </div>
-                    <div className="flex items-start gap-2">
-                        <Film className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)' }}>
+                        <Film size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Auditorium</p>
-                            <p className="text-sm font-bold">{ticketInfo.auditoriumNumber}</p>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Auditorium</p>
+                            <p style={{ fontSize: 13, fontWeight: 700 }}>{ticketInfo.auditoriumNumber}</p>
                         </div>
                     </div>
-                    <div className="flex items-start gap-2 col-span-2">
-                        <Clock className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)', gridColumn: '1 / -1' }}>
+                        <Clock size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p className="text-[10px] opacity-50 uppercase tracking-wider font-bold mb-0.5">Showtime</p>
-                            <p className="text-sm font-bold">
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Showtime</p>
+                            <p style={{ fontSize: 13, fontWeight: 700 }}>
                                 {new Date(ticketInfo.showTime).toLocaleString('vi-VN', {
                                     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
                                     hour: '2-digit', minute: '2-digit'
@@ -280,72 +305,73 @@ const BookingSuccessPage: React.FC = () => {
                 </div>
 
                 {/* Seats Table */}
-                <div className={`p-4 rounded-2xl mb-6 ${theme === 'dark' ? 'bg-black/40' : theme === 'modern' ? 'bg-white/5' : 'bg-gray-50'}`}>
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <Armchair className="w-4 h-4 text-red-500" />
-                            <span className="text-[10px] uppercase tracking-wider font-bold opacity-50">Tickets</span>
+                <div style={{
+                    padding: 'var(--space-16)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-24)',
+                    backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-12)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
+                            <Armchair size={16} style={{ color: 'var(--color-accent-primary)' }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)' }}>Tickets</span>
                         </div>
-                        <span className="text-[10px] opacity-40 font-mono">ID: {orderId?.substring(0, 8)}...</span>
+                        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>ID: {orderId?.substring(0, 8)}...</span>
                     </div>
-                    <div className="space-y-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
                         {ticketInfo.seats.map((seat, idx) => (
-                            <div key={idx} className={`flex items-center justify-between py-2 px-3 rounded-xl ${
-                                theme === 'dark' ? 'bg-white/5' : theme === 'modern' ? 'bg-white/5' : 'bg-white'
-                            }`}>
-                                <div className="flex items-center gap-3">
-                                    <span className="font-black text-red-600 text-sm">{seat.seatNumber}</span>
-                                    <span className="text-xs opacity-60">{seat.segmentName}</span>
+                            <div key={idx} style={{
+                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                                padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                                backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border)',
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)' }}>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-accent-cta)' }}>{seat.seatNumber}</span>
+                                    <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{seat.segmentName}</span>
                                 </div>
-                                <span className="font-bold text-sm">{seat.priceEach.toLocaleString('vi-VN')}đ</span>
+                                <span style={{ fontWeight: 600, fontSize: 13 }}>{seat.priceEach.toLocaleString('vi-VN')}đ</span>
                             </div>
                         ))}
                     </div>
                     {/* Total */}
-                    <div className="flex items-center justify-between mt-4 pt-3 border-t border-dashed border-white/10">
-                        <div className="flex items-center gap-2">
-                            <Receipt className="w-4 h-4 text-red-500" />
-                            <span className="font-bold text-sm">Total Paid</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-16)', paddingTop: 'var(--space-12)', borderTop: '1px dashed var(--color-border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
+                            <Receipt size={16} style={{ color: 'var(--color-accent-primary)' }} />
+                            <span style={{ fontWeight: 700, fontSize: 14 }}>Total Paid</span>
                         </div>
-                        <span className="text-xl font-black text-red-600">
+                        <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent-cta)' }}>
                             {ticketInfo.totalPrice.toLocaleString('vi-VN')}đ
                         </span>
                     </div>
                     {ticketInfo.vnPayTransactionId && (
-                        <p className="text-[10px] opacity-40 text-right mt-1">
+                        <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', textAlign: 'right', marginTop: 'var(--space-4)' }}>
                             VNPAY Txn: {ticketInfo.vnPayTransactionId}
                         </p>
                     )}
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex flex-col gap-3">
+                {/* Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
                     <button
                         onClick={handleDownloadTicket}
-                        className="w-full py-3.5 bg-red-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-red-700 transition-colors shadow-lg shadow-red-600/30"
+                        className="btn-primary cta-glow"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: 'var(--space-8)' }}
                     >
-                        <Download className="w-4 h-4" /> Download Ticket
+                        <Download size={16} /> Download Ticket
                     </button>
                     <button
                         onClick={handleGeneratePdf}
                         disabled={pdfLoading}
-                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 border border-red-600/30 transition-all ${
-                            theme === 'dark' || theme === 'modern'
-                                ? 'bg-white/5 hover:bg-white/10 text-red-500'
-                                : 'bg-red-50 hover:bg-red-100 text-red-600'
-                        }`}
+                        className="btn-secondary"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, fontWeight: 700, gap: 'var(--space-8)' }}
                     >
-                        {pdfLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Download className="w-4 h-4" /> Export to PDF</>}
+                        {pdfLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Download size={16} />}
+                        Export to PDF
                     </button>
                     <button
                         onClick={() => navigate('/home')}
-                        className={`w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 border border-white/10 transition-all text-sm ${
-                            theme === 'dark' || theme === 'modern'
-                                ? 'bg-white/5 hover:bg-white/10'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
+                        className="btn-ghost"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: 'var(--space-8)' }}
                     >
-                        <Home className="w-4 h-4" /> Return to Home
+                        <Home size={16} /> Return to Home
                     </button>
                 </div>
             </div>
