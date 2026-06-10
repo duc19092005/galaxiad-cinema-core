@@ -45,7 +45,7 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { publicApi } from '../../api/publicApi';
 import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
-import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToUtcString } from '../../utils/dateTimeUtils';
+import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -530,8 +530,8 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 movieName: formData.movieName.trim(),
                 movieDescription: formData.movieDescription.trim(),
                 movieImage: formData.movieImage,
-                startedDate: vietnamDateTimeLocalToUtcString(formData.startedDate) ?? formData.startedDate,
-                endedDate: vietnamDateTimeLocalToUtcString(formData.endedDate) ?? formData.endedDate,
+                startedDate: vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate,
+                endedDate: vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate,
                 duration: parseInt(formData.duration),
                 movieFormatIds: formData.movieFormatIds,
                 movieGenreIds: formData.movieGenreIds,
@@ -541,7 +541,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 cinemaIds: formData.cinemaIds,
             };
 
-            console.log("DEBUG: Creating Movie -> Sending Vietnam time as UTC:", {
+            console.log("DEBUG: Creating Movie -> Sending Vietnam time with +07:00 offset:", {
                 UI_Started: formData.startedDate,
                 UI_Ended: formData.endedDate
             });
@@ -953,12 +953,12 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             // 2. Dates (Compare using the same formatted string)
             const originalStarted = formatDateForInput(movie.startedDate);
             if (formData.startedDate !== originalStarted) {
-                submissionData.startedDate = vietnamDateTimeLocalToUtcString(formData.startedDate) || null;
+                submissionData.startedDate = vietnamDateTimeLocalToOffsetString(formData.startedDate) || null;
                 isChanged = true;
             }
             const originalEnded = formatDateForInput(movie.endedDate);
             if (formData.endedDate !== originalEnded) {
-                submissionData.endedDate = vietnamDateTimeLocalToUtcString(formData.endedDate) || null;
+                submissionData.endedDate = vietnamDateTimeLocalToOffsetString(formData.endedDate) || null;
                 isChanged = true;
             }
 

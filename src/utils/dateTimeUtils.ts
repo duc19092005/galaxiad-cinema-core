@@ -75,7 +75,7 @@ export const toVietnamDateTimeLocalValue = (value?: string | null) => {
   return `${pick('year')}-${pick('month')}-${pick('day')}T${pick('hour')}:${pick('minute')}`;
 };
 
-export const vietnamDateTimeLocalToUtcString = (value?: string | null) => {
+export const vietnamDateTimeLocalToOffsetString = (value?: string | null) => {
   if (!value) return value ?? null;
 
   const [datePart, timePart = '00:00'] = value.split('T');
@@ -86,5 +86,6 @@ export const vietnamDateTimeLocalToUtcString = (value?: string | null) => {
     return value;
   }
 
-  return new Date(Date.UTC(year, month - 1, day, hour - 7, minute)).toISOString();
+  const pad = (part: number) => part.toString().padStart(2, '0');
+  return `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00+07:00`;
 };

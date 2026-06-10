@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
 import { scheduleApi } from '../../api/scheduleApi';
+import { toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 
 import { useCinema } from '../../contexts/CinemaContext';
 
@@ -231,7 +232,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                         scheduleId: s.id.startsWith('new-') ? "00000000-0000-0000-0000-000000000000" : s.id,
                         movieId: s.movieId,
                         formatId: s.formatId,
-                        startedDate: s.start
+                        startedDate: vietnamDateTimeLocalToOffsetString(toVietnamDateTimeLocalValue(s.start)) ?? s.start
                     };
                 })
             };

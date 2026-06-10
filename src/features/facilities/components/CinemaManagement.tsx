@@ -7,6 +7,7 @@ import axios from 'axios';
 import type { ApiErrorResponse } from '../../../types/auth.types';
 import AssignRightsModal from '../../admin/components/AssignRightsModal';
 import { User as UserIcon, UserPlus } from 'lucide-react';
+import { toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../../utils/dateTimeUtils';
 
 const VIETNAM_CITIES = [
   'Hồ Chí Minh',
@@ -102,7 +103,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
     const value = e.target.value;
     setFormData(prev => ({
       ...prev,
-      activeAt: value ? new Date(value).toISOString() : null,
+      activeAt: vietnamDateTimeLocalToOffsetString(value),
     }));
   };
 
@@ -721,7 +722,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
                   </label>
                   <input
                     type="datetime-local"
-                    value={formData.activeAt ? new Date(formData.activeAt).toISOString().slice(0, 16) : ''}
+                    value={toVietnamDateTimeLocalValue(formData.activeAt)}
                     onChange={handleDateChange}
                     className={`w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors ${
                       theme === 'modern' 
