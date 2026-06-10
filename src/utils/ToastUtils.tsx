@@ -1,10 +1,15 @@
 import type { ToastOptions } from 'react-hot-toast';
 import toast from 'react-hot-toast';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 /**
- * Styled toast helpers with emoji icons and consistent styling.
+ * Styled toast helpers with Lucide icons and consistent styling.
  * Wraps react-hot-toast with a more premium look.
  */
+
+const checkIcon = <CheckCircle className="w-5 h-5 text-emerald-300" strokeWidth={2.5} />;
+const errorIcon = <XCircle className="w-5 h-5 text-red-300" strokeWidth={2.5} />;
+const loadIcon = <Loader2 className="w-5 h-5 animate-spin text-blue-300" strokeWidth={2.5} />;
 
 const defaultOptions: ToastOptions = {
   duration: 3000,
@@ -31,7 +36,7 @@ export const showSuccess = (message: string, options?: ToastOptions) =>
       color: '#ecfdf5',
       border: '1px solid rgba(52, 211, 153, 0.3)',
     },
-    icon: '✅',
+    icon: checkIcon,
   });
 
 export const showError = (message: string, options?: ToastOptions) =>
@@ -44,7 +49,7 @@ export const showError = (message: string, options?: ToastOptions) =>
       color: '#fef2f2',
       border: '1px solid rgba(248, 113, 113, 0.3)',
     },
-    icon: '❌',
+    icon: errorIcon,
   });
 
 export const showLoading = (message: string, options?: ToastOptions) =>
@@ -57,7 +62,7 @@ export const showLoading = (message: string, options?: ToastOptions) =>
       color: '#eff6ff',
       border: '1px solid rgba(96, 165, 250, 0.3)',
     },
-    icon: '⏳',
+    icon: loadIcon,
   });
 
 export const dismissToast = (toastId?: string) => toast.dismiss(toastId);
