@@ -9,9 +9,8 @@ import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import { useTheme } from '../../contexts/ThemeContext';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { showSuccess, showError, toast } from '../../utils/ToastUtils';
+import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
 
 const BookingPage: React.FC = () => {

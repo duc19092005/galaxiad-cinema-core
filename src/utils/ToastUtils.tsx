@@ -1,4 +1,5 @@
-import toast, { ToastOptions } from 'react-hot-toast';
+import type { ToastOptions } from 'react-hot-toast';
+import toast from 'react-hot-toast';
 
 /**
  * Styled toast helpers with emoji icons and consistent styling.
@@ -18,40 +19,46 @@ const defaultOptions: ToastOptions = {
     maxWidth: '420px',
     border: '1px solid rgba(255,255,255,0.08)',
   },
-  success: {
-    icon: '✅',
+};
+
+export const showSuccess = (message: string, options?: ToastOptions) =>
+  toast.success(message, {
+    ...defaultOptions,
+    ...options,
     style: {
+      ...defaultOptions.style,
       background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
       color: '#ecfdf5',
       border: '1px solid rgba(52, 211, 153, 0.3)',
     },
-  },
-  error: {
-    icon: '❌',
+    icon: '✅',
+  });
+
+export const showError = (message: string, options?: ToastOptions) =>
+  toast.error(message, {
+    ...defaultOptions,
+    ...options,
     style: {
+      ...defaultOptions.style,
       background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
       color: '#fef2f2',
       border: '1px solid rgba(248, 113, 113, 0.3)',
     },
-  },
-  loading: {
-    icon: '⏳',
+    icon: '❌',
+  });
+
+export const showLoading = (message: string, options?: ToastOptions) =>
+  toast.loading(message, {
+    ...defaultOptions,
+    ...options,
     style: {
+      ...defaultOptions.style,
       background: 'linear-gradient(135deg, #1e3a5f 0%, #1e40af 100%)',
       color: '#eff6ff',
       border: '1px solid rgba(96, 165, 250, 0.3)',
     },
-  },
-};
-
-export const showSuccess = (message: string, options?: ToastOptions) =>
-  toast.success(message, { ...defaultOptions, ...options });
-
-export const showError = (message: string, options?: ToastOptions) =>
-  toast.error(message, { ...defaultOptions, ...options });
-
-export const showLoading = (message: string, options?: ToastOptions) =>
-  toast.loading(message, { ...defaultOptions, ...options });
+    icon: '⏳',
+  });
 
 export const dismissToast = (toastId?: string) => toast.dismiss(toastId);
 

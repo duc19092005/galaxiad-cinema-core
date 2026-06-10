@@ -13,7 +13,7 @@ import {
     Loader2,
     AlertCircle
 } from 'lucide-react';
-import { showSuccess, showError } from '../../utils/ToastUtils';
+import { showSuccess } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../api/authApi';

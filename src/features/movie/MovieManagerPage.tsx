@@ -825,6 +825,7 @@ interface UpdateMovieModalProps {
 
 const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const formatDateForInput = toVietnamDateTimeLocalValue;

@@ -5,7 +5,7 @@ import {
     History, ChevronLeft, Loader2, AlertCircle,
     Ticket, MapPin, Clock, CheckCircle2, Timer,
     ExternalLink, Lock, Edit2, Check, X,
-    Sun, Moon, Sparkles, ChevronDown, PlayCircle
+    Sun, Moon, Sparkles, ChevronDown
 } from 'lucide-react';
 import { bookingApi } from '../../api/bookingApi';
 import { authApi } from '../../api/authApi';
