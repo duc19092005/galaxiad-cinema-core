@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using BusinessLayer.Services.ThirdPersonServices;
+using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,9 @@ builder.Services.AddFacilitiesFactories();
 builder.Services.AddMovieFactories();
 builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
+
+// Clean Architecture (Domain/Application/Infrastructure) — module Booking
+builder.Services.AddCleanArchitecture();
 
 // Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
 builder.Services.AddHostedService<BusinessLayer.Services.ApplicationServices.MovieStatusSyncBackgroundService>();

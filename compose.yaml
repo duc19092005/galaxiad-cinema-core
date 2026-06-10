@@ -17,6 +17,8 @@ services:
       - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaDatabase;User Id=sa;Password=anhduc9A@5;TrustServerCertificate=true
     networks:
       - cinema-network
+    depends_on:
+      - mssql
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
