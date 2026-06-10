@@ -64,7 +64,7 @@ public class TheaterManagerDataController : ControllerBase
             .Include(mf => mf.MovieInfoEntity)
             .Include(mf => mf.MovieFormatInfoEntity)
             .Where(mf => authorizedMovieIds.Contains(mf.MovieId) &&
-                         mf.MovieInfoEntity.IsActive && !mf.MovieInfoEntity.IsDeleted &&
+                         !mf.MovieInfoEntity.IsDeleted &&
                          mf.MovieFormatInfoEntity.IsActive && !mf.MovieFormatInfoEntity.IsDeleted)
             .Select(mf => new TheaterManagerMovieOptionDto
             {

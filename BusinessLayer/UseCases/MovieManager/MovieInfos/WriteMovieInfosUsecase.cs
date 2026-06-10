@@ -98,16 +98,16 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 MovieRequiredAgeId = request.MovieRequiredAgeId,
                 ActiveAt = request.StartedDate,
                 EndedDate = request.EndedDate,
-                IsActive = DateTime.Now >= request.StartedDate && request.EndedDate > DateTime.Now,
+                IsActive = DateTime.UtcNow >= request.StartedDate && request.EndedDate > DateTime.UtcNow,
                 CreatedByUserId = getUserId,
                 MovieManagerId = getUserId,
                 MovieDuration = request.Duration,
                 TrailerUrl = request.TrailerUrl ?? string.Empty,
                 Director = request.Director ?? string.Empty,
                 Actors = request.Actors ?? string.Empty,
-                IsCommingSoon = DateTime.Now < request.StartedDate,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                IsCommingSoon = DateTime.UtcNow < request.StartedDate,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             var newMovieGenreMovieInfos = request.MovieGenreIds.Select(id => new MovieGenreMovieInfoEntity()
@@ -248,11 +248,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findTheMovie.MovieName = request.MovieName ?? findTheMovie.MovieName;
                 findTheMovie.ActiveAt = request.StartedDate ?? findTheMovie.ActiveAt;
                 findTheMovie.EndedDate = request.EndedDate ?? findTheMovie.EndedDate;
-                findTheMovie.UpdatedAt = DateTime.Now;
+                findTheMovie.UpdatedAt = DateTime.UtcNow;
                 findTheMovie.UpdatedByUserId = getUserId;
                 findTheMovie.IsActive =
-                    (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.Now && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.Now;
-                findTheMovie.IsCommingSoon = (request.StartedDate ?? findTheMovie.ActiveAt) > DateTime.Now;
+                    (request.EndedDate ?? findTheMovie.EndedDate) > DateTime.UtcNow && (request.StartedDate ?? findTheMovie.ActiveAt) <= DateTime.UtcNow;
+                findTheMovie.IsCommingSoon = (request.StartedDate ?? findTheMovie.ActiveAt) > DateTime.UtcNow;
                 findTheMovie.MovieDuration = request.Duration ?? findTheMovie.MovieDuration;
                 findTheMovie.TrailerUrl = request.TrailerUrl ?? findTheMovie.TrailerUrl;
                 findTheMovie.Director = request.Director ?? findTheMovie.Director;
@@ -395,7 +395,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         {
             movie.IsDeleted = true;
             movie.DeletedByUserId = getCurrentUserId;
-            movie.DeletedAt = DateTime.Now;
+            movie.DeletedAt = DateTime.UtcNow;
             _dbContext.MovieInfoEntity.Update(movie);
         }
         else
@@ -408,7 +408,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 // Soft delete to avoid foreign key conflict with failed/canceled orders
                 movie.IsDeleted = true;
                 movie.DeletedByUserId = getCurrentUserId;
-                movie.DeletedAt = DateTime.Now;
+                movie.DeletedAt = DateTime.UtcNow;
                 _dbContext.MovieInfoEntity.Update(movie);
             }
             else

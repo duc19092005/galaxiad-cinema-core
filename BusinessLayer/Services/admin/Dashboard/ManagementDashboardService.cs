@@ -47,8 +47,10 @@ public class ManagementDashboardService
         }
 
         var paidStatuses = new[] { OrderStatusEnum.Booked, OrderStatusEnum.Completed };
-        var today = DateTime.Today;
-        var tomorrow = today.AddDays(1);
+        var vietnamTimeZone = GetVietnamTimeZone();
+        var vietnamToday = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone).Date;
+        var today = TimeZoneInfo.ConvertTimeToUtc(vietnamToday, vietnamTimeZone);
+        var tomorrow = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(1), vietnamTimeZone);
 
         var orderDetailsQuery = _dbContext.OrderDetailsInfoEntity
             .AsNoTracking()
@@ -75,8 +77,12 @@ public class ManagementDashboardService
 
         var totalTicketsSold = await orderDetailsQuery.CountAsync();
 
-        var ticketsByHour = await orderDetailsQuery
-            .GroupBy(od => od.OrderInfoEntity.OrderDate.Hour)
+        var orderDatesForHourlyStats = await orderDetailsQuery
+            .Select(od => od.OrderInfoEntity.OrderDate)
+            .ToListAsync();
+
+        var ticketsByHour = orderDatesForHourlyStats
+            .GroupBy(orderDate => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(orderDate, DateTimeKind.Utc), vietnamTimeZone).Hour)
             .Select(g => new HourlyTicketStatDto
             {
                 Hour = g.Key,
@@ -84,7 +90,7 @@ public class ManagementDashboardService
                 TicketsSold = g.Count()
             })
             .OrderBy(x => x.Hour)
-            .ToListAsync();
+            .ToList();
 
         var busiestHour = ticketsByHour
             .OrderByDescending(x => x.TicketsSold)
@@ -248,5 +254,17 @@ public class ManagementDashboardService
                 RecentActivities = recentActivities
             }
         };
+    }
+
+    private static TimeZoneInfo GetVietnamTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
+        }
+        catch (TimeZoneNotFoundException)
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
+        }
     }
 }

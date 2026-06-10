@@ -69,7 +69,7 @@ public class AuditLogService
                 ActorPrimaryRole = primaryRole,
                 IsAdminAction = isAdmin,
                 CinemaId = cinemaId,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.UtcNow
             });
         }
         catch (Exception ex)

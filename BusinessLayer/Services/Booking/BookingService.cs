@@ -712,7 +712,7 @@ public class BookingService
                 OrderStatus = OrderStatusEnum.Pending,
                 PaymentMethod = PaymentMethodEnum.VNPAY,
                 TotalPrice = totalPrice,
-                OrderDate = DateTime.Now,
+                OrderDate = DateTime.UtcNow,
                 TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
                 CustomerEmail = finalCustomerEmail,
