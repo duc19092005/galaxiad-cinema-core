@@ -20,10 +20,10 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useCinema } from '../../contexts/CinemaContext';
 import CinemaSelector from '../../components/CinemaSelector';
 import Sidebar from './components/Sidebar';
-import Dashboard from './components/Dashboard';
 import CinemaManagement from './components/CinemaManagement';
 import SeatReport from './components/SeatReport';
 import LogoutModal from '../../components/LogoutModal';
+import ManagementDashboard from '../../components/ManagementDashboard';
 
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import Cookies from 'js-cookie';
@@ -76,7 +76,7 @@ const FacilitiesManagerPage: React.FC = () => {
       const roles = parsed.roles || [];
 
       // Nếu không có quyền FacilitiesManager thì đá về chọn role
-      if (!roles.includes('FacilitiesManager')) {
+      if (!roles.includes('FacilitiesManager') && !roles.includes('Admin')) {
         navigate('/role-selection');
         return;
       }
@@ -153,6 +153,8 @@ const FacilitiesManagerPage: React.FC = () => {
 
   // Render content based on active tab
   const renderContent = () => {
+    const isAdmin = user?.roles?.includes('Admin') ?? false;
+
     if (cinemaContextLoading) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
@@ -162,7 +164,7 @@ const FacilitiesManagerPage: React.FC = () => {
       );
     }
 
-    if (managedCinemas.length === 0) {
+    if (!isAdmin && managedCinemas.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
           <div className="p-4 bg-red-600/10 rounded-full mb-6 border border-red-600/20 shadow-2xl shadow-red-600/10">
@@ -176,7 +178,7 @@ const FacilitiesManagerPage: React.FC = () => {
       );
     }
 
-    if (!activeCinemaId) {
+    if (!isAdmin && !activeCinemaId) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
           <Loader2 className="w-8 h-8 animate-spin text-red-600 mb-4" />
@@ -187,13 +189,13 @@ const FacilitiesManagerPage: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard cinemas={cinemas} loading={loading} />;
+        return <ManagementDashboard role="facilities" />;
       case 'cinemas':
         return <CinemaManagement cinemas={cinemas} loading={loading} error={error} onRefresh={fetchCinemas} />;
       case 'seat-reports':
         return <SeatReport />;
       default:
-        return <Dashboard cinemas={cinemas} loading={loading} />;
+        return <ManagementDashboard role="facilities" />;
     }
   };
 

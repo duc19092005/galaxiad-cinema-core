@@ -1,7 +1,7 @@
 // src/api/adminApi.ts
 import { identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { AdminUserDto, GroupedScheduleJobDto, RoleDto } from '../types/admin.types';
+import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, RoleDto } from '../types/admin.types';
 
 export const adminApi = {
     /** GET /api/v1/AdminManageUsers */
@@ -49,6 +49,22 @@ export const adminApi = {
     getScheduleJobs: async (): Promise<ApiSuccessResponse<GroupedScheduleJobDto[]>> => {
         const response = await identityAxios.get<ApiSuccessResponse<GroupedScheduleJobDto[]>>(
             '/ScheduleJobs'
+        );
+        return response.data;
+    },
+
+    /** GET /api/v1/admin/audit-logs/recent */
+    getRecentAuditLogs: async (take = 30): Promise<ApiSuccessResponse<AuditLogDto[]>> => {
+        const response = await identityAxios.get<ApiSuccessResponse<AuditLogDto[]>>(
+            `/admin/audit-logs/recent?take=${take}`
+        );
+        return response.data;
+    },
+
+    /** GET /api/v1/admin/dashboard/management */
+    getManagementDashboard: async (): Promise<ApiSuccessResponse<ManagementDashboardDto>> => {
+        const response = await identityAxios.get<ApiSuccessResponse<ManagementDashboardDto>>(
+            '/admin/dashboard/management'
         );
         return response.data;
     },

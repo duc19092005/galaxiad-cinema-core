@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Building2, Film, Users, TrendingUp, Activity, AlertCircle } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { adminApi } from '../../../api/adminApi';
 import type { Cinema } from '../../../api/facilitiesApi';
+import type { AuditLogDto } from '../../../types/admin.types';
 
 interface DashboardProps {
   cinemas: Cinema[];
@@ -10,6 +12,7 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ cinemas, loading }) => {
   const { theme } = useTheme();
+  const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
   
   // Tính toán thống kê
   const totalCinemas = cinemas.length;
@@ -47,6 +50,25 @@ const Dashboard: React.FC<DashboardProps> = ({ cinemas, loading }) => {
       change: '+500',
     },
   ];
+
+  useEffect(() => {
+    const fetchAuditLogs = async () => {
+      try {
+        const res = await adminApi.getRecentAuditLogs(8);
+        setAuditLogs(res.data || []);
+      } catch {
+        setAuditLogs([]);
+      }
+    };
+
+    fetchAuditLogs();
+  }, []);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleString();
+  };
 
   if (loading) {
     return (
@@ -209,9 +231,23 @@ const Dashboard: React.FC<DashboardProps> = ({ cinemas, loading }) => {
           <div className={`space-y-2 text-sm ${
             theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
           }`}>
-            <p>• Added 2 new auditoriums</p>
-            <p>• Updated VietNam cinema information</p>
-            <p>• December seat report created</p>
+            {auditLogs.length === 0 ? (
+              <p>No recent activity</p>
+            ) : (
+              auditLogs.map((log) => (
+                <div key={log.auditLogId} className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">
+                      {log.action} {log.entityType}: {log.entityName || 'N/A'}
+                    </p>
+                    <p className={`text-xs ${log.isAdminAction ? 'text-amber-400' : 'opacity-70'}`}>
+                      {log.isAdminAction ? `Admin action by ${log.actorName}` : log.actorName}
+                    </p>
+                  </div>
+                  <span className="text-xs opacity-50 whitespace-nowrap">{formatDate(log.createdAt)}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>

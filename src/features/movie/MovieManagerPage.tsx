@@ -44,6 +44,7 @@ import Cookies from 'js-cookie';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { publicApi } from '../../api/publicApi';
 import AssignRightsModal from '../admin/components/AssignRightsModal';
+import ManagementDashboard from '../../components/ManagementDashboard';
 
 // =============================================
 // SIDEBAR COMPONENT
@@ -62,6 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onTog
     const { t } = useTranslation();
 
     const menuItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'movies', label: 'Movies', icon: Film },
     ];
 
@@ -1325,7 +1327,7 @@ const MovieManagerPage: React.FC = () => {
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     // Sidebar
-    const [activeTab, setActiveTab] = useState('movies');
+    const [activeTab, setActiveTab] = useState('dashboard');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Modals
@@ -1360,7 +1362,7 @@ const MovieManagerPage: React.FC = () => {
         try {
             const parsed = JSON.parse(storedUser);
             const roles = parsed.roles || [];
-            if (!roles.includes('MovieManager')) { navigate('/role-selection'); return; }
+            if (!roles.includes('MovieManager') && !roles.includes('Admin')) { navigate('/role-selection'); return; }
             setUser(parsed);
             fetchMovies();
             fetchFormats();
@@ -1715,6 +1717,10 @@ const MovieManagerPage: React.FC = () => {
                         </div>
                     )}
 
+                    {activeTab === 'dashboard' ? (
+                        <ManagementDashboard role="movie" />
+                    ) : (
+                        <>
                     {/* Page Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                         <div className="flex-1 min-w-0">
@@ -1862,6 +1868,8 @@ const MovieManagerPage: React.FC = () => {
                                 {searchTerm ? 'Try adjusting your search' : 'Click "Add New Movie" to get started'}
                             </p>
                         </div>
+                    )}
+                        </>
                     )}
                 </div>
             </main>

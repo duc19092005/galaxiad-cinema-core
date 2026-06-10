@@ -32,6 +32,91 @@ export interface RoleDto {
     roleName: string;
 }
 
+export interface AuditLogDto {
+    auditLogId: string;
+    action: string;
+    entityType: string;
+    entityId?: string | null;
+    entityName: string;
+    description: string;
+    actorUserId: string;
+    actorName: string;
+    actorPrimaryRole: string;
+    isAdminAction: boolean;
+    cinemaId?: string | null;
+    createdAt: string;
+}
+
+export interface RecentTransactionDto {
+    orderId: string;
+    orderDate: string;
+    movieName: string;
+    cinemaName: string;
+    ticketCount: number;
+    totalPrice: number;
+    customerName: string;
+}
+
+export interface MovieTicketStatDto {
+    movieId: string;
+    movieName: string;
+    ticketsSold: number;
+    revenue: number;
+}
+
+export interface HourlyTicketStatDto {
+    hour: number;
+    hourLabel: string;
+    ticketsSold: number;
+}
+
+export interface HotMovieDto {
+    movieId: string;
+    movieName: string;
+    movieImageUrl: string;
+    ticketsSold: number;
+    revenue: number;
+}
+
+export interface RecentMovieDto {
+    movieId: string;
+    movieName: string;
+    movieImageUrl: string;
+    createdAt: string;
+    createdBy: string;
+}
+
+export interface RecentCinemaDto {
+    cinemaId: string;
+    cinemaName: string;
+    cinemaLocation: string;
+    createdAt: string;
+    createdBy: string;
+}
+
+export interface RecentAuditoriumDto {
+    auditoriumId: string;
+    auditoriumNumber: string;
+    cinemaName: string;
+    createdAt: string;
+    createdBy: string;
+}
+
+export interface ManagementDashboardDto {
+    ticketsSoldToday: number;
+    revenueToday: number;
+    totalTicketsSold: number;
+    busiestHourLabel: string;
+    recentTransactions: RecentTransactionDto[];
+    ticketsByMovie: MovieTicketStatDto[];
+    ticketsByHour: HourlyTicketStatDto[];
+    hotMovies: HotMovieDto[];
+    recentMovies: RecentMovieDto[];
+    recentCinemas: RecentCinemaDto[];
+    recentAuditoriums: RecentAuditoriumDto[];
+    recentActivities: AuditLogDto[];
+}
+
 export interface ManagerDto {
     userId: string;
     userEmail: string;

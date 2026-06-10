@@ -27,7 +27,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 
       // Check role nếu có yêu cầu
       if (requiredRole) {
-        if (!userInfo.roles || !userInfo.roles.includes(requiredRole)) {
+        const roles = userInfo.roles || [];
+        if (!roles.includes(requiredRole) && !roles.includes('Admin')) {
           setIsAuthenticated(false);
           setIsChecking(false);
           return;

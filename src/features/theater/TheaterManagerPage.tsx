@@ -24,9 +24,8 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import Cookies from 'js-cookie';
 import { useCinema } from '../../contexts/CinemaContext';
 import CinemaSelector from '../../components/CinemaSelector';
+import ManagementDashboard from '../../components/ManagementDashboard';
 
-// Placeholder for Employee Management & Dashboard until fully implemented
-const DashboardPlaceholder = () => <div className="p-6">Dashboard functionality coming soon...</div>;
 const EmployeeManagementPlaceholder = () => <div className="p-6">Employee Management functionality coming soon...</div>;
 
 const TheaterManagerPage: React.FC = () => {
@@ -72,7 +71,7 @@ const TheaterManagerPage: React.FC = () => {
             const parsed = JSON.parse(storedUser) as { username: string; roles?: string[]; selectedRole?: string };
             const roles = parsed.roles || [];
 
-            if (!roles.includes('TheaterManager')) {
+            if (!roles.includes('TheaterManager') && !roles.includes('Admin')) {
                 navigate('/role-selection');
                 return;
             }
@@ -120,7 +119,9 @@ const TheaterManagerPage: React.FC = () => {
             );
         }
 
-        if (managedCinemas.length === 0) {
+        const isAdmin = user?.roles?.includes('Admin') ?? false;
+
+        if (!isAdmin && managedCinemas.length === 0) {
             return (
                 <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
                     <div className="p-4 bg-red-600/10 rounded-full mb-6 border border-red-600/20 shadow-2xl shadow-red-600/10">
@@ -134,7 +135,7 @@ const TheaterManagerPage: React.FC = () => {
             );
         }
 
-        if (!activeCinemaId) {
+        if (!isAdmin && !activeCinemaId) {
             return (
                 <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-700">
                     <Loader2 className="w-8 h-8 animate-spin text-red-600 mb-4" />
@@ -145,13 +146,13 @@ const TheaterManagerPage: React.FC = () => {
 
         switch (activeTab) {
             case 'dashboard':
-                return <DashboardPlaceholder />;
+                return <ManagementDashboard role="theater" />;
             case 'employees':
                 return <EmployeeManagementPlaceholder />;
             case 'schedule':
                 return <ScheduleManagerPage embedded={true} />;
             default:
-                return <DashboardPlaceholder />;
+                return <ManagementDashboard role="theater" />;
         }
     };
 

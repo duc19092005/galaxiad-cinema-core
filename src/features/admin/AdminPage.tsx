@@ -21,11 +21,12 @@ import {
     SortDesc,
     Menu,
     XCircle,
+    History,
 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { adminApi } from '../../api/adminApi';
 import { authApi } from '../../api/authApi';
-import type { AdminUserDto, GroupedScheduleJobDto } from '../../types/admin.types';
+import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto } from '../../types/admin.types';
 import toast from 'react-hot-toast';
 import LogoutModal from '../../components/LogoutModal';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
@@ -38,8 +39,8 @@ import Cookies from 'js-cookie';
 // SIDEBAR COMPONENT
 // =============================================
 interface SidebarProps {
-    activeTab: 'users' | 'jobs' | 'transfer';
-    onTabChange: (tab: 'users' | 'jobs' | 'transfer') => void;
+    activeTab: 'users' | 'jobs' | 'transfer' | 'audit';
+    onTabChange: (tab: 'users' | 'jobs' | 'transfer' | 'audit') => void;
     isOpen: boolean;
     onClose: () => void;
 }
@@ -51,6 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClo
 
     const menuItems = [
         { id: 'users', label: t('User Management'), icon: Users },
+        { id: 'audit', label: t('Activity Logs'), icon: History },
         { id: 'jobs', label: t('Background Jobs'), icon: Clock },
         { id: 'transfer', label: t('Transfer Rights'), icon: Sparkles },
     ] as const;
@@ -248,9 +250,10 @@ const AdminPage: React.FC = () => {
     const { theme, setTheme } = useTheme();
     const { t } = useTranslation();
 
-    const [activeTab, setActiveTab] = useState<'users' | 'jobs' | 'transfer'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'jobs' | 'transfer' | 'audit'>('users');
     const [users, setUsers] = useState<AdminUserDto[]>([]);
     const [jobs, setJobs] = useState<GroupedScheduleJobDto[]>([]);
+    const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
@@ -318,6 +321,9 @@ const AdminPage: React.FC = () => {
             } else if (activeTab === 'jobs') {
                 const res = await adminApi.getScheduleJobs();
                 setJobs(res.data || []);
+            } else if (activeTab === 'audit') {
+                const res = await adminApi.getRecentAuditLogs(50);
+                setAuditLogs(res.data || []);
             }
         } catch (err) {
             toast.error('Failed to load data.');
@@ -902,12 +908,59 @@ const AdminPage: React.FC = () => {
                                 </>
                             )}
 
+                            {activeTab === 'audit' && (
+                                <table className="w-full min-w-[900px] text-center text-sm border-separate border-spacing-0">
+                                    <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
+                                            ? 'bg-gray-950/95 border-gray-800 text-gray-400'
+                                            : theme === 'modern'
+                                                ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
+                                                : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
+                                        }`}>
+                                        <tr>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Time</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Action</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Target</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Actor</th>
+                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Note</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
+                                        {auditLogs.map((log) => (
+                                            <tr key={log.auditLogId} className={`${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'}`}>
+                                                <td className="px-6 py-5 text-xs opacity-70">{formatDate(log.createdAt)}</td>
+                                                <td className="px-6 py-5">
+                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${log.action === 'Delete'
+                                                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
+                                                            : log.action === 'Create'
+                                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                                                        }`}>
+                                                        {log.action}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="font-bold">{log.entityName || 'N/A'}</div>
+                                                    <div className="text-[10px] opacity-50 uppercase tracking-widest">{log.entityType}</div>
+                                                </td>
+                                                <td className="px-6 py-5">
+                                                    <div className="font-bold">{log.actorName}</div>
+                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${log.isAdminAction ? 'text-amber-400' : 'opacity-50'}`}>
+                                                        {log.isAdminAction ? 'Admin action' : log.actorPrimaryRole}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-5 text-left text-xs opacity-80">{log.description}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+
                             {activeTab === 'transfer' && (
                                 <TransferRightsView />
                             )}
                         </div>
                     )}
-                    {!loading && ((activeTab === 'users' && users.length === 0) || (activeTab === 'jobs' && jobs.length === 0)) && (
+                    {!loading && ((activeTab === 'users' && users.length === 0) || (activeTab === 'jobs' && jobs.length === 0) || (activeTab === 'audit' && auditLogs.length === 0)) && (
                         <div className="p-12 text-center opacity-50">
                             No data available.
                         </div>
