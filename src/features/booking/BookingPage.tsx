@@ -1,27 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Loader2, AlertCircle, ShoppingCart,
-    ChevronLeft, CreditCard
+    Loader2, AlertCircle
 } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
 
+// Premium booking theme colors
+const BK = {
+  bg: '#131313',
+  surface: '#201f1f',
+  surfaceLow: '#1c1b1b',
+  surfaceHigh: '#2a2a2a',
+  surfaceHighest: '#353534',
+  border: '#564334',
+  text: '#e5e2e1',
+  textVariant: '#ddc1ae',
+  primary: '#ffb77f',
+  primaryContainer: '#ff8a00',
+  error: '#ffb4ab',
+  success: '#10B981',
+};
+
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
     const navigate = useNavigate();
-    const { theme } = useTheme();
     const { t } = useTranslation();
 
     const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
-    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({}); // seatId -> userSegmentId
+    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,13 +42,7 @@ const BookingPage: React.FC = () => {
 
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-    const [customerInfo, setCustomerInfo] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
-
+    const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
 
     const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
     const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
@@ -53,43 +60,25 @@ const BookingPage: React.FC = () => {
 
         if (scheduleId) {
             fetchData();
-
-            // Set up SignalR
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_BASE_URL}/ws/seat`, {
-                    transport: signalR.HttpTransportType.ServerSentEvents
-                })
+                .withUrl(`${API_BASE_URL}/ws/seat`, { transport: signalR.HttpTransportType.ServerSentEvents })
                 .withAutomaticReconnect()
                 .build();
 
             const startConnection = async () => {
                 try {
                     await connection.start();
-                    console.log("SignalR Connected.");
                     await connection.invoke("JoinSchedule", scheduleId);
-
                     connection.on("OnSeatSelected", (seatId: string, userName: string) => {
-                        console.log(`Seat ${seatId} currently selected by ${userName}`);
                         setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
                     });
-
                     connection.on("OnSeatUnselected", (seatId: string) => {
-                        console.log(`Seat ${seatId} unselected`);
-                        setLockedSeats(prev => {
-                            const next = { ...prev };
-                            delete next[seatId];
-                            return next;
-                        });
+                        setLockedSeats(prev => { const next = { ...prev }; delete next[seatId]; return next; });
                     });
-
                     setHubConnection(connection);
-                } catch (err) {
-                    console.error("SignalR Connection Error:", err);
-                }
+                } catch (err) { console.error("SignalR Connection Error:", err); }
             };
-
             startConnection();
-
             return () => {
                 if (connection.state === signalR.HubConnectionState.Connected) {
                     connection.invoke("LeaveSchedule", scheduleId)
@@ -101,364 +90,609 @@ const BookingPage: React.FC = () => {
     }, [scheduleId]);
 
     const fetchData = async () => {
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         try {
             const seatRes = await publicApi.getSeatMap(scheduleId!);
             setSeatMap(seatRes.data);
             try {
                 const priceRes = await publicApi.getPricing(scheduleId!);
                 setPricing(priceRes.data);
-            } catch (err) {
-                console.warn('Pricing not found, skipping for now', err);
-            }
-
-        } catch (err) {
-            setError('Failed to load booking information.');
-        } finally {
-            setLoading(false);
-        }
+            } catch { console.warn('Pricing not found, skipping for now'); }
+        } catch (err) { setError('Failed to load booking information.'); }
+        finally { setLoading(false); }
     };
 
     const toggleSeat = async (seat: PublicSeat) => {
         if (seat.isBooked) return;
-
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
-        
-        // Nếu không phải là ghế mình đang chọn mà bị người khác khóa thì bỏ qua
         if (!isCurrentlySelected && lockedSeats[seat.seatId]) return;
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-            setSeatSegmentMap(prev => {
-                const next = { ...prev };
-                delete next[seat.seatId];
-                return next;
-            });
+            setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try {
-                    await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId);
-                } catch (err) {
-                    console.error("Error unselecting seat", err);
-                }
+                try { await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId); }
+                catch (err) { console.error("Error unselecting seat", err); }
             }
         } else {
-            if (selectedSeats.length >= 8) {
-                showError(t('toast.maxSeats'));
-                return;
-            }
+            if (selectedSeats.length >= 8) { showError(t('toast.maxSeats')); return; }
             setSelectedSeats(prev => [...prev, seat]);
-            // Initial segment should be the first one in the list (Adult usually)
             if (pricing && pricing.segmentPrices.length > 0) {
                 setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
             }
-
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try {
-                    await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName);
-                } catch (err) {
-                    console.error("Error selecting seat", err);
-                }
+                try { await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName); }
+                catch (err) { console.error("Error selecting seat", err); }
             }
         }
-
     };
 
     const handleBooking = async () => {
-        if (selectedSeats.length === 0) {
-            showError(t('toast.selectSeat'));
-            return;
-        }
-
+        if (selectedSeats.length === 0) { showError(t('toast.selectSeat')); return; }
         if (!isLoggedIn) {
             if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
-                showError(t('toast.fillContactInfo'));
-                return;
+                showError(t('toast.fillContactInfo')); return;
             }
         }
-
         setBookingLoading(true);
         try {
             const payload: any = {
                 scheduleId: scheduleId!.trim(),
-                seatSelections: selectedSeats.map(s => ({
-                    seatId: s.seatId,
-                    userSegmentId: seatSegmentMap[s.seatId]
-                })),
+                seatSelections: selectedSeats.map(s => ({ seatId: s.seatId, userSegmentId: seatSegmentMap[s.seatId] })),
                 customerName: isLoggedIn ? undefined : customerInfo.name.trim(),
                 customerEmail: isLoggedIn ? undefined : customerInfo.email.trim(),
                 customerPhone: isLoggedIn ? undefined : customerInfo.phone.trim(),
                 customerAddress: isLoggedIn ? undefined : customerInfo.address.trim()
             };
-
             const res = await bookingApi.createBooking(payload);
-
             if (res.data.paymentUrl) {
-                // Open VNPay URL
                 window.location.href = res.data.paymentUrl;
-            } else {
-                showError(t('toast.paymentUrlError'));
-            }
+            } else { showError(t('toast.paymentUrlError')); }
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || t('toast.scheduleSaveFailed');
             showError(errorMsg);
-        } finally {
-            setBookingLoading(false);
-        }
+        } finally { setBookingLoading(false); }
     };
 
-    if (loading) {
-        return (
-            <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <Loader2 className="w-12 h-12 animate-spin text-red-600" />
-            </div>
-        );
-    }
-
-    if (error || !seatMap) {
-        return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-xl font-bold mb-4">{error || 'Schedule not found'}</p>
-                <button onClick={() => navigate('/home')} className="px-6 py-2 bg-red-600 text-white rounded-lg">Go Home</button>
-            </div>
-        );
-    }
-
-    // Calculate total
     const totalPrice = selectedSeats.reduce((sum, seat) => {
         const segmentId = seatSegmentMap[seat.seatId];
         const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
         return sum + (segment?.finalPrice || 0);
     }, 0);
 
+    if (loading) {
+        return (
+            <div style={{ minHeight: '100vh', backgroundColor: BK.bg, color: BK.text, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 size={48} style={{ color: BK.primaryContainer, animation: 'bk-spin 1s linear infinite' }} />
+            </div>
+        );
+    }
+
+    if (error || !seatMap) {
+        return (
+            <div style={{ minHeight: '100vh', backgroundColor: BK.bg, color: BK.text, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+                <AlertCircle size={64} style={{ color: BK.error, marginBottom: 16 }} />
+                <p style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>{error || 'Schedule not found'}</p>
+                <button onClick={() => navigate('/home')}
+                  style={{
+                    padding: '12px 24px', backgroundColor: BK.primaryContainer, border: 'none',
+                    borderRadius: 8, color: '#000', fontWeight: 600, cursor: 'pointer',
+                  }}>
+                  Go Home
+                </button>
+            </div>
+        );
+    }
+
+    const maxCol = Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1;
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-4 sm:px-6 ${theme === 'dark' ? 'bg-black/80 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30' : 'bg-white/80 border-gray-200'}`}>
-                <button onClick={() => navigate(-1)} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors">
-                    <ChevronLeft className="w-6 h-6" />
+        <div style={{ minHeight: '100vh', backgroundColor: BK.bg, color: BK.text, fontFamily: "'Inter', sans-serif" }}>
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+            .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+            .glass-card { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(32px); border: 1px solid rgba(255, 255, 255, 0.1); border-top: 1px solid rgba(255, 255, 255, 0.15); border-left: 1px solid rgba(255, 255, 255, 0.15); }
+            .screen-curve { height: 4px; width: 100%; background: linear-gradient(90deg, transparent 0%, #ff8a00 50%, transparent 100%); border-radius: 50%; filter: blur(1px) drop-shadow(0 0 8px #ff8a00); }
+            .no-scrollbar::-webkit-scrollbar { display: none; }
+            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+            @keyframes bk-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          `}</style>
+
+          {/* ===== TOP NAV ===== */}
+          <header style={{
+            position: 'fixed', top: 0, width: '100%', zIndex: 50,
+            backgroundColor: `${BK.bg}F2`, backdropFilter: 'blur(12px)',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            height: 80, display: 'flex', alignItems: 'center',
+          }}>
+            <div style={{
+              maxWidth: 1280, margin: '0 auto', width: '100%',
+              padding: '0 64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}>
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, color: BK.primary, letterSpacing: '-0.02em' }}>
+                CINEPREMIER
+              </div>
+              <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+                {['Movies', 'Cinemas', 'Offers', 'Membership'].map(item => (
+                  <a key={item} href="#"
+                    style={{ color: BK.textVariant, fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = BK.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = BK.textVariant; }}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </nav>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                <button style={{
+                  backgroundColor: BK.primaryContainer, color: '#000', fontWeight: 700,
+                  padding: '8px 24px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(255,138,0,0.3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
+                >
+                  Book Now
                 </button>
-                <div>
-                    <h2 className="font-black truncate">{seatMap.movieName}</h2>
-                    <p className="text-xs opacity-60">
-                        {seatMap.movieVisualFormatName} • {seatMap.auditoriumName} • {new Date(seatMap.startTime).toLocaleString('vi-VN', {
-                            weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                        })}
-                    </p>
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%', overflow: 'hidden',
+                  border: '1px solid rgba(86, 67, 52, 1)',
+                }}>
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuACrMTQJSt2YAxsWe1nMDq4vG5gyBcCxp1FBPqqjVLSfyD6U0qYaPIT1HJ1vpBJXMSNx2IDxCHvQO6cLZn0rMh0382PBu5jhQyMAWUfq3eILF-uzZ8YIFxUrancpZwBaPSwgyUWPafkW8nc6FTSVKKv23rqSdbBefa2S-jp5iX0QpyjgMlcFRrHA_BxSvkjb_VR0zJVtUjisYi_izNrnxpfr0QtV-u9QPT-52kNhXAKhOh8L-X_KXHdbtZPtwKiroCHxxAgF87_sI4"
+                    alt="Profile"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
                 </div>
-            </header>
+              </div>
+            </div>
+          </header>
 
-            <main className="pt-24 pb-32 container mx-auto px-6">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                    {/* Seat Map */}
-                    <div className="lg:col-span-3">
-                        <div className="flex flex-col items-center">
-                            {/* Screen */}
-                            <div className="w-full max-w-2xl mb-20 relative">
-                                <div className={`h-2 rounded-full shadow-[0_15px_40px_rgba(239,68,68,0.5)] ${theme === 'modern' ? 'bg-cyan-400 shadow-cyan-400/50' : 'bg-gray-400'}`} />
-                                <p className="text-center text-xs font-bold uppercase tracking-widest mt-4 opacity-40">Screen</p>
+          {/* ===== MAIN ===== */}
+          <main style={{ paddingTop: 128, paddingBottom: 96, maxWidth: 1280, margin: '0 auto', paddingLeft: 64, paddingRight: 64 }}>
+            {/* Movie Info */}
+            <div style={{
+              marginBottom: 48, display: 'flex', flexDirection: 'column',
+              justifyContent: 'flex-end', borderLeft: `4px solid ${BK.primary}`, paddingLeft: 24,
+            }}
+              className="md:flex-row md:items-end md:justify-between"
+            >
+              <div>
+                <h1 style={{
+                  fontFamily: "'Montserrat', sans-serif", fontSize: 48, fontWeight: 800,
+                  color: BK.text, margin: '0 0 8px', letterSpacing: '-0.02em',
+                }}>
+                  {seatMap.movieName}
+                </h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: BK.textVariant, fontSize: 14, letterSpacing: '0.1em', fontWeight: 600 }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>movie</span>
+                    {seatMap.auditoriumName}
+                  </span>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border }} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>calendar_today</span>
+                    {new Date(seatMap.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border }} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>schedule</span>
+                    {new Date(seatMap.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate(-1)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, color: BK.primary,
+                  background: 'none', border: 'none', cursor: 'pointer', fontSize: 14,
+                  transition: 'all 0.3s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.gap = '16px'; }}
+                onMouseLeave={e => { e.currentTarget.style.gap = '8px'; }}
+              >
+                <span className="material-symbols-outlined">arrow_back</span>
+                Change Session
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 48, alignItems: 'start' }}
+              className="lg:grid-cols-12"
+            >
+              {/* ===== SEAT SELECTION ===== */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                className="lg:col-span-8"
+              >
+                {/* Screen */}
+                <div style={{ width: '100%', maxWidth: 560, marginBottom: 64, position: 'relative' }}>
+                  <div className="screen-curve" />
+                  <p style={{
+                    textAlign: 'center', color: BK.textVariant, fontSize: 10,
+                    letterSpacing: '0.4em', textTransform: 'uppercase', marginTop: 16,
+                  }}>
+                    Screen
+                  </p>
+                </div>
+
+                {/* Seat Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))`,
+                  gap: 8,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: 'rgba(255,255,255,0.02)',
+                  width: '100%',
+                  maxWidth: maxCol * 56,
+                  justifyContent: 'center',
+                }}>
+                  {seatMap.seatMap?.map((seat) => {
+                    const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
+                    const lockedBy = lockedSeats[seat.seatId];
+                    const isLockedByOther = lockedBy && !isSelected;
+                    let seatStyle: React.CSSProperties = {
+                      width: 40, height: 40, borderRadius: 8,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 500,
+                      transition: 'all 0.2s ease', border: 'none', cursor: 'pointer',
+                      fontFamily: "'Inter', sans-serif",
+                    };
+
+                    if (seat.isBooked) {
+                      Object.assign(seatStyle, {
+                        backgroundColor: BK.surfaceHigh,
+                        opacity: 0.3, cursor: 'not-allowed',
+                        color: BK.textVariant,
+                      } as React.CSSProperties);
+                    } else if (isLockedByOther) {
+                      Object.assign(seatStyle, {
+                        backgroundColor: 'rgba(175, 141, 17, 0.2)',
+                        border: '1px solid rgba(175, 141, 17, 0.4)',
+                        cursor: 'not-allowed',
+                        color: BK.textVariant,
+                      } as React.CSSProperties);
+                    } else if (isSelected) {
+                      Object.assign(seatStyle, {
+                        backgroundColor: BK.primaryContainer,
+                        color: '#000',
+                        boxShadow: '0 0 15px rgba(255, 138, 0, 0.4)',
+                        transform: 'scale(1.05)',
+                        fontWeight: 700,
+                      } as React.CSSProperties);
+                    } else {
+                      Object.assign(seatStyle, {
+                        backgroundColor: BK.surfaceHigh,
+                        cursor: 'pointer',
+                        color: BK.textVariant,
+                      } as React.CSSProperties);
+                    }
+
+                    return (
+                      <button
+                        key={seat.seatId}
+                        disabled={seat.isBooked || !!isLockedByOther}
+                        onClick={() => toggleSeat(seat)}
+                        style={seatStyle}
+                        onMouseEnter={e => { if (!seat.isBooked && !isLockedByOther && !isSelected) { e.currentTarget.style.backgroundColor = BK.surfaceHighest; e.currentTarget.style.color = BK.text; } }}
+                        onMouseLeave={e => { if (!seat.isBooked && !isLockedByOther && !isSelected) { e.currentTarget.style.backgroundColor = BK.surfaceHigh; e.currentTarget.style.color = BK.textVariant; } }}
+                        title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
+                      >
+                        {seat.seatName}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Legend */}
+                <div style={{
+                  display: 'inline-flex', gap: 24, padding: '12px 24px',
+                  borderRadius: 9999, marginTop: 48,
+                  background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(32px)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}>
+                  <LegendItem color={BK.surfaceHigh} label="Available" />
+                  <LegendItem color={BK.primaryContainer} label="Selected" shadow />
+                  <LegendItem color="rgba(175,141,17,0.2)" label="Locked" border="rgba(175,141,17,0.4)" />
+                  <LegendItem color={BK.surfaceHigh} label="Occupied" faded />
+                </div>
+              </div>
+
+              {/* ===== BOOKING SUMMARY ===== */}
+              <aside style={{
+                position: 'sticky', top: 96,
+              }} className="lg:col-span-4 lg:sticky">
+                <div className="glass-card" style={{
+                  borderRadius: 16, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                  overflow: 'hidden', position: 'relative',
+                }}>
+                  {/* Glow */}
+                  <div style={{
+                    position: 'absolute', top: -96, right: -96, width: 192, height: 192,
+                    backgroundColor: `${BK.primary}1A`, filter: 'blur(100px)', borderRadius: '50%',
+                    pointerEvents: 'none',
+                  }} />
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+                    <span className="material-symbols-outlined" style={{ color: BK.primary, fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>
+                    <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Booking Summary</h2>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 32 }}>
+                    <SummaryRow label="Movie" value={seatMap.movieName} />
+                    <SummaryRow label="Venue" value={seatMap.auditoriumName} />
+                    <SummaryRow label="Format" value={seatMap.movieVisualFormatName || seatMap.auditoriumName} />
+
+                    {/* Selected Seats */}
+                    <div style={{ paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      <span style={{ color: BK.textVariant, fontSize: 12, letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase', display: 'block', marginBottom: 12 }}>
+                        Selected Seats
+                      </span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                        {selectedSeats.length === 0 ? (
+                          <span style={{ color: `${BK.textVariant}80`, fontStyle: 'italic', fontSize: 14 }}>No seats selected yet</span>
+                        ) : selectedSeats.map(seat => (
+                          <div key={seat.seatId} style={{
+                            display: 'flex', flexDirection: 'column', gap: 4,
+                            padding: '8px 12px', backgroundColor: `${BK.primary}0D`,
+                            border: `1px solid ${BK.primary}1A`, borderRadius: 8,
+                          }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontWeight: 700, color: BK.primary, fontSize: 13 }}>Seat {seat.seatName}</span>
+                              <span style={{ fontSize: 13, fontWeight: 700 }}>
+                                {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
+                              </span>
                             </div>
-
-                            {/* Seats Grid */}
-                            <div className="inline-grid gap-2" style={{
-                                gridTemplateColumns: `repeat(${Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1}, minmax(0, 1fr))`
-                            }}>
-                                {seatMap.seatMap?.map((seat) => {
-                                    const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
-                                    const lockedBy = lockedSeats[seat.seatId];
-                                    const isLockedByOther = lockedBy && !isSelected;
-
-                                    return (
-                                        <button
-                                            key={seat.seatId}
-                                            disabled={seat.isBooked || !!isLockedByOther}
-                                            onClick={() => toggleSeat(seat)}
-                                            className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all ${seat.isBooked
-                                                ? 'bg-gray-800 text-gray-600 cursor-not-allowed opacity-30'
-                                                : isLockedByOther
-                                                    ? 'bg-yellow-600 border border-yellow-500 text-white cursor-not-allowed opacity-80'
-                                                    : isSelected
-                                                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 transform scale-110 z-10'
-                                                        : theme === 'dark' ? 'bg-gray-900 border border-gray-800 hover:border-gray-500 text-gray-400' : 'bg-gray-100 border border-gray-300 hover:border-gray-500 text-gray-600'
-                                                }`}
-                                            title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
-                                        >
-                                            <span className="text-[10px] font-bold">{seat.seatName}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Legend */}
-                            <div className="flex gap-4 sm:gap-6 mt-16 text-xs sm:text-sm flex-wrap justify-center">
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-gray-900 border border-gray-800" /> Available</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-600" /> Selected</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-yellow-600" /> Locked</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-gray-800 opacity-30" /> Occupied</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Booking Summary */}
-                    <div className="lg:col-span-1">
-                        <div className={`p-6 rounded-2xl border sticky top-24 ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl' : 'bg-white border-gray-200 shadow-xl'}`}>
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-white/10 pb-4">
-                                <ShoppingCart className="w-5 h-5 text-red-600" /> Booking Summary
-                            </h3>
-
-                            <div className="space-y-4 mb-6">
-                                <div className="flex justify-between items-start">
-                                    <span className="opacity-60 text-sm">Movie</span>
-                                    <span className="font-bold text-right text-sm">{seatMap.movieName}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="opacity-60">Venue</span>
-                                    <span className="font-bold">{seatMap.auditoriumName}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="opacity-60">Format</span>
-                                    <span className="font-bold">{seatMap.movieVisualFormatName}</span>
-                                </div>
-                                <div className="space-y-4">
-                                    <span className="opacity-60 text-sm block">Selected Seats</span>
-                                    {selectedSeats.length === 0 ? (
-                                        <p className="text-xs italic opacity-40">No seats selected yet</p>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {selectedSeats.map(seat => (
-                                                <div key={seat.seatId} className={`p-3 rounded-xl border transition-all ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-800' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10' : 
-                                                    'bg-gray-50 border-gray-200'
-                                                }`}>
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <span className="font-bold text-red-600">Seat {seat.seatName}</span>
-                                                        <span className="text-sm font-black">
-                                                            {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
-                                                        </span>
-                                                    </div>
-                                                    <select
-                                                        value={seatSegmentMap[seat.seatId]}
-                                                        onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
-                                                        className={`w-full bg-transparent border-none text-xs opacity-80 focus:ring-0 cursor-pointer ${
-                                                            theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                                                        }`}
-                                                    >
-                                                        {pricing?.segmentPrices.map(segment => (
-                                                            <option key={segment.userSegmentId} value={segment.userSegmentId} className="bg-gray-900 text-white">
-                                                                {segment.segmentName}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                            </div>
-
-                            <div className="pt-4 border-t border-dashed border-white/20 mb-8">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="opacity-60 text-sm">Total Price</span>
-                                    <span className="text-2xl font-black text-red-600">{totalPrice.toLocaleString('vi-VN')}đ</span>
-                                </div>
-                                <p className="text-[10px] opacity-40 text-right">Inclusives of all taxes</p>
-                            </div>
-
-                            {!isLoggedIn ? (
-                                <div className={`space-y-4 mb-6 p-5 rounded-xl border transition-all ${
-                                    theme === 'dark' ? 'bg-gray-900/50 border-gray-800' : 
-                                    theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl backdrop-blur-md' : 
-                                    'bg-white border-gray-200'
-                                }`}>
-                                    <p className={`text-xs font-bold uppercase tracking-wider ${
-                                        theme === 'dark' ? 'text-gray-400' : 
-                                        theme === 'modern' ? 'text-indigo-300' : 
-                                        'text-gray-500'
-                                    }`}>Guest Information</p>
-                                    <div className="space-y-3">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Full Name *" 
-                                            value={customerInfo.name}
-                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            }`}
-                                        />
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <input 
-                                                type="email" 
-                                                placeholder="Email Address *" 
-                                                value={customerInfo.email}
-                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                                }`}
-                                            />
-                                            <input 
-                                                type="tel" 
-                                                placeholder="Phone Number *" 
-                                                value={customerInfo.phone}
-                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                                }`}
-                                            />
-                                        </div>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Address (Optional)" 
-                                            value={customerInfo.address}
-                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
-                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            }`}
-                                        />
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className={`mb-8 p-4 rounded-xl border transition-all ${
-                                    theme === 'dark' ? 'bg-red-600/5 border-red-600/20' : 
-                                    theme === 'modern' ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg' : 
-                                    'bg-red-50 border-red-100'
-                                }`}>
-                                    <p className={`text-xs text-center ${
-                                        theme === 'dark' || theme === 'modern' ? 'opacity-60' : 'text-gray-600'
-                                    }`}>
-                                        Booking as <span className="font-bold text-red-600">{userName}</span>. 
-                                        Your details will be retrieved from your profile.
-                                    </p>
-                                </div>
-                            )}
-
-                            <button
-                                disabled={selectedSeats.length === 0 || bookingLoading}
-                                onClick={handleBooking}
-                                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${selectedSeats.length > 0
-                                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30'
-                                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                    }`}
+                            <select
+                              value={seatSegmentMap[seat.seatId]}
+                              onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
+                              style={{
+                                width: '100%', backgroundColor: 'transparent', border: 'none',
+                                color: BK.textVariant, fontSize: 11, cursor: 'pointer', outline: 'none',
+                              }}
                             >
-                                {bookingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CreditCard className="w-5 h-5" /> Proceed to Pay</>}
-                            </button>
-                        </div>
+                              {pricing?.segmentPrices.map(segment => (
+                                <option key={segment.userSegmentId} value={segment.userSegmentId} style={{ backgroundColor: BK.surface, color: BK.text }}>
+                                  {segment.segmentName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Total Price */}
+                  <div style={{
+                    padding: 16, backgroundColor: `${BK.primary}0D`,
+                    borderRadius: 12, border: `1px solid ${BK.primary}1A`, marginBottom: 32,
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 500 }}>Total Price</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ color: BK.primary, fontSize: 28, fontWeight: 800 }}>
+                          {totalPrice.toLocaleString('vi-VN')}đ
+                        </span>
+                        <p style={{ fontSize: 10, color: BK.textVariant, textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>
+                          Inclusives of all taxes
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* User Info */}
+                  {!isLoggedIn ? (
+                    <div style={{
+                      padding: 16, borderRadius: 12,
+                      border: '1px solid rgba(147, 0, 10, 0.2)',
+                      backgroundColor: 'rgba(147, 0, 10, 0.1)',
+                      marginBottom: 24,
+                    }}>
+                      <p style={{ fontSize: 12, color: BK.textVariant, marginBottom: 12 }}>
+                        <span style={{ color: BK.primary, fontWeight: 700 }}>Guest</span>. Please fill your details to proceed.
+                      </p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <input type="text" placeholder="Full Name *" value={customerInfo.name}
+                          onChange={e => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                          style={{
+                            padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                            color: BK.text, fontSize: 13, outline: 'none',
+                          }}
+                          onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
+                          onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                          <input type="email" placeholder="Email *" value={customerInfo.email}
+                            onChange={e => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                            style={{
+                              padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                              color: BK.text, fontSize: 13, outline: 'none',
+                            }}
+                            onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                          />
+                          <input type="tel" placeholder="Phone *" value={customerInfo.phone}
+                            onChange={e => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                            style={{
+                              padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                              border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                              color: BK.text, fontSize: 13, outline: 'none',
+                            }}
+                            onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
+                            onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                          />
+                        </div>
+                        <input type="text" placeholder="Address (Optional)" value={customerInfo.address}
+                          onChange={e => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                          style={{
+                            padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
+                            color: BK.text, fontSize: 13, outline: 'none',
+                          }}
+                          onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
+                          onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: 16, borderRadius: 12,
+                      border: '1px solid rgba(147, 0, 10, 0.2)',
+                      backgroundColor: 'rgba(147, 0, 10, 0.1)', marginBottom: 24,
+                    }}>
+                      <p style={{ fontSize: 12, color: BK.textVariant, margin: 0 }}>
+                        Booking as <span style={{ color: BK.primary, fontWeight: 700 }}>{userName}</span>. Your details will be retrieved from your profile.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Pay Button */}
+                  <button
+                    disabled={selectedSeats.length === 0 || bookingLoading}
+                    onClick={handleBooking}
+                    style={{
+                      width: '100%', height: 56, borderRadius: 12,
+                      fontFamily: "'Montserrat', sans-serif", fontSize: 16, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                      border: 'none', cursor: selectedSeats.length > 0 ? 'pointer' : 'not-allowed',
+                      backgroundColor: selectedSeats.length > 0 ? BK.primaryContainer : BK.surfaceHigh,
+                      color: selectedSeats.length > 0 ? '#000' : `${BK.textVariant}80`,
+                      transition: 'all 0.3s ease',
+                      boxShadow: selectedSeats.length > 0 ? `0 4px 25px rgba(255,138,0,0.4)` : 'none',
+                    }}
+                    onMouseEnter={e => { if (selectedSeats.length > 0) { e.currentTarget.style.boxShadow = '0 4px 25px rgba(255,138,0,0.4)'; e.currentTarget.style.transform = 'scale(1.02)'; } }}
+                    onMouseLeave={e => { if (selectedSeats.length > 0) { e.currentTarget.style.boxShadow = '0 4px 25px rgba(255,138,0,0.4)'; e.currentTarget.style.transform = 'scale(1)'; } }}
+                    onMouseDown={e => { if (selectedSeats.length > 0) e.currentTarget.style.transform = 'scale(0.97)'; }}
+                    onMouseUp={e => { if (selectedSeats.length > 0) e.currentTarget.style.transform = 'scale(1.02)'; }}
+                  >
+                    {bookingLoading ? (
+                      <Loader2 size={20} style={{ animation: 'bk-spin 1s linear infinite' }} />
+                    ) : (
+                      <>
+                        <span className="material-symbols-outlined" style={{ fontSize: 20 }}>payments</span>
+                        Proceed to Pay
+                      </>
+                    )}
+                  </button>
                 </div>
-            </main>
+
+                {/* Promo Banner */}
+                <div style={{
+                  marginTop: 24, borderRadius: 16, overflow: 'hidden',
+                  position: 'relative', cursor: 'pointer', height: 128,
+                }}>
+                  <img
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCf7glp6ITcrfW0hlE9CXfpSZ7AKpilK45LhR60O8k-msYArV6MVcBMije9H5ruQss-UbuC6Gb1YAflcR428UUHyWYRUE37mAUiB7VVcDsku8dh0XkH6TnzJyx6Me9rtBRfmPBYyk05S__h3GC_UA8Zgnje4sA3Shl3oYaIMWBRFe43eWcgqhiiU_iEjv7gWW52Q2ay7rZQda7oW14y08BU8HYg4NYYb7c2oYMFYBIhsC3smbjMPl2266Wx7hu3U6mCtsWUDUQRCE"
+                    alt="Promotional"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }}
+                    className="promo-img"
+                  />
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.8), transparent)',
+                    display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 24px',
+                  }}>
+                    <p style={{
+                      color: BK.primary, fontWeight: 700, fontSize: 12,
+                      letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 4px',
+                    }}>
+                      Premier Plus
+                    </p>
+                    <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 18, fontWeight: 600, margin: 0 }}>
+                      Get 20% off popcorn
+                    </p>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </main>
+
+          {/* Footer */}
+          <footer style={{
+            width: '100%', padding: '48px 64px', maxWidth: 1280, margin: '0 auto',
+            borderTop: '1px solid rgba(86, 67, 52, 1)', marginTop: 80,
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center' }}
+              className="md:flex-row md:justify-between"
+            >
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, color: BK.primary, opacity: 0.5 }}>
+                CINEPREMIER
+              </div>
+              <div style={{ display: 'flex', gap: 32, color: BK.textVariant, fontSize: 14 }}>
+                {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Careers'].map(link => (
+                  <a key={link} href="#"
+                    style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = BK.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = BK.textVariant; }}
+                  >
+                    {link}
+                  </a>
+                ))}
+              </div>
+              <div style={{ color: BK.textVariant, fontSize: 12, letterSpacing: '-0.01em', opacity: 0.5 }}>
+                © 2024 CINEPREMIER LUXE CINEMAS. ALL RIGHTS RESERVED.
+              </div>
+            </div>
+          </footer>
+
+          {/* Mobile Bottom Nav */}
+          <nav style={{
+            display: 'none', position: 'fixed', bottom: 0, left: 0, width: '100%',
+            backgroundColor: `${BK.surface}E6`, backdropFilter: 'blur(24px)',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            padding: '12px 16px', zIndex: 50,
+            borderRadius: '12px 12px 0 0',
+            boxShadow: '0 -4px 20px rgba(255,138,0,0.15)',
+            justifyContent: 'space-around',
+          }} className="md:hidden flex">
+            {[
+              { icon: 'home', label: 'Home' },
+              { icon: 'confirmation_number', label: 'Tickets', active: true },
+              { icon: 'search', label: 'Search' },
+              { icon: 'person', label: 'Profile' },
+            ].map(item => (
+              <a key={item.label} href="#"
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  color: item.active ? BK.primary : BK.textVariant, textDecoration: 'none',
+                }}
+              >
+                <span className="material-symbols-outlined" style={{
+                  fontVariationSettings: item.active ? "'FILL' 1" : "'FILL' 0",
+                }}>
+                  {item.icon}
+                </span>
+                <span style={{ fontSize: 12, marginTop: 4 }}>{item.label}</span>
+              </a>
+            ))}
+          </nav>
         </div>
     );
 };
+
+// ===== Sub-components =====
+const LegendItem: React.FC<{ color: string; label: string; shadow?: boolean; border?: string; faded?: boolean }> = ({ color, label, shadow, border, faded }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <div style={{
+      width: 16, height: 16, borderRadius: 4,
+      backgroundColor: color,
+      boxShadow: shadow ? '0 0 8px rgba(255,138,0,0.5)' : undefined,
+      border: border ? `1px solid ${border}` : undefined,
+      opacity: faded ? 0.3 : 1,
+    }} />
+    <span style={{ fontSize: 12, color: BK.textVariant }}>{label}</span>
+  </div>
+);
+
+const SummaryRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+    <span style={{ color: BK.textVariant, fontSize: 12, letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase' }}>
+      {label}
+    </span>
+    <span style={{ fontWeight: 600, textAlign: 'right', fontSize: 14 }}>{value}</span>
+  </div>
+);
 
 export default BookingPage;
