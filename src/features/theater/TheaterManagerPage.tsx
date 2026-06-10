@@ -141,7 +141,7 @@ const TheaterManagerPage: React.FC = () => {
             </aside>
             {/* Calendar grid */}
             <div style={{ flex: 1, overflow: 'hidden' }}>
-              <ScheduleManagerPage embedded={true} />
+              <ScheduleManagerPage />
             </div>
           </div>
         );

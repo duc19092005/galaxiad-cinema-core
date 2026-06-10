@@ -1,42 +1,22 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import TimelineGrid from './components/TimelineGrid';
 import DraggableMovie from './components/DraggableMovie';
 import type { Movie as ScheduleMovie, ScheduleData, ShowTimeSlot, Auditorium as ScheduleAuditorium } from './types';
-import { Save, Menu, X, Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Save, Loader2, Search, ChevronLeft, ChevronRight, Calendar, Film } from 'lucide-react';
 import { showSuccess, showError } from '../../utils/ToastUtils';
-import { useTranslation } from 'react-i18next';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
 import { scheduleApi } from '../../api/scheduleApi';
 import { toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 import { useCinema } from '../../contexts/CinemaContext';
-
-interface ScheduleManagerPageProps {
-    embedded?: boolean;
-}
+import AppSidebar from '../../components/AppSidebar';
+import type { SidebarSection } from '../../components/AppSidebar';
+import Header from '../../components/Header';
 
 const colorPalette = ['#ff8a00', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0891b2', '#ea580c'];
 
-// Theme colors matching the admin design
-const C = {
-  bg: '#051424',
-  surface: '#122131',
-  surfaceLow: '#0d1c2d',
-  surfaceHigh: '#1c2b3c',
-  surfaceHighest: '#273647',
-  border: '#564334',
-  text: '#d4e4fa',
-  textMuted: '#ddc1ae',
-  textVariant: '#ddc1ae',
-  primary: '#ffb77f',
-  primaryContainer: '#ff8a00',
-  error: '#ffb4ab',
-  success: '#10B981',
-  tertiary: '#c8c5cb',
-  outline: '#a58c7b',
-};
-
-const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = false }) => {
+const ScheduleManagerPage: React.FC = () => {
     const { t } = useTranslation();
     const { activeCinemaId } = useCinema();
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
@@ -44,13 +24,16 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
     const [manualAddMovie, setManualAddMovie] = useState<ScheduleMovie | null>(null);
     const [selectedAuditoriumId, setSelectedAuditoriumId] = useState<string>('');
     const [selectedDate] = useState<Date>(new Date());
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [moviesList, setMoviesList] = useState<ScheduleMovie[]>([]);
     const [auditoriumsList, setAuditoriumsList] = useState<ScheduleAuditorium[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    // App layout sidebar tabs
+    const [activeTab, setActiveTab] = useState('schedule');
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Calendar week state
     const today = new Date();
@@ -59,6 +42,23 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
       d.setDate(d.getDate() - d.getDay() + 1);
       return d;
     });
+
+    const sidebarSections: SidebarSection[] = [
+      {
+        label: t('Management'),
+        items: [
+          { id: 'schedule', label: t('Schedules'), icon: <Calendar size={18} /> },
+          { id: 'movies', label: t('Movies'), icon: <Film size={18} /> },
+        ],
+      },
+    ];
+
+    const handleTabChange = (tab: string) => {
+      setActiveTab(tab);
+      if (tab === 'movies') {
+        window.location.href = '/movie-manager';
+      }
+    };
 
     useEffect(() => {
         fetchInitialData();
@@ -280,468 +280,292 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', backgroundColor: C.bg, color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center' }}>
-                    <Loader2 size={32} style={{ color: C.primary, animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
-                    <p style={{ fontSize: 14, color: C.textVariant }}>Loading Schedules Data...</p>
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
+              <Header title={t('Schedule Manager')} role="Schedule Manager" />
+              <main className="main-content">
+                <div className="page-container">
+                  <div className="state-center" style={{ minHeight: '60vh' }}>
+                      <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                      <p style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading Schedules Data...</p>
+                  </div>
                 </div>
+              </main>
             </div>
         );
     }
 
     return (
-        <div style={{
-          minHeight: embedded ? '100%' : '100vh',
-          backgroundColor: C.bg,
-          color: C.text,
-          display: 'flex', flexDirection: 'column',
-          position: 'relative',
-          overflow: 'hidden',
-          fontFamily: "'Inter', sans-serif",
-        }}>
-          {/* Inline Styles */}
-          <style>{`
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap');
-            .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
-            ::-webkit-scrollbar { width: 6px; height: 6px; }
-            ::-webkit-scrollbar-track { background: transparent; }
-            ::-webkit-scrollbar-thumb { background: #273647; border-radius: 10px; }
-            ::-webkit-scrollbar-thumb:hover { background: #ffb77f; }
-            .movie-card-glow:hover { box-shadow: 0 0 15px rgba(255, 138, 0, 0.2); }
-            @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-          `}</style>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+            <AppSidebar
+                isOpen={sidebarOpen}
+                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                sections={sidebarSections}
+                role="Schedule Manager"
+            />
 
-          {/* ======= TOP NAV ======= */}
-          <header style={{
-            height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '0 24px', backgroundColor: C.surface, borderBottom: `1px solid ${C.border}`,
-            flexShrink: 0,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24, flex: 1 }}>
-              {embedded && (
-                <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  style={{ background: 'none', border: 'none', color: C.textVariant, cursor: 'pointer', padding: 4 }}>
-                  {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
-                </button>
-              )}
-              <h2 style={{
-                fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 700, color: C.text, margin: 0,
-              }}>Command Center</h2>
-              <div style={{ position: 'relative', width: 384, maxWidth: '100%' }}>
-                <Search size={16} style={{
-                  position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                  color: C.textVariant, pointerEvents: 'none',
-                }} />
-                <input
-                  type="text"
-                  placeholder="Search movies, schedules, or users..."
-                  style={{
-                    width: '100%', backgroundColor: C.surfaceLow, border: 'none', borderRadius: 9999,
-                    padding: '8px 16px 8px 36px', color: C.text, fontSize: 12, outline: 'none',
-                  }}
-                  onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 1px ${C.primary}`; }}
-                  onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
-                />
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-              {/* Notification */}
-              <button style={{
-                width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: 'transparent', color: C.textVariant, position: 'relative',
-                transition: 'all 0.2s ease',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.surfaceHighest}80`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <span className="material-symbols-outlined">notifications</span>
-                <span style={{ position: 'absolute', top: 8, right: 8, width: 8, height: 8, borderRadius: '50%', backgroundColor: C.primary }} />
-              </button>
-              {/* Theme toggle */}
-              <button style={{
-                width: 40, height: 40, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                backgroundColor: 'transparent', color: C.textVariant,
-                transition: 'all 0.2s ease',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.surfaceHighest}80`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <span className="material-symbols-outlined">contrast</span>
-              </button>
-              <div style={{ width: 1, height: 32, backgroundColor: C.border, margin: '0 8px' }} />
-              <button style={{
-                display: 'flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer',
-                padding: '6px 12px', borderRadius: 9999,
-                backgroundColor: 'transparent', color: C.textVariant,
-                transition: 'all 0.2s ease',
-              }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.surfaceHighest}80`; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-              >
-                <span style={{ fontSize: 11, fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em' }}>Account Settings</span>
-                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>expand_more</span>
-              </button>
-            </div>
-          </header>
+            <Header
+                title={t('Schedule Manager')}
+                role="Schedule Manager"
+                showSidebarToggle
+                onMenuToggle={() => setSidebarOpen(true)}
+            />
 
-          {/* ======= PAGE TITLE + CONTROLS ======= */}
-          <div style={{
-            padding: '24px', backgroundColor: C.surface,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
-            borderBottom: `1px solid ${C.border}`, flexShrink: 0,
-          }}>
-            <div>
-              <h3 style={{
-                fontFamily: "'Manrope', sans-serif", fontSize: 28, fontWeight: 700,
-                color: C.text, margin: '0 0 8px',
-              }}>Movie Scheduler</h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                {/* Auditorium Selector */}
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  backgroundColor: C.surfaceHigh, padding: '6px 16px', borderRadius: 8,
-                  border: `1px solid ${C.border}`,
-                }}>
-                  <span className="material-symbols-outlined" style={{ color: C.primary, fontSize: 18 }}>theater_comedy</span>
-                  <select
-                    value={selectedAuditoriumId}
-                    onChange={(e) => setSelectedAuditoriumId(e.target.value)}
-                    style={{
-                      backgroundColor: 'transparent', border: 'none', color: C.text,
-                      fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
-                      padding: '4px 20px 4px 0', outline: 'none', cursor: 'pointer',
-                    }}
-                  >
-                    {auditoriumsList.map(aud => {
-                      const formatNames = aud.supportedFormats.map(f => f.name).filter(Boolean).join(', ');
-                      return (
-                        <option key={aud.id} value={aud.id} style={{ backgroundColor: C.surfaceHigh, color: C.text }}>
-                          Auditorium {aud.name}{formatNames ? ` (${formatNames})` : ''}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
-                {/* Date Navigation */}
-                <div style={{
-                  display: 'flex', alignItems: 'center',
-                  backgroundColor: C.surfaceHigh, borderRadius: 8, padding: 4,
-                  border: `1px solid ${C.border}`,
-                }}>
-                  <button onClick={goPrevWeek}
-                    style={{ padding: 6, background: 'none', border: 'none', color: C.textVariant, cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHighest; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <span style={{ padding: '4px 16px', fontSize: 12, fontFamily: "'JetBrains Mono', monospace", color: C.text }}>
-                    {weekLabel}
-                  </span>
-                  <button onClick={goNextWeek}
-                    style={{ padding: 6, background: 'none', border: 'none', color: C.textVariant, cursor: 'pointer', borderRadius: 4, display: 'flex', alignItems: 'center' }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHighest; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
-                <button onClick={goToday}
-                  style={{
-                    padding: '8px 16px', backgroundColor: C.surfaceHigh, border: `1px solid ${C.border}`,
-                    color: C.text, borderRadius: 8, cursor: 'pointer',
-                    fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
-                    transition: 'all 0.2s ease',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = C.surfaceHighest; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = C.surfaceHigh; }}
-                >
-                  Today
-                </button>
-              </div>
-            </div>
-            {/* Save Button */}
-            <button
-              onClick={handleSaveSchedule}
-              disabled={saving}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '12px 24px', backgroundColor: C.primaryContainer,
-                border: 'none', borderRadius: 8, color: '#2f1500',
-                fontWeight: 700, fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
-                cursor: 'pointer', opacity: saving ? 0.6 : 1,
-                boxShadow: `0 4px 16px ${C.primaryContainer}1a`,
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => { if (!saving) e.currentTarget.style.filter = 'brightness(1.1)'; }}
-              onMouseLeave={e => { if (!saving) e.currentTarget.style.filter = 'brightness(1)'; }}
-              onMouseDown={e => { e.currentTarget.style.transform = 'scale(0.95)'; }}
-              onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-            >
-              {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
-              Save Changes
-            </button>
-          </div>
-
-          {/* ======= MAIN WORKSPACE ======= */}
-          <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
-            {/* ===== SIDEBAR: DRAG MOVIES ===== */}
-            <aside style={{
-              width: 320, backgroundColor: C.surfaceLow,
-              borderRight: `1px solid ${C.border}`, flexShrink: 0,
-              display: 'flex', flexDirection: 'column', padding: 16,
-              transform: embedded && !isSidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
-              position: embedded ? 'absolute' : 'relative',
-              zIndex: embedded ? 40 : 'auto',
-              height: '100%',
-              transition: 'transform 0.3s ease',
-            }}>
-              <div style={{ marginBottom: 24 }}>
-                <h4 style={{
-                  fontSize: 12, color: C.textVariant, fontFamily: "'JetBrains Mono', monospace",
-                  letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: 16, margin: '0 0 12px 0',
-                }}>Drag Movies</h4>
-                <div style={{ position: 'relative' }}>
-                  <Search size={14} style={{
-                    position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
-                    color: `${C.textVariant}66`,
-                  }} />
-                  <input
-                    type="text"
-                    placeholder="Filter films..."
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    style={{
-                      width: '100%', backgroundColor: C.surfaceHigh,
-                      border: `1px solid ${C.border}`, borderRadius: 8,
-                      padding: '10px 12px 10px 36px', color: C.text, fontSize: 12,
-                      outline: 'none', fontFamily: "'Inter', sans-serif",
-                    }}
-                    onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 1px ${C.primary}`; }}
-                    onBlur={e => { e.currentTarget.style.boxShadow = 'none'; }}
-                  />
-                </div>
-              </div>
-
-              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {filteredMovies.length === 0 && (
-                  <div style={{ textAlign: 'center', padding: 24, color: C.textVariant, fontSize: 12 }}>
-                    {searchQuery ? 'No movies match your search.' : 'No movies available'}
-                  </div>
-                )}
-                {filteredMovies.map(movie => {
-                  return (
-                    <DraggableMovie
-                      key={movie.id}
-                      movie={movie}
-                      onDragStart={() => setDraggingMovie(movie)}
-                      onDragEnd={() => setDraggingMovie(null)}
-                      onManualAdd={setManualAddMovie}
-                    />
-                  );
-                })}
-
-                {/* Drag hint */}
-                <div style={{ marginTop: 'auto', paddingTop: 32, textAlign: 'center' }}>
-                  <span className="material-symbols-outlined" style={{ fontSize: 32, color: C.border, opacity: 0.5 }}>drag_indicator</span>
-                  <p style={{ fontSize: 11, color: C.textVariant, lineHeight: 1.6 }}>
-                    Drag movies from this list and drop them into a time slot on the calendar grid.
-                  </p>
-                </div>
-              </div>
-            </aside>
-
-            {/* ===== CALENDAR CONTENT ===== */}
-            <main style={{
-              flex: 1, display: 'flex', flexDirection: 'column',
-              backgroundColor: `${C.surfaceLow}4D`, overflow: 'hidden',
-            }}>
-              {/* Calendar Header (Days) */}
-              <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-                {/* Time gutter */}
-                <div style={{
-                  width: 80, borderRight: `1px solid ${C.border}`,
-                  backgroundColor: C.surface,
-                  display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '8px 0',
-                }}>
-                  <span style={{ fontSize: 11, color: `${C.textVariant}66`, fontFamily: "'JetBrains Mono', monospace" }}>GMT+7</span>
-                </div>
-                {/* Day columns */}
-                {weekDays.map((day, idx) => {
-                  const active = isActiveDay(day);
-                  const todayFlag = isToday(day);
-                  return (
-                    <div key={idx} style={{
-                      flex: 1, padding: '16px 0', textAlign: 'center',
-                      borderRight: idx < 6 ? `1px solid ${C.border}4D` : 'none',
-                      backgroundColor: active ? `${C.primary}0D` : 'transparent',
-                      position: 'relative',
-                    }}>
-                      {todayFlag && <span style={{ position: 'absolute', top: 8, right: 8, display: 'flex', width: 8, height: 8 }}>
-                        <span style={{ position: 'absolute', width: '100%', height: '100%', borderRadius: '50%', backgroundColor: C.primary, opacity: 0.75, animation: 'pulse 2s infinite' }} />
-                        <span style={{ position: 'relative', width: 8, height: 8, borderRadius: '50%', backgroundColor: C.primary }} />
-                      </span>}
-                      <p style={{
-                        margin: '0 0 4px', fontSize: 11, color: active ? C.primary : C.textVariant,
-                        fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em',
-                      }}>
-                        {DAY_NAMES[idx]}
-                      </p>
-                      <p style={{
-                        margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "'Manrope', sans-serif",
-                        color: active ? C.primary : C.text,
-                      }}>
-                        {day.getDate()}
-                      </p>
-                      {active && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, backgroundColor: C.primary }} />}
+            <main className="main-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {/* Page Title + Controls */}
+              <div style={{
+                padding: '20px 24px', background: 'var(--bg-surface)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                borderBottom: '1px solid var(--border-color)', flexShrink: 0,
+              }}>
+                <div>
+                  <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>
+                    Movie Scheduler
+                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {/* Auditorium Selector */}
+                    <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px' }}>
+                      <span style={{ color: 'var(--accent)', fontSize: 16, lineHeight: 1 }}>🎬</span>
+                      <select
+                        value={selectedAuditoriumId}
+                        onChange={(e) => setSelectedAuditoriumId(e.target.value)}
+                        style={{
+                          background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                          fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
+                          padding: '4px 16px 4px 0', outline: 'none', cursor: 'pointer',
+                        }}
+                      >
+                        {auditoriumsList.map(aud => {
+                          const formatNames = aud.supportedFormats.map(f => f.name).filter(Boolean).join(', ');
+                          return (
+                            <option key={aud.id} value={aud.id} style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                              Auditorium {aud.name}{formatNames ? ` (${formatNames})` : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
                     </div>
-                  );
-                })}
+                    {/* Date Navigation */}
+                    <div className="glass-card" style={{ display: 'flex', alignItems: 'center', padding: 4 }}>
+                      <button onClick={goPrevWeek} className="btn-ghost" style={{ padding: 6 }}>
+                        <ChevronLeft size={16} />
+                      </button>
+                      <span style={{ padding: '4px 12px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                        {weekLabel}
+                      </span>
+                      <button onClick={goNextWeek} className="btn-ghost" style={{ padding: 6 }}>
+                        <ChevronRight size={16} />
+                      </button>
+                    </div>
+                    <button onClick={goToday} className="btn-ghost" style={{
+                      padding: '6px 12px', fontSize: 11, fontFamily: "'JetBrains Mono', monospace",
+                    }}>
+                      Today
+                    </button>
+                  </div>
+                </div>
+                {/* Save Button */}
+                <button
+                  onClick={handleSaveSchedule}
+                  disabled={saving}
+                  className="btn btn-primary"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 20px', fontWeight: 700, fontSize: 12,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    opacity: saving ? 0.6 : 1,
+                  }}
+                >
+                  {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
+                  Save Changes
+                </button>
               </div>
 
-              {/* Calendar Body (Scrollable) */}
-              <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-                <div style={{ display: 'flex', minHeight: `${timeSlots.length * 48}px`, position: 'relative' }}>
-                  {/* Time Indicators */}
-                  <div style={{
-                    width: 80, borderRight: `1px solid ${C.border}`,
-                    backgroundColor: C.surface, flexShrink: 0,
-                  }}>
-                    {timeSlots.map((time, idx) => {
-                      const isPeak = idx >= 5 && idx <= 8; // 13:00-16:00 peak
+              {/* Main Workspace */}
+              <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+                {/* == Movie Drawer == */}
+                <aside style={{
+                  width: 300, background: 'var(--bg-surface)',
+                  borderRight: '1px solid var(--border-color)', flexShrink: 0,
+                  display: 'flex', flexDirection: 'column', padding: 16, gap: 16,
+                  overflow: 'hidden',
+                }}>
+                  <div>
+                    <h4 style={{
+                      fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace",
+                      letterSpacing: '0.05em', textTransform: 'uppercase', margin: '0 0 8px 0',
+                    }}>Drag Movies</h4>
+                    <div style={{ position: 'relative' }}>
+                      <Search size={14} style={{
+                        position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--text-muted)',
+                      }} />
+                      <input
+                        type="text"
+                        placeholder="Filter films..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="input"
+                        style={{ width: '100%', paddingLeft: 32, fontSize: 12, padding: '8px 10px 8px 32px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {filteredMovies.length === 0 && (
+                      <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)', fontSize: 12 }}>
+                        {searchQuery ? 'No movies match your search.' : 'No movies available'}
+                      </div>
+                    )}
+                    {filteredMovies.map(movie => (
+                      <DraggableMovie
+                        key={movie.id}
+                        movie={movie}
+                        onDragStart={() => setDraggingMovie(movie)}
+                        onDragEnd={() => setDraggingMovie(null)}
+                        onManualAdd={setManualAddMovie}
+                      />
+                    ))}
+
+                    <div style={{ marginTop: 'auto', paddingTop: 24, textAlign: 'center' }}>
+                      <p style={{ fontSize: 10, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                        Drag movies from this list and drop them into a time slot on the calendar grid.
+                      </p>
+                    </div>
+                  </div>
+                </aside>
+
+                {/* == Calendar Content == */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', overflow: 'hidden' }}>
+                  {/* Calendar Header (Days) */}
+                  <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
+                    {/* Time gutter */}
+                    <div style={{
+                      width: 72, borderRight: '1px solid var(--border-color)',
+                      background: 'var(--bg-surface)',
+                      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '8px 0',
+                    }}>
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>GMT+7</span>
+                    </div>
+                    {/* Day columns */}
+                    {weekDays.map((day, idx) => {
+                      const active = isActiveDay(day);
+                      const todayFlag = isToday(day);
                       return (
                         <div key={idx} style={{
-                          height: 48, borderBottom: `1px solid ${C.border}33`,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flex: 1, padding: '12px 0', textAlign: 'center',
+                          borderRight: idx < 6 ? '1px solid var(--border-color)' : 'none',
+                          background: active ? 'var(--accent-soft)' : 'transparent',
+                          position: 'relative',
                         }}>
-                          <span style={{
-                            fontSize: 11, color: isPeak ? C.primary : C.textVariant,
-                            fontFamily: "'JetBrains Mono', monospace", fontWeight: isPeak ? 700 : 400,
+                          {todayFlag && (
+                            <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+                          )}
+                          <p style={{
+                            margin: '0 0 2px', fontSize: 10, color: active ? 'var(--accent)' : 'var(--text-secondary)',
+                            fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em',
                           }}>
-                            {time}
-                          </span>
+                            {DAY_NAMES[idx]}
+                          </p>
+                          <p style={{
+                            margin: 0, fontSize: 18, fontWeight: 700,
+                            color: active ? 'var(--accent)' : 'var(--text-primary)',
+                          }}>
+                            {day.getDate()}
+                          </p>
+                          {active && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--accent)' }} />}
                         </div>
                       );
                     })}
                   </div>
 
-                  {/* Grid Columns */}
-                  <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(7, 1fr)`, position: 'relative' }}>
-                    {weekDays.map((_, idx) => (
-                      <div key={idx} style={{
-                        borderRight: idx < 6 ? `1px solid ${C.border}33` : 'none',
-                        position: 'relative',
-                        backgroundImage: `
-                          linear-gradient(to right, rgba(86, 67, 52, 0.2) 1px, transparent 1px),
-                          linear-gradient(to bottom, rgba(86, 67, 52, 0.2) 1px, transparent 1px)
-                        `,
-                        backgroundSize: '100% 48px',
+                  {/* Calendar Body */}
+                  <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+                    <div style={{ display: 'flex', minHeight: `${timeSlots.length * 48}px`, position: 'relative' }}>
+                      {/* Time Indicators */}
+                      <div style={{
+                        width: 72, borderRight: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)', flexShrink: 0,
                       }}>
-                        {/* Current time indicator on today column */}
-                        {isToday(weekDays[idx]) && (
-                          <div style={{
-                            position: 'absolute', left: 0, right: 0,
-                            top: currentTimeTop, height: 2,
-                            backgroundColor: C.primary, zIndex: 20, pointerEvents: 'none',
-                          }}>
-                            <div style={{
-                              position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                              width: 8, height: 8, borderRadius: '50%', backgroundColor: C.primary,
-                            }} />
-                          </div>
-                        )}
+                        {timeSlots.map((time, idx) => {
+                          const isPeak = idx >= 5 && idx <= 8;
+                          return (
+                            <div key={idx} style={{
+                              height: 48, borderBottom: '1px solid var(--border-color)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                              <span style={{
+                                fontSize: 10, color: isPeak ? 'var(--accent)' : 'var(--text-muted)',
+                                fontFamily: "'JetBrains Mono', monospace", fontWeight: isPeak ? 700 : 400,
+                              }}>
+                                {time}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
 
-                    {/* Scheduled Blocks - Rendered by TimelineGrid */}
-                    <TimelineGrid
-                      auditoriums={filteredAuditoriums}
-                      scheduleData={scheduleData}
-                      selectedDate={selectedDate}
-                      movies={moviesList}
-                      draggingMovie={draggingMovie}
-                      onAddSlot={handleAddSlot}
-                      onUpdateSlot={handleUpdateSlot}
-                      onMoveSlot={handleMoveSlot}
-                    />
+                      {/* Grid Columns */}
+                      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', position: 'relative' }}>
+                        {weekDays.map((_, idx) => (
+                          <div key={idx} style={{
+                            borderRight: idx < 6 ? '1px solid var(--border-color)' : 'none',
+                            position: 'relative',
+                            backgroundImage: `
+                              linear-gradient(to right, var(--border-color) 1px, transparent 1px),
+                              linear-gradient(to bottom, var(--border-color) 1px, transparent 1px)
+                            `,
+                            backgroundSize: '100% 48px',
+                          }}>
+                            {/* Current time indicator on today column */}
+                            {isToday(weekDays[idx]) && (
+                              <div style={{
+                                position: 'absolute', left: 0, right: 0,
+                                top: currentTimeTop, height: 2,
+                                background: 'var(--accent)', zIndex: 20, pointerEvents: 'none',
+                              }}>
+                                <div style={{
+                                  position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
+                                  width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
+                                }} />
+                              </div>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Scheduled Blocks - Rendered by TimelineGrid */}
+                        <TimelineGrid
+                          auditoriums={filteredAuditoriums}
+                          scheduleData={scheduleData}
+                          selectedDate={selectedDate}
+                          movies={moviesList}
+                          draggingMovie={draggingMovie}
+                          onAddSlot={handleAddSlot}
+                          onUpdateSlot={handleUpdateSlot}
+                          onMoveSlot={handleMoveSlot}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Floating Action Buttons */}
-              <div style={{ position: 'absolute', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 12, zIndex: 30 }}>
-                <div style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  backgroundColor: `${C.surfaceHigh}E6`,
-                  backdropFilter: 'blur(16px)',
-                  border: `1px solid ${C.border}`, borderRadius: '50%',
-                  padding: 8,
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-                }}>
-                  <button style={{
-                    width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'none', border: 'none', color: C.text, cursor: 'pointer', borderRadius: '50%',
-                    transition: 'all 0.2s ease',
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.primaryContainer}33`; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <span className="material-symbols-outlined">add</span>
-                  </button>
-                  <div style={{ width: 24, height: 1, backgroundColor: C.border, margin: '4px 0' }} />
-                  <button style={{
-                    width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'none', border: 'none', color: C.text, cursor: 'pointer', borderRadius: '50%',
-                    transition: 'all 0.2s ease',
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.primaryContainer}33`; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <span className="material-symbols-outlined">zoom_in</span>
-                  </button>
-                  <button style={{
-                    width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'none', border: 'none', color: C.text, cursor: 'pointer', borderRadius: '50%',
-                    transition: 'all 0.2s ease',
-                  }}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.primaryContainer}33`; }}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-                  >
-                    <span className="material-symbols-outlined">zoom_out</span>
-                  </button>
-                </div>
-                <button style={{
-                  width: 56, height: 56, borderRadius: '50%',
-                  backgroundColor: `${C.error}33`, border: `1px solid ${C.error}80`,
-                  color: C.error, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-                  transition: 'all 0.2s ease',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${C.error}66`; }}
-                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = `${C.error}33`; }}
-                >
-                  <span className="material-symbols-outlined" style={{ fontSize: 28 }}>delete</span>
-                </button>
-              </div>
+              {/* Manual Add Modal */}
+              {manualAddMovie && activeAuditorium && (
+                  <ManualAddModal
+                      movie={manualAddMovie}
+                      auditorium={activeAuditorium}
+                      scheduleSlots={scheduleData.data.find(d => d.auditoriumId === selectedAuditoriumId)?.slots || []}
+                      selectedDate={selectedDate}
+                      onClose={() => setManualAddMovie(null)}
+                      onAdd={(newSlot) => handleAddSlot(selectedAuditoriumId, newSlot)}
+                  />
+              )}
+
+              {/* TrashCan */}
+              <TrashCan onDeleteSlot={handleDeleteSlot} />
             </main>
-          </div>
-
-          {/* Manual Add Modal */}
-          {manualAddMovie && activeAuditorium && (
-              <ManualAddModal
-                  movie={manualAddMovie}
-                  auditorium={activeAuditorium}
-                  scheduleSlots={scheduleData.data.find(d => d.auditoriumId === selectedAuditoriumId)?.slots || []}
-                  selectedDate={selectedDate}
-                  onClose={() => setManualAddMovie(null)}
-                  onAdd={(newSlot) => handleAddSlot(selectedAuditoriumId, newSlot)}
-              />
-          )}
-
-          {/* TrashCan */}
-          <TrashCan onDeleteSlot={handleDeleteSlot} />
         </div>
     );
 };

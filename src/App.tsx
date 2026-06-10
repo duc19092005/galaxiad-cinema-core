@@ -42,12 +42,12 @@ function App() {
           <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
           <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
           <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><FacilitiesManagerPage /></ProtectedRoute>} />
+          <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><ScheduleManagerPage /></ProtectedRoute>} />
           <Route path="/movie/:movieId" element={<MovieDetailPage />} />
           <Route path="/booking/:scheduleId" element={<BookingPage />} />
           <Route path="/booking/success" element={<BookingSuccessPage />} />
           <Route path="/booking/failed" element={<BookingFailedPage />} />
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-          <Route path="/schedule" element={<ScheduleManagerPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
