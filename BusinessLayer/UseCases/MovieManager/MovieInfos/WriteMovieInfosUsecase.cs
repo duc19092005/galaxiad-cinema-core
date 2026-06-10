@@ -45,6 +45,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         (bool success, string result) cloudinaryStatus = (false, string.Empty);
         try
         {
+            request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
+            request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
             var getUserId = _userContextService.GetUserId();
 
             var isExitsMovieName =
@@ -182,6 +184,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         string oldImageUrl = null!;
         try
         {
+            request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
+            request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
             var findTheMovie = await _dbContext.MovieInfoEntity.FirstOrDefaultAsync(x => x.MovieId == itemId);
             if (findTheMovie == null)
             {
@@ -497,5 +501,20 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 _logger.LogError(e, $"Error while update movie status id : {movieId}");
             }
         }
+    }
+
+    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
+        };
+    }
+
+    private static DateTime? NormalizeIncomingVietnamTime(DateTime? value)
+    {
+        return value.HasValue ? NormalizeIncomingVietnamTime(value.Value) : null;
     }
 }

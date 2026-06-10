@@ -65,6 +65,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         try
         {
+            NormalizeSlotTimes(request.Slots);
             var reqMovieIds = request.Slots.Select(x => x.MovieId).Distinct().ToList();
             
             var validMovieDictionary = await _cinemaDbContext.MovieInfoEntity
@@ -123,7 +124,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
                 }
 
-                if (slot.StartedDate < DateTime.Now)
+                if (slot.StartedDate < DateTime.UtcNow)
                 {
                     throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
                 }
@@ -145,7 +146,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     StartTime = slot.StartedDate,
                     EndedTime = endTime,
                     CreatedByUserId = getCurrentUserId,
-                    IsActive = DateTime.Now >= slot.StartedDate && DateTime.Now < endTime,
+                    IsActive = DateTime.UtcNow >= slot.StartedDate && DateTime.UtcNow < endTime,
                 });
             }
 
@@ -266,6 +267,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         try
         {
+            NormalizeSlotTimes(request.Slots);
             var updatingScheduleIds = request.Slots.Select(s => s.ScheduleId).ToList();
             var movieNames = await _cinemaDbContext.MovieScheduleInfoEntity
                 .Where(x => updatingScheduleIds.Contains(x.MovieScheduleInfoId)) 
@@ -342,7 +344,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                         throw new BadRequestException(Messages.MovieFormat.InvalidFormatForMovie(movie.MovieName, formatName), "E01");
                     }
 
-                    if (slot.StartedDate < DateTime.Now)
+                    if (slot.StartedDate < DateTime.UtcNow)
                     {
                         throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
                     }
@@ -408,7 +410,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 entity.StartTime = slot.StartedDate;
                 entity.EndedTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
                 entity.UpdatedByUserId = getCurrentUserId;
-                entity.UpdatedAt = DateTime.Now;
+                entity.UpdatedAt = DateTime.UtcNow;
             }
 
             await _auditLogService.WriteAsync(
@@ -476,7 +478,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         schedule.IsDeleted = true;
         schedule.DeletedByUserId = getCurrentUserId;
-        schedule.DeletedAt = DateTime.Now;
+        schedule.DeletedAt = DateTime.UtcNow;
         
         _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
         await _auditLogService.WriteAsync(
@@ -548,6 +550,29 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             _logger.LogError(ex, "Error deactivating Movie Schedule {ScheduleId}", scheduleId);
             return false;
         }
+    }
+
+    private static void NormalizeSlotTimes(IEnumerable<SchedulesInfos>? slots)
+    {
+        if (slots == null)
+        {
+            return;
+        }
+
+        foreach (var slot in slots)
+        {
+            slot.StartedDate = NormalizeIncomingVietnamTime(slot.StartedDate);
+        }
+    }
+
+    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
+        };
     }
 
 }

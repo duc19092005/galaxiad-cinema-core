@@ -67,6 +67,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         try
         {
             Guid cinemaId = Guid.NewGuid();
+            var activeAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? DateTime.UtcNow;
             var newCinemaInfoEntity = new CinemaInfoEntity()
             {
                 CinemaId = cinemaId,
@@ -75,12 +76,12 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 CinemaLocation = request.CinemaLocation,
                 CinemaCity = request.CinemaCity,
                 CinemaHotLineNumber = request.CinemaHotlineNumber,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = userId,
                 FacilitiesManagerId = userId,
                 TheaterManagerId = userId,
-                ActiveAt = request.ActiveAt ?? DateTime.Now,
-                IsActive = request.ActiveAt < DateTime.Now
+                ActiveAt = activeAt,
+                IsActive = activeAt < DateTime.UtcNow
             };
             await _dbContext.CinemaInfoEntity.AddAsync(newCinemaInfoEntity);
             await _auditLogService.WriteAsync(
@@ -198,11 +199,11 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                     ? request.CinemaCity
                     : findCinema.CinemaCity;
 
-                findCinema.ActiveAt = request.ActiveAt ?? findCinema.ActiveAt;
+                findCinema.ActiveAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? findCinema.ActiveAt;
 
-                findCinema.UpdatedAt = DateTime.Now;
+                findCinema.UpdatedAt = DateTime.UtcNow;
 
-                findCinema.IsActive = findCinema.ActiveAt < DateTime.Now;
+                findCinema.IsActive = findCinema.ActiveAt < DateTime.UtcNow;
 
                 findCinema.UpdatedByUserId = userId;
 
@@ -243,6 +244,21 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     private Guid GetUserId()
     {
         return _userContext.GetUserId();
+    }
+
+    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
+        };
+    }
+
+    private static DateTime? NormalizeIncomingVietnamTime(DateTime? value)
+    {
+        return value.HasValue ? NormalizeIncomingVietnamTime(value.Value) : null;
     }
 
 }
