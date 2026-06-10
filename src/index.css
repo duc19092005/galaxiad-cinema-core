@@ -3,8 +3,47 @@
 /* Tailwind v4: khai báo dark mode dựa trên class .dark trên thẻ html */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Tailwind v4: bật dark mode theo class `.dark` (ThemeContext đang set class trên <html>) */
-@custom-variant dark (&:where(.dark, .dark *));
+/* ============================================================
+   🎭 SMOOTH THEME TRANSITIONS - Anti-slop color system
+   Triggered by ThemeContext when switching light/dark/modern.
+   ============================================================ */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: all 700ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+}
+
+/* ============================================================
+   🎨 ANTI-SLOP COLOR RULES
+   
+   DARK MODE  — No pure black (#000000). Use near-black with depth.
+                zinc-950 (#09090b) for deepest surfaces,
+                zinc-900 (#18181b) for elevated surfaces.
+   
+   LIGHT MODE — No pure white (#ffffff). Use soft off-whites.
+                zinc-50 (#fafafa) for base,
+                zinc-100 (#f4f4f5) for card surfaces.
+   ============================================================ */
+
+/* Dark — deepest background (anti-slop: ~#09090b instead of #000000) */
+html.dark, body.dark {
+  background-color: #09090b;
+  color: #fafafa;
+}
+
+/* Modern — cinematic dark with indigo depth (already premium, keep) */
+html.modern, body.modern {
+  background-color: #030712;
+  color: #ffffff;
+}
+
+/* Light — warm off-white (anti-slop: ~#fafafa instead of #ffffff) */
+html.light, body.light {
+  background-color: #fafafa;
+  color: #18181b;
+}
 
 /* --- Custom Animations --- */
 @keyframes reveal {
@@ -90,12 +129,12 @@
   background: rgba(129, 140, 248, 0.4);
 }
 
-/* Global Smooth Transitions */
+/* Interactive State Transitions */
 button, a {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Thêm đoạn này để đảm bảo full màn hình và background nhất quán */
+/* Full màn hình và background nhất quán */
 html, body, #root {
   width: 100%;
   min-height: 100vh;
@@ -105,20 +144,4 @@ html, body, #root {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Đồng bộ màu nền của trình duyệt với theme để tránh khoảng trắng */
-html.dark, body.dark {
-  background-color: #000000;
-  color: #ffffff;
-}
-
-html.modern, body.modern {
-  background-color: #030712;
-  color: #ffffff;
-}
-
-html.light, body.light {
-  background-color: #f9fafb;
-  color: #111827;
 }
