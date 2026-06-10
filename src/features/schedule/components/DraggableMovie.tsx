@@ -26,15 +26,20 @@ const DraggableMovie: React.FC<DraggableMovieProps> = ({ movie, onDragStart, onD
                 className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group"
                 style={{ borderLeft: `4px solid ${movie.color || '#cbd5e1'}` }}
             >
-                <div className="font-semibold text-slate-800 dark:text-slate-100 pr-6">{movie.title}</div>
-                <div className="text-xs text-slate-500 dark:text-white/60 mt-1 flex justify-between">
-                    <span>{movie.durationMinutes} min</span>
-                    <div className="flex gap-1">
-                        {(movie.formats || []).map(f => (
-                            <span key={f.id} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-[10px] uppercase font-bold tracking-wider">
+                <div className="font-semibold text-slate-800 dark:text-slate-100 pr-6 truncate">{movie.title}</div>
+                <div className="text-xs text-slate-500 dark:text-white/60 mt-1 flex justify-between items-start gap-1">
+                    <span className="shrink-0">{movie.durationMinutes} min</span>
+                    <div className="flex flex-wrap gap-1 justify-end">
+                        {(movie.formats || []).slice(0, 3).map(f => (
+                            <span key={f.id} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-[10px] uppercase font-bold tracking-wider whitespace-nowrap">
                                 {f.name}
                             </span>
                         ))}
+                        {(movie.formats || []).length > 3 && (
+                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-[10px] uppercase font-bold tracking-wider whitespace-nowrap">
+                                +{movie.formats.length - 3}
+                            </span>
+                        )}
                     </div>
                 </div>
             </div>

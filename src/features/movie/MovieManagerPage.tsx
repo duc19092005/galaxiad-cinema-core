@@ -1752,7 +1752,7 @@ const MovieManagerPage: React.FC = () => {
 
                     {/* Movie Cards Grid */}
                     {!loading && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 lg:gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 lg:gap-7">
                             {filteredMovies.map((movie) => (
                                 <div
                                     key={movie.movieId}
@@ -1775,31 +1775,31 @@ const MovieManagerPage: React.FC = () => {
 
                                         {/* Hover Actions */}
                                         <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                                            <div className="flex gap-2">
-                                                <button onClick={(e) => { e.stopPropagation(); setSelectedMovie(movie); setIsDetailModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-white/30 transition-colors">
-                                                    <Eye className="w-3.5 h-3.5" /> View
+                                            <div className="flex gap-1.5">
+                                                <button onClick={(e) => { e.stopPropagation(); setSelectedMovie(movie); setIsDetailModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-white/20 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-white/30 transition-colors">
+                                                    <Eye className="w-3.5 h-3.5 shrink-0" /> View
                                                 </button>
-                                                <button onClick={(e) => { e.stopPropagation(); setMovieToUpdate(movie); setIsUpdateModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-blue-700 transition-colors">
-                                                    <Edit className="w-3.5 h-3.5" /> Edit
+                                                <button onClick={(e) => { e.stopPropagation(); setMovieToUpdate(movie); setIsUpdateModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-blue-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-blue-700 transition-colors">
+                                                    <Edit className="w-3.5 h-3.5 shrink-0" /> Edit
                                                 </button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-red-700 transition-colors">
-                                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteMovie(movie); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-red-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-red-700 transition-colors">
+                                                    <Trash2 className="w-3.5 h-3.5 shrink-0" /> Delete
                                                 </button>
                                                 {isAdmin && (
-                                                    <button onClick={(e) => { e.stopPropagation(); setItemToAssign({ id: movie.movieId!, name: movie.movieName }); setIsAssignModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-indigo-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors">
-                                                        <UserPlus className="w-3.5 h-3.5" /> Assign
+                                                    <button onClick={(e) => { e.stopPropagation(); setItemToAssign({ id: movie.movieId!, name: movie.movieName }); setIsAssignModalOpen(true); }} className="flex-1 flex items-center justify-center gap-1 px-2 py-2 bg-indigo-600/80 backdrop-blur-md rounded-lg text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors">
+                                                        <UserPlus className="w-3.5 h-3.5 shrink-0" /> Assign
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
 
                                         {/* Duration Badge */}
-                                        <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-semibold text-white flex items-center gap-1">
+                                        <div className="absolute top-2.5 right-2.5 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs font-semibold text-white flex items-center gap-1">
                                             <Clock className="w-3 h-3" /> {movie.duration}m
                                         </div>
 
                                         {/* Format Tags */}
-                                        <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1">
                                             {(movie.movieVisualFormatInfos || []).slice(0, 2).map((format, i) => (
                                                 <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-bold ${theme === 'modern' ? 'bg-blue-600/80 text-white' : 'bg-red-600/80 text-white'
                                                     }`}>{format}</span>
@@ -1808,21 +1808,21 @@ const MovieManagerPage: React.FC = () => {
                                     </div>
 
                                     {/* Info */}
-                                    <div className="p-3 sm:p-4">
-                                        <h3 className={`font-bold text-sm sm:text-base truncate mb-1 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
+                                    <div className="p-4 sm:p-5">
+                                        <h3 className={`font-bold text-sm sm:text-base truncate mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
                                             }`}>{movie.movieName}</h3>
-                                        <div className="flex flex-wrap gap-1 mb-2">
-                                            {(movie.movieGenresInfos || []).slice(0, 2).map((genre, i) => (
-                                                <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-[#15102B]/80 text-white font-medium' : 'bg-gray-100 text-gray-600'
+                                        <div className="flex flex-wrap gap-1.5 mb-3">
+                                            {(movie.movieGenresInfos || []).map((genre, i) => (
+                                                <span key={i} className={`text-[10px] px-2 py-0.5 rounded-full ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-[#15102B]/80 text-white font-medium' : 'bg-gray-100 text-gray-600'
                                                     }`}>{genre}</span>
                                             ))}
                                         </div>
-                                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-500'}`}>
+                                        <p className={`text-xs leading-relaxed ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-cyan-400' : 'text-gray-500'}`}>
                                             {formatDate(movie.startedDate)} — {formatDate(movie.endedDate)}
                                         </p>
-                                        <div className="flex items-center gap-1 mt-2 text-[10px]">
-                                            <UserIcon className="w-3 h-3 text-red-600" />
-                                            <span className={`font-bold ${movie.managerName ? (theme === 'modern' || theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600') : 'text-red-500'}`}>
+                                        <div className="flex items-center gap-1.5 mt-2.5 text-[11px]">
+                                            <UserIcon className="w-3.5 h-3.5 text-red-600" />
+                                            <span className={`font-bold truncate ${movie.managerName ? (theme === 'modern' || theme === 'dark' ? 'text-cyan-400' : 'text-indigo-600') : 'text-red-500'}`}>
                                                 {movie.managerName || 'Chưa có quản lý'}
                                             </span>
                                         </div>

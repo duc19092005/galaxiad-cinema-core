@@ -326,7 +326,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ embedded = fa
                 )}
 
                 {/* Movie Sidebar - fixed height, does NOT scroll with timeline */}
-                <aside className={`absolute inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 z-40 w-64 sm:w-72 md:w-72 lg:w-80 flex flex-col shrink-0 transition-transform duration-300 ease-in-out bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-2xl md:shadow-xl`}>
+                <aside className={`absolute inset-y-0 left-0 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:relative md:translate-x-0 z-40 w-72 sm:w-80 md:w-80 lg:w-96 flex flex-col shrink-0 transition-transform duration-300 ease-in-out bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-2xl md:shadow-xl`}>
                     <div className="p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                         <h2 className="font-bold text-slate-700 dark:text-white/90 flex items-center gap-2 text-sm">
                             <Film className="w-4 h-4 text-red-500" />
