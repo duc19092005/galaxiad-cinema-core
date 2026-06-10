@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Shared.Exceptions;
 using Shared.Localization;
+using Shared.Validation;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -128,6 +129,16 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             }
             else
             {
+                // Business Rule: Block edit if cinema has Booked bookings
+                var hasBookedBookings = await _dbContext.HasBookedBookingForCinema(itemId);
+                if (hasBookedBookings)
+                {
+                    throw new AppException(
+                        Messages.Cinema.CannotEditActiveBookings,
+                        StatusCodes.Status409Conflict,
+                        "C02");
+                }
+
                 var validationErrors = new List<string>();
 
                 bool checkExitsDescription = request.CinemaDescription != null &&
@@ -238,7 +249,78 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
-        return null!;
+        try
+        {
+            var userId = GetUserId();
+            var isAdmin = _userContext.IsInRole("Admin");
+            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x =>
+                x.CinemaId.Equals(itemId) &&
+                (isAdmin || x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
+
+            if (findCinema == null)
+            {
+                throw new AppException(Messages.Cinema.NotFoundById(itemId),
+                    StatusCodes.Status404NotFound, "C01");
+            }
+
+            // Soft delete cinema
+            findCinema.IsDeleted = true;
+            findCinema.DeletedAt = DateTime.UtcNow;
+            findCinema.DeletedByUserId = userId;
+
+            // Soft delete all related auditoriums
+            var auditoriums = await _dbContext.AuditoriumInfoEntities
+                .Where(a => a.CinemaId == itemId && !a.IsDeleted)
+                .ToListAsync();
+
+            foreach (var aud in auditoriums)
+            {
+                aud.IsDeleted = true;
+                aud.DeletedAt = DateTime.UtcNow;
+                aud.DeletedByUserId = userId;
+
+                // Soft delete all related schedules
+                var schedules = await _dbContext.MovieScheduleInfoEntity
+                    .Where(s => s.AuditoriumId == aud.AuditoriumId && !s.IsDeleted)
+                    .ToListAsync();
+
+                foreach (var schedule in schedules)
+                {
+                    // Cancel pending orders for this schedule
+                    await _dbContext.CancelPendingOrdersForSchedule(schedule.ScheduleId);
+
+                    schedule.IsDeleted = true;
+                    schedule.DeletedAt = DateTime.UtcNow;
+                    schedule.DeletedByUserId = userId;
+                }
+            }
+
+            await _auditLogService.WriteAsync(
+                "Delete",
+                "Cinema",
+                itemId,
+                findCinema.CinemaName,
+                $"Soft deleted cinema {findCinema.CinemaName} with {auditoriums.Count} auditoriums.",
+                itemId);
+
+            await _dbContext.SaveChangesAsync();
+
+            return new BaseResponse<string>()
+            {
+                IsSuccess = true,
+                Data = null,
+                Message = Messages.Cinema.DeleteCompleted
+            };
+        }
+        catch (AppException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("There a Error with System : {0}", e.Message);
+            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+        }
     }
 
     private Guid GetUserId()
@@ -260,6 +342,4 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     {
         return value.HasValue ? NormalizeIncomingVietnamTime(value.Value) : null;
     }
-
 }
-

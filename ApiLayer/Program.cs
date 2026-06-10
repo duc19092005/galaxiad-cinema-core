@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using BusinessLayer.Services.ThirdPersonServices;
+using BusinessLayer.Services.ApplicationServices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +60,7 @@ builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
 
 // Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
-builder.Services.AddHostedService<BusinessLayer.Services.ApplicationServices.MovieStatusSyncBackgroundService>();
+builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
 
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);
@@ -116,6 +117,9 @@ builder.Services.AddHangfire(config => config
 
 builder.Services.AddHangfireServer();
 
+// Register PendingOrderCancellationJob for DI
+builder.Services.AddScoped<PendingOrderCancellationJob>();
+
 builder.Services.AddSignalR();
 
 var app = builder.Build();
@@ -142,6 +146,10 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
+// Register recurring job for auto-canceling pending orders
+var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
+
 app.MapControllers();
 app.MapHub<SeatHub>("/ws/seat");
 
@@ -152,7 +160,7 @@ using (var scope = app.Services.CreateScope())
     await dbContext.Database.MigrateAsync();
     await EnsureAuditLogTableAsync(dbContext);
 
-    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
+    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<IScheduleJobsService>();
     await scheduleJobsService.SyncSeededJobs();
 }
 

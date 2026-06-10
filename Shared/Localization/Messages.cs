@@ -73,11 +73,13 @@ public static class Messages
         // Success
         public const string AddCompleted = "Add Cinema Completed";
         public const string UpdateCompleted = "Update Cinema Completed";
+        public const string DeleteCompleted = "Delete Cinema Completed";
         public const string GetListSuccess = "Get Cinema List SuccessFully";
         public const string GetInfoSuccess = "Cinema Infos";
 
         // Errors
         public const string NotFound = "Sorry, We can not find the cinema";
+        public const string CannotEditActiveBookings = "Cannot edit this cinema because it has active Booked bookings. Please wait until all bookings are completed.";
 
         // Dynamic errors (with parameters)
         public static string AlreadyExistsName(string name) =>
@@ -104,6 +106,7 @@ public static class Messages
         // Success
         public const string AddCompleted = "Add Auditorium completed";
         public const string UpdateCompleted = "Update Auditorium completed";
+        public const string DeleteCompleted = "Delete Auditorium completed";
         public const string GetCompleted = "Get auditorium completed";
         
         // Errors
@@ -111,6 +114,8 @@ public static class Messages
         public const string DuplicateNumber = "Duplicate Auditorium Number";
         public const string NotFound = "Auditorium Not Found";
         public const string CannotFind = "Error : Can not find auditorium";
+        public const string CannotEditActiveBookings = "Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.";
+        public const string CannotEditHasOrderHistory = "Cannot edit seat layout because seats have been used in orders.";
     }
 
     // =============================================================

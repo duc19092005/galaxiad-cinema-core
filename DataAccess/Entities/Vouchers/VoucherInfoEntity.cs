@@ -23,5 +23,26 @@ public class VoucherInfoEntity
     public Guid roleId { get; set; }
 
     public RoleListInfoEntity RoleListInfoEntity { get; set; } = null!;
+
+    /// <summary>
+    /// Ngày bắt đầu có hiệu lực của voucher
+    /// </summary>
+    public DateTime? ValidFrom { get; set; }
+
+    /// <summary>
+    /// Ngày hết hạn của voucher
+    /// </summary>
+    public DateTime? ValidTo { get; set; }
+
+    /// <summary>
+    /// Kiểm tra voucher có đang trong thời gian hiệu lực không
+    /// </summary>
+    public bool IsValid(DateTime? at = null)
+    {
+        var now = at ?? DateTime.UtcNow;
+        var from = ValidFrom ?? DateTime.MinValue;
+        var to = ValidTo ?? DateTime.MaxValue;
+        return now >= from && now <= to;
+    }
 }
 

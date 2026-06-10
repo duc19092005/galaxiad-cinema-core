@@ -1,5 +1,6 @@
 using Shared.Exceptions;
 using Shared.Localization;
+using Shared.Validation;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -123,6 +124,29 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             
             var getUserId = _userContextService.GetUserId();
             
+            // Business Rule: Block edit if auditorium has Booked bookings
+            var hasBookedBookings = await _dbContext.HasBookedBookingForAuditorium(itemId);
+            if (hasBookedBookings)
+            {
+                throw new AppException(
+                    Messages.Auditorium.CannotEditActiveBookings,
+                    409,
+                    "D02");
+            }
+
+            // Business Rule: Block seat edit if any seats have been used
+            if (request.AddReqSeatsAuditoriumDto != null && request.AddReqSeatsAuditoriumDto.Count > 0)
+            {
+                var hasAnyBookings = await _dbContext.HasAnyBookingForAuditoriumSeats(itemId);
+                if (hasAnyBookings)
+                {
+                    throw new AppException(
+                        Messages.Auditorium.CannotEditHasOrderHistory,
+                        409,
+                        "D03");
+                }
+            }
+
             if (request.AuditoriumNumber != null && AuditoriumValidate.IsDuplicateAuditoriumNumber(_dbContext, itemId,
                     request.AuditoriumNumber,
                     request.CinemaId))
@@ -160,28 +184,27 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
 
             if (!(request.AddReqSeatsAuditoriumDto == null || request.AddReqSeatsAuditoriumDto.Count <= 0))
             {
-                // Did Nothing
+                await _dbContext.SeatsInfoEntity
+                    .Where(x => x.AuditoriumId == itemId)
+                    .ExecuteDeleteAsync();
+
+                var newSeatsInfos = request.AddReqSeatsAuditoriumDto?.Select(item => new SeatsInfoEntity()
+                {
+                    SeatId = Guid.NewGuid(),
+                    SeatNumber = item.SeatNumber,
+                    CoordX = item.CoordX,
+                    CoordY = item.CoordY,
+                    ColIndex = item.ColIndex,
+                    RowIndex = item.RowIndex,
+                    AuditoriumId = itemId
+                }).ToList();
+
+                if (newSeatsInfos != null)
+                {
+                    await _dbContext.SeatsInfoEntity.AddRangeAsync(newSeatsInfos);
+                }
             }
 
-            await _dbContext.SeatsInfoEntity
-                .Where(x => x.AuditoriumId == itemId)
-                .ExecuteDeleteAsync();
-
-            var newSeatsInfos = request.AddReqSeatsAuditoriumDto?.Select(item => new SeatsInfoEntity()
-            {
-                SeatId = Guid.NewGuid(),
-                SeatNumber = item.SeatNumber,
-                CoordX = item.CoordX,
-                CoordY = item.CoordY,
-                ColIndex = item.ColIndex,
-                RowIndex = item.RowIndex,
-                AuditoriumId = itemId
-            }).ToList();
-
-            if (newSeatsInfos != null)
-            {
-                await _dbContext.SeatsInfoEntity.AddRangeAsync(newSeatsInfos);
-            }
             await _auditLogService.WriteAsync(
                 "Update",
                 "Auditorium",
@@ -210,9 +233,76 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
         }
     }
 
-    public Task<BaseResponse<string>> DeleteItem(Guid itemId)
+    public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
-        return null!;
+        var transactions = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            var userId = _userContextService.GetUserId();
+
+            var findAuditorium = await _dbContext.AuditoriumInfoEntities
+                .FirstOrDefaultAsync(a => a.AuditoriumId == itemId && !a.IsDeleted);
+
+            if (findAuditorium == null)
+            {
+                throw new NotFoundException(Messages.Auditorium.NotFound);
+            }
+
+            // Business Rule: Block delete if auditorium has Booked bookings
+            var hasBookedBookings = await _dbContext.HasBookedBookingForAuditorium(itemId);
+            if (hasBookedBookings)
+            {
+                throw new AppException(
+                    Messages.Auditorium.CannotEditActiveBookings,
+                    409,
+                    "D02");
+            }
+
+            // Soft delete auditorium
+            findAuditorium.IsDeleted = true;
+            findAuditorium.DeletedAt = DateTime.UtcNow;
+            findAuditorium.DeletedByUserId = userId;
+
+            // Soft delete related schedules and cancel pending orders
+            var schedules = await _dbContext.MovieScheduleInfoEntity
+                .Where(s => s.AuditoriumId == itemId && !s.IsDeleted)
+                .ToListAsync();
+
+            foreach (var schedule in schedules)
+            {
+                await _dbContext.CancelPendingOrdersForSchedule(schedule.ScheduleId);
+
+                schedule.IsDeleted = true;
+                schedule.DeletedAt = DateTime.UtcNow;
+                schedule.DeletedByUserId = userId;
+            }
+
+            await _auditLogService.WriteAsync(
+                "Delete",
+                "Auditorium",
+                itemId,
+                findAuditorium.AuditoriumNumber,
+                $"Soft deleted auditorium {findAuditorium.AuditoriumNumber} with {schedules.Count} schedules.",
+                findAuditorium.CinemaId);
+
+            await _dbContext.SaveChangesAsync();
+            await transactions.CommitAsync();
+
+            return new BaseResponse<string>()
+            {
+                IsSuccess = true,
+                Message = Messages.Auditorium.DeleteCompleted,
+                Data = null
+            };
+        }
+        catch (Exception e)
+        {
+            await transactions.RollbackAsync();
+            if (e is AppException)
+            {
+                throw;
+            }
+            throw CustomSystemException.SystemExceptionCaller();
+        }
     }
 }
-
