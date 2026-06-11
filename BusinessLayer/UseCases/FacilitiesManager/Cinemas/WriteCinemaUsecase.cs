@@ -287,7 +287,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 foreach (var schedule in schedules)
                 {
                     // Cancel pending orders for this schedule
-                    await _dbContext.CancelPendingOrdersForSchedule(schedule.ScheduleId);
+                    await _dbContext.CancelPendingOrdersForSchedule(schedule.MovieScheduleInfoId);
 
                     schedule.IsDeleted = true;
                     schedule.DeletedAt = DateTime.UtcNow;

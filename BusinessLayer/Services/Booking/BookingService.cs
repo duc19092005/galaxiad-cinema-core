@@ -5,6 +5,7 @@ using DataAccess;
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 using DataAccess.Entities.UserInfos;
+using DataAccess.Entities.Vouchers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -683,6 +684,67 @@ public class BookingService
                 });
             }
 
+            // Calculate role-based discount
+            decimal roleDiscountPercent = 0;
+            if (userId.HasValue)
+            {
+                var userRoles = await _dbContext.UserRoleInfoEntity
+                    .Include(ur => ur.RoleListInfoEntity)
+                    .Where(ur => ur.UserId == userId.Value)
+                    .Select(ur => ur.RoleListInfoEntity.RoleName)
+                    .ToListAsync();
+
+                if (userRoles.Contains("VIP"))
+                {
+                    roleDiscountPercent = 15;
+                }
+                else if (userRoles.Contains("Student"))
+                {
+                    roleDiscountPercent = 10;
+                }
+                else if (userRoles.Contains("Customer"))
+                {
+                    roleDiscountPercent = 5;
+                }
+            }
+
+            // Calculate voucher discount
+            decimal voucherDiscountPercent = 0;
+            if (request.VoucherId.HasValue)
+            {
+                if (!userId.HasValue)
+                {
+                    throw new BadRequestException("Guests cannot apply vouchers.", "BK07");
+                }
+
+                var userVoucher = await _dbContext.Set<UserVoucherEntity>()
+                    .Include(uv => uv.VoucherInfoEntity)
+                    .FirstOrDefaultAsync(uv => uv.VoucherId == request.VoucherId.Value &&
+                                               uv.UserId == userId.Value &&
+                                               !uv.IsUsed);
+
+                if (userVoucher == null)
+                {
+                    throw new BadRequestException("Voucher is invalid or has already been used.", "BK08");
+                }
+
+                if (!userVoucher.VoucherInfoEntity.IsValid(null))
+                {
+                    throw new BadRequestException("Voucher has expired or is not active yet.", "BK09");
+                }
+
+                voucherDiscountPercent = userVoucher.VoucherInfoEntity.voucherDiscountPercent;
+            }
+
+            decimal totalDiscountPercent = roleDiscountPercent + voucherDiscountPercent;
+            if (totalDiscountPercent > 100)
+            {
+                totalDiscountPercent = 100;
+            }
+
+            decimal finalPrice = totalPrice * (1 - (totalDiscountPercent / 100));
+            finalPrice = Math.Round(finalPrice, 0);
+
             string? finalCustomerName = null;
             string? finalCustomerEmail = null;
 
@@ -711,12 +773,13 @@ public class BookingService
                 UserId = userId,
                 OrderStatus = OrderStatusEnum.Pending,
                 PaymentMethod = PaymentMethodEnum.VNPAY,
-                TotalPrice = totalPrice,
+                TotalPrice = finalPrice,
                 OrderDate = DateTime.UtcNow,
                 TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
                 CustomerEmail = finalCustomerEmail,
-                CustomerAddress = userId.HasValue ? null : request.CustomerAddress
+                CustomerAddress = userId.HasValue ? null : request.CustomerAddress,
+                VoucherId = request.VoucherId
             };
 
             await _dbContext.Set<OrderInfoEntity>().AddAsync(order);
@@ -724,7 +787,7 @@ public class BookingService
             await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)totalPrice, orderId.ToString(), ipAddress);
+            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);
 
             return new BaseResponse<ResCreateBookingDto>
             {
@@ -733,7 +796,7 @@ public class BookingService
                 {
                     OrderId = orderId,
                     PaymentUrl = paymentUrl,
-                    TotalPrice = totalPrice,
+                    TotalPrice = finalPrice,
                     TotalQuantity = seatIds.Count,
                     OrderDate = order.OrderDate
                 },
@@ -896,6 +959,54 @@ public class BookingService
         {
             order.OrderStatus = OrderStatusEnum.Booked;
             order.VnPayTransactionId = transactionId;
+
+            // Credit points and mark voucher as used
+            if (order.UserId.HasValue)
+            {
+                var userRoles = await _dbContext.UserRoleInfoEntity
+                    .Include(ur => ur.RoleListInfoEntity)
+                    .Where(ur => ur.UserId == order.UserId.Value)
+                    .Select(ur => ur.RoleListInfoEntity.RoleName)
+                    .ToListAsync();
+
+                decimal earningRate = 0;
+                if (userRoles.Contains("VIP"))
+                {
+                    earningRate = 10;
+                }
+                else if (userRoles.Contains("Student"))
+                {
+                    earningRate = 8;
+                }
+                else if (userRoles.Contains("Customer"))
+                {
+                    earningRate = 5;
+                }
+
+                if (earningRate > 0)
+                {
+                    long pointsEarned = (long)Math.Floor((order.TotalPrice * earningRate) / 100);
+                    var user = await _dbContext.UserInfoEntity
+                        .FirstOrDefaultAsync(u => u.UserId == order.UserId.Value);
+                    if (user != null)
+                    {
+                        user.RewardPoints += pointsEarned;
+                    }
+                }
+
+                if (order.VoucherId.HasValue)
+                {
+                    var userVoucher = await _dbContext.Set<UserVoucherEntity>()
+                        .FirstOrDefaultAsync(uv => uv.VoucherId == order.VoucherId.Value &&
+                                                   uv.UserId == order.UserId.Value &&
+                                                   !uv.IsUsed);
+                    if (userVoucher != null)
+                    {
+                        userVoucher.IsUsed = true;
+                        userVoucher.UsedAt = DateTime.UtcNow;
+                    }
+                }
+            }
         }
         else
         {
@@ -933,7 +1044,8 @@ public class BookingService
             UserName = user.UserProfileEntity.UserName,
             IdentityCode = decryptedIdentityCode,
             DateOfBirth = user.UserProfileEntity.DateOfBirth,
-            PhoneNumber = user.UserProfileEntity.PhoneNumber
+            PhoneNumber = user.UserProfileEntity.PhoneNumber,
+            RewardPoints = user.RewardPoints
         };
 
         return new BaseResponse<ResUserAccountInfoDto>

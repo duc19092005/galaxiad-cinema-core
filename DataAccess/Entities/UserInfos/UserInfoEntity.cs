@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
+using DataAccess.Entities.Vouchers;
 using Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 // ReSharper disable All
@@ -41,6 +42,9 @@ namespace DataAccess.Entities.UserInfos
         public List<UserRoleInfoEntity> UserRoleInfoEntity { get; set; } = [];
 
         public UserProfileEntity UserProfileEntity { get; set; } = null!;
+        
+        public long RewardPoints { get; set; } = 0;
+        public virtual ICollection<UserVoucherEntity> UserVouchers { get; set; } = [];
         
         // QL Rap
         

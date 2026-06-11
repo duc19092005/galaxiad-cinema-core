@@ -4,6 +4,7 @@ using DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace DataAccess.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260611025832_AddVoucherIdToOrder")]
+    partial class AddVoucherIdToOrder
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -184,7 +187,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(6007)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8668)
                         },
                         new
                         {
@@ -196,7 +199,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(6011)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8673)
                         },
                         new
                         {
@@ -208,7 +211,7 @@ namespace DataAccess.Migrations
                             CreatedByUserId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(6014)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8675)
                         });
                 });
 
@@ -362,7 +365,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(5931)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8606)
                         },
                         new
                         {
@@ -378,7 +381,7 @@ namespace DataAccess.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             TheaterManagerId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(5939)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8615)
                         },
                         new
                         {
@@ -394,7 +397,7 @@ namespace DataAccess.Migrations
                             FacilitiesManagerId = new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
                             IsActive = true,
                             IsDeleted = false,
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(5944)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(8618)
                         });
                 });
 
@@ -2594,7 +2597,7 @@ namespace DataAccess.Migrations
                             MovieName = "The Batman",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=mqqft239u6Q",
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7263)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9478)
                         },
                         new
                         {
@@ -2615,7 +2618,7 @@ namespace DataAccess.Migrations
                             MovieName = "Oppenheimer",
                             MovieRequiredAgeId = new Guid("9f0e1d2c-3b4a-4d5e-6f7a-8b9c0d1e2f3a"),
                             TrailerUrl = "https://www.youtube.com/watch?v=uYPbbksJxIg",
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7290)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9506)
                         },
                         new
                         {
@@ -2636,7 +2639,7 @@ namespace DataAccess.Migrations
                             MovieName = "Avatar: The Way of Water",
                             MovieRequiredAgeId = new Guid("5c1b2d4e-8a9b-4c0d-7f6e-1d2c3b4a5e0f"),
                             TrailerUrl = "https://www.youtube.com/watch?v=d9MyW72ELq0",
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7310)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9510)
                         });
                 });
 
@@ -2709,10 +2712,10 @@ namespace DataAccess.Migrations
                     b.HasData(
                         new
                         {
-                            MovieScheduleInfoId = new Guid("b65117ab-2be1-4101-9d3a-eefba139dbc7"),
+                            MovieScheduleInfoId = new Guid("44c40988-e258-4da8-aa47-32bb86b53baa"),
                             ActiveAt = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
                             AuditoriumId = new Guid("33333333-3333-3333-3333-333333333333"),
-                            CreatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7486),
+                            CreatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9640),
                             CreatedByUserId = new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
                             EndedTime = new DateTime(2026, 3, 19, 21, 56, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
@@ -2720,14 +2723,14 @@ namespace DataAccess.Migrations
                             MovieFormatId = new Guid("3fbc4a32-15f5-47e0-b98a-784f1b8a9612"),
                             MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
                             StartTime = new DateTime(2026, 3, 19, 19, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7488)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9641)
                         },
                         new
                         {
-                            MovieScheduleInfoId = new Guid("76815a01-ba56-4111-9919-dc71ffaf94ab"),
+                            MovieScheduleInfoId = new Guid("c4ec23c8-4751-45a7-b0a6-88f20839f4f0"),
                             ActiveAt = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
                             AuditoriumId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            CreatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7521),
+                            CreatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9718),
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             EndedTime = new DateTime(2026, 3, 19, 23, 0, 0, 0, DateTimeKind.Unspecified),
                             IsActive = true,
@@ -2735,7 +2738,7 @@ namespace DataAccess.Migrations
                             MovieFormatId = new Guid("d29b0f1c-8e2a-4c5b-bc3d-1a2f3e4d5c6b"),
                             MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
                             StartTime = new DateTime(2026, 3, 19, 20, 0, 0, 0, DateTimeKind.Unspecified),
-                            UpdatedAt = new DateTime(2026, 6, 11, 9, 59, 7, 350, DateTimeKind.Local).AddTicks(7522)
+                            UpdatedAt = new DateTime(2026, 6, 11, 9, 58, 30, 953, DateTimeKind.Local).AddTicks(9718)
                         });
                 });
 
@@ -2983,16 +2986,6 @@ namespace DataAccess.Migrations
                         {
                             RoleId = new Guid("6f3a2b4c-d9e0-f1a2-b3c4-d5e6f7a8b9c0"),
                             RoleName = "FacilitiesManager"
-                        },
-                        new
-                        {
-                            RoleId = new Guid("8b3d6f7e-9c0a-4b1d-2e3f-4a5b6c7d8e9f"),
-                            RoleName = "Student"
-                        },
-                        new
-                        {
-                            RoleId = new Guid("9c4e7f8a-0d1b-4c2d-3e4f-5a6b7c8d9e0f"),
-                            RoleName = "VIP"
                         });
                 });
 

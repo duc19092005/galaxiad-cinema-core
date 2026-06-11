@@ -4,6 +4,7 @@ using DataAccess.Entities.CinemaInfos;
 using DataAccess.Entities.MovieInfos;
 using DataAccess.Entities.ScheduleJob;
 using DataAccess.Entities.UserInfos;
+using DataAccess.Entities.Vouchers;
 using DataAccess.RelationshipKeys.MovieInfos;
 using DataAccess.SeedData;
 using DataAccess.RelationshipKeys.Facilities;
@@ -70,6 +71,8 @@ public class CinemaDbContext : DbContext
     public DbSet<OrderDetailsInfo> OrderDetailsInfoEntity { get; set; }
 
     public DbSet<AuditLogEntity> AuditLogEntity { get; set; }
+    
+    public DbSet<UserVoucherEntity> UserVoucherEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -132,6 +135,7 @@ public class CinemaDbContext : DbContext
         
         VoucherInfoRelationshipsKeys.AddVoucherInfoKeys(modelBuilder);
         VoucherInfoRelationshipsKeys.AddVoucherInfoRelationships(modelBuilder);
+        VoucherInfoRelationshipsKeys.AddUserVoucherRelationships(modelBuilder);
         
         // Cinema Surcharge info 
         

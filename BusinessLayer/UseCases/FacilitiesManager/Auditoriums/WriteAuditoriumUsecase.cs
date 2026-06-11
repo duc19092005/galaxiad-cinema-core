@@ -270,7 +270,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
 
             foreach (var schedule in schedules)
             {
-                await _dbContext.CancelPendingOrdersForSchedule(schedule.ScheduleId);
+                await _dbContext.CancelPendingOrdersForSchedule(schedule.MovieScheduleInfoId);
 
                 schedule.IsDeleted = true;
                 schedule.DeletedAt = DateTime.UtcNow;

@@ -35,6 +35,8 @@ public class OrderInfoEntity
     [Column(TypeName = "varchar(100)")]
     public string? VnPayTransactionId { get; set; }
 
+    public Guid? VoucherId { get; set; }
+
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
 
     public List<OrderDetailsInfo> OrderDetailsInfo { get; set; } = [];

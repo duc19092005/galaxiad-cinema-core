@@ -24,6 +24,14 @@ public class VoucherInfoEntity
 
     public RoleListInfoEntity RoleListInfoEntity { get; set; } = null!;
 
+    public int VoucherPointsCost { get; set; } = 0;
+    
+    public int VoucherQuantity { get; set; } = 0;
+    
+    public int RemainingQuantity { get; set; } = 0;
+
+    public virtual ICollection<UserVoucherEntity> UserVouchers { get; set; } = [];
+
     /// <summary>
     /// Ngày bắt đầu có hiệu lực của voucher
     /// </summary>

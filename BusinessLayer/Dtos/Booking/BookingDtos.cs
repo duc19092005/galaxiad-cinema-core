@@ -119,6 +119,8 @@ public class ReqCreateBookingDto
     [StringLength(40)]
     [EmailAddress(ErrorMessage = "Invalid email format")]
     public string? CustomerEmail { get; set; }
+
+    public Guid? VoucherId { get; set; }
 }
 
 public class SeatSelectionDto
@@ -221,6 +223,7 @@ public class ResUserAccountInfoDto
     public string IdentityCode { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string PhoneNumber { get; set; } = string.Empty;
+    public long RewardPoints { get; set; }
 }
 
 public class ResUserBookingHistoryDto

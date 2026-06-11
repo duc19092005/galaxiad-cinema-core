@@ -18,5 +18,23 @@ public static class VoucherInfoRelationshipsKeys
         modelBuilder.Entity<VoucherInfoEntity>().HasIndex(x => x.voucherName).IsUnique();
         modelBuilder.Entity<VoucherInfoEntity>().HasIndex(x => x.voucherDescription).IsUnique();
     }
+
+    public static void AddUserVoucherRelationships(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserVoucherEntity>()
+            .HasKey(x => x.UserVoucherId);
+
+        modelBuilder.Entity<UserVoucherEntity>()
+            .HasOne(x => x.UserInfoEntity)
+            .WithMany(x => x.UserVouchers)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<UserVoucherEntity>()
+            .HasOne(x => x.VoucherInfoEntity)
+            .WithMany(x => x.UserVouchers)
+            .HasForeignKey(x => x.VoucherId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
 }
 
