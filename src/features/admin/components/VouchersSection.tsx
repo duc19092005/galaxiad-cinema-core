@@ -165,6 +165,13 @@ export const VouchersSection: React.FC = () => {
     }
   };
 
+  const getRoleDisplayName = (name: string) => {
+    if (!name) return 'All';
+    if (name === 'Customer') return 'Customer (Regular User)';
+    if (name === 'User') return 'User (Regular User)';
+    return name;
+  };
+
   return (
     <div className="animate-in">
       {/* Header Panel */}
@@ -229,7 +236,7 @@ export const VouchersSection: React.FC = () => {
                   </td>
                   <td>
                     <span className={`badge ${getRoleBadgeClass(v.roleName)}`}>
-                      {v.roleName || 'All'}
+                      {getRoleDisplayName(v.roleName)}
                     </span>
                   </td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
@@ -416,7 +423,7 @@ export const VouchersSection: React.FC = () => {
                 >
                   {roles.map((r) => (
                     <option key={r.roleId} value={r.roleId}>
-                      {r.roleName}
+                      {getRoleDisplayName(r.roleName)}
                     </option>
                   ))}
                 </select>
