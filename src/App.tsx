@@ -19,6 +19,9 @@ import BookingPage from './features/booking/BookingPage';
 import BookingSuccessPage from './features/booking/BookingSuccessPage';
 import BookingFailedPage from './features/booking/BookingFailedPage';
 import AccountPage from './features/booking/AccountPage';
+import { ShowtimesPage } from './features/booking/ShowtimesPage';
+import { TheatersPage } from './features/booking/TheatersPage';
+import { OffersPage } from './features/booking/OffersPage';
 
 function App() {
   return (
@@ -37,17 +40,20 @@ function App() {
           {/* Protected Routes */}
           <Route path="/role-selection" element={<ProtectedRoute><RoleSelectionPage /></ProtectedRoute>} />
           <Route path="/home" element={<HomePage />} />
+          <Route path="/showtimes" element={<ShowtimesPage />} />
+          <Route path="/theaters" element={<TheatersPage />} />
+          <Route path="/offers" element={<OffersPage />} />
           <Route path="/cashier" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
           <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
           <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><FacilitiesManagerPage /></ProtectedRoute>} />
+          <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><ScheduleManagerPage /></ProtectedRoute>} />
           <Route path="/movie/:movieId" element={<MovieDetailPage />} />
           <Route path="/booking/:scheduleId" element={<BookingPage />} />
           <Route path="/booking/success" element={<BookingSuccessPage />} />
           <Route path="/booking/failed" element={<BookingFailedPage />} />
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-          <Route path="/schedule" element={<ScheduleManagerPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>

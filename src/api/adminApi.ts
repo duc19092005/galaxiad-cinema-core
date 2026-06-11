@@ -18,6 +18,11 @@ const normalizeAuditLog = (log: any): AuditLogDto => ({
     createdAt: log.createdAt ?? log.CreatedAt ?? '',
 });
 
+const normalizeRole = (role: any): RoleDto => ({
+    roleId: role.roleId ?? role.RoleId ?? role.id ?? role.Id ?? '',
+    roleName: role.roleName ?? role.RoleName ?? role.name ?? role.Name ?? '',
+});
+
 export const adminApi = {
     /** GET /api/v1/AdminManageUsers */
     getUsers: async (): Promise<ApiSuccessResponse<AdminUserDto[]>> => {
@@ -37,19 +42,30 @@ export const adminApi = {
 
     /** PUT /api/v1/AdminManageUsers/{userId}/role */
     updateUserRole: async (userId: string, roleIds: string[]): Promise<ApiSuccessResponse> => {
-        const response = await identityAxios.put<ApiSuccessResponse>(
+        const response = await identityAxios.put<any>(
             `/AdminManageUsers/${userId}/role`,
             roleIds
         );
-        return response.data;
+        return {
+            isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
+            message: response.data?.message ?? response.data?.Message ?? 'Success',
+            data: response.data?.data ?? response.data?.Data
+        };
     },
 
     /** GET /api/v1/AdminManageUsers/{userId}/role */
     getUserRoles: async (userId: string): Promise<ApiSuccessResponse<RoleDto[]>> => {
-        const response = await identityAxios.get<ApiSuccessResponse<RoleDto[]>>(
+        const response = await identityAxios.get<any>(
             `/AdminManageUsers/${userId}/role`
         );
-        return response.data;
+        const rawRoles = response.data?.data ?? response.data?.Data ?? response.data ?? [];
+        return {
+            isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? true,
+            message: response.data?.message ?? response.data?.Message ?? 'Success',
+            data: Array.isArray(rawRoles)
+                ? rawRoles.map((role: any) => typeof role === 'string' ? role : normalizeRole(role)) as any
+                : []
+        };
     },
 
     /** PUT /api/v1/AdminManageUsers/cinemas/{cinemaId}/manager?managerId={USER_ID} */
@@ -121,7 +137,20 @@ export const adminApi = {
             return {
                 isSuccess: true,
                 message: 'Success',
-                data: response.data
+                data: response.data.map(normalizeRole)
+            };
+        }
+        if (Array.isArray(response.data?.Data)) {
+            return {
+                isSuccess: response.data.IsSuccess ?? true,
+                message: response.data.Message ?? 'Success',
+                data: response.data.Data.map(normalizeRole)
+            };
+        }
+        if (Array.isArray(response.data?.data)) {
+            return {
+                ...response.data,
+                data: response.data.data.map(normalizeRole)
             };
         }
         return response.data;

@@ -27,6 +27,12 @@ import type { SeatInfo } from '../types/facilities.types';
 export type Room = AuditoriumDetail;
 export type SeatPosition = SeatInfo;
 
+const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
+  isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
+  message: response.data?.message ?? response.data?.Message ?? 'Success',
+  data: response.data?.data ?? response.data?.Data,
+});
+
 export const facilitiesApi = {
   // =============================================
   // CINEMA APIs
@@ -50,20 +56,20 @@ export const facilitiesApi = {
 
   /** POST /api/facilities/cinema */
   createCinema: async (data: CreateCinemaRequest): Promise<ApiSuccessResponse> => {
-    const response = await facilitiesAxios.post<ApiSuccessResponse>(
+    const response = await facilitiesAxios.post<any>(
       '/facilities/cinema',
       data
     );
-    return response.data;
+    return normalizeSuccessResponse(response);
   },
 
   /** PUT /api/facilities/cinema/{cinemaId} */
   updateCinema: async (cinemaId: string, data: UpdateCinemaRequest): Promise<ApiSuccessResponse> => {
-    const response = await facilitiesAxios.put<ApiSuccessResponse>(
+    const response = await facilitiesAxios.put<any>(
       `/facilities/cinema/${cinemaId}`,
       data
     );
-    return response.data;
+    return normalizeSuccessResponse(response);
   },
 
   // =============================================
@@ -96,20 +102,20 @@ export const facilitiesApi = {
 
   /** POST /api/facilities/auditorium */
   createAuditorium: async (data: CreateAuditoriumRequest): Promise<ApiSuccessResponse> => {
-    const response = await facilitiesAxios.post<ApiSuccessResponse>(
+    const response = await facilitiesAxios.post<any>(
       '/facilities/auditorium',
       data
     );
-    return response.data;
+    return normalizeSuccessResponse(response);
   },
 
   /** PUT /api/facilities/auditorium/{id} */
   updateAuditorium: async (auditoriumId: string, data: UpdateAuditoriumRequest): Promise<ApiSuccessResponse> => {
-    const response = await facilitiesAxios.put<ApiSuccessResponse>(
+    const response = await facilitiesAxios.put<any>(
       `/facilities/auditorium/${auditoriumId}`,
       data
     );
-    return response.data;
+    return normalizeSuccessResponse(response);
   },
 
   // =============================================

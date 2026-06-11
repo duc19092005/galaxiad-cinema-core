@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+// src/contexts/ThemeContext.tsx
+// Theme switching with localStorage persistence
+
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 
 export type Theme = 'light' | 'dark' | 'modern';
@@ -16,7 +19,6 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     let savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'web3') {
       savedTheme = 'modern';
-      localStorage.setItem('theme', 'modern');
     }
     return (savedTheme && ['light', 'dark', 'modern'].includes(savedTheme)) ? (savedTheme as Theme) : 'dark';
   });
@@ -38,13 +40,22 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     localStorage.setItem('theme', theme);
     document.documentElement.classList.remove('light', 'dark', 'modern', 'web3');
     document.documentElement.classList.add(theme);
-    if (theme === 'modern') {
-      document.documentElement.classList.add('dark');
+
+    // Update color scheme for proper form controls
+    if (theme === 'light') {
+      document.documentElement.style.colorScheme = 'light';
+    } else {
+      document.documentElement.style.colorScheme = 'dark';
     }
   }, [theme]);
 
+  const value: ThemeContextType = {
+    theme,
+    setTheme,
+  };
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

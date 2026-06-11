@@ -11,16 +11,15 @@ import { bookingApi } from '../../api/bookingApi';
 import { authApi } from '../../api/authApi';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import type { UserAccountInfo, BookingHistoryItem } from '../../types/booking.types';
 import type { UpdateProfileRequest } from '../../types/auth.types';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const AccountPage: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const { theme, setTheme } = useTheme();
     const [activeTab, setActiveTab] = useState<'profile' | 'history'>('profile');
     
     const [accountInfo, setAccountInfo] = useState<UserAccountInfo | null>(null);
@@ -29,7 +28,8 @@ const AccountPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
-    // Theme dropdown state
+    // Theme state
+    const { theme, setTheme } = useTheme();
     const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
     const themeDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -63,7 +63,6 @@ const AccountPage: React.FC = () => {
         fetchAllData();
     }, [navigate]);
 
-    // Handle outside click for theme dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
@@ -77,14 +76,10 @@ const AccountPage: React.FC = () => {
     const handleStartEdit = (field: string, initialValue: string) => {
         setEditingField(field);
         if (field === 'dateOfBirth' && initialValue && initialValue !== 'N/A') {
-            // Robust parsing of YYYY-MM-DD or ISO string
             const datePart = initialValue.split('T')[0];
             const parts = datePart.split('-');
             if (parts.length === 3) {
-                const year = parts[0];
-                const month = parts[1];
-                const day = parts[2];
-                setTempValue(`${day}/${month}/${year}`);
+                setTempValue(`${parts[2]}/${parts[1]}/${parts[0]}`);
             } else {
                 setTempValue('');
             }
@@ -101,7 +96,6 @@ const AccountPage: React.FC = () => {
     const handleSaveEdit = async (field: keyof UpdateProfileRequest) => {
         if (!accountInfo) return;
         
-        // 1. Validation Logic
         if (field === 'phoneNumber') {
             if (tempValue.length !== 10 || !/^\d+$/.test(tempValue)) {
                 showError(t('validation.phoneLength'));
@@ -125,10 +119,9 @@ const AccountPage: React.FC = () => {
                 showError(t('validation.dobRequired'));
                 return;
             }
-            // Parse DD/MM/YYYY
             const parts = tempValue.split('/');
             if (parts.length !== 3) {
-                showError(t('validation.dobInvalidFormat') || "Định dạng ngày không hợp lệ (DD/MM/YYYY)");
+                showError(t('validation.dobInvalidFormat') || "Invalid date format (DD/MM/YYYY)");
                 return;
             }
             const day = parseInt(parts[0], 10);
@@ -137,7 +130,7 @@ const AccountPage: React.FC = () => {
             const birth = new Date(year, month, day);
 
             if (isNaN(birth.getTime()) || birth.getDate() !== day || birth.getMonth() !== month) {
-                showError(t('validation.dobInvalidDate') || "Ngày tháng không hợp lệ");
+                showError(t('validation.dobInvalidDate') || "Invalid date");
                 return;
             }
 
@@ -152,7 +145,6 @@ const AccountPage: React.FC = () => {
             }
         }
 
-        // 2. Only send if changed
         const originalValue = field === 'dateOfBirth' 
             ? accountInfo.dateOfBirth?.split('T')[0] 
             : accountInfo[field as keyof UserAccountInfo];
@@ -167,11 +159,7 @@ const AccountPage: React.FC = () => {
             let finalValue = tempValue;
             if (field === 'dateOfBirth') {
                 const [d, m, y] = tempValue.split('/');
-                const day = d.padStart(2, '0');
-                const month = m.padStart(2, '0');
-                const year = y.padStart(4, '0');
-                // Construct string manually to avoid timezone shift
-                finalValue = `${year}-${month}-${day}T00:00:00`;
+                finalValue = `${y.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00`;
             }
             const updatePayload: UpdateProfileRequest = {
                 [field]: finalValue
@@ -195,112 +183,106 @@ const AccountPage: React.FC = () => {
         });
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string): React.CSSProperties => {
         switch (status) {
-            case 'Booked': return 'text-green-500 bg-green-500/10 border-green-500/20';
-            case 'Pending': return 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20';
-            case 'Canceled': return 'text-red-500 bg-red-500/10 border-red-500/20';
-            default: return 'text-gray-500 bg-gray-500/10 border-gray-500/20';
+            case 'Booked': return { color: 'var(--success)', backgroundColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.2)' };
+            case 'Pending': return { color: 'var(--warning)', backgroundColor: 'rgba(245,158,11,0.08)', borderColor: 'rgba(245,158,11,0.2)' };
+            case 'Canceled': return { color: 'var(--danger)', backgroundColor: 'rgba(255,180,171,0.08)', borderColor: 'rgba(255,180,171,0.2)' };
+            default: return { color: 'var(--text-secondary)', backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border-color)' };
         }
     };
 
     const getAiringStatusIcon = (status: string) => {
         switch (status) {
-            case 'Upcoming': return <Timer className="w-3 h-3" />;
-            case 'Airing': return <PlayCircle className="w-3 h-3 animate-pulse" />;
-            case 'Finished': return <CheckCircle2 className="w-3 h-3" />;
+            case 'Upcoming': return <Timer size={14} />;
+            case 'Airing': return (
+                <svg style={{ width: 14, height: 14, animation: 'pulse 2s infinite' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
+                </svg>
+            );
+            case 'Finished': return <CheckCircle2 size={14} />;
             default: return null;
         }
     };
 
-    const PlayCircle = ({ className }: { className?: string }) => (
-        <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/>
-        </svg>
-    );
-
     if (loading) {
         return (
-            <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <Loader2 className="w-12 h-12 animate-spin text-red-600" />
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 size={48} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-xl font-bold mb-4">{error}</p>
-                <button onClick={() => navigate('/home')} className="px-6 py-2 bg-red-600 text-white rounded-lg">{t('common.goHome')}</button>
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+                <AlertCircle size={64} style={{ color: 'var(--danger)', marginBottom: '16px' }} />
+                <p style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', marginBottom: '16px' }}>{error}</p>
+                <button onClick={() => navigate('/home')} className="btn-primary cta-glow">{t('common.goHome')}</button>
             </div>
         );
     }
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${
-            theme === 'dark' ? 'bg-black text-white' : 
-            theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 
-            'bg-gray-50 text-gray-900'
-        }`}>
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
             {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-6 transition-all ${
-                theme === 'dark' ? 'bg-black/80 border-gray-800' : 
-                theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30' : 
-                'bg-white/80 border-gray-200 shadow-sm'
-            }`}>
-                <div className="flex items-center">
+            <header style={{
+                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+                height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0 24px',
+                backgroundColor: 'var(--bg-surface)',
+                backdropFilter: 'blur(24px)',
+                borderBottom: '1px solid var(--border-color)',
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                     <button 
                         onClick={() => navigate('/home')} 
-                        className={`p-2 mr-4 rounded-lg transition-colors ${
-                            theme === 'dark' ? 'hover:bg-gray-800 text-white' : 
-                            theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' : 
-                            'hover:bg-gray-100 text-gray-700'
-                        }`}
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', width: 40, height: 40, color: 'var(--text-primary)', cursor: 'pointer', marginRight: '16px' }}
+                        className="interactive"
                     >
-                        <ChevronLeft className="w-6 h-6" />
+                        <ChevronLeft size={20} />
                     </button>
-                    <h2 className="font-black">{t('account.myAccount')}</h2>
+                    <h2 style={{ fontWeight: 800, fontSize: 20 }}>{t('account.myAccount')}</h2>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <LanguageSwitcher />
                     
                     {/* Theme Dropdown */}
-                    <div className="relative" ref={themeDropdownRef}>
+                    <div style={{ position: 'relative' }} ref={themeDropdownRef}>
                         <button 
                             onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)} 
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                                theme === 'dark' ? 'hover:bg-gray-800 text-gray-300' : 
-                                theme === 'modern' ? 'hover:bg-indigo-800/40 text-white font-medium' : 
-                                'hover:bg-gray-100 text-gray-700'
-                            }`}
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}
+                            className="interactive"
                         >
-                            {theme === 'dark' ? <Moon className="w-5 h-5" /> : theme === 'modern' ? <Sparkles className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                            <span className="hidden sm:inline-block text-sm font-medium">
-                                {theme === 'dark' ? 'Dark' : theme === 'modern' ? 'Modern' : 'Light'}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
+                            {theme === 'dark' ? <Moon size={18} /> : theme === 'modern' ? <Sparkles size={18} /> : <Sun size={18} />}
+                            <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{theme}</span>
+                            <ChevronDown size={16} style={{ transform: isThemeDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s ease' }} />
                         </button>
 
                         {isThemeDropdownOpen && (
-                            <div className={`absolute right-0 mt-2 w-48 rounded-xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 ${
-                                theme === 'dark' ? 'bg-gray-900 border border-gray-700' : 
-                                theme === 'modern' ? 'bg-[#0E0A20]/95 border border-indigo-500/30 backdrop-blur-2xl' : 
-                                'bg-white border border-gray-200'
-                            }`}>
+                            <div style={{
+                                position: 'absolute', right: 0, marginTop: '8px', width: 180,
+                                borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)',
+                                backgroundColor: 'var(--bg-elevated)', boxShadow: 'var(--shadow-xl)',
+                                overflow: 'hidden', zIndex: 100,
+                            }}>
                                 {(['light', 'dark', 'modern'] as const).map((tValue) => (
                                     <button 
                                         key={tValue} 
                                         onClick={() => { setTheme(tValue); setIsThemeDropdownOpen(false); }} 
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${
-                                            theme === tValue 
-                                            ? (theme === 'dark' ? 'bg-gray-800 text-white' : theme === 'modern' ? 'bg-indigo-500/20 text-white' : 'bg-gray-100 text-gray-900')
-                                            : (theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-100')
-                                        }`}
+                                        style={{
+                                            width: '100%', textAlign: 'left', padding: '12px 16px', fontSize: 14,
+                                            display: 'flex', alignItems: 'center', gap: '12px',
+                                            cursor: 'pointer', border: 'none',
+                                            backgroundColor: theme === tValue ? 'var(--bg-surface)' : 'transparent',
+                                            color: theme === tValue ? 'var(--accent)' : 'var(--text-secondary)',
+                                            transition: 'all 0.2s ease',
+                                            fontWeight: theme === tValue ? 600 : 400,
+                                        }}
                                     >
-                                        {tValue === 'light' ? <Sun className="w-4 h-4" /> : tValue === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                        <span className="capitalize">{tValue}</span>
+                                        {tValue === 'light' ? <Sun size={16} /> : tValue === 'dark' ? <Moon size={16} /> : <Sparkles size={16} />}
+                                        <span style={{ textTransform: 'capitalize' }}>{tValue}</span>
                                     </button>
                                 ))}
                             </div>
@@ -309,25 +291,35 @@ const AccountPage: React.FC = () => {
                 </div>
             </header>
 
-            <main className="pt-24 pb-12 container mx-auto px-6 max-w-5xl">
+            <main style={{ paddingTop: 88, paddingBottom: '48px', maxWidth: 960, margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' }}>
                 {/* User Hero */}
-                <div className={`p-8 rounded-3xl mb-8 flex flex-col md:flex-row items-center gap-8 border transition-all ${
-                    theme === 'modern' ? 'bg-indigo-600 shadow-indigo-500/20 border-indigo-400/30' : 
-                    theme === 'dark' ? 'bg-gray-900 border-gray-800' : 
-                    'bg-white border-gray-200 shadow-xl'
-                }`}>
-                    <div className={`shrink-0 w-24 h-24 rounded-2xl flex items-center justify-center shadow-2xl ${
-                        theme === 'modern' ? 'bg-white/20 backdrop-blur-md' : 'bg-red-600'
-                    }`}>
-                        <User className="w-12 h-12 text-white" />
+                <div style={{
+                    padding: '32px', borderRadius: 'var(--radius-xl)', marginBottom: '32px',
+                    display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap',
+                    backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-lg)',
+                }}>
+                    <div style={{
+                        width: 96, height: 96, borderRadius: 'var(--radius-lg)', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'linear-gradient(135deg, var(--accent), var(--accent))',
+                        boxShadow: '0 8px 32px rgba(255,138,0,0.3)',
+                    }}>
+                        <User size={48} style={{ color: 'black' }} />
                     </div>
                     
-                    <div className="text-center md:text-left flex-1">
+                    <div style={{ flex: 1, minWidth: 200 }}>
                         {editingField === 'userName' ? (
-                            <div className="flex items-center gap-2 mb-2">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                                 <input
                                     autoFocus
-                                    className={`text-3xl font-black bg-white/20 border border-white/40 rounded-lg px-3 py-1 outline-none text-white w-full max-md:max-w-xs ${updating ? 'opacity-50' : ''}`}
+                                    style={{
+                                        fontSize: 28, fontWeight: 800,
+                                        backgroundColor: 'var(--bg-surface)', border: '1px solid var(--accent)',
+                                        borderRadius: 'var(--radius-md)', padding: '8px 16px', outline: 'none',
+                                        color: 'var(--text-primary)', width: '100%', maxWidth: 300,
+                                        opacity: updating ? 0.5 : 1,
+                                    }}
                                     value={tempValue}
                                     onChange={(e) => setTempValue(e.target.value)}
                                     onKeyDown={(e) => {
@@ -336,63 +328,50 @@ const AccountPage: React.FC = () => {
                                     }}
                                     disabled={updating}
                                 />
-                                <button onClick={() => handleSaveEdit('userName')} className="p-2 bg-green-500 rounded-lg shrink-0" disabled={updating}>
-                                    {updating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Check className="w-5 h-5 text-white" />}
+                                <button onClick={() => handleSaveEdit('userName')} style={{ padding: 8, backgroundColor: 'var(--success)', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer' }} disabled={updating}>
+                                    {updating ? <Loader2 size={18} style={{ color: 'white', animation: 'spin 1s linear infinite' }} /> : <Check size={18} style={{ color: 'white' }} />}
                                 </button>
-                                <button onClick={handleCancelEdit} className="p-2 bg-red-500 rounded-lg shrink-0" disabled={updating}>
-                                    <X className="w-5 h-5 text-white" />
+                                <button onClick={handleCancelEdit} style={{ padding: 8, backgroundColor: 'var(--danger)', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer' }} disabled={updating}>
+                                    <X size={18} style={{ color: 'white' }} />
                                 </button>
                             </div>
                         ) : (
-                            <div className="group flex items-center gap-3 justify-center md:justify-start">
-                                <h1 className="text-3xl font-black mb-1">{accountInfo?.userName}</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>{accountInfo?.userName}</h1>
                                 <button 
                                     onClick={() => handleStartEdit('userName', accountInfo?.userName || '')}
-                                    className="p-1.5 bg-white/10 hover:bg-white/20 rounded-lg transition-all flex items-center gap-1.5"
+                                    className="glass-card interactive"
+                                    style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}
                                 >
-                                    <Edit2 className="w-4 h-4 text-white/90" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-white/70">{t('common.edit')}</span>
+                                    <Edit2 size={14} /> {t('common.edit')}
                                 </button>
                             </div>
                         )}
-                        <p className="opacity-60 flex items-center justify-center md:justify-start gap-2">
-                            <Mail className="w-4 h-4" /> {accountInfo?.email}
+                        <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, margin: '4px 0 0' }}>
+                            <Mail size={16} style={{ color: 'var(--accent)' }} /> {accountInfo?.email}
                         </p>
+                        {accountInfo?.rewardPoints !== undefined && (
+                            <p style={{ color: 'var(--primary, #ff8a00)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 'bold', margin: '6px 0 0' }}>
+                                <Sparkles size={16} /> {accountInfo.rewardPoints} points
+                            </p>
+                        )}
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-4 mb-8">
-                    <button 
-                        onClick={() => setActiveTab('profile')}
-                        className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 border transition-all ${
-                            activeTab === 'profile' 
-                            ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20' 
-                            : theme === 'dark' ? 'bg-gray-900 border-gray-800 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-red-600 transition-colors'
-                        }`}
-                    >
-                        <User className="w-5 h-5" /> {t('account.profileInfo')}
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('history')}
-                        className={`flex-1 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 border transition-all ${
-                            activeTab === 'history' 
-                            ? 'bg-red-600 border-red-600 text-white shadow-lg shadow-red-600/20' 
-                            : theme === 'dark' ? 'bg-gray-900 border-gray-800 hover:border-gray-600' : 'bg-white border-gray-200 hover:border-red-600 transition-colors'
-                        }`}
-                    >
-                        <History className="w-5 h-5" /> {t('account.bookingHistory')}
-                    </button>
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '32px' }}>
+                    <TabButton active={activeTab === 'profile'} onClick={() => setActiveTab('profile')} icon={<User size={20} />} label={t('account.profileInfo')} />
+                    <TabButton active={activeTab === 'history'} onClick={() => setActiveTab('history')} icon={<History size={20} />} label={t('account.bookingHistory')} />
                 </div>
 
                 {/* Content */}
-                <div className="space-y-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {activeTab === 'profile' ? (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <ProfileCard icon={<Mail className="w-5 h-5" />} label={t('account.email')} value={accountInfo?.email} theme={theme} />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+                                <ProfileCard icon={<Mail size={20} />} label={t('account.email')} value={accountInfo?.email} />
                                 <EditableProfileCard 
-                                    icon={<Phone className="w-5 h-5" />} 
+                                    icon={<Phone size={20} />} 
                                     label={t('account.phone')} 
                                     value={accountInfo?.phoneNumber || ''} 
                                     field="phoneNumber"
@@ -403,11 +382,9 @@ const AccountPage: React.FC = () => {
                                     onCancel={handleCancelEdit}
                                     onStart={() => handleStartEdit('phoneNumber', accountInfo?.phoneNumber || '')}
                                     updating={updating}
-                                    theme={theme}
-                                    t={t}
                                 />
                                 <EditableProfileCard 
-                                    icon={<IdCard className="w-5 h-5" />} 
+                                    icon={<IdCard size={20} />} 
                                     label={t('account.identityCode')} 
                                     value={accountInfo?.identityCode || ''} 
                                     field="identityCode"
@@ -418,11 +395,9 @@ const AccountPage: React.FC = () => {
                                     onCancel={handleCancelEdit}
                                     onStart={() => handleStartEdit('identityCode', accountInfo?.identityCode || '')}
                                     updating={updating}
-                                    theme={theme}
-                                    t={t}
                                 />
                                 <EditableProfileCard 
-                                    icon={<Calendar className="w-5 h-5" />} 
+                                    icon={<Calendar size={20} />} 
                                     label={t('account.dob')} 
                                     value={accountInfo?.dateOfBirth ? new Date(accountInfo.dateOfBirth).toLocaleDateString('vi-VN') : 'N/A'} 
                                     field="dateOfBirth"
@@ -434,95 +409,96 @@ const AccountPage: React.FC = () => {
                                     onCancel={handleCancelEdit}
                                     onStart={() => handleStartEdit('dateOfBirth', accountInfo?.dateOfBirth?.split('T')[0] || '')}
                                     updating={updating}
-                                    theme={theme}
-                                    t={t}
                                 />
                             </div>
                             
-                            <div className="flex justify-center md:justify-start">
+                            <div>
                                 <button 
                                     onClick={() => setIsPasswordModalOpen(true)}
-                                    className={`px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center gap-3 transition-all hover:-translate-y-1 active:scale-95 shadow-xl ${
-                                        theme === 'modern' ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-red-500/20' :
-                                        theme === 'dark' ? 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700 shadow-xl shadow-black/50' :
-                                        'bg-white border-2 border-red-600 text-red-600 hover:bg-red-50 shadow-xl shadow-red-600/5'
-                                    }`}
+                                    className="glass-card interactive"
+                                    style={{
+                                        padding: '16px 32px', borderRadius: 'var(--radius-md)',
+                                        fontWeight: 800, textTransform: 'uppercase', fontSize: 13,
+                                        letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '12px',
+                                        cursor: 'pointer', border: '1px solid var(--border-color)',
+                                        background: 'rgba(255,255,255,0.03)', color: 'var(--text-primary)',
+                                        boxShadow: 'var(--shadow-md)',
+                                    }}
                                 >
-                                    <Lock className="w-5 h-5" />
+                                    <Lock size={20} style={{ color: 'var(--accent)' }} />
                                     {t('account.changePassword')}
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                             {history.length === 0 ? (
-                                <div className={`p-12 text-center rounded-3xl border ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-                                    <Ticket className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                                    <p className="opacity-40 font-bold">{t('account.noBookings')}</p>
+                                <div style={{
+                                    padding: '48px', textAlign: 'center', borderRadius: 'var(--radius-xl)',
+                                    backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+                                }}>
+                                    <Ticket size={48} style={{ margin: '0 auto 16px', opacity: 0.2, color: 'var(--text-secondary)' }} />
+                                    <p style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{t('account.noBookings')}</p>
                                 </div>
                             ) : (
                                 history.map((item) => (
-                                    <div key={item.orderId} className={`group p-6 rounded-3xl border transition-all hover:-translate-y-1 ${
-                                        theme === 'dark' ? 'bg-gray-900 border-gray-800' : 
-                                        theme === 'modern' ? 'bg-white/5 border-indigo-500/20 backdrop-blur-md' :
-                                        'bg-white border-gray-200 shadow-lg'
-                                    }`}>
-                                        <div className="flex flex-col md:flex-row gap-6">
-                                            <div className="w-full md:w-32 h-44 shrink-0 rounded-2xl overflow-hidden shadow-xl border border-white/10">
+                                    <div key={item.orderId} style={{
+                                        padding: '24px', borderRadius: 'var(--radius-xl)',
+                                        backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+                                        boxShadow: 'var(--shadow-md)', transition: 'all 0.3s ease',
+                                    }} className="interactive">
+                                        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
+                                            <div style={{ width: 128, height: 176, flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
                                                 <img 
                                                     src={item.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'} 
                                                     alt={item.movieName} 
-                                                    className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" 
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                                                 />
                                             </div>
 
-                                            <div className="flex-1 space-y-4">
-                                                <div className="flex flex-wrap items-start justify-between gap-4">
+                                            <div style={{ flex: 1, minWidth: 250, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
                                                     <div>
-                                                        <h3 className="text-xl font-black mb-1">{item.movieName}</h3>
-                                                        <div className="flex flex-wrap items-center gap-3 text-sm opacity-60">
-                                                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {item.cinemaName}</span>
-                                                            <span className="flex items-center gap-1"><IdCard className="w-3 h-3" /> {item.auditoriumNumber}</span>
+                                                        <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 'var(--space-4)' }}>{item.movieName}</h3>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', fontSize: 13, color: 'var(--text-secondary)' }}>
+                                                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} style={{ color: 'var(--accent)' }} /> {item.cinemaName}</span>
+                                                            <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><IdCard size={14} style={{ color: 'var(--accent)' }} /> {item.auditoriumNumber}</span>
                                                         </div>
                                                     </div>
-                                                    <div className={`px-4 py-1.5 rounded-full text-xs font-black border uppercase tracking-wider ${getStatusColor(item.orderStatus)}`}>
+                                                    <div style={{ padding: '4px 16px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', ...getStatusColor(item.orderStatus) }}>
                                                         {item.orderStatus}
                                                     </div>
                                                 </div>
 
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-white/5">
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] uppercase font-bold opacity-40">{t('booking.bookingDate')}</p>
-                                                        <p className="text-sm font-bold flex items-center gap-2"><Clock className="w-3 h-3 text-red-600" /> {formatDate(item.orderDate)}</p>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                                                    <div>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.bookingDate')}</p>
+                                                        <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.orderDate)}</p>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] uppercase font-bold opacity-40">{t('booking.showtime')}</p>
-                                                        <p className="text-sm font-bold flex items-center gap-2"><Calendar className="w-3 h-3 text-red-600" /> {formatDate(item.startTime)}</p>
+                                                    <div>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.showtime')}</p>
+                                                        <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.startTime)}</p>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] uppercase font-bold opacity-40">{t('booking.seats')}</p>
-                                                        <p className="text-sm font-black text-red-600">{item.seats.join(', ')}</p>
+                                                    <div>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.seats')}</p>
+                                                        <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)' }}>{item.seats.join(', ')}</p>
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <p className="text-[10px] uppercase font-bold opacity-40">{t('booking.amount')}</p>
-                                                        <p className="text-lg font-black text-red-600">{item.totalPrice.toLocaleString('vi-VN')}đ</p>
+                                                    <div>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.amount')}</p>
+                                                        <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>{item.totalPrice.toLocaleString('vi-VN')}đ</p>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="mt-6 pt-4 border-t border-dashed border-white/10 flex flex-wrap items-center justify-between gap-4">
-                                           <div className={`flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-lg ${
-                                               item.movieAiringStatus === 'Airing' ? 'text-green-500 bg-green-500/10' :
-                                               item.movieAiringStatus === 'Finished' ? 'text-blue-500 bg-blue-500/10' :
-                                               'text-yellow-500 bg-yellow-500/10'
-                                           }`}>
-                                               {getAiringStatusIcon(item.movieAiringStatus)}
-                                               {item.movieAiringStatus}
-                                           </div>
-                                           <button className="text-xs font-bold flex items-center gap-1 hover:text-red-500 transition-colors uppercase tracking-widest opacity-60">
-                                               {t('common.viewDetails')} <ExternalLink className="w-3 h-3" />
-                                           </button>
+                                        <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, fontWeight: 700, padding: '6px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                                {getAiringStatusIcon(item.movieAiringStatus)}
+                                                {item.movieAiringStatus}
+                                            </div>
+                                            <button style={{ fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                                {t('common.viewDetails')} <ExternalLink size={14} />
+                                            </button>
                                         </div>
                                     </div>
                                 ))
@@ -540,55 +516,80 @@ const AccountPage: React.FC = () => {
     );
 };
 
-const ProfileCard = ({ icon, label, value, theme }: any) => (
-    <div className={`p-6 rounded-3xl border transition-all ${
-        theme === 'dark' ? 'bg-gray-900 border-gray-800' : 
-        theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl' : 
-        'bg-white border-gray-200 shadow-lg'
-    }`}>
-        <div className="flex items-center gap-4 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-red-600/10 flex items-center justify-center text-red-600">
+// ===== Sub-components =====
+
+const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.ReactNode; label: string }> = ({ active, onClick, icon, label }) => (
+    <button 
+        onClick={onClick}
+        style={{
+            flex: 1, padding: '16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+            borderRadius: 'var(--radius-lg)', cursor: 'pointer', border: '1px solid var(--border-color)',
+            fontWeight: 700, fontSize: 15, transition: 'all 0.3s ease',
+            backgroundColor: active ? 'var(--accent)' : 'var(--bg-elevated)',
+            color: active ? 'black' : 'var(--text-secondary)',
+            boxShadow: active ? '0 4px 16px rgba(255,138,0,0.3)' : 'none',
+        }}
+    >
+        {icon}
+        {label}
+    </button>
+);
+
+const ProfileCard: React.FC<{ icon: React.ReactNode; label: string; value?: string }> = ({ icon, label, value }) => (
+    <div style={{
+        padding: '24px', borderRadius: 'var(--radius-lg)',
+        backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-md)',
+    }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,138,0,0.1)', color: 'var(--accent)' }}>
                 {icon}
             </div>
-            <span className="text-xs font-black uppercase tracking-widest opacity-40">{label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>{label}</span>
         </div>
-        <p className="text-lg font-bold">{value || 'N/A'}</p>
+        <p style={{ fontSize: 18, fontWeight: 700 }}>{value || 'N/A'}</p>
     </div>
 );
 
-const EditableProfileCard = ({ icon, label, value, field, type = 'text', isEditing, tempValue, onChange, onSave, onCancel, onStart, updating, theme, t }: any) => (
-    <div className={`p-6 rounded-3xl border transition-all ${
-        isEditing ? 'ring-2 ring-indigo-500' : ''
-    } ${
-        theme === 'dark' ? 'bg-gray-900 border-gray-800' : 
-        theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl' : 
-        'bg-white border-gray-200 shadow-lg'
-    }`}>
-        <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-red-600/10 flex items-center justify-center text-red-600">
+const EditableProfileCard: React.FC<{
+    icon: React.ReactNode; label: string; value: string; field: string;
+    type?: string; isEditing: boolean; tempValue: string;
+    onChange: (v: string) => void; onSave: () => void; onCancel: () => void;
+    onStart: () => void; updating: boolean;
+}> = ({ icon, label, value, field, type = 'text', isEditing, tempValue, onChange, onSave, onCancel, onStart, updating }) => (
+    <div style={{
+        padding: '24px', borderRadius: 'var(--radius-lg)',
+        backgroundColor: 'var(--bg-elevated)', border: isEditing ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+        boxShadow: isEditing ? '0 0 16px rgba(255,183,127,0.2)' : 'var(--shadow-md)',
+        transition: 'all 0.3s ease',
+    }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,138,0,0.1)', color: 'var(--accent)' }}>
                     {icon}
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest opacity-40">{label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>{label}</span>
             </div>
             {!isEditing && (
-                <button onClick={onStart} className="p-2 bg-gray-500/5 hover:bg-gray-500/10 rounded-lg transition-all flex items-center gap-1.5">
-                    <Edit2 className="w-4 h-4 opacity-70" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">{t('common.edit')}</span>
+                <button onClick={onStart} className="glass-card interactive" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <Edit2 size={14} /> Edit
                 </button>
             )}
         </div>
         
         {isEditing ? (
-            <div className="space-y-2 animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
                         type={field === 'dateOfBirth' ? 'text' : type}
                         autoFocus
                         placeholder={field === 'dateOfBirth' ? 'DD/MM/YYYY' : ''}
-                        className={`flex-1 bg-transparent border-b-2 font-bold text-lg outline-none pb-1 ${
-                            theme === 'light' ? 'border-gray-300 focus:border-red-600 text-gray-900' : 'border-white/20 focus:border-cyan-400 text-white'
-                        } ${updating ? 'opacity-50' : ''}`}
+                        style={{
+                            flex: 1, backgroundColor: 'transparent', border: 'none', borderBottom: '2px solid var(--accent)',
+                            fontSize: 16, fontWeight: 600, outline: 'none', paddingBottom: 'var(--space-4)',
+                            color: 'var(--text-primary)', opacity: updating ? 0.5 : 1,
+                        }}
                         value={tempValue}
                         onChange={(e) => onChange(e.target.value)}
                         onKeyDown={(e) => {
@@ -597,35 +598,25 @@ const EditableProfileCard = ({ icon, label, value, field, type = 'text', isEditi
                         }}
                         disabled={updating}
                     />
-                    <button 
-                        onClick={onSave} 
-                        className={`p-2 rounded-lg text-white ${theme === 'modern' ? 'bg-cyan-600' : 'bg-green-600'} ${updating ? 'opacity-50' : ''}`}
-                        disabled={updating}
-                    >
-                        {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 text-white" />}
+                    <button onClick={onSave} style={{ padding: 8, backgroundColor: 'var(--success)', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer', opacity: updating ? 0.5 : 1 }} disabled={updating}>
+                        {updating ? <Loader2 size={16} style={{ color: 'white', animation: 'spin 1s linear infinite' }} /> : <Check size={16} style={{ color: 'white' }} />}
                     </button>
-                    <button onClick={onCancel} className="p-2 bg-gray-500/20 rounded-lg text-white" disabled={updating}>
-                        <X className="w-4 h-4 text-white" />
+                    <button onClick={onCancel} style={{ padding: 8, backgroundColor: 'var(--bg-surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', cursor: 'pointer' }} disabled={updating}>
+                        <X size={16} style={{ color: 'var(--text-secondary)' }} />
                     </button>
                 </div>
                 {field === 'dateOfBirth' && (
-                    <p className="text-[10px] font-extrabold tracking-widest opacity-80 text-red-400 animate-pulse">
-                        {t('account.dobFormatNote')}
+                    <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', color: 'var(--accent)' }}>
+                        Format: DD/MM/YYYY
                     </p>
                 )}
             </div>
         ) : (
-            <div className="space-y-1">
-                <p className="text-lg font-bold truncate">{value || 'N/A'}</p>
-                {field === 'dateOfBirth' && (
-                    <p className="text-[10px] font-extrabold tracking-widest opacity-80 text-indigo-400">
-                        {t('account.dobFormatNote')}
-                    </p>
-                )}
+            <div>
+                <p style={{ fontSize: 18, fontWeight: 700 }}>{value || 'N/A'}</p>
             </div>
         )}
     </div>
 );
-
 
 export default AccountPage;

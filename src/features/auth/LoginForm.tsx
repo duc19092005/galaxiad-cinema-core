@@ -1,256 +1,288 @@
+// src/features/auth/LoginForm.tsx
+// Cinema dark theme login page
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom'; // Dùng để chuyển trang
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
-import { Clapperboard, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Clapperboard, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
 import { identityAxios } from '../../api/axiosClient';
 import type { LoginRequest, ApiErrorResponse } from '../../types/auth.types';
-// Removed cookie reading logic - using HttpOnly cookie
-
-// --- Reusable InputField (Giữ nguyên style rạp phim) ---
-const InputField = ({ label, name, type = 'text', icon: Icon, placeholder, value, onChange }: any) => (
-    <div className="flex flex-col">
-        <label htmlFor={name} className="mb-2 text-sm font-medium text-gray-300 uppercase tracking-wider">
-            {label}
-        </label>
-        <div className="relative group">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <Icon className="w-5 h-5 text-gray-500 transition-colors group-focus-within:text-red-500" />
-            </div>
-            <input
-                type={type}
-                id={name}
-                name={name}
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                className="w-full py-3.5 pl-12 pr-4 text-white placeholder-gray-500 bg-gray-800 border border-gray-700 rounded-lg outline-none focus:border-indigo-500/50 focus:shadow-[0_0_15px_rgba(99,102,241,0.3)] focus:ring-1 focus:ring-red-600 transition-all duration-200"
-                required
-            />
-        </div>
-    </div>
-);
 
 const LoginForm: React.FC = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [formData, setFormData] = useState({ email: '', password: '' });
-    const [loading, setLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-    // Nhận thông báo lỗi từ Google OAuth callback
-    useEffect(() => {
-        const state = location.state as { googleError?: string } | null;
-        if (state?.googleError) {
-            setErrorMsg(state.googleError);
-            // Xóa state để tránh hiện lại lỗi khi back/refresh
-            window.history.replaceState({}, '');
-        }
-    }, [location.state]);
+  useEffect(() => {
+    const state = location.state as { googleError?: string } | null;
+    if (state?.googleError) { setErrorMsg(state.googleError); window.history.replaceState({}, ''); }
+  }, [location.state]);
 
-    // Check user info từ localStorage - nếu đã có thì có thể đã login
-    // (Không check cookie vì là HttpOnly)
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user_info');
-        if (storedUser) {
-            try {
-                const userInfo = JSON.parse(storedUser);
-                if (userInfo && userInfo.roles && userInfo.roles.length > 0) {
-                    // Có user info, redirect đến role selection hoặc trang tương ứng
-                    if (userInfo.roles.length === 1) {
-                        const roleConfig: Record<string, string> = {
-                            Customer: '/home',
-                            Cashier: '/cashier',
-                            Admin: '/admin',
-                            MovieManager: '/movie-manager',
-                            TheaterManager: '/theater-manager',
-                            FacilitiesManager: '/facilities-manager',
-                        };
-                        const route = roleConfig[userInfo.roles[0]] || '/role-selection';
-                        navigate(route, { replace: true });
-                    } else {
-                        navigate('/role-selection', { replace: true });
-                    }
-                }
-            } catch (error) {
-                // Invalid user info, allow login
-                console.warn('Invalid user info in storage:', error);
-            }
-        }
-    }, [navigate]);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setErrorMsg(null);
-        setLoading(true);
-
-        try {
-            const payload: LoginRequest = {
-                email: formData.email,
-                password: formData.password
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user_info');
+    if (storedUser) {
+      try {
+        const userInfo = JSON.parse(storedUser);
+        if (userInfo && userInfo.roles && userInfo.roles.length > 0) {
+          if (userInfo.roles.length === 1) {
+            const roleConfig: Record<string, string> = {
+              Customer: '/home', Cashier: '/cashier', Admin: '/admin',
+              MovieManager: '/movie-manager', TheaterManager: '/theater-manager', FacilitiesManager: '/facilities-manager',
             };
-
-            console.log('Attempting login with:', { email: payload.email });
-            const res = await authApi.regularLogin(payload);
-            console.log('Login response:', res);
-
-            if (res.isSuccess) {
-                // Lưu thông tin user để hiển thị ở Home
-                localStorage.setItem('user_info', JSON.stringify(res.data));
-                window.dispatchEvent(new Event('user_info_updated'));
-
-                // Lưu token vào cookie cho backend trích xuất
-                if (res.data.accessToken) {
-                    Cookies.set('X-Access-Token', res.data.accessToken, { expires: 7, sameSite: 'Lax' });
-                }
-
-                // Chuyển hướng sang trang chọn role
-                navigate('/role-selection');
-            } else {
-                setErrorMsg('Login failed. Please check your credentials.');
-            }
-        } catch (error: unknown) {
-            console.error('Login error:', error);
-            if (axios.isAxiosError(error)) {
-                if (error.response) {
-                    const data = error.response.data as ApiErrorResponse;
-                    // Hiển thị message lỗi từ server: "Invalid Password", "User Not Found"...
-                    setErrorMsg(data.message || 'Login failed.');
-                } else if (error.request) {
-                    setErrorMsg('Unable to connect to server. Please check if the server is running.');
-                } else {
-                    setErrorMsg('An error occurred. Please try again.');
-                }
-            } else {
-                setErrorMsg('An unexpected error occurred.');
-            }
-        } finally {
-            if (!formData.email && !formData.password) {
-                 // Prevent clearing loader early if redirecting
-            } else {
-                setLoading(false);
-            }
+            navigate(roleConfig[userInfo.roles[0]] || '/role-selection', { replace: true });
+          } else { navigate('/role-selection', { replace: true }); }
         }
-    };
+      } catch {}
+    }
+  }, [navigate]);
 
-    const handleGoogleLogin = async () => {
-        try {
-            setLoading(true);
-            const response = await identityAxios.get('/IdentityAccess/google-login?platform=web');
-            const data = response.data;
-            
-            if (data.isSuccess) {
-                window.location.href = data.data.redirectUrl; 
-            } else {
-                setErrorMsg('Failed to initialize Google Login.');
-                setLoading(false);
-            }
-        } catch (error) {
-            console.error("Login init fail", error);
-            setErrorMsg('Failed to connect to Google Login service.');
-            setLoading(false);
-        }
-    };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFormData({ ...formData, [e.target.name]: e.target.value });
 
-    return (
-        <div className="relative w-full min-h-screen overflow-hidden bg-black font-sans selection:bg-red-600 selection:text-white">
-            {/* Background Layer */}
-            <div className="absolute inset-0 z-0 opacity-40 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop')" }}></div>
-            <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-transparent to-transparent"></div>
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); setErrorMsg(null); setLoading(true);
+    try {
+      const payload: LoginRequest = { email: formData.email, password: formData.password };
+      const res = await authApi.regularLogin(payload);
+      if (res.isSuccess) {
+        localStorage.setItem('user_info', JSON.stringify(res.data));
+        window.dispatchEvent(new Event('user_info_updated'));
+        if (res.data.accessToken) Cookies.set('X-Access-Token', res.data.accessToken, { expires: 7, sameSite: 'Lax' });
+        navigate('/role-selection');
+      } else { setErrorMsg('Login failed. Please check your credentials.'); }
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) { setErrorMsg((error.response.data as ApiErrorResponse).message || 'Login failed.'); }
+        else if (error.request) { setErrorMsg('Unable to connect to server.'); }
+        else { setErrorMsg('An error occurred.'); }
+      } else { setErrorMsg('An unexpected error occurred.'); }
+    } finally { setLoading(false); }
+  };
 
-            {/* Main Content */}
-            <div className="relative z-10 flex min-h-screen w-full items-center justify-center p-4">
-                <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
-                    <div className="relative">
-                        {/* Red Glow */}
-                        <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-red-900 rounded-2xl blur-lg opacity-30"></div>
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true);
+      const response = await identityAxios.get('/IdentityAccess/google-login?platform=web');
+      const data = response.data;
+      if (data.isSuccess) { window.location.href = data.data.redirectUrl; }
+      else { setErrorMsg('Failed to initialize Google Login.'); setLoading(false); }
+    } catch { setErrorMsg('Failed to connect to Google Login service.'); setLoading(false); }
+  };
 
-                        <div className="relative bg-black/80 border border-gray-800 rounded-2xl p-8 shadow-2xl backdrop-blur-2xl">
-                            {/* Header */}
-                            <div className="flex flex-col items-center mb-8 text-center">
-                                <div className="p-3 bg-red-600/20 rounded-full mb-4 border border-red-600/40 shadow-[0_0_20px_rgba(220,38,38,0.5)]">
-                                    <Clapperboard className="w-10 h-10 text-white" />
-                                </div>
-                                <h1 className="text-3xl font-black text-white uppercase tracking-[0.2em] drop-shadow-md">
-                                    Welcome Back
-                                </h1>
-                                <p className="mt-2 text-gray-400 text-sm">Please sign in to continue</p>
-                            </div>
+  return (
+    <div style={{
+      width: '100%', minHeight: '100vh', overflow: 'hidden',
+      background: 'var(--bg-base)',
+      position: 'relative',
+    }}>
+      {/* Cinematic Background */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: `
+          radial-gradient(ellipse at 20% 50%, rgba(255,138,0,0.08) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 20%, rgba(255,138,0,0.04) 0%, transparent 50%),
+          radial-gradient(ellipse at 50% 80%, rgba(255,138,0,0.03) 0%, transparent 50%),
+          #0a0a0a
+        `,
+      }} />
 
-                            {/* Error Message */}
-                            {errorMsg && (
-                                <div className="mb-6 p-4 rounded-lg bg-red-900/40 border border-red-500/50 flex items-center text-red-100 animate-pulse">
-                                    <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-                                    <span className="text-sm font-medium">{errorMsg}</span>
-                                </div>
-                            )}
+      {/* Decorative grid lines */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px)
+        `,
+        backgroundSize: '60px 60px',
+        maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 70%)',
+      }} />
 
-                            {/* Form */}
-                            <form onSubmit={handleSubmit} className="space-y-6">
-                                <InputField label="Email Address" name="email" type="email" icon={Mail} placeholder="name@cinema.com" value={formData.email} onChange={handleChange} />
-                                <InputField label="Password" name="password" type="password" icon={Lock} placeholder="••••••••" value={formData.password} onChange={handleChange} />
+      <div style={{
+        position: 'relative', zIndex: 10,
+        display: 'flex', minHeight: '100vh', width: '100%',
+        alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}>
+        {/* Login Card */}
+        <div
+          className="glass-card"
+          style={{
+            width: '100%', maxWidth: 420,
+            padding: '40px 36px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+        >
+          {/* Subtle top gradient accent */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+            background: 'linear-gradient(90deg, #ff8a00, #ea580c, #ff8a00)',
+            backgroundSize: '200% 100%',
+            animation: 'gradientShift 3s ease-in-out infinite',
+          }} />
 
-                                <button type="submit" disabled={loading} className={`group relative w-full mt-4 py-4 overflow-hidden rounded-xl text-white font-black uppercase tracking-[0.15em] shadow-[0_4px_20px_rgba(220,38,38,0.5)] ring-1 ring-white/10 ${loading ? 'bg-red-900 cursor-not-allowed opacity-80' : 'bg-red-700 transition-all hover:scale-[1.02] hover:bg-red-600'}`}>
-                                    {!loading && <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-shine" />}
-                                    <div className="flex items-center justify-center gap-3">
-                                        {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                                        <span className="relative text-lg">{loading ? 'Signing In...' : 'Login'}</span>
-                                    </div>
-                                </button>
-                            </form>
-
-                            <div className="relative flex items-center justify-center mt-6 mb-6">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-gray-700/80"></div>
-                                </div>
-                                <div className="relative px-4 text-xs font-semibold tracking-widest text-gray-400 uppercase bg-black">
-                                    OR CONTINUE WITH
-                                </div>
-                            </div>
-
-                            <button 
-                                type="button" 
-                                disabled={loading} 
-                                onClick={handleGoogleLogin} 
-                                className={`relative flex items-center justify-center w-full py-3.5 mb-2 overflow-hidden rounded-xl bg-white text-gray-900 font-bold uppercase tracking-wider shadow-[0_4px_20px_rgba(255,255,255,0.1)] ring-1 ring-white/20 transition-all hover:scale-[1.02] hover:bg-gray-100 hover:shadow-[0_4px_20px_rgba(255,255,255,0.2)] ${loading ? 'cursor-not-allowed opacity-80' : ''}`}
-                            >
-                                <div className="flex items-center justify-center gap-3 w-full">
-                                    {loading ? (
-                                        <Loader2 className="w-5 h-5 animate-spin text-gray-600" />
-                                    ) : (
-                                        <svg className="w-5 h-5 shrink-0" viewBox="0 0 48 48">
-                                            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
-                                            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
-                                            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
-                                            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
-                                            <path fill="none" d="M0 0h48v48H0z"></path>
-                                        </svg>
-                                    )}
-                                    <span className="text-sm font-bold uppercase tracking-wider">
-                                        {loading ? 'Processing...' : 'Google Account'}
-                                    </span>
-                                </div>
-                            </button>
-
-                            <div className="mt-6 text-center text-sm sm:text-base text-gray-500 flex flex-col gap-3">
-                                <div>
-                                    Don't have an account? <Link to="/register" className="text-red-500 hover:text-red-400 font-bold transition-colors">Register now</Link>
-                                </div>
-                                <div className="border-t border-gray-800 pt-3">
-                                    <span className="opacity-70">Bạn không muốn đăng nhập?</span> <Link to="/home" className="text-white hover:text-red-400 font-bold transition-colors ml-1">Vào trang xem phim</Link>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+          {/* Logo & Title */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 36 }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 16,
+              background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 20,
+              boxShadow: '0 8px 32px rgba(255,138,0,0.3)',
+            }}>
+              <Clapperboard size={28} style={{ color: '#fff' }} />
             </div>
+            <h1 style={{
+              fontSize: 24, fontWeight: 800, letterSpacing: '-0.02em',
+              color: 'var(--text-primary)', margin: 0,
+            }}>
+              CINEMA
+            </h1>
+            <p style={{
+              fontSize: 12, color: 'var(--text-muted)', marginTop: 4,
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
+              The Ultimate Cinematic Experience
+            </p>
+          </div>
+
+          {errorMsg && (
+            <div style={{
+              padding: '10px 14px', marginBottom: 20, borderRadius: 10,
+              display: 'flex', alignItems: 'center', gap: 10,
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              background: 'rgba(239, 68, 68, 0.08)',
+              fontSize: 12, color: 'var(--danger)',
+            }}>
+              <AlertCircle size={14} style={{ flexShrink: 0 }} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Email address
+              </label>
+              <div className="relative">
+                <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="name@cinema.com"
+                  className="input"
+                  style={{ paddingLeft: 40 }}
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
+                Password
+              </label>
+              <div className="relative">
+                <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  className="input"
+                  style={{ paddingLeft: 40, paddingRight: 40 }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="btn-icon"
+                  style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)' }}
+                >
+                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn btn-primary"
+              style={{
+                width: '100%', padding: '12px 20px', fontSize: 14,
+                justifyContent: 'center', marginTop: 4,
+              }}
+            >
+              {loading ? (
+                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Signing in...</>
+              ) : 'Login'}
+            </button>
+          </form>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '24px 0',
+            position: 'relative',
+          }}>
+            <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', height: 1, background: 'var(--border-color)' }} />
+            <span style={{
+              position: 'relative', padding: '0 16px',
+              fontSize: 10, color: 'var(--text-muted)',
+              background: 'var(--bg-surface)',
+              fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}>
+              OR CONTINUE WITH
+            </span>
+          </div>
+
+          <button
+            type="button"
+            disabled={loading}
+            onClick={handleGoogleLogin}
+            className="btn btn-secondary"
+            style={{
+              width: '100%', padding: '12px 20px', fontSize: 13,
+              justifyContent: 'center', gap: 10,
+            }}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 48 48" style={{ width: 18, height: 18 }}>
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+              <path fill="none" d="M0 0h48v48H0z" />
+            </svg>
+            Google account
+          </button>
+
+          <div style={{
+            marginTop: 24, textAlign: 'center',
+            fontSize: 12, color: 'var(--text-muted)',
+            display: 'flex', flexDirection: 'column', gap: 12,
+          }}>
+            <div>
+              Don't have an account?{' '}
+              <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Register now</Link>
+            </div>
+            <div>
+              <span style={{ opacity: 0.6 }}>Không muốn đăng nhập? </span>
+              <Link to="/home" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Vào xem phim</Link>
+            </div>
+          </div>
         </div>
-    );
+      </div>
+    </div>
+  );
 };
 
 export default LoginForm;

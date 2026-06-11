@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Loader2, AlertCircle, ShoppingCart,
-    ChevronLeft, CreditCard
+    Loader2, AlertCircle
 } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
-import { useTheme } from '../../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
+import Header from '../../components/Header';
+import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
     const navigate = useNavigate();
-    const { theme } = useTheme();
     const { t } = useTranslation();
 
     const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
-    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({}); // seatId -> userSegmentId
+    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,13 +28,10 @@ const BookingPage: React.FC = () => {
 
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-    const [customerInfo, setCustomerInfo] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        address: ''
-    });
-
+    const [userRole, setUserRole] = useState<string>('Guest');
+    const [myVouchers, setMyVouchers] = useState<UserVoucherDto[]>([]);
+    const [selectedVoucherId, setSelectedVoucherId] = useState<string>('');
+    const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
 
     const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
     const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
@@ -45,51 +41,45 @@ const BookingPage: React.FC = () => {
         if (storedUser) {
             const user = JSON.parse(storedUser);
             setUserName(user.username || user.userName || 'Guest');
+            
+            const roles: string[] = user.roles || [];
+            if (roles.includes('VIP')) {
+                setUserRole('VIP');
+            } else if (roles.includes('Student')) {
+                setUserRole('Student');
+            } else if (roles.includes('Customer') || roles.includes('User')) {
+                setUserRole('User');
+            } else {
+                setUserRole('User');
+            }
             setIsLoggedIn(true);
         } else {
             setUserName('Guest');
+            setUserRole('Guest');
             setIsLoggedIn(false);
         }
 
         if (scheduleId) {
             fetchData();
-
-            // Set up SignalR
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_BASE_URL}/ws/seat`, {
-                    transport: signalR.HttpTransportType.ServerSentEvents
-                })
+                .withUrl(`${API_BASE_URL}/ws/seat`, { transport: signalR.HttpTransportType.ServerSentEvents })
                 .withAutomaticReconnect()
                 .build();
 
             const startConnection = async () => {
                 try {
                     await connection.start();
-                    console.log("SignalR Connected.");
                     await connection.invoke("JoinSchedule", scheduleId);
-
                     connection.on("OnSeatSelected", (seatId: string, userName: string) => {
-                        console.log(`Seat ${seatId} currently selected by ${userName}`);
                         setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
                     });
-
                     connection.on("OnSeatUnselected", (seatId: string) => {
-                        console.log(`Seat ${seatId} unselected`);
-                        setLockedSeats(prev => {
-                            const next = { ...prev };
-                            delete next[seatId];
-                            return next;
-                        });
+                        setLockedSeats(prev => { const next = { ...prev }; delete next[seatId]; return next; });
                     });
-
                     setHubConnection(connection);
-                } catch (err) {
-                    console.error("SignalR Connection Error:", err);
-                }
+                } catch (err) { console.error("SignalR Connection Error:", err); }
             };
-
             startConnection();
-
             return () => {
                 if (connection.state === signalR.HubConnectionState.Connected) {
                     connection.invoke("LeaveSchedule", scheduleId)
@@ -100,363 +90,478 @@ const BookingPage: React.FC = () => {
         }
     }, [scheduleId]);
 
+    useEffect(() => {
+        if (isLoggedIn) {
+            const fetchWallet = async () => {
+                try {
+                    const res = await voucherApi.getMyVouchers();
+                    if (res.isSuccess) {
+                        const today = new Date().getTime();
+                        const unused = (res.data || []).filter(v => 
+                            !v.isUsed && 
+                            (!v.validTo || new Date(v.validTo).getTime() >= today)
+                        );
+                        setMyVouchers(unused);
+                    }
+                } catch (err) {
+                    console.error("Error fetching user vouchers:", err);
+                }
+            };
+            fetchWallet();
+        }
+    }, [isLoggedIn]);
+
+    const ROLE_DISCOUNTS: Record<string, number> = {
+        'Guest': 0,
+        'User': 5,
+        'Student': 10,
+        'VIP': 15
+    };
+    const roleDiscountPercent = ROLE_DISCOUNTS[userRole] || 0;
+
+    const selectedVoucher = myVouchers.find(v => v.voucherId === selectedVoucherId);
+    const voucherDiscountPercent = selectedVoucher ? selectedVoucher.voucherDiscountPercent : 0;
+
     const fetchData = async () => {
-        setLoading(true);
-        setError(null);
+        setLoading(true); setError(null);
         try {
             const seatRes = await publicApi.getSeatMap(scheduleId!);
             setSeatMap(seatRes.data);
             try {
                 const priceRes = await publicApi.getPricing(scheduleId!);
                 setPricing(priceRes.data);
-            } catch (err) {
-                console.warn('Pricing not found, skipping for now', err);
-            }
-
-        } catch (err) {
-            setError('Failed to load booking information.');
-        } finally {
-            setLoading(false);
-        }
+            } catch { console.warn('Pricing not found, skipping for now'); }
+        } catch (err) { setError('Failed to load booking information.'); }
+        finally { setLoading(false); }
     };
 
     const toggleSeat = async (seat: PublicSeat) => {
         if (seat.isBooked) return;
-
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
-        
-        // Nếu không phải là ghế mình đang chọn mà bị người khác khóa thì bỏ qua
         if (!isCurrentlySelected && lockedSeats[seat.seatId]) return;
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-            setSeatSegmentMap(prev => {
-                const next = { ...prev };
-                delete next[seat.seatId];
-                return next;
-            });
+            setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try {
-                    await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId);
-                } catch (err) {
-                    console.error("Error unselecting seat", err);
-                }
+                try { await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId); }
+                catch (err) { console.error("Error unselecting seat", err); }
             }
         } else {
-            if (selectedSeats.length >= 8) {
-                showError(t('toast.maxSeats'));
-                return;
-            }
+            if (selectedSeats.length >= 8) { showError(t('toast.maxSeats')); return; }
             setSelectedSeats(prev => [...prev, seat]);
-            // Initial segment should be the first one in the list (Adult usually)
             if (pricing && pricing.segmentPrices.length > 0) {
                 setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
             }
-
             if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try {
-                    await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName);
-                } catch (err) {
-                    console.error("Error selecting seat", err);
-                }
+                try { await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName); }
+                catch (err) { console.error("Error selecting seat", err); }
             }
         }
-
     };
 
     const handleBooking = async () => {
-        if (selectedSeats.length === 0) {
-            showError(t('toast.selectSeat'));
-            return;
-        }
-
+        if (selectedSeats.length === 0) { showError(t('toast.selectSeat')); return; }
         if (!isLoggedIn) {
             if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
-                showError(t('toast.fillContactInfo'));
-                return;
+                showError(t('toast.fillContactInfo')); return;
             }
         }
-
         setBookingLoading(true);
         try {
             const payload: any = {
                 scheduleId: scheduleId!.trim(),
-                seatSelections: selectedSeats.map(s => ({
-                    seatId: s.seatId,
-                    userSegmentId: seatSegmentMap[s.seatId]
-                })),
+                seatSelections: selectedSeats.map(s => ({ seatId: s.seatId, userSegmentId: seatSegmentMap[s.seatId] })),
                 customerName: isLoggedIn ? undefined : customerInfo.name.trim(),
                 customerEmail: isLoggedIn ? undefined : customerInfo.email.trim(),
                 customerPhone: isLoggedIn ? undefined : customerInfo.phone.trim(),
-                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim()
+                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim(),
+                voucherId: selectedVoucherId ? selectedVoucherId : undefined
             };
-
             const res = await bookingApi.createBooking(payload);
-
             if (res.data.paymentUrl) {
-                // Open VNPay URL
                 window.location.href = res.data.paymentUrl;
-            } else {
-                showError(t('toast.paymentUrlError'));
-            }
+            } else { showError(t('toast.paymentUrlError')); }
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || t('toast.scheduleSaveFailed');
             showError(errorMsg);
-        } finally {
-            setBookingLoading(false);
-        }
+        } finally { setBookingLoading(false); }
     };
 
-    if (loading) {
-        return (
-            <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <Loader2 className="w-12 h-12 animate-spin text-red-600" />
-            </div>
-        );
-    }
-
-    if (error || !seatMap) {
-        return (
-            <div className={`min-h-screen flex flex-col items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : 'bg-gray-50 text-gray-900'}`}>
-                <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-                <p className="text-xl font-bold mb-4">{error || 'Schedule not found'}</p>
-                <button onClick={() => navigate('/home')} className="px-6 py-2 bg-red-600 text-white rounded-lg">Go Home</button>
-            </div>
-        );
-    }
-
-    // Calculate total
     const totalPrice = selectedSeats.reduce((sum, seat) => {
         const segmentId = seatSegmentMap[seat.seatId];
         const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
         return sum + (segment?.finalPrice || 0);
     }, 0);
 
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
+                <Loader2 size={48} className="text-[#ff8a00] animate-spin" />
+            </div>
+        );
+    }
+
+    if (error || !seatMap) {
+        return (
+            <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-center">
+                <AlertCircle size={64} className="text-red-400 mb-4" />
+                <p className="text-2xl font-bold text-white mb-6">{error || 'Schedule not found'}</p>
+                <button onClick={() => navigate('/home')} className="px-6 py-3 rounded-xl font-bold text-black bg-[#ff8a00]">Go Home</button>
+            </div>
+        );
+    }
+
+    const maxCol = Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1;
 
     return (
-        <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            {/* Header */}
-            <header className={`fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b h-16 flex items-center px-4 sm:px-6 ${theme === 'dark' ? 'bg-black/80 border-gray-800' : theme === 'modern' ? 'bg-[#0E0A20]/90 border-indigo-500/30' : 'bg-white/80 border-gray-200'}`}>
-                <button onClick={() => navigate(-1)} className="p-2 mr-4 hover:bg-white/10 rounded-lg transition-colors">
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <div>
-                    <h2 className="font-black truncate">{seatMap.movieName}</h2>
-                    <p className="text-xs opacity-60">
-                        {seatMap.movieVisualFormatName} • {seatMap.auditoriumName} • {new Date(seatMap.startTime).toLocaleString('vi-VN', {
-                            weekday: 'short', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                        })}
-                    </p>
+        <div className="min-h-screen bg-[#0A0A0A] text-[#e5e2e1] font-sans selection:bg-[#ff8a00] selection:text-black">
+            <style>{`
+                .glass-card {
+                    background: rgba(255, 255, 255, 0.05);
+                    backdrop-filter: blur(32px);
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    border-top: 1px solid rgba(255, 255, 255, 0.15);
+                    border-left: 1px solid rgba(255, 255, 255, 0.15);
+                }
+                .seat-selected {
+                    background-color: #ff8a00 !important;
+                    color: #000 !important;
+                    box-shadow: 0 0 15px rgba(255, 138, 0, 0.4);
+                }
+                .screen-curve {
+                    height: 4px;
+                    width: 100%;
+                    background: linear-gradient(90deg, transparent 0%, #ff8a00 50%, transparent 100%);
+                    border-radius: 50%;
+                    filter: blur(1px) drop-shadow(0 0 8px #ff8a00);
+                }
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 4px;
+                    height: 4px;
+                }
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(0,0,0,0.1);
+                }
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #ffb77f;
+                    border-radius: 10px;
+                }
+            `}</style>
+
+            {/* Redesigned Unified Header */}
+            <Header />
+
+            {/* Main Content */}
+            <main className="pt-32 pb-24 px-6 md:px-16 max-w-7xl mx-auto">
+                {/* Movie Info Breadcrumb */}
+                <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 border-l-4 border-[#ff8a00] pl-6">
+                    <div>
+                        <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-2 leading-tight">{seatMap.movieName}</h1>
+                        <div className="flex flex-wrap items-center gap-4 text-[#ddc1ae] text-sm font-semibold">
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">movie</span> {seatMap.auditoriumName}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">calendar_today</span> {new Date(seatMap.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">schedule</span> {new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    </div>
+                    <button className="flex items-center gap-2 text-[#ff8a00] hover:gap-4 transition-all duration-300 bg-transparent border-none cursor-pointer font-bold" onClick={() => navigate(-1)}>
+                        <span className="material-symbols-outlined">arrow_back</span>
+                        Change Session
+                    </button>
                 </div>
-            </header>
 
-            <main className="pt-24 pb-32 container mx-auto px-6">
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
-                    {/* Seat Map */}
-                    <div className="lg:col-span-3">
-                        <div className="flex flex-col items-center">
-                            {/* Screen */}
-                            <div className="w-full max-w-2xl mb-20 relative">
-                                <div className={`h-2 rounded-full shadow-[0_15px_40px_rgba(239,68,68,0.5)] ${theme === 'modern' ? 'bg-cyan-400 shadow-cyan-400/50' : 'bg-gray-400'}`} />
-                                <p className="text-center text-xs font-bold uppercase tracking-widest mt-4 opacity-40">Screen</p>
-                            </div>
+                {/* Seat and Summary Area */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    {/* Left: Seat Selection */}
+                    <div className="lg:col-span-8 flex flex-col items-center">
+                        {/* Screen curve */}
+                        <div className="w-full max-w-2xl mb-16 relative">
+                            <div className="screen-curve"></div>
+                            <p className="text-center text-[#ddc1ae] text-[10px] tracking-[0.4em] uppercase mt-4">Screen</p>
+                        </div>
 
-                            {/* Seats Grid */}
-                            <div className="inline-grid gap-2" style={{
-                                gridTemplateColumns: `repeat(${Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1}, minmax(0, 1fr))`
-                            }}>
-                                {seatMap.seatMap?.map((seat) => {
-                                    const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
-                                    const lockedBy = lockedSeats[seat.seatId];
-                                    const isLockedByOther = lockedBy && !isSelected;
+                        {/* Seat Grid */}
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))`,
+                            gap: 'clamp(4px, 1.5vw, 8px)',
+                            padding: 'clamp(8px, 2vw, 16px)',
+                            borderRadius: 16,
+                            backgroundColor: 'rgba(255,255,255,0.02)',
+                            width: '100%',
+                            maxWidth: `min(${maxCol * 56}px, 100%)`,
+                            justifyContent: 'center',
+                        }} className="mb-16">
+                            {seatMap.seatMap?.map((seat) => {
+                                const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
+                                const lockedBy = lockedSeats[seat.seatId];
+                                const isLockedByOther = lockedBy && !isSelected;
 
-                                    return (
-                                        <button
-                                            key={seat.seatId}
-                                            disabled={seat.isBooked || !!isLockedByOther}
-                                            onClick={() => toggleSeat(seat)}
-                                            className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-all ${seat.isBooked
-                                                ? 'bg-gray-800 text-gray-600 cursor-not-allowed opacity-30'
+                                return (
+                                    <button
+                                        key={seat.seatId}
+                                        disabled={seat.isBooked || !!isLockedByOther}
+                                        onClick={() => toggleSeat(seat)}
+                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border-none ${
+                                            seat.isBooked
+                                                ? 'bg-white/5 opacity-20 cursor-not-allowed text-zinc-600'
                                                 : isLockedByOther
-                                                    ? 'bg-yellow-600 border border-yellow-500 text-white cursor-not-allowed opacity-80'
-                                                    : isSelected
-                                                        ? 'bg-red-600 text-white shadow-lg shadow-red-600/40 transform scale-110 z-10'
-                                                        : theme === 'dark' ? 'bg-gray-900 border border-gray-800 hover:border-gray-500 text-gray-400' : 'bg-gray-100 border border-gray-300 hover:border-gray-500 text-gray-600'
-                                                }`}
-                                            title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
-                                        >
-                                            <span className="text-[10px] font-bold">{seat.seatName}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                                                ? 'bg-amber-500/10 text-[#e9c349] border border-[#e9c349]/30 cursor-not-allowed'
+                                                : isSelected
+                                                ? 'seat-selected'
+                                                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer'
+                                        }`}
+                                        title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
+                                    >
+                                        {seat.seatName}
+                                    </button>
+                                );
+                            })}
+                        </div>
 
-                            {/* Legend */}
-                            <div className="flex gap-4 sm:gap-6 mt-16 text-xs sm:text-sm flex-wrap justify-center">
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-gray-900 border border-gray-800" /> Available</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-red-600" /> Selected</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-yellow-600" /> Locked</div>
-                                <div className="flex items-center gap-2"><div className="w-4 h-4 rounded bg-gray-800 opacity-30" /> Occupied</div>
+                        {/* Legend */}
+                        <div className="flex flex-wrap justify-center gap-8 px-6 py-4 rounded-full glass-card">
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm bg-zinc-800"></div>
+                                <span className="text-xs text-[#ddc1ae]">Available</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm bg-[#ff8a00] shadow-[0_0_8px_rgba(255,138,0,0.5)]"></div>
+                                <span className="text-xs text-[#ddc1ae]">Selected</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm bg-amber-500/20 border border-amber-500/40"></div>
+                                <span className="text-xs text-[#ddc1ae]">Locked</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm bg-white/5 opacity-20"></div>
+                                <span className="text-xs text-[#ddc1ae]">Occupied</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Booking Summary */}
-                    <div className="lg:col-span-1">
-                        <div className={`p-6 rounded-2xl border sticky top-24 ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl' : 'bg-white border-gray-200 shadow-xl'}`}>
-                            <h3 className="text-xl font-bold mb-6 flex items-center gap-2 border-b border-white/10 pb-4">
-                                <ShoppingCart className="w-5 h-5 text-red-600" /> Booking Summary
-                            </h3>
+                    {/* Right: Summary */}
+                    <aside className="lg:col-span-4 sticky top-32 w-full">
+                        <div className="glass-card rounded-2xl p-8 shadow-2xl overflow-hidden relative border border-white/5">
+                            <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#ff8a00]/10 blur-[100px] rounded-full pointer-events-none"></div>
+                            
+                            <div className="flex items-center gap-3 mb-8">
+                                <span className="material-symbols-outlined text-[#ff8a00]" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>
+                                <h2 className="text-xl font-bold text-white">Booking Summary</h2>
+                            </div>
 
-                            <div className="space-y-4 mb-6">
+                            <div className="space-y-6 mb-8">
                                 <div className="flex justify-between items-start">
-                                    <span className="opacity-60 text-sm">Movie</span>
-                                    <span className="font-bold text-right text-sm">{seatMap.movieName}</span>
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Movie</span>
+                                    <span className="text-white font-bold text-right break-words max-w-[60%]">{seatMap.movieName}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="opacity-60">Venue</span>
-                                    <span className="font-bold">{seatMap.auditoriumName}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Venue</span>
+                                    <span className="text-white font-semibold">{seatMap.auditoriumName}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="opacity-60">Format</span>
-                                    <span className="font-bold">{seatMap.movieVisualFormatName}</span>
+                                <div className="flex justify-between">
+                                    <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Format</span>
+                                    <span className="text-white font-semibold">{seatMap.movieVisualFormatName || '2D'}</span>
                                 </div>
-                                <div className="space-y-4">
-                                    <span className="opacity-60 text-sm block">Selected Seats</span>
-                                    {selectedSeats.length === 0 ? (
-                                        <p className="text-xs italic opacity-40">No seats selected yet</p>
-                                    ) : (
-                                        <div className="space-y-3">
-                                            {selectedSeats.map(seat => (
-                                                <div key={seat.seatId} className={`p-3 rounded-xl border transition-all ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-800' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10' : 
-                                                    'bg-gray-50 border-gray-200'
-                                                }`}>
-                                                    <div className="flex justify-between items-center mb-2">
-                                                        <span className="font-bold text-red-600">Seat {seat.seatName}</span>
-                                                        <span className="text-sm font-black">
+                                
+                                {/* Selected Seats */}
+                                <div className="pt-6 border-t border-white/5">
+                                    <span className="text-[#ddc1ae] text-xs uppercase tracking-wider block mb-3 font-bold">Selected Seats</span>
+                                    <div className="flex flex-wrap gap-2">
+                                        {selectedSeats.length === 0 ? (
+                                            <span className="text-zinc-500 italic text-sm">No seats selected yet</span>
+                                        ) : (
+                                            selectedSeats.map(seat => (
+                                                <div key={seat.seatId} className="flex flex-col gap-2 p-3 bg-white/5 border border-white/10 rounded-xl w-full">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="font-bold text-[#ff8a00]">Seat {seat.seatName}</span>
+                                                        <span className="font-bold text-white">
                                                             {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
                                                         </span>
                                                     </div>
                                                     <select
-                                                        value={seatSegmentMap[seat.seatId]}
+                                                        value={seatSegmentMap[seat.seatId] || ''}
                                                         onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
-                                                        className={`w-full bg-transparent border-none text-xs opacity-80 focus:ring-0 cursor-pointer ${
-                                                            theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'
-                                                        }`}
+                                                        className="w-full bg-zinc-900 text-zinc-300 text-xs p-2 rounded border border-white/5 outline-none cursor-pointer"
                                                     >
                                                         {pricing?.segmentPrices.map(segment => (
-                                                            <option key={segment.userSegmentId} value={segment.userSegmentId} className="bg-gray-900 text-white">
+                                                            <option key={segment.userSegmentId} value={segment.userSegmentId} className="bg-zinc-950 text-white">
                                                                 {segment.segmentName}
                                                             </option>
                                                         ))}
                                                     </select>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                            ))
+                                        )}
+                                    </div>
                                 </div>
-
                             </div>
+                            {/* Voucher Selector Dropdown */}
+                             {isLoggedIn && (
+                                 <div className="mb-6">
+                                     <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2 font-semibold">
+                                         Apply Voucher
+                                     </label>
+                                     <select
+                                         value={selectedVoucherId}
+                                         onChange={(e) => setSelectedVoucherId(e.target.value)}
+                                         className="w-full bg-zinc-900 text-zinc-300 text-sm p-3 rounded-lg border border-white/10 outline-none cursor-pointer focus:border-[#ff8a00] transition-colors"
+                                     >
+                                         <option value="">No voucher applied</option>
+                                         {myVouchers.map((v) => (
+                                             <option key={v.voucherId} value={v.voucherId} className="bg-zinc-950 text-white">
+                                                 {v.voucherName} (-{v.voucherDiscountPercent}%)
+                                             </option>
+                                         ))}
+                                     </select>
+                                 </div>
+                             )}
 
-                            <div className="pt-4 border-t border-dashed border-white/20 mb-8">
-                                <div className="flex justify-between items-center mb-1">
-                                    <span className="opacity-60 text-sm">Total Price</span>
-                                    <span className="text-2xl font-black text-red-600">{totalPrice.toLocaleString('vi-VN')}đ</span>
-                                </div>
-                                <p className="text-[10px] opacity-40 text-right">Inclusives of all taxes</p>
-                            </div>
+                             {/* Pricing Breakdown */}
+                             <div className="mb-6 space-y-2 text-sm border-t border-white/5 pt-4">
+                                 <div className="flex justify-between text-zinc-400">
+                                     <span>Subtotal</span>
+                                     <span>{totalPrice.toLocaleString('vi-VN')}đ</span>
+                                 </div>
+                                 
+                                 {roleDiscountPercent > 0 && (
+                                     <div className="flex justify-between text-emerald-400 font-medium">
+                                         <span>Role Discount ({userRole} -{roleDiscountPercent}%)</span>
+                                         <span>-{(totalPrice * roleDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                     </div>
+                                 )}
 
+                                 {voucherDiscountPercent > 0 && (
+                                     <div className="flex justify-between text-[#ff8a00] font-medium">
+                                         <span>Voucher Discount (-{voucherDiscountPercent}%)</span>
+                                         <span>-{(totalPrice * voucherDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                     </div>
+                                 )}
+                             </div>
+
+                             {/* Total Box */}
+                             <div className="mb-8 p-4 bg-[#ff8a00]/5 rounded-xl border border-[#ff8a00]/10">
+                                 <div className="flex justify-between items-center">
+                                     <span className="text-white font-semibold">Total Price</span>
+                                     <div className="text-right">
+                                         <span className="text-[#ff8a00] text-3xl font-extrabold">
+                                             {Math.max(0, totalPrice * (1 - (roleDiscountPercent + voucherDiscountPercent) / 100)).toLocaleString('vi-VN')}đ
+                                         </span>
+                                         <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Inclusives of all taxes</p>
+                                     </div>
+                                 </div>
+                             </div>
+
+                            {/* Contact Form */}
                             {!isLoggedIn ? (
-                                <div className={`space-y-4 mb-6 p-5 rounded-xl border transition-all ${
-                                    theme === 'dark' ? 'bg-gray-900/50 border-gray-800' : 
-                                    theme === 'modern' ? 'bg-white/5 border-indigo-500/20 shadow-xl backdrop-blur-md' : 
-                                    'bg-white border-gray-200'
-                                }`}>
-                                    <p className={`text-xs font-bold uppercase tracking-wider ${
-                                        theme === 'dark' ? 'text-gray-400' : 
-                                        theme === 'modern' ? 'text-indigo-300' : 
-                                        'text-gray-500'
-                                    }`}>Guest Information</p>
+                                <div className="mb-8 p-4 bg-red-950/10 border border-red-900/20 rounded-xl">
+                                    <p className="text-xs text-zinc-400 mb-3 leading-relaxed">
+                                        Booking as <span className="text-[#ff8a00] font-bold">Guest</span>. Please fill your details to proceed.
+                                    </p>
                                     <div className="space-y-3">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Full Name *" 
+                                        <input
+                                            type="text"
+                                            placeholder="Full Name *"
                                             value={customerInfo.name}
-                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
-                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            }`}
+                                            onChange={e => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
+                                            className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
                                         />
                                         <div className="grid grid-cols-2 gap-3">
-                                            <input 
-                                                type="email" 
-                                                placeholder="Email Address *" 
+                                            <input
+                                                type="email"
+                                                placeholder="Email *"
                                                 value={customerInfo.email}
-                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
-                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                                }`}
+                                                onChange={e => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
+                                                className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
                                             />
-                                            <input 
-                                                type="tel" 
-                                                placeholder="Phone Number *" 
+                                            <input
+                                                type="tel"
+                                                placeholder="Phone *"
                                                 value={customerInfo.phone}
-                                                onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                                                className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                    theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                    theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                    'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                                }`}
+                                                onChange={e => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
+                                                className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
                                             />
                                         </div>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Address (Optional)" 
+                                        <input
+                                            type="text"
+                                            placeholder="Address (Optional)"
                                             value={customerInfo.address}
-                                            onChange={(e) => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
-                                            className={`w-full rounded-lg px-3 py-2.5 text-sm outline-none transition-all border ${
-                                                theme === 'dark' ? 'bg-black/40 border-gray-700 text-white focus:border-red-600' : 
-                                                theme === 'modern' ? 'bg-white/5 border-white/10 text-white focus:border-cyan-400' : 
-                                                'bg-gray-50 border-gray-300 text-gray-900 focus:border-red-600 focus:bg-white'
-                                            }`}
+                                            onChange={e => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
+                                            className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
                                         />
                                     </div>
                                 </div>
                             ) : (
-                                <div className={`mb-8 p-4 rounded-xl border transition-all ${
-                                    theme === 'dark' ? 'bg-red-600/5 border-red-600/20' : 
-                                    theme === 'modern' ? 'bg-indigo-500/5 border-indigo-500/20 shadow-lg' : 
-                                    'bg-red-50 border-red-100'
-                                }`}>
-                                    <p className={`text-xs text-center ${
-                                        theme === 'dark' || theme === 'modern' ? 'opacity-60' : 'text-gray-600'
-                                    }`}>
-                                        Booking as <span className="font-bold text-red-600">{userName}</span>. 
-                                        Your details will be retrieved from your profile.
+                                <div className="mb-8 p-4 bg-red-950/10 border border-red-900/20 rounded-xl">
+                                    <p className="text-xs text-zinc-400 leading-relaxed">
+                                        Booking as <span className="text-[#ff8a00] font-bold">{userName}</span>. Your details will be retrieved from your profile.
                                     </p>
                                 </div>
                             )}
 
+                            {/* Pay Button */}
                             <button
                                 disabled={selectedSeats.length === 0 || bookingLoading}
                                 onClick={handleBooking}
-                                className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${selectedSeats.length > 0
-                                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/30'
-                                    : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                                    }`}
+                                className="w-full bg-[#ff8a00] text-black h-14 rounded-xl font-bold flex items-center justify-center gap-3 hover:shadow-[0_0_25px_rgba(255,138,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group border-none cursor-pointer"
                             >
-                                {bookingLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><CreditCard className="w-5 h-5" /> Proceed to Pay</>}
+                                {bookingLoading ? (
+                                    <Loader2 className="animate-spin" size={20} />
+                                ) : (
+                                    <>
+                                        <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">payments</span>
+                                        <span className="font-display uppercase tracking-wider text-sm font-extrabold">Proceed to Pay</span>
+                                    </>
+                                )}
                             </button>
                         </div>
-                    </div>
+
+                        {/* Promo Banner */}
+                        <div className="mt-6 rounded-2xl overflow-hidden relative group cursor-pointer h-32">
+                            <img
+                                alt="Promotional background"
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCf7glp6ITcrfW0hlE9CXfpSZ7AKpilK45LhR60O8k-msYArV6MVcBMije9H5ruQss-UbuC6Gb1YAflcR428UUHyWYRUE37mAUiB7VVcDsku8dh0XkH6TnzJyx6Me9rtBRfmPBYyk05S__h3GC_UA8Zgnje4sA3Shl3oYaIMWBRFe43eWcgqhiiU_iEjv7gWW52Q2ay7rZQda7oW14y08BU8HYg4NYYb7c2oYMFYBIhsC3smbjMPl2266Wx7hu3U6mCtsWUDUQRCE"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent flex flex-col justify-center px-6">
+                                <p className="text-[#ff8a00] font-bold text-xs tracking-widest uppercase mb-1">Premier Plus</p>
+                                <p className="text-white font-bold text-lg font-display">Get 20% off popcorn</p>
+                            </div>
+                        </div>
+                    </aside>
                 </div>
             </main>
+
+            {/* Footer */}
+            <footer style={{
+                width: '100%', padding: '48px 24px',
+                maxWidth: 1280, margin: '0 auto',
+                borderTop: '1px solid var(--border-color)', marginTop: 80,
+            }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center' }}
+                    className="md:flex-row md:justify-between"
+                >
+                    <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, color: 'var(--accent, #ff8a00)', opacity: 0.5 }}>
+                        CINEMA
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 32, color: 'var(--text-secondary, #a1a1aa)', fontSize: 14 }}>
+                        {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Careers'].map(link => (
+                            <a key={link} href="#"
+                                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
+                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #fafafa)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary, #a1a1aa)'; }}
+                            >
+                                {link}
+                            </a>
+                        ))}
+                    </div>
+                    <div style={{ color: 'var(--text-secondary, #a1a1aa)', fontSize: 12, letterSpacing: '-0.01em', opacity: 0.5 }}>
+                        © 2026 CINEMA. ALL RIGHTS RESERVED.
+                    </div>
+                </div>
+            </footer>
         </div>
     );
 };

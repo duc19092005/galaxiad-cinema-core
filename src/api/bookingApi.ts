@@ -3,14 +3,20 @@ import { bookingAxios, API_BASE_URL } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type { CreateBookingRequest, CreateBookingResponse, UserAccountInfo, BookingHistoryItem, TicketInfo } from '../types/booking.types';
 
+const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
+    isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
+    message: response.data?.message ?? response.data?.Message ?? 'Success',
+    data: response.data?.data ?? response.data?.Data,
+});
+
 export const bookingApi = {
     /** 7. Create Booking Order */
     createBooking: async (data: CreateBookingRequest): Promise<ApiSuccessResponse<CreateBookingResponse>> => {
-        const response = await bookingAxios.post<ApiSuccessResponse<CreateBookingResponse>>(
+        const response = await bookingAxios.post<any>(
             `/create`,
             data
         );
-        return response.data;
+        return normalizeSuccessResponse<CreateBookingResponse>(response);
     },
 
     /** Get user information */

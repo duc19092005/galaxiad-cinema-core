@@ -1,6 +1,9 @@
+// src/features/auth/RoleSelectionPage.tsx
+// Cinema dark theme role selection page
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Shield, Ticket, Film, Building2, Wrench, Loader2, AlertCircle } from 'lucide-react';
+import { User, Shield, Ticket, Film, Building2, Wrench, Loader2, AlertCircle, Clapperboard } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../types/auth.types';
@@ -8,44 +11,13 @@ import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import Cookies from 'js-cookie';
 
-// Role mapping với icon và màu sắc
-const roleConfig: Record<string, { icon: React.ElementType; color: string; label: string; route: string }> = {
-  Customer: {
-    icon: Ticket,
-    color: 'from-blue-600 to-blue-800',
-    label: 'roles.customer',
-    route: '/home'
-  },
-  Cashier: {
-    icon: Ticket,
-    color: 'from-green-600 to-green-800',
-    label: 'roles.cashier',
-    route: '/cashier'
-  },
-  Admin: {
-    icon: Shield,
-    color: 'from-indigo-600/20 to-purple-900/40',
-    label: 'roles.admin',
-    route: '/admin'
-  },
-  MovieManager: {
-    icon: Film,
-    color: 'from-orange-600 to-orange-800',
-    label: 'roles.movieManager',
-    route: '/movie-manager'
-  },
-  TheaterManager: {
-    icon: Building2,
-    color: 'from-cyan-600 to-cyan-800',
-    label: 'roles.theaterManager',
-    route: '/theater-manager'
-  },
-  FacilitiesManager: {
-    icon: Wrench,
-    color: 'from-yellow-600 to-yellow-800',
-    label: 'roles.facilitiesManager',
-    route: '/facilities-manager'
-  }
+const roleConfig: Record<string, { icon: React.ElementType; label: string; route: string; description: string; gradient: string }> = {
+  Customer: { icon: Ticket, label: 'roles.customer', route: '/home', description: 'Browse movies and book tickets', gradient: 'linear-gradient(135deg, #ff8a00, #ea580c)' },
+  Cashier: { icon: Ticket, label: 'roles.cashier', route: '/cashier', description: 'Process ticket sales and payments', gradient: 'linear-gradient(135deg, #059669, #10b981)' },
+  Admin: { icon: Shield, label: 'roles.admin', route: '/admin', description: 'Full system administration', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
+  MovieManager: { icon: Film, label: 'roles.movieManager', route: '/movie-manager', description: 'Manage movie listings', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
+  TheaterManager: { icon: Building2, label: 'roles.theaterManager', route: '/theater-manager', description: 'Manage theater schedules', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
+  FacilitiesManager: { icon: Wrench, label: 'roles.facilitiesManager', route: '/facilities-manager', description: 'Manage cinemas and facilities', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
 };
 
 const RoleSelectionPage: React.FC = () => {
@@ -55,43 +27,27 @@ const RoleSelectionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [hoveredRole, setHoveredRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load thông tin user từ LocalStorage
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) {
       try {
         const userData = JSON.parse(storedUser);
         setUser(userData);
-
-        // Nếu chỉ có 1 role, tự động redirect
         if (userData.roles && userData.roles.length === 1) {
-          const singleRole = userData.roles[0];
-          const roleInfo = roleConfig[singleRole];
-          if (roleInfo) {
-            navigate(roleInfo.route);
-            return;
-          }
+          const roleInfo = roleConfig[userData.roles[0]];
+          if (roleInfo) { navigate(roleInfo.route); return; }
         }
-
-        // Test authentication bằng cách gọi API
         testAuthentication();
-      } catch (err) {
-        setError('Invalid user data');
-        setLoading(false);
-      }
-    } else {
-      // Nếu không có user, đá về trang login
-      navigate('/login');
-    }
+      } catch { setError('Invalid user data'); setLoading(false); }
+    } else { navigate('/login'); }
   }, [navigate]);
 
   const testAuthentication = async () => {
     try {
-      // Test authentication bằng cách gọi API profile
       const res = await authApi.getProfile();
       if (res.isSuccess) {
-        // Cập nhật lại thông tin user từ profile (có thể có managedCinemaNames mới)
         const currentStored = localStorage.getItem('user_info');
         if (currentStored) {
           const current = JSON.parse(currentStored);
@@ -106,16 +62,11 @@ const RoleSelectionPage: React.FC = () => {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
         if (data.statusCode === 401) {
-          // Authentication failed - xóa user info và cookie, redirect về login
-          localStorage.removeItem('user_info');
-          Cookies.remove('X-Access-Token');
-          navigate('/login');
-          return;
+          localStorage.removeItem('user_info'); Cookies.remove('X-Access-Token');
+          navigate('/login'); return;
         }
         setError(data.message || 'Authentication failed');
-      } else {
-        setError('Unable to connect to server');
-      }
+      } else { setError('Unable to connect to server'); }
       setLoading(false);
     }
   };
@@ -124,40 +75,30 @@ const RoleSelectionPage: React.FC = () => {
     setSelectedRole(role);
     const roleInfo = roleConfig[role];
     if (roleInfo) {
-      // Lưu role được chọn vào localStorage để sử dụng sau này
       const userData = { ...user, selectedRole: role };
       localStorage.setItem('user_info', JSON.stringify(userData));
       window.dispatchEvent(new Event('user_info_updated'));
-
-      // Navigate đến trang của role đó
       navigate(roleInfo.route);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
-          <p className="text-gray-400">Loading...</p>
-        </div>
+      <div className="state-center" style={{ minHeight: '100vh' }}>
+        <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+        <p style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", marginTop: 8 }}>Loading...</p>
       </div>
     );
   }
 
   if (error && !user) {
     return (
-      <div className="min-h-screen bg-black text-white font-sans flex items-center justify-center">
-        <div className="text-center">
-          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
-          <p className="text-red-500 mb-4">{error}</p>
-          <button
-            onClick={() => navigate('/login')}
-            className="px-6 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-          >
-            {t('roles.backToLogin')}
-          </button>
-        </div>
+      <div className="state-center" style={{ minHeight: '100vh', gap: 16 }}>
+        <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
+        <p style={{ color: 'var(--danger)', fontSize: 13 }}>{error}</p>
+        <button className="btn btn-primary" onClick={() => navigate('/login')}>
+          {t('roles.backToLogin')}
+        </button>
       </div>
     );
   }
@@ -165,97 +106,193 @@ const RoleSelectionPage: React.FC = () => {
   const availableRoles = user?.roles || [];
 
   return (
-    <div className="min-h-screen bg-black text-white font-sans">
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-base)',
+      position: 'relative',
+    }}>
+      {/* Background effects */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        background: `
+          radial-gradient(ellipse at 20% 30%, rgba(255,138,0,0.06) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 70%, rgba(255,138,0,0.04) 0%, transparent 50%),
+          #0a0a0a
+        `,
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 0,
+        backgroundImage: `
+          linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px)
+        `,
+        backgroundSize: '60px 60px',
+        maskImage: 'radial-gradient(ellipse at center, black 40%, transparent 70%)',
+        WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 70%)',
+      }} />
+
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-gray-800 h-16 flex items-center justify-between px-6 shadow-lg">
-        <div className="text-2xl font-black text-red-600 tracking-widest uppercase cursor-pointer">
-          CINEMA<span className="text-white">PRO</span>
+      <header style={{
+        position: 'fixed', top: 0, left: 0, right: 0, height: 64, zIndex: 50,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 24px',
+        background: 'rgba(10,10,10,0.8)',
+        backdropFilter: 'blur(12px)',
+        borderBottom: '1px solid var(--border-color)',
+      }}>
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
+            fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800,
+            color: 'var(--text-primary)', letterSpacing: '0.08em',
+          }}
+          onClick={() => navigate('/home')}
+        >
+          <Clapperboard size={20} style={{ color: 'var(--accent)' }} />
+          <span>CINEMA</span>
+          <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: 14 }}>Pro</span>
         </div>
-        <div className="flex items-center gap-6">
-          <LanguageSwitcher />
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center shadow-[0_0_10px_rgba(220,38,38,0.3)]">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-bold text-sm text-gray-200">{user?.username || t('roles.guest')}</span>
-          </div>
-        </div>
+        <LanguageSwitcher />
       </header>
 
-      {/* Main Content */}
-      <main className="pt-32 px-6 container mx-auto max-w-6xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-black text-white mb-4 uppercase tracking-wider">
-            {t('roles.selectRole')}
-          </h1>
-          <p className="text-gray-400 text-lg">
+      <main style={{
+        position: 'relative', zIndex: 10,
+        paddingTop: 96,
+        maxWidth: 960, margin: '0 auto',
+        paddingLeft: 24, paddingRight: 24,
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: 48 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            marginBottom: 8,
+          }}>
+            <h1 style={{
+              fontSize: 28, fontWeight: 800,
+              letterSpacing: '-0.02em',
+              color: 'var(--text-primary)', margin: 0,
+            }}>
+              {t('roles.selectRole')}
+            </h1>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', maxWidth: 400, margin: '0 auto' }}>
             {t('roles.chooseRole')}
           </p>
+          <div style={{
+            marginTop: 12,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <User size={14} style={{ color: 'var(--accent)' }} />
+            </div>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+              {user?.username || t('roles.guest')}
+            </span>
+          </div>
         </div>
 
-        {/* Role Selection Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {availableRoles.map((role) => {
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(270px, 1fr))',
+          gap: 20,
+        }}>
+          {availableRoles.map(role => {
             const roleInfo = roleConfig[role];
             if (!roleInfo) return null;
-
             const Icon = roleInfo.icon;
             const isSelected = selectedRole === role;
+            const isHovered = hoveredRole === role;
 
             return (
               <button
                 key={role}
                 onClick={() => handleRoleSelect(role)}
                 disabled={isSelected}
-                className={`group relative overflow-hidden rounded-2xl p-8 bg-gray-900 border-2 transition-all duration-300 hover:scale-105 hover:-translate-y-2 ${isSelected
-                  ? 'border-red-600 shadow-[0_0_30px_rgba(220,38,38,0.5)]'
-                  : 'border-gray-800 hover:border-red-600'
-                  }`}
+                onMouseEnter={() => setHoveredRole(role)}
+                onMouseLeave={() => setHoveredRole(null)}
+                className="glass-card"
+                style={{
+                  padding: 32,
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  position: 'relative',
+                  border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border-color)'}`,
+                  opacity: isSelected ? 0.9 : 1,
+                  transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+                  transition: 'all 0.2s ease',
+                }}
               >
-                {/* Gradient Background */}
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${roleInfo.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}
-                />
-
-                {/* Content */}
-                <div className="relative z-10 flex flex-col items-center text-center">
-                  {/* Icon */}
-                  <div
-                    className={`w-20 h-20 rounded-full bg-gradient-to-br ${roleInfo.color} flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-shadow`}
-                  >
-                    <Icon className="w-10 h-10 text-white" />
-                  </div>
-
-                  {/* Role Name */}
-                  <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
-                    {t(roleInfo.label)}
-                  </h3>
-
-                  {/* Hover Effect Text */}
-                  <p className="text-sm text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {t('roles.clickToContinue')}
-                  </p>
-
-                  {/* Selected Indicator */}
-                  {isSelected && (
-                    <div className="mt-4 px-4 py-2 bg-red-600 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {t('roles.selected')}
-                    </div>
-                  )}
+                {/* Icon */}
+                <div style={{
+                  width: 64, height: 64,
+                  borderRadius: '50%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: isSelected ? roleInfo.gradient : 'var(--accent-soft)',
+                  margin: '0 auto 20px',
+                  boxShadow: isSelected ? '0 8px 24px rgba(255,138,0,0.3)' : 'none',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <Icon size={28} style={{ color: isSelected ? '#fff' : 'var(--accent)' }} />
                 </div>
 
-                {/* Shine Effect */}
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                {/* Name */}
+                <h3 style={{
+                  fontSize: 16, fontWeight: 700,
+                  marginBottom: 8,
+                  color: 'var(--text-primary)',
+                }}>
+                  {t(roleInfo.label)}
+                </h3>
+
+                {/* Description */}
+                <p style={{
+                  fontSize: 11, color: 'var(--text-muted)',
+                  margin: 0, lineHeight: 1.5,
+                }}>
+                  {roleInfo.description}
+                </p>
+
+                {/* Selected badge */}
+                {isSelected && (
+                  <div style={{
+                    marginTop: 16,
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '4px 14px',
+                    borderRadius: 20,
+                    background: 'var(--accent)',
+                    color: '#fff',
+                    fontSize: 11, fontWeight: 700,
+                  }}>
+                    <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />
+                    {t('roles.selected')}
+                  </div>
+                )}
+
+                {/* Hover indicator */}
+                {isHovered && !isSelected && (
+                  <div style={{
+                    position: 'absolute', bottom: 16, left: '50%', transform: 'translateX(-50%)',
+                    fontSize: 10, color: 'var(--accent)',
+                    fontWeight: 600,
+                  }}>
+                    Click to enter →
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Error Message */}
         {error && (
-          <div className="mt-8 p-4 rounded-lg bg-red-900/40 border border-red-500/50 flex items-center text-red-100">
-            <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-            <span className="text-sm font-medium">{error}</span>
+          <div style={{
+            marginTop: 24,
+            padding: '10px 14px', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: 10,
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            background: 'rgba(239, 68, 68, 0.08)',
+            fontSize: 12, color: 'var(--danger)',
+          }}>
+            <AlertCircle size={14} style={{ flexShrink: 0 }} />
+            <span>{error}</span>
           </div>
         )}
       </main>

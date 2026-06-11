@@ -1,0 +1,87 @@
+/* Design System CSS Variables */
+:root {
+  /* Primary Colors */
+  --primary: #ff8a00; /* accent/orange */
+  --primary-hover: #ea580c;
+  --primary-soft: rgba(255, 138, 0, 0.1);
+  --primary-glow: rgba(255, 138, 0, 0.3);
+
+  /* Dark Mode Colors */
+  --bg-base: #09090b;
+  --bg-surface: #121214;
+  --bg-elevated: #18181b;
+  --bg-hover: #27272a;
+  --border-color: #27272a;
+  --text-primary: #fafafa;
+  --text-secondary: #a1a1aa;
+  --text-muted: #52525b;
+
+  /* Light Mode Overrides */
+  --bg-base-light: #fafafa;
+  --bg-surface-light: #ffffff;
+  --bg-elevated-light: #f4f4f5;
+  --bg-hover-light: #e4e4e7;
+  --border-color-light: #e4e4e7;
+  --text-primary-light: #09090b;
+  --text-secondary-light: #52525b;
+  --text-muted-light: #a1a1aa;
+
+  /* Spacing */
+  --gap-sm: 4px;
+  --gap-md: 8px;
+  --gap-lg: 12px;
+  --gap-xl: 16px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+  --shadow-glow: 0 0 30px var(--primary-soft);
+
+  /* Layout dimensions */
+  --sidebar-width: 280px;
+  --header-height: 64px;
+}
+
+/* Light mode overrides */
+html.light, body.light {
+  --bg-base: var(--bg-base-light);
+  --bg-surface: var(--bg-surface-light);
+  --bg-elevated: var(--bg-elevated-light);
+  --bg-hover: var(--bg-hover-light);
+  --border-color: var(--border-color-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --text-muted: var(--text-muted-light);
+}
+
+/* Dark mode already uses default vars */
+
+/* Glassmorphism utilities */
+.glass {
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.glass-card {
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04);
+  border-radius: var(--radius-lg);
+}
+
+.glass-card:hover {
+  border-color: var(--primary-soft);
+  box-shadow: var(--shadow-glow), 0 4px 24px rgba(0,0,0,0.3);
+}

@@ -1,13 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Building2, ChevronDown, Check } from 'lucide-react';
+// src/components/CinemaSelector.tsx
+
+import React, { useEffect, useState, useRef } from 'react';
 import { useCinema } from '../contexts/CinemaContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { Building2, ChevronDown, Loader2 } from 'lucide-react';
 
 const CinemaSelector: React.FC = () => {
-  const { theme } = useTheme();
+  const { managedCinemas, activeCinemaId, setActiveCinemaId, loading } = useCinema();
   const { t } = useTranslation();
-  const { managedCinemas, activeCinemaId, setActiveCinemaId, activeCinemaName } = useCinema();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -21,49 +21,64 @@ const CinemaSelector: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (managedCinemas.length <= 1) return null;
+  const activeCinema = managedCinemas.find(c => c.cinemaId === activeCinemaId);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
+        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading...</span>
+      </div>
+    );
+  }
+
+  if (managedCinemas.length === 0) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)' }}>
+        <Building2 size={14} style={{ color: 'var(--text-muted)' }} />
+        <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>No cinemas</span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all border ${
-          theme === 'dark'
-            ? 'bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-800 hover:border-red-600/50'
-            : theme === 'modern'
-              ? 'bg-[#0E0A20]/60 border-indigo-500/30 text-white hover:bg-indigo-500/20 hover:border-cyan-500/50 shadow-sm shadow-indigo-500/10 backdrop-blur-xl'
-              : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-red-600/30'
-        }`}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200"
+        style={{
+          background: 'var(--bg-elevated)',
+          border: `1px solid ${isOpen ? 'var(--accent)' : 'var(--border-color)'}`,
+        }}
       >
-        <div className={`p-1 rounded-md ${
-          theme === 'modern' ? 'bg-cyan-500/20 text-cyan-400' : 'bg-red-600/10 text-red-600'
-        }`}>
-          <Building2 className="w-4 h-4" />
-        </div>
-        <span className="hidden md:inline-block text-xs font-bold truncate max-w-[150px]">
-          {activeCinemaName || t('Select Cinema')}
+        <Building2 size={14} style={{ color: 'var(--accent)' }} />
+        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary)', fontFamily: "'Inter', sans-serif" }}>
+          {activeCinema ? activeCinema.cinemaName : t('Select Cinema')}
         </span>
-        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+        <ChevronDown
+          size={12}
+          style={{
+            color: 'var(--text-muted)',
+            transition: 'transform 0.2s ease',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
       </button>
 
       {isOpen && (
-        <div className={`absolute right-0 mt-2 w-64 rounded-xl shadow-2xl overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200 ${
-          theme === 'dark'
-            ? 'bg-gray-900 border border-gray-700'
-            : theme === 'modern'
-              ? 'bg-[#0f172a]/95 border border-indigo-500/20 backdrop-blur-2xl'
-              : 'bg-white border border-gray-200'
-        }`}>
-          <div className={`px-4 py-2 border-b ${
-            theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'
-          }`}>
-            <p className={`text-[10px] uppercase font-black tracking-widest ${
-              theme === 'modern' ? 'text-cyan-400' : 'text-gray-400'
-            }`}>
-              {t('Switch Cinema')}
-            </p>
+        <div
+          className="absolute right-0 mt-2 py-1 rounded-xl z-50"
+          style={{
+            minWidth: 240,
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-color)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}
+        >
+          <div style={{ padding: '8px 12px 4px', fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            {t('Select Cinema')}
           </div>
-          <div className="py-1 max-h-64 overflow-y-auto custom-scrollbar">
+          <div style={{ maxHeight: 200, overflowY: 'auto' }}>
             {managedCinemas.map((cinema) => (
               <button
                 key={cinema.cinemaId}
@@ -71,22 +86,19 @@ const CinemaSelector: React.FC = () => {
                   setActiveCinemaId(cinema.cinemaId);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-3 text-sm flex items-center justify-between transition-colors ${
-                  activeCinemaId === cinema.cinemaId
-                    ? theme === 'modern'
-                      ? 'bg-cyan-500/10 text-cyan-400'
-                      : 'bg-red-50 text-red-600'
-                    : theme === 'dark'
-                      ? 'text-gray-300 hover:bg-gray-800'
-                      : theme === 'modern'
-                        ? 'text-white hover:bg-indigo-500/10'
-                        : 'text-gray-700 hover:bg-gray-50'
-                }`}
+                className="w-full flex items-center gap-3 px-3 py-2.5 transition-all duration-150"
+                style={{
+                  background: cinema.cinemaId === activeCinemaId ? 'rgba(255, 138, 0, 0.08)' : 'transparent',
+                  borderLeft: cinema.cinemaId === activeCinemaId ? '2px solid var(--accent)' : '2px solid transparent',
+                }}
+                onMouseEnter={e => { if (cinema.cinemaId !== activeCinemaId) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                onMouseLeave={e => { if (cinema.cinemaId !== activeCinemaId) e.currentTarget.style.background = 'transparent'; }}
               >
-                <span className="font-bold truncate pr-2">{cinema.cinemaName}</span>
-                {activeCinemaId === cinema.cinemaId && (
-                  <Check className="w-4 h-4 shrink-0" />
-                )}
+                <Building2 size={14} style={{ color: cinema.cinemaId === activeCinemaId ? 'var(--accent)' : 'var(--text-muted)' }} />
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{cinema.cinemaName}</div>
+                  <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{cinema.cinemaId}</div>
+                </div>
               </button>
             ))}
           </div>

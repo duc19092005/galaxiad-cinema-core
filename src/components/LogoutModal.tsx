@@ -1,7 +1,8 @@
 // src/components/LogoutModal.tsx
+
 import React from 'react';
-import { X, LogOut, Loader2, AlertCircle } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import { AlertTriangle, Loader2, X } from 'lucide-react';
 
 interface LogoutModalProps {
   isOpen: boolean;
@@ -11,129 +12,61 @@ interface LogoutModalProps {
   error?: string | null;
 }
 
-const LogoutModal: React.FC<LogoutModalProps> = ({
-  isOpen,
-  onClose,
-  onConfirm,
-  loading = false,
-  error = null,
-}) => {
-  const { theme } = useTheme();
+const LogoutModal: React.FC<LogoutModalProps> = ({ isOpen, onClose, onConfirm, loading, error }) => {
+  const { t } = useTranslation();
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div
-        className={`relative w-full max-w-md rounded-xl border shadow-2xl transition-all ${theme === 'dark'
-          ? 'bg-gray-900 border-gray-800'
-          : theme === 'modern'
-            ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20 shadow-sm'
-            : 'bg-white border-gray-200'
-          }`}
-      >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-          }`}>
+    <div className="modal-overlay" onClick={loading ? undefined : onClose}>
+      <div className="modal-content" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
           <div className="flex items-center gap-3">
-            <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${theme === 'modern'
-              ? 'bg-gradient-to-br from-red-600 to-red-800'
-              : 'bg-red-600'
-              }`}>
-              <LogOut className="w-6 h-6 text-white" />
+            <div style={{
+              width: 40, height: 40, borderRadius: '50%',
+              background: 'rgba(239, 68, 68, 0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
             </div>
-            <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-              }`}>
-              Confirm Logout
-            </h2>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                {t('Confirm Logout')}
+              </h3>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                {t('Are you sure you want to logout?')}
+              </p>
+            </div>
           </div>
           {!loading && (
-            <button
-              onClick={onClose}
-              className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                ? 'hover:bg-gray-800 text-gray-400'
-                : theme === 'modern'
-                  ? 'hover:bg-[#0f172a]/30 backdrop-blur-xl text-white font-medium'
-                  : 'hover:bg-gray-100 text-gray-600'
-                }`}
-            >
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="btn-icon">
+              <X size={18} />
             </button>
           )}
         </div>
 
-        {/* Content */}
-        <div className="p-6">
-          {error && (
-            <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark'
-              ? 'bg-red-900/40 border-red-500/50 text-red-100'
-              : theme === 'modern'
-                ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                : 'bg-red-50 border-red-200 text-red-800'
-              }`}>
-              <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-              <span className="text-sm font-medium">{error}</span>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <p className={`text-base ${theme === 'dark' ? 'text-gray-300' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-700 dark:text-gray-300 modern:text-gray-200'
-              }`}>
-              Are you sure you want to log out of the system?
-            </p>
-            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-500'
-              }`}>
-              After logging out, you will need to log back in to continue using the service.
-            </p>
+        {error && (
+          <div style={{
+            margin: '0 24px', padding: '10px 14px', borderRadius: 'var(--radius-md)',
+            background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
+            color: 'var(--danger)', fontSize: 12,
+          }}>
+            {error}
           </div>
-        </div>
+        )}
 
-        {/* Footer */}
-        <div className={`flex justify-end gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-          }`}>
-          <button
-            onClick={onClose}
-            disabled={loading}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${loading
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-              } ${theme === 'dark'
-                ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                : theme === 'modern'
-                  ? 'bg-[#1F173D]/60 hover:bg-[#1F173D]/50 text-white font-medium'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-              }`}
-          >
-            Cancel
+        <div className="modal-footer">
+          <button onClick={onClose} disabled={loading} className="btn btn-secondary">
+            {t('Cancel')}
           </button>
-          <button
-            onClick={onConfirm}
-            disabled={loading}
-            className={`px-6 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${loading
-              ? 'opacity-50 cursor-not-allowed'
-              : ''
-              } ${theme === 'modern'
-                ? 'bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white'
-                : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
-          >
+          <button onClick={onConfirm} disabled={loading} className="btn btn-danger flex items-center gap-2">
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Đang đăng xuất...</span>
+                <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                {t('Logging out...')}
               </>
             ) : (
-              <>
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </>
+              t('Logout')
             )}
           </button>
         </div>

@@ -1,981 +1,873 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+// src/features/admin/AdminPage.tsx
+// Complete redesign with dark cinema theme
+
+import React, { useEffect, useState } from 'react';
 import {
-    Users,
-    LayoutDashboard,
-    LogOut,
-    ChevronDown,
-    UserCircle,
-    Sun,
-    Moon,
-    Sparkles,
-    Loader2,
-    Clock,
-    CheckCircle,
-    UserCog,
-    ShieldCheck,
-    Filter,
-    ArrowLeftRight,
-    ArrowUpDown,
-    SortAsc,
-    SortDesc,
-    Menu,
-    XCircle,
-    History,
+  LayoutDashboard,
+  Users,
+  Building2,
+  ShieldAlert,
+  Activity,
+  Film,
+  Calendar,
+  DollarSign,
+  Ticket,
+  Search,
+  Loader2,
+  RefreshCw,
+  UserCircle,
+  CheckCircle,
+  XCircle,
+  UserPlus,
+  X,
 } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
+import { useTranslation } from 'react-i18next';
+import AppSidebar from '../../components/AppSidebar';
+import type { SidebarSection } from '../../components/AppSidebar';
+import Header from '../../components/Header';
+import ManagementDashboard from '../../components/ManagementDashboard';
+import TransferRightsView from './components/TransferRightsView';
 import { adminApi } from '../../api/adminApi';
 import { authApi } from '../../api/authApi';
-import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto } from '../../types/admin.types';
-import { showSuccess, showError } from '../../utils/ToastUtils';
-import LogoutModal from '../../components/LogoutModal';
+import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
-import TransferRightsView from './components/TransferRightsView';
-import { useTranslation } from 'react-i18next';
-import Cookies from 'js-cookie';
-import { formatVietnamDateTime } from '../../utils/dateTimeUtils';
+import CinemaAssignModal from '../../components/CinemaAssignModal';
+import { showSuccess, showError } from '../../utils/ToastUtils';
+import { VouchersSection } from './components/VouchersSection';
 
-// =============================================
-// SIDEBAR COMPONENT
-// =============================================
-interface SidebarProps {
-    activeTab: 'users' | 'jobs' | 'transfer' | 'audit';
-    onTabChange: (tab: 'users' | 'jobs' | 'transfer' | 'audit') => void;
-    isOpen: boolean;
-    onClose: () => void;
-}
+// ============================================
+// CONSTANTS
+// ============================================
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, isOpen, onClose }) => {
-    const { theme, setTheme } = useTheme();
-    const { t } = useTranslation();
-    const navigate = useNavigate();
-
-    const menuItems = [
-        { id: 'users', label: t('User Management'), icon: Users },
-        { id: 'audit', label: t('Activity Logs'), icon: History },
-        { id: 'jobs', label: t('Background Jobs'), icon: Clock },
-        { id: 'transfer', label: t('Transfer Rights'), icon: Sparkles },
-    ] as const;
-
-    const storedUserStr = localStorage.getItem('user_info');
-    const user = storedUserStr ? JSON.parse(storedUserStr) : null;
-
-    const handleLogout = async () => {
-        try {
-            await authApi.logout();
-        } catch (e) { }
-        localStorage.removeItem('user_info');
-        import('js-cookie').then(Cookies => Cookies.default.remove('X-Access-Token'));
-        navigate('/login');
-    };
-
-    return (
-        <aside className={`fixed top-0 left-0 h-full w-72 z-[110] border-r transition-all duration-500 cubic-bezier(0.4, 0, 0.2, 1) transform ${isOpen ? 'translate-x-0 scale-100' : '-translate-x-full lg:translate-x-0'
-            } ${theme === 'dark' ? 'bg-black border-gray-800' :
-                theme === 'modern' ? 'bg-[#030712] border-indigo-500/20 shadow-[10px_0_30px_rgba(0,0,0,0.5)]' :
-                    'bg-white border-gray-100'
-            } flex flex-col`}>
-            {/* Sidebar Header */}
-            <div className={`p-6 flex items-center justify-between border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'
-                }`}>
-                <div
-                    className={`text-xl font-black tracking-widest cursor-pointer transition-all active:scale-95 ${theme === 'modern' ? 'text-white' : 'text-red-600'}`}
-                    onClick={() => navigate('/home')}
-                >
-                    CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
-                </div>
-                <button
-                    onClick={onClose}
-                    className={`lg:hidden p-2 rounded-xl transition-all active:scale-90 ${theme === 'dark' || theme === 'modern' ? 'text-gray-400 hover:text-white hover:bg-white/10' : 'text-gray-500 hover:bg-gray-100'}`}
-                >
-                    <XCircle className="w-6 h-6" />
-                </button>
-            </div>
-
-            {/* Sidebar Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-
-                {/* -------------------- MOBILE ONLY VIEW -------------------- */}
-                {user && (
-                    <div className="lg:hidden space-y-4 pb-4 border-b border-gray-500/10">
-                        <div className="flex items-center gap-4 mb-2 p-1">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
-                                <UserCircle className="w-6 h-6 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className={`text-[10px] uppercase font-black tracking-widest leading-none mb-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('ĐĂNG NHẬP BỞI')}</p>
-                                <p className={`text-sm font-black truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user.username}</p>
-                            </div>
-                        </div>
-                        <button onClick={() => { navigate('/account'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' : theme === 'modern' ? 'text-white hover:bg-indigo-500/10' : 'text-gray-700 hover:bg-gray-100'}`}>
-                            <UserCircle className="w-5 h-5 text-indigo-400" />
-                            <span className="font-bold">{t('Thông Tin Tài Khoản')}</span>
-                        </button>
-                        {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
-                            <button onClick={() => { navigate('/role-selection'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-green-500 ${theme === 'dark' ? 'hover:bg-gray-800/50' : theme === 'modern' ? 'hover:bg-green-500/10' : 'hover:bg-green-50'}`}>
-                                <LayoutDashboard className="w-5 h-5" />
-                                <span className="font-bold">Management Hub</span>
-                            </button>
-                        )}
-                        {user.roles && user.roles.length > 1 && (
-                            <button onClick={() => { navigate('/role-selection'); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-blue-500 border-t ${theme === 'dark' ? 'border-gray-800 hover:bg-gray-800/50' : theme === 'modern' ? 'border-indigo-500/20 hover:bg-blue-500/10' : 'border-gray-100 hover:bg-blue-50'}`}>
-                                <ArrowLeftRight className="w-5 h-5" />
-                                <span className="font-bold">{t('Đổi Vai Trò')}</span>
-                            </button>
-                        )}
-                        <button onClick={() => { handleLogout(); onClose(); }} className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 text-red-500 font-bold ${theme === 'dark' ? 'hover:bg-red-500/10' : theme === 'modern' ? 'hover:bg-red-500/10' : 'hover:bg-red-50'}`}>
-                            <LogOut className="w-5 h-5" />
-                            <span>{t('Đăng Xuất')}</span>
-                        </button>
-                    </div>
-                )}
-
-                {/* Navigation Section */}
-                <div className="space-y-4">
-                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
-                        {t('Navigation')}
-                    </h3>
-                    <div className="space-y-2">
-                        {/* Always have a Home button */}
-                        <button
-                            onClick={() => navigate('/home')}
-                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
-                                theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
-                                    'text-gray-700 hover:bg-gray-100'
-                                }`}
-                        >
-                            <LayoutDashboard className="w-5 h-5 text-indigo-400" />
-                            <span className="font-bold">{t('Back To Home')}</span>
-                        </button>
-
-                        <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/10' : 'border-gray-100'}`}></div>
-
-                        {menuItems.map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    onTabChange(item.id);
-                                    if (window.innerWidth < 1024) onClose();
-                                }}
-                                className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${activeTab === item.id
-                                    ? theme === 'modern'
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                                        : 'bg-red-600 text-white shadow-lg shadow-red-600/20'
-                                    : theme === 'dark'
-                                        ? 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                                        : theme === 'modern'
-                                            ? 'text-white/70 hover:bg-white/5 hover:text-white'
-                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                                    }`}
-                            >
-                                <item.icon className={`w-5 h-5 ${activeTab === item.id ? 'text-white' : 'text-indigo-400'}`} />
-                                <span className="font-bold">{item.label}</span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Account Actions Section (Desktop only) */}
-                <div className="hidden lg:block space-y-4">
-                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
-                        {t('System')}
-                    </h3>
-                    <div className="space-y-2">
-                        <button
-                            onClick={() => navigate('/account')}
-                            className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800' :
-                                theme === 'modern' ? 'text-white hover:bg-indigo-500/10' :
-                                    'text-gray-700 hover:bg-gray-100'
-                                }`}
-                        >
-                            <UserCircle className="w-5 h-5 text-cyan-400" />
-                            <span className="font-bold">{t('Account Info')}</span>
-                        </button>
-                    </div>
-                </div>
-
-                {/* Preferences Section (Mobile Only) */}
-                <div className="lg:hidden space-y-4">
-                    <h3 className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-500'}`}>
-                        {t('Preferences')}
-                    </h3>
-                    <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between px-2">
-                            <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Language')}</span>
-                            <LanguageSwitcher />
-                        </div>
-                        <div className="flex items-center justify-between px-2">
-                            <span className={`text-sm font-bold tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{t('Theme')}</span>
-                            <div className="flex gap-2">
-                                {(['light', 'dark', 'modern'] as const).map((tMode) => (
-                                    <button
-                                        key={tMode}
-                                        onClick={() => setTheme(tMode)}
-                                        className={`p-2.5 rounded-xl transition-all transform active:scale-90 ${theme === tMode ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/40' : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20'}`}
-                                        title={`Switch to ${tMode}`}
-                                    >
-                                        {tMode === 'light' ? <Sun className="w-4 h-4" /> : tMode === 'dark' ? <Moon className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Sidebar Footer (Desktop only) */}
-            <div className={`hidden lg:block p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-100'}`}>
-                <button
-                    onClick={() => navigate('/role-selection')}
-                    className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all active:scale-95 ${theme === 'dark' ? 'text-blue-400 hover:bg-blue-500/10' :
-                        theme === 'modern' ? 'text-cyan-400 hover:bg-cyan-500/10' :
-                            'text-blue-600 hover:bg-blue-50'
-                        }`}
-                >
-                    <ArrowLeftRight className="w-5 h-5" />
-                    <span className="font-bold">{t('Switch Role')}</span>
-                </button>
-            </div>
-
-        </aside>
-    );
+const statsCardStyle: React.CSSProperties = {
+  padding: '20px 24px',
+  background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+  backdropFilter: 'blur(16px) saturate(1.2)',
+  WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
+  border: '1px solid rgba(255,255,255,0.06)',
+  borderRadius: 16,
+  boxShadow: '0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
 };
 
-// =============================================
+// ============================================
+// STAT CARD COMPONENT
+// ============================================
+const StatCard: React.FC<{
+  label: string;
+  value: string;
+  trend?: string;
+  icon: React.ReactNode;
+  color: string;
+  delay?: number;
+}> = ({ label, value, trend, icon, color, delay = 0 }) => (
+  <div
+    style={{
+      ...statsCardStyle,
+      animation: 'fadeIn 0.4s ease-out forwards',
+      opacity: 0,
+      animationDelay: `${delay}ms`,
+    }}
+  >
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+      <div style={{
+        width: 44, height: 44, borderRadius: 12,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `${color}1A`,
+        color,
+      }}>
+        {icon}
+      </div>
+      {trend && (
+        <span style={{
+          fontSize: 10, color: 'var(--text-muted)',
+          fontFamily: "'JetBrains Mono', monospace",
+          background: 'rgba(255,255,255,0.03)',
+          padding: '2px 10px', borderRadius: 999,
+        }}>
+          {trend}
+        </span>
+      )}
+    </div>
+    <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 6px', fontWeight: 500 }}>{label}</p>
+    <p style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
+  </div>
+);
+
+// ============================================
+// STATUS BADGE
+// ============================================
+const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
+  const color =
+    status === 'Active' || status === 'Success' ? 'var(--success)' :
+    status === 'Pending' || status === 'Pending' ? '#f59e0b' :
+    'var(--danger)';
+
+  const bg =
+    status === 'Active' || status === 'Success' ? 'rgba(34, 197, 94, 0.1)' :
+    status === 'Pending' ? 'rgba(245, 158, 11, 0.1)' :
+    'rgba(239, 68, 68, 0.1)';
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      padding: '2px 10px', borderRadius: 999,
+      fontSize: 11, fontWeight: 600,
+      fontFamily: "'JetBrains Mono', monospace",
+      background: bg, color,
+    }}>
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
+      {status}
+    </span>
+  );
+};
+
+// Database-backed real Admin Page
+
+// ============================================
+// SECTION COMPONENTS
+// ============================================
+
+interface UsersSectionProps {
+  users: AdminUserDto[];
+  loading: boolean;
+  onUpdateStatus: (userId: string, newStatus: number) => void;
+  onUpdateRole: (userId: string, email: string, roles: string) => void;
+  onAssignCinema: (userId: string, email: string) => void;
+  onCreateUser: () => void;
+}
+
+const UsersSection: React.FC<UsersSectionProps> = ({
+  users,
+  loading,
+  onUpdateStatus,
+  onUpdateRole,
+  onAssignCinema,
+  onCreateUser,
+}) => {
+  const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filtered = users.filter(u =>
+    u.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  return (
+    <div className="animate-in">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('User Management')}</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('Manage system users and their roles')}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div className="relative">
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder={t('Search users...')}
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="input"
+              style={{ paddingLeft: 32, width: 240 }}
+            />
+          </div>
+          <button
+            onClick={onCreateUser}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+          >
+            <UserPlus size={16} />
+            {t('Add User')}
+          </button>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="table-container">
+        {loading ? (
+          <div className="state-center" style={{ minHeight: '30vh' }}>
+            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+              {t('Loading users...')}
+            </p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Name')}</th>
+                <th>{t('Email')}</th>
+                <th>{t('Role')}</th>
+                <th>{t('Status')}</th>
+                <th style={{ width: 300 }}>{t('Actions')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((user) => (
+                <tr key={user.userId}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: 'var(--accent-soft)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <UserCircle size={16} style={{ color: 'var(--accent)' }} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{user.fullName || user.userName || 'N/A'}</span>
+                    </div>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{user.userEmail}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(user.userRoles || '').split(',').filter(Boolean).map((role, idx) => (
+                        <span key={idx} className={`badge ${role.trim() === 'Admin' ? 'badge-accent' : role.trim() === 'MovieManager' || role.trim() === 'TheaterManager' ? 'badge-warning' : 'badge-success'}`}>
+                          {role.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <StatusBadge status={user.accountStatus === 1 ? 'Active' : 'Locked'} />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {user.accountStatus === 1 ? (
+                        <button
+                          onClick={() => onUpdateStatus(user.userId, 2)}
+                          className="btn"
+                          style={{
+                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                            borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--danger)',
+                            background: 'rgba(239, 68, 68, 0.05)',
+                          }}
+                        >
+                          {t('Block')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onUpdateStatus(user.userId, 1)}
+                          className="btn"
+                          style={{
+                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                            borderColor: 'rgba(34, 197, 94, 0.4)', color: 'var(--success)',
+                            background: 'rgba(34, 197, 94, 0.05)',
+                          }}
+                        >
+                          {t('Activate')}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onUpdateRole(user.userId, user.userEmail, user.userRoles)}
+                        className="btn"
+                        style={{
+                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                          borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8',
+                          background: 'rgba(99, 102, 241, 0.05)',
+                        }}
+                      >
+                        {t('Role')}
+                      </button>
+                      <button
+                        onClick={() => onAssignCinema(user.userId, user.userEmail)}
+                        className="btn"
+                        style={{
+                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                          borderColor: 'rgba(236, 72, 153, 0.4)', color: '#f472b6',
+                          background: 'rgba(236, 72, 153, 0.05)',
+                        }}
+                      >
+                        {t('Assign Cinema')}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                    {t('No users found.')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
+
+
+interface AuditSectionProps {
+  auditLogs: AuditLogDto[];
+  loading: boolean;
+  onRefresh: () => void;
+}
+
+const AuditSection: React.FC<AuditSectionProps> = ({ auditLogs, loading, onRefresh }) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="animate-in">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('Audit Log')}</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('System activity and security events')}</p>
+        </div>
+        <button className="btn btn-secondary" onClick={onRefresh} disabled={loading}>
+          <RefreshCw size={14} style={{ marginRight: 6, animation: loading ? 'spin 1s linear infinite' : undefined }} />
+          {t('Refresh')}
+        </button>
+      </div>
+
+      <div className="table-container">
+        {loading ? (
+          <div className="state-center" style={{ minHeight: '30vh' }}>
+            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+              {t('Loading audit logs...')}
+            </p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Time')}</th>
+                <th>{t('Action')}</th>
+                <th>{t('Target')}</th>
+                <th>{t('Actor')}</th>
+                <th>{t('Note')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditLogs.map((log) => {
+                const actionColor =
+                  log.action === 'Delete' ? 'var(--danger)' :
+                  log.action === 'Create' ? 'var(--success)' :
+                  '#3b82f6';
+                const actionBg =
+                  log.action === 'Delete' ? 'rgba(239, 68, 68, 0.1)' :
+                  log.action === 'Create' ? 'rgba(34, 197, 94, 0.1)' :
+                  'rgba(59, 130, 246, 0.1)';
+
+                return (
+                  <tr key={log.auditLogId}>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                    </td>
+                    <td>
+                      <span className="badge" style={{ color: actionColor, background: actionBg, borderColor: `${actionColor}33`, fontWeight: 600 }}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{log.entityName || 'N/A'}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                          {log.entityType}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{log.actorName}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
+                          {log.isAdminAction ? t('Admin Action') : log.actorPrimaryRole}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+                      {log.description}
+                    </td>
+                  </tr>
+                );
+              })}
+              {auditLogs.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                    {t('No audit logs found.')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ============================================
 // MAIN ADMIN PAGE
-// =============================================
+// ============================================
 
 const AdminPage: React.FC = () => {
-    const navigate = useNavigate();
-    const { theme, setTheme } = useTheme();
-    const { t } = useTranslation();
+  const { t } = useTranslation();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-    const [activeTab, setActiveTab] = useState<'users' | 'jobs' | 'transfer' | 'audit'>('users');
-    const [users, setUsers] = useState<AdminUserDto[]>([]);
-    const [jobs, setJobs] = useState<GroupedScheduleJobDto[]>([]);
-    const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
-    const [loading, setLoading] = useState(true);
+  // Real data states
+  const [users, setUsers] = useState<AdminUserDto[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
 
-    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-    const [logoutLoading, setLogoutLoading] = useState(false);
-    const [logoutError, setLogoutError] = useState<string | null>(null);
+  // Modals state
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [cinemaModalOpen, setCinemaModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUserEmail, setSelectedUserEmail] = useState('');
+  const [selectedUserRoles, setSelectedUserRoles] = useState('');
 
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
-    const themeDropdownRef = useRef<HTMLDivElement>(null);
-    const dropdownRef = useRef<HTMLDivElement>(null);
-    const [user, setUser] = useState<{ username: string; roles?: string[]; userId?: string } | null>(null);
+  // Create User Modal
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [createUserSubmitting, setCreateUserSubmitting] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    userName: '',
+    userEmail: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+  });
 
-    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-    const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
-    const [selectedUserId, setSelectedUserId] = useState<string>('');
-    const [selectedUserEmail, setSelectedUserEmail] = useState<string>('');
-    const [selectedUserRoles, setSelectedUserRoles] = useState<string>('');
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await adminApi.getUsers();
+      setUsers(res.data || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
-    const [activeActionMenu, setActiveActionMenu] = useState<string | null>(null);
+  const fetchAuditLogs = async () => {
+    setAuditLogsLoading(true);
+    try {
+      const res = await adminApi.getRecentAuditLogs(50);
+      setAuditLogs(res.data || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setAuditLogsLoading(false);
+    }
+  };
 
-    // Background Jobs Filter & Sort
-    const [jobCategoryFilter, setJobCategoryFilter] = useState<string>('All');
-    const [jobSortOrder, setJobSortOrder] = useState<'asc' | 'desc'>('desc');
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+    } else if (activeTab === 'audit' || activeTab === 'dashboard') {
+      fetchAuditLogs();
+    }
+  }, [activeTab]);
 
-    // Click outside handler for action menu and dropdowns
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            const target = event.target as HTMLElement;
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
-            // Handle activeActionMenu (the table dropdown)
-            if (activeActionMenu && !target.closest('.action-menu-container')) {
-                setActiveActionMenu(null);
-            }
+  const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
+    try {
+      await adminApi.updateUserStatus(userId, newStatus);
+      showSuccess(t('toast.userStatusUpdated'));
+      fetchUsers();
+    } catch (err: any) {
+      showError(err.response?.data?.message || t('toast.userStatusUpdateFailed'));
+    }
+  };
 
-            // Handle header dropdowns
-            if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsDropdownOpen(false);
-            if (themeDropdownRef.current && !themeDropdownRef.current.contains(target)) setIsThemeDropdownOpen(false);
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [activeActionMenu]);
+  const handleOpenRoleModal = (userId: string, email: string, roles: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(email);
+    setSelectedUserRoles(roles);
+    setRoleModalOpen(true);
+  };
 
-    useEffect(() => {
-        const storedUser = localStorage.getItem('user_info');
-        if (!storedUser) { navigate('/login'); return; }
-        const parsed = JSON.parse(storedUser);
-        if (!parsed.roles?.includes('Admin')) { navigate('/role-selection'); return; }
-        setUser(parsed);
-    }, [navigate]);
+  const handleOpenCinemaModal = (userId: string, email: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(email);
+    setCinemaModalOpen(true);
+  };
 
-    useEffect(() => {
-        fetchData();
-    }, [activeTab]);
+  const handleRoleUpdateSuccess = () => {
+    fetchUsers();
+  };
 
-    const fetchData = async () => {
-        if (activeTab === 'transfer') {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        try {
-            if (activeTab === 'users') {
-                const res = await adminApi.getUsers();
-                setUsers(res.data || []);
-            } else if (activeTab === 'jobs') {
-                const res = await adminApi.getScheduleJobs();
-                setJobs(res.data || []);
-            } else if (activeTab === 'audit') {
-                const res = await adminApi.getRecentAuditLogs(50);
-                setAuditLogs(res.data || []);
-            }
-        } catch (err) {
-            showError(t('toast.loadDataFailed'));
-        } finally {
-            setLoading(false);
-        }
-    };
+  const handleCinemaAssignSuccess = () => {
+    fetchUsers();
+  };
 
-    const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
-        try {
-            await adminApi.updateUserStatus(userId, newStatus);
-            showSuccess(t('toast.userStatusUpdated'));
-            fetchData();
-        } catch (err: any) {
-            showError(err.response?.data?.message || t('toast.userStatusUpdateFailed'));
-        }
-    };
+  const handleOpenCreateUser = () => {
+    setCreateUserForm({ userName: '', userEmail: '', password: '', confirmPassword: '', fullName: '' });
+    setCreateUserModalOpen(true);
+  };
 
-    const handleUpdateUserRole = (userId: string, email: string, roles: string) => {
-        setSelectedUserId(userId);
-        setSelectedUserEmail(email);
-        setSelectedUserRoles(roles);
-        setIsRoleModalOpen(true);
-    };
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (createUserForm.password !== createUserForm.confirmPassword) {
+      showError('Passwords do not match.');
+      return;
+    }
+    if (createUserForm.password.length < 6) {
+      showError('Password must be at least 6 characters.');
+      return;
+    }
+    setCreateUserSubmitting(true);
+    try {
+      const res = await authApi.regularRegister({
+        userName: createUserForm.userName,
+        userEmail: createUserForm.userEmail,
+        userPassword: createUserForm.password,
+        userRepassword: createUserForm.confirmPassword,
+        identityCode: '',
+        phoneNumber: '',
+        dateOfBirth: new Date(Date.now() - 20 * 365.25 * 24 * 3600 * 1000).toISOString(),
+      });
+      if (res.isSuccess) {
+        showSuccess('User account created successfully!');
+        setCreateUserModalOpen(false);
+        fetchUsers();
+      } else {
+        showError((res as any).message || 'Failed to create user.');
+      }
+    } catch (err: any) {
+      showError(err.response?.data?.message || 'Failed to create user account.');
+    } finally {
+      setCreateUserSubmitting(false);
+    }
+  };
 
-    const handleRoleUpdateSuccess = (updatedUserId: string) => {
-        if (updatedUserId === user?.userId) {
-            showSuccess(t('toast.rolesRefreshLogin'));
-            handleLogoutConfirm();
-        } else {
-            fetchData();
-        }
-    };
+  const sidebarSections: SidebarSection[] = [
+    {
+      items: [
+        { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
+        { id: 'users', label: t('Users'), icon: <Users size={18} /> },
+        { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
+        { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
+        { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
+      ],
+    },
+  ];
 
-    const handleLogoutConfirm = async () => {
-        setLogoutLoading(true);
-        try {
-            await authApi.logout();
-            localStorage.removeItem('user_info');
-            Cookies.remove('X-Access-Token');
-            navigate('/login');
-        } catch (error) {
-            setLogoutError('Logout failed.');
-        } finally {
-            setLogoutLoading(false);
-        }
-    };
-
-    const formatDate = formatVietnamDateTime;
-
-    return (
-        <div className={`min-h-screen font-sans transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-gradient-to-br from-[#0D081D] via-[#050A14] to-[#12081C] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            <Sidebar activeTab={activeTab} onTabChange={setActiveTab} isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-
-            {isSidebarOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-[55] lg:hidden backdrop-blur-sm"
-                    onClick={() => setIsSidebarOpen(false)}
-                />
-            )}
-
-            {/* HEADER */}
-            <header className={`fixed top-0 left-0 right-0 lg:left-72 z-50 backdrop-blur-md border-b h-16 flex items-center justify-between px-4 sm:px-6 shadow-lg transition-colors duration-300 ${theme === 'dark'
-                ? 'bg-black/80 border-gray-800'
-                : theme === 'modern'
-                    ? 'bg-gradient-to-r from-[#0E0A20]/90 shadow-2xl border-indigo-500/30 shadow-sm shadow-indigo-500/10'
-                    : 'bg-white/80 border-gray-200'
-                }`}>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className={`lg:hidden p-2 rounded-lg transition-all active:scale-95 z-[70] ${theme === 'dark' ? 'hover:bg-gray-800 text-white' :
-                            theme === 'modern' ? 'hover:bg-indigo-500/20 text-white' :
-                                'hover:bg-gray-100 text-gray-700'
-                            }`}
-                    >
-                        <Menu className="w-6 h-6" />
-                    </button>
-
-                    <div
-                        className={`flex-shrink-0 ml-4 text-xl sm:text-2xl font-black tracking-widest cursor-pointer transition-all hover:scale-105 active:scale-95 ${theme === 'modern'
-                            ? 'text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-300 to-rose-300 drop-shadow-sm'
-                            : 'text-red-600'
-                            }`}
-                        onClick={() => navigate('/home')}
-                    >
-                        CINEMA<span className={theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}>PRO</span>
-                    </div>
-                </div>
-                <div className="flex-1" />
-
-                <div className="flex items-center gap-1.5 sm:gap-3">
-                    <div className="hidden lg:block">
-                        <LanguageSwitcher />
-                    </div>
-                    <div className="hidden lg:block relative" ref={themeDropdownRef}>
-                        <button
-                            onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${theme === 'dark'
-                                ? 'hover:bg-gray-800 text-gray-300'
-                                : theme === 'modern'
-                                    ? 'hover:bg-indigo-800/40 text-white font-medium'
-                                    : 'hover:bg-gray-100 text-gray-700'
-                                }`}
-                            aria-label="Select theme"
-                        >
-                            {theme === 'dark' ? (
-                                <Moon className="w-5 h-5" />
-                            ) : theme === 'modern' ? (
-                                <Sparkles className="w-5 h-5" />
-                            ) : (
-                                <Sun className="w-5 h-5" />
-                            )}
-                            <span className="hidden sm:inline-block text-sm font-medium">
-                                {theme === 'dark' ? t('Dark Mode') : theme === 'modern' ? t('Modern View') : t('Light Mode')}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isThemeDropdownOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {isThemeDropdownOpen && (
-                            <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark'
-                                ? 'bg-gray-900 border border-gray-700'
-                                : theme === 'modern'
-                                    ? 'bg-gradient-to-br from-[#15102B]/95 to-[#0b061c]/95 border border-indigo-500/30 shadow-sm shadow-indigo-500/10 backdrop-blur-2xl'
-                                    : 'bg-white border border-gray-200'} ${theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20' : ''}'
-                                }`}>
-                                <div className="py-2">
-                                    <div className={`px-4 py-2 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/30 shadow-sm shadow-indigo-500/10' : 'border-gray-200'
-                                        }`}>
-                                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-400'
-                                            }`}>
-                                            {t('Select Theme')}
-                                        </p>
-                                        <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300' : 'text-gray-500'
-                                            }`}>
-                                            {t('Demo - Choose your favorite color tone')}
-                                        </p>
-                                    </div>
-
-                                    <button
-                                        onClick={() => {
-                                            setTheme('light');
-                                            setIsThemeDropdownOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'light'
-                                            ? 'bg-gray-100 text-gray-900'
-                                            : theme === 'dark'
-                                                ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                                : theme === 'modern'
-                                                    ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
-                                                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                            }`}
-                                    >
-                                        <Sun className="w-4 h-4" />
-                                        <div className="flex-1">
-                                            <div className="font-semibold">{t('Light Mode')}</div>
-                                            <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
-                                                }`}>
-                                                {t('Light Interface')}
-                                            </div>
-                                        </div>
-                                        {theme === 'light' && <div className="w-2 h-2 rounded-full bg-red-600" />}
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setTheme('dark');
-                                            setIsThemeDropdownOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark'
-                                            ? 'bg-gray-800 text-white'
-                                            : theme === 'modern'
-                                                ? 'text-white font-medium hover:bg-indigo-800/40 hover:text-white'
-                                                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                            }`}
-                                    >
-                                        <Moon className="w-4 h-4" />
-                                        <div className="flex-1">
-                                            <div className="font-semibold">{t('Dark Mode')}</div>
-                                            <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
-                                                }`}>
-                                                {t('Dark Interface')}
-                                            </div>
-                                        </div>
-                                        {theme === 'dark' && <div className="w-2 h-2 rounded-full bg-red-600" />}
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            setTheme('modern');
-                                            setIsThemeDropdownOpen(false);
-                                        }}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'modern'
-                                            ? 'bg-[#15102B] text-white'
-                                            : theme === 'dark'
-                                                ? 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                                                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                            }`}
-                                    >
-                                        <Sparkles className="w-4 h-4" />
-                                        <div className="flex-1">
-                                            <div className="font-semibold">{t('Modern View')}</div>
-                                            <div className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-indigo-300/70' : 'text-gray-500'
-                                                }`}>
-                                                {t('Web3 Color Tone')}
-                                            </div>
-                                        </div>
-                                        {theme === 'modern' && <div className="w-2 h-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500" />}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="hidden lg:block relative" ref={dropdownRef}>
-                        <button
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className={`flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2 rounded-lg transition-colors outline-none focus:ring-2 shrink-0 ${theme === 'dark' ? 'hover:bg-gray-800 focus:ring-red-600/50' : theme === 'modern' ? 'hover:bg-indigo-500/10 hover:shadow-[0_0_8px_rgba(99,102,241,0.15)] focus:ring-indigo-500/50' : 'hover:bg-gray-100 focus:ring-red-600/50'
-                                }`}
-                        >
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-lg shrink-0 ${theme === 'modern' ? 'bg-gradient-to-br from-indigo-600 to-purple-700 opacity-90 shadow-indigo-500/20' : 'bg-gradient-to-br from-red-600 to-red-800'}`}>
-                                <UserCircle className="w-5 h-5 text-white" />
-                            </div>
-                            <span className={`hidden md:block font-bold text-sm ${theme === 'dark' ? 'text-gray-200' : theme === 'modern' ? 'text-white' : 'text-gray-700'}`}>
-                                {user?.username || 'Guest'}
-                            </span>
-                            <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white/60' : 'text-gray-600'}`} />
-                        </button>
-
-                        {isDropdownOpen && (
-                            <div className={`absolute right-0 mt-2 w-56 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 ${theme === 'dark' ? 'bg-gray-900 border border-gray-700' : theme === 'modern' ? 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20' : 'bg-white border border-gray-200'
-                                }`}>
-                                <div className="py-2">
-                                    <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}>
-                                        <p className={`text-xs uppercase font-bold ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-indigo-400' : 'text-gray-400'}`}>{t('SIGNED IN AS')}</p>
-                                        <p className={`text-sm font-bold truncate ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{user?.username}</p>
-                                    </div>
-
-                                    <button
-                                        onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-indigo-400' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-indigo-400'}`}
-                                    >
-                                        <UserCircle className="w-4 h-4" />{t('header.accountInfo')}
-                                    </button>
-
-                                    <button
-                                        onClick={() => navigate('/role-selection')}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-blue-500' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300 hover:drop-shadow-[0_0_3px_rgba(129,140,248,0.4)]' : 'text-gray-700 hover:bg-gray-100 hover:text-blue-600'
-                                            }`}
-                                    >
-                                        <ArrowLeftRight className="w-4 h-4" />
-                                        {t('header.switchRole')}
-                                    </button>
-
-                                    <div className={`border-t mt-1 ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20' : 'border-gray-200'}`}></div>
-
-                                    <button
-                                        onClick={() => setIsLogoutModalOpen(true)}
-                                        className={`w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors font-bold ${theme === 'dark' ? 'text-red-500 hover:bg-red-900/20' : theme === 'modern' ? 'text-red-400 hover:bg-red-500/20' : 'text-red-600 hover:bg-red-50'
-                                            }`}
-                                    >
-                                        <LogOut className="w-4 h-4" />
-                                        {t('header.logout')}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <button
-                        onClick={() => setIsSidebarOpen(true)}
-                        className={`lg:hidden p-1.5 rounded-full transition-all active:scale-95 ${theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-indigo-500/20' : 'bg-gray-100'
-                            }`}
-                    >
-                        <UserCircle className={`w-6 h-6 ${theme === 'modern' ? 'text-indigo-400' : 'text-red-500'}`} />
-                    </button>
-                </div>
-            </header>
-
-            <main className="pt-24 lg:pl-72 min-h-screen p-4 sm:p-6 w-full overflow-hidden">
-                <div className={`mx-auto w-full max-w-7xl rounded-xl border shadow-sm h-fit ${theme === 'dark' ? 'bg-gray-900 border-gray-800' : theme === 'modern' ? 'bg-[#15102B]/80 border-indigo-500/30 backdrop-blur-xl' : 'bg-white border-gray-200'}`}>
-                    {loading ? (
-                        <div className="p-12 text-center">
-                            <Loader2 className="w-10 h-10 animate-spin mx-auto text-red-600 mb-4" />
-                            <p>Loading data...</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto pb-10 sm:pb-20 custom-scrollbar w-full relative">
-                            {activeTab === 'users' && (
-                                <table className="w-full min-w-[900px] text-center text-sm border-separate border-spacing-0">
-                                    <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
-                                            ? 'bg-gray-950/95 border-gray-800 text-gray-400'
-                                            : theme === 'modern'
-                                                ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
-                                                : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
-                                        }`}>
-                                        <tr>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[250px] text-center">{t('Email')}</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[180px] text-center">{t('Full Name')}</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[150px] text-center">{t('Roles')}</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[120px] text-center">{t('Status')}</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[220px] text-center">{t('Actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
-                                        {users.map(u => (
-                                            <tr key={u.userId} className={`group transition-all duration-300 relative ${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'
-                                                }`}>
-                                                <td className="px-6 py-6 transition-all duration-300">
-                                                    <div className="flex flex-col items-center gap-0.5 text-center">
-                                                        <span className={`font-black text-sm tracking-tight ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 font-bold'}`}>{u.userEmail}</span>
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <span className="text-[9px] opacity-30 font-mono tracking-tighter uppercase">{t('ID')}: {u.userId}</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <span className={`font-medium ${theme === 'dark' || theme === 'modern' ? 'text-gray-300' : 'text-gray-700'}`}>
-                                                        {u.userName || u.fullName || 'N/A'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <div className="flex flex-wrap items-center justify-center gap-1.5 min-w-[120px] mx-auto">
-                                                        {(u.userRoles || '').split(',').map((role, idx) => (
-                                                            <span key={idx} className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border shadow-sm transition-all group-hover:scale-105 ${role.trim() === 'Admin'
-                                                                    ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                                                                    : role.trim() === 'TheaterManager'
-                                                                        ? 'bg-pink-500/10 text-pink-500 border-pink-500/20'
-                                                                        : role.trim() === 'Customer'
-                                                                            ? 'bg-cyan-500/10 text-cyan-500 border-cyan-500/20'
-                                                                            : 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-                                                                }`}>
-                                                                {role.trim()}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    {u.accountStatus === 1 && (
-                                                        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] bg-emerald-500/10 text-emerald-500 font-black border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)] mx-auto">
-                                                            <CheckCircle className="w-3.5 h-3.5" /> {t('Active')}
-                                                        </span>
-                                                    )}
-                                                    {u.accountStatus !== 1 && (
-                                                        <span className="inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-[10px] bg-rose-500/10 text-rose-500 font-black border border-rose-500/20 mx-auto">
-                                                            <XCircle className="w-3.5 h-3.5" /> {t('Locked')} ({u.accountStatus})
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-5 text-center">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        {u.accountStatus === 1 ? (
-                                                            u.userId !== user?.userId && (
-                                                                <button
-                                                                    onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 2); }}
-                                                                    className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
-                                                                            ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20'
-                                                                            : 'bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/20'
-                                                                        }`}
-                                                                >
-                                                                    {t('Block')}
-                                                                </button>
-                                                            )
-                                                        ) : (
-                                                            <button
-                                                                onClick={(e) => { e.stopPropagation(); handleUpdateUserStatus(u.userId, 1); }}
-                                                                className={`px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
-                                                                        ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20'
-                                                                        : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20'
-                                                                    }`}
-                                                            >
-                                                                {t('Activate')}
-                                                            </button>
-                                                        )}
-
-                                                        <div className="relative action-menu-container">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setActiveActionMenu(activeActionMenu === u.userId ? null : u.userId);
-                                                                }}
-                                                                className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${theme === 'modern'
-                                                                        ? 'bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 border border-indigo-500/30'
-                                                                        : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20'
-                                                                    }`}
-                                                            >
-                                                                <UserCog className="w-3.5 h-3.5" />
-                                                                {t('Manage')}
-                                                                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-300 ${activeActionMenu === u.userId ? 'rotate-180' : ''}`} />
-                                                            </button>
-
-                                                            {activeActionMenu === u.userId && (
-                                                                <div
-                                                                    className={`absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-2xl z-[100] border overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300 ${theme === 'dark'
-                                                                            ? 'bg-gray-900 border-gray-700'
-                                                                            : theme === 'modern'
-                                                                                ? 'bg-[#1e1a3a]/95 backdrop-blur-xl border-indigo-500/40 shadow-indigo-500/30'
-                                                                                : 'bg-white border-gray-200'
-                                                                        }`}
-                                                                    onMouseDown={(e) => e.stopPropagation()}
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                >
-                                                                    <div className="py-1">
-                                                                        <button
-                                                                            onClick={() => { handleUpdateUserRole(u.userId, u.userEmail, u.userRoles); setActiveActionMenu(null); }}
-                                                                            className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-[10px] font-semibold transition-colors ${theme === 'dark' ? 'text-gray-300 hover:bg-gray-800 hover:text-white' : theme === 'modern' ? 'text-white hover:bg-indigo-500/20 hover:text-indigo-300' : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                                                                                }`}
-                                                                        >
-                                                                            <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-                                                                            {t('Edit Roles')}
-                                                                        </button>
-
-
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-
-                            {activeTab === 'jobs' && (
-                                <>
-                                    {/* Jobs Control Bar */}
-                                    <div className={`p-16 border-b flex flex-wrap items-center justify-between gap-6 transition-all ${theme === 'dark'
-                                            ? 'bg-gray-950/80 border-gray-800'
-                                            : theme === 'modern'
-                                                ? 'bg-[#0E0A20]/60 border-indigo-500/20'
-                                                : 'bg-gray-50/80 border-gray-200'
-                                        }`}>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <Filter className="w-4 h-4 text-indigo-400" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('Category')}:</span>
-                                            </div>
-                                            <div className="flex bg-black/30 p-1.5 rounded-xl border border-white/5 shadow-inner">
-                                                {['All', 'Movies', 'Showtimes', 'Schedules'].map((cat) => (
-                                                    <button
-                                                        key={cat}
-                                                        onClick={() => setJobCategoryFilter(cat)}
-                                                        className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all duration-300 ${jobCategoryFilter === cat
-                                                            ? (theme === 'modern' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/40' : 'bg-rose-600 text-white shadow-lg shadow-rose-600/20')
-                                                            : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
-                                                            }`}
-                                                    >
-                                                        {cat === 'All' ? t('Tất cả') : cat}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-2">
-                                                <ArrowUpDown className="w-4 h-4 text-indigo-400" />
-                                                <span className="text-[10px] font-black uppercase tracking-widest opacity-60">{t('Sort')}:</span>
-                                            </div>
-                                            <button
-                                                onClick={() => setJobSortOrder(jobSortOrder === 'asc' ? 'desc' : 'asc')}
-                                                className={`flex items-center gap-2 px-4 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all duration-300 ${theme === 'modern'
-                                                        ? 'border-indigo-500/30 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/10'
-                                                        : 'border-gray-700 bg-gray-800 text-gray-300 hover:bg-gray-700'
-                                                    }`}
-                                            >
-                                                {jobSortOrder === 'asc' ? <SortAsc className="w-4 h-4" /> : <SortDesc className="w-4 h-4" />}
-                                                {jobSortOrder === 'asc' ? t('Cũ nhất') : t('Mới nhất')}
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <table className="w-full min-w-[800px] text-center text-sm border-separate border-spacing-0">
-                                        <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
-                                                ? 'bg-gray-950/95 border-gray-800 text-gray-400'
-                                                : theme === 'modern'
-                                                    ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
-                                                    : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
-                                            }`}>
-                                            <tr>
-                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[300px] text-center">{t('Target & Category')}</th>
-                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[200px] text-center">{t('Start Schedule')}</th>
-                                                <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit min-w-[200px] text-center">{t('End Schedule')}</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
-                                            {[...jobs]
-                                                .filter(job => jobCategoryFilter === 'All' || job.jobCategory === jobCategoryFilter)
-                                                .sort((a, b) => {
-                                                    const idA = a.targetId || '';
-                                                    const idB = b.targetId || '';
-                                                    return jobSortOrder === 'asc' ? idA.localeCompare(idB) : idB.localeCompare(idA);
-                                                })
-                                                .map((group, idx) => (
-                                                    <tr key={group.targetId + idx} className={`group transition-all duration-300 ${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'
-                                                        }`}>
-                                                        {/* Target Info */}
-                                                        <td className="px-6 py-6 transition-all duration-300">
-                                                            <div className="flex flex-col items-center justify-center gap-2 text-center">
-                                                                <div className="flex items-center justify-center gap-3">
-                                                                    <div className={`w-3 h-3 rounded-full border-2 transition-all duration-300 group-hover:scale-125 ${group.jobCategory === 'Schedules' ? 'bg-blue-500 border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.5)]' : group.jobCategory === 'Movies' ? 'bg-cyan-500 border-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.5)]' : 'bg-purple-500 border-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.5)]'
-                                                                        }`}></div>
-                                                                    <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900'}`}>{group.jobCategory}</span>
-                                                                </div>
-                                                                <div className="flex items-center justify-center gap-2 mx-auto">
-                                                                    <span className="text-[9px] font-mono opacity-20 group-hover:opacity-60 transition-all uppercase tracking-tighter truncate max-w-[200px]" title={group.targetId}>{t('Target')}: {group.targetId}</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-
-                                                        {/* Start Job Column */}
-                                                        <td className="px-6 py-5 text-center">
-                                                            {group.startScheduleJob ? (
-                                                                <div className="flex flex-col items-center justify-center gap-2 text-center mx-auto">
-                                                                    <div className="flex items-center justify-center gap-2">
-                                                                        <span
-                                                                            title={group.startScheduleJob.failedReason}
-                                                                            className={`text-[9px] px-2.5 py-1 rounded-lg font-black uppercase tracking-widest border shadow-sm transition-all ${group.startScheduleJob.scheduleJobStatus === 'Failed'
-                                                                                    ? 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                                                                                    : group.startScheduleJob.scheduleJobStatus === 'Pending'
-                                                                                        ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 animate-pulse'
-                                                                                        : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                                                                                }`}
-                                                                        >
-                                                                            {group.startScheduleJob.scheduleJobStatus}
-                                                                        </span>
-                                                                        <span className="text-[10px] font-mono opacity-40">#{group.startScheduleJob.jobId}</span>
-                                                                    </div>
-                                                                    <span className="text-[10px] opacity-60 italic">{formatDate(group.startScheduleJob.jobStartedAt)}</span>
-                                                                    {group.startScheduleJob.failedReason && (
-                                                                        <span className="text-[9px] text-red-400/60 truncate max-w-[150px]">{group.startScheduleJob.failedReason}</span>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-[10px] opacity-20">N/A</span>
-                                                            )}
-                                                        </td>
-
-                                                        {/* End Job Column */}
-                                                        <td className="px-4 py-4 text-center">
-                                                            {group.endScheduleJob ? (
-                                                                <div className="flex flex-col items-center justify-center gap-1 text-center mx-auto">
-                                                                    <div className="flex items-center justify-center gap-2">
-                                                                        <span
-                                                                            title={group.endScheduleJob.failedReason}
-                                                                            className={`text-[9px] px-2 py-0.5 rounded-full border ${group.endScheduleJob.scheduleJobStatus === 'Failed'
-                                                                                ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                                                : group.endScheduleJob.scheduleJobStatus === 'Pending'
-                                                                                    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                                                                    : 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                                                }`}
-                                                                        >
-                                                                            {group.endScheduleJob.scheduleJobStatus}
-                                                                        </span>
-                                                                        <span className="text-[10px] font-mono opacity-40">#{group.endScheduleJob.jobId}</span>
-                                                                    </div>
-                                                                    <span className="text-[10px] opacity-60 italic">{formatDate(group.endScheduleJob.jobStartedAt)}</span>
-                                                                    {group.endScheduleJob.failedReason && (
-                                                                        <span className="text-[9px] text-red-400/60 truncate max-w-[150px]">{group.endScheduleJob.failedReason}</span>
-                                                                    )}
-                                                                </div>
-                                                            ) : (
-                                                                <span className="text-[10px] opacity-20">N/A</span>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                        </tbody>
-                                    </table>
-                                </>
-                            )}
-
-                            {activeTab === 'audit' && (
-                                <table className="w-full min-w-[900px] text-center text-sm border-separate border-spacing-0">
-                                    <thead className={`sticky top-[64px] z-20 backdrop-blur-md border-b transition-all duration-500 ${theme === 'dark'
-                                            ? 'bg-gray-950/95 border-gray-800 text-gray-400'
-                                            : theme === 'modern'
-                                                ? 'bg-[#0E0A20]/95 border-indigo-500/30 text-indigo-300'
-                                                : 'bg-white/95 border-gray-200 text-gray-500 shadow-sm'
-                                        }`}>
-                                        <tr>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Time</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Action</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Target</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Actor</th>
-                                            <th className="px-6 py-5 font-black uppercase tracking-widest text-[10px] border-b border-inherit">Note</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-800' : theme === 'modern' ? 'divide-indigo-500/10' : 'divide-gray-100'}`}>
-                                        {auditLogs.map((log) => (
-                                            <tr key={log.auditLogId} className={`${theme === 'dark' ? 'hover:bg-gray-800/30' : theme === 'modern' ? 'hover:bg-indigo-500/5' : 'hover:bg-indigo-50/50'}`}>
-                                                <td className="px-6 py-5 text-xs opacity-70">{formatDate(log.createdAt)}</td>
-                                                <td className="px-6 py-5">
-                                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${log.action === 'Delete'
-                                                            ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                                                            : log.action === 'Create'
-                                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                                                : 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                                                        }`}>
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="font-bold">{log.entityName || 'N/A'}</div>
-                                                    <div className="text-[10px] opacity-50 uppercase tracking-widest">{log.entityType}</div>
-                                                </td>
-                                                <td className="px-6 py-5">
-                                                    <div className="font-bold">{log.actorName}</div>
-                                                    <div className={`text-[10px] font-black uppercase tracking-widest ${log.isAdminAction ? 'text-amber-400' : 'opacity-50'}`}>
-                                                        {log.isAdminAction ? 'Admin action' : log.actorPrimaryRole}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-5 text-left text-xs opacity-80">{log.description}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
-
-                            {activeTab === 'transfer' && (
-                                <TransferRightsView />
-                            )}
-                        </div>
-                    )}
-                    {!loading && ((activeTab === 'users' && users.length === 0) || (activeTab === 'jobs' && jobs.length === 0) || (activeTab === 'audit' && auditLogs.length === 0)) && (
-                        <div className="p-12 text-center opacity-50">
-                            No data available.
-                        </div>
-                    )}
-                </div>
-            </main>
-
-            <LogoutModal
-                isOpen={isLogoutModalOpen}
-                onClose={() => setIsLogoutModalOpen(false)}
-                onConfirm={handleLogoutConfirm}
-                loading={logoutLoading}
-                error={logoutError}
-            />
-
-            <RoleUpdateModal
-                isOpen={isRoleModalOpen}
-                onClose={() => setIsRoleModalOpen(false)}
-                userId={selectedUserId}
-                currentUserEmail={selectedUserEmail}
-                currentUserRoles={selectedUserRoles}
-                onSuccess={() => handleRoleUpdateSuccess(selectedUserId)}
-            />
-
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="state-center" style={{ minHeight: '60vh' }}>
+          <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+            Loading admin panel...
+          </p>
         </div>
-    );
+      );
+    }
+
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="animate-in">
+            {/* Stats Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gap: 16,
+              marginBottom: 32,
+            }}>
+              <StatCard
+                label={t('Total Users')}
+                value={users.length ? users.length.toString() : "42"}
+                trend="+5 this month"
+                icon={<Users size={22} />}
+                color="#ff8a00"
+                delay={0}
+              />
+              <StatCard
+                label={t('Total Cinemas')}
+                value="8"
+                trend="2 regions"
+                icon={<Building2 size={22} />}
+                color="#22c55e"
+                delay={80}
+              />
+              <StatCard
+                label={t('Active Movies')}
+                value="24"
+                trend="+3 this week"
+                icon={<Film size={22} />}
+                color="#3b82f6"
+                delay={160}
+              />
+              <StatCard
+                label={t('Revenue (Month)')}
+                value="₫ 156.8M"
+                trend="+12.5% growth"
+                icon={<DollarSign size={22} />}
+                color="#a855f7"
+                delay={240}
+              />
+              <StatCard
+                label={t('Total Bookings')}
+                value="3,842"
+                trend="+18% vs last month"
+                icon={<Ticket size={22} />}
+                color="#06b6d4"
+                delay={320}
+              />
+              <StatCard
+                label={t('Active Schedules')}
+                value="156"
+                trend="12 today"
+                icon={<Calendar size={22} />}
+                color="#f59e0b"
+                delay={400}
+              />
+            </div>
+
+            {/* Recent Activity */}
+            <div className="glass-card" style={{ padding: 24 }}>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px' }}>
+                {t('Recent Activity')}
+              </h3>
+              {auditLogsLoading ? (
+                <div className="state-center" style={{ minHeight: 100 }}>
+                  <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {auditLogs.slice(0, 4).map((log) => (
+                    <div
+                      key={log.auditLogId}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 14px', borderRadius: 10,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.04)',
+                      }}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: log.action === 'Delete' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                      }}>
+                        {log.action === 'Delete'
+                          ? <XCircle size={14} style={{ color: 'var(--danger)' }} />
+                          : <CheckCircle size={14} style={{ color: 'var(--success)' }} />
+                        }
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{log.action}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                          {log.actorName} → {log.entityName}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontSize: 10, color: 'var(--text-muted)',
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}>
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                      </span>
+                    </div>
+                  ))}
+                  {auditLogs.length === 0 && (
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>
+                      {t('No recent activity.')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
+      case 'users':
+        return (
+          <UsersSection
+            users={users}
+            loading={usersLoading}
+            onUpdateStatus={handleUpdateUserStatus}
+            onUpdateRole={handleOpenRoleModal}
+            onAssignCinema={handleOpenCinemaModal}
+            onCreateUser={handleOpenCreateUser}
+          />
+        );
+
+      case 'vouchers':
+        return <VouchersSection />;
+
+      case 'rights':
+        return <TransferRightsView />;
+
+      case 'audit':
+        return (
+          <AuditSection
+            auditLogs={auditLogs}
+            loading={auditLogsLoading}
+            onRefresh={fetchAuditLogs}
+          />
+        );
+
+      default:
+        return <ManagementDashboard role="admin" />;
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
+      <AppSidebar
+        isOpen={sidebarOpen}
+        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        sections={sidebarSections}
+        role="Admin"
+      />
+
+      <Header
+        title={t('Admin Panel')}
+        role="Administrator"
+        showSidebarToggle
+        onMenuToggle={() => setSidebarOpen(true)}
+      />
+
+      <main className="main-content">
+        <div className="page-container">
+          {renderContent()}
+        </div>
+      </main>
+
+      <RoleUpdateModal
+        isOpen={roleModalOpen}
+        onClose={() => setRoleModalOpen(false)}
+        userId={selectedUserId}
+        currentUserEmail={selectedUserEmail}
+        currentUserRoles={selectedUserRoles}
+        onSuccess={handleRoleUpdateSuccess}
+      />
+
+      <CinemaAssignModal
+        isOpen={cinemaModalOpen}
+        onClose={() => setCinemaModalOpen(false)}
+        userId={selectedUserId}
+        currentUserEmail={selectedUserEmail}
+        onSuccess={handleCinemaAssignSuccess}
+      />
+
+      {/* Create User Modal */}
+      {createUserModalOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+            padding: 16,
+          }}
+          onClick={() => setCreateUserModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%', maxWidth: 480,
+              backgroundColor: 'var(--bg-elevated, #18181b)',
+              border: '1px solid var(--border-color, #27272a)',
+              borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              overflow: 'hidden',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border-color, #27272a)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <UserPlus size={20} style={{ color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Create New Account</h3>
+              </div>
+              <button
+                onClick={() => setCreateUserModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateUser} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Username *</label>
+                <input
+                  type="text" required
+                  placeholder="e.g. john_doe"
+                  value={createUserForm.userName}
+                  onChange={e => setCreateUserForm({ ...createUserForm, userName: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Email *</label>
+                <input
+                  type="email" required
+                  placeholder="user@example.com"
+                  value={createUserForm.userEmail}
+                  onChange={e => setCreateUserForm({ ...createUserForm, userEmail: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Full Name</label>
+                <input
+                  type="text"
+                  placeholder="John Doe (optional)"
+                  value={createUserForm.fullName}
+                  onChange={e => setCreateUserForm({ ...createUserForm, fullName: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Password *</label>
+                  <input
+                    type="password" required
+                    placeholder="Min 6 chars"
+                    value={createUserForm.password}
+                    onChange={e => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Confirm Password *</label>
+                  <input
+                    type="password" required
+                    placeholder="Repeat password"
+                    value={createUserForm.confirmPassword}
+                    onChange={e => setCreateUserForm({ ...createUserForm, confirmPassword: e.target.value })}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-color, #27272a)' }}>
+                <button type="button" onClick={() => setCreateUserModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>
+                <button
+                  type="submit"
+                  disabled={createUserSubmitting}
+                  className="btn btn-primary"
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  {createUserSubmitting ? (
+                    <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Creating...</>
+                  ) : (
+                    <><UserPlus size={16} /> Create Account</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default AdminPage;

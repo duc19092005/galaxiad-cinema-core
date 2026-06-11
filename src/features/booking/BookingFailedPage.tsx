@@ -1,26 +1,24 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { XCircle, Home, RefreshCw, AlertTriangle, ShieldAlert, HelpCircle } from 'lucide-react';
-import { useTheme } from '../../contexts/ThemeContext';
 
 const BookingFailedPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('orderId');
     const error = searchParams.get('error');
     const navigate = useNavigate();
-    const { theme } = useTheme();
 
     const getErrorMessage = () => {
         switch (error) {
             case 'processing_error':
                 return {
-                    icon: <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />,
+                    icon: <ShieldAlert size={18} style={{ color: '#ef4444', flexShrink: 0 }} />,
                     title: 'Processing Error',
                     message: 'An error occurred while processing your payment. If money was deducted, please contact our support team for assistance.'
                 };
             default:
                 return {
-                    icon: <AlertTriangle className="w-5 h-5 text-yellow-500 shrink-0" />,
+                    icon: <AlertTriangle size={18} style={{ color: '#f59e0b', flexShrink: 0 }} />,
                     title: 'Payment Interrupted',
                     message: 'The payment process was interrupted or canceled. No funds have been deducted from your account.'
                 };
@@ -30,36 +28,42 @@ const BookingFailedPage: React.FC = () => {
     const errorDetails = getErrorMessage();
 
     return (
-        <div className={`min-h-screen flex items-center justify-center p-6 ${theme === 'dark' ? 'bg-black text-white' : theme === 'modern' ? 'bg-[#0D081D] text-white' : 'bg-gray-50 text-gray-900'}`}>
-            <div className={`max-w-md w-full p-8 rounded-3xl border shadow-2xl text-center ${
-                theme === 'dark' ? 'bg-gray-900 border-gray-800' 
-                : theme === 'modern' ? 'bg-white/5 border-indigo-500/20 backdrop-blur-xl' 
-                : 'bg-white border-gray-100'
-            }`}>
-                <div className="w-24 h-24 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <XCircle className="w-16 h-16 text-red-500" />
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #18181b 55%, #2a0000 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#f4f4f5' }}>
+            <div style={{
+                maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
+                border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
+                backgroundColor: 'rgba(24,24,27,0.96)', textAlign: 'center',
+            }}>
+                <div style={{
+                    width: 96, height: 96, borderRadius: '50%',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 24px',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                }}>
+                    <XCircle size={56} style={{ color: '#ef4444' }} />
                 </div>
 
-                <h2 className="text-3xl font-black mb-2 text-red-500">Payment Failed</h2>
-                {orderId && <p className="text-xs opacity-50 mb-2 font-mono">Order ID: {orderId}</p>}
-                <p className="opacity-60 text-sm mb-8">
+                <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: '8px', color: '#ef4444' }}>Payment Failed</h2>
+                {orderId && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: '8px', fontFamily: "'JetBrains Mono', monospace" }}>Order ID: {orderId}</p>}
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: '32px' }}>
                     {errorDetails.message}
                 </p>
 
                 {/* Error Detail Card */}
-                <div className={`p-4 rounded-xl mb-8 flex items-start gap-3 text-left ${
-                    error === 'processing_error'
-                        ? 'bg-red-500/10 border border-red-500/20'
-                        : 'bg-yellow-500/10 border border-yellow-500/20'
-                }`}>
+                <div style={{
+                    padding: '16px', borderRadius: 'var(--radius-md)', marginBottom: '32px',
+                    display: 'flex', alignItems: 'flex-start', gap: '12px', textAlign: 'left',
+                    backgroundColor: error === 'processing_error'
+                        ? 'rgba(239, 68, 68, 0.08)'
+                        : 'rgba(245, 158, 11, 0.08)',
+                    border: `1px solid ${error === 'processing_error' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`,
+                }}>
                     {errorDetails.icon}
                     <div>
-                        <p className={`text-xs font-bold mb-1 ${
-                            error === 'processing_error' ? 'text-red-500' : 'text-yellow-600'
-                        }`}>{errorDetails.title}</p>
-                        <p className={`text-xs font-medium ${
-                            error === 'processing_error' ? 'text-red-400/80' : 'text-yellow-600/80'
-                        }`}>
+                        <p style={{ fontSize: 12, fontWeight: 700, marginBottom: '4px', color: error === 'processing_error' ? '#ef4444' : '#f59e0b' }}>
+                            {errorDetails.title}
+                        </p>
+                        <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                             {error === 'processing_error'
                                 ? 'Error code: processing_error — Please contact support with your Order ID.'
                                 : 'If you encountered an error during payment, please try a different payment method or contact your bank.'
@@ -68,41 +72,39 @@ const BookingFailedPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Help section for processing errors */}
+                {/* Help section */}
                 {error === 'processing_error' && (
-                    <div className={`p-4 rounded-xl mb-6 flex items-start gap-3 text-left ${
-                        theme === 'dark' ? 'bg-white/5 border border-white/10' 
-                        : theme === 'modern' ? 'bg-white/5 border border-white/10'
-                        : 'bg-blue-50 border border-blue-100'
-                    }`}>
-                        <HelpCircle className="w-5 h-5 text-blue-400 shrink-0" />
+                    <div style={{
+                        padding: '16px', borderRadius: 'var(--radius-md)', marginBottom: '24px',
+                        display: 'flex', alignItems: 'flex-start', gap: '12px', textAlign: 'left',
+                        backgroundColor: 'rgba(56, 189, 248, 0.06)', border: '1px solid rgba(56, 189, 248, 0.15)',
+                    }}>
+                        <HelpCircle size={18} style={{ color: '#0ea5e9', flexShrink: 0 }} />
                         <div>
-                            <p className={`text-xs font-bold mb-1 ${
-                                theme === 'dark' || theme === 'modern' ? 'text-blue-400' : 'text-blue-600'
-                            }`}>Need Help?</p>
-                            <p className="text-xs opacity-70">
+                            <p style={{ fontSize: 12, fontWeight: 700, marginBottom: '4px', color: '#0ea5e9' }}>
+                                Need Help?
+                            </p>
+                            <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                                 If you were charged but didn't receive your tickets, please contact our support with the Order ID above. We'll resolve this as soon as possible.
                             </p>
                         </div>
                     </div>
                 )}
 
-                <div className="flex flex-col gap-3">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <button
                         onClick={() => navigate('/home')}
-                        className="w-full py-4 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-600/30"
+                        className="btn btn-primary cta-glow"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: '8px' }}
                     >
-                        <RefreshCw className="w-4 h-4" /> Try Booking Again
+                        <RefreshCw size={16} /> Try Booking Again
                     </button>
                     <button
                         onClick={() => navigate('/home')}
-                        className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 border border-white/10 transition-all text-sm ${
-                            theme === 'dark' || theme === 'modern'
-                                ? 'bg-white/5 hover:bg-white/10'
-                                : 'bg-gray-100 hover:bg-gray-200'
-                        }`}
+                        className="btn btn-secondary"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: '8px' }}
                     >
-                        <Home className="w-4 h-4" /> Return to Home
+                        <Home size={16} /> Return to Home
                     </button>
                 </div>
             </div>

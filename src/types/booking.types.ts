@@ -64,6 +64,7 @@ export interface UserAccountInfo {
     identityCode: string;
     dateOfBirth: string;
     phoneNumber: string;
+    rewardPoints?: number;
 }
 
 export interface BookingHistoryItem {
