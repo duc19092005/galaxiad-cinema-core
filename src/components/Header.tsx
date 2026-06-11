@@ -113,7 +113,7 @@ const Header: React.FC<HeaderProps> = ({
           </button>
 
           {/* Cinema Selector */}
-          <CinemaSelector />
+          {user?.selectedRole === 'TheaterManager' && <CinemaSelector />}
 
           {/* Language Switcher */}
           <LanguageSwitcher />

@@ -27,6 +27,8 @@ import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
+import CinemaManagement from '../facilities/components/CinemaManagement';
+import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 
 // ============================================
 // CONSTANTS
@@ -125,12 +127,6 @@ const usersData = [
   { id: 5, name: 'Hoang Van E', email: 'hoangvane@cinema.com', role: 'Cashier', status: 'Pending', lastLogin: '2024-03-18 08:20' },
 ];
 
-const facilitiesData = [
-  { id: 1, name: 'CGV Vincom Center', location: 'District 1, HCMC', theaters: 8, status: 'Active', manager: 'Pham Thi D' },
-  { id: 2, name: 'Lotte Cinema Diamond', location: 'District 1, HCMC', theaters: 6, status: 'Active', manager: 'Pham Thi D' },
-  { id: 3, name: 'Galaxy Nguyen Du', location: 'District 1, HCMC', theaters: 5, status: 'Maintenance', manager: 'Unassigned' },
-  { id: 4, name: 'BHD Star Pham Hung', location: 'District 8, HCMC', theaters: 4, status: 'Active', manager: 'Nguyen Van F' },
-];
 
 const auditLogs = [
   { id: 1, action: 'User Login', user: 'Nguyen Van A', target: 'Admin Panel', timestamp: '2024-03-20 14:30:00', status: 'Success' },
@@ -230,60 +226,7 @@ const UsersSection: React.FC = () => {
   );
 };
 
-const FacilitiesSection: React.FC = () => {
-  const { t } = useTranslation();
 
-  return (
-    <div className="animate-in">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('Facility Management')}</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('Manage cinemas and facilities')}</p>
-        </div>
-        <button className="btn btn-primary">
-          <Building2 size={14} />
-          {t('Add Facility')}
-        </button>
-      </div>
-
-      <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>{t('Name')}</th>
-              <th>{t('Location')}</th>
-              <th>{t('Theaters')}</th>
-              <th>{t('Status')}</th>
-              <th>{t('Manager')}</th>
-              <th style={{ width: 60 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {facilitiesData.map((f) => (
-              <tr key={f.id}>
-                <td style={{ fontWeight: 600 }}>{f.name}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{f.location}</td>
-                <td>
-                  <span style={{
-                    fontFamily: "'JetBrains Mono', monospace",
-                    fontWeight: 700, fontSize: 14, color: 'var(--accent)',
-                  }}>{f.theaters}</span>
-                </td>
-                <td><StatusBadge status={f.status} /></td>
-                <td style={{ color: 'var(--text-secondary)' }}>{f.manager}</td>
-                <td>
-                  <button className="btn-icon">
-                    <MoreHorizontal size={16} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-};
 
 const AuditSection: React.FC = () => {
   const { t } = useTranslation();
@@ -347,6 +290,30 @@ const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Real cinema management states for Admin
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
+  const [cinemasLoading, setCinemasLoading] = useState(false);
+  const [cinemasError, setCinemasError] = useState<string | null>(null);
+
+  const fetchCinemas = async () => {
+    setCinemasLoading(true);
+    setCinemasError(null);
+    try {
+      const res = await facilitiesApi.getCinemaList();
+      setCinemas(res.data || []);
+    } catch (err) {
+      setCinemasError('Failed to load cinemas list.');
+    } finally {
+      setCinemasLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'facilities') {
+      fetchCinemas();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -487,7 +454,14 @@ const AdminPage: React.FC = () => {
         return <UsersSection />;
 
       case 'facilities':
-        return <FacilitiesSection />;
+        return (
+          <CinemaManagement
+            cinemas={cinemas}
+            loading={cinemasLoading}
+            error={cinemasError}
+            onRefresh={fetchCinemas}
+          />
+        );
 
       case 'rights':
         return <TransferRightsView />;
