@@ -156,8 +156,11 @@ export const VouchersSection: React.FC = () => {
   const getRoleBadgeClass = (name: string) => {
     switch (name) {
       case 'Admin': return 'badge-accent';
-      case 'VIP': return 'badge-warning';
+      case 'VIP': return 'badge-accent';
       case 'Student': return 'badge-success';
+      case 'Loyalty': return 'badge-warning';
+      case 'User':
+      case 'Customer': return 'badge-success';
       default: return 'badge-default';
     }
   };
@@ -288,19 +291,22 @@ export const VouchersSection: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '580px',
+              maxWidth: '600px',
               backgroundColor: 'var(--bg-elevated, #18181b)',
               border: '1px solid var(--border-color, #27272a)',
               borderRadius: 'var(--radius-xl, 20px)',
-              boxShadow: 'var(--shadow-xl)',
-              padding: '28px',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
               boxSizing: 'border-box',
-              margin: 'auto 0',
+              display: 'flex',
+              flexDirection: 'column',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              margin: 'auto',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border-color, #27272a)', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Ticket size={20} style={{ color: 'var(--accent)' }} />
                 <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
@@ -320,14 +326,17 @@ export const VouchersSection: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  flexShrink: 0,
                 }}
               >
                 <X size={14} />
               </button>
             </div>
 
+            {/* Scrollable Form Body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '20px 24px' }}>
             {/* Form */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <form id="voucher-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Voucher Name *</label>
@@ -436,36 +445,39 @@ export const VouchersSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Submit Buttons */}
-              <div style={{ display: 'flex', gap: '12px', borderTop: '1px solid var(--border-color, #27272a)', paddingTop: '16px', marginTop: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="btn btn-secondary"
-                  style={{ flex: 1 }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="btn btn-primary"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Check size={16} />
-                      Save Voucher
-                    </>
-                  )}
-                </button>
-              </div>
             </form>
+            </div>
+
+            {/* Sticky Footer - Action Buttons outside scroll */}
+            <div style={{ padding: '12px 24px 20px', borderTop: '1px solid var(--border-color, #27272a)', display: 'flex', gap: 12, flexShrink: 0 }}>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="btn btn-secondary"
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button
+                form="voucher-form"
+                type="submit"
+                disabled={submitting}
+                className="btn btn-primary"
+                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    Save Voucher
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

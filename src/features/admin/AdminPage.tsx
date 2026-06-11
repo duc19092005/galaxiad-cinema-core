@@ -18,6 +18,8 @@ import {
   UserCircle,
   CheckCircle,
   XCircle,
+  UserPlus,
+  X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import AppSidebar from '../../components/AppSidebar';
@@ -26,6 +28,7 @@ import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
 import { adminApi } from '../../api/adminApi';
+import { authApi } from '../../api/authApi';
 import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
@@ -130,6 +133,7 @@ interface UsersSectionProps {
   onUpdateStatus: (userId: string, newStatus: number) => void;
   onUpdateRole: (userId: string, email: string, roles: string) => void;
   onAssignCinema: (userId: string, email: string) => void;
+  onCreateUser: () => void;
 }
 
 const UsersSection: React.FC<UsersSectionProps> = ({
@@ -138,6 +142,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
   onUpdateStatus,
   onUpdateRole,
   onAssignCinema,
+  onCreateUser,
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
@@ -168,6 +173,14 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               style={{ paddingLeft: 32, width: 240 }}
             />
           </div>
+          <button
+            onClick={onCreateUser}
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+          >
+            <UserPlus size={16} />
+            {t('Add User')}
+          </button>
         </div>
       </div>
 
@@ -411,6 +424,17 @@ const AdminPage: React.FC = () => {
   const [selectedUserEmail, setSelectedUserEmail] = useState('');
   const [selectedUserRoles, setSelectedUserRoles] = useState('');
 
+  // Create User Modal
+  const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
+  const [createUserSubmitting, setCreateUserSubmitting] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({
+    userName: '',
+    userEmail: '',
+    password: '',
+    confirmPassword: '',
+    fullName: '',
+  });
+
   const fetchUsers = async () => {
     setUsersLoading(true);
     try {
@@ -477,6 +501,46 @@ const AdminPage: React.FC = () => {
 
   const handleCinemaAssignSuccess = () => {
     fetchUsers();
+  };
+
+  const handleOpenCreateUser = () => {
+    setCreateUserForm({ userName: '', userEmail: '', password: '', confirmPassword: '', fullName: '' });
+    setCreateUserModalOpen(true);
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (createUserForm.password !== createUserForm.confirmPassword) {
+      showError('Passwords do not match.');
+      return;
+    }
+    if (createUserForm.password.length < 6) {
+      showError('Password must be at least 6 characters.');
+      return;
+    }
+    setCreateUserSubmitting(true);
+    try {
+      const res = await authApi.regularRegister({
+        userName: createUserForm.userName,
+        userEmail: createUserForm.userEmail,
+        userPassword: createUserForm.password,
+        userRepassword: createUserForm.confirmPassword,
+        identityCode: '',
+        phoneNumber: '',
+        dateOfBirth: new Date(Date.now() - 20 * 365.25 * 24 * 3600 * 1000).toISOString(),
+      });
+      if (res.isSuccess) {
+        showSuccess('User account created successfully!');
+        setCreateUserModalOpen(false);
+        fetchUsers();
+      } else {
+        showError((res as any).message || 'Failed to create user.');
+      }
+    } catch (err: any) {
+      showError(err.response?.data?.message || 'Failed to create user account.');
+    } finally {
+      setCreateUserSubmitting(false);
+    }
   };
 
   const sidebarSections: SidebarSection[] = [
@@ -628,6 +692,7 @@ const AdminPage: React.FC = () => {
             onUpdateStatus={handleUpdateUserStatus}
             onUpdateRole={handleOpenRoleModal}
             onAssignCinema={handleOpenCinemaModal}
+            onCreateUser={handleOpenCreateUser}
           />
         );
 
@@ -691,6 +756,116 @@ const AdminPage: React.FC = () => {
         currentUserEmail={selectedUserEmail}
         onSuccess={handleCinemaAssignSuccess}
       />
+
+      {/* Create User Modal */}
+      {createUserModalOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+            padding: 16,
+          }}
+          onClick={() => setCreateUserModalOpen(false)}
+        >
+          <div
+            style={{
+              width: '100%', maxWidth: 480,
+              backgroundColor: 'var(--bg-elevated, #18181b)',
+              border: '1px solid var(--border-color, #27272a)',
+              borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              overflow: 'hidden',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border-color, #27272a)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <UserPlus size={20} style={{ color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Create New Account</h3>
+              </div>
+              <button
+                onClick={() => setCreateUserModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateUser} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Username *</label>
+                <input
+                  type="text" required
+                  placeholder="e.g. john_doe"
+                  value={createUserForm.userName}
+                  onChange={e => setCreateUserForm({ ...createUserForm, userName: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Email *</label>
+                <input
+                  type="email" required
+                  placeholder="user@example.com"
+                  value={createUserForm.userEmail}
+                  onChange={e => setCreateUserForm({ ...createUserForm, userEmail: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Full Name</label>
+                <input
+                  type="text"
+                  placeholder="John Doe (optional)"
+                  value={createUserForm.fullName}
+                  onChange={e => setCreateUserForm({ ...createUserForm, fullName: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Password *</label>
+                  <input
+                    type="password" required
+                    placeholder="Min 6 chars"
+                    value={createUserForm.password}
+                    onChange={e => setCreateUserForm({ ...createUserForm, password: e.target.value })}
+                    className="input"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Confirm Password *</label>
+                  <input
+                    type="password" required
+                    placeholder="Repeat password"
+                    value={createUserForm.confirmPassword}
+                    onChange={e => setCreateUserForm({ ...createUserForm, confirmPassword: e.target.value })}
+                    className="input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-color, #27272a)' }}>
+                <button type="button" onClick={() => setCreateUserModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>
+                <button
+                  type="submit"
+                  disabled={createUserSubmitting}
+                  className="btn btn-primary"
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                >
+                  {createUserSubmitting ? (
+                    <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Creating...</>
+                  ) : (
+                    <><UserPlus size={16} /> Create Account</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

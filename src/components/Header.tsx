@@ -97,66 +97,66 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="fixed w-full top-0 z-50 bg-[#131313]/30 backdrop-blur-xl border-b border-white/10 shadow-sm transition-all duration-300">
-        <nav className="flex justify-between items-center px-4 md:px-8 lg:px-12 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-6 lg:gap-12">
+        <nav className="flex justify-between items-center px-3 md:px-6 lg:px-10 py-3 max-w-7xl mx-auto gap-2">
+          <div className="flex items-center gap-2 md:gap-4 lg:gap-8 min-w-0 flex-shrink-0">
             {/* Sidebar toggle for dashboards */}
             {showSidebarToggle && (
               <button 
                 onClick={onMenuToggle} 
-                className="hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer lg:hidden"
+                className="hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer lg:hidden flex-shrink-0"
               >
-                <span className="material-symbols-outlined text-[24px]">menu</span>
+                <span className="material-symbols-outlined text-[22px]">menu</span>
               </button>
             )}
 
             <a 
               onClick={() => navigate('/home')} 
-              className="font-bold text-2xl tracking-tighter text-[#ffb77f] hover:text-[#ff8a00] transition-colors cursor-pointer no-underline"
+              className="font-bold text-xl lg:text-2xl tracking-tighter text-[#ffb77f] hover:text-[#ff8a00] transition-colors cursor-pointer no-underline flex-shrink-0"
               style={{ fontFamily: "'Montserrat', sans-serif" }}
             >
               CINEMA
             </a>
             
-            <div className="hidden md:flex gap-4 lg:gap-8">
+            <div className="hidden md:flex gap-2 lg:gap-5 min-w-0">
               <span 
                 onClick={() => navigate('/home')} 
-                className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap`}
               >
                 {t('home.moviesNav', 'Movies')}
               </span>
               <span 
                 onClick={() => navigate('/showtimes')} 
-                className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap`}
               >
                 {t('home.showtimesNav', 'Showtimes')}
               </span>
               <span 
                 onClick={() => navigate('/theaters')} 
-                className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap`}
               >
                 {t('home.theatersNav', 'Theaters')}
               </span>
               <span 
                 onClick={() => navigate('/offers')} 
-                className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap`}
               >
                 {t('home.offersNav', 'Offers')}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {/* Search Input Box */}
-            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/10">
-              <span className="material-symbols-outlined text-[#ddc1ae] text-[20px]">search</span>
+            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-3 py-2 border border-white/10">
+              <span className="material-symbols-outlined text-[#ddc1ae] text-[18px]">search</span>
               <input 
-                className="bg-transparent border-none focus:outline-none text-white text-sm ml-2 w-48 placeholder:text-[#ddc1ae]/50" 
+                className="bg-transparent border-none focus:outline-none text-white text-xs ml-2 w-36 placeholder:text-[#ddc1ae]/50" 
                 placeholder="Search movies..." 
                 type="text"
               />
             </div>
 
-            <div className="flex gap-1.5 md:gap-3 items-center">
+            <div className="flex gap-1 md:gap-2 items-center">
               {/* Cinema Selector (Only for TheaterManager) */}
               {user?.selectedRole === 'TheaterManager' && <CinemaSelector />}
 
@@ -273,15 +273,15 @@ const Header: React.FC<HeaderProps> = ({
               {/* Login Button / Welcome Message */}
               {user ? (
                 <span 
-                  className="hidden xl:inline-block text-xs font-semibold text-zinc-400 font-sans max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
+                  className="hidden lg:inline-block text-xs font-semibold text-zinc-400 font-sans max-w-[90px] overflow-hidden text-ellipsis whitespace-nowrap"
                   title={user.username}
                 >
-                  {t('Hi', 'Hi')}, {user.username}
+                  {user.username}
                 </span>
               ) : (
                 <button
                   onClick={() => navigate('/login')}
-                  className="hidden md:block bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold hover:scale-95 active:scale-90 transition-transform cursor-pointer border-none text-sm font-sans"
+                  className="hidden md:block bg-[#ff8a00] text-black px-4 py-1.5 rounded-full font-bold hover:scale-95 active:scale-90 transition-transform cursor-pointer border-none text-xs font-sans whitespace-nowrap"
                 >
                   Sign In
                 </button>
