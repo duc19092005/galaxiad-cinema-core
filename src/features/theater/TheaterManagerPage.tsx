@@ -11,14 +11,13 @@ import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ScheduleManagerPage from '../schedule/ScheduleManagerPage';
-import DragMovieCard from './components/DragMovieCard';
 import FloatingActionButtons from '../../components/FloatingActionButtons';
 import GlassCard from '../../components/GlassCard';
 import { useCinema } from '../../contexts/CinemaContext';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
-import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar, Search } from 'lucide-react';
+import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar } from 'lucide-react';
 
 /**
  * TheaterManagerPage – UI for theater schedule management with dark cinema theme.
@@ -120,29 +119,8 @@ const TheaterManagerPage: React.FC = () => {
         );
       case 'schedule':
         return (
-          <div style={{ display: 'flex', gap: 16, minHeight: '60vh' }}>
-            {/* Drag list */}
-            <aside
-              className="glass-card"
-              style={{
-                width: 320, padding: 16, overflowY: 'auto', flexShrink: 0,
-                display: 'flex', flexDirection: 'column', gap: 12,
-              }}
-            >
-              <h4 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                {t('Drag Movies')}
-              </h4>
-              <div className="relative">
-                <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                <input placeholder={t('Filter films...')} className="input" style={{ paddingLeft: 32 }} />
-              </div>
-              <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="Dune: Part Three" duration="120 min" />
-              <DragMovieCard posterUrl="https://via.placeholder.com/40x56" title="The Dark Knight" duration="152 min" />
-            </aside>
-            {/* Calendar grid */}
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <ScheduleManagerPage />
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+            <ScheduleManagerPage isEmbedded={true} />
           </div>
         );
       default:

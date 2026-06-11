@@ -16,7 +16,11 @@ import Header from '../../components/Header';
 
 const colorPalette = ['#ff8a00', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0891b2', '#ea580c'];
 
-const ScheduleManagerPage: React.FC = () => {
+interface ScheduleManagerPageProps {
+  isEmbedded?: boolean;
+}
+
+const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = false }) => {
     const { t } = useTranslation();
     const { activeCinemaId } = useCinema();
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
@@ -259,6 +263,14 @@ const ScheduleManagerPage: React.FC = () => {
     );
 
     if (loading) {
+        if (isEmbedded) {
+            return (
+                <div className="state-center" style={{ minHeight: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                    <p style={{ fontSize: 14, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", marginTop: 12 }}>Loading Schedules Data...</p>
+                </div>
+            );
+        }
         return (
             <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
               <Header title={t('Schedule Manager')} role="Schedule Manager" />
@@ -274,25 +286,9 @@ const ScheduleManagerPage: React.FC = () => {
         );
     }
 
-    return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
-            <AppSidebar
-                isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                sections={sidebarSections}
-                role="Schedule Manager"
-            />
-
-            <Header
-                title={t('Schedule Manager')}
-                role="Schedule Manager"
-                showSidebarToggle
-                onMenuToggle={() => setSidebarOpen(true)}
-            />
-
-            <main className="main-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    const renderWorkspace = () => {
+        return (
+            <>
               {/* Page Title + Controls */}
               <div style={{
                 padding: '20px 24px', background: 'var(--bg-surface)',
@@ -443,6 +439,38 @@ const ScheduleManagerPage: React.FC = () => {
 
               {/* TrashCan */}
               <TrashCan onDeleteSlot={handleDeleteSlot} />
+            </>
+        );
+    };
+
+    if (isEmbedded) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+                {renderWorkspace()}
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
+            <AppSidebar
+                isOpen={sidebarOpen}
+                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                sections={sidebarSections}
+                role="Schedule Manager"
+            />
+
+            <Header
+                title={t('Schedule Manager')}
+                role="Schedule Manager"
+                showSidebarToggle
+                onMenuToggle={() => setSidebarOpen(true)}
+            />
+
+            <main className="main-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                {renderWorkspace()}
             </main>
         </div>
     );
