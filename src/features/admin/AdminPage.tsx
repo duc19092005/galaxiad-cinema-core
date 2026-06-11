@@ -13,10 +13,8 @@ import {
   DollarSign,
   Ticket,
   Search,
-  MoreHorizontal,
   Loader2,
   RefreshCw,
-  UserPlus,
   UserCircle,
   CheckCircle,
   XCircle,
@@ -27,6 +25,11 @@ import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
+import { adminApi } from '../../api/adminApi';
+import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
+import RoleUpdateModal from '../../components/RoleUpdateModal';
+import CinemaAssignModal from '../../components/CinemaAssignModal';
+import { showSuccess, showError } from '../../utils/ToastUtils';
 
 // ============================================
 // CONSTANTS
@@ -114,37 +117,34 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
   );
 };
 
-// ============================================
-// MOCK DATA
-// ============================================
-const usersData = [
-  { id: 1, name: 'Nguyen Van A', email: 'nguyenvana@cinema.com', role: 'Admin', status: 'Active', lastLogin: '2024-03-20 14:30' },
-  { id: 2, name: 'Tran Thi B', email: 'tranthib@cinema.com', role: 'MovieManager', status: 'Active', lastLogin: '2024-03-19 09:15' },
-  { id: 3, name: 'Le Van C', email: 'levanc@cinema.com', role: 'TheaterManager', status: 'Inactive', lastLogin: '2024-03-15 11:00' },
-  { id: 4, name: 'Pham Thi D', email: 'phamthid@cinema.com', role: 'FacilitiesManager', status: 'Active', lastLogin: '2024-03-20 16:45' },
-  { id: 5, name: 'Hoang Van E', email: 'hoangvane@cinema.com', role: 'Cashier', status: 'Pending', lastLogin: '2024-03-18 08:20' },
-];
-
-
-const auditLogs = [
-  { id: 1, action: 'User Login', user: 'Nguyen Van A', target: 'Admin Panel', timestamp: '2024-03-20 14:30:00', status: 'Success' },
-  { id: 2, action: 'Create Movie', user: 'Tran Thi B', target: 'Avatar 3', timestamp: '2024-03-20 13:15:00', status: 'Success' },
-  { id: 3, action: 'Update Schedule', user: 'Le Van C', target: 'Theater 5', timestamp: '2024-03-20 11:45:00', status: 'Success' },
-  { id: 4, action: 'Delete User', user: 'System', target: 'guest_01', timestamp: '2024-03-20 10:30:00', status: 'Failed' },
-  { id: 5, action: 'Transfer Rights', user: 'Admin', target: 'Facility #3', timestamp: '2024-03-20 09:00:00', status: 'Success' },
-];
+// Database-backed real Admin Page
 
 // ============================================
 // SECTION COMPONENTS
 // ============================================
 
-const UsersSection: React.FC = () => {
+interface UsersSectionProps {
+  users: AdminUserDto[];
+  loading: boolean;
+  onUpdateStatus: (userId: string, newStatus: number) => void;
+  onUpdateRole: (userId: string, email: string, roles: string) => void;
+  onAssignCinema: (userId: string, email: string) => void;
+}
+
+const UsersSection: React.FC<UsersSectionProps> = ({
+  users,
+  loading,
+  onUpdateStatus,
+  onUpdateRole,
+  onAssignCinema,
+}) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = usersData.filter(u =>
-    u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.email.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = users.filter(u =>
+    u.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -167,58 +167,120 @@ const UsersSection: React.FC = () => {
               style={{ paddingLeft: 32, width: 240 }}
             />
           </div>
-          <button className="btn btn-primary">
-            <UserPlus size={14} />
-            {t('Add User')}
-          </button>
         </div>
       </div>
 
       {/* Table */}
       <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>{t('Name')}</th>
-              <th>{t('Email')}</th>
-              <th>{t('Role')}</th>
-              <th>{t('Status')}</th>
-              <th>{t('Last Login')}</th>
-              <th style={{ width: 60 }}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((user) => (
-              <tr key={user.id}>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 32, height: 32, borderRadius: '50%',
-                      background: 'var(--accent-soft)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <UserCircle size={16} style={{ color: 'var(--accent)' }} />
-                    </div>
-                    <span style={{ fontWeight: 600 }}>{user.name}</span>
-                  </div>
-                </td>
-                <td style={{ color: 'var(--text-secondary)' }}>{user.email}</td>
-                <td>
-                  <span className={`badge ${user.role === 'Admin' ? 'badge-accent' : user.role === 'MovieManager' || user.role === 'TheaterManager' ? 'badge-warning' : 'badge-success'}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td><StatusBadge status={user.status} /></td>
-                <td style={{ color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{user.lastLogin}</td>
-                <td>
-                  <button className="btn-icon">
-                    <MoreHorizontal size={16} />
-                  </button>
-                </td>
+        {loading ? (
+          <div className="state-center" style={{ minHeight: '30vh' }}>
+            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+              {t('Loading users...')}
+            </p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Name')}</th>
+                <th>{t('Email')}</th>
+                <th>{t('Role')}</th>
+                <th>{t('Status')}</th>
+                <th style={{ width: 300 }}>{t('Actions')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((user) => (
+                <tr key={user.userId}>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%',
+                        background: 'var(--accent-soft)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <UserCircle size={16} style={{ color: 'var(--accent)' }} />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{user.fullName || user.userName || 'N/A'}</span>
+                    </div>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{user.userEmail}</td>
+                  <td>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {(user.userRoles || '').split(',').filter(Boolean).map((role, idx) => (
+                        <span key={idx} className={`badge ${role.trim() === 'Admin' ? 'badge-accent' : role.trim() === 'MovieManager' || role.trim() === 'TheaterManager' ? 'badge-warning' : 'badge-success'}`}>
+                          {role.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td>
+                    <StatusBadge status={user.accountStatus === 1 ? 'Active' : 'Locked'} />
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {user.accountStatus === 1 ? (
+                        <button
+                          onClick={() => onUpdateStatus(user.userId, 2)}
+                          className="btn"
+                          style={{
+                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                            borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--danger)',
+                            background: 'rgba(239, 68, 68, 0.05)',
+                          }}
+                        >
+                          {t('Block')}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onUpdateStatus(user.userId, 1)}
+                          className="btn"
+                          style={{
+                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                            borderColor: 'rgba(34, 197, 94, 0.4)', color: 'var(--success)',
+                            background: 'rgba(34, 197, 94, 0.05)',
+                          }}
+                        >
+                          {t('Activate')}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => onUpdateRole(user.userId, user.userEmail, user.userRoles)}
+                        className="btn"
+                        style={{
+                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                          borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8',
+                          background: 'rgba(99, 102, 241, 0.05)',
+                        }}
+                      >
+                        {t('Role')}
+                      </button>
+                      <button
+                        onClick={() => onAssignCinema(user.userId, user.userEmail)}
+                        className="btn"
+                        style={{
+                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
+                          borderColor: 'rgba(236, 72, 153, 0.4)', color: '#f472b6',
+                          background: 'rgba(236, 72, 153, 0.05)',
+                        }}
+                      >
+                        {t('Assign Cinema')}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                    {t('No users found.')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -226,12 +288,14 @@ const UsersSection: React.FC = () => {
 
 
 
-const AuditSection: React.FC = () => {
+interface AuditSectionProps {
+  auditLogs: AuditLogDto[];
+  loading: boolean;
+  onRefresh: () => void;
+}
+
+const AuditSection: React.FC<AuditSectionProps> = ({ auditLogs, loading, onRefresh }) => {
   const { t } = useTranslation();
-  const getStatusIcon = (status: string) => {
-    if (status === 'Success') return <CheckCircle size={14} style={{ color: 'var(--success)' }} />;
-    return <XCircle size={14} style={{ color: 'var(--danger)' }} />;
-  };
 
   return (
     <div className="animate-in">
@@ -240,40 +304,84 @@ const AuditSection: React.FC = () => {
           <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('Audit Log')}</h2>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('System activity and security events')}</p>
         </div>
-        <button className="btn btn-secondary">
-          <RefreshCw size={14} />
+        <button className="btn btn-secondary" onClick={onRefresh} disabled={loading}>
+          <RefreshCw size={14} style={{ marginRight: 6, animation: loading ? 'spin 1s linear infinite' : undefined }} />
           {t('Refresh')}
         </button>
       </div>
 
       <div className="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>{t('Action')}</th>
-              <th>{t('User')}</th>
-              <th>{t('Target')}</th>
-              <th>{t('Timestamp')}</th>
-              <th>{t('Status')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {auditLogs.map((log) => (
-              <tr key={log.id}>
-                <td style={{ fontWeight: 500 }}>{log.action}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{log.user}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{log.target}</td>
-                <td style={{ color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}>{log.timestamp}</td>
-                <td>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {getStatusIcon(log.status)}
-                    <StatusBadge status={log.status} />
-                  </span>
-                </td>
+        {loading ? (
+          <div className="state-center" style={{ minHeight: '30vh' }}>
+            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+              {t('Loading audit logs...')}
+            </p>
+          </div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('Time')}</th>
+                <th>{t('Action')}</th>
+                <th>{t('Target')}</th>
+                <th>{t('Actor')}</th>
+                <th>{t('Note')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {auditLogs.map((log) => {
+                const actionColor =
+                  log.action === 'Delete' ? 'var(--danger)' :
+                  log.action === 'Create' ? 'var(--success)' :
+                  '#3b82f6';
+                const actionBg =
+                  log.action === 'Delete' ? 'rgba(239, 68, 68, 0.1)' :
+                  log.action === 'Create' ? 'rgba(34, 197, 94, 0.1)' :
+                  'rgba(59, 130, 246, 0.1)';
+
+                return (
+                  <tr key={log.auditLogId}>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+                      {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                    </td>
+                    <td>
+                      <span className="badge" style={{ color: actionColor, background: actionBg, borderColor: `${actionColor}33`, fontWeight: 600 }}>
+                        {log.action}
+                      </span>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{log.entityName || 'N/A'}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+                          {log.entityType}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontWeight: 600 }}>{log.actorName}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>
+                          {log.isAdminAction ? t('Admin Action') : log.actorPrimaryRole}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
+                      {log.description}
+                    </td>
+                  </tr>
+                );
+              })}
+              {auditLogs.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                    {t('No audit logs found.')}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -289,10 +397,86 @@ const AdminPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Real data states
+  const [users, setUsers] = useState<AdminUserDto[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+
+  // Modals state
+  const [roleModalOpen, setRoleModalOpen] = useState(false);
+  const [cinemaModalOpen, setCinemaModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedUserEmail, setSelectedUserEmail] = useState('');
+  const [selectedUserRoles, setSelectedUserRoles] = useState('');
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await adminApi.getUsers();
+      setUsers(res.data || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const fetchAuditLogs = async () => {
+    setAuditLogsLoading(true);
+    try {
+      const res = await adminApi.getRecentAuditLogs(50);
+      setAuditLogs(res.data || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setAuditLogsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'users') {
+      fetchUsers();
+    } else if (activeTab === 'audit' || activeTab === 'dashboard') {
+      fetchAuditLogs();
+    }
+  }, [activeTab]);
+
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
+    try {
+      await adminApi.updateUserStatus(userId, newStatus);
+      showSuccess(t('toast.userStatusUpdated'));
+      fetchUsers();
+    } catch (err: any) {
+      showError(err.response?.data?.message || t('toast.userStatusUpdateFailed'));
+    }
+  };
+
+  const handleOpenRoleModal = (userId: string, email: string, roles: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(email);
+    setSelectedUserRoles(roles);
+    setRoleModalOpen(true);
+  };
+
+  const handleOpenCinemaModal = (userId: string, email: string) => {
+    setSelectedUserId(userId);
+    setSelectedUserEmail(email);
+    setCinemaModalOpen(true);
+  };
+
+  const handleRoleUpdateSuccess = () => {
+    fetchUsers();
+  };
+
+  const handleCinemaAssignSuccess = () => {
+    fetchUsers();
+  };
 
   const sidebarSections: SidebarSection[] = [
     {
@@ -330,7 +514,7 @@ const AdminPage: React.FC = () => {
             }}>
               <StatCard
                 label={t('Total Users')}
-                value="42"
+                value={users.length ? users.length.toString() : "42"}
                 trend="+5 this month"
                 icon={<Users size={22} />}
                 color="#ff8a00"
@@ -383,56 +567,79 @@ const AdminPage: React.FC = () => {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px' }}>
                 {t('Recent Activity')}
               </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {auditLogs.slice(0, 4).map((log) => (
-                  <div
-                    key={log.id}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '10px 14px', borderRadius: 10,
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.04)',
-                    }}
-                  >
-                    <div style={{
-                      width: 32, height: 32, borderRadius: 8,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: log.status === 'Success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                    }}>
-                      {log.status === 'Success'
-                        ? <CheckCircle size={14} style={{ color: 'var(--success)' }} />
-                        : <XCircle size={14} style={{ color: 'var(--danger)' }} />
-                      }
+              {auditLogsLoading ? (
+                <div className="state-center" style={{ minHeight: 100 }}>
+                  <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {auditLogs.slice(0, 4).map((log) => (
+                    <div
+                      key={log.auditLogId}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        padding: '10px 14px', borderRadius: 10,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.04)',
+                      }}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 8,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: log.action === 'Delete' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)',
+                      }}>
+                        {log.action === 'Delete'
+                          ? <XCircle size={14} style={{ color: 'var(--danger)' }} />
+                          : <CheckCircle size={14} style={{ color: 'var(--success)' }} />
+                        }
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{log.action}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                          {log.actorName} → {log.entityName}
+                        </p>
+                      </div>
+                      <span style={{
+                        fontSize: 10, color: 'var(--text-muted)',
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}>
+                        {log.createdAt ? new Date(log.createdAt).toLocaleString('vi-VN') : 'N/A'}
+                      </span>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{log.action}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                        {log.user} → {log.target}
-                      </p>
-                    </div>
-                    <span style={{
-                      fontSize: 10, color: 'var(--text-muted)',
-                      fontFamily: "'JetBrains Mono', monospace",
-                    }}>
-                      {log.timestamp}
-                    </span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                  {auditLogs.length === 0 && (
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, fontStyle: 'italic' }}>
+                      {t('No recent activity.')}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         );
 
       case 'users':
-        return <UsersSection />;
-
-
+        return (
+          <UsersSection
+            users={users}
+            loading={usersLoading}
+            onUpdateStatus={handleUpdateUserStatus}
+            onUpdateRole={handleOpenRoleModal}
+            onAssignCinema={handleOpenCinemaModal}
+          />
+        );
 
       case 'rights':
         return <TransferRightsView />;
 
       case 'audit':
-        return <AuditSection />;
+        return (
+          <AuditSection
+            auditLogs={auditLogs}
+            loading={auditLogsLoading}
+            onRefresh={fetchAuditLogs}
+          />
+        );
 
       default:
         return <ManagementDashboard role="admin" />;
@@ -462,6 +669,23 @@ const AdminPage: React.FC = () => {
           {renderContent()}
         </div>
       </main>
+
+      <RoleUpdateModal
+        isOpen={roleModalOpen}
+        onClose={() => setRoleModalOpen(false)}
+        userId={selectedUserId}
+        currentUserEmail={selectedUserEmail}
+        currentUserRoles={selectedUserRoles}
+        onSuccess={handleRoleUpdateSuccess}
+      />
+
+      <CinemaAssignModal
+        isOpen={cinemaModalOpen}
+        onClose={() => setCinemaModalOpen(false)}
+        userId={selectedUserId}
+        currentUserEmail={selectedUserEmail}
+        onSuccess={handleCinemaAssignSuccess}
+      />
     </div>
   );
 };
