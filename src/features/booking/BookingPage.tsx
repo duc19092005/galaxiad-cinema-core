@@ -41,7 +41,17 @@ const BookingPage: React.FC = () => {
         if (storedUser) {
             const user = JSON.parse(storedUser);
             setUserName(user.username || user.userName || 'Guest');
-            setUserRole(user.selectedRole || 'Guest');
+            
+            const roles: string[] = user.roles || [];
+            if (roles.includes('VIP')) {
+                setUserRole('VIP');
+            } else if (roles.includes('Student')) {
+                setUserRole('Student');
+            } else if (roles.includes('Customer') || roles.includes('User')) {
+                setUserRole('User');
+            } else {
+                setUserRole('User');
+            }
             setIsLoggedIn(true);
         } else {
             setUserName('Guest');

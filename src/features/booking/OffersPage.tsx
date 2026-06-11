@@ -66,7 +66,16 @@ export const OffersPage: React.FC = () => {
         setIsLoggedIn(true);
         try {
           const parsed = JSON.parse(stored);
-          setUserRole(parsed.selectedRole || 'Guest');
+          const roles: string[] = parsed.roles || [];
+          if (roles.includes('VIP')) {
+            setUserRole('VIP');
+          } else if (roles.includes('Student')) {
+            setUserRole('Student');
+          } else if (roles.includes('Customer') || roles.includes('User')) {
+            setUserRole('User');
+          } else {
+            setUserRole('User');
+          }
         } catch {
           // ignore
         }

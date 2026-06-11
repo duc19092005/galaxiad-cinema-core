@@ -122,32 +122,32 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => navigate('/home')} 
                 className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
-                Movies
+                {t('home.moviesNav', 'Movies')}
               </span>
               <span 
                 onClick={() => navigate('/showtimes')} 
                 className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
-                Showtimes
+                {t('home.showtimesNav', 'Showtimes')}
               </span>
               <span 
                 onClick={() => navigate('/theaters')} 
                 className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
-                Theaters
+                {t('home.theatersNav', 'Theaters')}
               </span>
               <span 
                 onClick={() => navigate('/offers')} 
                 className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
-                Offers
+                {t('home.offersNav', 'Offers')}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-2 md:gap-4">
             {/* Search Input Box */}
-            <div className="hidden lg:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/10">
+            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/10">
               <span className="material-symbols-outlined text-[#ddc1ae] text-[20px]">search</span>
               <input 
                 className="bg-transparent border-none focus:outline-none text-white text-sm ml-2 w-48 placeholder:text-[#ddc1ae]/50" 
@@ -156,7 +156,7 @@ const Header: React.FC<HeaderProps> = ({
               />
             </div>
 
-            <div className="flex gap-2 md:gap-4 items-center">
+            <div className="flex gap-1.5 md:gap-3 items-center">
               {/* Cinema Selector (Only for TheaterManager) */}
               {user?.selectedRole === 'TheaterManager' && <CinemaSelector />}
 
@@ -166,12 +166,12 @@ const Header: React.FC<HeaderProps> = ({
               <button 
                 onClick={() => setIsLocationModalOpen(true)}
                 title={selectedCinemaName || "Select Cinema Location"}
-                className="material-symbols-outlined hover:bg-white/5 p-2 rounded-full transition-all duration-300 bg-transparent border-none cursor-pointer flex items-center gap-1"
+                className="hover:bg-white/5 p-2 rounded-full transition-all duration-300 bg-transparent border-none cursor-pointer flex items-center gap-1.5"
                 style={{ color: selectedCinemaName ? 'var(--primary, #ff8a00)' : 'white' }}
               >
-                location_on
+                <span className="material-symbols-outlined text-[20px]" style={{ fontSize: '20px' }}>location_on</span>
                 {selectedCinemaName && (
-                  <span className="hidden lg:inline text-xs font-semibold max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap">
+                  <span className="hidden lg:inline text-xs font-semibold max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap font-sans">
                     {selectedCinemaName}
                   </span>
                 )}
@@ -181,9 +181,9 @@ const Header: React.FC<HeaderProps> = ({
               <div className="relative" ref={dropdownRef}>
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className="material-symbols-outlined hover:bg-white/5 p-2 rounded-full transition-all duration-300 text-[#ffb77f] bg-transparent border-none cursor-pointer flex items-center justify-center"
+                  className="hover:bg-white/5 p-2 rounded-full transition-all duration-300 text-[#ffb77f] bg-transparent border-none cursor-pointer flex items-center justify-center"
                 >
-                  account_circle
+                  <span className="material-symbols-outlined text-[24px]">account_circle</span>
                 </button>
 
                 {isDropdownOpen && (
@@ -272,8 +272,11 @@ const Header: React.FC<HeaderProps> = ({
 
               {/* Login Button / Welcome Message */}
               {user ? (
-                <span className="hidden md:inline-block text-xs font-semibold text-zinc-400 font-sans">
-                  Hi, {user.username}
+                <span 
+                  className="hidden xl:inline-block text-xs font-semibold text-zinc-400 font-sans max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap"
+                  title={user.username}
+                >
+                  {t('Hi', 'Hi')}, {user.username}
                 </span>
               ) : (
                 <button
