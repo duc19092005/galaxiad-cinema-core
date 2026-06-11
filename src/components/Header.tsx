@@ -67,6 +67,17 @@ const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const getRoleDashboardRoute = (role?: string) => {
+    switch (role) {
+      case 'Admin': return '/admin';
+      case 'MovieManager': return '/movie-manager';
+      case 'TheaterManager': return '/theater-manager';
+      case 'FacilitiesManager': return '/facilities-manager';
+      case 'Cashier': return '/cashier';
+      default: return null;
+    }
+  };
+
   const handleLogout = async () => {
     setLogoutError(null);
     setLogoutLoading(true);
@@ -86,8 +97,8 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="fixed w-full top-0 z-50 bg-[#131313]/30 backdrop-blur-xl border-b border-white/10 shadow-sm transition-all duration-300">
-        <nav className="flex justify-between items-center px-6 md:px-16 py-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-12">
+        <nav className="flex justify-between items-center px-4 md:px-8 lg:px-12 py-4 max-w-7xl mx-auto">
+          <div className="flex items-center gap-6 lg:gap-12">
             {/* Sidebar toggle for dashboards */}
             {showSidebarToggle && (
               <button 
@@ -106,35 +117,35 @@ const Header: React.FC<HeaderProps> = ({
               CINEMA
             </a>
             
-            <div className="hidden md:flex gap-8">
+            <div className="hidden md:flex gap-4 lg:gap-8">
               <span 
                 onClick={() => navigate('/home')} 
-                className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
                 Movies
               </span>
               <span 
                 onClick={() => navigate('/showtimes')} 
-                className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
                 Showtimes
               </span>
               <span 
                 onClick={() => navigate('/theaters')} 
-                className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
                 Theaters
               </span>
               <span 
                 onClick={() => navigate('/offers')} 
-                className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+                className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-sm cursor-pointer`}
               >
                 Offers
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3 md:gap-6">
             {/* Search Input Box */}
             <div className="hidden lg:flex items-center bg-white/5 rounded-full px-4 py-2 border border-white/10">
               <span className="material-symbols-outlined text-[#ddc1ae] text-[20px]">search</span>
@@ -145,7 +156,7 @@ const Header: React.FC<HeaderProps> = ({
               />
             </div>
 
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-2 md:gap-4 items-center">
               {/* Cinema Selector (Only for TheaterManager) */}
               {user?.selectedRole === 'TheaterManager' && <CinemaSelector />}
 
@@ -204,6 +215,20 @@ const Header: React.FC<HeaderProps> = ({
 
                     {user && (
                       <>
+                        {user.selectedRole && user.selectedRole !== 'Customer' && (
+                          <button
+                            onClick={() => {
+                              const route = getRoleDashboardRoute(user.selectedRole);
+                              if (route) navigate(route);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-[#ffb77f] flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
+                          >
+                            <span className="material-symbols-outlined text-[18px]">dashboard</span>
+                            {t('Dashboard')}
+                          </button>
+                        )}
+
                         <button
                           onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
                           className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"

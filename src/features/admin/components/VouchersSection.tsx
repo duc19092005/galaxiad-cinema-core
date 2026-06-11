@@ -286,19 +286,21 @@ export const VouchersSection: React.FC = () => {
           <div
             style={{
               width: '100%',
-              maxWidth: '520px',
+              maxWidth: '580px',
               backgroundColor: 'var(--bg-elevated, #18181b)',
               border: '1px solid var(--border-color, #27272a)',
               borderRadius: 'var(--radius-xl, 20px)',
               boxShadow: 'var(--shadow-xl)',
-              padding: '24px',
+              padding: '28px',
               maxHeight: '90vh',
-              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Ticket size={20} style={{ color: 'var(--accent)' }} />
                 <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
@@ -325,117 +327,138 @@ export const VouchersSection: React.FC = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Name */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Voucher Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Special Student discount voucher"
-                  value={form.voucherName}
-                  onChange={(e) => setForm({ ...form, voucherName: e.target.value })}
-                  className="input"
-                  style={{ width: '100%' }}
-                />
-              </div>
-
-              {/* Description */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Description *</label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Provide voucher usage terms, rules, and value info..."
-                  value={form.voucherDescription}
-                  onChange={(e) => setForm({ ...form, voucherDescription: e.target.value })}
-                  className="input"
-                  style={{ width: '100%', resize: 'vertical', minHeight: '60px' }}
-                />
-              </div>
-
-              {/* Group discount, cost, quantity */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <form 
+              onSubmit={handleSubmit} 
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                overflow: 'hidden', 
+                flex: 1 
+              }}
+            >
+              {/* Form Content Scrollable Area */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  overflowY: 'auto',
+                  paddingRight: '6px',
+                  marginBottom: '20px',
+                  flex: 1,
+                }}
+              >
+                {/* Name */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Discount (%) *</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Voucher Name *</label>
                   <input
-                    type="number"
-                    min={1}
-                    max={100}
+                    type="text"
                     required
-                    value={form.voucherDiscountPercent}
-                    onChange={(e) => setForm({ ...form, voucherDiscountPercent: parseInt(e.target.value) || 0 })}
+                    placeholder="e.g. Special Student discount voucher"
+                    value={form.voucherName}
+                    onChange={(e) => setForm({ ...form, voucherName: e.target.value })}
                     className="input"
+                    style={{ width: '100%' }}
                   />
                 </div>
 
+                {/* Description */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Points Cost *</label>
-                  <input
-                    type="number"
-                    min={0}
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Description *</label>
+                  <textarea
                     required
-                    value={form.voucherPointsCost}
-                    onChange={(e) => setForm({ ...form, voucherPointsCost: parseInt(e.target.value) || 0 })}
+                    rows={3}
+                    placeholder="Provide voucher usage terms, rules, and value info..."
+                    value={form.voucherDescription}
+                    onChange={(e) => setForm({ ...form, voucherDescription: e.target.value })}
                     className="input"
+                    style={{ width: '100%', resize: 'vertical', minHeight: '60px' }}
                   />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Quantity *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    required
-                    value={form.voucherQuantity}
-                    onChange={(e) => setForm({ ...form, voucherQuantity: parseInt(e.target.value) || 0 })}
-                    className="input"
-                  />
-                </div>
-              </div>
+                {/* Group discount, cost, quantity */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Discount (%) *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      required
+                      value={form.voucherDiscountPercent}
+                      onChange={(e) => setForm({ ...form, voucherDiscountPercent: parseInt(e.target.value) || 0 })}
+                      className="input"
+                    />
+                  </div>
 
-              {/* Role limitation */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Target User Role constraint *</label>
-                <select
-                  value={form.roleId}
-                  onChange={(e) => setForm({ ...form, roleId: e.target.value })}
-                  className="input"
-                  style={{ width: '100%', cursor: 'pointer' }}
-                >
-                  {roles.map((r) => (
-                    <option key={r.roleId} value={r.roleId}>
-                      {r.roleName}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Points Cost *</label>
+                    <input
+                      type="number"
+                      min={0}
+                      required
+                      value={form.voucherPointsCost}
+                      onChange={(e) => setForm({ ...form, voucherPointsCost: parseInt(e.target.value) || 0 })}
+                      className="input"
+                    />
+                  </div>
 
-              {/* Dates */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Valid From</label>
-                  <input
-                    type="date"
-                    value={form.validFrom}
-                    onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
-                    className="input"
-                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Quantity *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={form.voucherQuantity}
+                      onChange={(e) => setForm({ ...form, voucherQuantity: parseInt(e.target.value) || 0 })}
+                      className="input"
+                    />
+                  </div>
                 </div>
 
+                {/* Role limitation */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Valid To</label>
-                  <input
-                    type="date"
-                    value={form.validTo}
-                    onChange={(e) => setForm({ ...form, validTo: e.target.value })}
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Target User Role constraint *</label>
+                  <select
+                    value={form.roleId}
+                    onChange={(e) => setForm({ ...form, roleId: e.target.value })}
                     className="input"
-                  />
+                    style={{ width: '100%', cursor: 'pointer' }}
+                  >
+                    {roles.map((r) => (
+                      <option key={r.roleId} value={r.roleId}>
+                        {r.roleName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dates */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Valid From</label>
+                    <input
+                      type="date"
+                      value={form.validFrom}
+                      onChange={(e) => setForm({ ...form, validFrom: e.target.value })}
+                      className="input"
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Valid To</label>
+                    <input
+                      type="date"
+                      value={form.validTo}
+                      onChange={(e) => setForm({ ...form, validTo: e.target.value })}
+                      className="input"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Submit Buttons */}
-              <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexShrink: 0, borderTop: '1px solid var(--border-color, #27272a)', paddingTop: '16px' }}>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
