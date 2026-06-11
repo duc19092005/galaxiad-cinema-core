@@ -969,19 +969,25 @@ public class BookingService
                     .Select(ur => ur.RoleListInfoEntity.RoleName)
                     .ToListAsync();
 
-                decimal earningRate = 5; // Default standard rate is 5% for all registered users (Customer, Admin, Managers, etc.)
+                decimal earningMultiplier = 1m;
                 if (userRoles.Contains("VIP"))
                 {
-                    earningRate = 10;
+                    earningMultiplier = 2m;
                 }
                 else if (userRoles.Contains("Student"))
                 {
-                    earningRate = 8;
+                    earningMultiplier = 1.5m;
                 }
 
-                if (earningRate > 0)
+                var ticketCount = await _dbContext.Set<OrderDetailsInfo>()
+                    .CountAsync(od => od.OrderId == order.OrderId);
+
+                var pointsFromPrice = (long)Math.Floor(order.TotalPrice / 10000m);
+                var pointsFromTickets = ticketCount * 10L;
+                var pointsEarned = Math.Max(1L, (long)Math.Floor((pointsFromPrice + pointsFromTickets) * earningMultiplier));
+
+                if (pointsEarned > 0)
                 {
-                    long pointsEarned = (long)Math.Floor((order.TotalPrice * earningRate) / 100);
                     var user = await _dbContext.UserInfoEntity
                         .FirstOrDefaultAsync(u => u.UserId == order.UserId.Value);
                     if (user != null)
