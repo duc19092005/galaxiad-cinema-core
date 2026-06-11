@@ -702,9 +702,9 @@ public class BookingService
                 {
                     roleDiscountPercent = 10;
                 }
-                else if (userRoles.Contains("Customer"))
+                else
                 {
-                    roleDiscountPercent = 5;
+                    roleDiscountPercent = 5; // All other registered roles (Customer, Admin, Managers) get at least 5%
                 }
             }
 
@@ -969,7 +969,7 @@ public class BookingService
                     .Select(ur => ur.RoleListInfoEntity.RoleName)
                     .ToListAsync();
 
-                decimal earningRate = 0;
+                decimal earningRate = 5; // Default standard rate is 5% for all registered users (Customer, Admin, Managers, etc.)
                 if (userRoles.Contains("VIP"))
                 {
                     earningRate = 10;
@@ -977,10 +977,6 @@ public class BookingService
                 else if (userRoles.Contains("Student"))
                 {
                     earningRate = 8;
-                }
-                else if (userRoles.Contains("Customer"))
-                {
-                    earningRate = 5;
                 }
 
                 if (earningRate > 0)
