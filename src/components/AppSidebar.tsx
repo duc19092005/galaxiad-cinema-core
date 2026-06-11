@@ -36,6 +36,7 @@ interface AppSidebarProps {
   sections: SidebarSection[];
   role?: string;
   onLogout?: () => void;
+  collapsibleDesktop?: boolean;
 }
 
 const AppSidebar: React.FC<AppSidebarProps> = ({
@@ -45,6 +46,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   onTabChange,
   sections,
   role,
+  collapsibleDesktop = false,
 }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -74,7 +76,10 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
       )}
 
       {/* Sidebar */}
-      <aside className={`sidebar glass-card ${isOpen ? 'open' : ''}`} style={{ transform: isOpen ? 'translateX(0)' : undefined }}>
+      <aside
+        className={`sidebar glass-card ${isOpen ? 'open' : ''}`}
+        style={{ transform: (isOpen || !collapsibleDesktop) ? 'translateX(0)' : 'translateX(-100%)' }}
+      >
         {/* Header */}
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -96,7 +101,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
                 </p>
               )}
             </div>
-            <button onClick={onToggle} className="btn-icon lg:!hidden">
+            <button onClick={onToggle} className="btn-icon">
               <X size={18} />
             </button>
           </div>

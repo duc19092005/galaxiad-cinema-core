@@ -4,6 +4,12 @@ import type { ApiSuccessResponse } from '../types/auth.types';
 import type { Movie, MovieRequiredAge, MovieGenre, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
 
+const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
+    isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
+    message: response.data?.message ?? response.data?.Message ?? 'Success',
+    data: response.data?.data ?? response.data?.Data,
+});
+
 export const movieApi = {
     /** GET /api/movieManager/movies */
     getMovieList: async (): Promise<ApiSuccessResponse<Movie[]>> => {
@@ -73,7 +79,7 @@ export const movieApi = {
             formData.append('movieGenreIds', id);
         });
 
-        const response = await movieAxios.post<ApiSuccessResponse>(
+        const response = await movieAxios.post<any>(
             '/movieManager/movies',
             formData,
             {
@@ -82,7 +88,7 @@ export const movieApi = {
                 },
             }
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 
     /** PUT /api/movieManager/movies/{movieId} (multipart/form-data) */
@@ -116,7 +122,7 @@ export const movieApi = {
             });
         }
 
-        const response = await movieAxios.put<ApiSuccessResponse>(
+        const response = await movieAxios.put<any>(
             `/movieManager/movies/${movieId}`,
             formData,
             {
@@ -125,14 +131,14 @@ export const movieApi = {
                 },
             }
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 
     /** DELETE /api/movieManager/movies/{movieId} */
     deleteMovie: async (movieId: string): Promise<ApiSuccessResponse> => {
-        const response = await movieAxios.delete<ApiSuccessResponse>(
+        const response = await movieAxios.delete<any>(
             `/movieManager/movies/${movieId}`
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 };

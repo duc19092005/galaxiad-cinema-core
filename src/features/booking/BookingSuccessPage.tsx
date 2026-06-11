@@ -174,11 +174,11 @@ const BookingSuccessPage: React.FC = () => {
     // Loading State
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #18181b 55%, #2a1300 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#f4f4f5' }}>
                 <div style={{
                     maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
                     border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
-                    backgroundColor: 'var(--bg-elevated)', textAlign: 'center',
+                    backgroundColor: 'rgba(24,24,27,0.96)', textAlign: 'center',
                 }}>
                     <Loader2 size={56} style={{ color: 'var(--primary)', animation: 'spin 1s linear infinite', margin: '0 auto 24px' }} />
                     <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>Loading Your Ticket...</h2>
@@ -191,11 +191,11 @@ const BookingSuccessPage: React.FC = () => {
     // Error State
     if (error || !ticketInfo) {
         return (
-            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+            <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #18181b 55%, #2a1300 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#f4f4f5' }}>
                 <div style={{
                     maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
                     border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
-                    backgroundColor: 'var(--bg-elevated)', textAlign: 'center',
+                    backgroundColor: 'rgba(24,24,27,0.96)', textAlign: 'center',
                 }}>
                     <div style={{
                         width: 96, height: 96, borderRadius: '50%',
@@ -222,11 +222,11 @@ const BookingSuccessPage: React.FC = () => {
 
     // Success State
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #18181b 55%, #2a1300 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#f4f4f5' }}>
             <div style={{
                 maxWidth: 500, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
                 border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
-                backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)',
+                backgroundColor: 'rgba(24,24,27,0.96)', color: '#f4f4f5',
             }}>
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>

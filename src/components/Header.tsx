@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({
             {showSidebarToggle && (
               <button 
                 onClick={onMenuToggle} 
-                className="hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer lg:hidden flex-shrink-0"
+                className="hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer flex-shrink-0"
               >
                 <span className="material-symbols-outlined text-[22px]">menu</span>
               </button>

@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next';
 import TimelineGrid from './components/TimelineGrid';
 import DraggableMovie from './components/DraggableMovie';
 import type { Movie as ScheduleMovie, ScheduleData, ShowTimeSlot, Auditorium as ScheduleAuditorium } from './types';
-import { Save, Loader2, Search, ChevronLeft, ChevronRight, Calendar, Film } from 'lucide-react';
+import { Save, Loader2, Search, ChevronLeft, ChevronRight, Calendar, Film, Building2 } from 'lucide-react';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
 import { scheduleApi } from '../../api/scheduleApi';
 import { toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 import { useCinema } from '../../contexts/CinemaContext';
+import { facilitiesApi } from '../../api/facilitiesApi';
+import type { Cinema } from '../../types/facilities.types';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
@@ -22,7 +24,7 @@ interface ScheduleManagerPageProps {
 
 const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = false }) => {
     const { t } = useTranslation();
-    const { activeCinemaId } = useCinema();
+    const { activeCinemaId, setActiveCinemaId, managedCinemas } = useCinema();
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
     const [draggingMovie, setDraggingMovie] = useState<ScheduleMovie | null>(null);
     const [manualAddMovie, setManualAddMovie] = useState<ScheduleMovie | null>(null);
@@ -34,6 +36,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [availableCinemas, setAvailableCinemas] = useState<{ cinemaId: string; cinemaName: string }[]>([]);
 
     // App layout sidebar tabs
     const [activeTab, setActiveTab] = useState('schedule');
@@ -67,6 +70,37 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
     useEffect(() => {
         fetchInitialData();
     }, [activeCinemaId]);
+
+    useEffect(() => {
+        const loadCinemas = async () => {
+            const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+            const isAdmin = (storedUser.roles || []).includes('Admin') || storedUser.selectedRole === 'Admin';
+
+            if (isAdmin) {
+                try {
+                    const res = await facilitiesApi.getCinemaList();
+                    const cinemas = (res.data || []).map((cinema: Cinema) => ({
+                        cinemaId: cinema.cinemaId,
+                        cinemaName: cinema.cinemaName,
+                    }));
+                    setAvailableCinemas(cinemas);
+                    if (!activeCinemaId && cinemas.length > 0) {
+                        setActiveCinemaId(cinemas[0].cinemaId);
+                    }
+                    return;
+                } catch (error) {
+                    console.error('Failed to load cinemas for schedule manager', error);
+                }
+            }
+
+            setAvailableCinemas(managedCinemas);
+            if (!activeCinemaId && managedCinemas.length > 0) {
+                setActiveCinemaId(managedCinemas[0].cinemaId);
+            }
+        };
+
+        loadCinemas();
+    }, [activeCinemaId, managedCinemas, setActiveCinemaId]);
 
     useEffect(() => {
         if (selectedAuditoriumId && auditoriumsList.length > 0) {
@@ -300,6 +334,30 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                     Movie Scheduler
                   </h2>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {availableCinemas.length > 0 && (
+                      <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px' }}>
+                        <Building2 size={16} style={{ color: 'var(--accent)' }} />
+                        <select
+                          value={activeCinemaId || ''}
+                          onChange={(e) => {
+                            setActiveCinemaId(e.target.value || null);
+                            setSelectedAuditoriumId('');
+                            setScheduleData({ cinemaId: e.target.value || 'default', data: [] });
+                          }}
+                          style={{
+                            background: 'transparent', border: 'none', color: 'var(--text-primary)',
+                            fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
+                            padding: '4px 16px 4px 0', outline: 'none', cursor: 'pointer',
+                          }}
+                        >
+                          {availableCinemas.map(cinema => (
+                            <option key={cinema.cinemaId} value={cinema.cinemaId} style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)' }}>
+                              {cinema.cinemaName}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     {/* Auditorium Selector */}
                     <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px' }}>
                       <span style={{ color: 'var(--accent)', fontSize: 16, lineHeight: 1 }}>🎬</span>
@@ -460,6 +518,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                 onTabChange={handleTabChange}
                 sections={sidebarSections}
                 role="Schedule Manager"
+                collapsibleDesktop
             />
 
             <Header
@@ -469,7 +528,15 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                 onMenuToggle={() => setSidebarOpen(true)}
             />
 
-            <main className="main-content" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <main
+                className="main-content"
+                style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden',
+                    marginLeft: sidebarOpen ? 'var(--sidebar-width)' : 0,
+                }}
+            >
                 {renderWorkspace()}
             </main>
         </div>

@@ -37,7 +37,15 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
         const userRolesRes = await adminApi.getUserRoles(userId);
         const userCurrentRoles = userRolesRes.data || [];
         if (userCurrentRoles.length > 0) {
-          setSelectedRoleIds(userCurrentRoles.map(r => r.roleId));
+          const selectedIds = userCurrentRoles
+            .map((role: any) => {
+              if (typeof role === 'string') {
+                return allRoles.find((r: RoleDto) => r.roleName === role)?.roleId;
+              }
+              return role.roleId;
+            })
+            .filter(Boolean) as string[];
+          setSelectedRoleIds(selectedIds);
         } else { syncFromProps(allRoles); }
       } catch { syncFromProps(allRoles); }
     } catch (err: any) {

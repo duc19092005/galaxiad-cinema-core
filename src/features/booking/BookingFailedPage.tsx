@@ -28,11 +28,11 @@ const BookingFailedPage: React.FC = () => {
     const errorDetails = getErrorMessage();
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+        <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #09090b 0%, #18181b 55%, #2a0000 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', color: '#f4f4f5' }}>
             <div style={{
                 maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
                 border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
-                backgroundColor: 'var(--bg-elevated)', textAlign: 'center',
+                backgroundColor: 'rgba(24,24,27,0.96)', textAlign: 'center',
             }}>
                 <div style={{
                     width: 96, height: 96, borderRadius: '50%',

@@ -9,22 +9,28 @@ import type {
     UpdateScheduleRequest
 } from '../types/schedule.types';
 
+const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
+    isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
+    message: response.data?.message ?? response.data?.Message ?? 'Success',
+    data: response.data?.data ?? response.data?.Data,
+});
+
 export const scheduleApi = {
     /** POST /api/TheaterManager/MovieSchedules */
     createSchedule: async (data: CreateScheduleRequest): Promise<ApiSuccessResponse> => {
-        const response = await theaterAxios.post<ApiSuccessResponse>(
+        const response = await theaterAxios.post<any>(
             '/TheaterManager/MovieSchedules',
             data
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 
     /** DELETE /api/TheaterManager/MovieSchedules/{scheduleId} */
     deleteSchedule: async (scheduleId: string): Promise<ApiSuccessResponse> => {
-        const response = await theaterAxios.delete<ApiSuccessResponse>(
+        const response = await theaterAxios.delete<any>(
             `/TheaterManager/MovieSchedules/${scheduleId}`
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 
     /** GET /api/TheaterManager/Data/movies-with-formats?cinemaId={id} */
@@ -52,10 +58,10 @@ export const scheduleApi = {
 
     /** PUT /api/TheaterManager/MovieSchedules/{auditoriumId} */
     updateSchedule: async (auditoriumId: string, data: UpdateScheduleRequest): Promise<ApiSuccessResponse> => {
-        const response = await theaterAxios.put<ApiSuccessResponse>(
+        const response = await theaterAxios.put<any>(
             `/TheaterManager/MovieSchedules/${auditoriumId}`,
             data
         );
-        return response.data;
+        return normalizeSuccessResponse(response);
     },
 };
