@@ -10,8 +10,7 @@ import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/publi
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
-import { authApi } from '../../api/authApi';
-import Cookies from 'js-cookie';
+import Header from '../../components/Header';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -201,116 +200,8 @@ const BookingPage: React.FC = () => {
                 }
             `}</style>
 
-            {/* Header / Top Nav */}
-            <header style={{
-                position: 'fixed', top: 0, width: '100%', zIndex: 50,
-                backgroundColor: 'var(--bg-surface, #121214)', backdropFilter: 'blur(24px)',
-                borderBottom: '1px solid var(--border-color, #27272a)',
-                height: 72, display: 'flex', alignItems: 'center',
-            }}>
-                <div style={{
-                    maxWidth: 1280, margin: '0 auto', width: '100%',
-                    padding: '0 clamp(16px, 4vw, 64px)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }}>
-                    <div
-                        onClick={() => navigate('/home')}
-                        style={{
-                            cursor: 'pointer',
-                            fontFamily: "'Montserrat', sans-serif",
-                            fontSize: 24,
-                            fontWeight: 800,
-                            letterSpacing: '-0.5px',
-                            background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            whiteSpace: 'nowrap',
-                            lineHeight: 1,
-                            userSelect: 'none',
-                        }}>
-                        CINEMA
-                    </div>
-                    <nav style={{ display: 'none', alignItems: 'center', gap: 32 }} className="md:flex">
-                        {['Movies', 'Cinemas', 'Offers', 'Membership'].map(item => (
-                            <a key={item} href="#"
-                                style={{ color: 'var(--text-secondary, #a1a1aa)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
-                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #fafafa)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary, #a1a1aa)'; }}
-                            >
-                                {item}
-                            </a>
-                        ))}
-                    </nav>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 24px)' }}>
-                        {isLoggedIn ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                    padding: '4px 12px 4px 4px',
-                                    height: 38,
-                                    borderRadius: 9999,
-                                    background: 'var(--bg-elevated, #18181b)',
-                                    border: '1px solid var(--border-color, #27272a)',
-                                    color: 'var(--text-primary, #fafafa)',
-                                }}>
-                                    <div style={{
-                                        width: 28,
-                                        height: 28,
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        backgroundColor: 'rgba(255,138,0,0.12)',
-                                    }}>
-                                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent, #ff8a00)' }}>{userName[0]?.toUpperCase() || 'U'}</span>
-                                    </div>
-                                    <span style={{ fontSize: 13, fontWeight: 500 }} className="hidden sm:inline">{userName}</span>
-                                </div>
-                                <button
-                                    onClick={async () => {
-                                        try { await authApi.logout(); } catch {}
-                                        localStorage.removeItem('user_info');
-                                        Cookies.remove('X-Access-Token');
-                                        navigate('/login');
-                                    }}
-                                    style={{
-                                        backgroundColor: 'transparent',
-                                        color: 'var(--danger, #ef4444)',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontWeight: 600,
-                                        fontSize: 13,
-                                        padding: '4px 8px',
-                                    }}
-                                >
-                                    {t('Logout')}
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => navigate('/login')}
-                                style={{
-                                    backgroundColor: 'var(--accent, #ff8a00)',
-                                    color: '#000',
-                                    fontWeight: 700,
-                                    padding: '8px 24px',
-                                    borderRadius: 8,
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.3s ease',
-                                    whiteSpace: 'nowrap',
-                                    fontSize: 'clamp(13px, 2vw, 14px)',
-                                }}
-                            >
-                                {t('Sign In')}
-                            </button>
-                        )}
-                    </div>
-                </div>
-            </header>
+            {/* Redesigned Unified Header */}
+            <Header />
 
             {/* Main Content */}
             <main className="pt-32 pb-24 px-6 md:px-16 max-w-7xl mx-auto">

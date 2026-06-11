@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Play, Loader2, AlertCircle, ChevronLeft
+    Play, Loader2, AlertCircle
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
+import Header from '../../components/Header';
 
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
@@ -22,14 +23,6 @@ const MovieDetailPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [loadingShowtimes, setLoadingShowtimes] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
-    const [isScrolled, setIsScrolled] = useState(false);
-
-    useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 50);
-        window.addEventListener('scroll', handleScroll);
-        return () => { window.removeEventListener('scroll', handleScroll); };
-    }, []);
 
     useEffect(() => {
         if (movieId) {
@@ -49,13 +42,16 @@ const MovieDetailPage: React.FC = () => {
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
 
-            // Fetch recommended movies
+            // Fetch recommended movies with fallback
             try {
-                const recRes = await publicApi.getNowShowing({ pageSize: 10 });
-                if (recRes && recRes.data) {
-                    const filtered = recRes.data.filter(m => m.movieId !== movieId);
-                    setRecommendedMovies(filtered.slice(0, 6));
+                let recRes = await publicApi.getNowShowing({ pageSize: 10 });
+                let list = recRes?.data || [];
+                if (list.length === 0) {
+                    const allRes = await publicApi.getAllMovies({ pageSize: 10 });
+                    list = allRes?.data || [];
                 }
+                const filtered = list.filter(m => m.movieId !== movieId);
+                setRecommendedMovies(filtered.slice(0, 6));
             } catch (recErr) {
                 console.error('Failed to load recommended movies:', recErr);
             }
@@ -161,45 +157,10 @@ const MovieDetailPage: React.FC = () => {
                 }
             `}</style>
 
-            {/* Navbar */}
-            <nav style={{
-                position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
-                height: 72, padding: '0 clamp(12px, 3vw, 24px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                backgroundColor: isScrolled ? 'var(--color-surface, #121214)' : 'rgba(255,255,255,0.03)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                borderBottom: isScrolled ? '1px solid var(--color-border, #27272a)' : '1px solid rgba(255,255,255,0.06)',
-                transition: 'background-color 0.3s ease, border-color 0.3s ease'
-            }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)' }}>
-                    <button
-                        onClick={() => navigate(-1)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--color-border, #27272a)', borderRadius: '50%', width: 40, height: 40, color: 'var(--color-text-primary, #fafafa)', cursor: 'pointer', transition: 'all 0.3s ease', flexShrink: 0 }}
-                        className="interactive"
-                    >
-                        <ChevronLeft size={20} />
-                    </button>
-                    <div
-                        onClick={() => navigate('/home')}
-                        style={{
-                            cursor: 'pointer',
-                            fontFamily: "'Montserrat', sans-serif",
-                            fontSize: 'clamp(20px, 4vw, 24px)', fontWeight: 800,
-                            letterSpacing: '-0.3px',
-                            background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        CINEMA
-                    </div>
-                </div>
-            </nav>
+            {/* Redesigned Unified Header */}
+            <Header />
 
-            <main>
+            <main className="pt-20">
                 {/* Hero Section */}
                 <section className="relative h-[550px] md:h-[870px] w-full overflow-hidden flex items-end">
                     <div className="absolute inset-0 z-0">
