@@ -252,31 +252,11 @@ const ScheduleManagerPage: React.FC = () => {
       return d;
     });
 
-    const isToday = (date: Date) => {
-      const t = new Date();
-      return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear();
-    };
-    const isActiveDay = (date: Date) => {
-      const t = selectedDate;
-      return date.getDate() === t.getDate() && date.getMonth() === t.getMonth() && date.getFullYear() === t.getFullYear();
-    };
-
     const weekLabel = `${weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} — ${weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 
     const filteredMovies = moviesList.filter(m =>
       !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
-    // Time slots from 08:00 to 00:00 (16 hours = 16 slots * 48px each)
-    const timeSlots: string[] = [];
-    for (let h = 8; h <= 23; h++) timeSlots.push(`${h.toString().padStart(2, '0')}:00`);
-
-    // Current time indicator position
-    const now = new Date();
-    const minutesSince8 = (now.getHours() - 8) * 60 + now.getMinutes();
-    const currentTimeTop = Math.max(0, minutesSince8 * 0.8); // 48px/h / 60min/h
-
-    const DAY_NAMES = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 
     if (loading) {
         return (
@@ -437,118 +417,16 @@ const ScheduleManagerPage: React.FC = () => {
                 </aside>
 
                 {/* == Calendar Content == */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--bg-base)', overflow: 'hidden' }}>
-                  {/* Calendar Header (Days) */}
-                  <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', flexShrink: 0 }}>
-                    {/* Time gutter */}
-                    <div style={{
-                      width: 72, borderRight: '1px solid var(--border-color)',
-                      background: 'var(--bg-surface)',
-                      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', padding: '8px 0',
-                    }}>
-                      <span style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>GMT+7</span>
-                    </div>
-                    {/* Day columns */}
-                    {weekDays.map((day, idx) => {
-                      const active = isActiveDay(day);
-                      const todayFlag = isToday(day);
-                      return (
-                        <div key={idx} style={{
-                          flex: 1, padding: '12px 0', textAlign: 'center',
-                          borderRight: idx < 6 ? '1px solid var(--border-color)' : 'none',
-                          background: active ? 'var(--accent-soft)' : 'transparent',
-                          position: 'relative',
-                        }}>
-                          {todayFlag && (
-                            <span style={{ position: 'absolute', top: 6, right: 6, width: 6, height: 6, borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
-                          )}
-                          <p style={{
-                            margin: '0 0 2px', fontSize: 10, color: active ? 'var(--accent)' : 'var(--text-secondary)',
-                            fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.03em',
-                          }}>
-                            {DAY_NAMES[idx]}
-                          </p>
-                          <p style={{
-                            margin: 0, fontSize: 18, fontWeight: 700,
-                            color: active ? 'var(--accent)' : 'var(--text-primary)',
-                          }}>
-                            {day.getDate()}
-                          </p>
-                          {active && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: 'var(--accent)' }} />}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Calendar Body */}
-                  <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
-                    <div style={{ display: 'flex', minHeight: `${timeSlots.length * 48}px`, position: 'relative' }}>
-                      {/* Time Indicators */}
-                      <div style={{
-                        width: 72, borderRight: '1px solid var(--border-color)',
-                        background: 'var(--bg-surface)', flexShrink: 0,
-                      }}>
-                        {timeSlots.map((time, idx) => {
-                          const isPeak = idx >= 5 && idx <= 8;
-                          return (
-                            <div key={idx} style={{
-                              height: 48, borderBottom: '1px solid var(--border-color)',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            }}>
-                              <span style={{
-                                fontSize: 10, color: isPeak ? 'var(--accent)' : 'var(--text-muted)',
-                                fontFamily: "'JetBrains Mono', monospace", fontWeight: isPeak ? 700 : 400,
-                              }}>
-                                {time}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      {/* Grid Columns */}
-                      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', position: 'relative' }}>
-                        {weekDays.map((_, idx) => (
-                          <div key={idx} style={{
-                            borderRight: idx < 6 ? '1px solid var(--border-color)' : 'none',
-                            position: 'relative',
-                            backgroundImage: `
-                              linear-gradient(to right, var(--border-color) 1px, transparent 1px),
-                              linear-gradient(to bottom, var(--border-color) 1px, transparent 1px)
-                            `,
-                            backgroundSize: '100% 48px',
-                          }}>
-                            {/* Current time indicator on today column */}
-                            {isToday(weekDays[idx]) && (
-                              <div style={{
-                                position: 'absolute', left: 0, right: 0,
-                                top: currentTimeTop, height: 2,
-                                background: 'var(--accent)', zIndex: 20, pointerEvents: 'none',
-                              }}>
-                                <div style={{
-                                  position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)',
-                                  width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)',
-                                }} />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-
-                        {/* Scheduled Blocks - Rendered by TimelineGrid */}
-                        <TimelineGrid
-                          auditoriums={filteredAuditoriums}
-                          scheduleData={scheduleData}
-                          selectedDate={selectedDate}
-                          movies={moviesList}
-                          draggingMovie={draggingMovie}
-                          onAddSlot={handleAddSlot}
-                          onUpdateSlot={handleUpdateSlot}
-                          onMoveSlot={handleMoveSlot}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <TimelineGrid
+                  auditoriums={filteredAuditoriums}
+                  scheduleData={scheduleData}
+                  selectedDate={selectedDate}
+                  movies={moviesList}
+                  draggingMovie={draggingMovie}
+                  onAddSlot={handleAddSlot}
+                  onUpdateSlot={handleUpdateSlot}
+                  onMoveSlot={handleMoveSlot}
+                />
               </div>
 
               {/* Manual Add Modal */}

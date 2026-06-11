@@ -10,21 +10,23 @@ import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/publi
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
+import { authApi } from '../../api/authApi';
+import Cookies from 'js-cookie';
 
 // Premium booking theme colors
 const BK = {
-  bg: '#131313',
-  surface: '#201f1f',
-  surfaceLow: '#1c1b1b',
-  surfaceHigh: '#2a2a2a',
-  surfaceHighest: '#353534',
-  border: '#564334',
-  text: '#e5e2e1',
-  textVariant: '#ddc1ae',
-  primary: '#ffb77f',
-  primaryContainer: '#ff8a00',
-  error: '#ffb4ab',
-  success: '#10B981',
+  bg: 'var(--bg-base)',
+  surface: 'var(--bg-surface)',
+  surfaceLow: 'var(--bg-base)',
+  surfaceHigh: 'var(--bg-elevated)',
+  surfaceHighest: 'var(--bg-hover)',
+  border: 'var(--border-color)',
+  text: 'var(--text-primary)',
+  textVariant: 'var(--text-secondary)',
+  primary: 'var(--accent)',
+  primaryContainer: 'var(--accent)',
+  error: 'var(--danger)',
+  success: 'var(--success)',
 };
 
 const BookingPage: React.FC = () => {
@@ -201,50 +203,110 @@ const BookingPage: React.FC = () => {
           {/* ===== TOP NAV - Fixed responsive padding ===== */}
           <header style={{
             position: 'fixed', top: 0, width: '100%', zIndex: 50,
-            backgroundColor: `${BK.bg}F2`, backdropFilter: 'blur(12px)',
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
-            height: 80, display: 'flex', alignItems: 'center',
+            backgroundColor: 'var(--bg-surface)', backdropFilter: 'blur(24px)',
+            borderBottom: '1px solid var(--border-color)',
+            height: 72, display: 'flex', alignItems: 'center',
           }}>
             <div style={{
               maxWidth: 1280, margin: '0 auto', width: '100%',
               padding: '0 clamp(16px, 4vw, 64px)',
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(18px, 3vw, 20px)', fontWeight: 800, color: BK.primary, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
-                CINEPREMIER
+              <div
+                onClick={() => navigate('/home')}
+                style={{
+                  cursor: 'pointer',
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 24,
+                  fontWeight: 800,
+                  letterSpacing: '-0.5px',
+                  background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1,
+                  userSelect: 'none',
+                }}>
+                CINEMA
               </div>
               <nav style={{ display: 'none', alignItems: 'center', gap: 32 }} className="md:flex">
                 {['Movies', 'Cinemas', 'Offers', 'Membership'].map(item => (
                   <a key={item} href="#"
-                    style={{ color: BK.textVariant, fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
-                    onMouseEnter={e => { e.currentTarget.style.color = BK.text; }}
-                    onMouseLeave={e => { e.currentTarget.style.color = BK.textVariant; }}
+                    style={{ color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
                   >
                     {item}
                   </a>
                 ))}
               </nav>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 24px)' }}>
-                <button style={{
-                  backgroundColor: BK.primaryContainer, color: '#000', fontWeight: 700,
-                  padding: '8px 24px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  transition: 'all 0.3s ease', whiteSpace: 'nowrap', fontSize: 'clamp(13px, 2vw, 14px)',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(255,138,0,0.3)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
-                >
-                  Book Now
-                </button>
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
-                  border: '1px solid rgba(86, 67, 52, 1)',
-                }}>
-                  <img
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuACrMTQJSt2YAxsWe1nMDq4vG5gyBcCxp1FBPqqjVLSfyD6U0qYaPIT1HJ1vpBJXMSNx2IDxCHvQO6cLZn0rMh0382PBu5jhQyMAWUfq3eILF-uzZ8YIFxUrancpZwBaPSwgyUWPafkW8nc6FTSVKKv23rqSdbBefa2S-jp5iX0QpyjgMlcFRrHA_BxSvkjb_VR0zJVtUjisYi_izNrnxpfr0QtV-u9QPT-52kNhXAKhOh8L-X_KXHdbtZPtwKiroCHxxAgF87_sI4"
-                    alt="Profile"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                  />
-                </div>
+                {isLoggedIn ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '4px 12px 4px 4px',
+                      height: 38,
+                      borderRadius: 9999,
+                      background: 'var(--bg-elevated)',
+                      border: '1px solid var(--border-color)',
+                      color: 'var(--text-primary)',
+                    }}>
+                      <div style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'rgba(255,138,0,0.12)',
+                      }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)' }}>{userName[0]?.toUpperCase() || 'U'}</span>
+                      </div>
+                      <span style={{ fontSize: 13, fontWeight: 500 }} className="hidden sm:inline">{userName}</span>
+                    </div>
+                    <button
+                      onClick={async () => {
+                        try { await authApi.logout(); } catch {}
+                        localStorage.removeItem('user_info');
+                        Cookies.remove('X-Access-Token');
+                        navigate('/login');
+                      }}
+                      style={{
+                        backgroundColor: 'transparent',
+                        color: 'var(--danger)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: 13,
+                        padding: '4px 8px',
+                      }}
+                    >
+                      {t('Logout')}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => navigate('/login')}
+                    style={{
+                      backgroundColor: 'var(--accent)',
+                      color: '#000',
+                      fontWeight: 700,
+                      padding: '8px 24px',
+                      borderRadius: 8,
+                      border: 'none',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      whiteSpace: 'nowrap',
+                      fontSize: 'clamp(13px, 2vw, 14px)',
+                    }}
+                  >
+                    {t('Sign In')}
+                  </button>
+                )}
               </div>
             </div>
           </header>
@@ -630,13 +692,13 @@ const BookingPage: React.FC = () => {
           <footer style={{
             width: '100%', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 64px)',
             maxWidth: 1280, margin: '0 auto',
-            borderTop: '1px solid rgba(86, 67, 52, 1)', marginTop: 80,
+            borderTop: '1px solid var(--border-color)', marginTop: 80,
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center' }}
               className="md:flex-row md:justify-between"
             >
               <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(18px, 3vw, 20px)', fontWeight: 800, color: BK.primary, opacity: 0.5 }}>
-                CINEPREMIER
+                CINEMA
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(16px, 4vw, 32px)', color: BK.textVariant, fontSize: 'clamp(12px, 2vw, 14px)' }}>
                 {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Careers'].map(link => (
@@ -650,7 +712,7 @@ const BookingPage: React.FC = () => {
                 ))}
               </div>
               <div style={{ color: BK.textVariant, fontSize: 12, letterSpacing: '-0.01em', opacity: 0.5 }}>
-                © 2024 CINEPREMIER LUXE CINEMAS. ALL RIGHTS RESERVED.
+                © 2026 CINEMA. ALL RIGHTS RESERVED.
               </div>
             </div>
           </footer>
