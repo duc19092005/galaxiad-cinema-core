@@ -174,15 +174,15 @@ const BookingSuccessPage: React.FC = () => {
     // Loading State
     if (loading) {
         return (
-            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
                 <div style={{
-                    maxWidth: 420, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
-                    border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
-                    backgroundColor: 'var(--color-card)', textAlign: 'center',
+                    maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
+                    border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
+                    backgroundColor: 'var(--bg-elevated)', textAlign: 'center',
                 }}>
-                    <Loader2 size={56} style={{ color: 'var(--color-accent-primary)', animation: 'spin 1s linear infinite', margin: '0 auto var(--space-24)' }} />
-                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 'var(--space-8)' }}>Loading Your Ticket...</h2>
-                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Retrieving your booking details.</p>
+                    <Loader2 size={56} style={{ color: 'var(--primary)', animation: 'spin 1s linear infinite', margin: '0 auto 24px' }} />
+                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>Loading Your Ticket...</h2>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Retrieving your booking details.</p>
                 </div>
             </div>
         );
@@ -191,26 +191,26 @@ const BookingSuccessPage: React.FC = () => {
     // Error State
     if (error || !ticketInfo) {
         return (
-            <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+            <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
                 <div style={{
-                    maxWidth: 420, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
-                    border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
-                    backgroundColor: 'var(--color-card)', textAlign: 'center',
+                    maxWidth: 420, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
+                    border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
+                    backgroundColor: 'var(--bg-elevated)', textAlign: 'center',
                 }}>
                     <div style={{
                         width: 96, height: 96, borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto var(--space-24)',
+                        margin: '0 auto 24px',
                         background: 'rgba(245, 158, 11, 0.12)',
                     }}>
-                        <AlertCircle size={56} style={{ color: 'var(--color-accent-warning)' }} />
+                        <AlertCircle size={56} style={{ color: '#f59e0b' }} />
                     </div>
-                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 'var(--space-8)' }}>Unable to Load Ticket</h2>
-                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-8)' }}>{error || 'Ticket information is not available.'}</p>
-                    {orderId && <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', marginBottom: 'var(--space-24)', fontFamily: 'var(--font-mono)' }}>Order ID: {orderId}</p>}
+                    <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>Unable to Load Ticket</h2>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: '8px' }}>{error || 'Ticket information is not available.'}</p>
+                    {orderId && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: '24px', fontFamily: "'JetBrains Mono', monospace" }}>Order ID: {orderId}</p>}
                     <button
                         onClick={() => navigate('/home')}
-                        className="btn-primary cta-glow"
+                        className="btn btn-primary"
                         style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontWeight: 700 }}
                     >
                         Return to Home
@@ -222,32 +222,32 @@ const BookingSuccessPage: React.FC = () => {
 
     // Success State
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: 'var(--color-bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'var(--space-24)' }}>
+        <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
             <div style={{
-                maxWidth: 500, width: '100%', padding: 'var(--space-32)', borderRadius: 'var(--radius-xl)',
-                border: '1px solid var(--color-border)', boxShadow: 'var(--shadow-xl)',
-                backgroundColor: 'var(--color-card)',
+                maxWidth: 500, width: '100%', padding: '32px', borderRadius: 'var(--radius-xl)',
+                border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-lg)',
+                backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)',
             }}>
                 {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: 'var(--space-32)' }}>
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <div style={{
                         width: 80, height: 80, borderRadius: '50%',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        margin: '0 auto var(--space-20)',
+                        margin: '0 auto 20px',
                         background: 'rgba(16, 185, 129, 0.12)',
                     }}>
-                        <CheckCircle size={48} style={{ color: 'var(--color-accent-success)' }} />
+                        <CheckCircle size={48} style={{ color: '#10b981' }} />
                     </div>
-                    <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 'var(--space-4)' }}>Booking Successful!</h2>
-                    <p style={{ fontSize: 14, color: 'var(--color-text-secondary)' }}>Your tickets have been confirmed. Enjoy your movie!</p>
+                    <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: '4px', color: 'var(--text-primary)' }}>Booking Successful!</h2>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>Your tickets have been confirmed. Enjoy your movie!</p>
                 </div>
 
                 {/* Movie Card */}
                 <div style={{
-                    borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 'var(--space-24)',
-                    backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: '24px',
+                    backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)',
                 }}>
-                    <div style={{ display: 'flex', gap: 'var(--space-16)', padding: 'var(--space-16)' }}>
+                    <div style={{ display: 'flex', gap: '16px', padding: '16px' }}>
                         {ticketInfo.movieImageUrl && (
                             <img
                                 src={ticketInfo.movieImageUrl}
@@ -256,11 +256,11 @@ const BookingSuccessPage: React.FC = () => {
                             />
                         )}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: 'var(--space-8)' }}>{ticketInfo.movieName}</h3>
+                            <h3 style={{ fontSize: 18, fontWeight: 800, marginBottom: '8px', color: 'var(--text-primary)' }}>{ticketInfo.movieName}</h3>
                             <span style={{
-                                display: 'inline-block', padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                                display: 'inline-block', padding: '4px 8px', borderRadius: 'var(--radius-sm)',
                                 fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em',
-                                color: 'var(--color-accent-cta)', backgroundColor: 'rgba(255,138,0,0.12)',
+                                color: 'var(--primary)', backgroundColor: 'rgba(255,138,0,0.12)',
                             }}>
                                 {ticketInfo.formatName}
                             </span>
@@ -270,31 +270,31 @@ const BookingSuccessPage: React.FC = () => {
 
                 {/* Details Grid */}
                 <div style={{
-                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-16)',
-                    marginBottom: 'var(--space-24)', padding: 'var(--space-16)',
-                    borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--color-surface)',
-                    border: '1px solid var(--color-border)',
+                    display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px',
+                    marginBottom: '24px', padding: '16px',
+                    borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-surface)',
+                    border: '1px solid var(--border-color)',
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)' }}>
-                        <MapPin size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <MapPin size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Cinema</p>
-                            <p style={{ fontSize: 13, fontWeight: 700 }}>{ticketInfo.cinemaName}</p>
-                            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{ticketInfo.cinemaAddress}</p>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 2 }}>Cinema</p>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{ticketInfo.cinemaName}</p>
+                            <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{ticketInfo.cinemaAddress}</p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)' }}>
-                        <Film size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                        <Film size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Auditorium</p>
-                            <p style={{ fontSize: 13, fontWeight: 700 }}>{ticketInfo.auditoriumNumber}</p>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 2 }}>Auditorium</p>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{ticketInfo.auditoriumNumber}</p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-8)', gridColumn: '1 / -1' }}>
-                        <Clock size={16} style={{ color: 'var(--color-accent-primary)', flexShrink: 0, marginTop: 2 }} />
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', gridColumn: '1 / -1' }}>
+                        <Clock size={16} style={{ color: 'var(--primary)', flexShrink: 0, marginTop: 2 }} />
                         <div>
-                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)', marginBottom: 2 }}>Showtime</p>
-                            <p style={{ fontSize: 13, fontWeight: 700 }}>
+                            <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 2 }}>Showtime</p>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
                                 {new Date(ticketInfo.showTime).toLocaleString('vi-VN', {
                                     weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric',
                                     hour: '2-digit', minute: '2-digit'
@@ -306,70 +306,70 @@ const BookingSuccessPage: React.FC = () => {
 
                 {/* Seats Table */}
                 <div style={{
-                    padding: 'var(--space-16)', borderRadius: 'var(--radius-lg)', marginBottom: 'var(--space-24)',
-                    backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)',
+                    padding: '16px', borderRadius: 'var(--radius-lg)', marginBottom: '24px',
+                    backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)',
                 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-12)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
-                            <Armchair size={16} style={{ color: 'var(--color-accent-primary)' }} />
-                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-secondary)' }}>Tickets</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Armchair size={16} style={{ color: 'var(--primary)' }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Tickets</span>
                         </div>
-                        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', fontFamily: 'var(--font-mono)' }}>ID: {orderId?.substring(0, 8)}...</span>
+                        <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>ID: {orderId?.substring(0, 8)}...</span>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {ticketInfo.seats.map((seat, idx) => (
                             <div key={idx} style={{
                                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                 padding: '8px 12px', borderRadius: 'var(--radius-sm)',
-                                backgroundColor: 'var(--color-bg-base)', border: '1px solid var(--color-border)',
+                                backgroundColor: 'var(--bg-base)', border: '1px solid var(--border-color)',
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)' }}>
-                                    <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--color-accent-cta)' }}>{seat.seatNumber}</span>
-                                    <span style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>{seat.segmentName}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--primary)' }}>{seat.seatNumber}</span>
+                                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{seat.segmentName}</span>
                                 </div>
-                                <span style={{ fontWeight: 600, fontSize: 13 }}>{seat.priceEach.toLocaleString('vi-VN')}đ</span>
+                                <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{seat.priceEach.toLocaleString('vi-VN')}đ</span>
                             </div>
                         ))}
                     </div>
                     {/* Total */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'var(--space-16)', paddingTop: 'var(--space-12)', borderTop: '1px dashed var(--color-border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
-                            <Receipt size={16} style={{ color: 'var(--color-accent-primary)' }} />
-                            <span style={{ fontWeight: 700, fontSize: 14 }}>Total Paid</span>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingTop: '12px', borderTop: '1px dashed var(--border-color)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Receipt size={16} style={{ color: 'var(--primary)' }} />
+                            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Total Paid</span>
                         </div>
-                        <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-accent-cta)' }}>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)' }}>
                             {ticketInfo.totalPrice.toLocaleString('vi-VN')}đ
                         </span>
                     </div>
                     {ticketInfo.vnPayTransactionId && (
-                        <p style={{ fontSize: 11, color: 'var(--color-text-secondary)', textAlign: 'right', marginTop: 'var(--space-4)' }}>
+                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'right', marginTop: '4px' }}>
                             VNPAY Txn: {ticketInfo.vnPayTransactionId}
                         </p>
                     )}
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     <button
                         onClick={handleDownloadTicket}
-                        className="btn-primary cta-glow"
-                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: 'var(--space-8)' }}
+                        className="btn btn-primary cta-glow"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: '8px' }}
                     >
                         <Download size={16} /> Download Ticket
                     </button>
                     <button
                         onClick={handleGeneratePdf}
                         disabled={pdfLoading}
-                        className="btn-secondary"
-                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, fontWeight: 700, gap: 'var(--space-8)' }}
+                        className="btn btn-secondary"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, fontWeight: 700, gap: '8px' }}
                     >
                         {pdfLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Download size={16} />}
                         Export to PDF
                     </button>
                     <button
                         onClick={() => navigate('/home')}
-                        className="btn-ghost"
-                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: 'var(--space-8)' }}
+                        className="btn btn-ghost"
+                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: '8px' }}
                     >
                         <Home size={16} /> Return to Home
                     </button>
