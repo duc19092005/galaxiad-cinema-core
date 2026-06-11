@@ -79,13 +79,6 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
           icon: <Users size={20} />,
           color: '#06b6d4',
         },
-        {
-          label: t('Facilities'),
-          value: '8',
-          trend: 'All operational',
-          icon: <Building2 size={20} />,
-          color: '#f59e0b',
-        },
       ];
     }
 
@@ -99,7 +92,10 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
     { label: t('Schedule'), icon: <Calendar size={18} />, path: '/schedule', color: '#22c55e' },
     { label: t('Theaters'), icon: <Building2 size={18} />, path: '/theater-manager', color: '#3b82f6' },
     { label: t('Facilities'), icon: <Activity size={18} />, path: '/facilities-manager', color: '#a855f7' },
-  ];
+  ].filter(item => {
+    if (role === 'admin' && item.path === '/facilities-manager') return false;
+    return true;
+  });
 
   if (loading) {
     return (

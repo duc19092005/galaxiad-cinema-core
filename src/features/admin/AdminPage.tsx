@@ -27,8 +27,6 @@ import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
-import CinemaManagement from '../facilities/components/CinemaManagement';
-import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 
 // ============================================
 // CONSTANTS
@@ -291,30 +289,6 @@ const AdminPage: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Real cinema management states for Admin
-  const [cinemas, setCinemas] = useState<Cinema[]>([]);
-  const [cinemasLoading, setCinemasLoading] = useState(false);
-  const [cinemasError, setCinemasError] = useState<string | null>(null);
-
-  const fetchCinemas = async () => {
-    setCinemasLoading(true);
-    setCinemasError(null);
-    try {
-      const res = await facilitiesApi.getCinemaList();
-      setCinemas(res.data || []);
-    } catch (err) {
-      setCinemasError('Failed to load cinemas list.');
-    } finally {
-      setCinemasLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'facilities') {
-      fetchCinemas();
-    }
-  }, [activeTab]);
-
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
     return () => clearTimeout(timer);
@@ -325,7 +299,6 @@ const AdminPage: React.FC = () => {
       items: [
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
-        { id: 'facilities', label: t('Facilities'), icon: <Building2 size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
       ],
@@ -453,15 +426,7 @@ const AdminPage: React.FC = () => {
       case 'users':
         return <UsersSection />;
 
-      case 'facilities':
-        return (
-          <CinemaManagement
-            cinemas={cinemas}
-            loading={cinemasLoading}
-            error={cinemasError}
-            onRefresh={fetchCinemas}
-          />
-        );
+
 
       case 'rights':
         return <TransferRightsView />;

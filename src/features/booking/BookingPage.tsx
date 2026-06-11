@@ -717,37 +717,6 @@ const BookingPage: React.FC = () => {
             </div>
           </footer>
 
-          {/* Mobile Bottom Nav */}
-          <nav style={{
-            display: 'flex', position: 'fixed', bottom: 0, left: 0, width: '100%',
-            backgroundColor: `${BK.surface}E6`, backdropFilter: 'blur(24px)',
-            borderTop: '1px solid rgba(255,255,255,0.05)',
-            padding: '12px 16px', zIndex: 50,
-            borderRadius: '12px 12px 0 0',
-            boxShadow: '0 -4px 20px rgba(255,138,0,0.15)',
-            justifyContent: 'space-around',
-          }} className="md:hidden">
-            {[
-              { icon: 'home', label: 'Home' },
-              { icon: 'confirmation_number', label: 'Tickets', active: true },
-              { icon: 'search', label: 'Search' },
-              { icon: 'person', label: 'Profile' },
-            ].map(item => (
-              <a key={item.label} href="#"
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center',
-                  color: item.active ? BK.primary : BK.textVariant, textDecoration: 'none',
-                }}
-              >
-                <span className="material-symbols-outlined" style={{
-                  fontVariationSettings: item.active ? "'FILL' 1" : "'FILL' 0",
-                }}>
-                  {item.icon}
-                </span>
-                <span style={{ fontSize: 12, marginTop: 4 }}>{item.label}</span>
-              </a>
-            ))}
-          </nav>
         </div>
     );
 };
