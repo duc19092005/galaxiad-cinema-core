@@ -7,6 +7,49 @@ import { publicApi } from '../../api/publicApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
 import Header from '../../components/Header';
 
+const MOCK_RECOMMENDATIONS: PublicMovieListItem[] = [
+    {
+        movieId: 'oppenheimer',
+        movieName: 'Oppenheimer',
+        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1O_H_0KoOy2puSsPLnT6dUR7E8WqrbId3se4-WfnHEqdA-czsRjYXqryLnBEOYtegrFXfzGSq-019JrlUhPp-kD1aKDfAlIILHsTQ8f0c3U8PpC0CmwfaheX2-wSCcW-w5l5-75wlI8eE1zRKJkOAJF-T7bVleF3scKMPjDNYcRQmpPvITHiHs9z-NKp6vAc8wH-qYIF4a5Ebz5vRVc7QT-twDNVzuxEPGwpotsRoIuAY26NecAlt9cdFitqCFjUt4jsp_089zjs',
+        movieFormatInfos: 'IMAX • 2D',
+        movieDuration: 180,
+        movieRequiredAge: '18+',
+        movieCategoryInfos: 'Drama',
+        isCommingSoon: false,
+    },
+    {
+        movieId: 'interstellar',
+        movieName: 'Interstellar',
+        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAIs3UTHbUVXCXJX7ZAM49urtKtTflPwsAnLGtarpOqVZ5snE7mjp7xTRed_8ClQ0ubFoCS1q2a2zXdcKr63f7zOydvRbkMuy-2MuXRKnbpVbN3ISJsecMCItqeV0ocUEpyVwpEBsGZsVSdf7LhC_vlzmceg7zHqq26Nzc9MbrnzMEPstancOirh0IGnf6_PaGDm-vRD7N1BN-xAVX36prBb7O5EqsIVI9nZQpZ5c-o7YrU5EEXLeKKPKzS5Y7cd-ERuNjhUuEwhbY',
+        movieFormatInfos: 'IMAX • 2D',
+        movieDuration: 169,
+        movieRequiredAge: '13+',
+        movieCategoryInfos: 'Sci-Fi',
+        isCommingSoon: false,
+    },
+    {
+        movieId: 'blade-runner-2049',
+        movieName: 'Blade Runner 2049',
+        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBm_rETSQAw2_mR7x2Dmk8dM_1ikKv7ZTwStEBA08AKIdUGTrzwnVBh6HrycFpVZO0dzy6h3CYmyDwTMJkhm4nfoWeWTjIWZSiCSDYqq8BtZ2D-f2xq4jWSxDU-cHUuhglSaVL2Busu4hOkub-TN-u1y_oikmFFNyiPjvtfE6euXfAbfeeN3REOayh2Wk4M2oV73HhgfPIcYbraUg-oRL5ZPDjOpY-Xxqz568HE0p9xpHVoPXKgwEthr-TT5GpjTmTYZxVogaJf5lM',
+        movieFormatInfos: '2D • 3D',
+        movieDuration: 164,
+        movieRequiredAge: '16+',
+        movieCategoryInfos: 'Sci-Fi',
+        isCommingSoon: false,
+    },
+    {
+        movieId: 'the-batman',
+        movieName: 'The Batman',
+        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDB-BqXjlzjlchGSQdGJNPOe5qA4U7eeFQ_aCm0mBszFfeX6u4TVbZPffBZ5YUaz8vwGJKehxAuZITpcjr3cbxIboJSPR-Q3hQ44LFoJq_7VD03J0HNM95tg83gpevnPCNsAKOJh12XTORrKS6DjltoUX25XZVfNAmPY1FZBN-jCsDshn_00-YI2H1rkAJaQYbIt7NX5JpXNek2WpCbCLvz0w1FBQpjPBS2BgeG2yDLZHAhvjG40VgWM8PSQPNqlFz5jp0J-40FTLE',
+        movieFormatInfos: 'IMAX • 2D',
+        movieDuration: 176,
+        movieRequiredAge: '16+',
+        movieCategoryInfos: 'Action',
+        isCommingSoon: false,
+    }
+];
+
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
@@ -50,10 +93,14 @@ const MovieDetailPage: React.FC = () => {
                     const allRes = await publicApi.getAllMovies({ pageSize: 10 });
                     list = allRes?.data || [];
                 }
-                const filtered = list.filter(m => m.movieId !== movieId);
+                let filtered = list.filter(m => m.movieId !== movieId);
+                if (filtered.length === 0) {
+                    filtered = MOCK_RECOMMENDATIONS;
+                }
                 setRecommendedMovies(filtered.slice(0, 6));
             } catch (recErr) {
                 console.error('Failed to load recommended movies:', recErr);
+                setRecommendedMovies(MOCK_RECOMMENDATIONS);
             }
         } catch (err) {
             console.error('Error fetching movie detail:', err);

@@ -1,9 +1,9 @@
 // src/features/public/HomePage.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2,
-  Sparkles, LayoutDashboard, UserCircle, Menu, X, Play, Ticket,
+  Sparkles, LayoutDashboard, UserCircle, X, Play, Ticket,
   Search,
 } from 'lucide-react';
 import axios from 'axios';
@@ -16,6 +16,8 @@ import LogoutModal from '../../components/LogoutModal';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import PublicCitySelector from './components/PublicCitySelector';
+import Header from '../../components/Header';
+
 
 const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
 
@@ -40,8 +42,6 @@ const HomePage: React.FC = () => {
   const { t } = useTranslation();
 
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -54,15 +54,10 @@ const HomePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>('');
 
-  const [isScrolled, setIsScrolled] = useState(false);
-
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
     const storedUser = localStorage.getItem('user_info');
     if (storedUser) setUser(JSON.parse(storedUser));
     fetchMovies();
-    return () => { window.removeEventListener('scroll', handleScroll); };
   }, [navigate]);
 
   useEffect(() => {
@@ -90,13 +85,7 @@ const HomePage: React.FC = () => {
     } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+
 
   const handleLogoutClick = () => { setIsLogoutModalOpen(true); setLogoutError(null); };
   const handleLogoutConfirm = async () => {
@@ -124,290 +113,16 @@ const HomePage: React.FC = () => {
       `}</style>
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
 
-      {/* ============================================
-          NAVBAR — fixed top bar
-          ============================================ */}
-      <nav
-        style={{
-          position: 'fixed', width: '100%', top: 0, zIndex: 50,
-          backgroundColor: isScrolled ? 'var(--bg-surface)' : 'rgba(255,255,255,0.03)',
-          backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
-          borderBottom: isScrolled ? '1px solid var(--border-color)' : '1px solid rgba(255,255,255,0.06)',
-          paddingLeft: 'clamp(16px, 4vw, 32px)',
-          paddingRight: 'clamp(16px, 4vw, 32px)',
-          transition: 'background-color 0.3s ease, border-color 0.3s ease',
-          height: 72,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* Left group: hamburger + logo + nav links */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          height: '100%',
-        }}>
-          <button
-            onClick={() => setIsMobileMenuOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 40,
-              height: 40,
-              borderRadius: 10,
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              flexShrink: 0,
-              transition: 'background 0.2s ease',
-            }}
-            className="hover:bg-white/5"
-          >
-            <Menu size={20} />
-          </button>
-
-          <div
-            onClick={() => navigate('/home')}
-            style={{
-              cursor: 'pointer',
-              fontFamily: "'Montserrat', sans-serif",
-              fontSize: 24,
-              fontWeight: 800,
-              letterSpacing: '-0.5px',
-              background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              whiteSpace: 'nowrap',
-              lineHeight: 1,
-              userSelect: 'none',
-            }}>
-            CINEMA
-          </div>
-
-          <div style={{ display: 'none', alignItems: 'center', gap: 32, marginLeft: 24 }} className="md:flex">
-            <a href="#" style={{
-              color: 'var(--accent)',
-              fontWeight: 600,
-              fontSize: 14,
-              textDecoration: 'none',
-              borderBottom: '2px solid var(--accent)',
-              paddingBottom: 3,
-              whiteSpace: 'nowrap',
-              lineHeight: 1.5,
-            }}>{t('home.moviesNav')}</a>
-
-            {['showtimesNav', 'theatersNav', 'offersNav'].map((key) => (
-              <a key={key} href="#" style={{
-                color: 'var(--text-secondary)',
-                fontWeight: 500,
-                fontSize: 14,
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-                lineHeight: 1.5,
-                transition: 'color 0.2s ease',
-              }}
-                className="hover:text-white"
-              >{t(`home.${key}`)}</a>
-            ))}
-          </div>
-        </div>
-
-        {/* Right group: city selector + lang + auth */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          flexShrink: 0,
-        }}>
-          <div style={{ display: 'none' }} className="md:block">
+      {/* Redesigned Unified Header */}
+      <Header
+        showSidebarToggle={true}
+        onMenuToggle={() => setIsMobileMenuOpen(true)}
+        rightContent={
+          <div className="hidden md:block">
             <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
           </div>
-
-          <LanguageSwitcher />
-
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {!user ? (
-              <button
-                onClick={() => navigate('/login')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '10px 24px',
-                  minHeight: 44,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  borderRadius: 16,
-                  whiteSpace: 'nowrap',
-                  lineHeight: 1,
-                  border: 'none',
-                  cursor: 'pointer',
-                  background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
-                  color: '#fff',
-                  boxShadow: '0 4px 16px rgba(255,138,0,0.3)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {t('home.signIn')}
-              </button>
-            ) : (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8,
-                    padding: '4px 12px 4px 4px',
-                    height: 44,
-                    borderRadius: 9999,
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: 'rgba(255,138,0,0.12)',
-                    flexShrink: 0,
-                  }}>
-                    <User size={16} style={{ color: 'var(--accent)' }} />
-                  </div>
-                  <span style={{
-                    fontSize: 14,
-                    fontWeight: 500,
-                    lineHeight: 1.2,
-                    display: 'none',
-                  }} className="sm:inline">{user.username}</span>
-                  <ChevronDown size={12} style={{
-                    color: 'var(--text-muted)',
-                    transition: 'transform 300ms ease',
-                    transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
-                    flexShrink: 0,
-                  }} />
-                </button>
-
-                {isDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    right: 0,
-                    marginTop: 8,
-                    width: 240,
-                    padding: 6,
-                    zIndex: 100,
-                    borderRadius: 14,
-                    background: 'var(--bg-elevated)',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
-                  }}>
-                    {/* Signed in as */}
-                    <div style={{
-                      padding: '12px 16px',
-                      borderBottom: '1px solid var(--border-color)',
-                      marginBottom: 4,
-                    }}>
-                      <p style={{
-                        fontSize: 11,
-                        margin: 0,
-                        color: 'var(--text-muted)',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        fontWeight: 600,
-                        marginBottom: 2,
-                      }}>{t('header.signedInAs')}</p>
-                      <p style={{
-                        fontSize: 14,
-                        fontWeight: 600,
-                        margin: 0,
-                        color: 'var(--text-primary)',
-                      }}>{user.username}</p>
-                    </div>
-
-                    {/* Management hub */}
-                    {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
-                      <button onClick={() => navigate('/role-selection')}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          width: '100%', minHeight: 44, padding: '10px 16px',
-                          borderRadius: 10, background: 'transparent', border: 'none',
-                          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-                          cursor: 'pointer', textAlign: 'left',
-                        }}
-                        className="hover:bg-white/5 hover:text-white"
-                      >
-                        <LayoutDashboard size={18} style={{ flexShrink: 0, color: 'var(--accent)' }} />
-                        <span>Management hub</span>
-                      </button>
-                    )}
-
-                    {/* Account Info */}
-                    <button onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        width: '100%', minHeight: 44, padding: '10px 16px',
-                        borderRadius: 10, background: 'transparent', border: 'none',
-                        color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-                        cursor: 'pointer', textAlign: 'left',
-                      }}
-                      className="hover:bg-white/5 hover:text-white"
-                    >
-                      <UserCircle size={18} style={{ flexShrink: 0 }} />
-                      <span>{t('header.accountInfo')}</span>
-                    </button>
-
-                    {/* Switch Role */}
-                    {user.roles && user.roles.length > 1 && (
-                      <button onClick={() => navigate('/role-selection')}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 12,
-                          width: '100%', minHeight: 44, padding: '10px 16px',
-                          borderRadius: 10, background: 'transparent', border: 'none',
-                          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
-                          cursor: 'pointer', textAlign: 'left',
-                        }}
-                        className="hover:bg-white/5 hover:text-white"
-                      >
-                        <ArrowLeftRight size={18} style={{ flexShrink: 0 }} />
-                        <span>{t('header.switchRole')}</span>
-                      </button>
-                    )}
-
-                    <div style={{ height: 1, backgroundColor: 'var(--border-color)', margin: '4px 8px' }} />
-
-                    {/* Logout */}
-                    <button onClick={handleLogoutClick}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 12,
-                        width: '100%', minHeight: 44, padding: '10px 16px',
-                        borderRadius: 10, background: 'transparent', border: 'none',
-                        color: '#ef4444', fontSize: 14, fontWeight: 500,
-                        cursor: 'pointer', textAlign: 'left',
-                      }}
-                      className="hover:bg-red-500/10"
-                    >
-                      <LogOut size={18} style={{ flexShrink: 0 }} />
-                      <span>{t('header.logout')}</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </nav>
+        }
+      />
 
       {/* ============================================
           MOBILE SIDEBAR (Drawer)
