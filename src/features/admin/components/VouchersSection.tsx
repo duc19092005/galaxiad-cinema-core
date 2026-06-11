@@ -292,6 +292,7 @@ export const VouchersSection: React.FC = () => {
             backdropFilter: 'blur(8px)',
             overflowY: 'auto',
             padding: '40px 16px',
+            height: '70vh',
           }}
           onClick={() => setIsModalOpen(false)}
         >
