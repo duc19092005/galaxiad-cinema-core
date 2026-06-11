@@ -347,9 +347,14 @@ const AccountPage: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14 }}>
+                        <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, margin: '4px 0 0' }}>
                             <Mail size={16} style={{ color: 'var(--accent)' }} /> {accountInfo?.email}
                         </p>
+                        {accountInfo?.rewardPoints !== undefined && (
+                            <p style={{ color: 'var(--primary, #ff8a00)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 'bold', margin: '6px 0 0' }}>
+                                <Sparkles size={16} /> {accountInfo.rewardPoints} points
+                            </p>
+                        )}
                     </div>
                 </div>
 

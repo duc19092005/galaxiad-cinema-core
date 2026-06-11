@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
 import Header from '../../components/Header';
+import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -27,6 +28,9 @@ const BookingPage: React.FC = () => {
 
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [userRole, setUserRole] = useState<string>('Guest');
+    const [myVouchers, setMyVouchers] = useState<UserVoucherDto[]>([]);
+    const [selectedVoucherId, setSelectedVoucherId] = useState<string>('');
     const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
 
     const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
@@ -37,9 +41,11 @@ const BookingPage: React.FC = () => {
         if (storedUser) {
             const user = JSON.parse(storedUser);
             setUserName(user.username || user.userName || 'Guest');
+            setUserRole(user.selectedRole || 'Guest');
             setIsLoggedIn(true);
         } else {
             setUserName('Guest');
+            setUserRole('Guest');
             setIsLoggedIn(false);
         }
 
@@ -73,6 +79,38 @@ const BookingPage: React.FC = () => {
             };
         }
     }, [scheduleId]);
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            const fetchWallet = async () => {
+                try {
+                    const res = await voucherApi.getMyVouchers();
+                    if (res.isSuccess) {
+                        const today = new Date().getTime();
+                        const unused = (res.data || []).filter(v => 
+                            !v.isUsed && 
+                            (!v.validTo || new Date(v.validTo).getTime() >= today)
+                        );
+                        setMyVouchers(unused);
+                    }
+                } catch (err) {
+                    console.error("Error fetching user vouchers:", err);
+                }
+            };
+            fetchWallet();
+        }
+    }, [isLoggedIn]);
+
+    const ROLE_DISCOUNTS: Record<string, number> = {
+        'Guest': 0,
+        'User': 5,
+        'Student': 10,
+        'VIP': 15
+    };
+    const roleDiscountPercent = ROLE_DISCOUNTS[userRole] || 0;
+
+    const selectedVoucher = myVouchers.find(v => v.voucherId === selectedVoucherId);
+    const voucherDiscountPercent = selectedVoucher ? selectedVoucher.voucherDiscountPercent : 0;
 
     const fetchData = async () => {
         setLoading(true); setError(null);
@@ -127,7 +165,8 @@ const BookingPage: React.FC = () => {
                 customerName: isLoggedIn ? undefined : customerInfo.name.trim(),
                 customerEmail: isLoggedIn ? undefined : customerInfo.email.trim(),
                 customerPhone: isLoggedIn ? undefined : customerInfo.phone.trim(),
-                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim()
+                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim(),
+                voucherId: selectedVoucherId ? selectedVoucherId : undefined
             };
             const res = await bookingApi.createBooking(payload);
             if (res.data.paymentUrl) {
@@ -349,17 +388,61 @@ const BookingPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
+                            {/* Voucher Selector Dropdown */}
+                             {isLoggedIn && (
+                                 <div className="mb-6">
+                                     <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2 font-semibold">
+                                         Apply Voucher
+                                     </label>
+                                     <select
+                                         value={selectedVoucherId}
+                                         onChange={(e) => setSelectedVoucherId(e.target.value)}
+                                         className="w-full bg-zinc-900 text-zinc-300 text-sm p-3 rounded-lg border border-white/10 outline-none cursor-pointer focus:border-[#ff8a00] transition-colors"
+                                     >
+                                         <option value="">No voucher applied</option>
+                                         {myVouchers.map((v) => (
+                                             <option key={v.voucherId} value={v.voucherId} className="bg-zinc-950 text-white">
+                                                 {v.voucherName} (-{v.voucherDiscountPercent}%)
+                                             </option>
+                                         ))}
+                                     </select>
+                                 </div>
+                             )}
 
-                            {/* Total Box */}
-                            <div className="mb-8 p-4 bg-[#ff8a00]/5 rounded-xl border border-[#ff8a00]/10">
-                                <div className="flex justify-between items-center">
-                                    <span className="text-white font-semibold">Total Price</span>
-                                    <div className="text-right">
-                                        <span className="text-[#ff8a00] text-3xl font-extrabold">{totalPrice.toLocaleString('vi-VN')}đ</span>
-                                        <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Inclusives of all taxes</p>
-                                    </div>
-                                </div>
-                            </div>
+                             {/* Pricing Breakdown */}
+                             <div className="mb-6 space-y-2 text-sm border-t border-white/5 pt-4">
+                                 <div className="flex justify-between text-zinc-400">
+                                     <span>Subtotal</span>
+                                     <span>{totalPrice.toLocaleString('vi-VN')}đ</span>
+                                 </div>
+                                 
+                                 {roleDiscountPercent > 0 && (
+                                     <div className="flex justify-between text-emerald-400 font-medium">
+                                         <span>Role Discount ({userRole} -{roleDiscountPercent}%)</span>
+                                         <span>-{(totalPrice * roleDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                     </div>
+                                 )}
+
+                                 {voucherDiscountPercent > 0 && (
+                                     <div className="flex justify-between text-[#ff8a00] font-medium">
+                                         <span>Voucher Discount (-{voucherDiscountPercent}%)</span>
+                                         <span>-{(totalPrice * voucherDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                     </div>
+                                 )}
+                             </div>
+
+                             {/* Total Box */}
+                             <div className="mb-8 p-4 bg-[#ff8a00]/5 rounded-xl border border-[#ff8a00]/10">
+                                 <div className="flex justify-between items-center">
+                                     <span className="text-white font-semibold">Total Price</span>
+                                     <div className="text-right">
+                                         <span className="text-[#ff8a00] text-3xl font-extrabold">
+                                             {Math.max(0, totalPrice * (1 - (roleDiscountPercent + voucherDiscountPercent) / 100)).toLocaleString('vi-VN')}đ
+                                         </span>
+                                         <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Inclusives of all taxes</p>
+                                     </div>
+                                 </div>
+                             </div>
 
                             {/* Contact Form */}
                             {!isLoggedIn ? (

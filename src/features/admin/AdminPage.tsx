@@ -30,6 +30,7 @@ import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
+import { VouchersSection } from './components/VouchersSection';
 
 // ============================================
 // CONSTANTS
@@ -483,6 +484,7 @@ const AdminPage: React.FC = () => {
       items: [
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
+        { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
       ],
@@ -628,6 +630,9 @@ const AdminPage: React.FC = () => {
             onAssignCinema={handleOpenCinemaModal}
           />
         );
+
+      case 'vouchers':
+        return <VouchersSection />;
 
       case 'rights':
         return <TransferRightsView />;

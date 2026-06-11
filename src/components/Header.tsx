@@ -7,6 +7,8 @@ import Cookies from 'js-cookie';
 import LanguageSwitcher from './LanguageSwitcher';
 import CinemaSelector from './CinemaSelector';
 import LogoutModal from './LogoutModal';
+import { ProximitySelectorModal } from './ProximitySelectorModal';
+import { useLocation } from 'react-router-dom';
 
 interface HeaderProps {
   title?: string;
@@ -22,15 +24,38 @@ const Header: React.FC<HeaderProps> = ({
   rightContent,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [selectedCinemaName, setSelectedCinemaName] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const storedUserStr = localStorage.getItem('user_info');
   const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+  useEffect(() => {
+    const checkSelectedCinema = () => {
+      const stored = localStorage.getItem('user_selected_cinema');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setSelectedCinemaName(parsed.cinemaName);
+        } catch {
+          setSelectedCinemaName(null);
+        }
+      } else {
+        setSelectedCinemaName(null);
+      }
+    };
+
+    checkSelectedCinema();
+    window.addEventListener('user_selected_cinema_changed', checkSelectedCinema);
+    return () => window.removeEventListener('user_selected_cinema_changed', checkSelectedCinema);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -82,10 +107,30 @@ const Header: React.FC<HeaderProps> = ({
             </a>
             
             <div className="hidden md:flex gap-8">
-              <span onClick={() => navigate('/home')} className="text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1 font-sans text-sm cursor-pointer">Movies</span>
-              <span onClick={() => navigate('/home')} className="text-white/80 hover:text-[#ffb77f] transition-colors font-sans text-sm cursor-pointer">Showtimes</span>
-              <span onClick={() => navigate('/home')} className="text-white/80 hover:text-[#ffb77f] transition-colors font-sans text-sm cursor-pointer">Theaters</span>
-              <span onClick={() => navigate('/home')} className="text-white/80 hover:text-[#ffb77f] transition-colors font-sans text-sm cursor-pointer">Offers</span>
+              <span 
+                onClick={() => navigate('/home')} 
+                className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+              >
+                Movies
+              </span>
+              <span 
+                onClick={() => navigate('/showtimes')} 
+                className={`${location.pathname === '/showtimes' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+              >
+                Showtimes
+              </span>
+              <span 
+                onClick={() => navigate('/theaters')} 
+                className={`${location.pathname === '/theaters' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+              >
+                Theaters
+              </span>
+              <span 
+                onClick={() => navigate('/offers')} 
+                className={`${location.pathname === '/offers' ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f]'} transition-colors font-sans text-sm cursor-pointer`}
+              >
+                Offers
+              </span>
             </div>
           </div>
 
@@ -107,8 +152,18 @@ const Header: React.FC<HeaderProps> = ({
               {/* Language Switcher */}
               <LanguageSwitcher />
 
-              <button className="material-symbols-outlined hover:bg-white/5 p-2 rounded-full transition-all duration-300 text-white bg-transparent border-none cursor-pointer">
+              <button 
+                onClick={() => setIsLocationModalOpen(true)}
+                title={selectedCinemaName || "Select Cinema Location"}
+                className="material-symbols-outlined hover:bg-white/5 p-2 rounded-full transition-all duration-300 bg-transparent border-none cursor-pointer flex items-center gap-1"
+                style={{ color: selectedCinemaName ? 'var(--primary, #ff8a00)' : 'white' }}
+              >
                 location_on
+                {selectedCinemaName && (
+                  <span className="hidden lg:inline text-xs font-semibold max-w-[120px] overflow-hidden text-ellipsis whitespace-nowrap">
+                    {selectedCinemaName}
+                  </span>
+                )}
               </button>
 
               {/* User Dropdown */}
@@ -215,6 +270,11 @@ const Header: React.FC<HeaderProps> = ({
         onConfirm={handleLogout}
         loading={logoutLoading}
         error={logoutError}
+      />
+
+      <ProximitySelectorModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
       />
     </>
   );
