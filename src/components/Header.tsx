@@ -72,7 +72,7 @@ const Header: React.FC<HeaderProps> = ({
 
   return (
     <>
-      <header className="navbar">
+      <header className="navbar glass-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flex: 1 }}>
           {showSidebarToggle && (
             <button onClick={onMenuToggle} className="btn-icon lg:hidden">

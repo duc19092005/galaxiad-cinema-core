@@ -117,90 +117,289 @@ const HomePage: React.FC = () => {
   return (
     <>
       <style>{`
-        @media (min-width: 768px) {
-          .trending-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          .booking-grid-items { grid-template-columns: repeat(3, 1fr) !important; }
-          .booking-bar-row { flex-direction: row !important; }
-          .footer-grid { grid-template-columns: repeat(3, 1fr) !important; }
-          .hero-section { min-height: 921px; }
-        }
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
       `}</style>
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
-      {/* ===== NAVBAR ===== */}
+
+      {/* ============================================
+          NAVBAR — fixed top bar
+          ============================================ */}
       <nav
         style={{
           position: 'fixed', width: '100%', top: 0, zIndex: 50,
           backgroundColor: isScrolled ? 'var(--bg-surface)' : 'rgba(255,255,255,0.03)',
           backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)',
           borderBottom: isScrolled ? '1px solid var(--border-color)' : '1px solid rgba(255,255,255,0.06)',
-          paddingLeft: 'var(--space-24)', paddingRight: 'var(--space-24)',
+          paddingLeft: 'clamp(16px, 4vw, 32px)',
+          paddingRight: 'clamp(16px, 4vw, 32px)',
           transition: 'background-color 0.3s ease, border-color 0.3s ease',
-          height: 72, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          height: 72,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-16)' }}>
-          <button onClick={() => setIsMobileMenuOpen(true)} className="btn-ghost" style={{ border: 'none' }}>
-            <Menu size={18} />
+        {/* Left group: hamburger + logo + nav links */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          height: '100%',
+        }}>
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 40,
+              height: 40,
+              borderRadius: 10,
+              border: 'none',
+              background: 'transparent',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'background 0.2s ease',
+            }}
+            className="hover:bg-white/5"
+          >
+            <Menu size={20} />
           </button>
+
           <div
             onClick={() => navigate('/home')}
-            style={{ cursor: 'pointer', fontFamily: "'Montserrat', sans-serif", fontSize: 24, fontWeight: 800, letterSpacing: '-0.3px', background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            style={{
+              cursor: 'pointer',
+              fontFamily: "'Montserrat', sans-serif",
+              fontSize: 24,
+              fontWeight: 800,
+              letterSpacing: '-0.5px',
+              background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+              userSelect: 'none',
+            }}>
             CINEMA
           </div>
-          <div style={{ display: 'none', alignItems: 'center', gap: 'var(--space-32)', marginLeft: 'var(--space-40)' }} className="md:flex">
-            <a href="#" style={{ color: 'var(--accent)', fontWeight: 600, fontSize: 'var(--text-sm)', textDecoration: 'none', borderBottom: '2px solid var(--accent)', paddingBottom: 2 }}>{t('home.moviesNav')}</a>
-            <a href="#" className="nav-link">{t('home.showtimesNav')}</a>
-            <a href="#" className="nav-link">{t('home.theatersNav')}</a>
-            <a href="#" className="nav-link">{t('home.offersNav')}</a>
+
+          <div style={{ display: 'none', alignItems: 'center', gap: 32, marginLeft: 24 }} className="md:flex">
+            <a href="#" style={{
+              color: 'var(--accent)',
+              fontWeight: 600,
+              fontSize: 14,
+              textDecoration: 'none',
+              borderBottom: '2px solid var(--accent)',
+              paddingBottom: 3,
+              whiteSpace: 'nowrap',
+              lineHeight: 1.5,
+            }}>{t('home.moviesNav')}</a>
+
+            {['showtimesNav', 'theatersNav', 'offersNav'].map((key) => (
+              <a key={key} href="#" style={{
+                color: 'var(--text-secondary)',
+                fontWeight: 500,
+                fontSize: 14,
+                textDecoration: 'none',
+                whiteSpace: 'nowrap',
+                lineHeight: 1.5,
+                transition: 'color 0.2s ease',
+              }}
+                className="hover:text-white"
+              >{t(`home.${key}`)}</a>
+            ))}
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)' }}>
+        {/* Right group: city selector + lang + auth */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flexShrink: 0,
+        }}>
           <div style={{ display: 'none' }} className="md:block">
             <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
           </div>
+
           <LanguageSwitcher />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-8)' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             {!user ? (
-              <button className="btn-primary cta-glow" onClick={() => navigate('/login')} style={{ padding: '10px 24px', fontSize: 'var(--text-sm)', fontWeight: 600, borderRadius: 16 }}>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '10px 24px',
+                  minHeight: 44,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  borderRadius: 16,
+                  whiteSpace: 'nowrap',
+                  lineHeight: 1,
+                  border: 'none',
+                  cursor: 'pointer',
+                  background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
+                  color: '#fff',
+                  boxShadow: '0 4px 16px rgba(255,138,0,0.3)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
                 {t('home.signIn')}
               </button>
             ) : (
               <div className="relative" ref={dropdownRef}>
-                <button onClick={() => setIsDropdownOpen(!isDropdownOpen)} className="btn-secondary" style={{ gap: 'var(--space-8)', padding: '4px 12px 4px 4px', height: 'auto', borderRadius: 'var(--radius-full)' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)' }}>
-                    <User size={14} style={{ color: 'var(--accent)' }} />
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '4px 12px 4px 4px',
+                    height: 44,
+                    borderRadius: 9999,
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-color)',
+                    color: 'var(--text-primary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  <div style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(255,138,0,0.12)',
+                    flexShrink: 0,
+                  }}>
+                    <User size={16} style={{ color: 'var(--accent)' }} />
                   </div>
-                  <span style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>{user.username}</span>
-                  <ChevronDown size={12} style={{ transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 300ms ease', color: 'var(--text-secondary)' }} />
+                  <span style={{
+                    fontSize: 14,
+                    fontWeight: 500,
+                    lineHeight: 1.2,
+                    display: 'none',
+                  }} className="sm:inline">{user.username}</span>
+                  <ChevronDown size={12} style={{
+                    color: 'var(--text-muted)',
+                    transition: 'transform 300ms ease',
+                    transform: isDropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
+                    flexShrink: 0,
+                  }} />
                 </button>
+
                 {isDropdownOpen && (
-                  <div className="glass-card" style={{ position: 'absolute', right: 0, marginTop: 'var(--space-8)', width: 220, padding: 'var(--space-4)', zIndex: 100, borderRadius: 'var(--radius-md)' }}>
-                    <div style={{ padding: 'var(--space-12) var(--space-16)', borderBottom: '1px solid var(--border-color)' }}>
-                      <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--text-secondary)' }}>{t('header.signedInAs')}</p>
-                      <p style={{ fontSize: 'var(--text-sm)', fontWeight: 500, margin: 0 }}>{user.username}</p>
+                  <div style={{
+                    position: 'absolute',
+                    right: 0,
+                    marginTop: 8,
+                    width: 240,
+                    padding: 6,
+                    zIndex: 100,
+                    borderRadius: 14,
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                  }}>
+                    {/* Signed in as */}
+                    <div style={{
+                      padding: '12px 16px',
+                      borderBottom: '1px solid var(--border-color)',
+                      marginBottom: 4,
+                    }}>
+                      <p style={{
+                        fontSize: 11,
+                        margin: 0,
+                        color: 'var(--text-muted)',
+                        letterSpacing: '0.05em',
+                        textTransform: 'uppercase',
+                        fontWeight: 600,
+                        marginBottom: 2,
+                      }}>{t('header.signedInAs')}</p>
+                      <p style={{
+                        fontSize: 14,
+                        fontWeight: 600,
+                        margin: 0,
+                        color: 'var(--text-primary)',
+                      }}>{user.username}</p>
                     </div>
+
+                    {/* Management hub */}
                     {user.roles && user.roles.some((r: string) => r !== 'User' && r !== 'Cashier') && (
-                      <button onClick={() => navigate('/role-selection')} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                        <LayoutDashboard size={14} /> Management hub
+                      <button onClick={() => navigate('/role-selection')}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          width: '100%', minHeight: 44, padding: '10px 16px',
+                          borderRadius: 10, background: 'transparent', border: 'none',
+                          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
+                          cursor: 'pointer', textAlign: 'left',
+                        }}
+                        className="hover:bg-white/5 hover:text-white"
+                      >
+                        <LayoutDashboard size={18} style={{ flexShrink: 0, color: 'var(--accent)' }} />
+                        <span>Management hub</span>
                       </button>
                     )}
-                    <button onClick={() => { navigate('/account'); setIsDropdownOpen(false); }} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                      <UserCircle size={14} /> {t('header.accountInfo')}
+
+                    {/* Account Info */}
+                    <button onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        width: '100%', minHeight: 44, padding: '10px 16px',
+                        borderRadius: 10, background: 'transparent', border: 'none',
+                        color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
+                      className="hover:bg-white/5 hover:text-white"
+                    >
+                      <UserCircle size={18} style={{ flexShrink: 0 }} />
+                      <span>{t('header.accountInfo')}</span>
                     </button>
+
+                    {/* Switch Role */}
                     {user.roles && user.roles.length > 1 && (
-                      <button onClick={() => navigate('/role-selection')} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)' }}>
-                        <ArrowLeftRight size={14} /> {t('header.switchRole')}
+                      <button onClick={() => navigate('/role-selection')}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 12,
+                          width: '100%', minHeight: 44, padding: '10px 16px',
+                          borderRadius: 10, background: 'transparent', border: 'none',
+                          color: 'var(--text-secondary)', fontSize: 14, fontWeight: 500,
+                          cursor: 'pointer', textAlign: 'left',
+                        }}
+                        className="hover:bg-white/5 hover:text-white"
+                      >
+                        <ArrowLeftRight size={18} style={{ flexShrink: 0 }} />
+                        <span>{t('header.switchRole')}</span>
                       </button>
                     )}
-                    <div style={{ height: 1, backgroundColor: 'var(--border-color)', margin: 'var(--space-4) 0' }} />
-                    <button onClick={handleLogoutClick} className="btn-ghost" style={{ width: '100%', justifyContent: 'flex-start', fontSize: 'var(--text-sm)', color: 'var(--danger)' }}>
-                      <LogOut size={14} /> {t('header.logout')}
+
+                    <div style={{ height: 1, backgroundColor: 'var(--border-color)', margin: '4px 8px' }} />
+
+                    {/* Logout */}
+                    <button onClick={handleLogoutClick}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12,
+                        width: '100%', minHeight: 44, padding: '10px 16px',
+                        borderRadius: 10, background: 'transparent', border: 'none',
+                        color: '#ef4444', fontSize: 14, fontWeight: 500,
+                        cursor: 'pointer', textAlign: 'left',
+                      }}
+                      className="hover:bg-red-500/10"
+                    >
+                      <LogOut size={18} style={{ flexShrink: 0 }} />
+                      <span>{t('header.logout')}</span>
                     </button>
                   </div>
                 )}
@@ -210,61 +409,237 @@ const HomePage: React.FC = () => {
         </div>
       </nav>
 
-      {/* ===== MOBILE SIDEBAR ===== */}
+      {/* ============================================
+          MOBILE SIDEBAR (Drawer)
+          ============================================ */}
+      {/* Overlay backdrop */}
+      <div
+        onClick={() => setIsMobileMenuOpen(false)}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 99,
+          backgroundColor: 'rgba(0,0,0,0.6)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          transition: 'opacity 350ms ease, visibility 350ms ease',
+          opacity: isMobileMenuOpen ? 1 : 0,
+          visibility: isMobileMenuOpen ? 'visible' : 'hidden',
+          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
+        }}
+      />
+
+      {/* Panel */}
       <div style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        transition: 'opacity 400ms ease, visibility 400ms ease',
-        opacity: isMobileMenuOpen ? 1 : 0,
-        visibility: isMobileMenuOpen ? 'visible' : 'hidden',
-        pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: 'min(82vw, 320px)',
+        maxWidth: 320,
+        height: '100vh',
+        zIndex: 100,
+        backgroundColor: '#111114',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '4px 0 40px rgba(0,0,0,0.5)',
+        display: 'flex',
+        flexDirection: 'column',
+        transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform 350ms cubic-bezier(0.4, 0, 0.2, 1)',
       }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} onClick={() => setIsMobileMenuOpen(false)} />
-        <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 280, backgroundColor: 'var(--bg-surface)', borderRight: '1px solid var(--border-color)', transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 400ms ease', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: 'var(--space-24)', borderBottom: '1px solid var(--border-color)' }}>
-            <span style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 22, fontWeight: 800, background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>CINEMA</span>
-            <button className="btn-icon" onClick={() => setIsMobileMenuOpen(false)}><X size={18} /></button>
-          </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: 'var(--space-24)', display: 'flex', flexDirection: 'column', gap: 'var(--space-24)' }}>
-            {!user ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-12)' }}>
-                <button className="btn-primary" onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}>{t('header.login')}</button>
-                <button className="btn-secondary" onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}>{t('header.register')}</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-12)', marginBottom: 'var(--space-16)' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-surface)' }}>
-                    <User size={20} style={{ color: 'var(--accent)' }} />
-                  </div>
-                  <div>
-                    <p style={{ fontSize: 'var(--text-xs)', margin: 0, color: 'var(--text-secondary)' }}>{t('header.signedInAs')}</p>
-                    <p style={{ fontWeight: 500, margin: 0 }}>{user?.username}</p>
-                  </div>
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '20px 16px 16px',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
+        }}>
+          <span style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 22,
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            lineHeight: 1,
+            userSelect: 'none',
+          }}>
+            CINEMA
+          </span>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              border: 'none',
+              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              flexShrink: 0,
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '16px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+        }}>
+          {!user ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
+              <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  minHeight: 48, borderRadius: 12, fontWeight: 600, fontSize: 15,
+                  gap: 8, border: 'none', cursor: 'pointer', padding: '12px 24px',
+                  background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
+                  color: '#fff',
+                }}>
+                {t('header.login')}
+              </button>
+              <button onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  minHeight: 48, borderRadius: 12, fontWeight: 600, fontSize: 15,
+                  gap: 8, border: '1px solid var(--border-color)',
+                  cursor: 'pointer', padding: '12px 24px',
+                  background: 'transparent', color: 'var(--text-primary)',
+                }}>
+                {t('header.register')}
+              </button>
+            </div>
+          ) : (
+            <>
+              {/* User card */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '12px 12px',
+                borderRadius: 12,
+                backgroundColor: 'rgba(255,255,255,0.03)',
+                marginBottom: 8,
+              }}>
+                <div style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: 'rgba(255,138,0,0.12)',
+                  flexShrink: 0,
+                }}>
+                  <User size={20} style={{ color: 'var(--accent)' }} />
                 </div>
-                <button className="btn-ghost" style={{ justifyContent: 'flex-start' }} onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}>
-                  <UserCircle size={16} /> {t('header.accountInfo')}
-                </button>
-                {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
-                  <button className="btn-ghost" style={{ justifyContent: 'flex-start' }} onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}>
-                    <LayoutDashboard size={16} /> Management hub
-                  </button>
-                )}
-                <button className="btn-ghost" style={{ justifyContent: 'flex-start', color: 'var(--danger)' }} onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}>
-                  <LogOut size={16} /> {t('header.logout')}
-                </button>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{
+                    fontSize: 11, margin: 0,
+                    color: 'var(--text-muted)',
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    fontWeight: 600,
+                    lineHeight: 1.3,
+                  }}>{t('header.signedInAs')}</p>
+                  <p style={{
+                    fontSize: 15, fontWeight: 600, margin: 0,
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.4,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '100%',
+                  }}>{user.username}</p>
+                </div>
               </div>
-            )}
-            <div>
-              <p style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-12)', letterSpacing: '0.3px', color: 'var(--text-secondary)' }}>Language</p>
+
+              {/* Divider */}
+              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '4px 0 8px' }} />
+
+              {/* Account Info */}
+              <SidebarItem
+                icon={<UserCircle size={20} style={{ flexShrink: 0, color: 'var(--accent)' }} />}
+                label={t('header.accountInfo')}
+                onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+              />
+
+              {/* Management hub */}
+              {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
+                <SidebarItem
+                  icon={<LayoutDashboard size={20} style={{ flexShrink: 0, color: 'var(--accent)' }} />}
+                  label="Management hub"
+                  onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                />
+              )}
+
+              {/* Switch Role */}
+              {user?.roles && user.roles.length > 1 && (
+                <SidebarItem
+                  icon={<ArrowLeftRight size={20} style={{ flexShrink: 0 }} />}
+                  label={t('header.switchRole')}
+                  onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                />
+              )}
+            </>
+          )}
+
+          {/* Spacer */}
+          <div style={{ flex: 1, minHeight: 16 }} />
+
+          {/* Language Section */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            paddingTop: 12,
+            marginTop: 4,
+          }}>
+            <p style={{
+              fontSize: 11, margin: '0 0 8px 14px',
+              color: 'var(--text-muted)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              lineHeight: 1.3,
+            }}>Language</p>
+            <div style={{ paddingLeft: 2 }}>
               <LanguageSwitcher />
             </div>
           </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
+
+          {/* Logout */}
+          <button
+            onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              width: '100%', minHeight: 48, padding: '12px 14px',
+              borderRadius: 10, background: 'transparent', border: 'none',
+              color: '#f87171', fontSize: 14, fontWeight: 500,
+              cursor: 'pointer', textAlign: 'left', lineHeight: 1.4,
+              transition: 'all 0.15s ease',
+            }}
+            className="hover:bg-red-500/10 hover:text-red-300"
+          >
+            <LogOut size={20} style={{ flexShrink: 0 }} />
+            <span>{t('header.logout')}</span>
+          </button>
         </div>
       </div>
 
       {/* ===== LOGOUT ERROR ===== */}
       {logoutError && (
-        <div style={{ paddingTop: 80, paddingLeft: 'var(--space-24)', paddingRight: 'var(--space-24)', maxWidth: 1200, margin: '0 auto' }}>
+        <div style={{ paddingTop: 80, paddingLeft: 'clamp(12px, 3vw, 24px)', paddingRight: 'clamp(12px, 3vw, 24px)', maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ padding: 'var(--space-12) var(--space-16)', border: '1px solid var(--danger)', backgroundColor: 'rgba(255,180,171,0.06)', display: 'flex', alignItems: 'center', gap: 'var(--space-12)', borderRadius: 'var(--radius-md)' }}>
             <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
             <span style={{ fontSize: 'var(--text-sm)' }}>{logoutError}</span>
@@ -273,47 +648,93 @@ const HomePage: React.FC = () => {
       )}
 
       {/* ===== HERO SECTION ===== */}
-      <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 80, paddingLeft: 20, paddingRight: 20, minHeight: 600 }} className="hero-section">
+      <section style={{
+        position: 'relative', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        paddingTop: 80, paddingLeft: 'clamp(12px, 4vw, 24px)',
+        paddingRight: 'clamp(12px, 4vw, 24px)',
+        minHeight: 'min(600px, 90vh)',
+        overflow: 'hidden'
+      }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img alt="Cinema theater" src={HERO_IMG} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.3)' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-base) 0%, rgba(5,20,36,0.4) 40%, rgba(5,20,36,0.8) 100%)' }} />
         </div>
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', maxWidth: 900, margin: '0 auto', paddingTop: 60 }}>
-          <span style={{ fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, display: 'block', marginBottom: 24 }}>
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', width: '100%', maxWidth: 900, margin: '0 auto', paddingTop: 'clamp(24px, 6vw, 60px)' }}>
+          <span style={{ fontSize: 'clamp(10px, 2vw, 11px)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, display: 'block', marginBottom: 'clamp(12px, 3vw, 24px)' }}>
             {t('home.experienceBadge')}
           </span>
-          <h1 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(2.5rem, 8vw, 4rem)', fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em', color: 'white' }}>
+          <h1 style={{
+            fontFamily: "'Montserrat', sans-serif",
+            fontSize: 'clamp(1.75rem, 8vw, 4rem)',
+            fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em',
+            color: 'white', maxWidth: '100%', overflowWrap: 'break-word',
+            margin: '0 auto',
+          }}>
             {t('home.cinematic')}<br />
             <span style={{ color: 'var(--accent)' }}>{t('home.adventure')}</span>
           </h1>
-          <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.65)', maxWidth: 600, margin: '24px auto' }}>
+          <p style={{
+            fontSize: 'clamp(14px, 2.5vw, 16px)',
+            lineHeight: 1.7, color: 'rgba(255,255,255,0.65)',
+            maxWidth: 600, margin: 'clamp(12px, 3vw, 24px) auto',
+            padding: '0 8px', overflowWrap: 'break-word',
+          }}>
             {t('home.heroDesc')}
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-            <button className="btn-primary cta-glow" style={{ padding: '16px 40px', fontWeight: 700, fontSize: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap', flexDirection: 'row' }}>
+            <button className="btn-primary cta-glow" style={{
+              padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 40px)',
+              fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
+              whiteSpace: 'nowrap', minHeight: 48,
+            }}>
               {t('home.exploreNow')}
             </button>
-            <button className="glass-card" style={{ padding: '16px 40px', color: 'white', fontWeight: 700, fontSize: 14, border: 'none', borderRadius: 16, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 8, transition: 'all 0.3s ease', background: 'rgba(255,255,255,0.05)' }}>
+            <button className="glass-card" style={{
+              padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 40px)',
+              color: 'white', fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
+              border: 'none', borderRadius: 16, cursor: 'pointer',
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              transition: 'all 0.3s ease', background: 'rgba(255,255,255,0.05)',
+              whiteSpace: 'nowrap', minHeight: 48,
+            }}>
               <Play size={16} fill="white" /> {t('home.watchTrailer')}
             </button>
           </div>
         </div>
 
         {/* Quick Booking Bar */}
-        <div style={{ position: 'relative', zIndex: 20, width: '100%', maxWidth: 1000, marginTop: 64, paddingLeft: 20, paddingRight: 20 }}>
-          <div className="glass-card" style={{ padding: 8, borderRadius: 16, display: 'flex', flexDirection: 'column' }}>
-            <div className="booking-grid-items" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+        <div style={{
+          position: 'relative', zIndex: 20, width: '100%',
+          maxWidth: 1000, marginTop: 'clamp(32px, 6vw, 64px)',
+          paddingLeft: 'clamp(8px, 2vw, 20px)',
+          paddingRight: 'clamp(8px, 2vw, 20px)',
+        }}>
+          <div className="glass-card" style={{ padding: 8, borderRadius: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}
+              className="booking-grid-items md:grid-cols-3">
               {[{ step: '1', label: 'home.date', value: 'home.today' }, { step: '2', label: 'home.movie', value: 'home.allMovies' }, { step: '3', label: 'home.cinema', value: 'home.allCinemas' }].map((item, idx) => (
-                <div key={idx} style={{ padding: '16px 24px', cursor: 'pointer', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: 8, borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none', transition: 'background 0.3s ease' }}>
+                <div key={idx} style={{
+                  padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 24px)',
+                  cursor: 'pointer', display: 'flex', flexDirection: 'column',
+                  justifyContent: 'center', borderRadius: 8,
+                  borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
+                  transition: 'background 0.3s ease',
+                }}>
                   <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.step}. {t(item.label)}</span>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 500, color: 'white' }}>{t(item.value)}</span>
-                    <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
+                    <span style={{ fontWeight: 500, color: 'white', fontSize: 'clamp(13px, 2vw, 14px)' }}>{t(item.value)}</span>
+                    <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
                   </div>
                 </div>
               ))}
             </div>
-            <button className="btn-primary cta-glow" style={{ width: '100%', padding: '16px 32px', fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <button className="btn-primary cta-glow" style={{
+              width: '100%', padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 32px)',
+              fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              minHeight: 48,
+            }}>
               <Search size={16} /> {t('home.searchNow')}
             </button>
           </div>
@@ -321,28 +742,32 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* ===== TOP TRENDING SECTION ===== */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '80px 20px', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48 }}>
+      <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(40px, 8vw, 80px) clamp(16px, 4vw, 24px)', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <Sparkles size={16} style={{ color: 'var(--accent)' }} />
-              <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600 }}>{t('home.weeklyLeaders')}</span>
+              <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600 }}>{t('home.weeklyLeaders')}</span>
             </div>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
               {t('home.topTrending')}
             </h2>
           </div>
         </div>
 
-        <div className="trending-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 40 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+          gap: 'clamp(16px, 4vw, 40px)',
+        }}>
           {TRENDING_DATA.map((item, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
               <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
                 <img src={TRENDING_IMGS[i]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 24, left: 24, right: 24 }}>
-                  <h3 style={{ fontSize: 20, fontWeight: 700, color: 'white', marginBottom: 8 }}>{item.title}</h3>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
+                <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
+                  <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8 }}>{item.title}</h3>
+                  <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
                   <button className="btn-primary cta-glow" style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                     <Ticket size={14} /> Book Now
                   </button>
@@ -354,13 +779,13 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* ===== NOW SHOWING SECTION ===== */}
-      <section style={{ maxWidth: 1280, margin: '0 auto', padding: '60px 20px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 48 }}>
+      <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)' }}>
           <div>
-            <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+            <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
               {t('home.nowShowingBadge')}
             </span>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
               {t('home.nowShowing')}
             </h2>
           </div>
@@ -377,13 +802,20 @@ const HomePage: React.FC = () => {
             <p style={{ color: 'var(--danger)', marginTop: 'var(--space-16)' }}>{error}</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+          <div className="movie-grid">
             {nowShowing.map(movie => (
               <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
                 onClick={() => navigate(`/movie/${movie.movieId}`)}>
-                <img src={movie.moviePosterURL || PLACEHOLDER_POSTER} alt={movie.movieName} style={{ width: '100%', height: 400, objectFit: 'cover' }} />
-                <div style={{ padding: 'var(--space-16)' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 'var(--space-8)' }}>{movie.movieName}</h3>
+                <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
+                  <img
+                    src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                    alt={movie.movieName}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    loading="lazy"
+                  />
+                </div>
+                <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
+                  <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
                       <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
@@ -400,22 +832,29 @@ const HomePage: React.FC = () => {
 
       {/* ===== COMING SOON SECTION ===== */}
       {comingSoon.length > 0 && (
-        <section style={{ maxWidth: 1280, margin: '0 auto', padding: '60px 20px 100px' }}>
-          <div style={{ marginBottom: 48 }}>
-            <span style={{ fontSize: 11, color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+        <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px) 100px' }}>
+          <div style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}>
+            <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
               {t('home.comingSoonBadge')}
             </span>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
               {t('home.comingSoon')}
             </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 24 }}>
+          <div className="movie-grid">
             {comingSoon.map(movie => (
               <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease' }}
                 onClick={() => navigate(`/movie/${movie.movieId}`)}>
-                <img src={movie.moviePosterURL || PLACEHOLDER_POSTER} alt={movie.movieName} style={{ width: '100%', height: 400, objectFit: 'cover' }} />
-                <div style={{ padding: 'var(--space-16)' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 'var(--space-8)' }}>{movie.movieName}</h3>
+                <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
+                  <img
+                    src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                    alt={movie.movieName}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                    loading="lazy"
+                  />
+                </div>
+                <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
+                  <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
                   <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)' }}>
                     Coming Soon
                   </span>
@@ -427,8 +866,13 @@ const HomePage: React.FC = () => {
       )}
 
       {/* ===== FOOTER ===== */}
-      <footer style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: '60px 20px 40px' }}>
-        <div className="footer-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 40, maxWidth: 1280, margin: '0 auto' }}>
+      <footer style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px)' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
+          gap: 'clamp(24px, 5vw, 40px)',
+          maxWidth: 1280, margin: '0 auto'
+        }}>
           <div>
             <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 16 }}>
               CINEMA PRO
@@ -454,7 +898,7 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
-        <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 40, paddingTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
+        <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 'clamp(24px, 5vw, 40px)', paddingTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
           © 2024 CinemaPro. All rights reserved.
         </div>
       </footer>
@@ -464,5 +908,40 @@ const HomePage: React.FC = () => {
     </>
   );
 };
+
+/* ------------------------------------------------------------------ */
+/*  Sidebar item helper                                                */
+/* ------------------------------------------------------------------ */
+const SidebarItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+}> = ({ icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+      width: '100%',
+      minHeight: 48,
+      padding: '12px 14px',
+      borderRadius: 10,
+      background: 'transparent',
+      border: 'none',
+      color: 'var(--text-secondary)',
+      fontSize: 14,
+      fontWeight: 500,
+      cursor: 'pointer',
+      transition: 'all 0.15s ease',
+      textAlign: 'left',
+      lineHeight: 1.4,
+    }}
+    className="hover:bg-white/5 hover:text-white"
+  >
+    {icon}
+    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
+  </button>
+);
 
 export default HomePage;

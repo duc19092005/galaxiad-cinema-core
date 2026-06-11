@@ -1,5 +1,5 @@
 @import "tailwindcss";
-
+@import "./styles/design-system.css";
 /* Tailwind v4: khai báo dark mode dựa trên class .dark trên thẻ html */
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -588,6 +588,88 @@ tr:hover td {
 }
 
 /* ============================================
+   🔥 RESPONSIVE UTILITY CLASSES
+   ============================================ */
+
+/* Container */
+.responsive-container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding-left: clamp(16px, 4vw, 64px);
+  padding-right: clamp(16px, 4vw, 64px);
+}
+
+/* Section spacing */
+.section-spacing {
+  padding-top: clamp(48px, 8vw, 80px);
+  padding-bottom: clamp(48px, 8vw, 80px);
+}
+
+/* Responsive grid helpers */
+.grid-mobile-1 {
+  grid-template-columns: 1fr !important;
+}
+.grid-tablet-2 {
+  grid-template-columns: repeat(2, 1fr) !important;
+}
+.grid-desktop-3 {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+.grid-desktop-4 {
+  grid-template-columns: repeat(4, 1fr) !important;
+}
+
+/* Text clamping */
+.text-clamp-sm {
+  font-size: clamp(0.75rem, 2vw, 0.875rem) !important;
+}
+.text-clamp-base {
+  font-size: clamp(0.875rem, 2.5vw, 1rem) !important;
+}
+.text-clamp-lg {
+  font-size: clamp(1.25rem, 5vw, 2rem) !important;
+}
+.text-clamp-xl {
+  font-size: clamp(2rem, 8vw, 4rem) !important;
+  line-height: 1.1 !important;
+}
+
+/* Ensure inputs are touch-friendly */
+.responsive-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+}
+
+/* Break words on long text */
+.break-words-safe {
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+/* Flex responsive helpers */
+.flex-responsive {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Card grid for movies */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 480px) {
+  .movie-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* ============================================
    RESPONSIVE OVERRIDES
    ============================================ */
 @media (max-width: 1024px) {
@@ -611,10 +693,25 @@ tr:hover td {
   .sidebar.open {
     transform: translateX(0);
   }
+
+  .movie-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
   .page-container {
     padding: 16px;
+  }
+
+  .movie-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 }

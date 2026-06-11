@@ -74,12 +74,7 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
       )}
 
       {/* Sidebar */}
-      <aside
-        className={`sidebar ${isOpen ? 'open' : ''}`}
-        style={{
-          transform: isOpen ? 'translateX(0)' : undefined,
-        }}
-      >
+      <aside className={`sidebar glass-card ${isOpen ? 'open' : ''}`} style={{ transform: isOpen ? 'translateX(0)' : undefined }}>
         {/* Header */}
         <div className="sidebar-header">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

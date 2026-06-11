@@ -68,30 +68,34 @@ const AdvancedSearch: React.FC = () => {
   const handleTimeClick = (scheduleId: string) => navigate(`/booking/${scheduleId}`);
 
   return (
-    <div style={{ maxWidth: 1200, margin: '0 auto', marginBottom: 'var(--space-16)', padding: '0 var(--space-4)' }}>
-      {/* Search form */}
+    <div style={{ width: '100%', maxWidth: 1200, margin: '0 auto', marginBottom: 'var(--space-16)', padding: '0 clamp(4px, 2vw, 16px)' }}>
+      {/* Search form - responsive grid */}
       <div className="card" style={{
         padding: 0, overflow: 'hidden',
         boxShadow: 'var(--shadow-lg)',
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-        }}>
+          gridTemplateColumns: '1fr',
+        }}
+          className="sm:grid-cols-2 lg:grid-cols-4"
+        >
           {/* Date */}
-          <div className="input-wrapper" style={{
-            padding: 'var(--space-5)',
+          <div className="input-wrapper lg:border-b-0" style={{
+            padding: 'clamp(12px, 2vw, 20px)',
             borderRight: '1px solid var(--border)',
-          }}>
+            borderBottom: '1px solid var(--border)',
+          }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-              <Calendar size={14} style={{ color: 'var(--text-muted)' }} />
+              <Calendar size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
               <span className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px' }}>1. {t('Date')}</span>
             </div>
             <select
               value={selectedDate}
               onChange={e => setSelectedDate(e.target.value)}
               className="input"
-              style={{ border: 'none', padding: 0, height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)' }}
+              style={{ width: '100%', border: 'none', padding: '8px 0', height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)', minHeight: 44 }}
             >
               {dateOptions.map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -100,19 +104,21 @@ const AdvancedSearch: React.FC = () => {
           </div>
 
           {/* Movie */}
-          <div style={{
-            padding: 'var(--space-5)',
+          <div className="lg:border-b-0" style={{
+            padding: 'clamp(12px, 2vw, 20px)',
             borderRight: '1px solid var(--border)',
-          }}>
+            borderBottom: '1px solid var(--border)',
+          }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-              <Film size={14} style={{ color: 'var(--text-muted)' }} />
+              <Film size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
               <span className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px' }}>2. {t('Movie')}</span>
             </div>
             <select
               value={selectedMovieId}
               onChange={e => setSelectedMovieId(e.target.value)}
               className="input"
-              style={{ border: 'none', padding: 0, height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)' }}
+              style={{ width: '100%', border: 'none', padding: '8px 0', height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)', minHeight: 44 }}
             >
               <option value="">{t('All Movies')}</option>
               {activeMovies?.map(m => (
@@ -122,19 +128,21 @@ const AdvancedSearch: React.FC = () => {
           </div>
 
           {/* Cinema */}
-          <div style={{
-            padding: 'var(--space-5)',
+          <div className="sm:border-b-0 lg:border-r-0" style={{
+            padding: 'clamp(12px, 2vw, 20px)',
             borderRight: '1px solid var(--border)',
-          }}>
+            borderBottom: '1px solid var(--border)',
+          }}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', marginBottom: 'var(--space-3)' }}>
-              <MapPin size={14} style={{ color: 'var(--text-muted)' }} />
+              <MapPin size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
               <span className="text-muted" style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.3px' }}>3. {t('Cinema')}</span>
             </div>
             <select
               value={selectedCinemaId}
               onChange={e => setSelectedCinemaId(e.target.value)}
               className="input"
-              style={{ border: 'none', padding: 0, height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)' }}
+              style={{ width: '100%', border: 'none', padding: '8px 0', height: 'auto', backgroundColor: 'transparent', fontSize: 'var(--text-sm)', minHeight: 44 }}
             >
               <option value="">{t('All Cinemas')}</option>
               {activeCinemas?.map(c => (
@@ -153,7 +161,8 @@ const AdvancedSearch: React.FC = () => {
               fontSize: 'var(--text-sm)',
               letterSpacing: '0.3px',
               height: '100%',
-              minHeight: 80,
+              minHeight: 'clamp(56px, 15vw, 80px)',
+              whiteSpace: 'nowrap',
             }}
           >
             {loading ? <Clock size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Search size={16} />}
@@ -180,20 +189,20 @@ const AdvancedSearch: React.FC = () => {
           ) : searchResults && searchResults.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-8)' }}>
               {searchResults.map(movie => (
-                <div key={movie.movieId} className="card card-hover" style={{ padding: 'var(--space-6)' }}>
+                <div key={movie.movieId} className="card card-hover" style={{ padding: 'clamp(16px, 3vw, 24px)' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
-                    {/* Movie header */}
-                    <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
-                      <div style={{ width: 120, flexShrink: 0 }}>
+                    {/* Movie header - responsive */}
+                    <div style={{ display: 'flex', gap: 'clamp(12px, 3vw, 24px)', flexWrap: 'wrap' }}>
+                      <div style={{ width: 'clamp(80px, 20vw, 120px)', flexShrink: 0 }}>
                         <img
                           src={movie.movieImageUrl}
                           alt={movie.movieName}
                           onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'; }}
-                          style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', borderRadius: 'var(--radius-md)' }}
+                          style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', borderRadius: 'var(--radius-md)', display: 'block' }}
                         />
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h3 className="heading-lg section-header" style={{ marginTop: 0 }}>{movie.movieName}</h3>
+                        <h3 className="heading-lg section-header" style={{ marginTop: 0, fontSize: 'clamp(16px, 3vw, 20px)', overflowWrap: 'break-word' }}>{movie.movieName}</h3>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
                           {(movie.movieGenres || []).map((g: string) => (
                             <span key={g} className="badge badge-neutral">{g}</span>
@@ -210,14 +219,14 @@ const AdvancedSearch: React.FC = () => {
                       {movie.cinemas?.map((cinema, cIdx) => (
                         <div key={cIdx}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-4)' }}>
-                            <MapPinned size={16} style={{ color: 'var(--accent)' }} />
-                            <div>
-                              <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>{cinema.cinemaName}</p>
-                              <p className="text-muted" style={{ fontSize: 'var(--text-xs)' }}>{cinema.cinemaLocation}</p>
+                            <MapPinned size={16} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <p style={{ fontWeight: 500, fontSize: 'var(--text-sm)', overflowWrap: 'break-word' }}>{cinema.cinemaName}</p>
+                              <p className="text-muted" style={{ fontSize: 'var(--text-xs)', overflowWrap: 'break-word' }}>{cinema.cinemaLocation}</p>
                             </div>
                           </div>
 
-                          <div style={{ paddingLeft: 'var(--space-8)' }}>
+                          <div style={{ paddingLeft: 'clamp(16px, 4vw, 32px)' }}>
                             {cinema.formatShowtimes?.map((format, fIdx) => (
                               <div key={fIdx} style={{ marginBottom: 'var(--space-5)' }}>
                                 <div style={{
@@ -231,7 +240,7 @@ const AdvancedSearch: React.FC = () => {
                                 </div>
                                 <div style={{
                                   display: 'grid',
-                                  gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                                  gridTemplateColumns: 'repeat(auto-fill, minmax(clamp(70px, 15vw, 80px), 1fr))',
                                   gap: 'var(--space-2)',
                                 }}>
                                   {format.showtimes?.map(st => (
@@ -245,6 +254,8 @@ const AdvancedSearch: React.FC = () => {
                                         gap: 0,
                                         height: 'auto',
                                         fontSize: 'var(--text-sm)',
+                                        minHeight: 44,
+                                        width: '100%',
                                       }}
                                     >
                                       <span style={{ fontWeight: 500 }}>

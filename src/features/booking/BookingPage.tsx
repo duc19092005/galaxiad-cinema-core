@@ -198,7 +198,7 @@ const BookingPage: React.FC = () => {
             @keyframes bk-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
           `}</style>
 
-          {/* ===== TOP NAV ===== */}
+          {/* ===== TOP NAV - Fixed responsive padding ===== */}
           <header style={{
             position: 'fixed', top: 0, width: '100%', zIndex: 50,
             backgroundColor: `${BK.bg}F2`, backdropFilter: 'blur(12px)',
@@ -207,15 +207,16 @@ const BookingPage: React.FC = () => {
           }}>
             <div style={{
               maxWidth: 1280, margin: '0 auto', width: '100%',
-              padding: '0 64px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '0 clamp(16px, 4vw, 64px)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, color: BK.primary, letterSpacing: '-0.02em' }}>
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(18px, 3vw, 20px)', fontWeight: 800, color: BK.primary, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
                 CINEPREMIER
               </div>
-              <nav style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+              <nav style={{ display: 'none', alignItems: 'center', gap: 32 }} className="md:flex">
                 {['Movies', 'Cinemas', 'Offers', 'Membership'].map(item => (
                   <a key={item} href="#"
-                    style={{ color: BK.textVariant, fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s' }}
+                    style={{ color: BK.textVariant, fontSize: 14, fontWeight: 500, textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
                     onMouseEnter={e => { e.currentTarget.style.color = BK.text; }}
                     onMouseLeave={e => { e.currentTarget.style.color = BK.textVariant; }}
                   >
@@ -223,11 +224,11 @@ const BookingPage: React.FC = () => {
                   </a>
                 ))}
               </nav>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 2vw, 24px)' }}>
                 <button style={{
                   backgroundColor: BK.primaryContainer, color: '#000', fontWeight: 700,
                   padding: '8px 24px', borderRadius: 8, border: 'none', cursor: 'pointer',
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.3s ease', whiteSpace: 'nowrap', fontSize: 'clamp(13px, 2vw, 14px)',
                 }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 0 20px rgba(255,138,0,0.3)'; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = 'none'; }}
@@ -235,7 +236,7 @@ const BookingPage: React.FC = () => {
                   Book Now
                 </button>
                 <div style={{
-                  width: 40, height: 40, borderRadius: '50%', overflow: 'hidden',
+                  width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', flexShrink: 0,
                   border: '1px solid rgba(86, 67, 52, 1)',
                 }}>
                   <img
@@ -248,33 +249,42 @@ const BookingPage: React.FC = () => {
             </div>
           </header>
 
-          {/* ===== MAIN ===== */}
-          <main style={{ paddingTop: 128, paddingBottom: 96, maxWidth: 1280, margin: '0 auto', paddingLeft: 64, paddingRight: 64 }}>
-            {/* Movie Info */}
+          {/* ===== MAIN - Fixed responsive padding ===== */}
+          <main style={{
+            paddingTop: 128, paddingBottom: 96,
+            maxWidth: 1280, margin: '0 auto',
+            paddingLeft: 'clamp(16px, 4vw, 64px)',
+            paddingRight: 'clamp(16px, 4vw, 64px)',
+          }}>
+            {/* Movie Info - Fixed responsive */}
             <div style={{
-              marginBottom: 48, display: 'flex', flexDirection: 'column',
+              marginBottom: 'clamp(24px, 5vw, 48px)',
+              display: 'flex', flexDirection: 'column',
               justifyContent: 'flex-end', borderLeft: `4px solid ${BK.primary}`, paddingLeft: 24,
             }}
               className="md:flex-row md:items-end md:justify-between"
             >
-              <div>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 <h1 style={{
-                  fontFamily: "'Montserrat', sans-serif", fontSize: 48, fontWeight: 800,
+                  fontFamily: "'Montserrat', sans-serif",
+                  fontSize: 'clamp(24px, 5vw, 48px)',
+                  fontWeight: 800,
                   color: BK.text, margin: '0 0 8px', letterSpacing: '-0.02em',
+                  overflowWrap: 'break-word', wordBreak: 'break-word',
                 }}>
                   {seatMap.movieName}
                 </h1>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, color: BK.textVariant, fontSize: 14, letterSpacing: '0.1em', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(8px, 2vw, 16px)', color: BK.textVariant, fontSize: 'clamp(12px, 2vw, 14px)', letterSpacing: '0.1em', fontWeight: 600, flexWrap: 'wrap' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 18 }}>movie</span>
                     {seatMap.auditoriumName}
                   </span>
-                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border }} />
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border, flexShrink: 0 }} />
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 18 }}>calendar_today</span>
                     {new Date(seatMap.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                   </span>
-                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border }} />
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: BK.border, flexShrink: 0 }} />
                   <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span className="material-symbols-outlined" style={{ fontSize: 18 }}>schedule</span>
                     {new Date(seatMap.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
@@ -286,7 +296,7 @@ const BookingPage: React.FC = () => {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, color: BK.primary,
                   background: 'none', border: 'none', cursor: 'pointer', fontSize: 14,
-                  transition: 'all 0.3s ease',
+                  transition: 'all 0.3s ease', padding: '8px 0', flexShrink: 0,
                 }}
                 onMouseEnter={e => { e.currentTarget.style.gap = '16px'; }}
                 onMouseLeave={e => { e.currentTarget.style.gap = '8px'; }}
@@ -296,15 +306,14 @@ const BookingPage: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 48, alignItems: 'start' }}
-              className="lg:grid-cols-12"
+            {/* Responsive grid - stacked on mobile, side-by-side on desktop */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 'clamp(24px, 5vw, 48px)', alignItems: 'start' }}
+              className="lg:grid-cols-[1fr_minmax(320px,420px)]"
             >
               {/* ===== SEAT SELECTION ===== */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-                className="lg:col-span-8"
-              >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }}>
                 {/* Screen */}
-                <div style={{ width: '100%', maxWidth: 560, marginBottom: 64, position: 'relative' }}>
+                <div style={{ width: '100%', maxWidth: 560, marginBottom: 'clamp(32px, 8vw, 64px)', position: 'relative' }}>
                   <div className="screen-curve" />
                   <p style={{
                     textAlign: 'center', color: BK.textVariant, fontSize: 10,
@@ -314,16 +323,16 @@ const BookingPage: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Seat Grid */}
+                {/* Seat Grid - responsive sizing */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))`,
-                  gap: 8,
-                  padding: 16,
+                  gap: 'clamp(4px, 1.5vw, 8px)',
+                  padding: 'clamp(8px, 2vw, 16px)',
                   borderRadius: 16,
                   backgroundColor: 'rgba(255,255,255,0.02)',
                   width: '100%',
-                  maxWidth: maxCol * 56,
+                  maxWidth: `min(${maxCol * 56}px, 100%)`,
                   justifyContent: 'center',
                 }}>
                   {seatMap.seatMap?.map((seat) => {
@@ -331,11 +340,14 @@ const BookingPage: React.FC = () => {
                     const lockedBy = lockedSeats[seat.seatId];
                     const isLockedByOther = lockedBy && !isSelected;
                     let seatStyle: React.CSSProperties = {
-                      width: 40, height: 40, borderRadius: 8,
+                      width: 'clamp(28px, 6vw, 40px)',
+                      height: 'clamp(28px, 6vw, 40px)',
+                      borderRadius: 8,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 500,
+                      fontSize: 'clamp(9px, 1.5vw, 11px)', fontWeight: 500,
                       transition: 'all 0.2s ease', border: 'none', cursor: 'pointer',
                       fontFamily: "'Inter', sans-serif",
+                      margin: '0 auto',
                     };
 
                     if (seat.isBooked) {
@@ -383,9 +395,11 @@ const BookingPage: React.FC = () => {
                   })}
                 </div>
 
-                {/* Legend */}
+                {/* Legend - responsive */}
                 <div style={{
-                  display: 'inline-flex', gap: 24, padding: '12px 24px',
+                  display: 'flex', flexWrap: 'wrap', justifyContent: 'center',
+                  gap: 'clamp(12px, 3vw, 24px)',
+                  padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 24px)',
                   borderRadius: 9999, marginTop: 48,
                   background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(32px)',
                   border: '1px solid rgba(255,255,255,0.1)',
@@ -397,12 +411,13 @@ const BookingPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* ===== BOOKING SUMMARY ===== */}
+              {/* ===== BOOKING SUMMARY - responsive ===== */}
               <aside style={{
                 position: 'sticky', top: 96,
-              }} className="lg:col-span-4 lg:sticky">
+              }} className="lg:sticky">
                 <div className="glass-card" style={{
-                  borderRadius: 16, padding: 32, boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+                  borderRadius: 16, padding: 'clamp(20px, 4vw, 32px)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                   overflow: 'hidden', position: 'relative',
                 }}>
                   {/* Glow */}
@@ -414,7 +429,7 @@ const BookingPage: React.FC = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
                     <span className="material-symbols-outlined" style={{ color: BK.primary, fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>
-                    <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 700, margin: 0 }}>Booking Summary</h2>
+                    <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(18px, 3vw, 20px)', fontWeight: 700, margin: 0 }}>Booking Summary</h2>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 24, marginBottom: 32 }}>
@@ -435,6 +450,7 @@ const BookingPage: React.FC = () => {
                             display: 'flex', flexDirection: 'column', gap: 4,
                             padding: '8px 12px', backgroundColor: `${BK.primary}0D`,
                             border: `1px solid ${BK.primary}1A`, borderRadius: 8,
+                            width: '100%',
                           }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                               <span style={{ fontWeight: 700, color: BK.primary, fontSize: 13 }}>Seat {seat.seatName}</span>
@@ -464,13 +480,13 @@ const BookingPage: React.FC = () => {
 
                   {/* Total Price */}
                   <div style={{
-                    padding: 16, backgroundColor: `${BK.primary}0D`,
+                    padding: 'clamp(12px, 2vw, 16px)', backgroundColor: `${BK.primary}0D`,
                     borderRadius: 12, border: `1px solid ${BK.primary}1A`, marginBottom: 32,
                   }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                       <span style={{ fontWeight: 500 }}>Total Price</span>
                       <div style={{ textAlign: 'right' }}>
-                        <span style={{ color: BK.primary, fontSize: 28, fontWeight: 800 }}>
+                        <span style={{ color: BK.primary, fontSize: 'clamp(22px, 4vw, 28px)', fontWeight: 800 }}>
                           {totalPrice.toLocaleString('vi-VN')}đ
                         </span>
                         <p style={{ fontSize: 10, color: BK.textVariant, textTransform: 'uppercase', letterSpacing: '-0.01em', margin: 0 }}>
@@ -495,9 +511,9 @@ const BookingPage: React.FC = () => {
                         <input type="text" placeholder="Full Name *" value={customerInfo.name}
                           onChange={e => setCustomerInfo(prev => ({ ...prev, name: e.target.value }))}
                           style={{
-                            padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                            width: '100%', minHeight: 44, padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
                             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-                            color: BK.text, fontSize: 13, outline: 'none',
+                            color: BK.text, fontSize: 13, outline: 'none', boxSizing: 'border-box',
                           }}
                           onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
                           onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
@@ -506,9 +522,9 @@ const BookingPage: React.FC = () => {
                           <input type="email" placeholder="Email *" value={customerInfo.email}
                             onChange={e => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
                             style={{
-                              padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                              width: '100%', minHeight: 44, padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
                               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-                              color: BK.text, fontSize: 13, outline: 'none',
+                              color: BK.text, fontSize: 13, outline: 'none', boxSizing: 'border-box',
                             }}
                             onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
                             onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
@@ -516,9 +532,9 @@ const BookingPage: React.FC = () => {
                           <input type="tel" placeholder="Phone *" value={customerInfo.phone}
                             onChange={e => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
                             style={{
-                              padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                              width: '100%', minHeight: 44, padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
                               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-                              color: BK.text, fontSize: 13, outline: 'none',
+                              color: BK.text, fontSize: 13, outline: 'none', boxSizing: 'border-box',
                             }}
                             onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
                             onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
@@ -527,9 +543,9 @@ const BookingPage: React.FC = () => {
                         <input type="text" placeholder="Address (Optional)" value={customerInfo.address}
                           onChange={e => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
                           style={{
-                            padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
+                            width: '100%', minHeight: 44, padding: '8px 12px', backgroundColor: 'rgba(0,0,0,0.2)',
                             border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8,
-                            color: BK.text, fontSize: 13, outline: 'none',
+                            color: BK.text, fontSize: 13, outline: 'none', boxSizing: 'border-box',
                           }}
                           onFocus={e => { e.currentTarget.style.borderColor = BK.primary; }}
                           onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
@@ -553,13 +569,14 @@ const BookingPage: React.FC = () => {
                     disabled={selectedSeats.length === 0 || bookingLoading}
                     onClick={handleBooking}
                     style={{
-                      width: '100%', height: 56, borderRadius: 12,
-                      fontFamily: "'Montserrat', sans-serif", fontSize: 16, fontWeight: 700,
+                      width: '100%', minHeight: 56, borderRadius: 12,
+                      fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(14px, 2.5vw, 16px)', fontWeight: 700,
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
                       border: 'none', cursor: selectedSeats.length > 0 ? 'pointer' : 'not-allowed',
                       backgroundColor: selectedSeats.length > 0 ? BK.primaryContainer : BK.surfaceHigh,
                       color: selectedSeats.length > 0 ? '#000' : `${BK.textVariant}80`,
                       transition: 'all 0.3s ease',
+                      padding: '0 24px',
                       boxShadow: selectedSeats.length > 0 ? `0 4px 25px rgba(255,138,0,0.4)` : 'none',
                     }}
                     onMouseEnter={e => { if (selectedSeats.length > 0) { e.currentTarget.style.boxShadow = '0 4px 25px rgba(255,138,0,0.4)'; e.currentTarget.style.transform = 'scale(1.02)'; } }}
@@ -581,7 +598,7 @@ const BookingPage: React.FC = () => {
                 {/* Promo Banner */}
                 <div style={{
                   marginTop: 24, borderRadius: 16, overflow: 'hidden',
-                  position: 'relative', cursor: 'pointer', height: 128,
+                  position: 'relative', cursor: 'pointer', height: 'clamp(96px, 20vw, 128px)',
                 }}>
                   <img
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCf7glp6ITcrfW0hlE9CXfpSZ7AKpilK45LhR60O8k-msYArV6MVcBMije9H5ruQss-UbuC6Gb1YAflcR428UUHyWYRUE37mAUiB7VVcDsku8dh0XkH6TnzJyx6Me9rtBRfmPBYyk05S__h3GC_UA8Zgnje4sA3Shl3oYaIMWBRFe43eWcgqhiiU_iEjv7gWW52Q2ay7rZQda7oW14y08BU8HYg4NYYb7c2oYMFYBIhsC3smbjMPl2266Wx7hu3U6mCtsWUDUQRCE"
@@ -600,7 +617,7 @@ const BookingPage: React.FC = () => {
                     }}>
                       Premier Plus
                     </p>
-                    <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 18, fontWeight: 600, margin: 0 }}>
+                    <p style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(14px, 3vw, 18px)', fontWeight: 600, margin: 0 }}>
                       Get 20% off popcorn
                     </p>
                   </div>
@@ -611,19 +628,20 @@ const BookingPage: React.FC = () => {
 
           {/* Footer */}
           <footer style={{
-            width: '100%', padding: '48px 64px', maxWidth: 1280, margin: '0 auto',
+            width: '100%', padding: 'clamp(24px, 5vw, 48px) clamp(16px, 4vw, 64px)',
+            maxWidth: 1280, margin: '0 auto',
             borderTop: '1px solid rgba(86, 67, 52, 1)', marginTop: 80,
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 32, alignItems: 'center' }}
               className="md:flex-row md:justify-between"
             >
-              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, color: BK.primary, opacity: 0.5 }}>
+              <div style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(18px, 3vw, 20px)', fontWeight: 800, color: BK.primary, opacity: 0.5 }}>
                 CINEPREMIER
               </div>
-              <div style={{ display: 'flex', gap: 32, color: BK.textVariant, fontSize: 14 }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(16px, 4vw, 32px)', color: BK.textVariant, fontSize: 'clamp(12px, 2vw, 14px)' }}>
                 {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Careers'].map(link => (
                   <a key={link} href="#"
-                    style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                    style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
                     onMouseEnter={e => { e.currentTarget.style.color = BK.text; }}
                     onMouseLeave={e => { e.currentTarget.style.color = BK.textVariant; }}
                   >
@@ -639,14 +657,14 @@ const BookingPage: React.FC = () => {
 
           {/* Mobile Bottom Nav */}
           <nav style={{
-            display: 'none', position: 'fixed', bottom: 0, left: 0, width: '100%',
+            display: 'flex', position: 'fixed', bottom: 0, left: 0, width: '100%',
             backgroundColor: `${BK.surface}E6`, backdropFilter: 'blur(24px)',
             borderTop: '1px solid rgba(255,255,255,0.05)',
             padding: '12px 16px', zIndex: 50,
             borderRadius: '12px 12px 0 0',
             boxShadow: '0 -4px 20px rgba(255,138,0,0.15)',
             justifyContent: 'space-around',
-          }} className="md:hidden flex">
+          }} className="md:hidden">
             {[
               { icon: 'home', label: 'Home' },
               { icon: 'confirmation_number', label: 'Tickets', active: true },
@@ -691,7 +709,7 @@ const SummaryRow: React.FC<{ label: string; value: string }> = ({ label, value }
     <span style={{ color: BK.textVariant, fontSize: 12, letterSpacing: '0.1em', fontWeight: 600, textTransform: 'uppercase' }}>
       {label}
     </span>
-    <span style={{ fontWeight: 600, textAlign: 'right', fontSize: 14 }}>{value}</span>
+    <span style={{ fontWeight: 600, textAlign: 'right', fontSize: 14, overflowWrap: 'break-word', wordBreak: 'break-word', maxWidth: '60%' }}>{value}</span>
   </div>
 );
 
