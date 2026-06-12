@@ -1,9 +1,6 @@
 # 🎬 CINEMA BOOKING PLATFORM — API BACKEND
 
-🌐 **Language / Ngôn ngữ:**
-*   [Tiếng Việt (Vietnamese) 🇻🇳](./README.md)
-*   [English (Tiếng Anh) 🇬🇧](./README.en.md)
-*   [Русский (Tiếng Nga) 🇷🇺](./README.ru.md)
+🌐 **Select Language:** [🇻🇳 Tiếng Việt](./README.md) • [🇬🇧 English](./README.en.md) • [🇷🇺 Русский](./README.ru.md)
 
 ---
 
