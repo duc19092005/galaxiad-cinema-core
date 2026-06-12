@@ -1,0 +1,229 @@
+# Backend Refactor Checkpoints
+
+Current scope: backend only. Do not edit Frontend.
+
+## Checkpoint 2026-06-13 13: Final DbContext sweep outside DataAccess
+
+### Done
+- Read handover docs: `HANDOVER_README.md`, `implementation_plan.md`.
+- Ran `dotnet build`; initial state failed with 14 errors, all active errors were caused by stale `UserProfileEntity` references.
+- Confirmed `ApiLayer/Program.cs` already has `builder.Services.AddHttpContextAccessor();`.
+- Replaced remaining compile-time `UserProfileEntity` usage with direct `UserInfoEntity` profile fields:
+  - `BusinessLayer/Validators/IdentityAccess/RegisterValidate.cs`
+  - `BusinessLayer/UseCases/IdentityAccess/RegisterRegularUseCase.cs`
+  - `BusinessLayer/UseCases/IdentityAccess/UserProfileUseCase.cs`
+  - `BusinessLayer/UseCases/MovieManager/MovieInfos/ReadMovieInfosUseCase.cs`
+  - `BusinessLayer/UseCases/TheaterManager/Auditoriums/ReadAuditorium.cs`
+- `rg -n "UserProfileEntity" BusinessLayer DataAccess ApiLayer` now only finds the explanatory comment in `UserInfoEntity.cs`.
+- Ran `dotnet build` again after edits.
+- Build result: succeeded with 0 errors and 25 warnings.
+- Created EF migration:
+  - `DataAccess/Migrations/20260612173054_InitialRefactoredSchema.cs`
+  - `DataAccess/Migrations/20260612173054_InitialRefactoredSchema.Designer.cs`
+  - `DataAccess/Migrations/CinemaDbContextModelSnapshot.cs`
+- First `dotnet ef database update` failed because old tables still existed in `CinemaDatabase`.
+- Dropped old local Docker SQL Server database `CinemaDatabase` on `localhost,1433`.
+- Re-ran `dotnet ef database update`; migration applied successfully.
+- Ran `dotnet build` after migration files were added; build succeeded.
+- Added persistence abstractions:
+  - `Shared/Interfaces/Persistence/IRepository.cs`
+  - `Shared/Interfaces/Persistence/IUnitOfWork.cs`
+  - `Shared/Interfaces/Persistence/IUnitOfWorkTransaction.cs`
+- Added EF implementations:
+  - `DataAccess/Repositories/EfRepository.cs`
+  - `DataAccess/Repositories/EfUnitOfWork.cs`
+- Registered persistence DI in `ApiLayer/Bootstraps/Common/CommonServicesBootstrap.cs`.
+- Refactored IdentityAccess use cases to consume `IUnitOfWork` instead of direct `CinemaDbContext`:
+  - `RegisterRegularUseCase.cs`
+  - `LoginRegularUseCase.cs`
+  - `GoogleLoginUseCase.cs`
+  - `UserProfileUseCase.cs`
+- `rg -n "CinemaDbContext|_dbContext" BusinessLayer/UseCases/IdentityAccess` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Refactored MovieManager read path to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/MovieManager/MovieInfos/ReadMovieInfosUseCase.cs`
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Simplified logger/user schema because `UserInfoEntity` had too many reverse relationships for created/updated/deleted metadata.
+- Kept scalar metadata columns (`CreatedByUserId`, `UpdatedByUserId`, `DeletedByUserId`) for display/audit purposes, but removed unnecessary FK/navigation links to `UserInfoEntity`.
+- Removed base navigation properties:
+  - `BaseManagementStatus.Creator`
+  - `BaseManagementStatus.Updater`
+  - `BaseManagementStatus.Deleter`
+- Removed reverse collections from `UserInfoEntity` for generic created/updated/deleted relationships.
+- Kept real business relationships:
+  - `TheaterManagedCinemas`
+  - `FacilitiesManagedCinemas`
+  - `ManagedMovieInfos`
+- Removed `AuditLogEntity.Actor` navigation and FK mapping. `AuditLogEntity` now stores `ActorUserId`, `ActorName`, and `ActorPrimaryRole` as snapshot fields.
+- Removed automatic field-level audit logging override from `CinemaDbContext.SaveChangesAsync`; use explicit `AuditLogService.WriteAsync` for meaningful business audit logs.
+- Updated display queries that previously used `Creator`/`Updater` navigation:
+  - `BusinessLayer/UseCases/MovieManager/MovieInfos/ReadMovieInfosUseCase.cs`
+  - `BusinessLayer/Services/admin/Dashboard/ManagementDashboardService.cs`
+- Stabilized seed data in `CinemaAndMovieSeedData.cs`:
+  - fixed seeded `UpdatedAt` values,
+  - replaced `Guid.NewGuid()` schedule seed IDs with deterministic IDs.
+- Created migration:
+  - `DataAccess/Migrations/20260612174655_SimplifyAuditUserLinks.cs`
+  - `DataAccess/Migrations/20260612174655_SimplifyAuditUserLinks.Designer.cs`
+- Applied migration to local Docker SQL Server database `CinemaDatabase`.
+- Ran `dotnet build`; build succeeded with 0 errors and 27 warnings.
+- Extended repository abstraction with `RemoveRange`.
+- Refactored `BusinessLayer/Validators/MovieManager/MovieInfoValidate.cs` so it accepts `IQueryable<MovieInfoEntity>` instead of `CinemaDbContext`.
+- Refactored `BusinessLayer/UseCases/MovieManager/MovieInfos/WriteMovieInfosUseCase.cs` to use `IUnitOfWork` and repositories instead of direct `CinemaDbContext`.
+- Covered MovieManager write operations:
+  - add movie,
+  - update movie,
+  - delete movie,
+  - update coming/overdue background job status.
+- Preserved existing Cloudinary rollback behavior, Hangfire enqueue behavior, and explicit `AuditLogService.WriteAsync` behavior.
+- `rg -n "CinemaDbContext|_dbContext" BusinessLayer/UseCases/MovieManager/MovieInfos/WriteMovieInfosUsecase.cs BusinessLayer/Validators/MovieManager/MovieInfoValidate.cs` has no direct DbContext matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 28 warnings.
+- Refactored FacilitiesManager read use cases to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/FacilitiesManager/MovieFormat/MovieFormatInfoUsecase.cs`
+  - `BusinessLayer/UseCases/FacilitiesManager/Cinemas/ReadCinemaUsecase.cs`
+  - `BusinessLayer/UseCases/FacilitiesManager/Auditoriums/ReadAuditoriumUsecase.cs`
+- Refactored FacilitiesManager validators away from direct `CinemaDbContext`:
+  - `BusinessLayer/Validators/CinemaValidate.cs`
+  - `BusinessLayer/Validators/AuditoriumValidate.cs`
+- Refactored FacilitiesManager write use cases to consume `IUnitOfWork` and repositories:
+  - `BusinessLayer/UseCases/FacilitiesManager/Cinemas/WriteCinemaUsecase.cs`
+  - `BusinessLayer/UseCases/FacilitiesManager/Auditoriums/WriteAuditoriumUsecase.cs`
+- Preserved existing explicit `AuditLogService.WriteAsync` behavior.
+- Replaced FacilitiesManager direct usages of booking extension methods with equivalent repository queries:
+  - booked booking checks for cinema/auditorium,
+  - seat usage check for auditorium,
+  - pending order cancellation when related schedules are soft-deleted.
+- Kept auditorium transaction behavior through `IUnitOfWork.BeginTransactionAsync()`.
+- `rg -n "CinemaDbContext|_dbContext|DbContext" BusinessLayer/UseCases/FacilitiesManager BusinessLayer/Validators/CinemaValidate.cs BusinessLayer/Validators/AuditoriumValidate.cs` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Refactored `BusinessLayer/Services/Booking/BookingService.cs` to consume `IUnitOfWork` instead of direct `CinemaDbContext`.
+- Added local helper methods inside `BookingService`:
+  - `Query<TEntity>()`
+  - `Repository<TEntity>()`
+- Covered booking/public flows in the refactor:
+  - now showing movies,
+  - coming soon movies,
+  - movie detail,
+  - active cinemas/movies,
+  - advanced search schedules,
+  - cities/genres,
+  - cinema showtimes,
+  - seat map,
+  - pricing,
+  - create booking with UnitOfWork transaction,
+  - ticket data,
+  - VNPay callback,
+  - user account info,
+  - user booking history.
+- Preserved VNPay URL/callback behavior, voucher usage behavior, reward point behavior, and existing DTO projections.
+- `rg -n "CinemaDbContext|_dbContext|DbContext" BusinessLayer/Services/Booking/BookingService.cs` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Refactored Admin dashboard read service to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/admin/Dashboard/ManagementDashboardService.cs`
+- Refactored Admin user management service to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/admin/UserManagement/AdminManageUserService.cs`
+- Refactored Admin transfer management service to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/admin/UserManagement/AdminManagementTransferService.cs`
+- Refactored Admin schedule-job read use case to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/Admin/AdminReadScheduleUseCase.cs`
+- Preserved admin audit writes via existing `AuditLogService.WriteAsync`.
+- Kept role assignment and transfer transaction behavior through `IUnitOfWork.BeginTransactionAsync()`.
+- `rg -n "CinemaDbContext|_dbContext|_cinemaDbContext|DbContext" BusinessLayer/Services/admin BusinessLayer/UseCases/Admin` now only matches `BusinessLayer/Services/admin/Audit/AuditLogService.cs`.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Refactored TheaterManager auditorium read use case to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/TheaterManager/Auditoriums/ReadAuditorium.cs`
+- Refactored TheaterManager schedule read use case to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/TheaterManager/MovieSchedules/ReadMovieSchedules.cs`
+- Refactored TheaterManager schedule write use case to consume `IUnitOfWork`:
+  - `BusinessLayer/UseCases/TheaterManager/MovieSchedules/WriteMovieSchedule.cs`
+- Refactored TheaterManager validator away from direct `CinemaDbContext`:
+  - `BusinessLayer/Validators/TheaterManager/TheaterManagerValidate.cs`
+- Preserved schedule validation behavior:
+  - auditorium ownership checks,
+  - movie active/deleted checks,
+  - movie format support checks,
+  - movie cinema authorization checks,
+  - 15-minute schedule gap checks,
+  - booked/completed order guards,
+  - Hangfire schedule job enqueue/update behavior,
+  - explicit `AuditLogService.WriteAsync` behavior.
+- Kept add/update schedule transaction behavior through `IUnitOfWork.BeginTransactionAsync()`.
+- `rg -n "CinemaDbContext|_cinemaDbContext|_dbContext|DbContext" BusinessLayer/UseCases/TheaterManager BusinessLayer/Validators/TheaterManager` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Extended `IUnitOfWork` with `ExecuteSqlRawAsync` for infrastructure raw SQL use cases.
+- Implemented `ExecuteSqlRawAsync` in `DataAccess/Repositories/EfUnitOfWork.cs`.
+- Refactored audit service to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/admin/Audit/AuditLogService.cs`
+- Refactored application/background services to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/ApplicationServices/PendingOrderCancellationJob.cs`
+  - `BusinessLayer/Services/ApplicationServices/MovieStatusSyncBackgroundService.cs`
+  - `BusinessLayer/Services/ApplicationServices/BackgroundJobsService.cs`
+- Replaced stale pending order extension usage with equivalent repository query/update logic.
+- Preserved Hangfire job scheduling, job log cleanup, movie/schedule status sync, and raw Hangfire table cleanup behavior.
+- `rg -n "CinemaDbContext|_dbContext|_cinemaDbContext" BusinessLayer/Services/admin/Audit BusinessLayer/Services/ApplicationServices` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 28 warnings.
+- Refactored voucher service to consume `IUnitOfWork`:
+  - `BusinessLayer/Services/Vouchers/VoucherService.cs`
+- Covered voucher operations:
+  - create voucher,
+  - update voucher,
+  - list vouchers,
+  - get voucher by id,
+  - delete voucher,
+  - list active vouchers,
+  - redeem voucher with UnitOfWork transaction,
+  - list user vouchers.
+- Preserved role eligibility checks, voucher stock checks, voucher validity checks, reward point deduction, and user voucher creation behavior.
+- `rg -n "CinemaDbContext|_dbContext|DbContext" BusinessLayer/Services/Vouchers/VoucherService.cs` has no matches.
+- Ran `dotnet build`; build succeeded with 0 errors and 24 warnings.
+- Refactored remaining identity register validator signatures away from direct `CinemaDbContext`:
+  - `BusinessLayer/Validators/IdentityAccess/RegisterValidate.cs`
+- Verified `BusinessLayer` has no direct `CinemaDbContext`, `_dbContext`, or `_cinemaDbContext` matches.
+- Removed unused `CinemaDbContext` injection from:
+  - `ApiLayer/Controllers/IdentityAccess/IdentityAccessController.cs`
+- Moved admin role lookup endpoints out of controller direct DbContext access and into `AdminManageUserService`:
+  - `GetUserRolesAsync`
+  - `GetAssignableRolesAsync`
+- Refactored `ApiLayer/Controllers/admin/AdminManageUsersController.cs` to call service methods instead of querying DbContext.
+- Added `BusinessLayer/Services/TheaterManager/TheaterManagerDataService.cs` for theater manager data-selection queries.
+- Refactored `ApiLayer/Controllers/TheaterManager/TheaterManagerDataController.cs` to call `TheaterManagerDataService`.
+- Registered `TheaterManagerDataService` in `ApiLayer/Bootstraps/Facilities/FacilitiesServicesBootstrap.cs`.
+- Refactored `ApiLayer/Controllers/public/PublicController.cs` away from direct `CinemaDbContext`; it now uses `IUnitOfWork` for legacy public queries.
+- `rg -n "CinemaDbContext|_dbContext|_cinemaDbContext" ApiLayer` now only matches `ApiLayer/Program.cs`.
+- `Program.cs` still uses `CinemaDbContext` for composition-root DbContext registration and the audit-log fallback table bootstrap; this is expected infrastructure code.
+- Ran `dotnet build`; build succeeded with 0 errors and 1 warning in the final incremental build.
+
+### Next
+- Address missing business logic flows:
+  - Query and embed detailed Permissions claim in JWT auth flow (currently only Roles are embedded).
+  - Implement Redis Lock Manager for Shift Registration to prevent race conditions.
+  - Implement Clock-In/Clock-Out Face Recognition matching (Euclidean distance on AES-256 decrypted FaceVectors).
+
+## Checkpoint 2026-06-13: Backend Refactored to Clean Architecture (Inverted Dependencies)
+
+### Done
+- Relocated Domain Entities and Constants from `DataAccess` to `BusinessLayer` and updated namespaces from `DataAccess.Entities` and `DataAccess.Constants` to `BusinessLayer.Entities` and `BusinessLayer.Constants`.
+- Deleted legacy `DataAccess/Entities` and `DataAccess/Constants` folders.
+- Deleted redundant/empty `Dockerfile` files in `DataAccess` and `Shared` projects.
+- Swapped project references: removed `DataAccess` project reference from `BusinessLayer.csproj` and added `BusinessLayer` project reference to `DataAccess.csproj`.
+- Abstracted third-party infrastructure services (Cloudinary, Hangfire) out of `BusinessLayer`:
+  - Created `IImageStorageService` and `IBackgroundJobScheduler` interfaces in `BusinessLayer/Interfaces/IThirdPersonServices`.
+  - Moved concrete implementations `CloudinaryImageStorageService` and `HangfireJobSchedulerService` to `DataAccess/Services`.
+  - Moved `ScheduleJobsService` implementation using Hangfire to `DataAccess/Services`.
+  - Cleaned up Hangfire recurring job extensions from `PendingOrderCancellationJob.cs` and moved them to `DataAccess/Services/PendingOrderCancellationJobExtensions.cs`.
+  - Removed package references for `CloudinaryDotNet`, `Hangfire.AspNetCore`, and `Hangfire.SqlServer` from `BusinessLayer.csproj` and added them to `DataAccess.csproj`.
+- Refactored `WriteMovieInfosUseCase` and `WriteMovieSchedule` (formerly `WriteMovieSchedulesUseCase` implementation in `WriteMovieSchedule.cs`) to consume the new interface abstractions instead of concrete/static external SDK calls.
+- Registered the new service mappings in `ApiLayer/Program.cs` and `ApiLayer/Bootstraps/Common/CommonServicesBootstrap.cs`.
+- Rewrote `compose.yaml` to set `ASPNETCORE_ENVIRONMENT=Docker` and removed hardcoded connection string environment variables, allowing settings to load automatically from `appsettings.Docker.json`.
+- Verified database entities, constants, and dependency flow compiled successfully. Final build check: `dotnet build` succeeded with 0 errors.
+
+### Next
+- Fix legacy warnings and implement missing business logic flows (Redis shift locking, face recognition clock-in, permissions in JWT).
+
+### Notes
+- Keep Clean Architecture refactor incremental after the schema build is stable.
+- Dependency cycle has been resolved: `BusinessLayer` no longer references `DataAccess`. `DataAccess` references `BusinessLayer` to implement repositories and DB configurations.
+- Current build warnings were not introduced as blocking errors in this pass.
+- EF database commands used an env override for Docker SQL Server:
+  `Server=localhost,1433;Database=CinemaDatabase;User Id=sa;TrustServerCertificate=true`.
+- Logger schema decision: generic create/update/delete user IDs are metadata, not core domain relationships, so they should remain scalar columns instead of FK-heavy navigation relationships.

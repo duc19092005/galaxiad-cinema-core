@@ -3,24 +3,25 @@ using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
-using DataAccess;
-using Microsoft.AspNetCore.Http;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.IdentityAccess;
+using Microsoft.AspNetCore.Http;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.UseCases.FacilitiesManager.Cinemas;
 
 public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesManagerCinema>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     
     private readonly IUserContextService _userContextService;
     private readonly ILogger<FacilitiesManagerReadCinemaUseCase> _logger;
 
-    public FacilitiesManagerReadCinemaUseCase(CinemaDbContext dbContext , ILogger<FacilitiesManagerReadCinemaUseCase> logger, IUserContextService userContextService)
+    public FacilitiesManagerReadCinemaUseCase(IUnitOfWork unitOfWork , ILogger<FacilitiesManagerReadCinemaUseCase> logger, IUserContextService userContextService)
     {
-        this._dbContext = dbContext;
+        this._unitOfWork = unitOfWork;
         this._logger = logger;
         this._userContextService = userContextService;
     }
@@ -32,7 +33,7 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
             var userId = _userContextService.GetUserId();
             var isAdmin = _userContextService.IsInRole("Admin");
 
-            var query = _dbContext.CinemaInfoEntity.AsQueryable();
+            var query = _unitOfWork.Repository<CinemaInfoEntity>().Query();
             if (!isAdmin)
             {
                 // Check if user is FacilitiesManager or TheaterManager and filter accordingly
@@ -79,7 +80,7 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
             var userId = _userContextService.GetUserId();
             var isAdmin = _userContextService.IsInRole("Admin");
 
-            var query = _dbContext.CinemaInfoEntity.Where(x => x.CinemaId == id);
+            var query = _unitOfWork.Repository<CinemaInfoEntity>().Query().Where(x => x.CinemaId == id);
             
             if (!isAdmin)
             {

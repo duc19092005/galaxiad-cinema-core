@@ -7,14 +7,14 @@ using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators.MovieManager;
-using DataAccess;
-using DataAccess.Entities.MovieInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using BusinessLayer.Services.ThirdPersonServices;
+using BusinessLayer.Interfaces.IThirdPersonServices;
 using BusinessLayer.Validators;
 using Shared.Enums;
-using Hangfire;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
 
@@ -22,38 +22,45 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 {
     private readonly IUserContextService _userContextService;
     private readonly ILogger<WriteMovieInfosUseCase> _logger;
-    private readonly CinemaDbContext _dbContext;
-    private readonly cloudinaryHelper _cloudinaryHelper;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageStorageService _imageStorageService;
     private readonly IScheduleJobsService _scheduleJobsService;
     private readonly AuditLogService _auditLogService;
+    private readonly IBackgroundJobScheduler _jobScheduler;
 
 
-    public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, CinemaDbContext dbContext,
-        cloudinaryHelper cloudinaryHelper , IScheduleJobsService scheduleJobService, AuditLogService auditLogService)
+    public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, IUnitOfWork unitOfWork,
+        IImageStorageService imageStorageService, IScheduleJobsService scheduleJobService, AuditLogService auditLogService,
+        IBackgroundJobScheduler jobScheduler)
     {
         _userContextService = userContextService;
         _logger = logger;
-        _dbContext = dbContext;
-        _cloudinaryHelper = cloudinaryHelper;
+        _unitOfWork = unitOfWork;
+        _imageStorageService = imageStorageService;
         _scheduleJobsService = scheduleJobService;
         _auditLogService = auditLogService;
+        _jobScheduler = jobScheduler;
     }
 
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
     {
-        using var transactions = await _dbContext.Database.BeginTransactionAsync();
-        (bool success, string result) cloudinaryStatus = (false, string.Empty);
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
+        (bool Success, string Result) cloudinaryStatus = (false, string.Empty);
         try
         {
             request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
             request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
             var getUserId = _userContextService.GetUserId();
+            var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
+            var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
+            var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
+            var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
 
             var isExitsMovieName =
-                await MovieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, null);
+                await MovieInfoValidate.IsExistMovieName(movieRepository.Query(), request.MovieName, null);
 
             var isExitsMovieDescription =
-                await MovieInfoValidate.IsExistMovieDescription(_dbContext, request.MovieDescription, null);
+                await MovieInfoValidate.IsExistMovieDescription(movieRepository.Query(), request.MovieDescription, null);
 
             var validationErrors = new List<string>();
 
@@ -85,8 +92,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             // Add Into Databases
             var newMovieId = Guid.NewGuid();
 
-            cloudinaryStatus = await _cloudinaryHelper.PostImageIntoCloudinary(request.MovieImage);
-            if (!cloudinaryStatus.success)
+            cloudinaryStatus = await _imageStorageService.PostImageAsync(request.MovieImage);
+            if (!cloudinaryStatus.Success)
             {
                 throw new AppException(Messages.Movie.ImageUploadError, 400, "E01");
             }
@@ -96,7 +103,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 MovieId = newMovieId,
                 MovieDescription = request.MovieDescription,
                 MovieName = request.MovieName,
-                MovieImageUrl = cloudinaryStatus.result,
+                MovieImageUrl = cloudinaryStatus.Result,
                 MovieRequiredAgeId = request.MovieRequiredAgeId,
                 ActiveAt = request.StartedDate,
                 EndedDate = request.EndedDate,
@@ -130,10 +137,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 CinemaId = id
             });
 
-            await _dbContext.MovieInfoEntity.AddAsync(newMovieEntity);
-            await _dbContext.MovieFormatMovieInfoEntity.AddRangeAsync(newMovieFormatMovieInfos);
-            await _dbContext.MovieGenreMovieInfoEntity.AddRangeAsync(newMovieGenreMovieInfos);
-            await _dbContext.MovieCinemaEntities.AddRangeAsync(newMovieCinemaInfos);
+            await movieRepository.AddAsync(newMovieEntity);
+            await movieFormatRepository.AddRangeAsync(newMovieFormatMovieInfos);
+            await movieGenreRepository.AddRangeAsync(newMovieGenreMovieInfos);
+            await movieCinemaRepository.AddRangeAsync(newMovieCinemaInfos);
             await _auditLogService.WriteAsync(
                 "Create",
                 "Movie",
@@ -142,12 +149,12 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 $"Created movie {request.MovieName}.",
                 request.CinemaIds.FirstOrDefault());
             
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             // Enqueue job registration to background AFTER transaction is committed
             // This prevents race conditions where the job runs before the DB has the record.
-            BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));
+            _jobScheduler.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));
 
             return new BaseResponse<string>()
             {
@@ -160,9 +167,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         {
             await transactions.RollbackAsync();
 
-            if (cloudinaryStatus.success)
+            if (cloudinaryStatus.Success)
             {
-                await _cloudinaryHelper.DeleteImageFromCloudinary(cloudinaryStatus.result);
+                await _imageStorageService.DeleteImageAsync(cloudinaryStatus.Result);
             }
 
             if (ex is AppException)
@@ -179,14 +186,20 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     public async Task<BaseResponse<string>> UpdateItem(Guid itemId, ReqEditMovieManagerMovieDto request)
     {
         // Update the Movie
-        using var transactions = await _dbContext.Database.BeginTransactionAsync();
-        (bool success, string result) fileUploadStatus = (false, "upload false");
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
+        (bool Success, string Result) fileUploadStatus = (false, "upload false");
         string oldImageUrl = null!;
         try
         {
             request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
             request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
-            var findTheMovie = await _dbContext.MovieInfoEntity.FirstOrDefaultAsync(x => x.MovieId == itemId);
+            var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
+            var orderDetailRepository = _unitOfWork.Repository<OrderDetailsInfo>();
+            var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
+            var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
+            var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
+
+            var findTheMovie = await movieRepository.Query().FirstOrDefaultAsync(x => x.MovieId == itemId);
             if (findTheMovie == null)
             {
                 throw new NotFoundException(Messages.Movie.NotFoundById(itemId));
@@ -196,7 +209,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 var getUserId = _userContextService.GetUserId();
                 var validationsErrors = new List<string>();
 
-                var hasSuccessfulBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+                var hasSuccessfulBooking = await orderDetailRepository.Query()
                     .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
                                     (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
 
@@ -207,7 +220,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 if (!string.IsNullOrEmpty(request.MovieName))
                 {
-                    if (await MovieInfoValidate.IsExistMovieName(_dbContext, request.MovieName, itemId))
+                    if (await MovieInfoValidate.IsExistMovieName(movieRepository.Query(), request.MovieName, itemId))
                     {
                         validationsErrors.Add(Messages.Movie.NameAlreadyExists);
                     }
@@ -223,7 +236,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 
                 if (!string.IsNullOrEmpty(request.MovieDescription))
                 {
-                    if (await MovieInfoValidate.IsExistMovieDescription(_dbContext, request.MovieDescription, itemId))
+                    if (await MovieInfoValidate.IsExistMovieDescription(movieRepository.Query(), request.MovieDescription, itemId))
                     {
                         validationsErrors.Add(Messages.Movie.DescriptionAlreadyExists);
                     }
@@ -264,15 +277,15 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 
                 if (request.MovieImage != null)
                 {
-                    fileUploadStatus = await _cloudinaryHelper.PostImageIntoCloudinary(request.MovieImage);
-                    if (fileUploadStatus.success)
+                    fileUploadStatus = await _imageStorageService.PostImageAsync(request.MovieImage);
+                    if (fileUploadStatus.Success)
                     {
                         oldImageUrl = findTheMovie.MovieImageUrl;
-                        findTheMovie.MovieImageUrl = fileUploadStatus.result;
+                        findTheMovie.MovieImageUrl = fileUploadStatus.Result;
                     }
                     else
                     {
-                        _logger.LogError(fileUploadStatus.result);
+                        _logger.LogError(fileUploadStatus.Result);
                         throw CustomSystemException.SystemExceptionCaller();
                     }
                 }
@@ -280,12 +293,12 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 if (request.MovieFormatIds != null && request.MovieFormatIds.Any())
                 {
                     // Truy Van trong dbo
-                    var findTheFormats = _dbContext.MovieFormatMovieInfoEntity.Where(x => x.MovieId.Equals(itemId));
-                    _dbContext.MovieFormatMovieInfoEntity.RemoveRange(findTheFormats);
+                    var findTheFormats = await movieFormatRepository.Query().Where(x => x.MovieId.Equals(itemId)).ToListAsync();
+                    movieFormatRepository.RemoveRange(findTheFormats);
 
                     // Add Again in databases
 
-                    _dbContext.MovieFormatMovieInfoEntity.AddRange(request.MovieFormatIds.Distinct().Select(id => new movieFormatMovieInfoEntity()
+                    await movieFormatRepository.AddRangeAsync(request.MovieFormatIds.Distinct().Select(id => new movieFormatMovieInfoEntity()
                     {
                         MovieId = itemId,
                         FormatId = id
@@ -294,11 +307,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 if (request.MovieGenreIds != null && request.MovieGenreIds.Any())
                 {
                     // Truy Van trong dbo
-                    var findTheGenres = _dbContext.MovieGenreMovieInfoEntity.Where(x => x.MovieId.Equals(itemId));
-                    _dbContext.MovieGenreMovieInfoEntity.RemoveRange(findTheGenres);
+                    var findTheGenres = await movieGenreRepository.Query().Where(x => x.MovieId.Equals(itemId)).ToListAsync();
+                    movieGenreRepository.RemoveRange(findTheGenres);
 
                     // Add Again in databases
-                    _dbContext.MovieGenreMovieInfoEntity.AddRange(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
+                    await movieGenreRepository.AddRangeAsync(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
                     {
                         MovieId = itemId,
                         MovieGenreId = id
@@ -307,10 +320,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 if (request.CinemaIds != null && request.CinemaIds.Any())
                 {
-                    var existingCinemas = _dbContext.MovieCinemaEntities.Where(x => x.MovieId == itemId);
-                    _dbContext.MovieCinemaEntities.RemoveRange(existingCinemas);
+                    var existingCinemas = await movieCinemaRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
+                    movieCinemaRepository.RemoveRange(existingCinemas);
 
-                    _dbContext.MovieCinemaEntities.AddRange(request.CinemaIds.Distinct().Select(id => new MovieCinemaEntity()
+                    await movieCinemaRepository.AddRangeAsync(request.CinemaIds.Distinct().Select(id => new MovieCinemaEntity()
                     {
                         MovieId = itemId,
                         CinemaId = id
@@ -323,22 +336,22 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     itemId,
                     findTheMovie.MovieName,
                     $"Updated movie {findTheMovie.MovieName}.",
-                    request.CinemaIds?.FirstOrDefault() ?? await _dbContext.MovieCinemaEntities
+                    request.CinemaIds?.FirstOrDefault() ?? await movieCinemaRepository.Query()
                         .Where(x => x.MovieId == itemId)
                         .Select(x => (Guid?)x.CinemaId)
                         .FirstOrDefaultAsync());
 
-                await _dbContext.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 await transactions.CommitAsync();
 
                 // Enqueue job update to background AFTER transaction is committed
-                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate, request.EndedDate));
+                _jobScheduler.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate, request.EndedDate));
 
-                if (fileUploadStatus.success && !string.IsNullOrEmpty(oldImageUrl))
+                if (fileUploadStatus.Success && !string.IsNullOrEmpty(oldImageUrl))
                 {
                     try
                     {
-                        await _cloudinaryHelper.DeleteImageFromCloudinary(oldImageUrl);
+                        await _imageStorageService.DeleteImageAsync(oldImageUrl);
                     }
                     catch (Exception ex)
                     {
@@ -358,9 +371,9 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             // Roll Back
             await transactions.RollbackAsync();
             // Deleted new image if upload completed
-            if (fileUploadStatus.success)
+            if (fileUploadStatus.Success)
             {
-                var deleteImageFromCloudinary = await _cloudinaryHelper.DeleteImageFromCloudinary(fileUploadStatus.result);
+                var deleteImageFromCloudinary = await _imageStorageService.DeleteImageAsync(fileUploadStatus.Result);
                 if (!deleteImageFromCloudinary)
                 {
                     _logger.LogError(ex, "Error while delete image from Cloudinary");
@@ -378,7 +391,14 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
         var getCurrentUserId = _userContextService.GetUserId();
-        var movie = await _dbContext.MovieInfoEntity
+        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
+        var orderDetailRepository = _unitOfWork.Repository<OrderDetailsInfo>();
+        var scheduleRepository = _unitOfWork.Repository<MovieScheduleInfoEntity>();
+        var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
+        var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
+        var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
+
+        var movie = await movieRepository.Query()
             .FirstOrDefaultAsync(x => x.MovieId == itemId);
             
         if (movie == null)
@@ -391,7 +411,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             throw new BadRequestException("Phim này đã bị xóa.", "D01");
         }
 
-        var hasSuccessfulBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+        var hasSuccessfulBooking = await orderDetailRepository.Query()
             .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
                             (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
 
@@ -400,11 +420,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             movie.IsDeleted = true;
             movie.DeletedByUserId = getCurrentUserId;
             movie.DeletedAt = DateTime.UtcNow;
-            _dbContext.MovieInfoEntity.Update(movie);
+            movieRepository.Update(movie);
         }
         else
         {
-            var hasAnyBooking = await _dbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+            var hasAnyBooking = await orderDetailRepository.Query()
                 .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId);
 
             if (hasAnyBooking)
@@ -413,24 +433,24 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 movie.IsDeleted = true;
                 movie.DeletedByUserId = getCurrentUserId;
                 movie.DeletedAt = DateTime.UtcNow;
-                _dbContext.MovieInfoEntity.Update(movie);
+                movieRepository.Update(movie);
             }
             else
             {
                 // Hard delete
-                var schedules = await _dbContext.MovieScheduleInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
-                _dbContext.MovieScheduleInfoEntity.RemoveRange(schedules);
+                var schedules = await scheduleRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
+                scheduleRepository.RemoveRange(schedules);
 
-                var movieFormats = await _dbContext.MovieFormatMovieInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
-                _dbContext.MovieFormatMovieInfoEntity.RemoveRange(movieFormats);
+                var movieFormats = await movieFormatRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
+                movieFormatRepository.RemoveRange(movieFormats);
 
-                var movieGenres = await _dbContext.MovieGenreMovieInfoEntity.Where(x => x.MovieId == itemId).ToListAsync();
-                _dbContext.MovieGenreMovieInfoEntity.RemoveRange(movieGenres);
+                var movieGenres = await movieGenreRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
+                movieGenreRepository.RemoveRange(movieGenres);
 
-                var movieCinemas = await _dbContext.MovieCinemaEntities.Where(x => x.MovieId == itemId).ToListAsync();
-                _dbContext.MovieCinemaEntities.RemoveRange(movieCinemas);
+                var movieCinemas = await movieCinemaRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
+                movieCinemaRepository.RemoveRange(movieCinemas);
 
-                _dbContext.MovieInfoEntity.Remove(movie);
+                movieRepository.Remove(movie);
             }
         }
         
@@ -440,12 +460,12 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             movie.MovieId,
             movie.MovieName,
             $"Deleted movie {movie.MovieName}.",
-            await _dbContext.MovieCinemaEntities
+            await movieCinemaRepository.Query()
                 .Where(x => x.MovieId == itemId)
                 .Select(x => (Guid?)x.CinemaId)
                 .FirstOrDefaultAsync());
 
-        await _dbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string>()
         {
@@ -457,7 +477,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
     public async Task UpdatedComingMovieStatusJobs(Guid movieId)
     {
-        var findMovie = await _dbContext.MovieInfoEntity.FindAsync(movieId);
+        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
+        var findMovie = await movieRepository.FindAsync(movieId);
         if (findMovie == null)
         {
             // Log the error
@@ -469,8 +490,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 findMovie.IsCommingSoon = false;
                 findMovie.IsActive = true;
-                _dbContext.MovieInfoEntity.Update(findMovie);
-                await _dbContext.SaveChangesAsync();
+                movieRepository.Update(findMovie);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch(Exception e)
             {
@@ -481,7 +502,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     
     public async Task UpdatedOverDueStatus(Guid movieId)
     {
-        var findMovie = await _dbContext.MovieInfoEntity.FindAsync(movieId);
+        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
+        var findMovie = await movieRepository.FindAsync(movieId);
         if (findMovie == null)
         {
             // Log the error
@@ -493,8 +515,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 findMovie.IsCommingSoon = false;
                 findMovie.IsActive = false;
-                _dbContext.MovieInfoEntity.Update(findMovie);
-                await _dbContext.SaveChangesAsync();
+                movieRepository.Update(findMovie);
+                await _unitOfWork.SaveChangesAsync();
             }
             catch(Exception e)
             {

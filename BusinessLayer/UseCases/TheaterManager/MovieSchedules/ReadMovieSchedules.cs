@@ -2,21 +2,23 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.TheaterManager.MovieSchedules.Responses;
 using BusinessLayer.Interfaces.TheaterManager;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Shared.Exceptions;
+using Shared.Interfaces.Persistence;
 using Shared.Localization;
 
 namespace BusinessLayer.UseCases.TheaterManager.MovieSchedules;
 
 public class ReadMovieSchedules : ITheaterManagerReadSchedules
 {
-    private readonly CinemaDbContext _cinemaDbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
 
-    public ReadMovieSchedules(CinemaDbContext dbContext, IUserContextService userContextService)
+    public ReadMovieSchedules(IUnitOfWork unitOfWork, IUserContextService userContextService)
     {
-        _cinemaDbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
     }
 
@@ -26,7 +28,7 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
         var isAdmin = _userContextService.IsInRole("Admin");
         
         // Ensure auditorium belongs to a cinema this manager manages
-        var validAuditorium = await _cinemaDbContext.AuditoriumInfoEntities
+        var validAuditorium = await _unitOfWork.Repository<AuditoriumInfoEntities>().Query()
             .Include(x => x.CinemaInfoEntity)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.AuditoriumId == auditoriumId);
@@ -42,7 +44,7 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
             throw new BadRequestException("Bạn không có quyền xem thông tin của rạp này.", "E01");
         }
 
-        var schedules = await _cinemaDbContext.MovieScheduleInfoEntity
+        var schedules = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
             .AsNoTracking()
             .Include(x => x.MovieInfoEntity)
             .Include(x => x.MovieFormatInfoEntity)

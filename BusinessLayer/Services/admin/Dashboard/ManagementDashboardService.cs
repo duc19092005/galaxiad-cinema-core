@@ -1,20 +1,24 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.AuditLogs;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.Admin.Dashboard;
 
 public class ManagementDashboardService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
 
-    public ManagementDashboardService(CinemaDbContext dbContext, IUserContextService userContextService)
+    public ManagementDashboardService(IUnitOfWork unitOfWork, IUserContextService userContextService)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
     }
 
@@ -26,10 +30,10 @@ public class ManagementDashboardService
         var isTheaterManager = _userContextService.IsInRole("TheaterManager");
         var isMovieManager = _userContextService.IsInRole("MovieManager");
 
-        var cinemaIdsQuery = _dbContext.CinemaInfoEntity.AsNoTracking().Select(c => c.CinemaId);
+        var cinemaIdsQuery = Query<CinemaInfoEntity>().AsNoTracking().Select(c => c.CinemaId);
         if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
-            cinemaIdsQuery = _dbContext.CinemaInfoEntity
+            cinemaIdsQuery = Query<CinemaInfoEntity>()
                 .AsNoTracking()
                 .Where(c =>
                     (isFacilitiesManager && c.FacilitiesManagerId == userId) ||
@@ -37,10 +41,10 @@ public class ManagementDashboardService
                 .Select(c => c.CinemaId);
         }
 
-        var movieIdsQuery = _dbContext.MovieInfoEntity.AsNoTracking().Select(m => m.MovieId);
+        var movieIdsQuery = Query<MovieInfoEntity>().AsNoTracking().Select(m => m.MovieId);
         if (!isAdmin && isMovieManager)
         {
-            movieIdsQuery = _dbContext.MovieInfoEntity
+            movieIdsQuery = Query<MovieInfoEntity>()
                 .AsNoTracking()
                 .Where(m => m.MovieManagerId == userId)
                 .Select(m => m.MovieId);
@@ -52,7 +56,7 @@ public class ManagementDashboardService
         var today = TimeZoneInfo.ConvertTimeToUtc(vietnamToday, vietnamTimeZone);
         var tomorrow = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(1), vietnamTimeZone);
 
-        var orderDetailsQuery = _dbContext.OrderDetailsInfoEntity
+        var orderDetailsQuery = Query<OrderDetailsInfo>()
             .AsNoTracking()
             .Where(od => paidStatuses.Contains(od.OrderInfoEntity.OrderStatus));
 
@@ -132,7 +136,7 @@ public class ManagementDashboardService
             .Take(8)
             .ToListAsync();
 
-        var recentTransactions = await _dbContext.OrderInfoEntity
+        var recentTransactions = await Query<OrderInfoEntity>()
             .AsNoTracking()
             .Where(o => paidStatuses.Contains(o.OrderStatus))
             .Where(o => isAdmin ||
@@ -153,7 +157,7 @@ public class ManagementDashboardService
             })
             .ToListAsync();
 
-        var recentMoviesQuery = _dbContext.MovieInfoEntity.AsNoTracking().Where(m => !m.IsDeleted);
+        var recentMoviesQuery = Query<MovieInfoEntity>().AsNoTracking().Where(m => !m.IsDeleted);
         if (!isAdmin && isMovieManager)
         {
             recentMoviesQuery = recentMoviesQuery.Where(m => m.MovieManagerId == userId);
@@ -168,11 +172,14 @@ public class ManagementDashboardService
                 MovieName = m.MovieName,
                 MovieImageUrl = m.MovieImageUrl,
                 CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = m.Creator != null ? m.Creator.UserName ?? "System" : "System"
+                CreatedBy = Query<UserInfoEntity>()
+                    .Where(u => u.UserId == m.CreatedByUserId)
+                    .Select(u => u.UserName)
+                    .FirstOrDefault() ?? "System"
             })
             .ToListAsync();
 
-        var recentCinemasQuery = _dbContext.CinemaInfoEntity.AsNoTracking().Where(c => !c.IsDeleted);
+        var recentCinemasQuery = Query<CinemaInfoEntity>().AsNoTracking().Where(c => !c.IsDeleted);
         if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
             recentCinemasQuery = recentCinemasQuery.Where(c => cinemaIdsQuery.Contains(c.CinemaId));
@@ -187,11 +194,14 @@ public class ManagementDashboardService
                 CinemaName = c.CinemaName,
                 CinemaLocation = c.CinemaLocation,
                 CreatedAt = DateTime.SpecifyKind(c.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = c.Creator != null ? c.Creator.UserName ?? "System" : "System"
+                CreatedBy = Query<UserInfoEntity>()
+                    .Where(u => u.UserId == c.CreatedByUserId)
+                    .Select(u => u.UserName)
+                    .FirstOrDefault() ?? "System"
             })
             .ToListAsync();
 
-        var recentAuditoriumsQuery = _dbContext.AuditoriumInfoEntities.AsNoTracking().Where(a => !a.IsDeleted);
+        var recentAuditoriumsQuery = Query<AuditoriumInfoEntities>().AsNoTracking().Where(a => !a.IsDeleted);
         if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
             recentAuditoriumsQuery = recentAuditoriumsQuery.Where(a => cinemaIdsQuery.Contains(a.CinemaId));
@@ -206,11 +216,14 @@ public class ManagementDashboardService
                 AuditoriumNumber = a.AuditoriumNumber,
                 CinemaName = a.CinemaInfoEntity.CinemaName,
                 CreatedAt = DateTime.SpecifyKind(a.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = a.Creator != null ? a.Creator.UserName ?? "System" : "System"
+                CreatedBy = Query<UserInfoEntity>()
+                    .Where(u => u.UserId == a.CreatedByUserId)
+                    .Select(u => u.UserName)
+                    .FirstOrDefault() ?? "System"
             })
             .ToListAsync();
 
-        var recentActivities = await _dbContext.AuditLogEntity
+        var recentActivities = await Query<AuditLogEntity>()
             .AsNoTracking()
             .Where(log => isAdmin ||
                 ((isFacilitiesManager || isTheaterManager) && log.CinemaId != null && cinemaIdsQuery.Contains(log.CinemaId.Value)) ||
@@ -266,5 +279,10 @@ public class ManagementDashboardService
         {
             return TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh");
         }
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>().Query();
     }
 }

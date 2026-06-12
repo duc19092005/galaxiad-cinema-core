@@ -6,28 +6,29 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Interfaces.IIdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.IdentityAccess;
+using Shared.Interfaces.Persistence;
 using Shared.Enums;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 
 public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , ResRegularLoginDto>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     
     private readonly IConfiguration _configuration;
     
     private readonly ILogger<identityAccessRegularLoginUseCase> _logger;
 
-    public identityAccessRegularLoginUseCase(CinemaDbContext dbContext, IConfiguration configuration,
+    public identityAccessRegularLoginUseCase(IUnitOfWork unitOfWork, IConfiguration configuration,
         ILogger<identityAccessRegularLoginUseCase> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
     }
@@ -36,7 +37,8 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
     {
         try
         {
-            var getUserInfo = await _dbContext.UserInfoEntity.FirstOrDefaultAsync(x => x.UserEmail.Equals(dto.Email) && x.AccountStatus == AccountStatusEnum.Active);
+            var userRepository = _unitOfWork.Repository<UserInfoEntity>();
+            var getUserInfo = await userRepository.Query().FirstOrDefaultAsync(x => x.UserEmail.Equals(dto.Email) && x.AccountStatus == AccountStatusEnum.Active);
             if (getUserInfo == null)
             {
                 throw new AppException(Messages.Auth.UserNotFound, 404 , "UN01");
@@ -51,7 +53,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                 else
                 {
 
-                    var result = await _dbContext.UserInfoEntity
+                    var result = await userRepository.Query()
                         .AsNoTracking() 
                         .Where(x => x.UserId == getUserInfo.UserId)
                         .Select(x => new 
@@ -64,16 +66,16 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                         })
                         .FirstOrDefaultAsync();
 
-                    if (!result.Roles.Any())
-                    {
-                        _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.UserId);
-                        throw new AppException(Messages.Auth.UserNotFound, 403, "UN01");
-                    }
-
                     if (result == null)
                     {
                         _logger.LogError("User with Id {0} Profile Not Found" , getUserInfo.UserId);
                         throw new AppException(Messages.Auth.UserNotFound, 404, "UN01");
+                    }
+
+                    if (!result.Roles.Any())
+                    {
+                        _logger.LogError("User with Id {0} Role Not Found" , getUserInfo.UserId);
+                        throw new AppException(Messages.Auth.UserNotFound, 403, "UN01");
                     }
                     
                     // Sign JWT for User

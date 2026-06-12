@@ -1,5 +1,5 @@
-using DataAccess.Constants;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedData;
@@ -14,9 +14,7 @@ public static class SeedDataRoleLists
             new RoleListInfoEntity() { RoleId = userRoles.Admin, RoleName = "Admin" },
             new RoleListInfoEntity() { RoleId = userRoles.MovieManager, RoleName = "MovieManager" },
             new RoleListInfoEntity() { RoleId = userRoles.TheaterManager, RoleName = "TheaterManager" },
-            new RoleListInfoEntity() { RoleId = userRoles.FacilitiesManager, RoleName = "FacilitiesManager" },
-            new RoleListInfoEntity() { RoleId = userRoles.Student, RoleName = "Student" },
-            new RoleListInfoEntity() { RoleId = userRoles.VIP, RoleName = "VIP" }
+            new RoleListInfoEntity() { RoleId = userRoles.FacilitiesManager, RoleName = "FacilitiesManager" }
         );
     }
 }

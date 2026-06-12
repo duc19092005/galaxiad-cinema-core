@@ -1,6 +1,6 @@
-using DataAccess.Constants;
-using DataAccess.Entities.CinemaInfos;
-using DataAccess.Entities.MovieInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedData;
@@ -33,6 +33,7 @@ public static class CinemaAndMovieSeedData
                 CinemaDescription = "Không gian điện ảnh trẻ trung, hiện đại bậc nhất Sài Gòn.",
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId,
                 TheaterManagerId = theaterManagerId
             },
@@ -46,6 +47,7 @@ public static class CinemaAndMovieSeedData
                 CinemaDescription = "Cụm rạp cao cấp với công nghệ âm thanh Dolby Atmos.",
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId,
                 TheaterManagerId = adminId // Admin quản lý rạp này
             },
@@ -59,6 +61,7 @@ public static class CinemaAndMovieSeedData
                 CinemaDescription = "Tọa lạc tại biểu tượng của thành phố, mang lại trải nghiệm đẳng cấp.",
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId,
                 FacilitiesManagerId = facilitiesManagerId // Facilities Manager quản lý rạp này
             }
@@ -70,9 +73,9 @@ public static class CinemaAndMovieSeedData
         var auditorium3Id = Guid.Parse("55555555-5555-5555-5555-555555555555"); 
 
         modelBuilder.Entity<AuditoriumInfoEntities>().HasData(
-            new AuditoriumInfoEntities { AuditoriumId = auditorium1Id, CinemaId = cinemaHCMId, AuditoriumNumber = "Cinema 1 (2D)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, IsActive = true },
-            new AuditoriumInfoEntities { AuditoriumId = auditorium2Id, CinemaId = cinemaHNId, AuditoriumNumber = "Cinema 2 (IMAX)", CreatedByUserId = adminId, CreatedAt = defaultDate, IsActive = true },
-            new AuditoriumInfoEntities { AuditoriumId = auditorium3Id, CinemaId = cinemaBHDId, AuditoriumNumber = "Cinema 3 (3D)", CreatedByUserId = facilitiesManagerId, CreatedAt = defaultDate, IsActive = true }
+            new AuditoriumInfoEntities { AuditoriumId = auditorium1Id, CinemaId = cinemaHCMId, AuditoriumNumber = "Cinema 1 (2D)", CreatedByUserId = theaterManagerId, CreatedAt = defaultDate, UpdatedAt = defaultDate, IsActive = true },
+            new AuditoriumInfoEntities { AuditoriumId = auditorium2Id, CinemaId = cinemaHNId, AuditoriumNumber = "Cinema 2 (IMAX)", CreatedByUserId = adminId, CreatedAt = defaultDate, UpdatedAt = defaultDate, IsActive = true },
+            new AuditoriumInfoEntities { AuditoriumId = auditorium3Id, CinemaId = cinemaBHDId, AuditoriumNumber = "Cinema 3 (3D)", CreatedByUserId = facilitiesManagerId, CreatedAt = defaultDate, UpdatedAt = defaultDate, IsActive = true }
         );
 
         modelBuilder.Entity<AuditoriumFormatInfos>().HasData(
@@ -126,6 +129,7 @@ public static class CinemaAndMovieSeedData
                 EndedDate = now.AddDays(25), 
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = movieManagerId,
                 MovieManagerId = movieManagerId
             },
@@ -144,6 +148,7 @@ public static class CinemaAndMovieSeedData
                 EndedDate = now.AddDays(30),
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = adminId,
                 MovieManagerId = adminId // Admin quản lý nội dung phim này
             },
@@ -162,6 +167,7 @@ public static class CinemaAndMovieSeedData
                 EndedDate = now.AddDays(40),
                 IsActive = true,
                 CreatedAt = defaultDate,
+                UpdatedAt = defaultDate,
                 CreatedByUserId = movieManagerId,
                 MovieManagerId = movieManagerId
             }
@@ -197,23 +203,27 @@ public static class CinemaAndMovieSeedData
         // 5. Seed Movie Schedules (Lịch chiếu) - Chỉ tạo 1 vài slot tiêu biểu
         var schedules = new List<MovieScheduleInfoEntity>();
         var scheduleDate = now.Date.AddDays(1); // Ưu tiên ngày mai
+        var batmanScheduleId = Guid.Parse("99999999-9999-9999-9999-999999999991");
+        var oppenheimerScheduleId = Guid.Parse("99999999-9999-9999-9999-999999999992");
 
         // Galaxy Cinema - The Batman
         schedules.Add(new MovieScheduleInfoEntity
         {
-            MovieScheduleInfoId = Guid.NewGuid(), MovieId = movieId1, AuditoriumId = auditorium1Id,
+            MovieScheduleInfoId = batmanScheduleId, MovieId = movieId1, AuditoriumId = auditorium1Id,
             MovieFormatId = movie_visual_constant.Format2D,
             StartTime = scheduleDate.AddHours(19), EndedTime = scheduleDate.AddHours(19).AddMinutes(176),
-            ActiveAt = scheduleDate.AddHours(19), IsActive = true, CreatedByUserId = theaterManagerId
+            ActiveAt = scheduleDate.AddHours(19), IsActive = true, CreatedByUserId = theaterManagerId,
+            CreatedAt = defaultDate, UpdatedAt = defaultDate
         });
 
         // Lotte Cinema - Oppenheimer (IMAX)
         schedules.Add(new MovieScheduleInfoEntity
         {
-            MovieScheduleInfoId = Guid.NewGuid(), MovieId = movieId2, AuditoriumId = auditorium2Id,
+            MovieScheduleInfoId = oppenheimerScheduleId, MovieId = movieId2, AuditoriumId = auditorium2Id,
             MovieFormatId = movie_visual_constant.Imax,
             StartTime = scheduleDate.AddHours(20), EndedTime = scheduleDate.AddHours(20).AddMinutes(180),
-            ActiveAt = scheduleDate.AddHours(20), IsActive = true, CreatedByUserId = adminId
+            ActiveAt = scheduleDate.AddHours(20), IsActive = true, CreatedByUserId = adminId,
+            CreatedAt = defaultDate, UpdatedAt = defaultDate
         });
 
         modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(schedules);

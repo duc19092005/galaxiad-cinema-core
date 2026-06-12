@@ -2,7 +2,6 @@ using Shared.Exceptions;
 using Shared.Localization;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.IIdentityAccess;
-using BusinessLayer.Interfaces.IBehaviors;
 using Shared.Enums;
 using Microsoft.Extensions.DependencyInjection;
 

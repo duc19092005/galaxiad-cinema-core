@@ -5,40 +5,42 @@ using BusinessLayer.Dtos;
 using Shared.Localization;
 using BusinessLayer.Interfaces.IIdentityAccess;
 using BusinessLayer.Validators.IdentityAccess;
-using DataAccess;
-using DataAccess.Constants;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.UserInfos;
 using Shared.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.IdentityAccess;
+using Shared.Interfaces.Persistence;
 using Shared.Utils;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 
 public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegisterDto , string>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     
     private readonly IConfiguration _configuration;
     
     private readonly ILogger<IdentityAccessRegularRegisterUseCase> _logger;
 
-    public IdentityAccessRegularRegisterUseCase(CinemaDbContext dbContext , IConfiguration configuration, ILogger<IdentityAccessRegularRegisterUseCase> logger)
+    public IdentityAccessRegularRegisterUseCase(IUnitOfWork unitOfWork , IConfiguration configuration, ILogger<IdentityAccessRegularRegisterUseCase> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
     }
     
     public async Task<BaseResponse<string>> Add(ReqRegularRegisterDto dto)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();        
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();        
         try
         {
             var validationErrors = new List<string>();
+            var userRepository = _unitOfWork.Repository<UserInfoEntity>();
+            var userRoleRepository = _unitOfWork.Repository<UserRoleInfoEntity>();
 
-            if (RegisterValidate.CheckExistEmail(_dbContext, dto.UserEmail))
+            if (await userRepository.AnyAsync(x => x.UserEmail == dto.UserEmail))
             {
                 validationErrors.Add(Messages.Auth.EmailAlreadyExists);
             }
@@ -59,7 +61,9 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 throw CustomSystemException.SystemExceptionCaller();
             }
 
-            if (RegisterValidate.CheckExistIdentityCode(getAESKey, getAESIV, _dbContext, dto.IdentityCode))
+            var encryptedIdentityCode = AES256Helper.Encrypt(dto.IdentityCode, getAESKey, getAESIV);
+
+            if (await userRepository.AnyAsync(x => x.IdentityCode == encryptedIdentityCode))
             {
                 validationErrors.Add(Messages.Auth.IdentityCodeAlreadyExists);
             }
@@ -73,31 +77,33 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
 
             var generateUserId = Guid.NewGuid();
 
-            await _dbContext.UserInfoEntity.AddAsync(new UserInfoEntity()
+            await userRepository.AddAsync(new UserInfoEntity()
             {
                 UserId = generateUserId,
                 UserEmail = dto.UserEmail,
                 Password = BCrypt_helper.Hash(dto.UserPassword),
                 RegisterMethod = RegisterMethodEnum.UsernamePassword,
-                AccountStatus = AccountStatusEnum.Active
-            });
-
-            await _dbContext.UserProfileEntity.AddAsync(new UserProfileEntity()
-            {
-                UserId = generateUserId,
+                AccountStatus = AccountStatusEnum.Active,
                 DateOfBirth = dto.DateOfBirth,
-                IdentityCode = AES256Helper.Encrypt(dto.IdentityCode, getAESKey, getAESIV),
+                IdentityCode = encryptedIdentityCode,
                 PhoneNumber = dto.PhoneNumber,
                 UserName = dto.UserName
             });
 
-            await _dbContext.UserRoleInfoEntity.AddAsync(new UserRoleInfoEntity()
+            await userRoleRepository.AddAsync(new UserRoleInfoEntity()
             {
                 UserId = generateUserId,
                 RoleId = userRoles.Customer
             });
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.Repository<CustomerProfileEntity>().AddAsync(new CustomerProfileEntity
+            {
+                UserId = generateUserId,
+                TotalPoint = 0,
+                UserSegmentId = user_segments_constant.MemberStandard
+            });
+
+            await _unitOfWork.SaveChangesAsync();
             
             await transaction.CommitAsync();
 

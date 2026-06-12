@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using DataAccess;
-using DataAccess.Entities.Vouchers;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Entities.Vouchers;
+using BusinessLayer.Entities.UserInfos;
 using BusinessLayer.Dtos.Vouchers;
 using Shared.Exceptions;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.Vouchers;
 
 public class VoucherService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public VoucherService(CinemaDbContext dbContext)
+    public VoucherService(IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
     }
 
     // ==========================================
@@ -27,13 +27,13 @@ public class VoucherService
     public async Task<VoucherDto> CreateVoucherAsync(CreateVoucherDto dto)
     {
         // Check if role exists
-        var roleExists = await _dbContext.RoleListInfoEntity.AnyAsync(r => r.RoleId == dto.RoleId);
+        var roleExists = await Query<RoleListInfoEntity>().AnyAsync(r => r.RoleId == dto.RoleId);
         if (!roleExists)
         {
             throw new AppException("Role does not exist", 400, "V02");
         }
 
-        var nameExists = await _dbContext.Set<VoucherInfoEntity>()
+        var nameExists = await Query<VoucherInfoEntity>()
             .AnyAsync(v => v.voucherName.ToLower() == dto.VoucherName.ToLower());
         if (nameExists)
         {
@@ -55,28 +55,28 @@ public class VoucherService
             RemainingQuantity = dto.VoucherQuantity
         };
 
-        _dbContext.Set<VoucherInfoEntity>().Add(voucher);
-        await _dbContext.SaveChangesAsync();
+        await Repository<VoucherInfoEntity>().AddAsync(voucher);
+        await _unitOfWork.SaveChangesAsync();
 
         return await GetVoucherByIdAsync(voucher.voucherId);
     }
 
     public async Task<VoucherDto> UpdateVoucherAsync(Guid voucherId, UpdateVoucherDto dto)
     {
-        var voucher = await _dbContext.Set<VoucherInfoEntity>()
+        var voucher = await Query<VoucherInfoEntity>()
             .FirstOrDefaultAsync(v => v.voucherId == voucherId);
         if (voucher == null)
         {
             throw new AppException("Voucher not found", 404, "V03");
         }
 
-        var roleExists = await _dbContext.RoleListInfoEntity.AnyAsync(r => r.RoleId == dto.RoleId);
+        var roleExists = await Query<RoleListInfoEntity>().AnyAsync(r => r.RoleId == dto.RoleId);
         if (!roleExists)
         {
             throw new AppException("Role does not exist", 400, "V02");
         }
 
-        var nameExists = await _dbContext.Set<VoucherInfoEntity>()
+        var nameExists = await Query<VoucherInfoEntity>()
             .AnyAsync(v => v.voucherName.ToLower() == dto.VoucherName.ToLower() && v.voucherId != voucherId);
         if (nameExists)
         {
@@ -102,13 +102,13 @@ public class VoucherService
         voucher.VoucherQuantity = dto.VoucherQuantity;
         voucher.RemainingQuantity = newRemaining;
 
-        await _dbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return await GetVoucherByIdAsync(voucher.voucherId);
     }
 
     public async Task<List<VoucherDto>> GetAllVouchersAsync()
     {
-        return await _dbContext.Set<VoucherInfoEntity>()
+        return await Query<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
             .Select(v => new VoucherDto
             {
@@ -131,20 +131,20 @@ public class VoucherService
 
     public async Task DeleteVoucherAsync(Guid voucherId)
     {
-        var voucher = await _dbContext.Set<VoucherInfoEntity>()
+        var voucher = await Query<VoucherInfoEntity>()
             .FirstOrDefaultAsync(v => v.voucherId == voucherId);
         if (voucher == null)
         {
             throw new AppException("Voucher not found", 404, "V03");
         }
 
-        _dbContext.Set<VoucherInfoEntity>().Remove(voucher);
-        await _dbContext.SaveChangesAsync();
+        Repository<VoucherInfoEntity>().Remove(voucher);
+        await _unitOfWork.SaveChangesAsync();
     }
 
     public async Task<VoucherDto> GetVoucherByIdAsync(Guid voucherId)
     {
-        var v = await _dbContext.Set<VoucherInfoEntity>()
+        var v = await Query<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
             .FirstOrDefaultAsync(v => v.voucherId == voucherId);
         if (v == null)
@@ -177,7 +177,7 @@ public class VoucherService
     public async Task<List<VoucherDto>> GetActiveVouchersAsync()
     {
         var now = DateTime.UtcNow;
-        return await _dbContext.Set<VoucherInfoEntity>()
+        return await Query<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
             .Where(v => v.RemainingQuantity > 0 && 
                         (v.ValidFrom == null || v.ValidFrom <= now) &&
@@ -203,10 +203,10 @@ public class VoucherService
 
     public async Task<UserVoucherDto> RedeemVoucherAsync(Guid userId, Guid voucherId)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var voucher = await _dbContext.Set<VoucherInfoEntity>()
+            var voucher = await Query<VoucherInfoEntity>()
                 .FirstOrDefaultAsync(v => v.voucherId == voucherId);
             if (voucher == null)
             {
@@ -223,7 +223,7 @@ public class VoucherService
                 throw new AppException("Voucher has expired or is not yet active", 400, "V05");
             }
 
-            var user = await _dbContext.UserInfoEntity
+            var user = await Query<UserInfoEntity>()
                 .FirstOrDefaultAsync(u => u.UserId == userId);
             if (user == null)
             {
@@ -238,7 +238,7 @@ public class VoucherService
             // Verify user has the required role (if role is not Customer or Admin or guest equivalent)
             // If the role is Customer (default), anyone who is logged in can redeem.
             // Let's load the user roles
-            var userRoles = await _dbContext.Set<UserRoleInfoEntity>()
+            var userRoles = await Query<UserRoleInfoEntity>()
                 .Where(ur => ur.UserId == userId)
                 .Select(ur => ur.RoleId)
                 .ToListAsync();
@@ -246,7 +246,7 @@ public class VoucherService
             if (voucher.roleId != Guid.Empty)
             {
                 // check if the role matches
-                var requiredRole = await _dbContext.RoleListInfoEntity.FindAsync(voucher.roleId);
+                var requiredRole = await Repository<RoleListInfoEntity>().FindAsync(voucher.roleId);
                 // If the required role name is NOT "Customer" and the user doesn't have it, throw
                 if (requiredRole != null && requiredRole.RoleName != "Customer" && !userRoles.Contains(voucher.roleId))
                 {
@@ -267,8 +267,8 @@ public class VoucherService
                 PurchasedAt = DateTime.UtcNow
             };
 
-            await _dbContext.Set<UserVoucherEntity>().AddAsync(userVoucher);
-            await _dbContext.SaveChangesAsync();
+            await Repository<UserVoucherEntity>().AddAsync(userVoucher);
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new UserVoucherDto
@@ -295,7 +295,7 @@ public class VoucherService
 
     public async Task<List<UserVoucherDto>> GetMyVouchersAsync(Guid userId)
     {
-        return await _dbContext.Set<UserVoucherEntity>()
+        return await Query<UserVoucherEntity>()
             .Include(uv => uv.VoucherInfoEntity)
             .Where(uv => uv.UserId == userId)
             .OrderByDescending(uv => uv.PurchasedAt)
@@ -314,5 +314,15 @@ public class VoucherService
                 ValidTo = uv.VoucherInfoEntity.ValidTo
             })
             .ToListAsync();
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return Repository<TEntity>().Query();
+    }
+
+    private IRepository<TEntity> Repository<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>();
     }
 }

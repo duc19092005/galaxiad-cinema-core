@@ -1,5 +1,5 @@
-using DataAccess.Constants;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedData;

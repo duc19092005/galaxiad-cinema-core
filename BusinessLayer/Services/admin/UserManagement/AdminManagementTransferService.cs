@@ -1,21 +1,24 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
-using DataAccess;
-using DataAccess.Constants;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shared.Exceptions;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.Admin.UserManagement;
 
 public class AdminManagementTransferService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AdminManagementTransferService> _logger;
 
-    public AdminManagementTransferService(CinemaDbContext dbContext, ILogger<AdminManagementTransferService> logger)
+    public AdminManagementTransferService(IUnitOfWork unitOfWork, ILogger<AdminManagementTransferService> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
@@ -32,7 +35,7 @@ public class AdminManagementTransferService
             _ => throw new BadRequestException("Loại chuyển quyền không hợp lệ." , "B02")
         };
 
-        var users = await _dbContext.UserRoleInfoEntity
+        var users = await Query<UserRoleInfoEntity>()
             .AsNoTracking()
             .Where(ur => ur.RoleId == roleId)
             .Select(ur => new AdminTransferUserDto
@@ -67,7 +70,7 @@ public class AdminManagementTransferService
 
         if (transferType == TransferTypeEnum.Facilities || transferType == TransferTypeEnum.Theater)
         {
-            var query = _dbContext.CinemaInfoEntity.AsNoTracking();
+            var query = Query<CinemaInfoEntity>().AsNoTracking();
             
             if (transferType == TransferTypeEnum.Facilities)
             {
@@ -104,7 +107,7 @@ public class AdminManagementTransferService
         }
         else // Movie
         {
-            var query = _dbContext.MovieInfoEntity.AsNoTracking();
+            var query = Query<MovieInfoEntity>().AsNoTracking();
             if (filterUnmanaged) query = query.Where(m => m.MovieManagerId == null);
             else if (userGuid.HasValue) query = query.Where(m => m.MovieManagerId == userGuid.Value);
 
@@ -127,7 +130,7 @@ public class AdminManagementTransferService
     /// </summary>
     public async Task<BaseResponse<string>> TransferManagementAsync(TransferManagementReqDto request)
     {
-        var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             if (!request.ItemId.HasValue && !request.SourceUserId.HasValue)
@@ -137,7 +140,7 @@ public class AdminManagementTransferService
 
             if (request.TransferType == TransferTypeEnum.Facilities)
             {
-                var query = _dbContext.CinemaInfoEntity.AsQueryable();
+                var query = Query<CinemaInfoEntity>();
                 if (request.ItemId.HasValue)
                     query = query.Where(c => c.CinemaId == request.ItemId.Value);
                 else
@@ -152,7 +155,7 @@ public class AdminManagementTransferService
             }
             else if (request.TransferType == TransferTypeEnum.Theater)
             {
-                var query = _dbContext.CinemaInfoEntity.AsQueryable();
+                var query = Query<CinemaInfoEntity>();
                 if (request.ItemId.HasValue)
                     query = query.Where(c => c.CinemaId == request.ItemId.Value);
                 else
@@ -167,7 +170,7 @@ public class AdminManagementTransferService
             }
             else // Movie
             {
-                var query = _dbContext.MovieInfoEntity.AsQueryable();
+                var query = Query<MovieInfoEntity>();
                 if (request.ItemId.HasValue)
                     query = query.Where(m => m.MovieId == request.ItemId.Value);
                 else
@@ -181,7 +184,7 @@ public class AdminManagementTransferService
                 }
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new BaseResponse<string>
@@ -197,5 +200,10 @@ public class AdminManagementTransferService
             _logger.LogError(e, "Lỗi khi chuyển quyền quản lý.");
             throw CustomSystemException.SystemExceptionCaller();
         }
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>().Query();
     }
 }

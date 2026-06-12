@@ -1,5 +1,5 @@
-using DataAccess.Constants;
-using DataAccess.Entities.CinemaInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedData;

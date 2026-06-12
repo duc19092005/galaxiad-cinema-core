@@ -1,8 +1,7 @@
 
-using System.Net;
 using Shared.Exceptions;
 using Shared.Localization;
-using DataAccess;
+using BusinessLayer.Entities.UserInfos;
 using Shared.Enums;
 using Shared.Utils;
 
@@ -10,9 +9,9 @@ namespace BusinessLayer.Validators.IdentityAccess;
 
 public static class RegisterValidate
 {
-    public static bool CheckExistEmail(CinemaDbContext context , string email)
+    public static bool CheckExistEmail(IQueryable<UserInfoEntity> users, string email)
     {
-        return context.UserInfoEntity.Any(x => x.UserEmail == email);
+        return users.Any(x => x.UserEmail == email);
     }
     // Nghiệp vụ : Ít nhất 16 tuổi mới đc đăng ký
 
@@ -29,11 +28,11 @@ public static class RegisterValidate
         }
     }
 
-    public static bool CheckExistIdentityCode(string aes256Key , string aes256Iv ,CinemaDbContext context, string inputIdentityCode)
+    public static bool CheckExistIdentityCode(string aes256Key, string aes256Iv, IQueryable<UserInfoEntity> users, string inputIdentityCode)
     {
         var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, aes256Key, aes256Iv);
         
-        return context.UserProfileEntity.Any(x => x.IdentityCode == encryptedInput);
+        return users.Any(x => x.IdentityCode == encryptedInput);
     }
 }
 

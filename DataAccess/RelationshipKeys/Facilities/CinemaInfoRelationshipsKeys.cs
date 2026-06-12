@@ -1,4 +1,4 @@
-using DataAccess.Entities.CinemaInfos;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 

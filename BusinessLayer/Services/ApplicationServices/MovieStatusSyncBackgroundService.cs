@@ -1,8 +1,9 @@
-using DataAccess;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.ApplicationServices;
 
@@ -40,7 +41,7 @@ public class MovieStatusSyncBackgroundService : BackgroundService
     private async Task SyncMovieStatusesAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
+        var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
 
         // Lấy thời gian hiện tại chuẩn Việt Nam (UTC+7)
         TimeZoneInfo vietnamTimeZone;
@@ -58,7 +59,10 @@ public class MovieStatusSyncBackgroundService : BackgroundService
         _logger.LogInformation("MovieStatusSyncBackgroundService running sync at {Time}", currentVnTime);
 
         // 1. Cập nhật MovieInfoEntity: nếu Current > EndedDate -> IsActive = false
-        var overDueMovies = await dbContext.MovieInfoEntity
+        var movieRepository = unitOfWork.Repository<MovieInfoEntity>();
+        var scheduleRepository = unitOfWork.Repository<MovieScheduleInfoEntity>();
+
+        var overDueMovies = await movieRepository.Query()
             .Where(m => m.IsActive == true && m.EndedDate < currentVnTime && !m.IsDeleted)
             .ToListAsync(cancellationToken);
 
@@ -68,12 +72,15 @@ public class MovieStatusSyncBackgroundService : BackgroundService
             {
                 movie.IsActive = false;
             }
-            dbContext.MovieInfoEntity.UpdateRange(overDueMovies);
+            foreach (var movie in overDueMovies)
+            {
+                movieRepository.Update(movie);
+            }
             _logger.LogInformation($"Updated {overDueMovies.Count} movies to IsActive = false due to EndedDate.");
         }
 
         // Nếu ActiveAt <= Current < EndedDate -> IsActive = true, IsCommingSoon = false
-        var startingMovies = await dbContext.MovieInfoEntity
+        var startingMovies = await movieRepository.Query()
             .Where(m => (m.IsActive == false || m.IsCommingSoon == true) 
                         && m.ActiveAt <= currentVnTime && m.EndedDate > currentVnTime && !m.IsDeleted)
             .ToListAsync(cancellationToken);
@@ -85,12 +92,15 @@ public class MovieStatusSyncBackgroundService : BackgroundService
                 movie.IsActive = true;
                 movie.IsCommingSoon = false;
             }
-            dbContext.MovieInfoEntity.UpdateRange(startingMovies);
+            foreach (var movie in startingMovies)
+            {
+                movieRepository.Update(movie);
+            }
             _logger.LogInformation($"Updated {startingMovies.Count} movies to IsActive = true, IsCommingSoon = false.");
         }
 
         // 2. Cập nhật MovieScheduleInfoEntity (Lịch chiếu): nếu Current > EndedTime -> IsActive = false
-        var overDueSchedules = await dbContext.MovieScheduleInfoEntity
+        var overDueSchedules = await scheduleRepository.Query()
             .Where(s => s.IsActive == true && s.EndedTime < currentVnTime && !s.IsDeleted)
             .ToListAsync(cancellationToken);
 
@@ -100,12 +110,15 @@ public class MovieStatusSyncBackgroundService : BackgroundService
             {
                 schedule.IsActive = false;
             }
-            dbContext.MovieScheduleInfoEntity.UpdateRange(overDueSchedules);
+            foreach (var schedule in overDueSchedules)
+            {
+                scheduleRepository.Update(schedule);
+            }
             _logger.LogInformation($"Updated {overDueSchedules.Count} schedules to IsActive = false due to EndedTime.");
         }
         
         // Cập nhật lịch chiếu tới giờ chạy (StartTime <= Current < EndedTime)
-        var startingSchedules = await dbContext.MovieScheduleInfoEntity
+        var startingSchedules = await scheduleRepository.Query()
             .Where(s => s.IsActive == false && s.StartTime <= currentVnTime && s.EndedTime > currentVnTime && !s.IsDeleted)
             .ToListAsync(cancellationToken);
             
@@ -115,13 +128,16 @@ public class MovieStatusSyncBackgroundService : BackgroundService
             {
                 schedule.IsActive = true;
             }
-            dbContext.MovieScheduleInfoEntity.UpdateRange(startingSchedules);
+            foreach (var schedule in startingSchedules)
+            {
+                scheduleRepository.Update(schedule);
+            }
             _logger.LogInformation($"Updated {startingSchedules.Count} schedules to IsActive = true.");
         }
 
         if (overDueMovies.Any() || startingMovies.Any() || overDueSchedules.Any() || startingSchedules.Any())
         {
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Changes saved to database successfully.");
         }
     }

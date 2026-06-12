@@ -2,21 +2,22 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.TheaterManager.Auditoriums.Responses;
 using BusinessLayer.Interfaces.TheaterManager;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
+using Shared.Interfaces.Persistence;
 using Shared.Localization;
 
 namespace BusinessLayer.UseCases.TheaterManager.Auditoriums;
 
 public class ReadAuditorium : ITheaterManagerReadAuditorium
 {
-    private readonly CinemaDbContext _cinemaDbContext;
+    private readonly IUnitOfWork _unitOfWork;
     
     private readonly IUserContextService userContextservice;
 
-    public ReadAuditorium(CinemaDbContext dbContext , IUserContextService userContextservice)
+    public ReadAuditorium(IUnitOfWork unitOfWork , IUserContextService userContextservice)
     {
-        _cinemaDbContext = dbContext;
+        _unitOfWork = unitOfWork;
         this.userContextservice = userContextservice;
     }
 
@@ -26,10 +27,10 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
         // Checking Cinemas
         var isAdmin = userContextservice.IsInRole("Admin");
 
-        var getCinemaByUserIdQuery = _cinemaDbContext.CinemaInfoEntity.AsNoTracking()
+        var getCinemaByUserIdQuery = _unitOfWork.Repository<CinemaInfoEntity>().Query().AsNoTracking()
                 .Include(x => x.AuditoriumInfoEntities)
-                .Include(x => x.TheaterManager).ThenInclude(u => u.UserProfileEntity)
-                .Include(x => x.FacilitiesManager).ThenInclude(u => u.UserProfileEntity)
+                .Include(x => x.TheaterManager)
+                .Include(x => x.FacilitiesManager)
                 .AsQueryable();
 
         if (!isAdmin)
@@ -45,7 +46,7 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
         }
 
         var auditoriumLists =
-            _cinemaDbContext.AuditoriumInfoEntities.AsNoTracking()
+            _unitOfWork.Repository<AuditoriumInfoEntities>().Query().AsNoTracking()
                 .Where(x => x.CinemaId.Equals(getCinemaByUserId.CinemaId) && x.IsActive && !x.IsDeleted).Select(x 
                     => 
                     new TheaterManagerAuditoriumInfos
@@ -68,10 +69,10 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
             CinemaHotLineNumber = getCinemaByUserId.CinemaHotLineNumber,
             CinemaLocation = getCinemaByUserId.CinemaLocation,
             TotalAuditoriums = getCinemaByUserId.AuditoriumInfoEntities.Count,
-            TheaterManagerName = getCinemaByUserId.TheaterManager != null && getCinemaByUserId.TheaterManager.UserProfileEntity != null 
-                ? getCinemaByUserId.TheaterManager.UserProfileEntity.UserName : "Chưa có",
-            FacilitiesManagerName = getCinemaByUserId.FacilitiesManager != null && getCinemaByUserId.FacilitiesManager.UserProfileEntity != null 
-                ? getCinemaByUserId.FacilitiesManager.UserProfileEntity.UserName : "Chưa có"
+            TheaterManagerName = getCinemaByUserId.TheaterManager != null 
+                ? getCinemaByUserId.TheaterManager.UserName : "Chưa có",
+            FacilitiesManagerName = getCinemaByUserId.FacilitiesManager != null 
+                ? getCinemaByUserId.FacilitiesManager.UserName : "Chưa có"
         };
         
         // Config For base Response

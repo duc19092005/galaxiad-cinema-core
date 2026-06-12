@@ -1,4 +1,4 @@
-using DataAccess.Entities.Vouchers;
+using BusinessLayer.Entities.Vouchers;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.Promotions;

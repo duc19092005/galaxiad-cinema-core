@@ -1,8 +1,8 @@
 // ReSharper disable All
 
-using DataAccess.Entities.CinemaInfos;
-using DataAccess.Entities.UserInfos;
-using DataAccess.Entities.MovieInfos;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.Facilities;

@@ -1,11 +1,12 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Booking;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
-using DataAccess.Entities.CinemaInfos;
-using DataAccess.Entities.MovieInfos;
-using DataAccess.Entities.UserInfos;
-using DataAccess.Entities.Vouchers;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Entities.Vouchers;
+using BusinessLayer.Interfaces.IThirdPersonServices;
+using Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -18,22 +19,22 @@ namespace BusinessLayer.Services.Booking;
 
 public class BookingService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
     private readonly VnPayHelper _vnPayHelper;
-    private readonly BusinessLayer.Services.ThirdPersonServices.IVnPayService _vnPayService;
+    private readonly IVnPayService _vnPayService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<BookingService> _logger;
 
     public BookingService(
-        CinemaDbContext dbContext,
+        IUnitOfWork unitOfWork,
         IUserContextService userContextService,
         VnPayHelper vnPayHelper,
-        BusinessLayer.Services.ThirdPersonServices.IVnPayService vnPayService,
+        IVnPayService vnPayService,
         IConfiguration configuration,
         ILogger<BookingService> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
         _vnPayHelper = vnPayHelper;
         _vnPayService = vnPayService;
@@ -46,7 +47,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<PagedResult<ResPublicMovieListDto>>> GetNowShowingMovies(string? keyword = null, int pageIndex = 1, int pageSize = 5)
     {
-        var query = _dbContext.MovieInfoEntity
+        var query = _unitOfWork.Repository<MovieInfoEntity>().Query()
             .Where(x => !x.IsDeleted && x.IsActive && !x.IsCommingSoon);
 
         if (!string.IsNullOrEmpty(keyword))
@@ -103,7 +104,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<PagedResult<ResPublicMovieListDto>>> GetComingSoonMovies(string? keyword = null, int pageIndex = 1, int pageSize = 5)
     {
-        var query = _dbContext.MovieInfoEntity
+        var query = _unitOfWork.Repository<MovieInfoEntity>().Query()
             .Where(x => !x.IsDeleted && x.IsCommingSoon);
 
         if (!string.IsNullOrEmpty(keyword))
@@ -161,7 +162,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<ResPublicMovieDetailDto>> GetMovieDetail(Guid movieId)
     {
-        var movie = await _dbContext.MovieInfoEntity
+        var movie = await _unitOfWork.Repository<MovieInfoEntity>().Query()
             .Where(x => x.MovieId == movieId && !x.IsDeleted)
             .Select(x => new ResPublicMovieDetailDto
             {
@@ -202,7 +203,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<List<ResPublicSimpleCinemaDto>>> GetActiveCinemas()
     {
-        var cinemas = await _dbContext.CinemaInfoEntity
+        var cinemas = await _unitOfWork.Repository<CinemaInfoEntity>().Query()
             .Where(c => !c.IsDeleted && c.IsActive)
             .Select(c => new ResPublicSimpleCinemaDto
             {
@@ -223,7 +224,7 @@ public class BookingService
     public async Task<BaseResponse<List<ResPublicSimpleMovieDto>>> GetActiveMovies()
     {
         var now = DateTime.Now;
-        var movies = await _dbContext.MovieInfoEntity
+        var movies = await _unitOfWork.Repository<MovieInfoEntity>().Query()
             .Where(m => m.IsActive && !m.IsDeleted && m.EndedDate > now)
             .Select(m => new ResPublicSimpleMovieDto
             {
@@ -251,7 +252,7 @@ public class BookingService
         var startOfDay = targetDate.Date;
         var endOfDay = startOfDay.AddDays(1);
 
-        var query = _dbContext.MovieScheduleInfoEntity
+        var query = _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
             .Where(s => !s.IsDeleted 
                         && s.StartTime >= startOfDay 
                         && s.StartTime < endOfDay
@@ -335,7 +336,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<List<ResPublicCityListDto>>> GetCities()
     {
-        var cities = await _dbContext.CinemaInfoEntity
+        var cities = await _unitOfWork.Repository<CinemaInfoEntity>().Query()
             .Where(x => !x.IsDeleted)
             .GroupBy(x => x.CinemaCity)
             .Select(g => new ResPublicCityListDto
@@ -359,7 +360,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<List<ResPublicGenreDto>>> GetGenres()
     {
-        var genres = await _dbContext.Set<MovieGenreInfoEntity>()
+        var genres = await _unitOfWork.Repository<MovieGenreInfoEntity>().Query()
             .Select(x => new ResPublicGenreDto
             {
                 GenreId = x.MovieGenreId,
@@ -389,7 +390,7 @@ public class BookingService
         var now = DateTime.Now;
 
         // Lấy tất cả schedule cho phim này, ở thành phố này, trong ngày này
-        var cinemas = await _dbContext.CinemaInfoEntity
+        var cinemas = await _unitOfWork.Repository<CinemaInfoEntity>().Query()
             .Where(c => !c.IsDeleted && c.CinemaCity == city)
             .Select(c => new ResPublicCinemaShowtimeDto
             {
@@ -449,7 +450,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<ResPublicSeatMapDto>> GetSeatMap(Guid scheduleId)
     {
-        var schedule = await _dbContext.MovieScheduleInfoEntity
+        var schedule = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
             .Where(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted)
             .Select(s => new
             {
@@ -477,7 +478,7 @@ public class BookingService
         }
 
         // Lấy danh sách ghế đã đặt (Pending hoặc Booked)
-        var occupiedSeatIds = await _dbContext.Set<OrderDetailsInfo>()
+        var occupiedSeatIds = await _unitOfWork.Repository<OrderDetailsInfo>().Query()
             .Where(od => od.MovieScheduleId == scheduleId
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
@@ -517,7 +518,7 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<ResPublicPricingDto>> GetPricing(Guid scheduleId)
     {
-        var schedule = await _dbContext.MovieScheduleInfoEntity
+        var schedule = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
             .Include(s => s.MovieFormatInfoEntity)
             .Include(s => s.AuditoriumInfoEntities)
             .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);
@@ -532,7 +533,7 @@ public class BookingService
         var formatId = schedule.MovieFormatId;
 
         // Lấy tất cả các segments
-        var segmentsQuery = _dbContext.Set<UserSegmentsInfoEntity>().AsQueryable();
+        var segmentsQuery = _unitOfWork.Repository<UserSegmentsInfoEntity>().Query();
 
         bool hasHighRole = _userContextService.IsInRole("Admin") || 
                            _userContextService.IsInRole("MovieManager") || 
@@ -547,7 +548,7 @@ public class BookingService
         var segments = await segmentsQuery.ToListAsync();
 
         // Lấy surcharges của rạp này và format này
-        var surcharges = await _dbContext.Set<CinemaSurchargeInfosEntity>()
+        var surcharges = await _unitOfWork.Repository<CinemaSurchargeInfosEntity>().Query()
             .Where(s => s.CinemaId == cinemaId && s.MovieFormatId == formatId)
             .ToListAsync();
 
@@ -588,13 +589,13 @@ public class BookingService
     public async Task<BaseResponse<ResCreateBookingDto>> CreateBooking(
         ReqCreateBookingDto request, string ipAddress)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var userId = _userContextService.TryGetUserId();
 
             // Validate schedule
-            var schedule = await _dbContext.MovieScheduleInfoEntity
+            var schedule = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
                 .Include(s => s.MovieFormatInfoEntity)
                 .Include(s => s.MovieInfoEntity)
                 .Include(s => s.AuditoriumInfoEntities)
@@ -615,7 +616,7 @@ public class BookingService
             var segmentIds = request.SeatSelections.Select(s => s.UserSegmentId).Distinct().ToList();
 
             // Validate seats belong to the auditorium
-            var validSeats = await _dbContext.SeatsInfoEntity
+            var validSeats = await _unitOfWork.Repository<SeatsInfoEntity>().Query()
                 .Where(s => s.AuditoriumId == schedule.AuditoriumId
                             && seatIds.Contains(s.SeatId))
                 .ToListAsync();
@@ -626,7 +627,7 @@ public class BookingService
             }
 
             // Validate all segment IDs exist
-            var validSegments = await _dbContext.Set<UserSegmentsInfoEntity>()
+            var validSegments = await _unitOfWork.Repository<UserSegmentsInfoEntity>().Query()
                 .Where(seg => segmentIds.Contains(seg.UserSegmentId))
                 .ToListAsync();
             
@@ -636,7 +637,7 @@ public class BookingService
             }
 
             // Check seats aren't already booked
-            var alreadyBooked = await _dbContext.Set<OrderDetailsInfo>()
+            var alreadyBooked = await _unitOfWork.Repository<OrderDetailsInfo>().Query()
                 .Where(od => od.MovieScheduleId == request.ScheduleId
                              && seatIds.Contains(od.SeatId)
                              && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
@@ -655,7 +656,7 @@ public class BookingService
             var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
             var formatId = schedule.MovieFormatId;
 
-            var surcharges = await _dbContext.Set<CinemaSurchargeInfosEntity>()
+            var surcharges = await _unitOfWork.Repository<CinemaSurchargeInfosEntity>().Query()
                 .Where(s => s.CinemaId == cinemaId && s.MovieFormatId == formatId)
                 .ToListAsync();
 
@@ -684,27 +685,33 @@ public class BookingService
                 });
             }
 
-            // Calculate role-based discount
+            // Calculate segment-based discount
             decimal roleDiscountPercent = 0;
             if (userId.HasValue)
             {
-                var userRoles = await _dbContext.UserRoleInfoEntity
-                    .Include(ur => ur.RoleListInfoEntity)
-                    .Where(ur => ur.UserId == userId.Value)
-                    .Select(ur => ur.RoleListInfoEntity.RoleName)
-                    .ToListAsync();
+                var customerProfile = await _unitOfWork.Repository<CustomerProfileEntity>().Query()
+                    .Include(cp => cp.UserSegmentsInfoEntity)
+                    .FirstOrDefaultAsync(cp => cp.UserId == userId.Value);
 
-                if (userRoles.Contains("VIP"))
+                if (customerProfile != null && customerProfile.UserSegmentsInfoEntity != null)
                 {
-                    roleDiscountPercent = 15;
-                }
-                else if (userRoles.Contains("Student"))
-                {
-                    roleDiscountPercent = 10;
+                    var segmentName = customerProfile.UserSegmentsInfoEntity.UserSegmentName;
+                    if (segmentName == "VIP Member")
+                    {
+                        roleDiscountPercent = 15;
+                    }
+                    else if (segmentName == "Student")
+                    {
+                        roleDiscountPercent = 10;
+                    }
+                    else
+                    {
+                        roleDiscountPercent = 5; // Standard Member or others get 5%
+                    }
                 }
                 else
                 {
-                    roleDiscountPercent = 5; // All other registered roles (Customer, Admin, Managers) get at least 5%
+                    roleDiscountPercent = 5; // Default discount for registered users
                 }
             }
 
@@ -717,7 +724,7 @@ public class BookingService
                     throw new BadRequestException("Guests cannot apply vouchers.", "BK07");
                 }
 
-                var userVoucher = await _dbContext.Set<UserVoucherEntity>()
+                var userVoucher = await _unitOfWork.Repository<UserVoucherEntity>().Query()
                     .Include(uv => uv.VoucherInfoEntity)
                     .FirstOrDefaultAsync(uv => uv.VoucherId == request.VoucherId.Value &&
                                                uv.UserId == userId.Value &&
@@ -750,7 +757,7 @@ public class BookingService
 
             if (userId.HasValue)
             {
-                var user = await _dbContext.UserInfoEntity
+                var user = await _unitOfWork.Repository<UserInfoEntity>().Query()
                     .FirstOrDefaultAsync(u => u.UserId == userId);
                 
                 finalCustomerName = user?.UserName;
@@ -781,9 +788,9 @@ public class BookingService
                 VoucherId = request.VoucherId
             };
 
-            await _dbContext.Set<OrderInfoEntity>().AddAsync(order);
-            await _dbContext.Set<OrderDetailsInfo>().AddRangeAsync(orderDetails);
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.Repository<OrderInfoEntity>().AddAsync(order);
+            await _unitOfWork.Repository<OrderDetailsInfo>().AddRangeAsync(orderDetails);
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             var paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);
@@ -816,7 +823,7 @@ public class BookingService
     // ==========================================
     public async Task<ResTicketPdfDto> GetTicketData(Guid orderId)
     {
-        var order = await _dbContext.Set<OrderInfoEntity>()
+        var order = await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .Where(o => o.OrderId == orderId && o.OrderStatus == OrderStatusEnum.Booked)
             .Select(o => new ResTicketPdfDto
             {
@@ -936,7 +943,7 @@ public class BookingService
             return (false, Guid.Empty);
         }
 
-        var order = await _dbContext.Set<OrderInfoEntity>()
+        var order = await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
         if (order == null)
@@ -962,23 +969,25 @@ public class BookingService
             // Credit points and mark voucher as used
             if (order.UserId.HasValue)
             {
-                var userRoles = await _dbContext.UserRoleInfoEntity
-                    .Include(ur => ur.RoleListInfoEntity)
-                    .Where(ur => ur.UserId == order.UserId.Value)
-                    .Select(ur => ur.RoleListInfoEntity.RoleName)
-                    .ToListAsync();
+                var customerProfile = await _unitOfWork.Repository<CustomerProfileEntity>().Query()
+                    .Include(cp => cp.UserSegmentsInfoEntity)
+                    .FirstOrDefaultAsync(cp => cp.UserId == order.UserId.Value);
 
                 decimal earningMultiplier = 1m;
-                if (userRoles.Contains("VIP"))
+                if (customerProfile != null && customerProfile.UserSegmentsInfoEntity != null)
                 {
-                    earningMultiplier = 2m;
-                }
-                else if (userRoles.Contains("Student"))
-                {
-                    earningMultiplier = 1.5m;
+                    var segmentName = customerProfile.UserSegmentsInfoEntity.UserSegmentName;
+                    if (segmentName == "VIP Member")
+                    {
+                        earningMultiplier = 2m;
+                    }
+                    else if (segmentName == "Student")
+                    {
+                        earningMultiplier = 1.5m;
+                    }
                 }
 
-                var ticketCount = await _dbContext.Set<OrderDetailsInfo>()
+                var ticketCount = await _unitOfWork.Repository<OrderDetailsInfo>().Query()
                     .CountAsync(od => od.OrderId == order.OrderId);
 
                 var pointsFromPrice = (long)Math.Floor(order.TotalPrice / 10000m);
@@ -987,7 +996,7 @@ public class BookingService
 
                 if (pointsEarned > 0)
                 {
-                    var user = await _dbContext.UserInfoEntity
+                    var user = await _unitOfWork.Repository<UserInfoEntity>().Query()
                         .FirstOrDefaultAsync(u => u.UserId == order.UserId.Value);
                     if (user != null)
                     {
@@ -997,7 +1006,7 @@ public class BookingService
 
                 if (order.VoucherId.HasValue)
                 {
-                    var userVoucher = await _dbContext.Set<UserVoucherEntity>()
+                    var userVoucher = await _unitOfWork.Repository<UserVoucherEntity>().Query()
                         .FirstOrDefaultAsync(uv => uv.VoucherId == order.VoucherId.Value &&
                                                    uv.UserId == order.UserId.Value &&
                                                    !uv.IsUsed);
@@ -1014,7 +1023,7 @@ public class BookingService
             order.OrderStatus = OrderStatusEnum.Canceled;
         }
 
-        await _dbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return (isSuccess, orderId);
     }
@@ -1025,7 +1034,7 @@ public class BookingService
     public async Task<BaseResponse<ResUserAccountInfoDto>> GetUserAccountInfo()
     {
         var userId = _userContextService.GetUserId();
-        var user = await _dbContext.UserInfoEntity
+        var user = await _unitOfWork.Repository<UserInfoEntity>().Query()
             .FirstOrDefaultAsync(u => u.UserId == userId);
 
         if (user == null)
@@ -1064,7 +1073,7 @@ public class BookingService
         var userId = _userContextService.GetUserId();
         var now = DateTime.Now;
 
-        var orders = await _dbContext.Set<OrderInfoEntity>()
+        var orders = await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.OrderDate)
             .Select(o => new ResUserBookingHistoryDto

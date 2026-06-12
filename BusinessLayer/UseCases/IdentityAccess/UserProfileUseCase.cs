@@ -4,24 +4,25 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Interfaces.IIdentityAccess;
-using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using BusinessLayer.Services.IdentityAccess;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.UseCases.IdentityAccess;
 
 public class UserProfileUseCase : IProfileBehavior
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
     private readonly ILogger<UserProfileUseCase> _logger;
 
-    public UserProfileUseCase(CinemaDbContext dbContext, IUserContextService userContextService,
+    public UserProfileUseCase(IUnitOfWork unitOfWork, IUserContextService userContextService,
         ILogger<UserProfileUseCase> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
         _logger = logger;
     }
@@ -31,19 +32,19 @@ public class UserProfileUseCase : IProfileBehavior
         try
         {
             var userId = _userContextService.GetUserId();
+            var userRepository = _unitOfWork.Repository<UserInfoEntity>();
+            var userRoleRepository = _unitOfWork.Repository<UserRoleInfoEntity>();
+            var cinemaRepository = _unitOfWork.Repository<CinemaInfoEntity>();
             
             // Get user basic info
-            var result = await _dbContext.UserInfoEntity
+            var result = await userRepository.Query()
                 .AsNoTracking()
                 .Where(x => x.UserId == userId)
                 .Select(x => new ResRegularLoginDto
                 {
                     UserId = x.UserId,
-                    Username = _dbContext.UserProfileEntity
-                                .Where(p => p.UserId == x.UserId)
-                                .Select(p => p.UserName)
-                                .FirstOrDefault(),
-                    Roles = _dbContext.UserRoleInfoEntity
+                    Username = x.UserName,
+                    Roles = userRoleRepository.Query()
                                 .Where(r => r.UserId == x.UserId)
                                 .Select(r => r.RoleListInfoEntity.RoleName)
                                 .ToArray(),
@@ -63,7 +64,7 @@ public class UserProfileUseCase : IProfileBehavior
             // Look up managed cinemas if the user is a manager
             if (result.Roles.Contains("TheaterManager") || result.Roles.Contains("FacilitiesManager"))
             {
-                var managedCinemas = await _dbContext.CinemaInfoEntity
+                var managedCinemas = await cinemaRepository.Query()
                     .Where(c => !c.IsDeleted && (c.TheaterManagerId == userId || c.FacilitiesManagerId == userId))
                     .Select(c => new ManagedCinemaInfoDto
                     {
@@ -100,7 +101,7 @@ public class UserProfileUseCase : IProfileBehavior
             // Get User Id
             var getUserId = _userContextService.GetUserId();
 
-            var findUser = await _dbContext.UserInfoEntity.FirstOrDefaultAsync(x => x.UserId.Equals(getUserId));
+            var findUser = await _unitOfWork.Repository<UserInfoEntity>().Query().FirstOrDefaultAsync(x => x.UserId.Equals(getUserId));
 
             if (findUser == null)
             {
@@ -118,7 +119,7 @@ public class UserProfileUseCase : IProfileBehavior
                 {
                     var newPassword = BCrypt_helper.Hash(request.NewPassword!);
                     findUser.Password = newPassword;
-                    await _dbContext.SaveChangesAsync();
+                    await _unitOfWork.SaveChangesAsync();
                     return new BaseResponse<string>()
                     {
                         IsSuccess = true,
@@ -150,7 +151,7 @@ public class UserProfileUseCase : IProfileBehavior
         try
         {
             var userId = _userContextService.GetUserId();
-            var profile = await _dbContext.UserProfileEntity.FirstOrDefaultAsync(x => x.UserId == userId);
+            var profile = await _unitOfWork.Repository<UserInfoEntity>().Query().FirstOrDefaultAsync(x => x.UserId == userId);
 
             if (profile == null)
             {
@@ -185,7 +186,7 @@ public class UserProfileUseCase : IProfileBehavior
                 profile.IdentityCode = request.IdentityCode;
             }
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

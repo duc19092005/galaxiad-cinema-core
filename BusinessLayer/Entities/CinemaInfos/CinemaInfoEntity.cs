@@ -1,0 +1,44 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Entities.MovieInfos;
+
+namespace BusinessLayer.Entities.CinemaInfos;
+// ReSharper disable All
+
+public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
+{
+    [Key]
+    public Guid CinemaId { get; set; } 
+    
+    [Column(TypeName = "nvarchar(100)")]
+    public string CinemaCity { get; set; } = null!;
+    
+    [Column(TypeName = "nvarchar(100)")]
+    public string CinemaLocation { get; set; } = null!;
+    
+    [Column(TypeName = "nvarchar(1000)")]
+    public string CinemaName { get; set; } = null!;
+
+    [Column(TypeName = "char(10)")]
+    public string CinemaHotLineNumber { get; set; } = null!;
+
+    [Column(TypeName = "nvarchar(max)")]
+    public string CinemaDescription { get; set; } = null!;
+    
+    public Guid? TheaterManagerId { get; set; }
+    public UserInfoEntity? TheaterManager { get; set; }
+
+    public Guid? FacilitiesManagerId { get; set; }
+    public UserInfoEntity? FacilitiesManager { get; set; }
+
+
+    public List<AuditoriumInfoEntities> AuditoriumInfoEntities { get; set; } = [];
+
+    public List<CinemaDiscountInfoEntity> CinemaDiscountInfoEntity { get; set; } = [];
+
+    public List<MovieCinemaEntity> MovieCinemaEntities { get; set; } = [];
+
+    public List<CinemaSurchargeInfosEntity> CinemaSurchargeInfosEntity { get; set; } = [];
+}
+

@@ -1,25 +1,25 @@
 
 using Shared.Exceptions;
 using Shared.Localization;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.AspNetCore.Http;
 
 namespace BusinessLayer.Validators;
 
 public class CinemaValidate
 {
-    public static bool ValidateCinemaName(Guid? cinemaId ,string cinemaName , CinemaDbContext dbContext)
+    public static bool ValidateCinemaName(Guid? cinemaId, string cinemaName, IQueryable<CinemaInfoEntity> cinemas)
     {
         try
         {
             if (cinemaId == null)
             {
-                return dbContext.CinemaInfoEntity.Any(x => 
+                return cinemas.Any(x => 
                     !x.IsDeleted && x.CinemaName.ToLower().Equals(cinemaName.ToLower()));
             }
             else
             {
-                return dbContext.CinemaInfoEntity.Any(x => 
+                return cinemas.Any(x => 
                     !x.IsDeleted && x.CinemaId != cinemaId && x.CinemaName.ToLower().Equals(cinemaName.ToLower()));
             }
         }
@@ -33,20 +33,20 @@ public class CinemaValidate
         }
     }
 
-    public static bool ValidateCinemaDescription(Guid ? CinemaId,string CinemaDescriptions, CinemaDbContext dbContext)
+    public static bool ValidateCinemaDescription(Guid? cinemaId, string cinemaDescriptions, IQueryable<CinemaInfoEntity> cinemas)
     {
         try
         {
-            if (CinemaId == null)
+            if (cinemaId == null)
             {
-                return dbContext.CinemaInfoEntity.Any(x => !x.IsDeleted && x.CinemaDescription.ToLower().Equals(CinemaDescriptions.ToLower()));
+                return cinemas.Any(x => !x.IsDeleted && x.CinemaDescription.ToLower().Equals(cinemaDescriptions.ToLower()));
             }
             else
             {
-                return dbContext.CinemaInfoEntity.Any
+                return cinemas.Any
                     (x => !x.IsDeleted 
-                          && x.CinemaDescription.ToLower().Equals(CinemaDescriptions.ToLower())
-                          && x.CinemaId != CinemaId);
+                          && x.CinemaDescription.ToLower().Equals(cinemaDescriptions.ToLower())
+                          && x.CinemaId != cinemaId);
             }
         }
         catch (AppException)
@@ -59,18 +59,18 @@ public class CinemaValidate
         }
     }
     
-    public static bool ValidateCinemaHotLineNumber(Guid ? CinemaId,string hotlineNumber, CinemaDbContext dbContext)
+    public static bool ValidateCinemaHotLineNumber(Guid? cinemaId, string hotlineNumber, IQueryable<CinemaInfoEntity> cinemas)
     {
         try
         {
-            if (CinemaId == null)
+            if (cinemaId == null)
             {
-                return dbContext.CinemaInfoEntity.Any(x => !x.IsDeleted && x.CinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower()));
+                return cinemas.Any(x => !x.IsDeleted && x.CinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower()));
             }
             else
             {
-                return dbContext.CinemaInfoEntity.Any(x => !x.IsDeleted && x.CinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower())
-                && x.CinemaId != CinemaId);
+                return cinemas.Any(x => !x.IsDeleted && x.CinemaHotLineNumber.ToLower().Equals(hotlineNumber.ToLower())
+                && x.CinemaId != cinemaId);
             }
         }
         catch (AppException)
@@ -83,18 +83,18 @@ public class CinemaValidate
         }
     }
     
-    public static bool ValidateCinemaLocation(Guid? CinemaId,string CinemaLocation, CinemaDbContext dbContext)
+    public static bool ValidateCinemaLocation(Guid? cinemaId, string cinemaLocation, IQueryable<CinemaInfoEntity> cinemas)
     {
         try
         {
-            if (CinemaId == null)
+            if (cinemaId == null)
             {
-                return dbContext.CinemaInfoEntity.Any(x => !x.IsDeleted && x.CinemaLocation.ToLower().Equals(CinemaLocation.ToLower()));
+                return cinemas.Any(x => !x.IsDeleted && x.CinemaLocation.ToLower().Equals(cinemaLocation.ToLower()));
             }
             else
             {
-                return dbContext.CinemaInfoEntity.Any(x => !x.IsDeleted && x.CinemaLocation.ToLower().Equals(CinemaLocation.ToLower())
-                && x.CinemaId != CinemaId);
+                return cinemas.Any(x => !x.IsDeleted && x.CinemaLocation.ToLower().Equals(cinemaLocation.ToLower())
+                && x.CinemaId != cinemaId);
 
             }
         }

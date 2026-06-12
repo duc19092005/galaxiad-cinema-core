@@ -1,34 +1,35 @@
-using System.Security.Claims;
 using Shared.Exceptions;
+using Shared.Enums;
 using Shared.Localization;
-using Shared.Validation;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.Validators;
-using DataAccess;
 using Microsoft.Extensions.Logging;
-using DataAccess.Entities.CinemaInfos;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.UseCases.FacilitiesManager.Cinemas;
 
 public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDto, EditCinemaReqDto, string>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<FacilitiesManagerWriteCinemaUseCase> _logger;
     private readonly IUserContextService _userContext;
     private readonly AuditLogService _auditLogService;
 
-    public FacilitiesManagerWriteCinemaUseCase(CinemaDbContext dbContext,
+    public FacilitiesManagerWriteCinemaUseCase(IUnitOfWork unitOfWork,
         ILogger<FacilitiesManagerWriteCinemaUseCase> logger,
         IUserContextService userContext,
         AuditLogService auditLogService)
     {
-        this._dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         this._logger = logger;
         _userContext = userContext;
         _auditLogService = auditLogService;
@@ -39,23 +40,24 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         Guid userId = GetUserId();
         
         var validationErrors = new List<string>();
+        var cinemas = _unitOfWork.Repository<CinemaInfoEntity>().Query();
 
-        if (CinemaValidate.ValidateCinemaName(null, request.CinemaName, _dbContext))
+        if (CinemaValidate.ValidateCinemaName(null, request.CinemaName, cinemas))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsName(request.CinemaName));
         }
 
-        if (CinemaValidate.ValidateCinemaDescription(null, request.CinemaDescription, _dbContext))
+        if (CinemaValidate.ValidateCinemaDescription(null, request.CinemaDescription, cinemas))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsDescription(request.CinemaDescription));
         }
 
-        if (CinemaValidate.ValidateCinemaLocation(null, request.CinemaLocation, _dbContext))
+        if (CinemaValidate.ValidateCinemaLocation(null, request.CinemaLocation, cinemas))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsLocation(request.CinemaLocation));
         }
 
-        if (CinemaValidate.ValidateCinemaHotLineNumber(null, request.CinemaHotlineNumber, _dbContext))
+        if (CinemaValidate.ValidateCinemaHotLineNumber(null, request.CinemaHotlineNumber, cinemas))
         {
             validationErrors.Add(Messages.Cinema.AlreadyExistsHotline(request.CinemaHotlineNumber));
         }
@@ -84,7 +86,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 ActiveAt = activeAt,
                 IsActive = activeAt < DateTime.UtcNow
             };
-            await _dbContext.CinemaInfoEntity.AddAsync(newCinemaInfoEntity);
+            await _unitOfWork.Repository<CinemaInfoEntity>().AddAsync(newCinemaInfoEntity);
             await _auditLogService.WriteAsync(
                 "Create",
                 "Cinema",
@@ -92,7 +94,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 request.CinemaName,
                 $"Created cinema {request.CinemaName}.",
                 cinemaId);
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>()
             {
@@ -119,7 +121,8 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         {
             var userId = GetUserId();
             var isAdmin = _userContext.IsInRole("Admin");
-            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x =>
+            var cinemas = _unitOfWork.Repository<CinemaInfoEntity>().Query();
+            var findCinema = await cinemas.FirstOrDefaultAsync(x =>
                 x.CinemaId.Equals(itemId) &&
                 (isAdmin || x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
             if (findCinema == null)
@@ -130,7 +133,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             else
             {
                 // Business Rule: Block edit if cinema has Booked bookings
-                var hasBookedBookings = await _dbContext.HasBookedBookingForCinema(itemId);
+                var hasBookedBookings = await HasBookedBookingForCinema(itemId);
                 if (hasBookedBookings)
                 {
                     throw new AppException(
@@ -143,19 +146,19 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
                 bool checkExitsDescription = request.CinemaDescription != null &&
                                              CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
-                                                 request.CinemaDescription, _dbContext);
+                                                 request.CinemaDescription, cinemas);
 
                 bool checkExitsCinemaName = request.CinemaName != null &&
                                             CinemaValidate.ValidateCinemaName(findCinema.CinemaId, request.CinemaName,
-                                                _dbContext);
+                                                cinemas);
 
                 bool checkExitsHotlineNumber = request.CinemaHotlineNumber != null &&
                                                CinemaValidate.ValidateCinemaHotLineNumber(findCinema.CinemaId,
-                                                   request.CinemaHotlineNumber, _dbContext);
+                                                   request.CinemaHotlineNumber, cinemas);
 
                 bool checkExitsLocation = request.CinemaLocation != null &&
-                                          CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
-                                              request.CinemaLocation, _dbContext);
+                                          CinemaValidate.ValidateCinemaLocation(findCinema.CinemaId,
+                                              request.CinemaLocation, cinemas);
 
                 if (checkExitsDescription)
                 {
@@ -184,25 +187,25 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
 
                 findCinema.CinemaName = (!string.IsNullOrWhiteSpace(request.CinemaName)
                                          && !CinemaValidate.ValidateCinemaName(findCinema.CinemaId, request.CinemaName,
-                                             _dbContext))
+                                             cinemas))
                     ? request.CinemaName
                     : findCinema.CinemaName;
 
                 findCinema.CinemaDescription = (!string.IsNullOrWhiteSpace(request.CinemaDescription)
                                                 && !CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
-                                                    request.CinemaDescription, _dbContext))
+                                                    request.CinemaDescription, cinemas))
                     ? request.CinemaDescription
                     : findCinema.CinemaDescription;
 
                 findCinema.CinemaHotLineNumber = (!string.IsNullOrWhiteSpace(request.CinemaHotlineNumber)
                                                   && !CinemaValidate.ValidateCinemaHotLineNumber(findCinema.CinemaId,
-                                                      request.CinemaHotlineNumber, _dbContext))
+                                                      request.CinemaHotlineNumber, cinemas))
                     ? request.CinemaHotlineNumber
                     : findCinema.CinemaHotLineNumber;
 
                 findCinema.CinemaLocation = (!string.IsNullOrWhiteSpace(request.CinemaLocation)
-                                             && !CinemaValidate.ValidateCinemaDescription(findCinema.CinemaId,
-                                                 request.CinemaLocation, _dbContext))
+                                             && !CinemaValidate.ValidateCinemaLocation(findCinema.CinemaId,
+                                                 request.CinemaLocation, cinemas))
                     ? request.CinemaLocation
                     : findCinema.CinemaLocation;
 
@@ -226,7 +229,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                     $"Updated cinema {findCinema.CinemaName}.",
                     findCinema.CinemaId);
 
-                await _dbContext.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
 
                 return new BaseResponse<string>()
                 {
@@ -253,7 +256,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         {
             var userId = GetUserId();
             var isAdmin = _userContext.IsInRole("Admin");
-            var findCinema = await _dbContext.CinemaInfoEntity.FirstOrDefaultAsync(x =>
+            var findCinema = await _unitOfWork.Repository<CinemaInfoEntity>().Query().FirstOrDefaultAsync(x =>
                 x.CinemaId.Equals(itemId) &&
                 (isAdmin || x.FacilitiesManagerId == userId || x.TheaterManagerId == userId));
 
@@ -269,7 +272,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
             findCinema.DeletedByUserId = userId;
 
             // Soft delete all related auditoriums
-            var auditoriums = await _dbContext.AuditoriumInfoEntities
+            var auditoriums = await _unitOfWork.Repository<AuditoriumInfoEntities>().Query()
                 .Where(a => a.CinemaId == itemId && !a.IsDeleted)
                 .ToListAsync();
 
@@ -280,14 +283,14 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 aud.DeletedByUserId = userId;
 
                 // Soft delete all related schedules
-                var schedules = await _dbContext.MovieScheduleInfoEntity
+                var schedules = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
                     .Where(s => s.AuditoriumId == aud.AuditoriumId && !s.IsDeleted)
                     .ToListAsync();
 
                 foreach (var schedule in schedules)
                 {
                     // Cancel pending orders for this schedule
-                    await _dbContext.CancelPendingOrdersForSchedule(schedule.MovieScheduleInfoId);
+                    await CancelPendingOrdersForSchedule(schedule.MovieScheduleInfoId);
 
                     schedule.IsDeleted = true;
                     schedule.DeletedAt = DateTime.UtcNow;
@@ -303,7 +306,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 $"Soft deleted cinema {findCinema.CinemaName} with {auditoriums.Count} auditoriums.",
                 itemId);
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>()
             {
@@ -326,6 +329,28 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
     private Guid GetUserId()
     {
         return _userContext.GetUserId();
+    }
+
+    private async Task<bool> HasBookedBookingForCinema(Guid cinemaId)
+    {
+        return await _unitOfWork.Repository<OrderDetailsInfo>().Query()
+            .AnyAsync(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities != null
+                            && od.MovieScheduleInfoEntity.AuditoriumInfoEntities.CinemaId == cinemaId
+                            && od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked
+                            && !od.MovieScheduleInfoEntity.IsDeleted);
+    }
+
+    private async Task CancelPendingOrdersForSchedule(Guid scheduleId)
+    {
+        var pendingOrders = await _unitOfWork.Repository<OrderInfoEntity>().Query()
+            .Where(o => o.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId)
+                        && o.OrderStatus == OrderStatusEnum.Pending)
+            .ToListAsync();
+
+        foreach (var order in pendingOrders)
+        {
+            order.OrderStatus = OrderStatusEnum.Canceled;
+        }
     }
 
     private static DateTime NormalizeIncomingVietnamTime(DateTime value)

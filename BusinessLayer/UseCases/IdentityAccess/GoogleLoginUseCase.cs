@@ -10,10 +10,9 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
-using DataAccess.Constants;
-using DataAccess.Entities.UserInfos;
-using Microsoft.AspNetCore.Http;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.UserInfos;
+using Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -26,7 +25,7 @@ namespace BusinessLayer.UseCases.IdentityAccess;
 
 public class GoogleLoginUseCase
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleLoginUseCase> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
@@ -37,12 +36,12 @@ public class GoogleLoginUseCase
     private const string GoogleUserInfoEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo";
 
     public GoogleLoginUseCase(
-        CinemaDbContext dbContext,
+        IUnitOfWork unitOfWork,
         IConfiguration configuration,
         ILogger<GoogleLoginUseCase> logger,
         IHttpClientFactory httpClientFactory)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _configuration = configuration;
         _logger = logger;
         _httpClientFactory = httpClientFactory;
@@ -91,9 +90,12 @@ public class GoogleLoginUseCase
 
     public async Task<BaseResponse<ResGoogleLoginDto>> HandleGoogleCallback(string code, string state)
     {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
+            var userRepository = _unitOfWork.Repository<UserInfoEntity>();
+            var userRoleRepository = _unitOfWork.Repository<UserRoleInfoEntity>();
+
             // 1. Parse state để lấy platform
             string platform = "web";
             try
@@ -124,7 +126,7 @@ public class GoogleLoginUseCase
             }
 
             // 4. Check user đã tồn tại chưa
-            var existingUser = await _dbContext.UserInfoEntity
+            var existingUser = await userRepository.Query()
                 .Include(u => u.UserRoleInfoEntity)
                     .ThenInclude(r => r.RoleListInfoEntity)
                 .FirstOrDefaultAsync(u => u.UserEmail == googleUserInfo.Email);
@@ -171,7 +173,7 @@ public class GoogleLoginUseCase
                     }
                 }
 
-                await _dbContext.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 isNewAccount = false;
             }
             else
@@ -199,7 +201,7 @@ public class GoogleLoginUseCase
                 var cryptoIv = _configuration["AES_256:IV"] ?? "";
                 var encryptedIdentity = AES256Helper.Encrypt(rawIdentity, cryptoKey, cryptoIv);
 
-                await _dbContext.UserInfoEntity.AddAsync(new UserInfoEntity
+                await userRepository.AddAsync(new UserInfoEntity
                 {
                     UserId = userId,
                     UserEmail = googleUserInfo.Email,
@@ -215,13 +217,21 @@ public class GoogleLoginUseCase
                 });
 
                 // Gán role Customer
-                await _dbContext.UserRoleInfoEntity.AddAsync(new UserRoleInfoEntity
+                await userRoleRepository.AddAsync(new UserRoleInfoEntity
                 {
                     UserId = userId,
                     RoleId = userRoles.Customer
                 });
 
-                await _dbContext.SaveChangesAsync();
+                // Add Customer Profile
+                await _unitOfWork.Repository<CustomerProfileEntity>().AddAsync(new CustomerProfileEntity
+                {
+                    UserId = userId,
+                    TotalPoint = 0,
+                    UserSegmentId = user_segments_constant.MemberStandard
+                });
+
+                await _unitOfWork.SaveChangesAsync();
                 roles = new[] { "Customer" };
             }
 

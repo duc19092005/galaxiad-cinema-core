@@ -6,24 +6,25 @@ using BusinessLayer.Dtos.FacilitiesManager.Auditoriums.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Interfaces.ICinema;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shared.Interfaces.Persistence;
 
 
 namespace BusinessLayer.UseCases.FacilitiesManager.Auditoriums;
 
 public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAuditoriumDto> , ICinemaBehavior<GetResAuditoriumDtoCinema>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<FacilitiesManagerReadAuditoriumUseCase> _logger;
     private readonly IUserContextService _userContextService;
 
-    public FacilitiesManagerReadAuditoriumUseCase(CinemaDbContext dbContext, ILogger<FacilitiesManagerReadAuditoriumUseCase> logger,
+    public FacilitiesManagerReadAuditoriumUseCase(IUnitOfWork unitOfWork, ILogger<FacilitiesManagerReadAuditoriumUseCase> logger,
         IUserContextService userContextService)
     {
         this._logger = logger;
-        this._dbContext = dbContext;
+        this._unitOfWork = unitOfWork;
         this._userContextService = userContextService;
     }
     
@@ -34,7 +35,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
         {
             var userId = _userContextService.GetUserId();
             
-            var getData = await _dbContext.AuditoriumInfoEntities
+            var getData = await _unitOfWork.Repository<AuditoriumInfoEntities>().Query()
                 .AsNoTracking()
                 .Where(x => x.CreatedByUserId.Equals((userId)))
                 .Select(x => new GetResAuditoriumDto()
@@ -83,7 +84,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
 
             var userId = GetUserId();
 
-            var result = await _dbContext.AuditoriumInfoEntities
+            var result = await _unitOfWork.Repository<AuditoriumInfoEntities>().Query()
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == id && x.CreatedByUserId == userId)
                 .Select(x => new GetResAuditoriumDto()
@@ -137,7 +138,7 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
         {
             var userId = GetUserId();
             
-            var getData = await _dbContext.AuditoriumInfoEntities
+            var getData = await _unitOfWork.Repository<AuditoriumInfoEntities>().Query()
                 .AsNoTracking()
                 .Where(x => x.CreatedByUserId.Equals(userId)
                             && x.CinemaId.Equals(cinemaId)).Select(x => new GetResAuditoriumDtoCinema()

@@ -1,8 +1,9 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
-using DataAccess;
+using BusinessLayer.Entities.ScheduleJob;
 using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
+using Shared.Interfaces.Persistence;
 using Shared.MappingEnums;
 
 namespace BusinessLayer.UseCases.Admin;
@@ -13,16 +14,16 @@ public interface IAdminReadScheduleBehavior
 }
 public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
 {
-    private readonly CinemaDbContext _cinemaDbContext;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public AdminReadScheduleUseCase(CinemaDbContext cinemaDbContext)
+    public AdminReadScheduleUseCase(IUnitOfWork unitOfWork)
     {
-        _cinemaDbContext = cinemaDbContext;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<BaseResponse<List<ResponseScheduleJobGroupDto>>> ListScheduleJob()
     {
-        var rawData = await _cinemaDbContext.BackGroundJobLoggerEntity
+        var rawData = await _unitOfWork.Repository<ScheduleJobLogger>().Query()
             .OrderByDescending(x => x.StartedTime)
             .ToListAsync();
 
@@ -59,7 +60,7 @@ public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
         };
     }
 
-    private static ResponseScheduleJobDto MapToDto(DataAccess.Entities.ScheduleJob.ScheduleJobLogger x)
+    private static ResponseScheduleJobDto MapToDto(BusinessLayer.Entities.ScheduleJob.ScheduleJobLogger x)
     {
         var (category, status, type) = SchedulesJobMapping.MappingScheduleEnums(
             x.JobCategory,

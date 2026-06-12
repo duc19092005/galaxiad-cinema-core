@@ -4,21 +4,23 @@ using BusinessLayer.Interfaces.IBehaviors;
 using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
-using DataAccess.Entities.MovieInfos;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shared.Enums;
 using Shared.Exceptions;
+using Shared.Interfaces.Persistence;
 using Shared.Localization;
-using Hangfire;
+using BusinessLayer.Interfaces.IThirdPersonServices;
 
 namespace BusinessLayer.UseCases.TheaterManager.MovieSchedules;
 
 public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieSchedulesRequest,
     TheaterManagerEditMovieSchedulesRequest, string>
 {
-    private readonly CinemaDbContext _cinemaDbContext;
+    private readonly IUnitOfWork _unitOfWork;
     
     private readonly ILogger<WriteMovieSchedulesUseCase> _logger;
     
@@ -28,25 +30,28 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
     private readonly TheaterManagerValidate _theaterManagerValidate;
     private readonly AuditLogService _auditLogService;
+    private readonly IBackgroundJobScheduler _jobScheduler;
 
-    public WriteMovieSchedulesUseCase(CinemaDbContext cinemaDbContext , ILogger<WriteMovieSchedulesUseCase> logger ,
+    public WriteMovieSchedulesUseCase(IUnitOfWork unitOfWork , ILogger<WriteMovieSchedulesUseCase> logger ,
         IUserContextService userContextService , IScheduleJobsService scheduleJobsService ,
         TheaterManagerValidate theaterManagerValidate,
-        AuditLogService auditLogService)
+        AuditLogService auditLogService,
+        IBackgroundJobScheduler jobScheduler)
     {
-        _cinemaDbContext = cinemaDbContext;
+        _unitOfWork = unitOfWork;
         _logger = logger;
         _userContextService = userContextService;
         _scheduleJobsService = scheduleJobsService;
         _theaterManagerValidate = theaterManagerValidate;
         _auditLogService = auditLogService;
+        _jobScheduler = jobScheduler;
     }
     public async Task<BaseResponse<string>> AddItem(TheaterManagerAddMovieSchedulesRequest request)
     {
         var getCurrentUserId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
 
-        var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
+        var isAuditoriumExist = await Query<AuditoriumInfoEntities>()
             .AsNoTracking()
             .AnyAsync(x => x.AuditoriumId == request.AuditoriumId && 
                            (isAdmin || x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId));
@@ -56,35 +61,35 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
 
-        var cinemaId = await _cinemaDbContext.AuditoriumInfoEntities
+        var cinemaId = await Query<AuditoriumInfoEntities>()
             .Where(x => x.AuditoriumId == request.AuditoriumId)
             .Select(x => x.CinemaId)
             .FirstOrDefaultAsync();
 
-        var transactions = await _cinemaDbContext.Database.BeginTransactionAsync();
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
 
         try
         {
             NormalizeSlotTimes(request.Slots);
             var reqMovieIds = request.Slots.Select(x => x.MovieId).Distinct().ToList();
             
-            var validMovieDictionary = await _cinemaDbContext.MovieInfoEntity
+            var validMovieDictionary = await Query<MovieInfoEntity>()
                 .AsNoTracking()
                 .Where(m => reqMovieIds.Contains(m.MovieId) && m.IsActive && !m.IsDeleted)
                 .ToDictionaryAsync(x => x.MovieId);
 
-            var validMovieFormats = await _cinemaDbContext.MovieFormatMovieInfoEntity
+            var validMovieFormats = await Query<movieFormatMovieInfoEntity>()
                 .AsNoTracking()
                 .Where(y => reqMovieIds.Contains(y.MovieId))
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(x => x.Key, y => y.Select(f => f.FormatId).ToList());
 
-            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+            var allFormats = await Query<MovieFormatInfoEntity>()
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
 
             // Kiểm tra phim đã được ủy quyền tại rạp chưa
-            var authorizedMovies = await _cinemaDbContext.MovieCinemaEntities
+            var authorizedMovies = await Query<MovieCinemaEntity>()
                 .AsNoTracking()
                 .Where(x => x.CinemaId == cinemaId && reqMovieIds.Contains(x.MovieId))
                 .Select(x => x.MovieId)
@@ -93,7 +98,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             var proposedSlots = new List<MovieScheduleInfoEntity>();
 
             // Fetch existing schedules to skip duplicates
-            var existingMatchSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
+            var existingMatchSchedules = await Query<MovieScheduleInfoEntity>()
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == request.AuditoriumId && !x.IsDeleted)
                 .ToListAsync();
@@ -173,7 +178,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             var minStartTime = sortedProposedSlots.First().ActiveAt;
             var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
-            var existingSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
+            var existingSchedules = await Query<MovieScheduleInfoEntity>()
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == request.AuditoriumId 
                          && x.EndedTime.AddMinutes(15) > minStartTime 
@@ -192,7 +197,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 }
             }
 
-            await _cinemaDbContext.MovieScheduleInfoEntity.AddRangeAsync(proposedSlots);
+            await Repository<MovieScheduleInfoEntity>().AddRangeAsync(proposedSlots);
             await _auditLogService.WriteAsync(
                 "Create",
                 "MovieSchedule",
@@ -200,12 +205,12 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 $"Auditorium {request.AuditoriumId}",
                 $"Created {proposedSlots.Count} movie schedule(s).",
                 cinemaId);
-            await _cinemaDbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             foreach (var slot in proposedSlots)
             {
-                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime));
+                _jobScheduler.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.MovieScheduleInfoId, slot.ActiveAt, slot.EndedTime));
             }
 
             return new BaseResponse<string>()
@@ -242,7 +247,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         var getCurrentUserId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
 
-        var isAuditoriumExist = await _cinemaDbContext.AuditoriumInfoEntities
+        var isAuditoriumExist = await Query<AuditoriumInfoEntities>()
             .AsNoTracking()
             .AnyAsync(x => x.AuditoriumId == auditoriumId && 
                            (isAdmin || x.CinemaInfoEntity.TheaterManagerId == getCurrentUserId || 
@@ -253,7 +258,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
 
-        var cinemaId = await _cinemaDbContext.AuditoriumInfoEntities
+        var cinemaId = await Query<AuditoriumInfoEntities>()
             .Where(x => x.AuditoriumId == auditoriumId)
             .Select(x => x.CinemaId)
             .FirstOrDefaultAsync();
@@ -263,18 +268,18 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             throw new BadRequestException(Messages.Schedule.ScheduleListCannotBeEmpty, "E01");
         }
 
-        var transactions = await _cinemaDbContext.Database.BeginTransactionAsync();
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
 
         try
         {
             NormalizeSlotTimes(request.Slots);
             var updatingScheduleIds = request.Slots.Select(s => s.ScheduleId).ToList();
-            var movieNames = await _cinemaDbContext.MovieScheduleInfoEntity
+            var movieNames = await Query<MovieScheduleInfoEntity>()
                 .Where(x => updatingScheduleIds.Contains(x.MovieScheduleInfoId)) 
                 .Select(x => x.MovieInfoEntity.MovieName)
                 .Distinct()
                 .ToListAsync();
-            var schedulesToUpdate = await _cinemaDbContext.MovieScheduleInfoEntity
+            var schedulesToUpdate = await Query<MovieScheduleInfoEntity>()
                 .Where(x => x.AuditoriumId == auditoriumId && updatingScheduleIds.Contains(x.MovieScheduleInfoId) && !x.IsDeleted)
                 .ToListAsync();
 
@@ -283,9 +288,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 throw new BadRequestException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated, "E01");
             }
 
-            var hasSuccessfulBookingOnUpdatingSchedules = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+            var hasSuccessfulBookingOnUpdatingSchedules = await Query<OrderDetailsInfo>()
                 .AnyAsync(od => updatingScheduleIds.Contains(od.MovieScheduleId) &&
-                                od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked);
+                                od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked);
 
             if (hasSuccessfulBookingOnUpdatingSchedules)
             {
@@ -294,23 +299,23 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
             var movieIdsToCheck = request.Slots.Select(s => s.MovieId).Distinct().ToList();
 
-            var moviesInfos = await _cinemaDbContext.MovieInfoEntity
+            var moviesInfos = await Query<MovieInfoEntity>()
                 .AsNoTracking()
                 .Where(x => movieIdsToCheck.Contains(x.MovieId) && x.IsActive && !x.IsDeleted)
                 .ToDictionaryAsync(m => m.MovieId);
 
-            var findMoviesSupportedFormat = await _cinemaDbContext.MovieFormatMovieInfoEntity
+            var findMoviesSupportedFormat = await Query<movieFormatMovieInfoEntity>()
                 .AsNoTracking()
                 .Where(x => movieIdsToCheck.Contains(x.MovieId))
                 .GroupBy(x => x.MovieId)
                 .ToDictionaryAsync(m => m.Key, f => f.Select(x => x.FormatId).ToList());
 
-            var allFormats = await _cinemaDbContext.Set<MovieFormatInfoEntity>()
+            var allFormats = await Query<MovieFormatInfoEntity>()
                 .AsNoTracking()
                 .ToDictionaryAsync(x => x.MovieFormatId, x => x.MovieFormatName);
 
             // Kiểm tra phim đã được ủy quyền tại rạp chưa
-            var authorizedMovies = await _cinemaDbContext.MovieCinemaEntities
+            var authorizedMovies = await Query<MovieCinemaEntity>()
                 .AsNoTracking()
                 .Where(x => x.CinemaId == cinemaId && movieIdsToCheck.Contains(x.MovieId))
                 .Select(x => x.MovieId)
@@ -379,7 +384,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             var minStartTime = sortedProposedSlots.First().ActiveAt;
             var maxEndTime = sortedProposedSlots.Last().EndedTime.AddMinutes(15);
 
-            var existingDbSchedules = await _cinemaDbContext.MovieScheduleInfoEntity
+            var existingDbSchedules = await Query<MovieScheduleInfoEntity>()
                 .AsNoTracking()
                 .Where(x => x.AuditoriumId == auditoriumId 
                          && x.EndedTime.AddMinutes(15) > minStartTime 
@@ -421,13 +426,13 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                 $"Updated {request.Slots.Count} movie schedule(s).",
                 cinemaId);
 
-            await _cinemaDbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             foreach (var slot in request.Slots)
             {
                 var movie = moviesInfos[slot.MovieId];
-                BackgroundJob.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration)));
+                _jobScheduler.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Schedules, slot.ScheduleId, slot.StartedDate, slot.StartedDate.AddMinutes(movie.MovieDuration)));
             }
 
             return new BaseResponse<string>()
@@ -452,7 +457,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
         var getCurrentUserId = _userContextService.GetUserId();
-        var schedule = await _cinemaDbContext.MovieScheduleInfoEntity
+        var schedule = await Query<MovieScheduleInfoEntity>()
             .Include(x => x.AuditoriumInfoEntities)
             .Include(x => x.MovieInfoEntity)
             .FirstOrDefaultAsync(x => x.MovieScheduleInfoId == itemId);
@@ -467,9 +472,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             throw new BadRequestException("Lịch chiếu này đã bị xóa.", "D01");
         }
 
-        var hasSuccessfulBooking = await _cinemaDbContext.Set<DataAccess.Entities.UserInfos.OrderDetailsInfo>()
+        var hasSuccessfulBooking = await Query<OrderDetailsInfo>()
             .AnyAsync(od => od.MovieScheduleId == itemId &&
-                            (od.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Booked));
+                            (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked));
 
         if (hasSuccessfulBooking)
         {
@@ -480,7 +485,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         schedule.DeletedByUserId = getCurrentUserId;
         schedule.DeletedAt = DateTime.UtcNow;
         
-        _cinemaDbContext.MovieScheduleInfoEntity.Update(schedule);
+        Repository<MovieScheduleInfoEntity>().Update(schedule);
         await _auditLogService.WriteAsync(
             "Delete",
             "MovieSchedule",
@@ -488,7 +493,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             schedule.MovieInfoEntity.MovieName,
             $"Deleted schedule for movie {schedule.MovieInfoEntity.MovieName}.",
             schedule.AuditoriumInfoEntities.CinemaId);
-        await _cinemaDbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string>()
         {
@@ -503,7 +508,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     /// </summary>
     public async Task<bool> SetScheduleActiveStatus(Guid scheduleId)
     {
-        var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
+        var findSchedule = await Repository<MovieScheduleInfoEntity>().FindAsync(scheduleId);
         if (findSchedule == null)
         {
             _logger.LogWarning("Schedule {ScheduleId} not found for activation", scheduleId);
@@ -513,8 +518,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         try
         {
             findSchedule.IsActive = true;
-            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
-            await _cinemaDbContext.SaveChangesAsync();
+            Repository<MovieScheduleInfoEntity>().Update(findSchedule);
+            await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Schedule {ScheduleId} activated (IsActive=true)", scheduleId);
             return true;
         }
@@ -530,7 +535,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
     /// </summary>
     public async Task<bool> SetScheduleInactiveStatus(Guid scheduleId)
     {
-        var findSchedule = await _cinemaDbContext.MovieScheduleInfoEntity.FindAsync(scheduleId);
+        var findSchedule = await Repository<MovieScheduleInfoEntity>().FindAsync(scheduleId);
         if (findSchedule == null)
         {
             _logger.LogWarning("Schedule {ScheduleId} not found for deactivation", scheduleId);
@@ -540,8 +545,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
         try
         {
             findSchedule.IsActive = false;
-            _cinemaDbContext.MovieScheduleInfoEntity.Update(findSchedule);
-            await _cinemaDbContext.SaveChangesAsync();
+            Repository<MovieScheduleInfoEntity>().Update(findSchedule);
+            await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Schedule {ScheduleId} deactivated (IsActive=false)", scheduleId);
             return true;
         }
@@ -573,6 +578,16 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             DateTimeKind.Local => value.ToUniversalTime(),
             _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
         };
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return Repository<TEntity>().Query();
+    }
+
+    private IRepository<TEntity> Repository<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>();
     }
 
 }

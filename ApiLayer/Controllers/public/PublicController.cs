@@ -1,8 +1,9 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Public.Responses;
-using DataAccess;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shared.Interfaces.Persistence;
 using Shared.Localization;
 
 namespace ApiLayer.Controllers.Public;
@@ -14,12 +15,12 @@ public class PublicController : ControllerBase
     // Đây là Controller Public ai cũng có thể Access được
     // Controller naày làmdđơn giản thoi
     private readonly ILogger<PublicController> _logger;
-    private readonly CinemaDbContext _cinemaDbContext;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public PublicController(ILogger<PublicController> logger, CinemaDbContext cinemaDbContext)
+    public PublicController(ILogger<PublicController> logger, IUnitOfWork unitOfWork)
     {
         this._logger = logger;
-        this._cinemaDbContext = cinemaDbContext;
+        this._unitOfWork = unitOfWork;
     }
 
     /// <summary>
@@ -42,7 +43,7 @@ public class PublicController : ControllerBase
     [HttpGet("MovieFormats")]
     public async Task<IActionResult> GetMovieFormats()
     {
-        var getMovieFormats = await _cinemaDbContext.MovieFormatInfoEntity.Select(x => new BaseFormatInfo()
+        var getMovieFormats = await Query<MovieFormatInfoEntity>().Select(x => new BaseFormatInfo()
         {
             FormatId = x.MovieFormatId,
             FormatName = x.MovieFormatName
@@ -59,7 +60,7 @@ public class PublicController : ControllerBase
     [HttpGet("MovieRequiredAge")]
     public async Task<IActionResult> GetMovieRequiredAge()
     {
-        var getMovieRequiredAge = await _cinemaDbContext.MovieRequiredAgeEntity.Select(x => new BaseRequiredAge()
+        var getMovieRequiredAge = await Query<movieRequiredAgeEntity>().Select(x => new BaseRequiredAge()
         {
             MovieRequiredAgeSymbolId = x.MovieRequiredAgeId,
             MovieRequiredAgeDescription = x.MovieRequiredAgeDescription,
@@ -83,7 +84,7 @@ public class PublicController : ControllerBase
     [HttpGet("Movies")]
     public async Task<IActionResult> GetMovies([FromQuery] string? city, [FromQuery] string? status)
     {
-        var query = _cinemaDbContext.MovieInfoEntity
+        var query = Query<MovieInfoEntity>()
             .Where(x => !x.IsDeleted);
 
         // Lọc theo trạng thái phim
@@ -133,7 +134,7 @@ public class PublicController : ControllerBase
     [HttpGet("MovieDetail/{MovieId}")]
     public async Task<IActionResult> GetMovieDetail(Guid MovieId)
     {
-        var GetMovieDetail = await _cinemaDbContext.MovieInfoEntity.Where(x => !x.IsDeleted && x.IsActive && x.MovieId == MovieId).Select(x => new MovieDetailInfoRes()
+        var GetMovieDetail = await Query<MovieInfoEntity>().Where(x => !x.IsDeleted && x.IsActive && x.MovieId == MovieId).Select(x => new MovieDetailInfoRes()
         {
             MovieId = x.MovieId,
             MovieName = x.MovieName,
@@ -160,7 +161,7 @@ public class PublicController : ControllerBase
     public async Task<IActionResult> GetScheduleDates(Guid MovieId, [FromQuery] string? city)
     {
         var now = GetVietnamNow();
-        var query = _cinemaDbContext.MovieScheduleInfoEntity
+        var query = Query<MovieScheduleInfoEntity>()
             .Where(x => !x.IsDeleted && x.MovieId == MovieId && x.StartTime > now);
 
         // Lọc lịch chiếu theo thành phố
@@ -200,7 +201,7 @@ public class PublicController : ControllerBase
         var now = GetVietnamNow();
 
         // Step 1: Build base query with Include to load navigation properties
-        var query = _cinemaDbContext.MovieScheduleInfoEntity
+        var query = Query<MovieScheduleInfoEntity>()
             .Include(x => x.AuditoriumInfoEntities)
                 .ThenInclude(a => a!.CinemaInfoEntity)
             .Include(x => x.MovieFormatInfoEntity)
@@ -257,7 +258,7 @@ public class PublicController : ControllerBase
     [HttpGet("AuditoriumDetails/{ScheduleId}")]
     public async Task<IActionResult> GetAuditoriumDetails(Guid ScheduleId)
     {
-        var getAuditoriumDetails = await _cinemaDbContext.MovieScheduleInfoEntity
+        var getAuditoriumDetails = await Query<MovieScheduleInfoEntity>()
             .Where(x => !x.IsDeleted && x.MovieScheduleInfoId == ScheduleId)
             .Select(x => new GetAuditoriumInfosRes()
             {
@@ -294,5 +295,10 @@ public class PublicController : ControllerBase
             IsSuccess = true,
             Message = "Thành công"
         });
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>().Query();
     }
 }

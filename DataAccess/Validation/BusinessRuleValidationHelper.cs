@@ -1,7 +1,7 @@
 using DataAccess;
-using DataAccess.Entities.UserInfos;
-using DataAccess.Entities.MovieInfos;
-using DataAccess.Entities.CinemaInfos;
+using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.CinemaInfos;
 using Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 

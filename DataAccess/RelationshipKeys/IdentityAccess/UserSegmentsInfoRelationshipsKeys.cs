@@ -1,4 +1,4 @@
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.IdentityAccess;
@@ -7,7 +7,11 @@ public static class UserSegmentsInfoRelationshipsKeys
 {
     public static void AddUserSegmentsInfoRelationships(ModelBuilder modelBuilder)
     {
-        
+        modelBuilder.Entity<CustomerProfileEntity>()
+            .HasOne(x => x.UserSegmentsInfoEntity)
+            .WithMany()
+            .HasForeignKey(x => x.UserSegmentId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 
     public static void AddUserSegmentsInfoKeys(ModelBuilder modelBuilder)

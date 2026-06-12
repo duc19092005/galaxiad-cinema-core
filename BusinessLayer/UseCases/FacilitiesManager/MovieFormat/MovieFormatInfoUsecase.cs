@@ -3,28 +3,29 @@ using Shared.Localization;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.MovieInfos.MovieFormats.Responses;
 using BusinessLayer.Interfaces.IBehaviors;
-using DataAccess;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.UseCases.FacilitiesManager.MovieFormat;
 
 public class FacilitiesManagerReadMovieFormatUseCase : IReadBehavior<ResFacilitiesManagerMovieFormatDto>
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<FacilitiesManagerReadMovieFormatUseCase> _logger;
 
-    public FacilitiesManagerReadMovieFormatUseCase(CinemaDbContext dbContext
+    public FacilitiesManagerReadMovieFormatUseCase(IUnitOfWork unitOfWork
     ,ILogger<FacilitiesManagerReadMovieFormatUseCase> logger)
     {
-        this._dbContext = dbContext;
+        this._unitOfWork = unitOfWork;
         this._logger = logger;
     }
     public async Task<BaseResponse<List<ResFacilitiesManagerMovieFormatDto>>> GetAll()
     {
         try
         {
-            var results = await _dbContext.MovieFormatInfoEntity.Select(x =>
+            var results = await _unitOfWork.Repository<MovieFormatInfoEntity>().Query().Select(x =>
                 new ResFacilitiesManagerMovieFormatDto()
                 {
                     FormatId = x.MovieFormatId,

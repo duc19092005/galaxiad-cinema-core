@@ -1,25 +1,27 @@
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
 using BusinessLayer.Services.IdentityAccess;
-using DataAccess;
-using DataAccess.Entities.AuditLogs;
+using BusinessLayer.Entities.AuditLogs;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.Admin.Audit;
 
 public class AuditLogService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
     private readonly ILogger<AuditLogService> _logger;
 
     public AuditLogService(
-        CinemaDbContext dbContext,
+        IUnitOfWork unitOfWork,
         IUserContextService userContextService,
         ILogger<AuditLogService> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
         _logger = logger;
     }
@@ -35,7 +37,7 @@ public class AuditLogService
         try
         {
             var actorUserId = _userContextService.GetUserId();
-            var actor = await _dbContext.UserInfoEntity
+            var actor = await Query<UserInfoEntity>()
                 .AsNoTracking()
                 .Where(u => u.UserId == actorUserId)
                 .Select(u => new
@@ -56,7 +58,7 @@ public class AuditLogService
                 ? "Admin"
                 : actor.Roles.FirstOrDefault(r => r != "User" && r != "Cashier") ?? actor.Roles.FirstOrDefault() ?? "";
 
-            await _dbContext.AuditLogEntity.AddAsync(new AuditLogEntity
+            await _unitOfWork.Repository<AuditLogEntity>().AddAsync(new AuditLogEntity
             {
                 AuditLogId = Guid.NewGuid(),
                 Action = action,
@@ -86,13 +88,13 @@ public class AuditLogService
         var isTheaterManager = _userContextService.IsInRole("TheaterManager");
         var isMovieManager = _userContextService.IsInRole("MovieManager");
 
-        var query = _dbContext.AuditLogEntity.AsNoTracking().AsQueryable();
+        var query = Query<AuditLogEntity>().AsNoTracking();
 
         if (!isAdmin)
         {
             if (isFacilitiesManager || isTheaterManager)
             {
-                var cinemaIds = _dbContext.CinemaInfoEntity
+                var cinemaIds = Query<CinemaInfoEntity>()
                     .Where(c =>
                         (isFacilitiesManager && c.FacilitiesManagerId == userId) ||
                         (isTheaterManager && c.TheaterManagerId == userId))
@@ -137,5 +139,10 @@ public class AuditLogService
             Message = "Get audit logs successfully.",
             Data = logs
         };
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>().Query();
     }
 }

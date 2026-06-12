@@ -12,9 +12,7 @@ services:
       - .:/src
     environment:
       - DOTNET_USE_POLLING_FILE_WATCHER=1 
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaDatabase;User Id=sa;Password=anhduc9A@5;TrustServerCertificate=true
-      - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaDatabase;User Id=sa;Password=anhduc9A@5;TrustServerCertificate=true
+      - ASPNETCORE_ENVIRONMENT=Docker
     networks:
       - cinema-network
 

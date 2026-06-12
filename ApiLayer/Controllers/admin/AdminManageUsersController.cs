@@ -2,11 +2,6 @@ using BusinessLayer.Services.Admin.UserManagement;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Enums;
-using BusinessLayer.Dtos;
-using BusinessLayer.Dtos.Admin.Responses;
-using DataAccess;
-using DataAccess.Constants;
-using Microsoft.EntityFrameworkCore;
 
 namespace ApiLayer.Controllers.admin;
 
@@ -18,13 +13,9 @@ public class AdminManageUsersController : ControllerBase
 {
     private readonly AdminManageUserService _adminManageUserService;
 
-    private readonly CinemaDbContext _cinemaDbContext;
-
-    public AdminManageUsersController(AdminManageUserService adminManageUserService ,
-        CinemaDbContext cinemaDbContext)
+    public AdminManageUsersController(AdminManageUserService adminManageUserService)
     {
         _adminManageUserService = adminManageUserService;
-        _cinemaDbContext = cinemaDbContext;
     }
     
     [HttpGet]
@@ -48,8 +39,7 @@ public class AdminManageUsersController : ControllerBase
     [HttpGet("{userId}/role")]
     public async Task<IActionResult> GetUserRole(Guid userId)
     {
-        var result = await _cinemaDbContext.UserRoleInfoEntity.AsNoTracking().Where(x => x.UserId.Equals(userId))
-            .Select(x => x.RoleListInfoEntity.RoleName).ToListAsync();
+        var result = await _adminManageUserService.GetUserRolesAsync(userId);
         return Ok(result);
     }
     
@@ -78,12 +68,7 @@ public class AdminManageUsersController : ControllerBase
     [HttpGet("roles")]
     public async Task<IActionResult> GetAllRoles()
     {
-        var getAllRoles = await _cinemaDbContext.RoleListInfoEntity.AsNoTracking().Where(x => 
-            x.RoleId != userRoles.Admin && x.RoleId != userRoles.Customer).Select(x => new ResponseRolesDto()
-        {
-            RoleId = x.RoleId,
-            RoleName = x.RoleName,
-        }).ToListAsync();
+        var getAllRoles = await _adminManageUserService.GetAssignableRolesAsync();
         
         return Ok(getAllRoles);
     }

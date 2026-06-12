@@ -1,19 +1,21 @@
-using DataAccess;
+using BusinessLayer.Entities.UserInfos;
+using Shared.Enums;
+using Shared.Interfaces.Persistence;
 
 public class TheaterManagerValidate
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public TheaterManagerValidate(CinemaDbContext dbContext)
+    public TheaterManagerValidate(IUnitOfWork unitOfWork)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
     }
     public bool ValidateSchedule(Guid scheduleId)
     {
         // Find Order If there's any order with this scheduleId and the Schedule can not be deleted or edited
         var orderInfo = 
-        _dbContext.OrderDetailsInfoEntity.Where
-            (x => x.MovieScheduleId.Equals(scheduleId) && x.OrderInfoEntity.OrderStatus == Shared.Enums.OrderStatusEnum.Completed);
+        _unitOfWork.Repository<OrderDetailsInfo>().Query().Where
+            (x => x.MovieScheduleId.Equals(scheduleId) && x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Completed);
         return orderInfo.Any();
     }
 }

@@ -7,7 +7,6 @@ using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Services.IdentityAccess;
 using BusinessLayer.UseCases.IdentityAccess;
-using DataAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,8 +17,6 @@ namespace ApiLayer.Controllers.IdentityAccess;
 [ApiController]
 public class IdentityAccessController : ControllerBase
 {
-    private readonly CinemaDbContext _dbContext;
-    
     private readonly RegisterService _registerService;
     
     private readonly LoginService _loginService;
@@ -29,10 +26,9 @@ public class IdentityAccessController : ControllerBase
     private readonly GoogleLoginService _googleLoginService;
     private readonly IConfiguration _configuration;
 
-    public IdentityAccessController(CinemaDbContext dbContext , RegisterService registerService , LoginService loginService
+    public IdentityAccessController(RegisterService registerService , LoginService loginService
     , UserProfileService userProfileService, GoogleLoginService googleLoginService, IConfiguration configuration)
     {
-        this._dbContext = dbContext;
         this._registerService = registerService;
         this._loginService = loginService;
         this._userProfileService = userProfileService;

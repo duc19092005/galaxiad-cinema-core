@@ -1,7 +1,8 @@
-using DataAccess;
-using Shared.Validation;
-using Hangfire;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Shared.Enums;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.ApplicationServices;
 
@@ -11,25 +12,37 @@ namespace BusinessLayer.Services.ApplicationServices;
 /// </summary>
 public class PendingOrderCancellationJob
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PendingOrderCancellationJob> _logger;
 
-    public PendingOrderCancellationJob(CinemaDbContext dbContext, ILogger<PendingOrderCancellationJob> logger)
+    public PendingOrderCancellationJob(IUnitOfWork unitOfWork, ILogger<PendingOrderCancellationJob> logger)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _logger = logger;
     }
 
     /// <summary>
-    /// Called by Hangfire on a recurring schedule. 
     /// Expires all Pending orders older than 15 minutes.
     /// </summary>
-    [AutomaticRetry(Attempts = 1)]
     public async Task ExecuteAsync(int expireAfterMinutes = 15)
     {
         try
         {
-            var canceledCount = await _dbContext.ExpireStalePendingOrders(expireAfterMinutes);
+            var cutoff = DateTime.UtcNow.AddMinutes(-expireAfterMinutes);
+            var staleOrders = await _unitOfWork.Repository<OrderInfoEntity>().Query()
+                .Where(o => o.OrderStatus == OrderStatusEnum.Pending && o.OrderDate < cutoff)
+                .ToListAsync();
+
+            foreach (var order in staleOrders)
+            {
+                order.OrderStatus = OrderStatusEnum.Canceled;
+            }
+
+            var canceledCount = staleOrders.Count;
+            if (canceledCount > 0)
+            {
+                await _unitOfWork.SaveChangesAsync();
+            }
 
             if (canceledCount > 0)
             {
@@ -43,26 +56,5 @@ public class PendingOrderCancellationJob
             _logger.LogError(ex, "PendingOrderCancellationJob: Error while canceling stale pending orders");
             throw;
         }
-    }
-}
-
-/// <summary>
-/// Extension methods for registering the PendingOrderCancellationJob with Hangfire.
-/// </summary>
-public static class PendingOrderCancellationJobExtensions
-{
-    /// <summary>
-    /// Registers the recurring job in Hangfire.
-    /// Call this from Program.cs after Hangfire is set up.
-    /// </summary>
-    public static void AddPendingOrderCancellationRecurringJob(
-        this IRecurringJobManager recurringJobManager,
-        int intervalMinutes = 5,
-        int expireAfterMinutes = 15)
-    {
-        recurringJobManager.AddOrUpdate<PendingOrderCancellationJob>(
-            "auto-cancel-pending-orders",
-            job => job.ExecuteAsync(expireAfterMinutes),
-            $"*/{intervalMinutes} * * * *"); // Every X minutes
     }
 }

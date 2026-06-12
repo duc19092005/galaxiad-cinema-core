@@ -1,4 +1,4 @@
-using DataAccess.Entities.MovieInfos;
+using BusinessLayer.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.MovieInfos;

@@ -1,16 +1,20 @@
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
 
 namespace BusinessLayer.Validators;
 
 public static class AuditoriumValidate
 {
-    public static bool IsDuplicateAuditoriumNumber(CinemaDbContext dbContext , Guid? auditoriumId ,string auditoriumNumber , Guid? cinemaId)
+    public static bool IsDuplicateAuditoriumNumber(
+        IQueryable<AuditoriumInfoEntities> auditoriums,
+        Guid? auditoriumId,
+        string auditoriumNumber,
+        Guid? cinemaId)
     {
         if (auditoriumId == null)
         {
             // Check Trong DB
             var checkDuplicateAuditoriumNumber =
-                dbContext.AuditoriumInfoEntities.FirstOrDefault
+                auditoriums.FirstOrDefault
                 (x => x.AuditoriumNumber.Equals(auditoriumNumber)
                       && x.CinemaId.Equals(cinemaId)
                       && !x.IsDeleted);
@@ -19,7 +23,7 @@ public static class AuditoriumValidate
         else
         {
             var checkDuplicateAuditoriumNumber =
-                dbContext.AuditoriumInfoEntities.FirstOrDefault
+                auditoriums.FirstOrDefault
                 (x => x.AuditoriumNumber.Equals(auditoriumNumber)
                       && x.CinemaId.Equals(cinemaId)
                       && !x.IsDeleted

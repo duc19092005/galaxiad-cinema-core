@@ -1,7 +1,9 @@
 using BusinessLayer.Services.ApplicationServices;
 using BusinessLayer.Services.IdentityAccess;
-using BusinessLayer.Services.ThirdPersonServices;
-using BusinessLayer.Services.ThirdPersonServices.HashServices;
+using BusinessLayer.Interfaces.IThirdPersonServices;
+using DataAccess.Services;
+using DataAccess.Repositories;
+using Shared.Interfaces.Persistence;
 using Shared.Localization;
 
 namespace ApiLayer.Bootstraps.Common;
@@ -32,6 +34,9 @@ public static class CommonServicesBootstrap
         services.AddScoped<ISha256Services , Sha256Service>();
         
         services.AddScoped<IVnPayService , VnpayService>();
+
+        services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
         
         return services;
     }

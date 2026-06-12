@@ -1,5 +1,5 @@
-using DataAccess.Constants;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.SeedData;
@@ -114,22 +114,5 @@ public static class PermissionsSeedData
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.MovieManager }
         );
 
-        // Student permissions (same as Customer)
-        modelBuilder.Entity<PermissionForRoleEntity>().HasData(
-            new PermissionForRoleEntity { PermissionId = userPermissions.BookTicket, RoleId = userRoles.Student },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewHistory, RoleId = userRoles.Student },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewCinema, RoleId = userRoles.Student },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewMovie, RoleId = userRoles.Student },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewSchedule, RoleId = userRoles.Student }
-        );
-
-        // VIP permissions (same as Customer)
-        modelBuilder.Entity<PermissionForRoleEntity>().HasData(
-            new PermissionForRoleEntity { PermissionId = userPermissions.BookTicket, RoleId = userRoles.VIP },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewHistory, RoleId = userRoles.VIP },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewCinema, RoleId = userRoles.VIP },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewMovie, RoleId = userRoles.VIP },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewSchedule, RoleId = userRoles.VIP }
-        );
     }
 }

@@ -1,5 +1,5 @@
-using DataAccess.Entities.CinemaInfos;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.RelationshipKeys.UserInfos;

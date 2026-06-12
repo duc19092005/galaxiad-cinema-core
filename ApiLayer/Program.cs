@@ -10,14 +10,15 @@ using ApiLayer.Hubs;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
-using DataAccess.Constants;
+using BusinessLayer.Constants;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using BusinessLayer.Services.ThirdPersonServices;
 using BusinessLayer.Services.ApplicationServices;
+using BusinessLayer.Interfaces.IThirdPersonServices;
+using DataAccess.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,7 +65,8 @@ builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
 
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);
-builder.Services.AddSingleton<cloudinaryHelper>();
+builder.Services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
+builder.Services.AddScoped<IBackgroundJobScheduler, HangfireJobSchedulerService>();
 builder.Services.TheaterManagerValidate();
 
 // --- CẤU HÌNH CORS (ĐÃ SỬA LỖI) ---
@@ -184,8 +186,7 @@ BEGIN
         [IsAdminAction] bit NOT NULL,
         [CinemaId] uniqueidentifier NULL,
         [CreatedAt] datetime2 NOT NULL,
-        CONSTRAINT [PK_AuditLogEntity] PRIMARY KEY ([AuditLogId]),
-        CONSTRAINT [FK_AuditLogEntity_UserInfoEntity_ActorUserId] FOREIGN KEY ([ActorUserId]) REFERENCES [dbo].[UserInfoEntity] ([UserId]) ON DELETE NO ACTION
+        CONSTRAINT [PK_AuditLogEntity] PRIMARY KEY ([AuditLogId])
     );
 END;
 

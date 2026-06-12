@@ -1,11 +1,14 @@
 using BusinessLayer.Dtos;
+using BusinessLayer.Dtos.Admin.Responses;
 using BusinessLayer.Services.Admin.Audit;
-using DataAccess;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Constants;
 using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
-using DataAccess.Entities.UserInfos;
+using BusinessLayer.Entities.UserInfos;
 using Microsoft.Extensions.Logging;
 using Shared.Exceptions;
+using Shared.Interfaces.Persistence;
 
 namespace BusinessLayer.Services.Admin.UserManagement;
 
@@ -22,20 +25,20 @@ public class AdminUserDto
 
 public class AdminManageUserService
 {
-    private readonly CinemaDbContext _dbContext;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AdminManageUserService> _logger;
     private readonly AuditLogService _auditLogService;
 
-    public AdminManageUserService(CinemaDbContext dbContext, ILogger<AdminManageUserService> logger, AuditLogService auditLogService)
+    public AdminManageUserService(IUnitOfWork unitOfWork, ILogger<AdminManageUserService> logger, AuditLogService auditLogService)
     {
-        _dbContext = dbContext;
+        _unitOfWork = unitOfWork;
         _logger = logger;
         _auditLogService = auditLogService;
     }
 
     public async Task<BaseResponse<List<AdminUserDto>>> GetAllUsersAsync()
     {
-        var users = await _dbContext.UserInfoEntity
+        var users = await Query<UserInfoEntity>()
             .OrderByDescending(u => u.UserId)
             .Select(u => new AdminUserDto
             {
@@ -58,7 +61,7 @@ public class AdminManageUserService
 
     public async Task<BaseResponse<string>> SetUserStatusAsync(Guid userId, AccountStatusEnum status)
     {
-        var user = await _dbContext.UserInfoEntity.FindAsync(userId);
+        var user = await Repository<UserInfoEntity>().FindAsync(userId);
         if (user == null)
         {
             return new BaseResponse<string>
@@ -69,14 +72,14 @@ public class AdminManageUserService
         }
 
         user.AccountStatus = status;
-        _dbContext.UserInfoEntity.Update(user);
+        Repository<UserInfoEntity>().Update(user);
         await _auditLogService.WriteAsync(
             "Update",
             "User",
             user.UserId,
             user.UserEmail,
             $"Updated user status to {status}.");
-        await _dbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string>
         {
@@ -88,13 +91,13 @@ public class AdminManageUserService
 
     public async Task<BaseResponse<string>> AssignRoleToUserAsync(Guid userId, List<Guid> roleIds)
     {
-        var transactions = await _dbContext.Database.BeginTransactionAsync();
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
         try
         {
-            var user = await _dbContext.UserInfoEntity.FindAsync(userId);
+            var user = await Repository<UserInfoEntity>().FindAsync(userId);
             if (user == null) return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
 
-            var isValidRole = await _dbContext.RoleListInfoEntity.AnyAsync(r => roleIds.Contains(r.RoleId));
+            var isValidRole = await Query<RoleListInfoEntity>().AnyAsync(r => roleIds.Contains(r.RoleId));
 
             if (!isValidRole)
             {
@@ -102,12 +105,12 @@ public class AdminManageUserService
             }
 
             // Protect the Admin role: Don't delete it if it exists
-            var adminRoleId = DataAccess.Constants.userRoles.Admin;
+            var adminRoleId = BusinessLayer.Constants.userRoles.Admin;
             
-            bool hasAdminPreviously = await _dbContext.UserRoleInfoEntity
+            bool hasAdminPreviously = await Query<UserRoleInfoEntity>()
                 .AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId);
 
-            await _dbContext.UserRoleInfoEntity
+            await Query<UserRoleInfoEntity>()
                 .Where(ur => ur.UserId == userId && ur.RoleId != adminRoleId)
                 .ExecuteDeleteAsync();
 
@@ -122,7 +125,7 @@ public class AdminManageUserService
 
             if (rolesToAdd.Any())
             {
-                await _dbContext.UserRoleInfoEntity.AddRangeAsync(rolesToAdd);
+                await Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
             }
 
             await _auditLogService.WriteAsync(
@@ -132,7 +135,7 @@ public class AdminManageUserService
                 user.UserEmail,
                 "Updated user roles.");
 
-            await _dbContext.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             return new BaseResponse<string> { IsSuccess = true, Message = $"Role Assign Completed successfully." };
@@ -152,10 +155,10 @@ public class AdminManageUserService
 
     public async Task<BaseResponse<string>> AssignCinemaToManagerAsync(Guid cinemaId, Guid managerId)
     {
-        var cinema = await _dbContext.CinemaInfoEntity.FindAsync(cinemaId);
+        var cinema = await Repository<CinemaInfoEntity>().FindAsync(cinemaId);
         if (cinema == null) return new BaseResponse<string> { IsSuccess = false, Message = "Cinema not found." };
 
-        var userRole = await _dbContext.UserRoleInfoEntity
+        var userRole = await Query<UserRoleInfoEntity>()
             .Include(ur => ur.RoleListInfoEntity)
             .FirstOrDefaultAsync(ur => ur.UserId == managerId && 
                                        (ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager"));
@@ -171,7 +174,7 @@ public class AdminManageUserService
             cinema.FacilitiesManagerId = managerId;
         }
         
-        _dbContext.CinemaInfoEntity.Update(cinema);
+        Repository<CinemaInfoEntity>().Update(cinema);
         await _auditLogService.WriteAsync(
             "Update",
             "Cinema",
@@ -179,8 +182,40 @@ public class AdminManageUserService
             cinema.CinemaName,
             $"Assigned {userRole.RoleListInfoEntity.RoleName} to cinema {cinema.CinemaName}.",
             cinema.CinemaId);
-        await _dbContext.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string> { IsSuccess = true, Message = "Assigned cinema successfully." };
+    }
+
+    public async Task<List<string>> GetUserRolesAsync(Guid userId)
+    {
+        return await Query<UserRoleInfoEntity>()
+            .AsNoTracking()
+            .Where(x => x.UserId.Equals(userId))
+            .Select(x => x.RoleListInfoEntity.RoleName)
+            .ToListAsync();
+    }
+
+    public async Task<List<ResponseRolesDto>> GetAssignableRolesAsync()
+    {
+        return await Query<RoleListInfoEntity>()
+            .AsNoTracking()
+            .Where(x => x.RoleId != userRoles.Admin && x.RoleId != userRoles.Customer)
+            .Select(x => new ResponseRolesDto
+            {
+                RoleId = x.RoleId,
+                RoleName = x.RoleName
+            })
+            .ToListAsync();
+    }
+
+    private IQueryable<TEntity> Query<TEntity>() where TEntity : class
+    {
+        return Repository<TEntity>().Query();
+    }
+
+    private IRepository<TEntity> Repository<TEntity>() where TEntity : class
+    {
+        return _unitOfWork.Repository<TEntity>();
     }
 }

@@ -1,10 +1,10 @@
-using DataAccess.Constants;
-using DataAccess.Entities.AuditLogs;
-using DataAccess.Entities.CinemaInfos;
-using DataAccess.Entities.MovieInfos;
-using DataAccess.Entities.ScheduleJob;
-using DataAccess.Entities.UserInfos;
-using DataAccess.Entities.Vouchers;
+using BusinessLayer.Constants;
+using BusinessLayer.Entities.AuditLogs;
+using BusinessLayer.Entities.CinemaInfos;
+using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.ScheduleJob;
+using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Entities.Vouchers;
 using DataAccess.RelationshipKeys.MovieInfos;
 using DataAccess.SeedData;
 using DataAccess.RelationshipKeys.Facilities;
@@ -12,10 +12,7 @@ using DataAccess.RelationshipKeys.IdentityAccess;
 using DataAccess.RelationshipKeys.Promotions;
 using DataAccess.RelationshipKeys.Common;
 using DataAccess.RelationshipKeys.UserInfos;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
-using System.Text;
 
 // ReSharper disable All
 
@@ -25,12 +22,10 @@ namespace DataAccess;
 public class CinemaDbContext : DbContext
 {
     private readonly UserIdentityCodeConstant user_identity_code_constant;
-    private readonly IHttpContextAccessor? _httpContextAccessor;
 
-    public CinemaDbContext(DbContextOptions<CinemaDbContext> options , UserIdentityCodeConstant user_identity_code_constant, IHttpContextAccessor? httpContextAccessor = null) : base(options)
+    public CinemaDbContext(DbContextOptions<CinemaDbContext> options , UserIdentityCodeConstant user_identity_code_constant) : base(options)
     {
         this.user_identity_code_constant = user_identity_code_constant;
-        this._httpContextAccessor = httpContextAccessor;
     }
     
     public DbSet<UserInfoEntity> UserInfoEntity { get; set; }
@@ -113,10 +108,6 @@ public class CinemaDbContext : DbContext
             entity.HasIndex(x => x.CreatedAt);
             entity.HasIndex(x => x.CinemaId);
             entity.HasIndex(x => new { x.EntityType, x.EntityId });
-            entity.HasOne(x => x.Actor)
-                .WithMany()
-                .HasForeignKey(x => x.ActorUserId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
         
         // User Infos 
@@ -300,93 +291,6 @@ public class CinemaDbContext : DbContext
         PermissionsSeedData.AddPermissionsSeedData(modelBuilder);
     }
     
-    // ==========================================
-    // Automatic Field-Level Audit Logging
-    // ==========================================
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        var auditEntries = new List<AuditLogEntity>();
-        var httpContext = _httpContextAccessor?.HttpContext;
-        
-        if (httpContext?.User?.Identity?.IsAuthenticated == true)
-        {
-            var actorUserId = httpContext.User.FindFirst(ClaimTypes.Sid)?.Value;
-            var actorName = httpContext.User.FindFirst(ClaimTypes.Name)?.Value ?? "System";
-            var actorRole = httpContext.User.FindFirst(ClaimTypes.Role)?.Value ?? "";
-            var isAdmin = httpContext.User.IsInRole("Admin");
-            
-            if (Guid.TryParse(actorUserId, out var parsedUserId))
-            {
-                foreach (var entry in ChangeTracker.Entries()
-                    .Where(e => e.State == EntityState.Modified || e.State == EntityState.Added || e.State == EntityState.Deleted))
-                {
-                    // Skip AuditLogEntity itself to avoid infinite loop
-                    if (entry.Entity is AuditLogEntity) continue;
-                    
-                    var entityType = entry.Entity.GetType().Name;
-                    var action = entry.State.ToString();
-                    var description = new StringBuilder();
-                    
-                    if (entry.State == EntityState.Modified)
-                    {
-                        foreach (var prop in entry.Properties.Where(p => p.IsModified))
-                        {
-                            var originalValue = prop.OriginalValue?.ToString() ?? "null";
-                            var currentValue = prop.CurrentValue?.ToString() ?? "null";
-                            if (originalValue != currentValue)
-                            {
-                                description.Append($"[{prop.Metadata.Name}]: '{originalValue}' -> '{currentValue}'; ");
-                            }
-                        }
-                    }
-                    else if (entry.State == EntityState.Added)
-                    {
-                        description.Append("Record created.");
-                    }
-                    else if (entry.State == EntityState.Deleted)
-                    {
-                        description.Append("Record deleted.");
-                    }
-                    
-                    if (description.Length > 0)
-                    {
-                        // Try to get entity name from common properties
-                        var entityName = entry.Properties
-                            .FirstOrDefault(p => p.Metadata.Name.Contains("Name") || p.Metadata.Name.Contains("Email"))?
-                            .CurrentValue?.ToString() ?? "";
-                        
-                        // Try to get entity ID
-                        var entityId = entry.Properties
-                            .FirstOrDefault(p => p.Metadata.IsPrimaryKey())?
-                            .CurrentValue;
-                        
-                        auditEntries.Add(new AuditLogEntity
-                        {
-                            AuditLogId = Guid.NewGuid(),
-                            Action = action,
-                            EntityType = entityType,
-                            EntityId = entityId is Guid guid ? guid : null,
-                            EntityName = entityName,
-                            Description = description.ToString().TrimEnd(' ', ';'),
-                            ActorUserId = parsedUserId,
-                            ActorName = actorName,
-                            ActorPrimaryRole = actorRole,
-                            IsAdminAction = isAdmin,
-                            CreatedAt = DateTime.UtcNow
-                        });
-                    }
-                }
-            }
-        }
-        
-        // Add audit entries before saving
-        if (auditEntries.Any())
-        {
-            AuditLogEntity.AddRange(auditEntries);
-        }
-        
-        return await base.SaveChangesAsync(cancellationToken);
-    }
 }
 
 
