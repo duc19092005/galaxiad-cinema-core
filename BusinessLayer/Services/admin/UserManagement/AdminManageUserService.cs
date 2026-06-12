@@ -36,13 +36,12 @@ public class AdminManageUserService
     public async Task<BaseResponse<List<AdminUserDto>>> GetAllUsersAsync()
     {
         var users = await _dbContext.UserInfoEntity
-            .Include(u => u.UserProfileEntity)
             .OrderByDescending(u => u.UserId)
             .Select(u => new AdminUserDto
             {
                 UserId = u.UserId,
                 UserEmail = u.UserEmail,
-                UserName = u.UserProfileEntity != null ? u.UserProfileEntity.UserName : string.Empty,
+                UserName = u.UserName ?? string.Empty,
                 AccountStatus = u.AccountStatus,
                 RegisterMethod = u.RegisterMethod,
                 UserRoles = String.Join("," , u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))

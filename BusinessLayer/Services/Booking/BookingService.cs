@@ -751,10 +751,9 @@ public class BookingService
             if (userId.HasValue)
             {
                 var user = await _dbContext.UserInfoEntity
-                    .Include(u => u.UserProfileEntity)
                     .FirstOrDefaultAsync(u => u.UserId == userId);
                 
-                finalCustomerName = user?.UserProfileEntity?.UserName;
+                finalCustomerName = user?.UserName;
                 finalCustomerEmail = user?.UserEmail;
             }
             else
@@ -1027,7 +1026,6 @@ public class BookingService
     {
         var userId = _userContextService.GetUserId();
         var user = await _dbContext.UserInfoEntity
-            .Include(u => u.UserProfileEntity)
             .FirstOrDefaultAsync(u => u.UserId == userId);
 
         if (user == null)
@@ -1037,16 +1035,16 @@ public class BookingService
 
         var key = _configuration["AES_256:Key"] ?? "";
         var iv = _configuration["AES_256:IV"] ?? "";
-        var decryptedIdentityCode = AES256Helper.Decrypt(user.UserProfileEntity.IdentityCode, key, iv);
+        var decryptedIdentityCode = AES256Helper.Decrypt(user.IdentityCode, key, iv);
 
         var res = new ResUserAccountInfoDto
         {
             UserId = user.UserId,
             Email = user.UserEmail,
-            UserName = user.UserProfileEntity.UserName,
+            UserName = user.UserName,
             IdentityCode = decryptedIdentityCode,
-            DateOfBirth = user.UserProfileEntity.DateOfBirth,
-            PhoneNumber = user.UserProfileEntity.PhoneNumber,
+            DateOfBirth = user.DateOfBirth,
+            PhoneNumber = user.PhoneNumber,
             RewardPoints = user.RewardPoints
         };
 

@@ -39,9 +39,22 @@ namespace DataAccess.Entities.UserInfos
         
         public string? LockoutReason { get; set; }
 
-        public List<UserRoleInfoEntity> UserRoleInfoEntity { get; set; } = [];
+        // Personal Info (merged from UserProfileEntity)
+        
+        [Column(TypeName = "nvarchar(100)")]
+        [Required]
+        public string UserName { get; set; } = null!;
+        
+        [Column(TypeName = "varchar(200)")]
+        [Required]
+        public string IdentityCode { get; set; } = null!;
 
-        public UserProfileEntity UserProfileEntity { get; set; } = null!;
+        public DateTime DateOfBirth { get; set; }
+
+        [Column(TypeName = "char(10)")] 
+        public string PhoneNumber { get; set; } = null!;
+
+        public List<UserRoleInfoEntity> UserRoleInfoEntity { get; set; } = [];
         
         public long RewardPoints { get; set; } = 0;
         public virtual ICollection<UserVoucherEntity> UserVouchers { get; set; } = [];
@@ -103,6 +116,11 @@ namespace DataAccess.Entities.UserInfos
         // QL Order
 
         public virtual ICollection<OrderInfoEntity> OrderInfoEntity { get; set; } = [];
+        
+        // Staff & Customer Profiles (1-1)
+        
+        public StaffProfileEntity? StaffProfileEntity { get; set; }
+        public CustomerProfileEntity? CustomerProfileEntity { get; set; }
     }
 }
 

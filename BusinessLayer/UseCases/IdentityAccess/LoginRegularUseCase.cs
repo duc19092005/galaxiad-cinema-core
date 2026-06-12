@@ -57,10 +57,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                         .Select(x => new 
                         {
                             UserId = x.UserId,
-                            Username = _dbContext.UserProfileEntity
-                                .Where(p => p.UserId == x.UserId)
-                                .Select(p => p.UserName)
-                                .FirstOrDefault(),
+                            Username = x.UserName,
                             Roles = x.UserRoleInfoEntity 
                                 .Select(r => r.RoleListInfoEntity.RoleName)
                                 .ToArray()

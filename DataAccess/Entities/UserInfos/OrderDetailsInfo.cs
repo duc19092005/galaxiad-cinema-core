@@ -17,6 +17,12 @@ public class OrderDetailsInfo
     [Column(TypeName = "decimal(18,2)")]
     public decimal PriceEach { get; set; }
 
+    [Column(TypeName = "nvarchar(100)")]
+    public string? FullName { get; set; }
+
+    [Column(TypeName = "varchar(200)")]
+    public string? IdentityCodeHash { get; set; }
+
     public SeatsInfoEntity SeatsInfoEntity { get; set; } = null!;
 
     public MovieScheduleInfoEntity MovieScheduleInfoEntity { get; set; } = null!;

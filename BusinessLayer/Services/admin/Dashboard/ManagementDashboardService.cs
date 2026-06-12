@@ -168,7 +168,7 @@ public class ManagementDashboardService
                 MovieName = m.MovieName,
                 MovieImageUrl = m.MovieImageUrl,
                 CreatedAt = DateTime.SpecifyKind(m.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = m.Creator != null && m.Creator.UserProfileEntity != null ? m.Creator.UserProfileEntity.UserName : "System"
+                CreatedBy = m.Creator != null ? m.Creator.UserName ?? "System" : "System"
             })
             .ToListAsync();
 
@@ -187,7 +187,7 @@ public class ManagementDashboardService
                 CinemaName = c.CinemaName,
                 CinemaLocation = c.CinemaLocation,
                 CreatedAt = DateTime.SpecifyKind(c.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = c.Creator != null && c.Creator.UserProfileEntity != null ? c.Creator.UserProfileEntity.UserName : "System"
+                CreatedBy = c.Creator != null ? c.Creator.UserName ?? "System" : "System"
             })
             .ToListAsync();
 
@@ -206,7 +206,7 @@ public class ManagementDashboardService
                 AuditoriumNumber = a.AuditoriumNumber,
                 CinemaName = a.CinemaInfoEntity.CinemaName,
                 CreatedAt = DateTime.SpecifyKind(a.CreatedAt, DateTimeKind.Utc),
-                CreatedBy = a.Creator != null && a.Creator.UserProfileEntity != null ? a.Creator.UserProfileEntity.UserName : "System"
+                CreatedBy = a.Creator != null ? a.Creator.UserName ?? "System" : "System"
             })
             .ToListAsync();
 

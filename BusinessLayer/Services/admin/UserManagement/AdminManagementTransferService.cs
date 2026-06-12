@@ -39,7 +39,7 @@ public class AdminManagementTransferService
             {
                 UserId = ur.UserId,
                 UserEmail = ur.UserInfoEntity.UserEmail,
-                UserName = ur.UserInfoEntity.UserProfileEntity != null ? ur.UserInfoEntity.UserProfileEntity.UserName : string.Empty
+                UserName = ur.UserInfoEntity.UserName ?? string.Empty
             })
             .ToListAsync();
 
@@ -79,8 +79,8 @@ public class AdminManagementTransferService
                     ItemId = c.CinemaId,
                     ItemName = c.CinemaName,
                     Description = $"Vị trí: {c.CinemaLocation} (CSVC)",
-                    ManagerName = c.FacilitiesManager != null && c.FacilitiesManager.UserProfileEntity != null 
-                        ? c.FacilitiesManager.UserProfileEntity.UserName : "Chưa có quản lý CSVC"
+                    ManagerName = c.FacilitiesManager != null 
+                        ? c.FacilitiesManager.UserName ?? "Chưa có quản lý CSVC" : "Chưa có quản lý CSVC"
                 }).ToListAsync();
                 
                 return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = results, Message = "Lấy danh sách rạp (CSVC) thành công." };
@@ -95,8 +95,8 @@ public class AdminManagementTransferService
                     ItemId = c.CinemaId,
                     ItemName = c.CinemaName,
                     Description = $"Vị trí: {c.CinemaLocation} (Vận hành)",
-                    ManagerName = c.TheaterManager != null && c.TheaterManager.UserProfileEntity != null 
-                        ? c.TheaterManager.UserProfileEntity.UserName : "Chưa có quản lý vận hành"
+                    ManagerName = c.TheaterManager != null 
+                        ? c.TheaterManager.UserName ?? "Chưa có quản lý vận hành" : "Chưa có quản lý vận hành"
                 }).ToListAsync();
                 
                 return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = results, Message = "Lấy danh sách rạp (Vận hành) thành công." };
@@ -114,7 +114,7 @@ public class AdminManagementTransferService
                     ItemId = m.MovieId,
                     ItemName = m.MovieName,
                     Description = $"Đạo diễn: {m.Director}",
-                    ManagerName = m.MovieManager != null && m.MovieManager.UserProfileEntity != null ? m.MovieManager.UserProfileEntity.UserName : "Chưa có quản lý"
+                    ManagerName = m.MovieManager != null ? m.MovieManager.UserName ?? "Chưa có quản lý" : "Chưa có quản lý"
                 })
                 .ToListAsync();
 

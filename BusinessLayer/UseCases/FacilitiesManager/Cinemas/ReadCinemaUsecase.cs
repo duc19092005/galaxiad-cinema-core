@@ -54,8 +54,8 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
                 CinemaName = x.CinemaName,
                 CinemaHotlineNumber = x.CinemaHotLineNumber,
                 TotalRooms = x.AuditoriumInfoEntities.Count,
-                TheaterManagerName = x.TheaterManager != null && x.TheaterManager.UserProfileEntity != null ? x.TheaterManager.UserProfileEntity.UserName : "Chưa có",
-                FacilitiesManagerName = x.FacilitiesManager != null && x.FacilitiesManager.UserProfileEntity != null ? x.FacilitiesManager.UserProfileEntity.UserName : "Chưa có"
+                TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
+                FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
             }).ToListAsync();
 
             return new BaseResponse<List<ResFacilitiesManagerCinema>>()
@@ -101,8 +101,8 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
                     CinemaLocation = x.CinemaLocation,
                     CinemaHotlineNumber = x.CinemaHotLineNumber,
                     TotalRooms = x.AuditoriumInfoEntities.Count,
-                    TheaterManagerName = x.TheaterManager != null && x.TheaterManager.UserProfileEntity != null ? x.TheaterManager.UserProfileEntity.UserName : "Chưa có",
-                    FacilitiesManagerName = x.FacilitiesManager != null && x.FacilitiesManager.UserProfileEntity != null ? x.FacilitiesManager.UserProfileEntity.UserName : "Chưa có"
+                    TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
+                    FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
                 })
                 .FirstOrDefaultAsync();
 

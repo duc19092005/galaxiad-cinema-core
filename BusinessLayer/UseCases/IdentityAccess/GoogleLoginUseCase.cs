@@ -127,7 +127,6 @@ public class GoogleLoginUseCase
             var existingUser = await _dbContext.UserInfoEntity
                 .Include(u => u.UserRoleInfoEntity)
                     .ThenInclude(r => r.RoleListInfoEntity)
-                .Include(u => u.UserProfileEntity)
                 .FirstOrDefaultAsync(u => u.UserEmail == googleUserInfo.Email);
 
             bool isNewAccount = false;
@@ -150,7 +149,7 @@ public class GoogleLoginUseCase
                 }
 
                 userId = existingUser.UserId;
-                username = existingUser.UserProfileEntity?.UserName ?? googleUserInfo.Name ?? googleUserInfo.Email;
+                username = existingUser.UserName ?? googleUserInfo.Name ?? googleUserInfo.Email;
                 roles = existingUser.UserRoleInfoEntity
                     .Select(r => r.RoleListInfoEntity.RoleName)
                     .ToArray();
@@ -195,6 +194,11 @@ public class GoogleLoginUseCase
                 }
 
                 // Tạo UserInfo
+                var rawIdentity = "GOOGLE_" + googleUserInfo.Id;
+                var cryptoKey = _configuration["AES_256:Key"] ?? "";
+                var cryptoIv = _configuration["AES_256:IV"] ?? "";
+                var encryptedIdentity = AES256Helper.Encrypt(rawIdentity, cryptoKey, cryptoIv);
+
                 await _dbContext.UserInfoEntity.AddAsync(new UserInfoEntity
                 {
                     UserId = userId,
@@ -203,22 +207,11 @@ public class GoogleLoginUseCase
                     RegisterMethod = RegisterMethodEnum.Google,
                     AccountStatus = AccountStatusEnum.Active,
                     SubId = googleUserInfo.Id,
-                    RefreshToken = encryptedRefreshToken
-                });
-
-                var rawIdentity = "GOOGLE_" + googleUserInfo.Id;
-                var cryptoKey = _configuration["AES_256:Key"] ?? "";
-                var cryptoIv = _configuration["AES_256:IV"] ?? "";
-                var encryptedIdentity = AES256Helper.Encrypt(rawIdentity, cryptoKey, cryptoIv);
-
-                // Tạo UserProfile
-                await _dbContext.UserProfileEntity.AddAsync(new UserProfileEntity
-                {
-                    UserId = userId,
+                    RefreshToken = encryptedRefreshToken,
                     UserName = username,
-                    IdentityCode = encryptedIdentity, // Phải được mã hóa để GetUserAccountInfo có thể giải mã
-                    DateOfBirth = DateTime.MinValue, // User có thể cập nhật sau
-                    PhoneNumber = $"0{Random.Shared.Next(100000000, 999999999)}" // Random để tránh lỗi Unique Index Constraint
+                    IdentityCode = encryptedIdentity,
+                    DateOfBirth = DateTime.MinValue,
+                    PhoneNumber = $"0{Random.Shared.Next(100000000, 999999999)}"
                 });
 
                 // Gán role Customer

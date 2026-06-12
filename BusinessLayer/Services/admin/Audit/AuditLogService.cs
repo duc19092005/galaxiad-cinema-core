@@ -41,7 +41,7 @@ public class AuditLogService
                 .Select(u => new
                 {
                     u.UserId,
-                    UserName = u.UserProfileEntity != null ? u.UserProfileEntity.UserName : u.UserEmail,
+                    UserName = u.UserName ?? u.UserEmail,
                     Roles = u.UserRoleInfoEntity.Select(r => r.RoleListInfoEntity.RoleName).ToList()
                 })
                 .FirstOrDefaultAsync();

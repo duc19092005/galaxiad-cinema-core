@@ -17,36 +17,41 @@ public static class SeedDataUserInfos
 
         // 2. Seed Data cho bảng UserInfoEntity (Tài khoản)
         modelBuilder.Entity<UserInfoEntity>().HasData(
-            new UserInfoEntity { UserId = adminId, UserEmail = "admin@cinema.com", Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi", AccountStatus = (Shared.Enums.AccountStatusEnum)1 }, // Password: 123
-            new UserInfoEntity { UserId = movieManagerId, UserEmail = "movie.manager@cinema.com", Password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke", AccountStatus = (Shared.Enums.AccountStatusEnum)1 },
-            new UserInfoEntity { UserId = theaterManagerId, UserEmail = "theater.manager@cinema.com", Password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m", AccountStatus = (Shared.Enums.AccountStatusEnum)1 },
-            new UserInfoEntity { UserId = facilitiesManagerId, UserEmail = "facilities.manager@cinema.com", Password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2", AccountStatus = (Shared.Enums.AccountStatusEnum)1 }
-        );
-
-        modelBuilder.Entity<UserProfileEntity>().HasData(
-            new UserProfileEntity {
+            new UserInfoEntity { 
                 UserId = adminId, 
+                UserEmail = "admin@cinema.com", 
+                Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
                 UserName = "Tổng Quản Trị Hệ Thống", 
                 PhoneNumber = "0988123456", 
                 DateOfBirth = new DateTime(1985, 1, 1),
                 IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[0]
-            },
-            new UserProfileEntity {
+            }, // Password: 123
+            new UserInfoEntity { 
                 UserId = movieManagerId, 
+                UserEmail = "movie.manager@cinema.com", 
+                Password = "$2a$12$FhmQsQjdtTZIHEzJIpAjZumRH0WvleZ2xidk22wSd841kxaQNE7ke", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
                 UserName = "Quản Lý Nội Dung Phim", 
                 PhoneNumber = "0911111111", 
                 DateOfBirth = new DateTime(1990, 5, 10),
                 IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[1]
             },
-            new UserProfileEntity {
+            new UserInfoEntity { 
                 UserId = theaterManagerId, 
+                UserEmail = "theater.manager@cinema.com", 
+                Password = "$2a$12$Lcz0doBD1.jofXcNDWF8x.4TSmUsyJKR/pbdP.fIh4Fc9yDV5X39m", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
                 UserName = "Quản Lý Vận Hành Rạp", 
                 PhoneNumber = "0922222222", 
                 DateOfBirth = new DateTime(1988, 3, 15),
                 IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[2]
             },
-            new UserProfileEntity {
+            new UserInfoEntity { 
                 UserId = facilitiesManagerId, 
+                UserEmail = "facilities.manager@cinema.com", 
+                Password = "$2a$12$v2nSRwPmr62wHUakVl6TCeZLPGLEaVJBqotgF3qXVff0KnlWNWHE2", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
                 UserName = "Quản Lý Cơ Sở Vật Chất", 
                 PhoneNumber = "0933333333", 
                 DateOfBirth = new DateTime(1992, 8, 20),
