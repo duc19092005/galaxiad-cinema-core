@@ -1,9 +1,9 @@
 # 🎬 CINEMA BOOKING PLATFORM — API BACKEND
 
 🌐 **Language / Ngôn ngữ:**
-*   [Tiếng Việt (Vietnamese) 🇻🇳](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.md)
-*   [English (Tiếng Anh) 🇬🇧](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.en.md)
-*   [Русский (Tiếng Nga) 🇷🇺](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.ru.md)
+*   [Tiếng Việt (Vietnamese) 🇻🇳](./README.md)
+*   [English (Tiếng Anh) 🇬🇧](./README.en.md)
+*   [Русский (Tiếng Nga) 🇷🇺](./README.ru.md)
 
 ---
 
@@ -94,8 +94,8 @@ The backend follows a streamlined implementation of Clean Architecture:
 
 For technical deep-dives, setting up the local environment, or code contributions, please consult the internal developer documentation:
 
-*   **[Technical Implementation Plan](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/docs/dev/implementation_plan.md)**: Detailed class structures, EF Core entity relationships, and architectural blueprints.
-*   **[Task Tracker](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/docs/dev/task.md)**: Work items, refactoring progress, and current roadmap status.
+*   **[Technical Implementation Plan](./docs/dev/implementation_plan.md)**: Detailed class structures, EF Core entity relationships, and architectural blueprints.
+*   **[Task Tracker](./docs/dev/task.md)**: Work items, refactoring progress, and current roadmap status.
 
 ---
 

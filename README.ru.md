@@ -1,9 +1,9 @@
 # 🎬 ПЛАТФОРМА БРОНИРОВАНИЯ БИЛЕТОВ В КИНО — API БЭКЕНД
 
 🌐 **Language / Ngôn ngữ:**
-*   [Tiếng Việt (Vietnamese) 🇻🇳](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.md)
-*   [English (Tiếng Anh) 🇬🇧](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.en.md)
-*   [Русский (Tiếng Nga) 🇷🇺](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/README.ru.md)
+*   [Tiếng Việt (Vietnamese) 🇻🇳](./README.md)
+*   [English (Tiếng Anh) 🇬🇧](./README.en.md)
+*   [Русский (Tiếng Nga) 🇷🇺](./README.ru.md)
 
 ---
 
@@ -94,8 +94,8 @@
 
 Для детального изучения кода, локальной настройки среды или участия в разработке обратитесь к внутренней технической документации:
 
-*   **[План технической реализации (Technical Implementation Plan)](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/docs/dev/implementation_plan.md)**: Детальная структура классов, связи сущностей EF Core и архитектурные схемы.
-*   **[Трекер задач (Task Tracker)](file:///d:/Personal%20Datas/Cinema/Backend/renew_cinema_project_backend/docs/dev/task.md)**: Список задач по рефакторингу, статусы выполнения и дорожная карта проекта.
+*   **[План технической реализации (Technical Implementation Plan)](./docs/dev/implementation_plan.md)**: Детальная структура классов, связи сущностей EF Core и архитектурные схемы.
+*   **[Трекер задач (Task Tracker)](./docs/dev/task.md)**: Список задач по рефакторингу, статусы выполнения и дорожная карта проекта.
 
 ---
 
