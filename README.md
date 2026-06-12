@@ -28,11 +28,18 @@ Hệ thống được thiết kế để giải quyết triệt để các bài 
 ### 2. Thuật toán Quản lý Lịch chiếu Chống Trùng Lặp (Schedule Conflict Prevention)
 *   **Thời gian Dọn Dẹp Rạp (Breakdown Time):** Hệ thống tích hợp thuật toán kiểm tra xung đột lịch chiếu tự động. Giữa các suất chiếu của cùng một phòng chiếu bắt buộc phải có khoảng nghỉ tối thiểu 15 phút (Breakdown Time) để dọn dẹp và chuẩn bị. Thuật toán ngăn chặn 100% tình trạng người quản lý rạp cấu hình trùng giờ hoặc đè lịch chiếu lên nhau.
 
-### 3. Công cụ Tính Giá Vé Linh hoạt (Seat Surcharge Engine)
-Hệ thống quản lý giá vé không theo dạng giảm giá cố định mà sử dụng cơ chế **Phụ thu Rạp & Định dạng (Surcharge Engine)** thông minh:
-*   **Công thức tính giá linh hoạt:**
-    $$\text{Giá cuối} = \text{Giá gốc} \times \left(1 + \frac{\text{Phần trăm phụ thu}}{100}\right)$$
-*   Phụ thu được thiết lập chi tiết theo từng tổ hợp: `(Rạp chiếu, Định dạng phim 2D/3D/IMAX, Phân khúc khách hàng)`.
+### 3. Công cụ Tính Giá Vé Linh hoạt (Dynamic Seat Surcharge & Discount Engine)
+Hệ thống không sử dụng bảng giá vé cố định cứng nhắc, mà tích hợp một **Bộ công cụ tính giá thông minh (Dynamic Engine)** nhằm tối ưu hóa doanh thu theo mô hình kinh doanh rạp phim hiện đại. Quy trình tính giá vé được chia làm hai giai đoạn độc lập:
+
+1. **Giai đoạn 1: Áp dụng Phụ thu (Surcharge) theo định dạng phòng chiếu & cụm rạp**
+   Giúp tối ưu hóa doanh thu trên mỗi ghế ngồi đối với các suất chiếu cao cấp hoặc phòng chiếu đặc biệt (ví dụ: IMAX, 3D, cụm rạp trung tâm).
+   $$\text{Giá sau phụ thu} = \text{Giá gốc} \times \left(1 + \frac{\text{Phần trăm phụ thu}}{100}\right)$$
+   *Phụ thu được cấu hình linh hoạt theo tổ hợp: `(Rạp chiếu, Định dạng phim 2D/3D/IMAX)`.*
+
+2. **Giai đoạn 2: Áp dụng Ưu đãi Phân khúc Khách hàng (User Segment Discount)**
+   Hệ thống tự động nhận diện phân khúc thành viên của khách hàng để áp dụng chương trình giảm giá tri ân, giúp tăng tỷ lệ giữ chân khách hàng (Customer Retention Rate).
+   $$\text{Giá cuối cùng} = \text{Giá sau phụ thu} \times \left(1 - \frac{\text{Phần trăm ưu đãi}}{100}\right)$$
+   *Mức ưu đãi được xác định tự động dựa trên phân khúc khách hàng: Standard (5%), Student (10%), hoặc VIP (15%).*
 
 ---
 

@@ -28,11 +28,18 @@ This platform translates complex cinema operations into robust backend workflows
 ### 2. Conflict-Free Movie Scheduling (Breakdown Time Algorithm)
 *   **Theater Cleanup Interval:** The system features an automatic scheduling validator. Between any two showtimes in the same auditorium, there must be a minimum of **15 minutes of breakdown time** for cleaning and preparation. This algorithm prevents managers from accidentally scheduling overlapping movies.
 
-### 3. Dynamic Seat Surcharge Engine
-Ticket pricing is not based on hard-coded discounts but calculated dynamically using an intelligent **Cinema Surcharge Engine**:
-*   **Dynamic Formula:**
-    $$\text{Final Price} = \text{Base Price} \times \left(1 + \frac{\text{Surcharge Percent}}{100}\right)$$
-*   Surcharges are configured flexibly per combinations of: `(Cinema, Movie Format 2D/3D/IMAX, User Segment)`.
+### 3. Dynamic Ticket Pricing Engine (Seat Surcharge & Segment Discount Engine)
+Rather than relying on static, hard-coded pricing, the platform features an intelligent **Dynamic Pricing Engine** designed to maximize venue revenue while cultivating customer loyalty. The ticket price calculation is performed in two decoupled steps:
+
+1. **Step 1: Format & Venue Surcharge (Surcharge Engine)**
+   Optimizes revenue per seat for premium screening formats and premium theater locations (e.g., IMAX, 3D, VIP halls, high-traffic venues).
+   $$\text{Price after Surcharge} = \text{Base Price} \times \left(1 + \frac{\text{Surcharge Percent}}{100}\right)$$
+   *Surcharges are dynamically resolved based on the specific combination of: `(Cinema, Movie Format 2D/3D/IMAX)`.*
+
+2. **Step 2: Customer Loyalty Discount (User Segment Discount)**
+   Encourages repeat purchases and improves Customer Retention Rates by automatically applying tier-based discounts during checkout.
+   $$\text{Final Price} = \text{Price after Surcharge} \times \left(1 - \frac{\text{Discount Percent}}{100}\right)$$
+   *Discounts are automatically determined by the user's loyalty segment: Standard (5%), Student (10%), or VIP (15%).*
 
 ---
 
