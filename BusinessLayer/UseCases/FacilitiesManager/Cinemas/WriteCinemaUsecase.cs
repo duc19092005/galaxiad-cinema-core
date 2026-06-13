@@ -79,6 +79,8 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 CinemaLocation = request.CinemaLocation,
                 CinemaCity = request.CinemaCity,
                 CinemaHotLineNumber = request.CinemaHotlineNumber,
+                Latitude = request.Latitude,
+                Longitude = request.Longitude,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = userId,
                 FacilitiesManagerId = userId,
@@ -212,6 +214,9 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 findCinema.CinemaCity = (!string.IsNullOrWhiteSpace(request.CinemaCity))
                     ? request.CinemaCity
                     : findCinema.CinemaCity;
+
+                if (request.Latitude.HasValue) findCinema.Latitude = request.Latitude.Value;
+                if (request.Longitude.HasValue) findCinema.Longitude = request.Longitude.Value;
 
                 findCinema.ActiveAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? findCinema.ActiveAt;
 

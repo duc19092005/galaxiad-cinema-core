@@ -235,7 +235,19 @@ public class GoogleLoginUseCase
                 roles = new[] { "Customer" };
             }
 
-            // 5. Tạo JWT token
+            // 5. Fetch permissions corresponding to the user's roles
+            var rolesIds = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.RoleId)
+                .ToListAsync();
+
+            var permissions = await _unitOfWork.Repository<PermissionForRoleEntity>().Query()
+                .Where(pr => rolesIds.Contains(pr.RoleId))
+                .Select(pr => pr.PermissionEntity.PermissionInfo)
+                .Distinct()
+                .ToArrayAsync();
+
+            // 6. Tạo JWT token
             string? jwtKey = _configuration["JWT_Info:Key"];
             string? jwtIss = _configuration["JWT_Info:Iss"];
             string? jwtAud = _configuration["JWT_Info:Aud"];
@@ -246,7 +258,7 @@ public class GoogleLoginUseCase
                 throw new AppException(Messages.System.Error, 500, "E01");
             }
 
-            var accessToken = Jwt_helper.Encrypt(jwtKey, jwtIss, jwtAud, googleUserInfo.Email, username, userId, roles);
+            var accessToken = Jwt_helper.Encrypt(jwtKey, jwtIss, jwtAud, googleUserInfo.Email, username, userId, roles, permissions);
             if (string.IsNullOrEmpty(accessToken))
             {
                 _logger.LogError("Failed to generate JWT token for Google login");

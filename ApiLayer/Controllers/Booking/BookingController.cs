@@ -78,6 +78,16 @@ public class PublicMovieController : ControllerBase
     }
 
     /// <summary>
+    /// Lấy danh sách các rạp gần nhất dựa trên vị trí (kinh độ và vĩ độ) của người dùng (tính bằng km)
+    /// </summary>
+    [HttpGet("nearest-cinemas")]
+    public async Task<IActionResult> GetNearestCinemas([FromQuery] double latitude, [FromQuery] double longitude)
+    {
+        var result = await _bookingService.GetNearestCinemas(latitude, longitude);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Lấy danh sách các phim đang hoạt động (dành cho Combobox tìm kiếm)
     /// </summary>
     [HttpGet("active-movies")]

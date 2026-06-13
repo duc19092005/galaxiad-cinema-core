@@ -78,6 +78,18 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                         throw new AppException(Messages.Auth.UserNotFound, 403, "UN01");
                     }
                     
+                    // Fetch permissions corresponding to the user's roles
+                    var rolesIds = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
+                        .Where(ur => ur.UserId == getUserInfo.UserId)
+                        .Select(ur => ur.RoleId)
+                        .ToListAsync();
+
+                    var permissions = await _unitOfWork.Repository<PermissionForRoleEntity>().Query()
+                        .Where(pr => rolesIds.Contains(pr.RoleId))
+                        .Select(pr => pr.PermissionEntity.PermissionInfo)
+                        .Distinct()
+                        .ToArrayAsync();
+
                     // Sign JWT for User
                     string? getJWTKey = _configuration["JWT_Info:Key"];
                     string? getJWTIss = _configuration["JWT_Info:Iss"];
@@ -88,12 +100,36 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                         _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
                         throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
                     }
-                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.UserEmail ,result.Username, getUserInfo.UserId , result.Roles);
+                    string? token = Jwt_helper.Encrypt(getJWTKey , getJWTIss , getJwtAud , getUserInfo.UserEmail ,result.Username, getUserInfo.UserId , result.Roles, permissions);
 
                     if (token == null)
                     {
                         _logger.LogError("Token Generator System Error");
                         throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
+                    }
+
+                    List<ManagedCinemaInfoDto>? managedCinemasList = null;
+                    if (result.Roles.Contains("Admin"))
+                    {
+                        managedCinemasList = await _unitOfWork.Repository<BusinessLayer.Entities.CinemaInfos.CinemaInfoEntity>().Query()
+                            .Where(c => !c.IsDeleted)
+                            .Select(c => new ManagedCinemaInfoDto
+                            {
+                                CinemaId = c.CinemaId,
+                                CinemaName = c.CinemaName
+                            })
+                            .ToListAsync();
+                    }
+                    else if (result.Roles.Contains("TheaterManager") || result.Roles.Contains("FacilitiesManager"))
+                    {
+                        managedCinemasList = await _unitOfWork.Repository<BusinessLayer.Entities.CinemaInfos.CinemaInfoEntity>().Query()
+                            .Where(c => !c.IsDeleted && (c.TheaterManagerId == getUserInfo.UserId || c.FacilitiesManagerId == getUserInfo.UserId))
+                            .Select(c => new ManagedCinemaInfoDto
+                            {
+                                CinemaId = c.CinemaId,
+                                CinemaName = c.CinemaName
+                            })
+                            .ToListAsync();
                     }
 
                     return new BaseResponse<ResRegularLoginDto>()
@@ -104,7 +140,8 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                             UserId = getUserInfo.UserId,
                             AccessToken = token,
                             Roles = result.Roles,
-                            Username = result.Username
+                            Username = result.Username,
+                            ManagedCinemas = managedCinemasList
                         },
                         Message = Messages.Auth.LoginSuccess
                     };

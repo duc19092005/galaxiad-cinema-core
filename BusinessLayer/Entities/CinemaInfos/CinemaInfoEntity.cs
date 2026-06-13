@@ -26,6 +26,9 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     [Column(TypeName = "nvarchar(max)")]
     public string CinemaDescription { get; set; } = null!;
     
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    
     public Guid? TheaterManagerId { get; set; }
     public UserInfoEntity? TheaterManager { get; set; }
 

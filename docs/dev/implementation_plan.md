@@ -1,196 +1,124 @@
-# KẾ HOẠCH TRIỂN KHAI TỔNG THỂ (MASTER IMPLEMENTATION PLAN)
-## Refactor Database Schema, JWT Permissions, Tự động Audit Logs, Đăng ký ca trực & Nhận diện khuôn mặt (Bảo mật AES-256)
+# KẾ HOẠCH TRIỂN KHAI CHI TIẾT (IMPLEMENTATION PLAN)
+## JWT Permissions, Redis Distributed Lock, Điểm danh khuôn mặt & Quản lý Tài khoản POS / Duyệt-Hủy Ca Trực
 
-Tài liệu này phác thảo toàn bộ thiết kế hệ thống, các thay đổi cơ sở dữ liệu, quy trình bảo mật và sơ đồ luồng hoạt động (Sequence Diagrams) dành cho Frontend (FE) và hội đồng đánh giá đồ án.
-
----
-
-## 1. Sơ đồ Luồng hoạt động Hệ thống (System Flowcharts)
-
-Để FE và người ngoài dễ dàng hình dung cơ chế hoạt động, dưới đây là sơ đồ Mermaid mô tả các quy trình cốt lõi:
-
-### A. Luồng Đăng nhập & Phân quyền qua JWT (Login & Authorization Flow)
-Mô tả cách thức đăng nhập, truy vấn quyền hạn và tự động đính kèm quyền vào JWT:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Nhân viên / Admin
-    participant FE as Frontend App
-    participant BE as Backend API
-    participant DB as SQL Server
-    participant Redis as Redis Cache
-
-    User->>FE: 1. Nhập thông tin đăng nhập
-    FE->>BE: 2. POST /regular-login
-    BE->>DB: 3. Kiểm tra thông tin tài khoản (Active)
-    DB-->>BE: 4. Trả về thông tin User
-    BE->>DB: 5. Query Roles & Permissions tương ứng của User
-    DB-->>BE: 6. Trả về danh sách Quyền (Ví dụ: SellTicket, ClockIn...)
-    BE->>BE: 7. Mã hóa JWT (nhúng Email, UserId, Roles, Permissions vào Payload)
-    BE->>BE: 8. Sinh ngẫu nhiên Refresh Token ngẫu nhiên (bảo mật)
-    BE->>Redis: 9. Lưu Refresh Token (Key: user:rf:{UserId}:{Token}, TTL: 7 ngày)
-    BE-->>FE: 10. Trả về HTTP 200 OK + Set Cookies (X-Access-Token & X-Refresh-Token)
-    Note over FE: FE giải mã JWT bằng jwt-decode để lấy danh sách "permission" ẩn/hiện nút bấm trên UI.
-```
+Kế hoạch này tích hợp luồng nghiệp vụ **Tài khoản chung phòng ban/quầy (POS Shared Account)**, chấm công khuôn mặt, cơ chế **Hủy ca trực đã duyệt** và **Gán trực tiếp nhân viên mới** nhằm giải quyết vấn đề nhân viên nghỉ đột xuất.
 
 ---
 
-### B. Luồng Đăng ký ca trực & Khóa chống Race Condition (Shift Registration & Redis Lock Flow)
-Mô tả cơ chế khóa phân tán Redis để ngăn chặn tình trạng nhiều nhân viên đăng ký vượt quá số lượng tối đa (`MaxStaff`) của ca trực trong cùng một mili-giây:
+## 1. Thiết kế Cơ cấu Quản lý Rạp (1 Rạp có bao nhiêu Quản lý?)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Staff as Nhân viên
-    participant FE as Frontend App
-    participant BE as Backend API
-    participant Redis as Redis Cache (Lock Manager)
-    participant DB as SQL Server
-
-    Staff->>FE: 1. Chọn ca trực ngày D và nhấn "Đăng ký"
-    FE->>BE: 2. POST /shifts/register (TemplateId, Date)
-    BE->>Redis: 3. SET NX lock:shift:{TemplateId}:{Date} (Yêu cầu Khóa)
-    alt Lấy Khóa thành công (Lock Acquired)
-        Redis-->>BE: 4. Đồng ý cấp Khóa (TTL: 3000ms)
-        BE->>DB: 5. Đếm số lượng đăng ký đã có của ca này ngày này
-        DB-->>BE: 6. Trả về kết quả (Ví dụ: 1/2 vị trí đã đăng ký)
-        alt Còn vị trí trống (Slot Available)
-            BE->>DB: 7. Tạo bản ghi đăng ký mới (Trạng thái: Pending)
-            BE->>Redis: 8. DEL lock:shift:{TemplateId}:{Date} (Giải phóng Khóa)
-            BE-->>FE: 9. Trả về HTTP 200: Đăng ký thành công, chờ phê duyệt
-        else Hết vị trí trống (Slot Full)
-            BE->>Redis: 10. DEL lock:shift:{TemplateId}:{Date} (Giải phóng Khóa)
-            BE-->>FE: 11. Trả về HTTP 400: Ca trực đã đầy chỗ
-        end
-    else Lấy Khóa thất bại (Lock Failed - Đang có request khác xử lý)
-        BE->>BE: 12. Thử lại (Retry) sau 100ms
-        Note over BE: Lặp lại bước yêu cầu khóa đến khi thành công hoặc quá thời gian chờ (500ms).
-    end
-```
+### Phân tích nghiệp vụ thực tế:
+* Trong các chuỗi rạp phim lớn (CGV, Lotte), một chi nhánh rạp (ví dụ: CGV Vincom Bà Triệu) thường sẽ có **1 Quản lý trưởng (Cinema Manager)** và **2-3 Trưởng ca/Trợ lý quản lý (Shift Supervisors / Assistant Managers)** để thay ca nhau vận hành từ 8:00 sáng đến 12:00 đêm.
+* Về mặt phần mềm, cả Quản lý trưởng và các Trưởng ca đều cần quyền quản trị vận hành như: duyệt ca trực, gán nhân viên, kiểm kho bắp nước và xử lý sự cố.
+* **Thiết kế hệ thống**:
+    * Hệ thống cho phép **nhiều nhân viên** có vai trò `TheaterManager` hoạt động tại cùng một Rạp (`CinemaId`).
+    * Bất kỳ tài khoản nào có Role là `TheaterManager` (hoặc `Admin`) và có `StaffProfile.CinemaId` trùng với Rạp của ca trực thì đều có quyền: duyệt ca, hủy ca, và gán ca cho nhân viên tại rạp đó. Admin hệ thống có quyền bypass (quản lý tất cả các rạp).
 
 ---
 
-### C. Luồng Điểm danh bằng Khuôn mặt & Giả lập Thời gian (Clock-In Face Recognition & Demo Flow)
-Mô tả quy trình giải mã AES-256 Vector khuôn mặt để so khớp hình học và cơ chế hỗ trợ giả lập thời gian để demo cho giáo viên:
+## 2. Thiết kế Luồng Duyệt ca, Hủy ca & Gán nhân viên trực tiếp
 
+### A. Duyệt ca và Hủy ca sau khi duyệt
+* **Duyệt ca (`POST /api/v1/TheaterManager/shifts/registrations/{id}/approve`)**:
+    * Chuyển trạng thái yêu cầu đăng ký ca trực từ `"Pending"` sang `"Approved"`.
+* **Hủy ca trực (`POST /api/v1/TheaterManager/shifts/registrations/{id}/cancel`)**:
+    * Quản lý hoặc Admin có thể hủy ca đã duyệt của nhân viên (Ví dụ: Nhân viên báo ốm đột xuất).
+    * Hệ thống chuyển trạng thái ca trực từ `"Approved"` sang `"Cancelled"`.
+    * Lúc này vị trí trống của ca đó ngày hôm đó sẽ tự động được nhả ra (khi đếm số lượng ca trực hợp lệ sẽ bỏ qua trạng thái `"Cancelled"` và `"Rejected"`). Nhân viên khác có thể đăng ký vào ca đó.
+
+### B. Gán trực tiếp nhân viên mới (`POST /api/v1/TheaterManager/shifts/assign`)
+* **Chức năng**: Cho phép Admin/Quản lý rạp gán thẳng một nhân viên vào một ca trực mà không cần qua bước nhân viên tự đăng ký rồi quản lý duyệt.
+* **Xử lý trên BE**:
+    1. Nhận thông tin: `StaffId` (Id nhân viên được gán), `ShiftTemplateId` (Mẫu ca), `RegistrationDate` (Ngày trực).
+    2. Sử dụng Redis Lock tương tự như luồng tự đăng ký để tránh race condition: `lock:shift:{ShiftTemplateId}:{Date:yyyyMMdd}`.
+    3. Dưới lock:
+        * Đếm số lượng ca trực có trạng thái `"Approved"` hoặc `"Pending"` của template này trong ngày này.
+        * Nếu vượt quá `MaxStaff`, trả về lỗi 400 ("Ca trực đã đầy").
+        * Nếu còn chỗ, tạo bản ghi `StaffShiftRegistrationEntity` mới với `Status = "Approved"`, ghi nhận `ApprovedByUserId` là ID của Admin/Quản lý thực hiện gán ca.
+
+---
+
+## 3. Sơ đồ Luồng hoạt động tại Quầy POS (Mermaid Sequence Diagram)
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Staff as Nhân viên quầy vé
-    participant FE as Frontend POS (Webcam)
+    actor Staff as Nhân viên Thu ngân (A)
+    participant POS as POS Terminal (Frontend)
     participant BE as Backend API
     participant DB as SQL Server
 
-    Staff->>FE: 1. Đứng trước camera POS và nhấn "Clock In"
-    Note over FE: face-api.js mở webcam, phát hiện khuôn mặt và trích xuất Face Vector (mảng 128 số thực).
-    FE->>BE: 2. POST /shifts/clock-in (FaceVector, simulatedDateTime)
-    BE->>DB: 3. Lấy hồ sơ StaffProfile của Nhân viên
-    DB-->>BE: 4. Trả về StaffProfile (FaceVector đã mã hóa AES)
-    BE->>BE: 5. Giải mã FaceVector gốc từ DB bằng AES-256 (Decrypt)
-    BE->>BE: 6. Tính khoảng cách hình học (Euclidean Distance) giữa Vector quét trực tiếp và Vector mẫu
-    alt Khuôn mặt KHÔNG khớp (Khoảng cách >= 0.6)
-        BE-->>FE: 7a. Trả về HTTP 400: Xác thực khuôn mặt thất bại
-    else Khuôn mặt KHỚP (Khoảng cách < 0.6)
-        BE->>BE: 8. Xác định thời gian hiện tại (Lấy simulatedDateTime nếu chạy thử, hoặc DateTime.Now thực tế)
-        BE->>DB: 9. Truy vấn ca trực đã phê duyệt (Approved) của nhân viên cho ngày hôm đó
-        alt Không đúng ca trực hoặc sai khung giờ
-            BE-->>FE: 10a. Trả về HTTP 400: Không đúng ca trực hiện tại
-        else Đúng ca trực
-            BE->>DB: 11. Ghi nhận thời gian bắt đầu làm việc thực tế (StaffWorkingLogger)
-            BE-->>FE: 12. Trả về HTTP 200: Điểm danh vào ca thành công!
+    Note over POS: Máy POS đã đăng nhập bằng tài khoản chung:<br/>quay_ve_01@cinema.com (JWT chung)
+    
+    Staff->>POS: 1. Chọn tên mình (StaffId) và bấm "Vào ca (Clock-In)"
+    Note over POS: Mở webcam, quét khuôn mặt và trích xuất Face Vector (128 số thực)
+    
+    POS->>BE: 2. POST /api/v1/Cashier/shifts/clock-in (StaffId, FaceVector, simulatedDateTime)
+    Note over BE: Đính kèm JWT chung của quầy trong Header
+    
+    BE->>DB: 3. Lấy hồ sơ StaffProfile của nhân viên theo StaffId
+    DB-->>BE: 4. Trả về StaffProfile (FaceVector đã mã hóa AES-256)
+    
+    BE->>BE: 5. Giải mã FaceVector gốc từ DB bằng AES-256
+    BE->>BE: 6. Tính khoảng cách Euclidean giữa FaceVector quét và mẫu
+    
+    alt Khoảng cách > 0.6 (Xác thực khuôn mặt thất bại)
+        BE-->>POS: 7a. Trả về HTTP 400: Xác thực khuôn mặt thất bại
+    else Khoảng cách <= 0.6 (Khớp khuôn mặt)
+        BE->>BE: 8. Kiểm tra ca trực của nhân viên trong ngày (có trạng thái "Approved" không)
+        alt Không có ca trực được duyệt cho hôm nay
+            BE-->>POS: 9a. Trả về HTTP 400: Không có ca trực được duyệt cho hôm nay
+        else Có ca trực hợp lệ
+            BE->>DB: 10. Tạo bản ghi chấm công (StaffWorkingLogger)
+            BE->>BE: 11. Tạo JWT Token MỚI mang danh tính riêng của Nhân viên A (UserId, Roles, Permissions)
+            BE-->>POS: 12. Trả về HTTP 200 + JWT cá nhân của Nhân viên A
         end
     end
+    
+    Note over POS: POS thay thế JWT chung bằng JWT cá nhân của Nhân viên A.<br/>Giao diện chuyển sang màn hình làm việc của Nhân viên A.<br/>Tất cả giao dịch bán vé lúc này được lưu dưới tên Nhân viên A.
+    
+    Staff->>POS: 13. Hết ca trực, nhấn "Giao ca (Clock-Out)"
+    POS->>BE: 14. POST /api/v1/Cashier/shifts/clock-out (simulatedDateTime)
+    Note over BE: Đính kèm JWT cá nhân của Nhân viên A
+    BE->>DB: 15. Cập nhật giờ ra ca, tính tổng giờ làm, tổng tiền lương
+    BE-->>POS: 16. Trả về HTTP 200 OK
+    Note over POS: POS xóa JWT cá nhân và tự động quay lại đăng nhập bằng JWT chung của quầy.
 ```
 
 ---
 
-### D. Luồng Tự động ghi Audit Logs thay đổi Dữ liệu (Automatic Field-Level Audit Log Flow)
-Mô tả cách thức ghi lại lịch sử thay đổi đến từng cột dữ liệu khi Admin hoặc Manager thực hiện cập nhật hệ thống:
+## 4. Chi tiết các thay đổi đề xuất (Proposed Changes)
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Admin as Quản trị viên
-    participant FE as Frontend Admin
-    participant BE as Backend API
-    participant Context as EF Core CinemaDbContext
-    participant DB as SQL Server
+### A. Gói phần mềm & Cấu hình (Infrastructure)
+1.  **Cập nhật `.csproj`**: Thêm package `StackExchange.Redis` (Version `2.8.0`) vào `DataAccess/DataAccess.csproj` và `ApiLayer/ApiLayer.csproj`.
+2.  **Cập nhật `compose.yaml`**: Thêm dịch vụ `redis`.
+3.  **Cấu hình**: Cấu hình `"RedisConnection"` trong `appsettings.Development.json` (`localhost:6379`) và tạo `appsettings.Docker.json` (`redis:6379`).
 
-    Admin->>FE: 1. Chỉnh sửa giá vé định dạng từ 50,000đ thành 60,000đ
-    FE->>BE: 2. PUT /api/v1/Formats/update
-    BE->>Context: 3. Tìm bản ghi, gán giá trị mới và gọi SaveChangesAsync()
-    Note over Context: Hàm SaveChangesAsync() bị ghi đè (override) tự động kích hoạt.
-    Context->>Context: 4. Quét qua ChangeTracker tìm thực thể bị sửa đổi (Modified)
-    Context->>Context: 5. So sánh thuộc tính: OriginalValue ("50000") và CurrentValue ("60000")
-    Context->>Context: 6. Tạo văn bản mô tả thay đổi: "[BasePrice]: '50000' -> '60000'"
-    Context->>Context: 7. Lấy Claims từ IHttpContextAccessor (UserId, UserName, Role của Admin)
-    Context->>Context: 8. Chèn một bản ghi mới vào DbSet<AuditLogEntity> chứa các mô tả thay đổi trên
-    Context->>DB: 9. Lưu toàn bộ thay đổi dữ liệu gốc + Dữ liệu Logs vào DB trong cùng một Transaction
-    DB-->>Context: 10. Lưu thành công
-    BE-->>FE: 11. Trả về HTTP 200: Cập nhật thành công
-```
+### B. Nhúng Permissions vào JWT (Claim-based Auth)
+1.  **Hàm `Jwt_helper.Encrypt`**: Nhận thêm `string[] permissions` và add claim `"permission"`.
+2.  **Login Use Cases**: Cập nhật `LoginRegularUseCase.cs` & `GoogleLoginUseCase.cs` để query permissions từ DB dựa trên các Role của user và truyền vào `Jwt_helper.Encrypt`.
 
----
+### C. Triển khai Redis Lock Service
+1.  Tạo interface `IRedisLockService.cs` trong `BusinessLayer/Interfaces/IThirdPersonServices/`.
+2.  Triển khai class `RedisLockService.cs` trong `DataAccess/Services/` sử dụng `StackExchange.Redis` với cơ chế SET NX và giải phóng bằng Lua Script.
+3.  Đăng ký DI trong `Program.cs`.
 
-## 2. Kế hoạch Refactor Cơ sở dữ liệu Chi tiết
+### D. Luồng Đăng ký ca trực & Khóa chống Race Condition
+1.  **`RegisterShiftUseCase.cs`**: Đăng ký ca làm của nhân viên (sử dụng Redis lock, kiểm tra `MaxStaff`).
+2.  **`ApproveShiftRegistrationUseCase.cs`**:
+    *   `ApproveShiftRegistrationAsync(Guid registrationId, Guid managerUserId, string? notes)`: Duyệt ca làm (`Status = "Approved"`).
+    *   `RejectShiftRegistrationAsync(Guid registrationId, Guid managerUserId, string? notes)`: Từ chối ca làm (`Status = "Rejected"`).
+    *   `CancelShiftRegistrationAsync(Guid registrationId, Guid managerUserId, string? notes)`: Hủy ca trực đã duyệt (`Status = "Cancelled"`).
+    *   `AssignShiftDirectlyAsync(Guid staffId, Guid shiftTemplateId, DateTime date, Guid managerUserId)`: Gán thẳng nhân viên vào ca trực (sử dụng Redis lock, tạo bản ghi `Status = "Approved"`).
 
-### Cập nhật các Entity hiện có (DataAccess)
-1.  **`UserInfoEntity.cs` (Sửa đổi)**:
-    *   Tích hợp trực tiếp các trường cá nhân: `UserName`, `IdentityCode`, `DateOfBirth`, `PhoneNumber`.
-    *   Xóa liên kết tới bảng `UserProfileEntity`.
-2.  **`RoleListInfoEntity.cs` (Sửa đổi)**:
-    *   Thêm `SalaryPerHour` (decimal) và `DiscountPercent` (decimal).
-3.  **`OrderDetailsInfo.cs` (Sửa đổi)**:
-    *   Thêm `FullName` (nvarchar), `IdentityCodeHash` (varchar). Đảm bảo `PriceEach` dùng kiểu `decimal(18,2)`.
-
-### Tạo mới các Entity phục vụ tính năng mới (DataAccess)
-1.  **`PermissionEntity.cs` (Mới)**: Danh mục quyền hạn.
-2.  **`PermissionForRoleEntity.cs` (Mới)**: Bảng liên kết trung gian nhiều-nhiều giữa Roles và Permissions.
-3.  **`StaffProfileEntity.cs` (Mới)**: 
-    *   `UserId` (PK/FK trỏ sang User)
-    *   `WorkingStatus` (bool)
-    *   `CinemaId` (Guid, rạp làm việc chính)
-    *   `IsCinemaManager` (bool)
-    *   `FaceVector` (nvarchar(max), **Mã hóa AES-256**)
-4.  **`CustomerProfileEntity.cs` (Mới)**:
-    *   `UserId` (PK/FK trỏ sang User)
-    *   `TotalPoint` (decimal)
-5.  **`CinemaShiftTemplateEntity.cs` (Mới)**: Khung giờ mẫu ca làm việc.
-    *   `ShiftTemplateId` (Guid, PK)
-    *   `CinemaId` (Guid, FK)
-    *   `ShiftName`, `StartTime`, `EndTime`, `MaxStaff`, `RoleId` (vị trí công việc yêu cầu).
-6.  **`StaffShiftRegistrationEntity.cs` (Mới)**: Đăng ký ca trực của nhân viên.
-    *   `ShiftRegistrationId` (Guid, PK)
-    *   `StaffId`, `ShiftTemplateId`, `RegistrationDate`
-    *   `Status` (Pending, Approved, Rejected)
-    *   `ApprovedByUserId` (Guid?), `ApprovedAt`, `Notes`
-7.  **`StaffWorkingLoggerEntity.cs` (Mới)**: Lịch sử chấm công ca trực thực tế.
-    *   Ghi nhận giờ bắt đầu, giờ kết thúc, số giờ làm, số tiền lương nhận được trong ca và ID đợt chi trả lương (`SalaryTotalLoggerId`).
-8.  **`StaffSalaryTotalLoggerEntity.cs` (Mới)**: Nhật ký đợt thanh toán lương cho nhân viên.
-
-### Xóa bỏ (Delete)
-*   Xóa file `UserProfileEntity.cs`.
-*   Xóa toàn bộ thư mục `Migrations` cũ.
+### E. Chấm công Khuôn mặt Euclidean & Session Switching
+1.  **Đăng ký khuôn mặt Staff (`POST /api/v1/Staff/register-face`)**: Mã hóa vector 128 số bằng AES-256 lưu vào `StaffProfileEntity.FaceVector`.
+2.  **Điểm danh vào ca (`POST /api/v1/Cashier/shifts/clock-in`)**: So khớp Euclidean $\le 0.6$ với vector mẫu đã giải mã AES, kiểm tra ca trực `"Approved"`, tạo log chấm công và trả về JWT cá nhân mới của nhân viên.
+3.  **Điểm danh ra ca (`POST /api/v1/Cashier/shifts/clock-out`)**: Tính toán tổng giờ làm và tiền lương dựa trên lương theo giờ của role.
 
 ---
 
-## 3. Kế hoạch Kiểm thử & Chạy lệnh CLI
+## 5. Kế hoạch xác minh (Verification Plan)
 
-Khi tiến hành chạy thực tế, ta mở Terminal chạy các lệnh sau:
-1.  **Dọn dẹp DB cũ trong Docker:**
-    ```bash
-    dotnet ef database drop --project DataAccess --startup-project ApiLayer -f
-    ```
-2.  **Tạo migration Initial mới tinh:**
-    ```bash
-    dotnet ef migrations add InitialRefactoredSchema --project DataAccess --startup-project ApiLayer
-    ```
-3.  **Cập nhật cấu trúc DB mới vào SQL Server trong Docker:**
-    ```bash
-    dotnet ef database update --project DataAccess --startup-project ApiLayer
-    ```
-4.  **Biên dịch kiểm tra dự án:**
-    ```bash
-    dotnet build
-    ```
+*   **Race Condition Test**: Gửi 5 request đồng thời để đăng ký ca trực có `MaxStaff = 2`, xác minh chỉ có 2 yêu cầu thành công.
+*   **Euclidean Matching Test**: Kiểm tra tính chính xác của thuật toán so khớp khoảng cách hình học khuôn mặt.
+*   **Time Simulation Test**: Kiểm thử giả lập giờ bằng `simulatedDateTime` trên môi trường Development.

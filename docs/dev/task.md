@@ -218,7 +218,24 @@ Current scope: backend only. Do not edit Frontend.
 - Verified database entities, constants, and dependency flow compiled successfully. Final build check: `dotnet build` succeeded with 0 errors.
 
 ### Next
-- Fix legacy warnings and implement missing business logic flows (Redis shift locking, face recognition clock-in, permissions in JWT).
+- Fix legacy warnings and implement missing business logic flows (Redis shift locking, face recognition clock-in, permissions in JWT):
+  - `[x]` **Giai đoạn 10: Tích hợp Permissions JWT & Quản lý Tài khoản POS**
+    - `[x]` Cập nhật `Jwt_helper.Encrypt` trong `JwtService.cs` nhận thêm permissions.
+    - `[x]` Cập nhật `LoginRegularUseCase.cs` & `GoogleLoginUseCase.cs` để query permissions từ DB.
+    - `[x]` Seed tài khoản chung phòng ban POS trong `UserInfoSeedData.cs`.
+  - `[x]` **Giai đoạn 11: Tích hợp Redis Lock cho Đăng ký ca làm**
+    - `[x]` Thêm package `StackExchange.Redis` vào `DataAccess.csproj` và `ApiLayer.csproj`.
+    - `[x]` Thêm container `redis` vào `compose.yaml`.
+    - `[x]` Cấu hình `RedisConnection` trong `appsettings.Development.json` và tạo `appsettings.Docker.json`.
+    - `[x]` Định nghĩa `IRedisLockService` trong `BusinessLayer` và triển khai `RedisLockService` trong `DataAccess`.
+    - `[x]` Đăng ký DI cho Redis trong `Program.cs` hoặc `CommonServicesBootstrap.cs`.
+    - `[x]` Tạo `RegisterShiftUseCase.cs` (Đăng ký ca làm nhân viên).
+    - `[x]` Tạo `ApproveShiftRegistrationUseCase.cs` (Duyệt ca, từ chối ca, hủy ca đã duyệt, và gán ca trực tiếp).
+  - `[x]` **Giai đoạn 12: Chấm công Khuôn mặt Euclidean & Session Switching**
+    - `[x]` Tạo endpoint `POST /api/v1/Staff/register-face` mã hóa AES-256 lưu face vector.
+    - `[x]` Tạo endpoint `POST /api/v1/Cashier/shifts/clock-in` đối khớp Euclidean, kiểm tra ca làm, ghi log, sinh JWT cá nhân mới.
+    - `[x]` Tạo endpoint `POST /api/v1/Cashier/shifts/clock-out` chấm công ra, tính lương.
+    - `[x]` Viết các Controllers tương ứng (`StaffShiftController`, `TheaterManagerShiftController` hỗ trợ các API đăng ký, duyệt/hủy, gán ca).
 
 ### Notes
 - Keep Clean Architecture refactor incremental after the schema build is stable.

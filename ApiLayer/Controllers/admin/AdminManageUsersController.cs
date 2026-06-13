@@ -72,4 +72,29 @@ public class AdminManageUsersController : ControllerBase
         
         return Ok(getAllRoles);
     }
+
+    [HttpGet("permissions")]
+    public async Task<IActionResult> GetAllPermissions()
+    {
+        var result = await _adminManageUserService.GetAllPermissionsAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("roles-permissions")]
+    public async Task<IActionResult> GetRolesPermissions()
+    {
+        var result = await _adminManageUserService.GetRolesPermissionsAsync();
+        return Ok(result);
+    }
+
+    [HttpPut("roles/{roleId}/permissions")]
+    public async Task<IActionResult> UpdateRolePermissions(Guid roleId, [FromBody] List<Guid> permissionIds)
+    {
+        var result = await _adminManageUserService.UpdateRolePermissionsAsync(roleId, permissionIds);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
 }

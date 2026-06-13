@@ -61,8 +61,20 @@ public class UserProfileUseCase : IProfileBehavior
             if (result.Roles == null || result.Roles.Length == 0)
                 throw new AppException(Messages.Auth.RoleNotFound, 403, "UN02");
 
-            // Look up managed cinemas if the user is a manager
-            if (result.Roles.Contains("TheaterManager") || result.Roles.Contains("FacilitiesManager"))
+            // Look up managed cinemas if the user is a manager or admin
+            if (result.Roles.Contains("Admin"))
+            {
+                var allCinemas = await cinemaRepository.Query()
+                    .Where(c => !c.IsDeleted)
+                    .Select(c => new ManagedCinemaInfoDto
+                    {
+                        CinemaId = c.CinemaId,
+                        CinemaName = c.CinemaName
+                    })
+                    .ToListAsync();
+                result.ManagedCinemas = allCinemas;
+            }
+            else if (result.Roles.Contains("TheaterManager") || result.Roles.Contains("FacilitiesManager"))
             {
                 var managedCinemas = await cinemaRepository.Query()
                     .Where(c => !c.IsDeleted && (c.TheaterManagerId == userId || c.FacilitiesManagerId == userId))

@@ -221,6 +221,59 @@ public class BookingService
         };
     }
 
+    public async Task<BaseResponse<List<ResPublicNearestCinemaDto>>> GetNearestCinemas(double userLat, double userLon)
+    {
+        var cinemas = await _unitOfWork.Repository<CinemaInfoEntity>().Query()
+            .Where(c => !c.IsDeleted && c.IsActive)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var list = cinemas
+            .Select(c =>
+            {
+                var distance = (c.Latitude.HasValue && c.Longitude.HasValue)
+                    ? CalculateDistanceInKm(userLat, userLon, c.Latitude.Value, c.Longitude.Value)
+                    : 9999.0; // Đặt giá trị lớn nếu rạp chưa có tọa độ
+
+                return new ResPublicNearestCinemaDto
+                {
+                    CinemaId = c.CinemaId,
+                    CinemaName = c.CinemaName,
+                    CinemaLocation = c.CinemaLocation,
+                    Latitude = c.Latitude,
+                    Longitude = c.Longitude,
+                    DistanceInKm = Math.Round(distance, 2)
+                };
+            })
+            .OrderBy(c => c.DistanceInKm)
+            .ToList();
+
+        return new BaseResponse<List<ResPublicNearestCinemaDto>>
+        {
+            IsSuccess = true,
+            Data = list,
+            Message = "Lấy danh sách rạp gần nhất thành công."
+        };
+    }
+
+    private static double CalculateDistanceInKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return 6371 * c; // Earth's radius in km
+    }
+
+    private static double ToRadians(double angle)
+    {
+        return Math.PI * angle / 180.0;
+    }
+
     public async Task<BaseResponse<List<ResPublicSimpleMovieDto>>> GetActiveMovies()
     {
         var now = DateTime.Now;

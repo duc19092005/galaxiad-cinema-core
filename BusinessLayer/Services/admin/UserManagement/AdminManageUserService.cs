@@ -128,6 +128,42 @@ public class AdminManageUserService
                 await Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
             }
 
+            // Tự động khởi tạo StaffProfileEntity nếu gán vai trò nhân viên (staff role)
+            var staffRoleIds = new[] 
+            { 
+                userRoles.Cashier, 
+                userRoles.TheaterManager, 
+                userRoles.FacilitiesManager, 
+                userRoles.MovieManager 
+            };
+
+            bool isStaff = roleIds.Any(r => staffRoleIds.Contains(r));
+            if (isStaff)
+            {
+                var hasProfile = await Query<StaffProfileEntity>()
+                    .AnyAsync(sp => sp.UserId == userId);
+
+                if (!hasProfile)
+                {
+                    var firstCinema = await Query<CinemaInfoEntity>().FirstOrDefaultAsync();
+                    if (firstCinema == null)
+                    {
+                        throw new AppException("Không thể gán vai trò nhân viên vì hệ thống chưa có chi nhánh rạp nào được tạo.", 400, "ROLE_ERR");
+                    }
+
+                    var newProfile = new StaffProfileEntity
+                    {
+                        UserId = userId,
+                        WorkingStatus = true,
+                        CinemaId = firstCinema.CinemaId,
+                        IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
+                        FaceVector = null
+                    };
+
+                    await Repository<StaffProfileEntity>().AddAsync(newProfile);
+                }
+            }
+
             await _auditLogService.WriteAsync(
                 "Update",
                 "UserRole",
@@ -209,6 +245,101 @@ public class AdminManageUserService
             .ToListAsync();
     }
 
+    public async Task<BaseResponse<List<ResponsePermissionDto>>> GetAllPermissionsAsync()
+    {
+        var permissions = await Query<PermissionEntity>()
+            .AsNoTracking()
+            .Select(p => new ResponsePermissionDto
+            {
+                PermissionId = p.PermissionId,
+                PermissionInfo = p.PermissionInfo
+            })
+            .ToListAsync();
+
+        return new BaseResponse<List<ResponsePermissionDto>>
+        {
+            IsSuccess = true,
+            Data = permissions,
+            Message = "Lấy danh sách quyền thành công."
+        };
+    }
+
+    public async Task<BaseResponse<List<ResponseRolePermissionsDto>>> GetRolesPermissionsAsync()
+    {
+        var roles = await Query<RoleListInfoEntity>()
+            .AsNoTracking()
+            .Select(r => new ResponseRolePermissionsDto
+            {
+                RoleId = r.RoleId,
+                RoleName = r.RoleName,
+                Permissions = r.PermissionForRoleEntities.Select(pr => new ResponsePermissionDto
+                {
+                    PermissionId = pr.PermissionId,
+                    PermissionInfo = pr.PermissionEntity.PermissionInfo
+                }).ToList()
+            })
+            .ToListAsync();
+
+        return new BaseResponse<List<ResponseRolePermissionsDto>>
+        {
+            IsSuccess = true,
+            Data = roles,
+            Message = "Lấy danh sách vai trò và quyền thành công."
+        };
+    }
+
+    public async Task<BaseResponse<string>> UpdateRolePermissionsAsync(Guid roleId, List<Guid> permissionIds)
+    {
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var role = await Repository<RoleListInfoEntity>().FindAsync(roleId);
+            if (role == null)
+            {
+                return new BaseResponse<string> { IsSuccess = false, Message = "Không tìm thấy vai trò." };
+            }
+
+            // Xóa tất cả quyền cũ của vai trò này
+            await Query<PermissionForRoleEntity>()
+                .Where(pr => pr.RoleId == roleId)
+                .ExecuteDeleteAsync();
+
+            // Gán danh sách quyền mới
+            var newMappings = permissionIds.Select(pid => new PermissionForRoleEntity
+            {
+                RoleId = roleId,
+                PermissionId = pid
+            }).ToList();
+
+            if (newMappings.Any())
+            {
+                await Repository<PermissionForRoleEntity>().AddRangeAsync(newMappings);
+            }
+
+            await _auditLogService.WriteAsync(
+                "Update",
+                "RolePermissions",
+                roleId,
+                role.RoleName,
+                $"Cập nhật danh sách quyền cho vai trò {role.RoleName}.");
+
+            await _unitOfWork.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new BaseResponse<string>
+            {
+                IsSuccess = true,
+                Message = $"Cập nhật quyền cho vai trò {role.RoleName} thành công."
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex.Message);
+            await transaction.RollbackAsync();
+            throw CustomSystemException.SystemExceptionCaller();
+        }
+    }
+
     private IQueryable<TEntity> Query<TEntity>() where TEntity : class
     {
         return Repository<TEntity>().Query();
@@ -218,4 +349,17 @@ public class AdminManageUserService
     {
         return _unitOfWork.Repository<TEntity>();
     }
+}
+
+public class ResponsePermissionDto
+{
+    public Guid PermissionId { get; set; }
+    public string PermissionInfo { get; set; } = string.Empty;
+}
+
+public class ResponseRolePermissionsDto
+{
+    public Guid RoleId { get; set; }
+    public string RoleName { get; set; } = string.Empty;
+    public List<ResponsePermissionDto> Permissions { get; set; } = [];
 }

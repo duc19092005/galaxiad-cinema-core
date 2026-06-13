@@ -8,7 +8,7 @@ namespace BusinessLayer.Services.IdentityAccess;
 
 public class Jwt_helper
 {
-    public static string? Encrypt(string jwtKey , string jwtIss , string jwtAud ,string userEmail , string username , Guid userId , string [] userRoles)
+    public static string? Encrypt(string jwtKey , string jwtIss , string jwtAud ,string userEmail , string username , Guid userId , string [] userRoles, string[] userPermissions)
     {
         var claims = new List<Claim>
         {
@@ -20,6 +20,11 @@ public class Jwt_helper
         foreach (var roleName in userRoles)
         {
             claims.Add(new Claim(ClaimTypes.Role, roleName));
+        }
+
+        foreach (var permissionName in userPermissions)
+        {
+            claims.Add(new Claim("permission", permissionName));
         }
         
         var SecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));

@@ -24,9 +24,12 @@ public class AddCinemaReqDto
     [MaxLength(100, ErrorMessage = "Cinema City cannot exceed 100 characters")]
     public string CinemaCity { get; set; } = string.Empty;
     
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    
     [Required(ErrorMessage = "Release Date is Required")]
     public DateTime? ActiveAt { get; set; }
-
+    
     /// <summary>
     /// Helper list for Frontend to display city selection
     /// </summary>
@@ -52,6 +55,9 @@ public class EditCinemaReqDto
 
     [MaxLength(100, ErrorMessage = "Cinema City cannot exceed 100 characters")]
     public string? CinemaCity { get; set; }
+    
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     
     public DateTime? ActiveAt { get; set; }
 }

@@ -54,6 +54,8 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
                 CinemaDescription = x.CinemaDescription,
                 CinemaName = x.CinemaName,
                 CinemaHotlineNumber = x.CinemaHotLineNumber,
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
                 TotalRooms = x.AuditoriumInfoEntities.Count,
                 TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
                 FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
@@ -101,6 +103,8 @@ public class FacilitiesManagerReadCinemaUseCase : IReadBehavior<ResFacilitiesMan
                     CinemaDescription = x.CinemaDescription,
                     CinemaLocation = x.CinemaLocation,
                     CinemaHotlineNumber = x.CinemaHotLineNumber,
+                    Latitude = x.Latitude,
+                    Longitude = x.Longitude,
                     TotalRooms = x.AuditoriumInfoEntities.Count,
                     TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
                     FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"

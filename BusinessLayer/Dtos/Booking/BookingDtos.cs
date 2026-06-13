@@ -260,6 +260,16 @@ public class ResPublicSimpleCinemaDto
     public string CinemaName { get; set; } = string.Empty;
 }
 
+public class ResPublicNearestCinemaDto
+{
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
+    public string CinemaLocation { get; set; } = string.Empty;
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double DistanceInKm { get; set; }
+}
+
 public class ResPublicSimpleMovieDto
 {
     public Guid MovieId { get; set; }

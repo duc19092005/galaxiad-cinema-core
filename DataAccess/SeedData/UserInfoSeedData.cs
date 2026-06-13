@@ -12,6 +12,8 @@ public static class SeedDataUserInfos
         var movieManagerId = Guid.Parse("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7");
         var theaterManagerId = Guid.Parse("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5");
         var facilitiesManagerId = Guid.Parse("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e");
+        var posTicketId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a01");
+        var posFoodId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a02");
 
         var defaultDate = new DateTime(2024, 1, 1);
 
@@ -56,6 +58,26 @@ public static class SeedDataUserInfos
                 PhoneNumber = "0933333333", 
                 DateOfBirth = new DateTime(1992, 8, 20),
                 IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[3]
+            },
+            new UserInfoEntity { 
+                UserId = posTicketId, 
+                UserEmail = "quay_ve_01@cinema.com", 
+                Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
+                UserName = "Quầy Vé 01", 
+                PhoneNumber = "0999000001", 
+                DateOfBirth = new DateTime(1990, 1, 1),
+                IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[4]
+            },
+            new UserInfoEntity { 
+                UserId = posFoodId, 
+                UserEmail = "quay_bapnuoc_01@cinema.com", 
+                Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi", 
+                AccountStatus = (Shared.Enums.AccountStatusEnum)1,
+                UserName = "Quầy Bắp Nước 01", 
+                PhoneNumber = "0999000002", 
+                DateOfBirth = new DateTime(1990, 1, 1),
+                IdentityCode = userIdentityCodeConstant.getUserIdentityCode()[5]
             }
         );
 
@@ -70,7 +92,11 @@ public static class SeedDataUserInfos
             // Các manager chuyên biệt
             new UserRoleInfoEntity { UserId = movieManagerId, RoleId = userRoles.MovieManager },
             new UserRoleInfoEntity { UserId = theaterManagerId, RoleId = userRoles.TheaterManager },
-            new UserRoleInfoEntity { UserId = facilitiesManagerId, RoleId = userRoles.FacilitiesManager }
+            new UserRoleInfoEntity { UserId = facilitiesManagerId, RoleId = userRoles.FacilitiesManager },
+
+            // Shared POS accounts có quyền Cashier
+            new UserRoleInfoEntity { UserId = posTicketId, RoleId = userRoles.Cashier },
+            new UserRoleInfoEntity { UserId = posFoodId, RoleId = userRoles.Cashier }
         );
     }
 }
