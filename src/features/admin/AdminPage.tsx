@@ -1,17 +1,19 @@
 // src/features/admin/AdminPage.tsx
 // Complete redesign with dark cinema theme
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   LayoutDashboard,
   Users,
   Building2,
   ShieldAlert,
+  KeyRound,
   Activity,
   Film,
   Calendar,
   DollarSign,
   Ticket,
+  Camera,
   Search,
   Loader2,
   RefreshCw,
@@ -27,6 +29,7 @@ import type { SidebarSection } from '../../components/AppSidebar';
 import Header from '../../components/Header';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
+import RolePermissionsSection from './components/RolePermissionsSection';
 import { adminApi } from '../../api/adminApi';
 import { authApi } from '../../api/authApi';
 import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
@@ -47,6 +50,12 @@ const statsCardStyle: React.CSSProperties = {
   border: '1px solid rgba(255,255,255,0.06)',
   borderRadius: 16,
   boxShadow: '0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
+};
+
+const getAdminErrorMessage = (error: unknown, fallback: string) => {
+  if (typeof error !== 'object' || error === null) return fallback;
+  const response = (error as { response?: { data?: { message?: string; Message?: string } } }).response;
+  return response?.data?.message ?? response?.data?.Message ?? fallback;
 };
 
 // ============================================
@@ -120,6 +129,31 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
     </span>
   );
 };
+
+const UserPortrait: React.FC<{ src?: string | null; name?: string; size?: number }> = ({ src, name, size = 32 }) => (
+  <div style={{
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    overflow: 'hidden',
+    background: 'var(--accent-soft)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    border: '1px solid var(--border-color)',
+  }}>
+    {src ? (
+      <img
+        src={src}
+        alt={name ? `${name} portrait` : 'User portrait'}
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+      />
+    ) : (
+      <UserCircle size={Math.max(16, size * 0.52)} style={{ color: 'var(--accent)' }} />
+    )}
+  </div>
+);
 
 // Database-backed real Admin Page
 
@@ -209,13 +243,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                 <tr key={user.userId}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 32, height: 32, borderRadius: '50%',
-                        background: 'var(--accent-soft)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        <UserCircle size={16} style={{ color: 'var(--accent)' }} />
-                      </div>
+                      <UserPortrait src={user.portraitImageUrl} name={user.fullName || user.userName} />
                       <span style={{ fontWeight: 600 }}>{user.fullName || user.userName || 'N/A'}</span>
                     </div>
                   </td>
@@ -414,7 +442,7 @@ const AdminPage: React.FC = () => {
   // Real data states
   const [users, setUsers] = useState<AdminUserDto[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
   const [auditLogsLoading, setAuditLogsLoading] = useState(false);
 
   // Modals state
@@ -433,9 +461,14 @@ const AdminPage: React.FC = () => {
     password: '',
     confirmPassword: '',
     fullName: '',
+    identityCode: '',
+    phoneNumber: '',
+    dateOfBirth: '',
   });
+  const [createUserPortraitFile, setCreateUserPortraitFile] = useState<File | null>(null);
+  const [createUserPortraitPreview, setCreateUserPortraitPreview] = useState<string | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
       const res = await adminApi.getUsers();
@@ -445,9 +478,9 @@ const AdminPage: React.FC = () => {
     } finally {
       setUsersLoading(false);
     }
-  };
+  }, [t]);
 
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     setAuditLogsLoading(true);
     try {
       const res = await adminApi.getRecentAuditLogs(50);
@@ -457,7 +490,7 @@ const AdminPage: React.FC = () => {
     } finally {
       setAuditLogsLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     if (activeTab === 'users') {
@@ -465,7 +498,7 @@ const AdminPage: React.FC = () => {
     } else if (activeTab === 'audit' || activeTab === 'dashboard') {
       fetchAuditLogs();
     }
-  }, [activeTab]);
+  }, [activeTab, fetchAuditLogs, fetchUsers]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -477,8 +510,8 @@ const AdminPage: React.FC = () => {
       await adminApi.updateUserStatus(userId, newStatus);
       showSuccess(t('toast.userStatusUpdated'));
       fetchUsers();
-    } catch (err: any) {
-      showError(err.response?.data?.message || t('toast.userStatusUpdateFailed'));
+    } catch (err) {
+      showError(getAdminErrorMessage(err, t('toast.userStatusUpdateFailed')));
     }
   };
 
@@ -504,8 +537,39 @@ const AdminPage: React.FC = () => {
   };
 
   const handleOpenCreateUser = () => {
-    setCreateUserForm({ userName: '', userEmail: '', password: '', confirmPassword: '', fullName: '' });
+    setCreateUserForm({
+      userName: '',
+      userEmail: '',
+      password: '',
+      confirmPassword: '',
+      fullName: '',
+      identityCode: '',
+      phoneNumber: '',
+      dateOfBirth: '',
+    });
+    setCreateUserPortraitFile(null);
+    setCreateUserPortraitPreview(null);
     setCreateUserModalOpen(true);
+  };
+
+  const handleCreateUserPortraitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      showError('Please choose an image file.');
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showError('Portrait image must be under 5MB.');
+      event.target.value = '';
+      return;
+    }
+
+    setCreateUserPortraitFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setCreateUserPortraitPreview(typeof reader.result === 'string' ? reader.result : null);
+    reader.readAsDataURL(file);
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -514,8 +578,20 @@ const AdminPage: React.FC = () => {
       showError('Passwords do not match.');
       return;
     }
-    if (createUserForm.password.length < 6) {
-      showError('Password must be at least 6 characters.');
+    if (createUserForm.password.length < 8) {
+      showError('Password must be at least 8 characters.');
+      return;
+    }
+    if (!/^\d{12}$/.test(createUserForm.identityCode)) {
+      showError('Identity code must be exactly 12 digits.');
+      return;
+    }
+    if (!/^\d{10}$/.test(createUserForm.phoneNumber)) {
+      showError('Phone number must be exactly 10 digits.');
+      return;
+    }
+    if (!createUserForm.dateOfBirth) {
+      showError('Date of birth is required.');
       return;
     }
     setCreateUserSubmitting(true);
@@ -525,19 +601,30 @@ const AdminPage: React.FC = () => {
         userEmail: createUserForm.userEmail,
         userPassword: createUserForm.password,
         userRepassword: createUserForm.confirmPassword,
-        identityCode: '',
-        phoneNumber: '',
-        dateOfBirth: new Date(Date.now() - 20 * 365.25 * 24 * 3600 * 1000).toISOString(),
+        identityCode: createUserForm.identityCode,
+        phoneNumber: createUserForm.phoneNumber,
+        dateOfBirth: new Date(`${createUserForm.dateOfBirth}T00:00:00`).toISOString(),
       });
       if (res.isSuccess) {
-        showSuccess('User account created successfully!');
+        if (createUserPortraitFile && res.data) {
+          try {
+            await adminApi.updateUserPortrait(res.data, createUserPortraitFile);
+            showSuccess('User account and portrait created successfully!');
+          } catch (portraitError) {
+            showError(getAdminErrorMessage(portraitError, 'Account created, but portrait upload failed.'));
+          }
+        } else {
+          showSuccess('User account created successfully!');
+        }
         setCreateUserModalOpen(false);
+        setCreateUserPortraitFile(null);
+        setCreateUserPortraitPreview(null);
         fetchUsers();
       } else {
-        showError((res as any).message || 'Failed to create user.');
+        showError(res.message || 'Failed to create user.');
       }
-    } catch (err: any) {
-      showError(err.response?.data?.message || 'Failed to create user account.');
+    } catch (err) {
+      showError(getAdminErrorMessage(err, 'Failed to create user account.'));
     } finally {
       setCreateUserSubmitting(false);
     }
@@ -549,6 +636,7 @@ const AdminPage: React.FC = () => {
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
+        { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
       ],
@@ -699,6 +787,9 @@ const AdminPage: React.FC = () => {
       case 'vouchers':
         return <VouchersSection />;
 
+      case 'permissions':
+        return <RolePermissionsSection />;
+
       case 'rights':
         return <TransferRightsView />;
 
@@ -770,7 +861,7 @@ const AdminPage: React.FC = () => {
         >
           <div
             style={{
-              width: '100%', maxWidth: 480,
+              width: '100%', maxWidth: 560,
               backgroundColor: 'var(--bg-elevated, #18181b)',
               border: '1px solid var(--border-color, #27272a)',
               borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
@@ -794,6 +885,51 @@ const AdminPage: React.FC = () => {
 
             {/* Form */}
             <form onSubmit={handleCreateUser} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '96px 1fr',
+                gap: 16,
+                alignItems: 'center',
+                padding: 14,
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(255,255,255,0.025)',
+              }}>
+                <label htmlFor="create-user-portrait" style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px dashed rgba(255, 138, 0, 0.45)',
+                  background: 'var(--bg-surface)',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}>
+                  {createUserPortraitPreview ? (
+                    <img src={createUserPortraitPreview} alt="Portrait preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <Camera size={24} style={{ color: 'var(--accent)' }} />
+                  )}
+                </label>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>Employee portrait</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Optional square portrait for staff identity checks. JPG, PNG, or WebP under 5MB.
+                    </p>
+                  </div>
+                  <input
+                    id="create-user-portrait"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCreateUserPortraitChange}
+                    style={{ fontSize: 12, color: 'var(--text-secondary)' }}
+                  />
+                </div>
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Username *</label>
                 <input
@@ -826,10 +962,45 @@ const AdminPage: React.FC = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Identity Code *</label>
+                  <input
+                    type="text" required
+                    inputMode="numeric"
+                    maxLength={12}
+                    placeholder="12 digit ID"
+                    value={createUserForm.identityCode}
+                    onChange={e => setCreateUserForm({ ...createUserForm, identityCode: e.target.value.replace(/\D/g, '') })}
+                    className="input"
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Phone Number *</label>
+                  <input
+                    type="text" required
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="10 digits"
+                    value={createUserForm.phoneNumber}
+                    onChange={e => setCreateUserForm({ ...createUserForm, phoneNumber: e.target.value.replace(/\D/g, '') })}
+                    className="input"
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Date of Birth *</label>
+                <input
+                  type="date" required
+                  value={createUserForm.dateOfBirth}
+                  onChange={e => setCreateUserForm({ ...createUserForm, dateOfBirth: e.target.value })}
+                  className="input"
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Password *</label>
                   <input
                     type="password" required
-                    placeholder="Min 6 chars"
+                    placeholder="Min 8 chars"
                     value={createUserForm.password}
                     onChange={e => setCreateUserForm({ ...createUserForm, password: e.target.value })}
                     className="input"

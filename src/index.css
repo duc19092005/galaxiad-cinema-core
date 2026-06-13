@@ -713,6 +713,19 @@ tr:hover td {
   .movie-grid {
     grid-template-columns: 1fr;
   }
+
+  .cashier-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-permissions-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .employee-layout,
+  .employee-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 480px) {

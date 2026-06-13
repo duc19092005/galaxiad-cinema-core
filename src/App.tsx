@@ -22,6 +22,8 @@ import AccountPage from './features/booking/AccountPage';
 import { ShowtimesPage } from './features/booking/ShowtimesPage';
 import { TheatersPage } from './features/booking/TheatersPage';
 import { OffersPage } from './features/booking/OffersPage';
+import CashierPage from './features/cashier/CashierPage';
+import ShiftNotificationListener from './components/ShiftNotificationListener';
 
 function App() {
   return (
@@ -29,7 +31,8 @@ function App() {
       <CinemaProvider>
         <Toaster position="top-right" />
         <Router>
-        <Routes>
+          <ShiftNotificationListener />
+          <Routes>
           {/* Route root - check token và redirect */}
           <Route path="/" element={<HomePage />} />
 
@@ -43,7 +46,7 @@ function App() {
           <Route path="/showtimes" element={<ShowtimesPage />} />
           <Route path="/theaters" element={<TheatersPage />} />
           <Route path="/offers" element={<OffersPage />} />
-          <Route path="/cashier" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><CashierPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
           <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
@@ -56,8 +59,8 @@ function App() {
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
 
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+          </Routes>
+        </Router>
       </CinemaProvider>
     </ThemeProvider>
   );

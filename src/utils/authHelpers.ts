@@ -30,7 +30,7 @@ export const verifyAuth = async (): Promise<boolean> => {
  * Verify authentication và lấy user info từ API get-profile
  * Nếu chưa đăng nhập (401), sẽ return null để redirect về login
  */
-export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; username: string; roles: string[] } | null> => {
+export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null } | null> => {
   try {
     const response = await authApi.getProfile();
 
@@ -40,6 +40,8 @@ export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; usernam
         userId: response.data.userId,
         username: response.data.username,
         roles: response.data.roles,
+        permissions: response.data.permissions,
+        portraitImageUrl: response.data.portraitImageUrl,
       };
       // Cập nhật localStorage với thông tin mới nhất từ server
       localStorage.setItem('user_info', JSON.stringify(userData));
@@ -48,7 +50,7 @@ export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; usernam
 
     localStorage.removeItem('user_info');
     return null;
-  } catch (error) {
+  } catch {
     // FALLBACK: Trình duyệt trên Vercel thường chặn HttpOnly Cookie của domain khác
     // Nếu API trả về 401 hoặc lỗi mạng, ta dùng dữ liệu lưu tạm để người dùng không bị văng ra
     const storedUser = localStorage.getItem('user_info');

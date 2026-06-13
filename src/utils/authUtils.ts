@@ -6,6 +6,7 @@ export interface DecodedToken {
   name?: string;
   role?: string;
   roles?: string[];
+  permissions?: string[];
   exp?: number;
   nbf?: number;
   iss?: string;
@@ -79,6 +80,13 @@ export const decodeJWT = (token: string): DecodedToken | null => {
       }
     }
 
+    const permissionValue = (parsed as Record<string, unknown>).permission;
+    if (permissionValue) {
+      result.permissions = Array.isArray(permissionValue)
+        ? permissionValue.map(String)
+        : [String(permissionValue)];
+    }
+
     // Check if token is expired
     if (result.exp && result.exp < Date.now() / 1000) {
       return null; // Token expired
@@ -94,7 +102,7 @@ export const decodeJWT = (token: string): DecodedToken | null => {
 /**
  * Lấy user info từ localStorage (đã được lưu từ login response)
  */
-export const getUserInfoFromStorage = (): { userId: string; username: string; roles: string[] } | null => {
+export const getUserInfoFromStorage = (): { userId: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null } | null => {
   try {
     const stored = localStorage.getItem('user_info');
     if (!stored) return null;
@@ -113,7 +121,7 @@ export const getUserInfoFromStorage = (): { userId: string; username: string; ro
 /**
  * Tạo user info object từ token để lưu vào localStorage (tương thích với format hiện tại)
  */
-export const createUserInfoFromToken = (decoded: DecodedToken): { userId: string; username: string; roles: string[] } | null => {
+export const createUserInfoFromToken = (decoded: DecodedToken): { userId: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null } | null => {
   if (!decoded.userId || !decoded.roles || decoded.roles.length === 0) {
     return null;
   }
@@ -123,5 +131,17 @@ export const createUserInfoFromToken = (decoded: DecodedToken): { userId: string
     // Ưu tiên name, sau đó email, cuối cùng là userId
     username: decoded.name || decoded.email || decoded.userId,
     roles: decoded.roles,
+    permissions: decoded.permissions,
   };
+};
+
+export const hasPermission = (requiredPermission: string): boolean => {
+  try {
+    const stored = localStorage.getItem('user_info');
+    if (!stored) return false;
+    const userInfo = JSON.parse(stored) as { permissions?: string[]; roles?: string[] };
+    return Boolean(userInfo.roles?.includes('Admin') || userInfo.permissions?.includes(requiredPermission));
+  } catch {
+    return false;
+  }
 };

@@ -4,6 +4,7 @@ export interface AdminUserDto {
     userEmail: string;
     userName: string;
     fullName?: string; // Kept for backward compatibility if needed
+    portraitImageUrl?: string | null;
     userRoles: string; // e.g., "Admin,TheaterManager"
     accountStatus: number; // 1: Active, 2: Locked, 3: Banned...
     registerMethod: number;
@@ -30,6 +31,17 @@ export interface GroupedScheduleJobDto {
 export interface RoleDto {
     roleId: string;
     roleName: string;
+}
+
+export type UserRoleDto = RoleDto | string;
+
+export interface PermissionDto {
+    permissionId: string;
+    permissionInfo: string;
+}
+
+export interface RolePermissionsDto extends RoleDto {
+    permissions: PermissionDto[];
 }
 
 export interface AuditLogDto {

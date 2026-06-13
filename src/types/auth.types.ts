@@ -72,6 +72,8 @@ export interface UserLoginData {
   username: string;
   userName?: string; // Backend actually sends userName instead of username
   roles: string[];
+  permissions?: string[];
+  portraitImageUrl?: string | null;
   accessToken?: string;
   managedCinemaNames?: string[];
   managedCinemas?: ManagedCinemaDto[];
@@ -86,6 +88,8 @@ export interface UserProfileData {
   phoneNumber: string;
   identityCode: string;
   roles: string[];
+  permissions?: string[];
+  portraitImageUrl?: string | null;
   managedCinemaNames?: string[];
   managedCinemas?: ManagedCinemaDto[];
 }

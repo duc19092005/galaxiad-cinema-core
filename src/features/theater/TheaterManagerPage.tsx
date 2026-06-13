@@ -18,6 +18,7 @@ import ManagementDashboard from '../../components/ManagementDashboard';
 import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
 import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar } from 'lucide-react';
+import EmployeesShiftWorkspace from './components/EmployeesShiftWorkspace';
 
 /**
  * TheaterManagerPage – UI for theater schedule management with dark cinema theme.
@@ -111,12 +112,7 @@ const TheaterManagerPage: React.FC = () => {
       case 'dashboard':
         return <ManagementDashboard role="theater" />;
       case 'employees':
-        return (
-          <div className="state-center" style={{ minHeight: 300 }}>
-            <Users size={40} style={{ color: 'var(--text-muted)', opacity: 0.3, marginBottom: 12 }} />
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{t('Employee Management coming soon…')}</p>
-          </div>
-        );
+        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} />;
       case 'schedule':
         return (
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
