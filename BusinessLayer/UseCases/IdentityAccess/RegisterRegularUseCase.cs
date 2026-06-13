@@ -110,7 +110,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
             return new BaseResponse<string>()
             {
                 IsSuccess = true,
-                Data = null,
+                Data = generateUserId.ToString(),
                 Message = Messages.Auth.RegisterSuccess
             };
         }catch (AppException) {

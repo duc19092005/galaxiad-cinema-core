@@ -6,7 +6,9 @@ using BusinessLayer.Constants;
 using Microsoft.EntityFrameworkCore;
 using Shared.Enums;
 using BusinessLayer.Entities.UserInfos;
+using BusinessLayer.Interfaces.IThirdPersonServices;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 using Shared.Exceptions;
 using Shared.Interfaces.Persistence;
 
@@ -17,6 +19,7 @@ public class AdminUserDto
     public Guid UserId { get; set; }
     public string UserEmail { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
+    public string? PortraitImageUrl { get; set; }
 
     public string UserRoles { get; set; } = string.Empty;
     public AccountStatusEnum AccountStatus { get; set; }
@@ -28,12 +31,14 @@ public class AdminManageUserService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AdminManageUserService> _logger;
     private readonly AuditLogService _auditLogService;
+    private readonly IImageStorageService _imageStorageService;
 
-    public AdminManageUserService(IUnitOfWork unitOfWork, ILogger<AdminManageUserService> logger, AuditLogService auditLogService)
+    public AdminManageUserService(IUnitOfWork unitOfWork, ILogger<AdminManageUserService> logger, AuditLogService auditLogService, IImageStorageService imageStorageService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _auditLogService = auditLogService;
+        _imageStorageService = imageStorageService;
     }
 
     public async Task<BaseResponse<List<AdminUserDto>>> GetAllUsersAsync()
@@ -45,6 +50,7 @@ public class AdminManageUserService
                 UserId = u.UserId,
                 UserEmail = u.UserEmail,
                 UserName = u.UserName ?? string.Empty,
+                PortraitImageUrl = u.PortraitImageUrl,
                 AccountStatus = u.AccountStatus,
                 RegisterMethod = u.RegisterMethod,
                 UserRoles = String.Join("," , u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))
@@ -221,6 +227,51 @@ public class AdminManageUserService
         await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string> { IsSuccess = true, Message = "Assigned cinema successfully." };
+    }
+
+    public async Task<BaseResponse<string>> UpdateUserPortraitAsync(Guid userId, IFormFile? portrait)
+    {
+        if (portrait == null || portrait.Length == 0)
+        {
+            return new BaseResponse<string> { IsSuccess = false, Message = "Portrait image is required." };
+        }
+
+        var user = await Repository<UserInfoEntity>().FindAsync(userId);
+        if (user == null)
+        {
+            return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
+        }
+
+        var oldPortraitUrl = user.PortraitImageUrl;
+        var uploadResult = await _imageStorageService.PostImageAsync(portrait);
+        if (!uploadResult.Success)
+        {
+            return new BaseResponse<string> { IsSuccess = false, Message = uploadResult.Result };
+        }
+
+        user.PortraitImageUrl = uploadResult.Result;
+        Repository<UserInfoEntity>().Update(user);
+
+        await _auditLogService.WriteAsync(
+            "Update",
+            "UserPortrait",
+            user.UserId,
+            user.UserEmail,
+            "Updated user portrait image.");
+
+        await _unitOfWork.SaveChangesAsync();
+
+        if (!string.IsNullOrWhiteSpace(oldPortraitUrl))
+        {
+            _ = await _imageStorageService.DeleteImageAsync(oldPortraitUrl);
+        }
+
+        return new BaseResponse<string>
+        {
+            IsSuccess = true,
+            Data = uploadResult.Result,
+            Message = "Portrait image updated successfully."
+        };
     }
 
     public async Task<List<string>> GetUserRolesAsync(Guid userId)

@@ -44,7 +44,7 @@ Quy trình thêm mới một tài khoản nhân viên được tiến hành theo
     {
       "isSuccess": true,
       "message": "Đăng ký thành công",
-      "data": true
+      "data": "e9c8f615-3a01-42f5-b28f-f9c3b8a18d24"
     }
     ```
 

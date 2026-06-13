@@ -35,6 +35,18 @@ public class AdminManageUsersController : ControllerBase
         }
         return Ok(result);
     }
+
+    [HttpPut("{userId}/portrait")]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> UpdateUserPortrait(Guid userId, IFormFile portrait)
+    {
+        var result = await _adminManageUserService.UpdateUserPortraitAsync(userId, portrait);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
     
     [HttpGet("{userId}/role")]
     public async Task<IActionResult> GetUserRole(Guid userId)

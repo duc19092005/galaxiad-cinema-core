@@ -6,6 +6,7 @@ public class ResRegularLoginDto
 {
     public Guid UserId { get; set; }
     public string? Username { get; set; } = string.Empty;
+    public string? PortraitImageUrl { get; set; }
     public string[] Roles { get; set; } = [];
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

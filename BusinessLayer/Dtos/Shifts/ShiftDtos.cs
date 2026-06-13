@@ -123,6 +123,7 @@ public class ResStaffProfileDto
     public Guid UserId { get; set; }
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? PortraitImageUrl { get; set; }
     public bool WorkingStatus { get; set; }
     public Guid CinemaId { get; set; }
     public string CinemaName { get; set; } = string.Empty;

@@ -44,6 +44,7 @@ public class UserProfileUseCase : IProfileBehavior
                 {
                     UserId = x.UserId,
                     Username = x.UserName,
+                    PortraitImageUrl = x.PortraitImageUrl,
                     Roles = userRoleRepository.Query()
                                 .Where(r => r.UserId == x.UserId)
                                 .Select(r => r.RoleListInfoEntity.RoleName)

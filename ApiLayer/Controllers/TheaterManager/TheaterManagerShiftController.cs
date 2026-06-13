@@ -215,6 +215,7 @@ public class TheaterManagerShiftController : ControllerBase
                 UserId = s.UserId,
                 UserName = s.UserInfoEntity.UserName,
                 Email = s.UserInfoEntity.UserEmail,
+                PortraitImageUrl = s.UserInfoEntity.PortraitImageUrl,
                 WorkingStatus = s.WorkingStatus,
                 CinemaId = s.CinemaId,
                 CinemaName = s.CinemaInfoEntity.CinemaName,

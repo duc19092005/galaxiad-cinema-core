@@ -54,6 +54,9 @@ namespace BusinessLayer.Entities.UserInfos
         [Column(TypeName = "char(10)")] 
         public string PhoneNumber { get; set; } = null!;
 
+        [Column(TypeName = "varchar(2048)")]
+        public string? PortraitImageUrl { get; set; }
+
         public List<UserRoleInfoEntity> UserRoleInfoEntity { get; set; } = [];
         
         public long RewardPoints { get; set; } = 0;
