@@ -19,14 +19,14 @@ Kế hoạch này tích hợp luồng nghiệp vụ **Tài khoản chung phòng 
 ## 2. Thiết kế Luồng Duyệt ca, Hủy ca & Gán nhân viên trực tiếp
 
 ### A. Duyệt ca và Hủy ca sau khi duyệt
-* **Duyệt ca (`POST /api/v1/TheaterManager/shifts/registrations/{id}/approve`)**:
+* **Duyệt ca (`POST /api/v1/TheaterManager/Shifts/registrations/{id}/approve`)**:
     * Chuyển trạng thái yêu cầu đăng ký ca trực từ `"Pending"` sang `"Approved"`.
-* **Hủy ca trực (`POST /api/v1/TheaterManager/shifts/registrations/{id}/cancel`)**:
+* **Hủy ca trực (`POST /api/v1/TheaterManager/Shifts/registrations/{id}/cancel`)**:
     * Quản lý hoặc Admin có thể hủy ca đã duyệt của nhân viên (Ví dụ: Nhân viên báo ốm đột xuất).
     * Hệ thống chuyển trạng thái ca trực từ `"Approved"` sang `"Cancelled"`.
     * Lúc này vị trí trống của ca đó ngày hôm đó sẽ tự động được nhả ra (khi đếm số lượng ca trực hợp lệ sẽ bỏ qua trạng thái `"Cancelled"` và `"Rejected"`). Nhân viên khác có thể đăng ký vào ca đó.
 
-### B. Gán trực tiếp nhân viên mới (`POST /api/v1/TheaterManager/shifts/assign`)
+### B. Gán trực tiếp nhân viên mới (`POST /api/v1/TheaterManager/Shifts/assign`)
 * **Chức năng**: Cho phép Admin/Quản lý rạp gán thẳng một nhân viên vào một ca trực mà không cần qua bước nhân viên tự đăng ký rồi quản lý duyệt.
 * **Xử lý trên BE**:
     1. Nhận thông tin: `StaffId` (Id nhân viên được gán), `ShiftTemplateId` (Mẫu ca), `RegistrationDate` (Ngày trực).
@@ -52,8 +52,8 @@ sequenceDiagram
     Staff->>POS: 1. Chọn tên mình (StaffId) và bấm "Vào ca (Clock-In)"
     Note over POS: Mở webcam, quét khuôn mặt và trích xuất Face Vector (128 số thực)
     
-    POS->>BE: 2. POST /api/v1/Cashier/shifts/clock-in (StaffId, FaceVector, simulatedDateTime)
-    Note over BE: Đính kèm JWT chung của quầy trong Header
+    POS->>BE: 2. POST /api/v1/Staff/Shifts/clock-in (StaffId, FaceVector, simulatedDateTime)
+    Note over BE: Clock-In cho phép anonymous; FE có thể gọi từ màn POS chung trước khi có JWT cá nhân
     
     BE->>DB: 3. Lấy hồ sơ StaffProfile của nhân viên theo StaffId
     DB-->>BE: 4. Trả về StaffProfile (FaceVector đã mã hóa AES-256)
@@ -77,7 +77,7 @@ sequenceDiagram
     Note over POS: POS thay thế JWT chung bằng JWT cá nhân của Nhân viên A.<br/>Giao diện chuyển sang màn hình làm việc của Nhân viên A.<br/>Tất cả giao dịch bán vé lúc này được lưu dưới tên Nhân viên A.
     
     Staff->>POS: 13. Hết ca trực, nhấn "Giao ca (Clock-Out)"
-    POS->>BE: 14. POST /api/v1/Cashier/shifts/clock-out (simulatedDateTime)
+    POS->>BE: 14. POST /api/v1/Staff/Shifts/clock-out (simulatedDateTime)
     Note over BE: Đính kèm JWT cá nhân của Nhân viên A
     BE->>DB: 15. Cập nhật giờ ra ca, tính tổng giờ làm, tổng tiền lương
     BE-->>POS: 16. Trả về HTTP 200 OK
@@ -111,9 +111,9 @@ sequenceDiagram
     *   `AssignShiftDirectlyAsync(Guid staffId, Guid shiftTemplateId, DateTime date, Guid managerUserId)`: Gán thẳng nhân viên vào ca trực (sử dụng Redis lock, tạo bản ghi `Status = "Approved"`).
 
 ### E. Chấm công Khuôn mặt Euclidean & Session Switching
-1.  **Đăng ký khuôn mặt Staff (`POST /api/v1/Staff/register-face`)**: Mã hóa vector 128 số bằng AES-256 lưu vào `StaffProfileEntity.FaceVector`.
-2.  **Điểm danh vào ca (`POST /api/v1/Cashier/shifts/clock-in`)**: So khớp Euclidean $\le 0.6$ với vector mẫu đã giải mã AES, kiểm tra ca trực `"Approved"`, tạo log chấm công và trả về JWT cá nhân mới của nhân viên.
-3.  **Điểm danh ra ca (`POST /api/v1/Cashier/shifts/clock-out`)**: Tính toán tổng giờ làm và tiền lương dựa trên lương theo giờ của role.
+1.  **Đăng ký khuôn mặt Staff (`POST /api/v1/Staff/Shifts/{staffId}/register-face`)**: Mã hóa vector 128 số bằng AES-256 lưu vào `StaffProfileEntity.FaceVector`.
+2.  **Điểm danh vào ca (`POST /api/v1/Staff/Shifts/clock-in`)**: So khớp Euclidean $\le 0.6$ với vector mẫu đã giải mã AES, kiểm tra ca trực `"Approved"`, tạo log chấm công và trả về JWT cá nhân mới của nhân viên.
+3.  **Điểm danh ra ca (`POST /api/v1/Staff/Shifts/clock-out`)**: Tính toán tổng giờ làm và tiền lương dựa trên lương theo giờ của role.
 
 ---
 

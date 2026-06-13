@@ -16,6 +16,7 @@ namespace ApiLayer.Controllers.Staff;
 [ApiController]
 [Authorize]
 [Route("api/Staff/Shifts")]
+[Route("api/v1/Staff/Shifts")]
 [Tags("Staff - Shift Registration & Attendance (POS)")]
 [ApiExplorerSettings(GroupName = "v1-user")]
 public class StaffShiftController : ControllerBase

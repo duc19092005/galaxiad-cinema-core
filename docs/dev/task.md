@@ -232,9 +232,9 @@ Current scope: backend only. Do not edit Frontend.
     - `[x]` Tạo `RegisterShiftUseCase.cs` (Đăng ký ca làm nhân viên).
     - `[x]` Tạo `ApproveShiftRegistrationUseCase.cs` (Duyệt ca, từ chối ca, hủy ca đã duyệt, và gán ca trực tiếp).
   - `[x]` **Giai đoạn 12: Chấm công Khuôn mặt Euclidean & Session Switching**
-    - `[x]` Tạo endpoint `POST /api/v1/Staff/register-face` mã hóa AES-256 lưu face vector.
-    - `[x]` Tạo endpoint `POST /api/v1/Cashier/shifts/clock-in` đối khớp Euclidean, kiểm tra ca làm, ghi log, sinh JWT cá nhân mới.
-    - `[x]` Tạo endpoint `POST /api/v1/Cashier/shifts/clock-out` chấm công ra, tính lương.
+    - `[x]` Tạo endpoint `POST /api/v1/Staff/Shifts/{staffId}/register-face` mã hóa AES-256 lưu face vector.
+    - `[x]` Tạo endpoint `POST /api/v1/Staff/Shifts/clock-in` đối khớp Euclidean, kiểm tra ca làm, ghi log, sinh JWT cá nhân mới.
+    - `[x]` Tạo endpoint `POST /api/v1/Staff/Shifts/clock-out` chấm công ra, tính lương.
     - `[x]` Viết các Controllers tương ứng (`StaffShiftController`, `TheaterManagerShiftController` hỗ trợ các API đăng ký, duyệt/hủy, gán ca).
 
 ### Notes

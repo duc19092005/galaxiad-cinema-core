@@ -75,7 +75,7 @@ sequenceDiagram
     Staff->>POS: 1. Chọn tên mình (StaffId) và bấm "Vào ca (Clock-In)"
     Note over POS: Mở webcam, chụp ảnh khuôn mặt và trích xuất Face Vector (128 số thực)
     
-    POS->>BE: 2. POST /api/Staff/Shifts/clock-in (StaffId, FaceVector, simulatedDateTime)
+    POS->>BE: 2. POST /api/v1/Staff/Shifts/clock-in (StaffId, FaceVector, simulatedDateTime)
     Note over BE: Request gửi lên KHÔNG cần đính kèm Bearer token (API cho phép Anonymous)
     
     BE->>DB: 3. Lấy hồ sơ StaffProfile của nhân viên theo StaffId
@@ -100,7 +100,7 @@ sequenceDiagram
     Note over POS: POS lưu JWT cá nhân của Nhân viên A vào bộ nhớ tạm.<br/>Tất cả các API call tiếp theo (bán vé, tạo hóa đơn) sẽ đính kèm JWT cá nhân này.<br/>Màn hình POS hiển thị lời chào "Chào mừng [Tên nhân viên] vào ca".
     
     Staff->>POS: 13. Hết ca trực, nhấn "Ra ca (Clock-Out)"
-    POS->>BE: 14. POST /api/Staff/Shifts/clock-out (simulatedDateTime)
+    POS->>BE: 14. POST /api/v1/Staff/Shifts/clock-out (simulatedDateTime)
     Note over BE: Đính kèm JWT cá nhân của Nhân viên A trong Authorization Header
     BE->>DB: 15. Cập nhật giờ ra ca, tính tổng giờ làm, tổng tiền lương
     BE-->>POS: 16. Trả về HTTP 200 OK
@@ -111,7 +111,7 @@ sequenceDiagram
 
 ## 3. Khóa chống trùng lặp ca trực (Redis Distributed Lock)
 
-Khi nhân viên đăng ký ca trực (`POST /api/Staff/Shifts/register`) hoặc quản lý gán ca trực tiếp (`POST /api/TheaterManager/Shifts/assign`), Backend sẽ khóa tài nguyên ca trực theo ngày (`lock:shift:{ShiftTemplateId}:{Date:yyyyMMdd}`) để ngăn chặn hiện tượng tranh chấp làm vượt quá `MaxStaff`.
+Khi nhân viên đăng ký ca trực (`POST /api/v1/Staff/Shifts/register`) hoặc quản lý gán ca trực tiếp (`POST /api/v1/TheaterManager/Shifts/assign`), Backend sẽ khóa tài nguyên ca trực theo ngày (`lock:shift:{ShiftTemplateId}:{Date:yyyyMMdd}`) để ngăn chặn hiện tượng tranh chấp làm vượt quá `MaxStaff`.
 
 *   **HTTP Status Code khi bị xung đột:** `409 Conflict` (với `errorCode: "SHIFT_ERR"`).
 *   **Xử lý ở FE:** Khi nhận mã lỗi `409 Conflict`, hãy hiển thị thông điệp: *"Hệ thống đang bận xử lý yêu cầu cho ca trực này. Vui lòng thử lại sau vài giây."* thay vì báo lỗi hệ thống.
@@ -124,7 +124,7 @@ Hệ thống cung cấp kênh Server-Sent Events (SSE) để Frontend đăng ký
 
 ### Thiết lập kết nối SSE ở FE:
 ```javascript
-const eventSource = new EventSource("http://localhost:8080/api/Staff/Shifts/notifications/sse", {
+const eventSource = new EventSource("http://localhost:8080/api/v1/Staff/Shifts/notifications/sse", {
   withCredentials: true // Gửi kèm cookie JWT nếu có
 });
 
@@ -158,10 +158,11 @@ eventSource.onerror = (err) => {
 
 ## 5. Chi tiết các API dành cho Nhân viên (Staff APIs)
 
-Base Route: `/api/Staff/Shifts` (Yêu cầu Authorization Header ngoại trừ Clock-In)
+Base Route: `/api/v1/Staff/Shifts` (Yêu cầu Authorization Header ngoại trừ Clock-In)
+Compatibility note: backend vẫn giữ alias cũ `/api/Staff/Shifts`, nhưng FE mới nên dùng route canonical `/api/v1/Staff/Shifts`.
 
 ### A. Xem danh sách ca làm trống tại chi nhánh rạp của mình
-*   **Method & Route:** `GET /api/Staff/Shifts/available`
+*   **Method & Route:** `GET /api/v1/Staff/Shifts/available`
 *   **Query Parameters:**
     *   `date`: Ngày muốn xem `yyyy-MM-dd` (ví dụ `2026-06-13`).
 *   **Response (200 OK):**
@@ -188,7 +189,7 @@ Base Route: `/api/Staff/Shifts` (Yêu cầu Authorization Header ngoại trừ C
 
 ### B. Đăng ký ca trực theo dải ngày (Hỗ trợ kéo thả trên Calendar)
 Hỗ trợ đăng ký một ca làm cho cả một khoảng thời gian (từ ngày này đến ngày kia) kèm lời nhắn tự chọn gửi đến quản lý.
-*   **Method & Route:** `POST /api/Staff/Shifts/register`
+*   **Method & Route:** `POST /api/v1/Staff/Shifts/register`
 *   **Request Body:**
     ```json
     {
@@ -209,7 +210,7 @@ Hỗ trợ đăng ký một ca làm cho cả một khoảng thời gian (từ ng
     *Lưu ý:* Nếu có ngày bị trùng lặp hoặc đầy chỗ, server sẽ tự động loại trừ và trả ra thông báo chi tiết trong trường `message` về các ngày đăng ký thành công/thất bại.
 
 ### C. Xem lịch sử đăng ký ca trực cá nhân
-*   **Method & Route:** `GET /api/Staff/Shifts/my-registrations`
+*   **Method & Route:** `GET /api/v1/Staff/Shifts/my-registrations`
 *   **Response (200 OK):**
     ```json
     {
@@ -235,7 +236,7 @@ Hỗ trợ đăng ký một ca làm cho cả một khoảng thời gian (từ ng
 
 ### D. Xem thông tin bảng lương tích lũy (Hiển thị ở Profile cá nhân)
 Nhân viên xem lịch sử các kỳ nhận lương đã chi trả hoặc đang chờ duyệt thanh toán.
-*   **Method & Route:** `GET /api/Staff/Shifts/my-payroll`
+*   **Method & Route:** `GET /api/v1/Staff/Shifts/my-payroll`
 *   **Response (200 OK):**
     ```json
     {
@@ -268,7 +269,7 @@ Nhân viên xem lịch sử các kỳ nhận lương đã chi trả hoặc đang
     ```
 
 ### E. Đăng ký mẫu khuôn mặt (Face Vector)
-*   **Method & Route:** `POST /api/Staff/Shifts/{staffId}/register-face`
+*   **Method & Route:** `POST /api/v1/Staff/Shifts/{staffId}/register-face`
 *   **Request Body:**
     ```json
     {
@@ -288,7 +289,7 @@ Nhân viên xem lịch sử các kỳ nhận lương đã chi trả hoặc đang
     ```
 
 ### F. Chấm công vào ca (Clock-In)
-*   **Method & Route:** `POST /api/Staff/Shifts/clock-in`
+*   **Method & Route:** `POST /api/v1/Staff/Shifts/clock-in`
 *   **Request Body:**
     ```json
     {
@@ -313,7 +314,7 @@ Nhân viên xem lịch sử các kỳ nhận lương đã chi trả hoặc đang
     ```
 
 ### G. Chấm công ra ca (Clock-Out)
-*   **Method & Route:** `POST /api/Staff/Shifts/clock-out`
+*   **Method & Route:** `POST /api/v1/Staff/Shifts/clock-out`
 *   **Request Body:**
     ```json
     {
@@ -333,10 +334,11 @@ Nhân viên xem lịch sử các kỳ nhận lương đã chi trả hoặc đang
 
 ## 6. Chi tiết các API dành cho Quản lý & Admin (Theater Manager APIs)
 
-Base Route: `/api/TheaterManager/Shifts` (Yêu cầu quyền truy cập của vai trò `TheaterManager` hoặc `Admin`)
+Base Route: `/api/v1/TheaterManager/Shifts` (Yêu cầu quyền truy cập của vai trò `TheaterManager` hoặc `Admin`)
+Compatibility note: backend vẫn giữ alias cũ `/api/TheaterManager/Shifts`, nhưng FE mới nên dùng route canonical `/api/v1/TheaterManager/Shifts`.
 
 ### A. Duyệt ca trực của nhân viên
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/registrations/{id}/approve`
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/registrations/{id}/approve`
 *   **Request Body:**
     ```json
     {
@@ -353,7 +355,7 @@ Base Route: `/api/TheaterManager/Shifts` (Yêu cầu quyền truy cập của va
     ```
 
 ### B. Từ chối yêu cầu đăng ký ca trực (Kèm lý do từ chối)
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/registrations/{id}/reject`
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/registrations/{id}/reject`
 *   **Request Body:**
     ```json
     {
@@ -370,7 +372,7 @@ Base Route: `/api/TheaterManager/Shifts` (Yêu cầu quyền truy cập của va
     ```
 
 ### C. Hủy ca trực đã được phê duyệt (Nhân viên xin nghỉ đột xuất)
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/registrations/{id}/cancel`
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/registrations/{id}/cancel`
 *   **Request Body:**
     ```json
     {
@@ -387,7 +389,7 @@ Base Route: `/api/TheaterManager/Shifts` (Yêu cầu quyền truy cập của va
     ```
 
 ### D. Gán trực tiếp nhân viên vào ca trực
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/assign`
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/assign`
 *   **Request Body:**
     ```json
     {
@@ -399,7 +401,7 @@ Base Route: `/api/TheaterManager/Shifts` (Yêu cầu quyền truy cập của va
 
 ### E. Tính toán bảng lương cho nhân viên
 Tổng hợp tất cả các ca trực đã hoàn thành nhưng chưa được kết toán lương của một nhân viên tính tới thời điểm được chọn, gộp lại thành hóa đơn lương trạng thái `Pending`.
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/payroll/calculate`
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/payroll/calculate`
 *   **Request Body:**
     ```json
     {
@@ -427,7 +429,7 @@ Tổng hợp tất cả các ca trực đã hoàn thành nhưng chưa được k
     ```
 
 ### F. Xác nhận đã thực trả lương (Đóng bảng lương)
-*   **Method & Route:** `POST /api/TheaterManager/Shifts/payroll/{id}/pay` (với `id` là `salaryTotalLoggerId`)
+*   **Method & Route:** `POST /api/v1/TheaterManager/Shifts/payroll/{id}/pay` (với `id` là `salaryTotalLoggerId`)
 *   **Request Body:** Không có.
 *   **Response (200 OK):**
     ```json
@@ -439,11 +441,11 @@ Tổng hợp tất cả các ca trực đã hoàn thành nhưng chưa được k
     ```
 
 ### G. Xem lịch sử bảng lương của một nhân viên cụ thể
-*   **Method & Route:** `GET /api/TheaterManager/Shifts/payroll/staff/{staffId}`
+*   **Method & Route:** `GET /api/v1/TheaterManager/Shifts/payroll/staff/{staffId}`
 *   **Response (200 OK):** Trả về mảng danh sách `ResPayrollDto` của nhân viên đó.
 
 ### H. Xem lịch sử bảng lương của toàn bộ nhân viên thuộc chi nhánh Rạp
-*   **Method & Route:** `GET /api/TheaterManager/Shifts/payroll/cinema/{cinemaId}`
+*   **Method & Route:** `GET /api/v1/TheaterManager/Shifts/payroll/cinema/{cinemaId}`
 *   **Response (200 OK):** Trả về danh sách lương của toàn bộ nhân sự tại chi nhánh.
 
 ---

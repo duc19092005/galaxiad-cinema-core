@@ -14,6 +14,7 @@ namespace ApiLayer.Controllers.TheaterManager;
 [ApiController]
 [Authorize(Policy = "TheaterManager")]
 [Route("api/TheaterManager/Shifts")]
+[Route("api/v1/TheaterManager/Shifts")]
 [Tags("Theater Manager - Shift & Personnel Management")]
 [ApiExplorerSettings(GroupName = "v1-theater-manager")]
 public class TheaterManagerShiftController : ControllerBase
