@@ -14,7 +14,7 @@ import type { ApiErrorResponse } from '../../types/auth.types';
 import { useCinema } from '../../contexts/CinemaContext';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
-import Header from '../../components/Header';
+import ManagementChrome from '../../components/ManagementChrome';
 import CinemaManagement from './components/CinemaManagement';
 import SeatReport from './components/SeatReport';
 import LogoutModal from '../../components/LogoutModal';
@@ -144,21 +144,20 @@ const FacilitiesManagerPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <AppSidebar
         isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onToggle={() => setSidebarOpen((open) => !open)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         sections={sidebarSections}
         role="Facilities Manager"
+        collapsibleDesktop
       />
 
-      <Header
-        title="Facilities Manager"
-        role="Facilities Manager"
-        showSidebarToggle
-        onMenuToggle={() => setSidebarOpen(true)}
+      <ManagementChrome
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={() => setSidebarOpen((open) => !open)}
       />
 
-      <main className="main-content">
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
         <div className="page-container">
           {logoutError && (
             <div className="alert alert-error" style={{ marginBottom: 16 }}>

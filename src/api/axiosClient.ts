@@ -75,6 +75,19 @@ export const bookingAxios = axios.create({
 });
 
 /**
+ * Axios instance for Staff and Theater Manager Shift APIs
+ * Base URL: {API_BASE_URL}/api/v1
+ */
+export const shiftAxios = axios.create({
+  baseURL: `${API_BASE_URL}/api/v1`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+  timeout: 10000,
+});
+
+/**
  * Axios instance for Public APIs
  * Base URL: {API_BASE_URL}/api/v1/Public
  * Notice: No withCredentials since it is public, but you can include interceptors for Language
@@ -88,7 +101,7 @@ export const publicAxios = axios.create({
   timeout: 10000,
 });
 
-const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios, bookingAxios, publicAxios];
+const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios, bookingAxios, shiftAxios, publicAxios];
 
 allInstances.forEach((instance) => {
   // Request interceptor — attach language header

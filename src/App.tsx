@@ -22,6 +22,11 @@ import AccountPage from './features/booking/AccountPage';
 import { ShowtimesPage } from './features/booking/ShowtimesPage';
 import { TheatersPage } from './features/booking/TheatersPage';
 import { OffersPage } from './features/booking/OffersPage';
+import CashierPage from './features/cashier/CashierPage';
+import ServicesPage from './features/public/ServicesPage';
+import HelpPage from './features/public/HelpPage';
+import ShiftNotificationListener from './components/ShiftNotificationListener';
+import ChatBot from './components/ChatBot';
 
 function App() {
   return (
@@ -29,7 +34,8 @@ function App() {
       <CinemaProvider>
         <Toaster position="top-right" />
         <Router>
-        <Routes>
+          <ShiftNotificationListener />
+          <Routes>
           {/* Route root - check token và redirect */}
           <Route path="/" element={<HomePage />} />
 
@@ -43,8 +49,9 @@ function App() {
           <Route path="/showtimes" element={<ShowtimesPage />} />
           <Route path="/theaters" element={<TheatersPage />} />
           <Route path="/offers" element={<OffersPage />} />
-          <Route path="/cashier" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+          <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><CashierPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
+          <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
           <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
           <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><FacilitiesManagerPage /></ProtectedRoute>} />
@@ -54,10 +61,13 @@ function App() {
           <Route path="/booking/success" element={<BookingSuccessPage />} />
           <Route path="/booking/failed" element={<BookingFailedPage />} />
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/help" element={<HelpPage />} />
 
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Router>
+          </Routes>
+          <ChatBot />
+        </Router>
       </CinemaProvider>
     </ThemeProvider>
   );

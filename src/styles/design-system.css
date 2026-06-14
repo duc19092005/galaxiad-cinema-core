@@ -7,12 +7,12 @@
   --primary-glow: rgba(255, 138, 0, 0.3);
 
   /* Dark Mode Colors */
-  --bg-base: #09090b;
-  --bg-surface: #121214;
-  --bg-elevated: #18181b;
-  --bg-hover: #27272a;
-  --border-color: #27272a;
-  --text-primary: #fafafa;
+  --bg-base: #131316;
+  --bg-surface: #1a1a20;
+  --bg-elevated: #22222a;
+  --bg-hover: #32323e;
+  --border-color: #2e2e38;
+  --text-primary: #e4e4e7;
   --text-secondary: #a1a1aa;
   --text-muted: #52525b;
 

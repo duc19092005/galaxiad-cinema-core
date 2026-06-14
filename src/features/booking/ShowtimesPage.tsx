@@ -1,11 +1,140 @@
 // src/features/booking/ShowtimesPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, MapPin, Search, Loader2, Sparkles } from 'lucide-react';
+import { Film, MapPin, Search, Loader2, Sparkles, ChevronDown } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { ActiveCinema, ActiveMovie, SearchScheduleResult } from '../../types/public.types';
 import Header from '../../components/Header';
 import { showError } from '../../utils/ToastUtils';
+
+interface CustomSelectProps {
+  label: string;
+  value: string;
+  displayValue: string;
+  options: { value: string; label: string }[];
+  onChange: (val: string) => void;
+  icon: React.ReactNode;
+  disabled?: boolean;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({
+  label,
+  value,
+  displayValue,
+  options,
+  onChange,
+  icon,
+  disabled,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (disabled) {
+    return (
+      <div
+        style={{
+          padding: '12px 16px',
+          borderRadius: 8,
+          backgroundColor: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.04)',
+          color: 'var(--text-secondary)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          opacity: 0.5,
+          cursor: 'not-allowed',
+        }}
+      >
+        <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {icon} {label}
+        </span>
+        <span style={{ fontSize: '14px' }}>Loading...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: 'relative',
+        padding: '12px 16px',
+        borderRadius: 8,
+        backgroundColor: 'rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        transition: 'all 0.3s ease',
+      }}
+      className="hover:border-primary-soft"
+      onClick={() => setIsOpen(!isOpen)}
+    >
+      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {icon} {label}
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <span style={{ fontWeight: 500, color: 'var(--text-primary)', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90%' }}>
+          {displayValue}
+        </span>
+        <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+      </div>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: 8,
+            backgroundColor: '#18181b',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8,
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+            zIndex: 50,
+            maxHeight: 250,
+            overflowY: 'auto',
+          }}
+          className="scrollbar-thin"
+        >
+          {options.map((opt) => (
+            <div
+              key={opt.value}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '10px 16px',
+                fontSize: 13,
+                color: opt.value === value ? 'var(--primary, #ff8a00)' : 'rgba(255,255,255,0.8)',
+                backgroundColor: opt.value === value ? 'rgba(255,138,0,0.1)' : 'transparent',
+                fontWeight: opt.value === value ? 600 : 400,
+                transition: 'background-color 0.15s, color 0.15s',
+              }}
+              className="hover:bg-white/5 hover:text-white"
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const ShowtimesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -89,6 +218,18 @@ export const ShowtimesPage: React.FC = () => {
     return () => window.removeEventListener('user_selected_cinema_changed', checkPreselectedCinema);
   }, []);
 
+  // Read initial query params from URL (e.g. from Home page Quick Search)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const qDate = params.get('date');
+    const qMovie = params.get('movie');
+    const qCinema = params.get('cinema');
+    
+    if (qDate) setSelectedDate(qDate);
+    if (qMovie) setSelectedMovieId(qMovie);
+    if (qCinema) setSelectedCinemaId(qCinema);
+  }, []);
+
   // Fetch schedules when filters change
   useEffect(() => {
     if (!selectedDate) return;
@@ -123,6 +264,20 @@ export const ShowtimesPage: React.FC = () => {
       return timeStr;
     }
   };
+
+  // Cinema options list
+  const cinemaOptions = [
+    { value: 'All', label: 'All Theaters' },
+    ...cinemas.map((c) => ({ value: c.cinemaId, label: c.cinemaName })),
+  ];
+  const selectedCinemaLabel = cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || 'All Theaters';
+
+  // Movie options list
+  const movieOptions = [
+    { value: 'All', label: 'All Movies' },
+    ...movies.map((m) => ({ value: m.movieId, label: m.movieName })),
+  ];
+  const selectedMovieLabel = movies.find((m) => m.movieId === selectedMovieId)?.movieName || 'All Movies';
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
@@ -207,72 +362,38 @@ export const ShowtimesPage: React.FC = () => {
         <div 
           className="glass-card" 
           style={{ 
+            position: 'relative',
+            zIndex: 30,
             padding: '20px', 
             borderRadius: 'var(--radius-lg)', 
-            display: 'flex', 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '20px', 
-            flexWrap: 'wrap',
             marginBottom: '40px',
             border: '1px solid rgba(255,255,255,0.06)'
           }}
         >
           {/* Cinema Filter */}
-          <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <MapPin size={14} style={{ color: 'var(--primary)' }} /> Select Theater
-            </label>
-            <select
-              value={selectedCinemaId}
-              onChange={(e) => setSelectedCinemaId(e.target.value)}
-              disabled={dataLoading}
-              style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              <option value="All">All Theaters</option>
-              {cinemas.map((cinema) => (
-                <option key={cinema.cinemaId} value={cinema.cinemaId}>
-                  {cinema.cinemaName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            label="Select Theater"
+            value={selectedCinemaId}
+            displayValue={selectedCinemaLabel}
+            options={cinemaOptions}
+            onChange={setSelectedCinemaId}
+            icon={<MapPin size={14} style={{ color: 'var(--primary)' }} />}
+            disabled={dataLoading}
+          />
 
           {/* Movie Filter */}
-          <div style={{ flex: '1 1 280px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Film size={14} style={{ color: 'var(--primary)' }} /> Select Movie
-            </label>
-            <select
-              value={selectedMovieId}
-              onChange={(e) => setSelectedMovieId(e.target.value)}
-              disabled={dataLoading}
-              style={{
-                padding: '12px 16px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(0,0,0,0.3)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                color: 'var(--text-primary)',
-                outline: 'none',
-                cursor: 'pointer',
-                fontSize: '14px',
-              }}
-            >
-              <option value="All">All Movies</option>
-              {movies.map((movie) => (
-                <option key={movie.movieId} value={movie.movieId}>
-                  {movie.movieName}
-                </option>
-              ))}
-            </select>
-          </div>
+          <CustomSelect
+            label="Select Movie"
+            value={selectedMovieId}
+            displayValue={selectedMovieLabel}
+            options={movieOptions}
+            onChange={setSelectedMovieId}
+            icon={<Film size={14} style={{ color: 'var(--primary)' }} />}
+            disabled={dataLoading}
+          />
         </div>
 
         {/* Schedule Display */}

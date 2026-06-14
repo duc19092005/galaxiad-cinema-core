@@ -14,7 +14,7 @@ import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema } from '../../types/facilities.types';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
-import Header from '../../components/Header';
+import ManagementChrome from '../../components/ManagementChrome';
 
 const colorPalette = ['#ff8a00', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#0891b2', '#ea580c'];
 
@@ -290,7 +290,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
       return d;
     });
 
-    const weekLabel = `${weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} — ${weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    const weekLabel = `${weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 
     const filteredMovies = moviesList.filter(m =>
       !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -307,8 +307,11 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
         }
         return (
             <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-base)' }}>
-              <Header title={t('Schedule Manager')} role="Schedule Manager" />
-              <main className="main-content">
+              <ManagementChrome
+                sidebarOpen={false}
+                onSidebarToggle={() => {}}
+              />
+              <main className="main-content" style={{ paddingTop: 0, marginLeft: 0 }}>
                 <div className="page-container">
                   <div className="state-center" style={{ minHeight: '60vh' }}>
                       <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
@@ -513,7 +516,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
         <div style={{ minHeight: '100vh', background: 'var(--bg-base)', display: 'flex', flexDirection: 'column' }}>
             <AppSidebar
                 isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                onToggle={() => setSidebarOpen((open) => !open)}
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
                 sections={sidebarSections}
@@ -521,20 +524,18 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                 collapsibleDesktop
             />
 
-            <Header
-                title={t('Schedule Manager')}
-                role="Schedule Manager"
-                showSidebarToggle
-                onMenuToggle={() => setSidebarOpen(true)}
+            <ManagementChrome
+                sidebarOpen={sidebarOpen}
+                onSidebarToggle={() => setSidebarOpen((open) => !open)}
             />
 
             <main
-                className="main-content"
+                className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}
                 style={{
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
-                    marginLeft: sidebarOpen ? 'var(--sidebar-width)' : 0,
+                    paddingTop: 0,
                 }}
             >
                 {renderWorkspace()}

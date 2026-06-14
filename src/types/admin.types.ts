@@ -4,9 +4,25 @@ export interface AdminUserDto {
     userEmail: string;
     userName: string;
     fullName?: string; // Kept for backward compatibility if needed
+    portraitImageUrl?: string | null;
     userRoles: string; // e.g., "Admin,TheaterManager"
     accountStatus: number; // 1: Active, 2: Locked, 3: Banned...
     registerMethod: number;
+}
+
+export interface AdminCreateUserRequest {
+    userEmail: string;
+    userPassword: string;
+    userRepassword: string;
+    userName: string;
+    identityCode: string;
+    phoneNumber: string;
+    dateOfBirth: string;
+    roleIds: string[];
+}
+
+export interface AdminCreateUserResponse {
+    userId: string;
 }
 
 export interface ScheduleJobDto {
@@ -30,6 +46,17 @@ export interface GroupedScheduleJobDto {
 export interface RoleDto {
     roleId: string;
     roleName: string;
+}
+
+export type UserRoleDto = RoleDto | string;
+
+export interface PermissionDto {
+    permissionId: string;
+    permissionInfo: string;
+}
+
+export interface RolePermissionsDto extends RoleDto {
+    permissions: PermissionDto[];
 }
 
 export interface AuditLogDto {
@@ -103,10 +130,17 @@ export interface RecentAuditoriumDto {
 }
 
 export interface ManagementDashboardDto {
+    activeUsers: number;
+    totalCinemas: number;
+    activeMovies: number;
+    activeSchedules: number;
+    totalBookings: number;
+    monthRevenue: number;
     ticketsSoldToday: number;
     revenueToday: number;
     totalTicketsSold: number;
     busiestHourLabel: string;
+    revenueByDay: DailyRevenueStatDto[];
     recentTransactions: RecentTransactionDto[];
     ticketsByMovie: MovieTicketStatDto[];
     ticketsByHour: HourlyTicketStatDto[];
@@ -115,6 +149,13 @@ export interface ManagementDashboardDto {
     recentCinemas: RecentCinemaDto[];
     recentAuditoriums: RecentAuditoriumDto[];
     recentActivities: AuditLogDto[];
+}
+
+export interface DailyRevenueStatDto {
+    date: string;
+    dateLabel: string;
+    revenue: number;
+    ticketCount: number;
 }
 
 export interface ManagerDto {

@@ -24,8 +24,19 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
   const [updating, setUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
+  const [initialRoleIds, setInitialRoleIds] = useState<string[]>([]);
 
   useEffect(() => { if (isOpen) fetchRoles(); }, [isOpen]);
+
+  const getRoleError = (err: unknown, fallback: string) => {
+    if (typeof err !== 'object' || err === null) return fallback;
+    const response = (err as { response?: { data?: { message?: string; Message?: string; errors?: string[] } } }).response;
+    return response?.data?.message ?? response?.data?.Message ?? response?.data?.errors?.[0] ?? fallback;
+  };
+
+  const sameRoleSet = (a: string[], b: string[]) => (
+    a.length === b.length && a.every((id) => b.includes(id))
+  );
 
   const fetchRoles = async () => {
     setLoading(true); setError(null);
@@ -46,16 +57,19 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
             })
             .filter(Boolean) as string[];
           setSelectedRoleIds(selectedIds);
+          setInitialRoleIds(selectedIds);
         } else { syncFromProps(allRoles); }
       } catch { syncFromProps(allRoles); }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load roles');
+      setError(getRoleError(err, 'Failed to load roles'));
     } finally { setLoading(false); }
   };
 
   const syncFromProps = (allRoles: RoleDto[]) => {
     const currentRoleNames = currentUserRoles.split(',').map(r => r.trim());
-    setSelectedRoleIds(allRoles.filter(r => currentRoleNames.includes(r.roleName)).map(r => r.roleId));
+    const selectedIds = allRoles.filter(r => currentRoleNames.includes(r.roleName)).map(r => r.roleId);
+    setSelectedRoleIds(selectedIds);
+    setInitialRoleIds(selectedIds);
   };
 
   const toggleRole = (role: RoleDto) => {
@@ -73,6 +87,7 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
   };
 
   const handleUpdate = async () => {
+    if (sameRoleSet(selectedRoleIds, initialRoleIds)) return;
     setUpdating(true);
     try {
       await adminApi.updateUserRole(userId, selectedRoleIds);
@@ -87,10 +102,11 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
         return;
       }
       showSuccess(t('toast.rolesUpdated'));
+      setInitialRoleIds(selectedRoleIds);
       onSuccess(userId);
       onClose();
     } catch (err: any) {
-      showError(err.response?.data?.message || t('toast.rolesUpdateFailed'));
+      showError(getRoleError(err, t('toast.rolesUpdateFailed')));
     } finally { setUpdating(false); }
   };
 
@@ -98,10 +114,11 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
 
   const currentRoleList = roles.filter(r => selectedRoleIds.includes(r.roleId));
   const availableRoleList = roles.filter(r => !selectedRoleIds.includes(r.roleId));
+  const hasChanges = !sameRoleSet(selectedRoleIds, initialRoleIds);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+      <div className="modal-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 620 }}>
         {/* Header */}
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -114,8 +131,8 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
               <Shield size={18} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h2 className="heading-md" style={{ margin: 0 }}>Update user role</h2>
-              <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>
+              <h2 className="heading-md" style={{ margin: 0, fontSize: 22 }}>Update staff roles</h2>
+              <p className="text-muted" style={{ fontSize: 13, margin: '4px 0 0' }}>
                 {currentUserEmail}
               </p>
             </div>
@@ -139,12 +156,12 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
             <>
               {/* Current roles */}
               <div style={{ marginBottom: 'var(--space-6)' }}>
-                <p className="text-muted" style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
+                <p className="text-muted" style={{ fontSize: 13, marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
                   Current roles
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
                   {currentRoleList.length === 0 ? (
-                    <span className="text-muted" style={{ fontSize: 'var(--text-sm)', fontStyle: 'italic', opacity: 0.5 }}>
+                    <span className="text-muted" style={{ fontSize: 14, fontStyle: 'italic', opacity: 0.7 }}>
                       No roles assigned.
                     </span>
                   ) : (
@@ -154,7 +171,7 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                       const isAdminRole = role.roleName === 'Admin';
                       const isProtected = isSelf && isAdminRole;
                       return (
-                        <span key={role.roleId} className="badge badge-accent" style={{ gap: 'var(--space-1)', paddingRight: isProtected ? '8px' : '4px' }}>
+                        <span key={role.roleId} className="badge badge-accent" style={{ gap: 'var(--space-1)', padding: '7px 8px 7px 12px', fontSize: 13 }}>
                           <span>{role.roleName}</span>
                           {isProtected ? (
                             <Shield size={10} />
@@ -178,12 +195,12 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
 
               {/* Available roles */}
               <div>
-                <p className="text-muted" style={{ fontSize: 'var(--text-xs)', marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
+                <p className="text-muted" style={{ fontSize: 13, marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
                   Add roles
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
                   {availableRoleList.length === 0 ? (
-                    <span className="text-muted" style={{ fontSize: 'var(--text-sm)', fontStyle: 'italic', opacity: 0.5 }}>
+                    <span className="text-muted" style={{ fontSize: 14, fontStyle: 'italic', opacity: 0.7 }}>
                       All available roles assigned.
                     </span>
                   ) : (
@@ -194,11 +211,13 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                         className="card card-hover"
                         style={{
                           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: 'var(--space-3) var(--space-4)', width: '100%', textAlign: 'left',
+                          padding: '14px 16px', width: '100%', textAlign: 'left',
                           cursor: 'pointer',
+                          backgroundColor: 'rgba(255,255,255,0.04)',
+                          border: '1px solid rgba(255,255,255,0.1)',
                         }}
                       >
-                        <span className="text-body" style={{ fontSize: 'var(--text-sm)', fontWeight: 500 }}>
+                        <span className="text-body" style={{ fontSize: 15, fontWeight: 750 }}>
                           {role.roleName}
                         </span>
                         <div style={{
@@ -220,11 +239,11 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
           <button className="btn btn-secondary" onClick={onClose} disabled={updating}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={handleUpdate} disabled={updating || loading}>
+          <button className="btn btn-primary" onClick={handleUpdate} disabled={updating || loading || !hasChanges}>
             {updating ? (
               <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Updating...</>
             ) : (
-              <><Shield size={14} /> Apply changes</>
+              <><Shield size={14} /> {hasChanges ? 'Apply changes' : 'No changes'}</>
             )}
           </button>
         </div>

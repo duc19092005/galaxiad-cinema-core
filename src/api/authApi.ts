@@ -13,8 +13,8 @@ import type {
 
 export const authApi = {
   /** POST /api/v1/IdentityAccess/regular-register */
-  regularRegister: async (data: RegisterRequest): Promise<ApiSuccessResponse> => {
-    const response = await identityAxios.post<ApiSuccessResponse>(
+  regularRegister: async (data: RegisterRequest): Promise<ApiSuccessResponse<string | null>> => {
+    const response = await identityAxios.post<ApiSuccessResponse<string | null>>(
       '/IdentityAccess/regular-register',
       data
     );

@@ -5,20 +5,20 @@ export default {
     extend: {
       colors: {
         cinema: {
-          bg: '#0a0a0a',
-          surface: '#141414',
-          elevated: '#1a1a1a',
-          border: '#27272a',
+          bg: '#131316',
+          surface: '#1a1a20',
+          elevated: '#22222a',
+          border: '#2e2e38',
           accent: '#ff8a00',
           'accent-hover': '#ea580c',
-          text: '#fafafa',
+          text: '#e4e4e7',
           'text-muted': '#a1a1aa',
           danger: '#ef4444',
           success: '#22c55e',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       animation: {

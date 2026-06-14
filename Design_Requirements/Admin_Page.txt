@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CinemaPro Admin Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error": "#ffb4ab",
+            "surface-container": "#171f33",
+            "tertiary-fixed-dim": "#4edea3",
+            "on-background": "#dae2fd",
+            "primary-container": "#f59e0b",
+            "surface-container-highest": "#2d3449",
+            "surface-container-high": "#222a3d",
+            "tertiary": "#56e5a9",
+            "surface-variant": "#2d3449",
+            "tertiary-fixed": "#6ffbbe",
+            "on-secondary-fixed-variant": "#38485d",
+            "surface-bright": "#31394d",
+            "surface-dim": "#0b1326",
+            "on-primary": "#472a00",
+            "primary-fixed": "#ffddb8",
+            "surface-container-low": "#131b2e",
+            "on-tertiary-fixed": "#002113",
+            "on-primary-fixed-variant": "#653e00",
+            "on-secondary": "#213145",
+            "on-error-container": "#ffdad6",
+            "on-error": "#690005",
+            "outline": "#a08e7a",
+            "inverse-surface": "#dae2fd",
+            "on-tertiary": "#003824",
+            "inverse-on-surface": "#283044",
+            "tertiary-container": "#30c88f",
+            "outline-variant": "#534434",
+            "error-container": "#93000a",
+            "primary": "#ffc174",
+            "surface": "#0b1326",
+            "secondary-fixed-dim": "#b7c8e1",
+            "secondary": "#b7c8e1",
+            "surface-tint": "#ffb95f",
+            "primary-fixed-dim": "#ffb95f",
+            "secondary-fixed": "#d3e4fe",
+            "on-primary-container": "#613b00",
+            "on-surface-variant": "#d8c3ad",
+            "surface-container-lowest": "#060e20",
+            "on-surface": "#dae2fd",
+            "on-tertiary-container": "#004e34",
+            "secondary-container": "#3a4a5f",
+            "on-primary-fixed": "#2a1700",
+            "on-secondary-fixed": "#0b1c30",
+            "on-tertiary-fixed-variant": "#005236",
+            "background": "#0b1326",
+            "inverse-primary": "#855300",
+            "on-secondary-container": "#a9bad3"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "lg": "24px",
+            "base": "4px",
+            "gutter": "20px",
+            "md": "16px",
+            "sm": "8px",
+            "xs": "4px",
+            "xl": "32px",
+            "sidebar_width": "260px"
+          },
+          "fontFamily": {
+            "headline-md": ["Geist"],
+            "headline-xl": ["Geist"],
+            "label-md": ["Geist"],
+            "body-lg": ["Geist"],
+            "mono-label": ["Geist Mono"],
+            "body-md": ["Geist"],
+            "headline-lg": ["Geist"]
+          },
+          "fontSize": {
+            "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+            "headline-xl": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+            "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+            "mono-label": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+            "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+            "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    body {
+      background-color: #0b1326;
+      color: #dae2fd;
+      font-family: 'Geist', sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .glass-card {
+      background: rgba(23, 31, 51, 0.6);
+      backdrop-filter: blur(8px);
+      border: 1px solid #2d3449;
+    }
+    .sidebar-active {
+      background-color: #222a3d;
+      color: #ffc174;
+      border-right: 2px solid #ffc174;
+    }
+    /* Simple Sparkline simulation with CSS masks/gradients */
+    .sparkline {
+      mask-image: linear-gradient(90deg, transparent 0%, black 20%, black 80%, transparent 100%);
+    }
+  </style>
+</head>
+<body class="flex min-h-screen overflow-hidden">
+<!-- Side Navigation Shell -->
+<aside class="fixed left-0 top-0 h-full w-[260px] border-r border-surface-container-highest bg-surface-dim flex flex-col py-lg px-md z-50">
+<div class="mb-xl flex items-center gap-sm">
+<span class="text-headline-md font-headline-md font-bold text-primary">CinemaPro</span>
+<span class="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded tracking-widest">ADMIN</span>
+</div>
+<div class="flex items-center gap-md p-md mb-lg rounded-lg bg-surface-container-low border border-surface-container-highest">
+<div class="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center overflow-hidden border border-primary/30">
+<img alt="Admin User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB06qKtvpJ4H430NbGbASgw_fSdLpkPr1OpomOVKSDHRx_pYIkLYUvE-vFElbFsVLQgVwKmeGUma5uURwoUCnZbskWT35MWCb_sCjhSNn4cujWwv2BwfOVL9tKV7Rglsi1tRobyoPfjzdKIPoju3TVNv1Inp3e-tsEXh5QiBwfnijDBwTty01zjqUXagc98blUorp7PqBut_KILLaUUuRwo-8DrHnLSFKPED8BpViIu7yrWHDhko2QzzKhOaKsWbe-GFq402lJTQNI"/>
+</div>
+<div class="overflow-hidden">
+<p class="font-label-md text-on-surface truncate">Tổng Quản Trị Hệ Thống</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-tighter">Signed in</p>
+</div>
+</div>
+<nav class="flex-1 space-y-1 overflow-y-auto">
+<a class="flex items-center justify-between px-md py-sm rounded sidebar-active transition-all duration-200 group" href="#">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span class="font-label-md">Dashboard</span>
+</div>
+<span class="material-symbols-outlined text-sm opacity-50">chevron_right</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md">Users</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">local_activity</span>
+<span class="font-label-md">Vouchers</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">lock_person</span>
+<span class="font-label-md">Permissions</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">swap_horiz</span>
+<span class="font-label-md">Transfer Rights</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-label-md">Audit Log</span>
+</a>
+</nav>
+<div class="pt-md border-t border-surface-container-highest space-y-1">
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="font-label-md">Account Info</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined">cached</span>
+<span class="font-label-md">Switch Role</span>
+</a>
+<a class="flex items-center gap-md px-md py-sm rounded text-error/80 hover:text-error hover:bg-error/10 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-md">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Shell -->
+<main class="flex-1 ml-[260px] flex flex-col h-screen overflow-hidden relative">
+<!-- Top App Bar -->
+<header class="sticky top-0 z-40 w-full h-16 bg-surface border-b border-surface-container-highest flex justify-between items-center px-lg">
+<div class="flex items-center gap-lg flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-body-lg">search</span>
+<input class="w-full bg-surface-container-low border-surface-container-highest rounded-lg pl-10 pr-md py-1.5 font-body-md text-on-surface focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Search movies, theaters, or users..." type="text"/>
+</div>
+<nav class="hidden xl:flex items-center gap-lg">
+<a class="text-on-surface-variant hover:text-primary font-label-md transition-colors" href="#">Movies</a>
+<a class="text-on-surface-variant hover:text-primary font-label-md transition-colors" href="#">Showtimes</a>
+<a class="text-on-surface-variant hover:text-primary font-label-md transition-colors" href="#">Theaters</a>
+<a class="text-on-surface-variant hover:text-primary font-label-md transition-colors" href="#">Offers</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+<span class="material-symbols-outlined">language</span>
+</button>
+<div class="h-6 w-px bg-surface-container-highest mx-2"></div>
+<div class="flex items-center gap-sm px-2 py-1 rounded hover:bg-surface-container-low cursor-pointer transition-colors">
+<img alt="Administrator Avatar" class="w-8 h-8 rounded-full border border-primary/20" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCP9NLEOLIu6H43H05QNb4yy498MaWNrZPdcA92kJ9ODTZHPlzmP8Kme_ZCUodBp3UIqsebYJJFI4XXLtCUr-9UKBMK2gwK1NLs5OGO815DyOlrkyEDo64XUCkd4CF8CX1OskLVEzpKRmLrHE_S592NG0Wcd6aQSfiTOGruQe8p1OtJg1scIaRGXAMnYkmWPNT5-JCgy3UZlPnxWlmtdn4-U_F6zk7NmhT779tDBbst4VIqh9qsvFF1shOTD8jhTDsTFjij7uvs1Uw"/>
+<span class="material-symbols-outlined text-on-surface-variant">expand_more</span>
+</div>
+</div>
+</header>
+<!-- Scrollable Canvas -->
+<div class="flex-1 overflow-y-auto p-lg space-y-lg">
+<!-- Dashboard Header -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-md">
+<div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-xs">Performance Dashboard</h1>
+<p class="font-body-md text-on-surface-variant">Real-time overview of your cinema operations and revenue.</p>
+</div>
+<div class="flex items-center gap-sm bg-surface-container-high p-1 rounded-xl border border-surface-container-highest">
+<button class="px-md py-1.5 rounded-lg bg-primary text-on-primary font-label-md shadow-sm">Last 30 Days</button>
+<button class="px-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md">Last Quarter</button>
+<button class="p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">calendar_today</span>
+</button>
+</div>
+</section>
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-6 gap-gutter">
+<!-- Total Users -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-[64px]" style="font-variation-settings: 'FILL' 1;">group</span>
+</div>
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">group</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary">+5 this month</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Total Users</p>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">6</h2>
+</div>
+</div>
+<!-- Total Cinemas -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 relative overflow-hidden">
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined">corporate_fare</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-surface-container-highest text-on-surface-variant">2 regions</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Total Cinemas</p>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">8</h2>
+</div>
+</div>
+<!-- Active Movies -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 relative overflow-hidden">
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">movie</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary">+3 this week</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Active Movies</p>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">24</h2>
+</div>
+</div>
+<!-- Revenue -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 xl:col-span-1 relative overflow-hidden">
+<div class="absolute -bottom-2 right-0 w-24 h-12">
+<svg class="w-full h-full stroke-primary fill-none opacity-20" viewbox="0 0 100 40">
+<path d="M0,35 Q20,30 40,25 T80,10 T100,5" stroke-width="2"></path>
+</svg>
+</div>
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary">+12.5%</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Revenue (Month)</p>
+<h2 class="font-headline-xl text-headline-xl text-primary">đ 156.8M</h2>
+</div>
+</div>
+<!-- Total Bookings -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 relative overflow-hidden">
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined">confirmation_number</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-tertiary/10 text-tertiary">+18%</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Total Bookings</p>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">3,842</h2>
+</div>
+</div>
+<!-- Active Schedules -->
+<div class="glass-card p-lg rounded-xl flex flex-col justify-between group transition-all duration-300 hover:border-primary/50 relative overflow-hidden">
+<div>
+<div class="flex items-center justify-between mb-md">
+<div class="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center text-on-surface">
+<span class="material-symbols-outlined">schedule</span>
+</div>
+<span class="text-[10px] font-mono-label px-1.5 py-0.5 rounded bg-primary/10 text-primary">12 today</span>
+</div>
+<p class="text-on-surface-variant font-label-md mb-base">Active Schedules</p>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">156</h2>
+</div>
+</div>
+</section>
+<!-- Charts & Tables Layout -->
+<section class="grid grid-cols-1 xl:grid-cols-3 gap-gutter items-start">
+<!-- Revenue Overview Chart Card -->
+<div class="xl:col-span-2 glass-card rounded-xl p-lg space-y-lg relative overflow-hidden group">
+<div class="flex items-center justify-between">
+<div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Revenue Overview</h3>
+<p class="text-label-md text-on-surface-variant">Daily gross revenue comparison across all regions</p>
+</div>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-[10px] font-label-md text-primary"><span class="w-2 h-2 rounded-full bg-primary"></span> Revenue</span>
+<span class="flex items-center gap-1 text-[10px] font-label-md text-tertiary"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Target</span>
+</div>
+</div>
+<!-- Mock Chart Visualization -->
+<div class="h-[300px] w-full flex items-end gap-3 px-sm relative pt-lg">
+<!-- Vertical Axes -->
+<div class="absolute inset-0 flex flex-col justify-between py-lg pointer-events-none border-b border-surface-container-highest">
+<div class="w-full border-t border-surface-container-highest border-dashed opacity-20"></div>
+<div class="w-full border-t border-surface-container-highest border-dashed opacity-20"></div>
+<div class="w-full border-t border-surface-container-highest border-dashed opacity-20"></div>
+<div class="w-full border-t border-surface-container-highest border-dashed opacity-20"></div>
+</div>
+<!-- Bar Simulation -->
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[40%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[80%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">MON</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[65%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[85%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">TUE</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[55%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[70%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">WED</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[85%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[90%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">THU</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[95%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[95%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">FRI</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[100%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[98%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">SAT</span>
+</div>
+<div class="flex-1 flex flex-col justify-end items-center group/bar cursor-pointer">
+<div class="w-full max-w-[40px] bg-primary/20 rounded-t h-[90%] group-hover/bar:bg-primary/40 transition-all relative">
+<div class="absolute inset-x-0 bottom-0 h-[92%] bg-primary rounded-t"></div>
+</div>
+<span class="mt-2 text-[10px] text-on-surface-variant font-mono-label">SUN</span>
+</div>
+</div>
+</div>
+<!-- Recent Activity Card -->
+<div class="xl:col-span-1 glass-card rounded-xl flex flex-col h-[424px]">
+<div class="p-lg border-b border-surface-container-highest flex items-center justify-between">
+<h3 class="font-headline-md text-headline-md text-on-surface">Recent Activity</h3>
+<button class="text-primary text-label-md hover:underline">View All</button>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-md">
+<!-- Activity Item -->
+<div class="flex gap-md p-md rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="mt-1 w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-body-lg">check_circle</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-base">
+<span class="font-label-md text-on-surface">Update</span>
+<span class="text-[10px] font-mono-label text-on-surface-variant">20:46:28 13/6/2026</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">
+<span class="text-on-surface font-medium">Tổng Quản Trị Hệ Thống</span> → facilities.manager@cinema.com
+                </p>
+<p class="text-[11px] text-on-surface-variant/70 mt-1">Permission hierarchy updated for Sector 7 theaters.</p>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-md p-md rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="mt-1 w-8 h-8 rounded-full bg-tertiary/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-body-lg">check_circle</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-base">
+<span class="font-label-md text-on-surface">Update</span>
+<span class="text-[10px] font-mono-label text-on-surface-variant">20:46:28 13/6/2026</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">
+<span class="text-on-surface font-medium">Tổng Quản Trị Hệ Thống</span> → facilities.manager@cinema.com
+                </p>
+<p class="text-[11px] text-on-surface-variant/70 mt-1">Maintenance schedule synchronized with central database.</p>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-md p-md rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="mt-1 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-body-lg">edit</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-base">
+<span class="font-label-md text-on-surface">Content Edit</span>
+<span class="text-[10px] font-mono-label text-on-surface-variant">19:30:15 13/6/2026</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">
+<span class="text-on-surface font-medium">Admin Lee</span> edited "Interstellar 4K" showtimes.
+                </p>
+</div>
+</div>
+<!-- Activity Item -->
+<div class="flex gap-md p-md rounded-lg hover:bg-surface-container-low transition-colors group">
+<div class="mt-1 w-8 h-8 rounded-full bg-error/10 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-body-lg">warning</span>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between mb-base">
+<span class="font-label-md text-on-surface">System Alert</span>
+<span class="text-[10px] font-mono-label text-on-surface-variant">18:15:00 13/6/2026</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-tight">
+                  Unusual login attempt from IP 192.168.1.45 flagged.
+                </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Extra Content: Theater Occupancy Bento -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter pb-xl">
+<div class="glass-card rounded-xl p-md border-l-4 border-l-primary flex items-center gap-md">
+<div class="flex-1">
+<p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest">Regional Occupancy</p>
+<h4 class="text-headline-md font-headline-md">78.4%</h4>
+</div>
+<div class="w-16 h-16 relative">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-highest" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-width="4"></circle>
+<circle class="text-primary" cx="32" cy="32" fill="transparent" r="28" stroke="currentColor" stroke-dasharray="176" stroke-dashoffset="38" stroke-width="4"></circle>
+</svg>
+</div>
+</div>
+<div class="glass-card rounded-xl p-md border-l-4 border-l-tertiary flex items-center gap-md">
+<div class="flex-1">
+<p class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest">Projection Uptime</p>
+<h4 class="text-headline-md font-headline-md">99.9%</h4>
+</div>
+<div class="w-16 h-16 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-[40px]">sensors</span>
+</div>
+</div>
+<div class="glass-card rounded-xl p-lg md:col-span-2 flex justify-between items-center bg-gradient-to-r from-surface-container to-surface-dim border-none">
+<div class="space-y-1">
+<p class="text-primary font-label-md">Maintenance Alert</p>
+<h4 class="text-body-lg font-bold">2 Theaters requiring calibration</h4>
+<p class="text-on-surface-variant text-body-md">Recommended service date: Tomorrow</p>
+</div>
+<button class="bg-primary text-on-primary px-lg py-md rounded-lg font-label-md hover:brightness-110 transition-all shadow-lg shadow-primary/20">Schedule Now</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Interactive Atmosphere Layer -->
+<div class="fixed inset-0 pointer-events-none z-[60] overflow-hidden opacity-20">
+<div class="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-secondary/10 blur-[100px] rounded-full"></div>
+</div>
+<script>
+    // Simple micro-interaction for sidebar links
+    document.querySelectorAll('aside nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        document.querySelectorAll('aside nav a').forEach(l => l.classList.remove('sidebar-active'));
+        link.classList.add('sidebar-active');
+      });
+    });
+
+    // Mock search interaction
+    const searchInput = document.querySelector('input[type="text"]');
+    searchInput.addEventListener('focus', () => {
+      searchInput.parentElement.classList.add('ring-2', 'ring-primary/20');
+    });
+    searchInput.addEventListener('blur', () => {
+      searchInput.parentElement.classList.remove('ring-2', 'ring-primary/20');
+    });
+  </script>
+</body></html>
