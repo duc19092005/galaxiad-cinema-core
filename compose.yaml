@@ -10,11 +10,22 @@ services:
       - "8081:8081"
     volumes:
       - .:/src
+      - /src/ApiLayer/bin
+      - /src/ApiLayer/obj
+      - /src/BusinessLayer/bin
+      - /src/BusinessLayer/obj
+      - /src/DataAccess/bin
+      - /src/DataAccess/obj
+      - /src/Shared/bin
+      - /src/Shared/obj
     environment:
       - DOTNET_USE_POLLING_FILE_WATCHER=1 
       - ASPNETCORE_ENVIRONMENT=Docker
     networks:
       - cinema-network
+    depends_on:
+      - mssql
+      - redis
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest

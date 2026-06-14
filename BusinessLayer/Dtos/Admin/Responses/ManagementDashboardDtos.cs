@@ -2,10 +2,17 @@ namespace BusinessLayer.Dtos.Admin.Responses;
 
 public class ManagementDashboardDto
 {
+    public int ActiveUsers { get; set; }
+    public int TotalCinemas { get; set; }
+    public int ActiveMovies { get; set; }
+    public int ActiveSchedules { get; set; }
+    public int TotalBookings { get; set; }
+    public decimal MonthRevenue { get; set; }
     public int TicketsSoldToday { get; set; }
     public decimal RevenueToday { get; set; }
     public int TotalTicketsSold { get; set; }
     public string BusiestHourLabel { get; set; } = "N/A";
+    public List<DailyRevenueStatDto> RevenueByDay { get; set; } = [];
     public List<RecentTransactionDto> RecentTransactions { get; set; } = [];
     public List<MovieTicketStatDto> TicketsByMovie { get; set; } = [];
     public List<HourlyTicketStatDto> TicketsByHour { get; set; } = [];
@@ -14,6 +21,14 @@ public class ManagementDashboardDto
     public List<RecentCinemaDto> RecentCinemas { get; set; } = [];
     public List<RecentAuditoriumDto> RecentAuditoriums { get; set; } = [];
     public List<AuditLogDto> RecentActivities { get; set; } = [];
+}
+
+public class DailyRevenueStatDto
+{
+    public DateTime Date { get; set; }
+    public string DateLabel { get; set; } = string.Empty;
+    public decimal Revenue { get; set; }
+    public int TicketCount { get; set; }
 }
 
 public class RecentTransactionDto

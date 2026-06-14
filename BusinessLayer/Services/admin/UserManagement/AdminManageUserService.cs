@@ -1,16 +1,21 @@
+using BusinessLayer.Constants;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Admin.Responses;
-using BusinessLayer.Services.Admin.Audit;
 using BusinessLayer.Entities.CinemaInfos;
-using BusinessLayer.Constants;
-using Microsoft.EntityFrameworkCore;
-using Shared.Enums;
 using BusinessLayer.Entities.UserInfos;
 using BusinessLayer.Interfaces.IThirdPersonServices;
-using Microsoft.Extensions.Logging;
+using BusinessLayer.Services.Admin.Audit;
+using BusinessLayer.Services.IdentityAccess;
+using BusinessLayer.Validators.IdentityAccess;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Shared.Enums;
 using Shared.Exceptions;
 using Shared.Interfaces.Persistence;
+using Shared.Localization;
+using Shared.Utils;
 
 namespace BusinessLayer.Services.Admin.UserManagement;
 
@@ -20,25 +25,56 @@ public class AdminUserDto
     public string UserEmail { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string? PortraitImageUrl { get; set; }
-
     public string UserRoles { get; set; } = string.Empty;
     public AccountStatusEnum AccountStatus { get; set; }
     public RegisterMethodEnum RegisterMethod { get; set; }
 }
 
+public class AdminCreateUserRequestDto
+{
+    public string UserEmail { get; set; } = string.Empty;
+    public string UserPassword { get; set; } = string.Empty;
+    public string UserRepassword { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string IdentityCode { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+    public DateTime DateOfBirth { get; set; }
+    public List<Guid> RoleIds { get; set; } = [];
+}
+
+public class AdminCreateUserResponseDto
+{
+    public Guid UserId { get; set; }
+}
+
 public class AdminManageUserService
 {
+    private static readonly Guid[] StaffRoleIds =
+    [
+        userRoles.Cashier,
+        userRoles.MovieManager,
+        userRoles.TheaterManager,
+        userRoles.FacilitiesManager
+    ];
+
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<AdminManageUserService> _logger;
     private readonly AuditLogService _auditLogService;
     private readonly IImageStorageService _imageStorageService;
+    private readonly IConfiguration _configuration;
 
-    public AdminManageUserService(IUnitOfWork unitOfWork, ILogger<AdminManageUserService> logger, AuditLogService auditLogService, IImageStorageService imageStorageService)
+    public AdminManageUserService(
+        IUnitOfWork unitOfWork,
+        ILogger<AdminManageUserService> logger,
+        AuditLogService auditLogService,
+        IImageStorageService imageStorageService,
+        IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _auditLogService = auditLogService;
         _imageStorageService = imageStorageService;
+        _configuration = configuration;
     }
 
     public async Task<BaseResponse<List<AdminUserDto>>> GetAllUsersAsync()
@@ -53,7 +89,7 @@ public class AdminManageUserService
                 PortraitImageUrl = u.PortraitImageUrl,
                 AccountStatus = u.AccountStatus,
                 RegisterMethod = u.RegisterMethod,
-                UserRoles = String.Join("," , u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))
+                UserRoles = string.Join(",", u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))
             })
             .ToListAsync();
 
@@ -95,103 +131,133 @@ public class AdminManageUserService
         };
     }
 
+    public async Task<BaseResponse<AdminCreateUserResponseDto>> CreateUserAsync(AdminCreateUserRequestDto dto)
+    {
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            var normalizedRoleIds = NormalizeStaffRoleIds(dto.RoleIds);
+            var validationErrors = new List<string>();
+            var userRepository = Repository<UserInfoEntity>();
+
+            if (string.IsNullOrWhiteSpace(dto.UserEmail))
+                validationErrors.Add("Email is required.");
+            if (string.IsNullOrWhiteSpace(dto.UserName))
+                validationErrors.Add("User name is required.");
+            if (dto.UserPassword != dto.UserRepassword)
+                validationErrors.Add("Passwords do not match.");
+            if (dto.UserPassword.Length < 8)
+                validationErrors.Add("Password must be at least 8 characters.");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(dto.IdentityCode, "^\\d{12}$"))
+                validationErrors.Add("Identity code must be exactly 12 digits.");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(dto.PhoneNumber, "^\\d{10}$"))
+                validationErrors.Add("Phone number must be exactly 10 digits.");
+
+            if (await userRepository.AnyAsync(x => x.UserEmail == dto.UserEmail))
+                validationErrors.Add(Messages.Auth.EmailAlreadyExists);
+
+            var ageMessage = RegisterValidate.CheckValidateAge(
+                dto.DateOfBirth,
+                normalizedRoleIds.Count > 0 ? RegisterUserTypeEnum.Staff : RegisterUserTypeEnum.Customer);
+            if (ageMessage != null)
+                validationErrors.Add(ageMessage);
+
+            var aesKey = _configuration["AES_256:Key"];
+            var aesIv = _configuration["AES_256:IV"];
+            if (aesKey == null || aesIv == null)
+            {
+                _logger.LogError("Error AES Key and AES IV is null.");
+                throw CustomSystemException.SystemExceptionCaller();
+            }
+
+            var encryptedIdentityCode = AES256Helper.Encrypt(dto.IdentityCode, aesKey, aesIv);
+            if (await userRepository.AnyAsync(x => x.IdentityCode == encryptedIdentityCode))
+                validationErrors.Add(Messages.Auth.IdentityCodeAlreadyExists);
+
+            if (validationErrors.Any())
+                throw new BadRequestException(validationErrors, "VALIDATION_ERROR");
+
+            var userId = Guid.NewGuid();
+            await userRepository.AddAsync(new UserInfoEntity
+            {
+                UserId = userId,
+                UserEmail = dto.UserEmail,
+                Password = BCrypt_helper.Hash(dto.UserPassword),
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                DateOfBirth = dto.DateOfBirth,
+                IdentityCode = encryptedIdentityCode,
+                PhoneNumber = dto.PhoneNumber,
+                UserName = dto.UserName
+            });
+
+            await ReplaceStaffRolesAsync(userId, normalizedRoleIds);
+
+            await _auditLogService.WriteAsync(
+                "Create",
+                "User",
+                userId,
+                dto.UserEmail,
+                normalizedRoleIds.Count == 0 ? "Created user without staff roles." : "Created user with staff roles.");
+
+            await _unitOfWork.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new BaseResponse<AdminCreateUserResponseDto>
+            {
+                IsSuccess = true,
+                Data = new AdminCreateUserResponseDto { UserId = userId },
+                Message = "User account created successfully."
+            };
+        }
+        catch (AppException)
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, ex.Message);
+            await transaction.RollbackAsync();
+            throw CustomSystemException.SystemExceptionCaller();
+        }
+    }
+
     public async Task<BaseResponse<string>> AssignRoleToUserAsync(Guid userId, List<Guid> roleIds)
     {
-        await using var transactions = await _unitOfWork.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var user = await Repository<UserInfoEntity>().FindAsync(userId);
-            if (user == null) return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
-
-            var isValidRole = await Query<RoleListInfoEntity>().AnyAsync(r => roleIds.Contains(r.RoleId));
-
-            if (!isValidRole)
+            if (user == null)
             {
-                throw new NotFoundException("Error role is invalid");
+                return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
             }
 
-            // Protect the Admin role: Don't delete it if it exists
-            var adminRoleId = BusinessLayer.Constants.userRoles.Admin;
-            
-            bool hasAdminPreviously = await Query<UserRoleInfoEntity>()
-                .AnyAsync(ur => ur.UserId == userId && ur.RoleId == adminRoleId);
-
-            await Query<UserRoleInfoEntity>()
-                .Where(ur => ur.UserId == userId && ur.RoleId != adminRoleId)
-                .ExecuteDeleteAsync();
-
-            // Add new roles, but skip Admin if they already have it to avoid duplicates
-            var rolesToAdd = roleIds
-                .Where(id => !(id == adminRoleId && hasAdminPreviously))
-                .Select(x => new UserRoleInfoEntity
-                {
-                    UserId = userId,
-                    RoleId = x
-                }).ToList();
-
-            if (rolesToAdd.Any())
-            {
-                await Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
-            }
-
-            // Tự động khởi tạo StaffProfileEntity nếu gán vai trò nhân viên (staff role)
-            var staffRoleIds = new[] 
-            { 
-                userRoles.Cashier, 
-                userRoles.TheaterManager, 
-                userRoles.FacilitiesManager, 
-                userRoles.MovieManager 
-            };
-
-            bool isStaff = roleIds.Any(r => staffRoleIds.Contains(r));
-            if (isStaff)
-            {
-                var hasProfile = await Query<StaffProfileEntity>()
-                    .AnyAsync(sp => sp.UserId == userId);
-
-                if (!hasProfile)
-                {
-                    var firstCinema = await Query<CinemaInfoEntity>().FirstOrDefaultAsync();
-                    if (firstCinema == null)
-                    {
-                        throw new AppException("Không thể gán vai trò nhân viên vì hệ thống chưa có chi nhánh rạp nào được tạo.", 400, "ROLE_ERR");
-                    }
-
-                    var newProfile = new StaffProfileEntity
-                    {
-                        UserId = userId,
-                        WorkingStatus = true,
-                        CinemaId = firstCinema.CinemaId,
-                        IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
-                        FaceVector = null
-                    };
-
-                    await Repository<StaffProfileEntity>().AddAsync(newProfile);
-                }
-            }
+            var normalizedRoleIds = NormalizeStaffRoleIds(roleIds);
+            await ReplaceStaffRolesAsync(userId, normalizedRoleIds);
 
             await _auditLogService.WriteAsync(
                 "Update",
                 "UserRole",
                 user.UserId,
                 user.UserEmail,
-                "Updated user roles.");
+                normalizedRoleIds.Count == 0 ? "Cleared staff roles." : "Updated staff roles.");
 
             await _unitOfWork.SaveChangesAsync();
-            await transactions.CommitAsync();
+            await transaction.CommitAsync();
 
-            return new BaseResponse<string> { IsSuccess = true, Message = $"Role Assign Completed successfully." };
+            return new BaseResponse<string> { IsSuccess = true, Message = "Staff roles updated successfully." };
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            _logger.LogError(e.Message);
-            await transactions.RollbackAsync();
-            if (e is AppException)
+            _logger.LogError(ex, ex.Message);
+            await transaction.RollbackAsync();
+            if (ex is AppException)
             {
                 throw;
             }
             throw CustomSystemException.SystemExceptionCaller();
-
         }
     }
 
@@ -202,7 +268,7 @@ public class AdminManageUserService
 
         var userRole = await Query<UserRoleInfoEntity>()
             .Include(ur => ur.RoleListInfoEntity)
-            .FirstOrDefaultAsync(ur => ur.UserId == managerId && 
+            .FirstOrDefaultAsync(ur => ur.UserId == managerId &&
                                        (ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager"));
 
         if (userRole == null) return new BaseResponse<string> { IsSuccess = false, Message = "User must be a TheaterManager or FacilitiesManager." };
@@ -215,7 +281,7 @@ public class AdminManageUserService
         {
             cinema.FacilitiesManagerId = managerId;
         }
-        
+
         Repository<CinemaInfoEntity>().Update(cinema);
         await _auditLogService.WriteAsync(
             "Update",
@@ -287,7 +353,7 @@ public class AdminManageUserService
     {
         return await Query<RoleListInfoEntity>()
             .AsNoTracking()
-            .Where(x => x.RoleId != userRoles.Admin && x.RoleId != userRoles.Customer)
+            .Where(x => StaffRoleIds.Contains(x.RoleId))
             .Select(x => new ResponseRolesDto
             {
                 RoleId = x.RoleId,
@@ -311,7 +377,7 @@ public class AdminManageUserService
         {
             IsSuccess = true,
             Data = permissions,
-            Message = "Lấy danh sách quyền thành công."
+            Message = "Permissions loaded successfully."
         };
     }
 
@@ -335,7 +401,7 @@ public class AdminManageUserService
         {
             IsSuccess = true,
             Data = roles,
-            Message = "Lấy danh sách vai trò và quyền thành công."
+            Message = "Role permissions loaded successfully."
         };
     }
 
@@ -347,16 +413,22 @@ public class AdminManageUserService
             var role = await Repository<RoleListInfoEntity>().FindAsync(roleId);
             if (role == null)
             {
-                return new BaseResponse<string> { IsSuccess = false, Message = "Không tìm thấy vai trò." };
+                return new BaseResponse<string> { IsSuccess = false, Message = "Role not found." };
             }
 
-            // Xóa tất cả quyền cũ của vai trò này
             await Query<PermissionForRoleEntity>()
                 .Where(pr => pr.RoleId == roleId)
                 .ExecuteDeleteAsync();
 
-            // Gán danh sách quyền mới
-            var newMappings = permissionIds.Select(pid => new PermissionForRoleEntity
+            var nextPermissionIds = permissionIds.Distinct().ToList();
+            var validPermissionCount = await Query<PermissionEntity>()
+                .CountAsync(permission => nextPermissionIds.Contains(permission.PermissionId));
+            if (validPermissionCount != nextPermissionIds.Count)
+            {
+                throw new BadRequestException("One or more permissions are invalid.", "PERMISSION_ERR");
+            }
+
+            var newMappings = nextPermissionIds.Select(pid => new PermissionForRoleEntity
             {
                 RoleId = roleId,
                 PermissionId = pid
@@ -372,7 +444,7 @@ public class AdminManageUserService
                 "RolePermissions",
                 roleId,
                 role.RoleName,
-                $"Cập nhật danh sách quyền cho vai trò {role.RoleName}.");
+                $"Updated permissions for role {role.RoleName}.");
 
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -380,15 +452,89 @@ public class AdminManageUserService
             return new BaseResponse<string>
             {
                 IsSuccess = true,
-                Message = $"Cập nhật quyền cho vai trò {role.RoleName} thành công."
+                Message = $"Permissions updated for role {role.RoleName}."
             };
+        }
+        catch (AppException)
+        {
+            await transaction.RollbackAsync();
+            throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex.Message);
+            _logger.LogError(ex, ex.Message);
             await transaction.RollbackAsync();
             throw CustomSystemException.SystemExceptionCaller();
         }
+    }
+
+    private static List<Guid> NormalizeStaffRoleIds(IEnumerable<Guid>? roleIds)
+    {
+        var nextRoleIds = (roleIds ?? []).Distinct().ToList();
+        var invalidRoleIds = nextRoleIds.Where(roleId => !StaffRoleIds.Contains(roleId)).ToList();
+        if (invalidRoleIds.Any())
+        {
+            throw new BadRequestException("Only staff roles can be assigned from Admin Users.", "ROLE_ERR");
+        }
+        return nextRoleIds;
+    }
+
+    private async Task ReplaceStaffRolesAsync(Guid userId, List<Guid> roleIds)
+    {
+        await Query<UserRoleInfoEntity>()
+            .Where(ur => ur.UserId == userId && StaffRoleIds.Contains(ur.RoleId))
+            .ExecuteDeleteAsync();
+
+        if (roleIds.Count > 0)
+        {
+            var rolesToAdd = roleIds.Select(roleId => new UserRoleInfoEntity
+            {
+                UserId = userId,
+                RoleId = roleId
+            }).ToList();
+            await Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
+            await EnsureStaffProfileAsync(userId, roleIds);
+        }
+        else
+        {
+            var staffProfile = await Query<StaffProfileEntity>()
+                .FirstOrDefaultAsync(sp => sp.UserId == userId);
+            if (staffProfile != null)
+            {
+                staffProfile.WorkingStatus = false;
+                staffProfile.IsCinemaManager = false;
+                Repository<StaffProfileEntity>().Update(staffProfile);
+            }
+        }
+    }
+
+    private async Task EnsureStaffProfileAsync(Guid userId, List<Guid> roleIds)
+    {
+        var staffProfile = await Query<StaffProfileEntity>()
+            .FirstOrDefaultAsync(sp => sp.UserId == userId);
+
+        if (staffProfile != null)
+        {
+            staffProfile.WorkingStatus = true;
+            staffProfile.IsCinemaManager = roleIds.Contains(userRoles.TheaterManager);
+            Repository<StaffProfileEntity>().Update(staffProfile);
+            return;
+        }
+
+        var firstCinema = await Query<CinemaInfoEntity>().FirstOrDefaultAsync();
+        if (firstCinema == null)
+        {
+            throw new AppException("Cannot assign staff role because no cinema branch exists.", 400, "ROLE_ERR");
+        }
+
+        await Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
+        {
+            UserId = userId,
+            WorkingStatus = true,
+            CinemaId = firstCinema.CinemaId,
+            IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
+            FaceVector = null
+        });
     }
 
     private IQueryable<TEntity> Query<TEntity>() where TEntity : class

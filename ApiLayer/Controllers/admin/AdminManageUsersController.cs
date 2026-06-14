@@ -56,9 +56,20 @@ public class AdminManageUsersController : ControllerBase
     }
     
     [HttpPut("{userId}/role")]
-    public async Task<IActionResult> UpdateUserRole(Guid userId, List<Guid> roleIds)
+    public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] List<Guid> roleIds)
     {
         var result = await _adminManageUserService.AssignRoleToUserAsync(userId, roleIds);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPost("create-user")]
+    public async Task<IActionResult> CreateUser([FromBody] AdminCreateUserRequestDto request)
+    {
+        var result = await _adminManageUserService.CreateUserAsync(request);
         if (!result.IsSuccess)
         {
             return BadRequest(result);

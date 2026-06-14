@@ -289,6 +289,9 @@ public class CinemaDbContext : DbContext
         
         // Seeds Permissions & PermissionForRole
         PermissionsSeedData.AddPermissionsSeedData(modelBuilder);
+
+        // Seeds Vouchers
+        VoucherSeedData.AddVoucherSeedData(modelBuilder);
     }
     
 }

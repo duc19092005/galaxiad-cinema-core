@@ -55,6 +55,38 @@ public class ManagementDashboardService
         var vietnamToday = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone).Date;
         var today = TimeZoneInfo.ConvertTimeToUtc(vietnamToday, vietnamTimeZone);
         var tomorrow = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(1), vietnamTimeZone);
+        var monthStart = TimeZoneInfo.ConvertTimeToUtc(new DateTime(vietnamToday.Year, vietnamToday.Month, 1), vietnamTimeZone);
+        var lastSevenDaysStart = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(-6), vietnamTimeZone);
+
+        var activeUsers = isAdmin
+            ? await Query<UserInfoEntity>().AsNoTracking().CountAsync(u => u.AccountStatus == AccountStatusEnum.Active)
+            : 0;
+
+        var totalCinemas = await Query<CinemaInfoEntity>()
+            .AsNoTracking()
+            .Where(c => !c.IsDeleted)
+            .Where(c => isAdmin || cinemaIdsQuery.Contains(c.CinemaId))
+            .CountAsync();
+
+        var activeMovies = await Query<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(m => !m.IsDeleted && m.IsActive)
+            .Where(m => isAdmin || !isMovieManager || movieIdsQuery.Contains(m.MovieId))
+            .CountAsync();
+
+        var activeSchedulesQuery = Query<MovieScheduleInfoEntity>()
+            .AsNoTracking()
+            .Where(schedule => !schedule.IsDeleted && schedule.IsActive);
+        if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+        {
+            activeSchedulesQuery = activeSchedulesQuery.Where(schedule =>
+                cinemaIdsQuery.Contains(schedule.AuditoriumInfoEntities!.CinemaId));
+        }
+        if (!isAdmin && isMovieManager)
+        {
+            activeSchedulesQuery = activeSchedulesQuery.Where(schedule => movieIdsQuery.Contains(schedule.MovieId));
+        }
+        var activeSchedules = await activeSchedulesQuery.CountAsync();
 
         var orderDetailsQuery = Query<OrderDetailsInfo>()
             .AsNoTracking()
@@ -72,6 +104,22 @@ public class ManagementDashboardService
                 movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId));
         }
 
+        var paidOrdersQuery = Query<OrderInfoEntity>()
+            .AsNoTracking()
+            .Where(o => paidStatuses.Contains(o.OrderStatus));
+        if (!isAdmin)
+        {
+            paidOrdersQuery = paidOrdersQuery.Where(o =>
+                o.OrderDetailsInfo.Any(od =>
+                    ((isFacilitiesManager || isTheaterManager) && cinemaIdsQuery.Contains(od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId)) ||
+                    (isMovieManager && movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId))));
+        }
+
+        var totalBookings = await paidOrdersQuery.CountAsync();
+        var monthRevenue = await orderDetailsQuery
+            .Where(od => od.OrderInfoEntity.OrderDate >= monthStart && od.OrderInfoEntity.OrderDate < tomorrow)
+            .SumAsync(od => (decimal?)od.PriceEach) ?? 0;
+
         var ticketsSoldToday = await orderDetailsQuery.CountAsync(od =>
             od.OrderInfoEntity.OrderDate >= today && od.OrderInfoEntity.OrderDate < tomorrow);
 
@@ -80,6 +128,40 @@ public class ManagementDashboardService
             .SumAsync(od => (decimal?)od.PriceEach) ?? 0;
 
         var totalTicketsSold = await orderDetailsQuery.CountAsync();
+
+        var recentRevenueRows = await orderDetailsQuery
+            .Where(od => od.OrderInfoEntity.OrderDate >= lastSevenDaysStart && od.OrderInfoEntity.OrderDate < tomorrow)
+            .Select(od => new
+            {
+                od.OrderInfoEntity.OrderDate,
+                od.PriceEach
+            })
+            .ToListAsync();
+
+        var revenueByDayLookup = recentRevenueRows
+            .GroupBy(row => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(row.OrderDate, DateTimeKind.Utc), vietnamTimeZone).Date)
+            .ToDictionary(
+                group => group.Key,
+                group => new
+                {
+                    Revenue = group.Sum(row => row.PriceEach),
+                    TicketCount = group.Count()
+                });
+
+        var revenueByDay = Enumerable.Range(0, 7)
+            .Select(offset => vietnamToday.AddDays(-6 + offset))
+            .Select(date =>
+            {
+                revenueByDayLookup.TryGetValue(date, out var stat);
+                return new DailyRevenueStatDto
+                {
+                    Date = DateTime.SpecifyKind(date, DateTimeKind.Unspecified),
+                    DateLabel = date.ToString("ddd"),
+                    Revenue = stat?.Revenue ?? 0,
+                    TicketCount = stat?.TicketCount ?? 0
+                };
+            })
+            .ToList();
 
         var orderDatesForHourlyStats = await orderDetailsQuery
             .Select(od => od.OrderInfoEntity.OrderDate)
@@ -256,7 +338,14 @@ public class ManagementDashboardService
                 TicketsSoldToday = ticketsSoldToday,
                 RevenueToday = revenueToday,
                 TotalTicketsSold = totalTicketsSold,
+                ActiveUsers = activeUsers,
+                TotalCinemas = totalCinemas,
+                ActiveMovies = activeMovies,
+                ActiveSchedules = activeSchedules,
+                TotalBookings = totalBookings,
+                MonthRevenue = monthRevenue,
                 BusiestHourLabel = busiestHour?.HourLabel ?? "N/A",
+                RevenueByDay = revenueByDay,
                 RecentTransactions = recentTransactions,
                 TicketsByMovie = ticketsByMovie,
                 TicketsByHour = ticketsByHour,

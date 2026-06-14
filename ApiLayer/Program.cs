@@ -126,6 +126,17 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+// Migrations & Seed Jobs
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
+    await dbContext.Database.MigrateAsync();
+    await EnsureAuditLogTableAsync(dbContext);
+
+    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<IScheduleJobsService>();
+    await scheduleJobsService.SyncSeededJobs();
+}
+
 app.UseCors("web");
 
 app.UseErrorMiddleware();
@@ -154,17 +165,6 @@ recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, 
 
 app.MapControllers();
 app.MapHub<SeatHub>("/ws/seat");
-
-// Migrations & Seed Jobs
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await EnsureAuditLogTableAsync(dbContext);
-
-    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<IScheduleJobsService>();
-    await scheduleJobsService.SyncSeededJobs();
-}
 
 app.Run();
 
