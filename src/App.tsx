@@ -23,6 +23,8 @@ import { ShowtimesPage } from './features/booking/ShowtimesPage';
 import { TheatersPage } from './features/booking/TheatersPage';
 import { OffersPage } from './features/booking/OffersPage';
 import CashierPage from './features/cashier/CashierPage';
+import ServicesPage from './features/public/ServicesPage';
+import HelpPage from './features/public/HelpPage';
 import ShiftNotificationListener from './components/ShiftNotificationListener';
 
 function App() {
@@ -58,6 +60,8 @@ function App() {
           <Route path="/booking/success" element={<BookingSuccessPage />} />
           <Route path="/booking/failed" element={<BookingFailedPage />} />
           <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
+          <Route path="/services" element={<ServicesPage />} />
+          <Route path="/help" element={<HelpPage />} />
 
           <Route path="*" element={<NotFound />} />
           </Routes>

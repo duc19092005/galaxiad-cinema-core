@@ -11,7 +11,7 @@ import { ProximitySelectorModal } from './ProximitySelectorModal';
 import PublicCitySelector from '../features/public/components/PublicCitySelector';
 import { 
   Menu, Search, MapPin, User, LayoutDashboard, 
-  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film 
+  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText 
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -362,6 +362,11 @@ const Header: React.FC<HeaderProps> = ({
           <MobileNavItem icon={<Calendar size={18} />} label={t('home.showtimesNav', 'Showtimes')} onClick={() => { navigate('/showtimes'); setIsMobileMenuOpen(false); }} active={location.pathname === '/showtimes'} />
           <MobileNavItem icon={<MapPin size={18} />} label={t('home.theatersNav', 'Theaters')} onClick={() => { navigate('/theaters'); setIsMobileMenuOpen(false); }} active={location.pathname === '/theaters'} />
           <MobileNavItem icon={<Ticket size={18} />} label={t('home.offersNav', 'Offers')} onClick={() => { navigate('/offers'); setIsMobileMenuOpen(false); }} active={location.pathname === '/offers'} />
+
+          <div className="h-px bg-white/5 my-2" />
+
+          <MobileNavItem icon={<HelpCircle size={18} />} label={t('servicesTitle', 'Services')} onClick={() => { navigate('/services'); setIsMobileMenuOpen(false); }} active={location.pathname === '/services'} />
+          <MobileNavItem icon={<FileText size={18} />} label={t('helpTitle', 'Help')} onClick={() => { navigate('/help'); setIsMobileMenuOpen(false); }} active={location.pathname === '/help'} />
 
           <div className="h-px bg-white/5 my-2" />
 

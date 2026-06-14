@@ -537,8 +537,8 @@ const HomePage: React.FC = () => {
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Quick Links</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {['Movies', 'Showtimes', 'Theaters', 'Offers'].map(link => (
-                <a key={link} href="#" style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none' }}>{link}</a>
+              {[{ label: 'Movies', path: '/home' }, { label: 'Showtimes', path: '/showtimes' }, { label: 'Theaters', path: '/theaters' }, { label: 'Offers', path: '/offers' }].map(link => (
+                <button key={link.label} onClick={() => navigate(link.path)} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>{link.label}</button>
               ))}
             </div>
           </div>

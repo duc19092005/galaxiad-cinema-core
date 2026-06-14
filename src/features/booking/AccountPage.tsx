@@ -346,7 +346,7 @@ const AccountPage: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, margin: '4px 0 0' }}>
+                        <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, margin: '4px 0 0', wordBreak: 'break-word' }}>
                             <Mail size={16} style={{ color: 'var(--accent)' }} /> {accountInfo?.email}
                         </p>
                         {accountInfo?.rewardPoints !== undefined && (
@@ -367,7 +367,7 @@ const AccountPage: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {activeTab === 'profile' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
                                 <ProfileCard icon={<Mail size={20} />} label={t('account.email')} value={accountInfo?.email} />
                                 <EditableProfileCard 
                                     icon={<Phone size={20} />} 
@@ -458,7 +458,7 @@ const AccountPage: React.FC = () => {
                                             <div style={{ flex: 1, minWidth: 250, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
                                                     <div>
-                                                        <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 'var(--space-4)' }}>{item.movieName}</h3>
+                                                        <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 'var(--space-4)', wordBreak: 'break-word' }}>{item.movieName}</h3>
                                                         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px', fontSize: 13, color: 'var(--text-secondary)' }}>
                                                             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><MapPin size={14} style={{ color: 'var(--accent)' }} /> {item.cinemaName}</span>
                                                             <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><IdCard size={14} style={{ color: 'var(--accent)' }} /> {item.auditoriumNumber}</span>
@@ -469,21 +469,21 @@ const AccountPage: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
                                                     <div>
-                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.bookingDate')}</p>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.bookingDate')}</p>
                                                         <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.orderDate)}</p>
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.showtime')}</p>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.showtime')}</p>
                                                         <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.startTime)}</p>
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.seats')}</p>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.seats')}</p>
                                                         <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)' }}>{item.seats.join(', ')}</p>
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)' }}>{t('booking.amount')}</p>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.amount')}</p>
                                                         <p style={{ fontSize: 20, fontWeight: 800, color: 'var(--accent)' }}>{item.totalPrice.toLocaleString('vi-VN')}đ</p>
                                                     </div>
                                                 </div>
@@ -528,6 +528,7 @@ const TabButton: React.FC<{ active: boolean; onClick: () => void; icon: React.Re
             backgroundColor: active ? 'var(--accent)' : 'var(--bg-elevated)',
             color: active ? 'black' : 'var(--text-secondary)',
             boxShadow: active ? '0 4px 16px rgba(255,138,0,0.3)' : 'none',
+            overflowWrap: 'break-word', wordBreak: 'break-word', whiteSpace: 'normal',
         }}
     >
         {icon}
@@ -545,7 +546,7 @@ const ProfileCard: React.FC<{ icon: React.ReactNode; label: string; value?: stri
             <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,138,0,0.1)', color: 'var(--accent)' }}>
                 {icon}
             </div>
-            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>{label}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', wordBreak: 'break-word' }}>{label}</span>
         </div>
         <p style={{ fontSize: 18, fontWeight: 700 }}>{value || 'N/A'}</p>
     </div>
@@ -568,7 +569,7 @@ const EditableProfileCard: React.FC<{
                 <div style={{ width: 40, height: 40, borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,138,0,0.1)', color: 'var(--accent)' }}>
                     {icon}
                 </div>
-                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>{label}</span>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', wordBreak: 'break-word' }}>{label}</span>
             </div>
             {!isEditing && (
                 <button onClick={onStart} className="glass-card interactive" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
