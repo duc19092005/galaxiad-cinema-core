@@ -438,7 +438,7 @@ const Header: React.FC<HeaderProps> = ({
 
           {/* Language Selection */}
           <div className="border-t border-white/5 pt-4">
-            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">Language</p>
+            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">{t('sidebar.language')}</p>
             <div className="px-1">
               <LanguageSwitcher />
             </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import viDict from './locales/vi/translation.json';
+import ruDict from './locales/ru/translation.json';
 import i18n from './config';
 
 /**
@@ -32,6 +33,15 @@ for (const enKey in VI_DICT) {
     EN_DICT[VI_DICT[enKey]] = enKey;
 }
 
+// Build từ điển phẳng cho tiếng Nga 1 lần duy nhất
+const RU_DICT: Record<string, string> = flattenDict(ruDict as Record<string, any>);
+
+// Tạo từ điển ngược: Tiếng Nga -> Tiếng Anh
+const RU_TO_EN_DICT: Record<string, string> = {};
+for (const enKey in RU_DICT) {
+    RU_TO_EN_DICT[RU_DICT[enKey]] = enKey;
+}
+
 export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [lang, setLang] = useState(localStorage.getItem('language') || 'vi');
     const observerRef = useRef<MutationObserver | null>(null);
@@ -55,11 +65,34 @@ export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ childre
                 // Tiếng Anh -> Tiếng Việt
                 if (VI_DICT[text]) {
                     node.nodeValue = node.nodeValue!.replace(text, VI_DICT[text]);
+                    return;
+                }
+            } else if (lang === 'ru') {
+                // Tiếng Anh -> Tiếng Nga
+                if (RU_DICT[text]) {
+                    node.nodeValue = node.nodeValue!.replace(text, RU_DICT[text]);
+                    return;
+                }
+                // Tiếng Việt -> Tiếng Nga (qua trung gian Anh)
+                if (EN_DICT[text] && RU_DICT[EN_DICT[text]]) {
+                    node.nodeValue = node.nodeValue!.replace(text, RU_DICT[EN_DICT[text]]);
+                    return;
+                }
+                // Tiếng Nga -> Tiếng Anh (dùng từ điển ngược)
+                if (RU_TO_EN_DICT[text]) {
+                    node.nodeValue = node.nodeValue!.replace(text, RU_TO_EN_DICT[text]);
+                    return;
                 }
             } else {
                 // Tiếng Việt -> Tiếng Anh (dùng từ điển ngược)
                 if (EN_DICT[text]) {
                     node.nodeValue = node.nodeValue!.replace(text, EN_DICT[text]);
+                    return;
+                }
+                // Tiếng Nga -> Tiếng Anh
+                if (RU_TO_EN_DICT[text]) {
+                    node.nodeValue = node.nodeValue!.replace(text, RU_TO_EN_DICT[text]);
+                    return;
                 }
             }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -71,8 +104,14 @@ export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ childre
                 const phTrimmed = ph.trim();
                 if (lang === 'vi' && VI_DICT[phTrimmed]) {
                     el.setAttribute('placeholder', VI_DICT[phTrimmed]);
+                } else if (lang === 'ru' && RU_DICT[phTrimmed]) {
+                    el.setAttribute('placeholder', RU_DICT[phTrimmed]);
+                } else if (lang === 'ru' && EN_DICT[phTrimmed] && RU_DICT[EN_DICT[phTrimmed]]) {
+                    el.setAttribute('placeholder', RU_DICT[EN_DICT[phTrimmed]]);
                 } else if (lang === 'en' && EN_DICT[phTrimmed]) {
                     el.setAttribute('placeholder', EN_DICT[phTrimmed]);
+                } else if (lang === 'en' && RU_TO_EN_DICT[phTrimmed]) {
+                    el.setAttribute('placeholder', RU_TO_EN_DICT[phTrimmed]);
                 }
             }
 
@@ -82,8 +121,14 @@ export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ childre
                 const titleTrimmed = title.trim();
                 if (lang === 'vi' && VI_DICT[titleTrimmed]) {
                     el.setAttribute('title', VI_DICT[titleTrimmed]);
+                } else if (lang === 'ru' && RU_DICT[titleTrimmed]) {
+                    el.setAttribute('title', RU_DICT[titleTrimmed]);
+                } else if (lang === 'ru' && EN_DICT[titleTrimmed] && RU_DICT[EN_DICT[titleTrimmed]]) {
+                    el.setAttribute('title', RU_DICT[EN_DICT[titleTrimmed]]);
                 } else if (lang === 'en' && EN_DICT[titleTrimmed]) {
                     el.setAttribute('title', EN_DICT[titleTrimmed]);
+                } else if (lang === 'en' && RU_TO_EN_DICT[titleTrimmed]) {
+                    el.setAttribute('title', RU_TO_EN_DICT[titleTrimmed]);
                 }
             }
         }
