@@ -1,6 +1,6 @@
 // src/components/Header.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../api/authApi';
 import Cookies from 'js-cookie';
@@ -8,7 +8,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import CinemaSelector from './CinemaSelector';
 import LogoutModal from './LogoutModal';
 import { ProximitySelectorModal } from './ProximitySelectorModal';
-import { useLocation } from 'react-router-dom';
+import PublicCitySelector from '../features/public/components/PublicCitySelector';
+import { 
+  Menu, Search, MapPin, User, LayoutDashboard, 
+  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film 
+} from 'lucide-react';
 
 interface HeaderProps {
   title?: string;
@@ -19,23 +23,41 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({
-  onMenuToggle,
-  showSidebarToggle = false,
   rightContent,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+  
+  // Dropdowns and Modals
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedCinemaName, setSelectedCinemaName] = useState<string | null>(null);
+  const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const storedUserStr = localStorage.getItem('user_info');
   const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+  useEffect(() => {
+    const checkSelectedCity = () => {
+      setSelectedCity(localStorage.getItem('user_selected_city') || '');
+    };
+    checkSelectedCity();
+    window.addEventListener('user_selected_city_changed', checkSelectedCity);
+    return () => window.removeEventListener('user_selected_city_changed', checkSelectedCity);
+  }, []);
+
+  const handleCityChange = (city: string) => {
+    setSelectedCity(city);
+    localStorage.setItem('user_selected_city', city);
+    window.dispatchEvent(new Event('user_selected_city_changed'));
+  };
 
   useEffect(() => {
     const checkSelectedCinema = () => {
@@ -86,6 +108,7 @@ const Header: React.FC<HeaderProps> = ({
       localStorage.removeItem('user_info');
       Cookies.remove('X-Access-Token');
       setIsLogoutModalOpen(false);
+      setIsMobileMenuOpen(false);
       navigate('/login');
     } catch {
       setLogoutError('Logout failed. Please try again.');
@@ -97,17 +120,16 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <>
       <header className="fixed w-full top-0 z-50 bg-[#131313]/30 backdrop-blur-xl border-b border-white/10 shadow-sm transition-all duration-300">
-        <nav className="flex justify-between items-center px-3 md:px-6 lg:px-10 py-3 max-w-7xl mx-auto gap-2">
-          <div className="flex items-center gap-2 md:gap-4 lg:gap-8 min-w-0 flex-shrink-0">
-            {/* Sidebar toggle for dashboards */}
-            {showSidebarToggle && (
-              <button 
-                onClick={onMenuToggle} 
-                className="hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer flex-shrink-0"
-              >
-                <span className="material-symbols-outlined text-[22px]">menu</span>
-              </button>
-            )}
+        <nav className="flex justify-between items-center px-4 md:px-6 lg:px-10 py-3.5 max-w-7xl mx-auto gap-2">
+          <div className="flex items-center gap-3 md:gap-5 lg:gap-8 min-w-0 flex-shrink-0">
+            {/* Mobile Menu Hamburger Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)} 
+              className="md:hidden hover:bg-white/5 p-2 rounded-full transition-all text-white bg-transparent border-none cursor-pointer flex-shrink-0 flex items-center justify-center"
+              aria-label="Toggle Navigation Menu"
+            >
+              <Menu size={20} />
+            </button>
 
             <a 
               onClick={() => navigate('/home')} 
@@ -117,7 +139,7 @@ const Header: React.FC<HeaderProps> = ({
               CINEMA
             </a>
             
-            <div className="hidden md:flex gap-2 lg:gap-5 min-w-0">
+            <div className="hidden md:flex gap-3 lg:gap-5 min-w-0">
               <span 
                 onClick={() => navigate('/home')} 
                 className={`${(location.pathname === '/home' || location.pathname === '/') ? 'text-[#ffb77f] font-bold border-b-2 border-[#ffb77f] pb-1' : 'text-white/80 hover:text-[#ffb77f] border-b-2 border-transparent pb-1'} transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap`}
@@ -145,10 +167,10 @@ const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 md:gap-2.5 flex-shrink-0">
             {/* Search Input Box */}
-            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-3 py-2 border border-white/10">
-              <span className="material-symbols-outlined text-[#ddc1ae] text-[18px]">search</span>
+            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+              <Search size={15} className="text-[#ddc1ae] flex-shrink-0" />
               <input 
                 className="bg-transparent border-none focus:outline-none text-white text-xs ml-2 w-36 placeholder:text-[#ddc1ae]/50" 
                 placeholder="Search movies..." 
@@ -163,13 +185,19 @@ const Header: React.FC<HeaderProps> = ({
               {/* Language Switcher */}
               <LanguageSwitcher />
 
+              {/* City Selector */}
+              <div className="hidden md:block">
+                <PublicCitySelector selectedCity={selectedCity} onCityChange={handleCityChange} />
+              </div>
+
+              {/* Location Select Button */}
               <button 
                 onClick={() => setIsLocationModalOpen(true)}
                 title={selectedCinemaName || "Select Cinema Location"}
                 className="hover:bg-white/5 p-2 rounded-full transition-all duration-300 bg-transparent border-none cursor-pointer flex items-center gap-1.5"
                 style={{ color: selectedCinemaName ? 'var(--primary, #ff8a00)' : 'white' }}
               >
-                <span className="material-symbols-outlined text-[20px]" style={{ fontSize: '20px' }}>location_on</span>
+                <MapPin size={18} className="flex-shrink-0" />
                 {selectedCinemaName && (
                   <span className="hidden lg:inline text-xs font-semibold max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap font-sans">
                     {selectedCinemaName}
@@ -182,8 +210,9 @@ const Header: React.FC<HeaderProps> = ({
                 <button 
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="hover:bg-white/5 p-2 rounded-full transition-all duration-300 text-[#ffb77f] bg-transparent border-none cursor-pointer flex items-center justify-center"
+                  aria-label="User Account Options"
                 >
-                  <span className="material-symbols-outlined text-[24px]">account_circle</span>
+                  <User size={20} className="flex-shrink-0" />
                 </button>
 
                 {isDropdownOpen && (
@@ -224,7 +253,7 @@ const Header: React.FC<HeaderProps> = ({
                             }}
                             className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-[#ffb77f] flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
                           >
-                            <span className="material-symbols-outlined text-[18px]">dashboard</span>
+                            <LayoutDashboard size={16} className="flex-shrink-0" />
                             {t('Dashboard')}
                           </button>
                         )}
@@ -233,7 +262,7 @@ const Header: React.FC<HeaderProps> = ({
                           onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
                           className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[18px]">person</span>
+                          <User size={16} className="flex-shrink-0" />
                           {t('Account Info')}
                         </button>
 
@@ -241,7 +270,7 @@ const Header: React.FC<HeaderProps> = ({
                           onClick={() => { navigate('/role-selection'); setIsDropdownOpen(false); }}
                           className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
                         >
-                          <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
+                          <ArrowLeftRight size={16} className="flex-shrink-0" />
                           {t('Switch Role')}
                         </button>
 
@@ -252,17 +281,17 @@ const Header: React.FC<HeaderProps> = ({
                     {user ? (
                       <button
                         onClick={() => { setIsDropdownOpen(false); setIsLogoutModalOpen(true); }}
-                        className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-red-400 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
+                        className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-red-400 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
                       >
-                        <span className="material-symbols-outlined text-[18px]">logout</span>
+                        <LogOut size={16} className="flex-shrink-0" />
                         {t('Logout')}
                       </button>
                     ) : (
                       <button
                         onClick={() => { navigate('/login'); setIsDropdownOpen(false); }}
-                        className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-[#ffb77f] flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
+                        className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-[#ffb77f] flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
                       >
-                        <span className="material-symbols-outlined text-[18px]">login</span>
+                        <LogIn size={16} className="flex-shrink-0" />
                         {t('Sign In')}
                       </button>
                     )}
@@ -292,6 +321,139 @@ const Header: React.FC<HeaderProps> = ({
         </nav>
       </header>
 
+      {/* ============================================
+          MOBILE SIDEBAR DRAWER MENU
+          ============================================ */}
+      {/* Overlay backdrop */}
+      {isMobileMenuOpen && (
+        <div
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm transition-all duration-300"
+        />
+      )}
+
+      {/* Drawer Panel */}
+      <div 
+        className="fixed top-0 left-0 h-full w-[280px] bg-[#111114] border-r border-white/5 shadow-2xl flex flex-col z-[1001] transition-transform duration-300 ease-out"
+        style={{
+          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-white/5">
+          <span 
+            className="font-bold text-xl tracking-tighter text-[#ffb77f]"
+            style={{ fontFamily: "'Montserrat', sans-serif" }}
+          >
+            CINEMA
+          </span>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center border-none cursor-pointer"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content Body */}
+        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
+          {/* Main Navigation Links */}
+          <MobileNavItem icon={<Film size={18} />} label={t('home.moviesNav', 'Movies')} onClick={() => { navigate('/home'); setIsMobileMenuOpen(false); }} active={location.pathname === '/home' || location.pathname === '/'} />
+          <MobileNavItem icon={<Calendar size={18} />} label={t('home.showtimesNav', 'Showtimes')} onClick={() => { navigate('/showtimes'); setIsMobileMenuOpen(false); }} active={location.pathname === '/showtimes'} />
+          <MobileNavItem icon={<MapPin size={18} />} label={t('home.theatersNav', 'Theaters')} onClick={() => { navigate('/theaters'); setIsMobileMenuOpen(false); }} active={location.pathname === '/theaters'} />
+          <MobileNavItem icon={<Ticket size={18} />} label={t('home.offersNav', 'Offers')} onClick={() => { navigate('/offers'); setIsMobileMenuOpen(false); }} active={location.pathname === '/offers'} />
+
+          <div className="h-px bg-white/5 my-2" />
+
+          {/* User Account / Auth Section */}
+          {!user ? (
+            <div className="flex flex-col gap-2 pt-2">
+              <button 
+                onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
+                className="w-full py-2.5 bg-gradient-to-r from-[#ff8a00] to-[#ea580c] hover:brightness-110 text-white font-bold text-sm rounded-xl border-none cursor-pointer transition-all active:scale-95"
+              >
+                {t('header.login', 'Sign In')}
+              </button>
+              <button 
+                onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}
+                className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm rounded-xl border border-white/10 cursor-pointer transition-all"
+              >
+                {t('header.register', 'Register')}
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {/* User profile card */}
+              <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-[#ffb77f] border border-white/10">
+                  <User size={20} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs text-zinc-500 font-mono m-0 uppercase tracking-wider">Signed in as</p>
+                  <p className="text-sm font-bold text-white m-0 truncate">{user.username}</p>
+                </div>
+              </div>
+
+              {user.selectedRole && user.selectedRole !== 'Customer' && (
+                <MobileNavItem
+                  icon={<LayoutDashboard size={18} />}
+                  label={t('Dashboard')}
+                  onClick={() => {
+                    const route = getRoleDashboardRoute(user.selectedRole);
+                    if (route) navigate(route);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  active={false}
+                />
+              )}
+
+              <MobileNavItem
+                icon={<User size={18} />}
+                label={t('Account Info')}
+                onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                active={location.pathname === '/account'}
+              />
+
+              <MobileNavItem
+                icon={<ArrowLeftRight size={18} />}
+                label={t('Switch Role')}
+                onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                active={false}
+              />
+
+              <div className="h-px bg-white/5 my-2" />
+
+              <button
+                onClick={() => { setIsMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
+                className="w-full py-3 px-4 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-bold transition-colors text-left"
+              >
+                <LogOut size={18} />
+                <span>{t('header.logout', 'Logout')}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Spacer */}
+          <div className="flex-1 min-h-[20px]" />
+
+          {/* Language Selection */}
+          <div className="border-t border-white/5 pt-4">
+            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">Language</p>
+            <div className="px-1">
+              <LanguageSwitcher />
+            </div>
+          </div>
+
+          {/* City Selection */}
+          <div className="border-t border-white/5 pt-4">
+            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">City</p>
+            <div className="px-1">
+              <PublicCitySelector selectedCity={selectedCity} onCityChange={handleCityChange} />
+            </div>
+          </div>
+        </div>
+      </div>
+
       <LogoutModal
         isOpen={isLogoutModalOpen}
         onClose={() => setIsLogoutModalOpen(false)}
@@ -307,5 +469,25 @@ const Header: React.FC<HeaderProps> = ({
     </>
   );
 };
+
+/* Mobile nav item helper */
+const MobileNavItem: React.FC<{
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  active: boolean;
+}> = ({ icon, label, onClick, active }) => (
+  <button
+    onClick={onClick}
+    className={`w-full py-3 px-4 rounded-xl flex items-center gap-3 text-sm border-none cursor-pointer transition-colors text-left font-medium ${
+      active 
+        ? 'bg-[#ff8a00]/10 text-[#ffb77f] font-bold border border-[#ff8a00]/20' 
+        : 'bg-transparent text-zinc-400 hover:bg-white/5 hover:text-white'
+    }`}
+  >
+    {icon}
+    <span className="truncate">{label}</span>
+  </button>
+);
 
 export default Header;

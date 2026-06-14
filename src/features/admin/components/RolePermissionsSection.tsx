@@ -154,11 +154,11 @@ const RolePermissionsSection: React.FC = () => {
   }
 
   return (
-    <div className="animate-in" style={{ display: 'grid', gap: 18 }}>
+    <div className="animate-in" style={{ display: 'grid', gap: 22 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-primary)' }}>Role permissions</h2>
-          <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: 13 }}>
+          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 850, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Role permissions</h2>
+          <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.6 }}>
             Configure permission claims for each role. Active users receive changes after their next login.
           </p>
         </div>
@@ -174,15 +174,15 @@ const RolePermissionsSection: React.FC = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 0.36fr) minmax(0, 1fr)', gap: 16 }} className="admin-permissions-grid">
-        <aside className="glass-card" style={{ padding: 16, display: 'grid', gap: 12, alignSelf: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 0.36fr) minmax(0, 1fr)', gap: 18 }} className="admin-permissions-grid">
+        <aside className="glass-card" style={{ padding: 20, display: 'grid', gap: 16, alignSelf: 'start', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ShieldCheck size={17} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: 13, fontWeight: 800 }}>Roles</h3>
-              <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>{roles.length} configured</p>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 850 }}>Roles</h3>
+              <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>{roles.length} configured</p>
             </div>
           </div>
 
@@ -200,16 +200,16 @@ const RolePermissionsSection: React.FC = () => {
                     alignItems: 'center',
                     gap: 10,
                     width: '100%',
-                    padding: '10px 12px',
+                    padding: '14px 14px',
                     borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${isActive ? 'rgba(255, 138, 0, 0.45)' : 'var(--border-color)'}`,
-                    background: isActive ? 'var(--accent-soft)' : 'rgba(255,255,255,0.02)',
-                    color: isActive ? 'var(--accent)' : 'var(--text-secondary)',
+                    border: `1px solid ${isActive ? 'rgba(255, 138, 0, 0.52)' : 'rgba(255,255,255,0.11)'}`,
+                    background: isActive ? 'rgba(255, 138, 0, 0.14)' : 'rgba(255,255,255,0.04)',
+                    color: isActive ? 'var(--accent)' : 'var(--text-primary)',
                     cursor: 'pointer',
                     textAlign: 'left',
                   }}
                 >
-                  <span style={{ fontSize: 13, fontWeight: 700 }}>{role.roleName}</span>
+                  <span style={{ fontSize: 15, fontWeight: 800 }}>{role.roleName}</span>
                   <span className="badge badge-default">{role.permissions.length}</span>
                 </button>
               );
@@ -217,16 +217,16 @@ const RolePermissionsSection: React.FC = () => {
           </div>
         </aside>
 
-        <section className="glass-card" style={{ padding: 18, display: 'grid', gap: 16, minWidth: 0 }}>
+        <section className="glass-card" style={{ padding: 22, display: 'grid', gap: 18, minWidth: 0, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }}>
           {selectedRole ? (
             <>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{selectedRole.roleName}</h3>
+                    <h3 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{selectedRole.roleName}</h3>
                     {hasUnsavedChanges && <span className="badge badge-warning">Unsaved changes</span>}
                   </div>
-                  <p style={{ margin: '5px 0 0', color: 'var(--text-secondary)', fontSize: 12 }}>
+                  <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>
                     {selectedPermissionIds.length} of {permissions.length} permissions selected.
                   </p>
                 </div>
@@ -246,7 +246,7 @@ const RolePermissionsSection: React.FC = () => {
               </div>
 
               <label style={{ display: 'grid', gap: 6 }}>
-                <span className="input-label" style={{ margin: 0 }}>Search permissions</span>
+                <span className="input-label" style={{ margin: 0, fontSize: 13 }}>Search permissions</span>
                 <div style={{ position: 'relative' }}>
                   <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
@@ -254,15 +254,15 @@ const RolePermissionsSection: React.FC = () => {
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
                     placeholder="Search permission name..."
-                    style={{ paddingLeft: 38 }}
+                    style={{ paddingLeft: 38, fontSize: 15, minHeight: 42 }}
                   />
                 </div>
               </label>
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
-                gap: 10,
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gap: 12,
                 maxHeight: 500,
                 overflowY: 'auto',
                 paddingRight: 4,
@@ -275,26 +275,27 @@ const RolePermissionsSection: React.FC = () => {
                       style={{
                         display: 'flex',
                         alignItems: 'flex-start',
-                        gap: 10,
-                        padding: 12,
+                        gap: 12,
+                        padding: '14px 15px',
                         borderRadius: 'var(--radius-md)',
-                        border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.35)' : 'var(--border-color)'}`,
-                        background: checked ? 'rgba(255, 138, 0, 0.08)' : 'rgba(255,255,255,0.02)',
+                        border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.45)' : 'rgba(255,255,255,0.12)'}`,
+                        background: checked ? 'rgba(255, 138, 0, 0.12)' : 'rgba(255,255,255,0.04)',
                         cursor: 'pointer',
                         minWidth: 0,
+                        minHeight: 72,
                       }}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
                         onChange={() => togglePermission(permission.permissionId)}
-                        style={{ marginTop: 2, accentColor: '#ff8a00' }}
+                        style={{ marginTop: 3, width: 18, height: 18, accentColor: '#ff8a00', flexShrink: 0 }}
                       />
                       <span style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-                        <span style={{ color: 'var(--text-primary)', fontSize: 13, fontWeight: 700, overflowWrap: 'anywhere' }}>
+                        <span style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 800, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
                           {permission.permissionInfo}
                         </span>
-                        <span style={{ color: 'var(--text-muted)', fontSize: 10, fontFamily: "'JetBrains Mono', monospace", overflowWrap: 'anywhere' }}>
+                        <span style={{ color: 'var(--text-secondary)', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", overflowWrap: 'anywhere', opacity: 0.82 }}>
                           {permission.permissionId}
                         </span>
                       </span>

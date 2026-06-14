@@ -7,40 +7,15 @@ import { bookingApi } from '../../api/bookingApi';
 import Header from '../../components/Header';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 
-const MOCK_PROMOTIONS = [
-  {
-    id: 'p1',
-    title: 'Student Discount Day',
-    description: 'Every Monday & Tuesday, present your student ID to get 10% off plus free popcorn!',
-    code: 'STUDENTDAY',
-    image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600',
-    tag: 'Student Offer'
-  },
-  {
-    id: 'p2',
-    title: 'Midnight Cinema Special',
-    description: 'Save 20% on any showtime after 22:00. Perfect for night owls!',
-    code: 'MIDNIGHT20',
-    image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600',
-    tag: 'Special Promo'
-  },
-  {
-    id: 'p3',
-    title: 'Double Points Weekend',
-    description: 'Earn 2x reward points on all tickets bought between Friday and Sunday.',
-    code: 'DOUBLEPOINTS',
-    image: 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?auto=format&fit=crop&w=600',
-    tag: 'Points Booster'
-  },
-  {
-    id: 'p4',
-    title: 'First booking Coupon',
-    description: 'First time booking tickets online? Enter code WELCOME5 at checkout to save 5%.',
-    code: 'WELCOME5',
-    image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600',
-    tag: 'New Member'
-  }
-];
+const getVoucherImage = (name: string) => {
+  const norm = name.toUpperCase();
+  if (norm.includes('SUMMER')) return 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600';
+  if (norm.includes('STUDENT')) return 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=600';
+  if (norm.includes('MIDNIGHT') || norm.includes('NIGHT')) return 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600';
+  if (norm.includes('NEWBIE') || norm.includes('WELCOME')) return 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600';
+  if (norm.includes('DOUBLE') || norm.includes('POINTS')) return 'https://images.unsplash.com/photo-1560169897-fc0cdbdfa4d5?auto=format&fit=crop&w=600';
+  return 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600';
+};
 
 export const OffersPage: React.FC = () => {
   const navigate = useNavigate();
@@ -59,7 +34,26 @@ export const OffersPage: React.FC = () => {
   const [loadingWallet, setLoadingWallet] = useState(false);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
+  // Dynamic promotions state (Deals & Offers)
+  const [promotions, setPromotions] = useState<VoucherDto[]>([]);
+  const [loadingPromotions, setLoadingPromotions] = useState(false);
+
+  const fetchPublicPromotions = async () => {
+    setLoadingPromotions(true);
+    try {
+      const res = await voucherApi.getActiveVouchers();
+      if (res.isSuccess) {
+        setPromotions(res.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load promotions:', err);
+    } finally {
+      setLoadingPromotions(false);
+    }
+  };
+
   useEffect(() => {
+    fetchPublicPromotions();
     const checkLogin = () => {
       const stored = localStorage.getItem('user_info');
       if (stored) {
@@ -274,56 +268,69 @@ export const OffersPage: React.FC = () => {
 
         {/* -------------------- TAB CONTENT: DEALS & OFFERS -------------------- */}
         {activeTab === 'offers' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
-            {MOCK_PROMOTIONS.map((promo) => (
-              <div 
-                key={promo.id} 
-                className="glass-card" 
-                style={{ 
-                  borderRadius: 'var(--radius-xl)', 
-                  overflow: 'hidden', 
-                  border: '1px solid rgba(255,255,255,0.05)',
-                  background: 'rgba(18,18,20,0.3)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  height: '100%'
-                }}
-              >
-                {/* Image & tag */}
-                <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
-                  <img src={promo.image} alt={promo.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <span style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    fontSize: '10px',
-                    fontWeight: 800,
-                    padding: '4px 10px',
-                    borderRadius: 'var(--radius-full)',
-                    background: 'var(--primary, #ff8a00)',
-                    color: 'black',
-                    textTransform: 'uppercase'
-                  }}>
-                    {promo.tag}
-                  </span>
-                </div>
-
-                {/* Content */}
-                <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '8px' }}>{promo.title}</h3>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 16px 0' }}>
-                      {promo.description}
-                    </p>
-                  </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Promo Code:</span>
-                    <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary, #ff8a00)', letterSpacing: '0.05em' }}>{promo.code}</span>
-                  </div>
-                </div>
+          <div>
+            {loadingPromotions ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '60px 0' }}>
+                <Loader2 size={32} className="animate-spin" style={{ color: 'var(--primary, #ff8a00)', animation: 'spin 1s linear infinite' }} />
               </div>
-            ))}
+            ) : promotions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
+                No active promotions or deals available at the moment.
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
+                {promotions.map((promo) => (
+                  <div 
+                    key={promo.voucherId} 
+                    className="glass-card" 
+                    style={{ 
+                      borderRadius: 'var(--radius-xl)', 
+                      overflow: 'hidden', 
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      background: 'rgba(18,18,20,0.3)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      height: '100%'
+                    }}
+                  >
+                    {/* Image & tag */}
+                    <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
+                      <img src={getVoucherImage(promo.voucherName)} alt={promo.voucherName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <span style={{
+                        position: 'absolute',
+                        top: '12px',
+                        left: '12px',
+                        fontSize: '10px',
+                        fontWeight: 800,
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-full)',
+                        background: 'var(--primary, #ff8a00)',
+                        color: 'black',
+                        textTransform: 'uppercase'
+                      }}>
+                        {promo.voucherDiscountPercent}% OFF
+                      </span>
+                    </div>
+
+                    {/* Content */}
+                    <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Deal Code: {promo.voucherName}</span>
+                        <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 8px 0' }}>{promo.voucherName}</h3>
+                        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 16px 0' }}>
+                          {promo.voucherDescription}
+                        </p>
+                      </div>
+                      
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Point Cost:</span>
+                        <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary, #ff8a00)', letterSpacing: '0.05em' }}>{promo.voucherPointsCost} PTS</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

@@ -38,7 +38,7 @@ import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
-import Header from '../../components/Header';
+import ManagementChrome from '../../components/ManagementChrome';
 import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 
 // =============================================
@@ -869,7 +869,7 @@ const MoviesListTab: React.FC<MoviesListTabProps> = ({
                                     ))}
                                 </div>
                                 <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 4px' }}>
-                                    {formatDate(movie.startedDate)} — {formatDate(movie.endedDate)}
+                                    {formatDate(movie.startedDate)} - {formatDate(movie.endedDate)}
                                 </p>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                                     <UserIcon size={11} style={{ color: movie.managerName ? 'var(--accent)' : 'var(--danger)' }} />
@@ -1063,21 +1063,20 @@ const MovieManagerPage: React.FC = () => {
         <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
             <AppSidebar
                 isOpen={sidebarOpen}
-                onToggle={() => setSidebarOpen(!sidebarOpen)}
+                onToggle={() => setSidebarOpen((open) => !open)}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
                 sections={sidebarSections}
                 role="Movie Manager"
+                collapsibleDesktop
             />
 
-            <Header
-                title={t('Movie Manager')}
-                role="Movie Manager"
-                showSidebarToggle
-                onMenuToggle={() => setSidebarOpen(true)}
+            <ManagementChrome
+                sidebarOpen={sidebarOpen}
+                onSidebarToggle={() => setSidebarOpen((open) => !open)}
             />
 
-            <main className="main-content">
+            <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
                 <div className="page-container">
                     {renderContent()}
                 </div>

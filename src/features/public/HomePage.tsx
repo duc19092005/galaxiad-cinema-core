@@ -1,21 +1,17 @@
 // src/features/public/HomePage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, ChevronDown, LogOut, AlertCircle, ArrowLeftRight, Loader2,
-  Sparkles, LayoutDashboard, UserCircle, X, Play, Ticket,
+  ChevronDown, AlertCircle, Loader2,
+  Sparkles, Play, Ticket,
   Search,
 } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
-import { authApi } from '../../api/authApi';
 import { publicApi } from '../../api/publicApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { PublicMovieListItem } from '../../types/public.types';
-import LogoutModal from '../../components/LogoutModal';
+import type { PublicMovieListItem, ActiveCinema, ActiveMovie } from '../../types/public.types';
 import { useTranslation } from 'react-i18next';
-import LanguageSwitcher from '../../components/LanguageSwitcher';
-import PublicCitySelector from './components/PublicCitySelector';
 import Header from '../../components/Header';
 
 
@@ -37,28 +33,176 @@ const TRENDING_DATA = [
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
 
+interface CustomSelectProps {
+  step: string;
+  label: string;
+  value: string;
+  displayValue: string;
+  options: { value: string; label: string }[];
+  onChange: (val: string) => void;
+  borderLeft?: boolean;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({
+  step,
+  label,
+  value,
+  displayValue,
+  options,
+  onChange,
+  borderLeft,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: 'relative',
+        padding: '12px 16px',
+        borderRadius: 12,
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        transition: 'background-color 0.2s ease',
+      }}
+      className={`hover:bg-white/5 ${borderLeft ? 'md:border-l md:border-white/10' : ''}`}
+      onClick={() => setIsOpen(!isOpen)}
+    >
+      <span style={{ fontSize: 10, color: 'var(--accent, #ff8a00)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+        {step}. {label}
+      </span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+        <span style={{ fontWeight: 500, color: 'white', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90%' }}>
+          {displayValue}
+        </span>
+        <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+      </div>
+
+      {isOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: 8,
+            backgroundColor: '#18181b',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 12,
+            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
+            zIndex: 50,
+            maxHeight: 250,
+            overflowY: 'auto',
+          }}
+          className="scrollbar-thin"
+        >
+          {options.map((opt) => (
+            <div
+              key={opt.value}
+              onClick={(e) => {
+                e.stopPropagation();
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              style={{
+                padding: '10px 16px',
+                fontSize: 13,
+                color: opt.value === value ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.8)',
+                backgroundColor: opt.value === value ? 'rgba(255,138,0,0.1)' : 'transparent',
+                fontWeight: opt.value === value ? 600 : 400,
+                transition: 'background-color 0.15s, color 0.15s',
+              }}
+              className="hover:bg-white/5 hover:text-white"
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const [logoutError, setLogoutError] = useState<string | null>(null);
-  const [logoutLoading, setLogoutLoading] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const [nowShowing, setNowShowing] = useState<PublicMovieListItem[]>([]);
   const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCity, setSelectedCity] = useState<string>('');
+  
+  // City select sync state
+  const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+
+  // Quick Booking states
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedMovieId, setSelectedMovieId] = useState<string>('All');
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('All');
+  const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
+  const [movies, setMovies] = useState<ActiveMovie[]>([]);
+  const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user_info');
-    if (storedUser) setUser(JSON.parse(storedUser));
-    fetchMovies();
-  }, [navigate]);
+    const handleCityChange = () => {
+      setSelectedCity(localStorage.getItem('user_selected_city') || '');
+    };
+    window.addEventListener('user_selected_city_changed', handleCityChange);
+    return () => window.removeEventListener('user_selected_city_changed', handleCityChange);
+  }, []);
+
+  useEffect(() => {
+    // Generate dates
+    const dates = [];
+    const today = new Date();
+    for (let i = 0; i < 7; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() + i);
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const dateVal = String(d.getDate()).padStart(2, '0');
+      const valueStr = `${year}-${month}-${dateVal}`;
+      
+      let dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      if (i === 0) dayName = 'Today';
+      
+      dates.push({
+        label: `${d.getDate()}/${d.getMonth() + 1}`,
+        value: valueStr,
+        dayName,
+      });
+    }
+    setDateList(dates);
+    setSelectedDate(dates[0].value);
+
+    // Fetch master data for booking bar
+    const fetchMasterData = async () => {
+      try {
+        const [cinemaRes, movieRes] = await Promise.all([
+          publicApi.getActiveCinemas(),
+          publicApi.getActiveMovies(),
+        ]);
+        if (cinemaRes.isSuccess) setCinemas(cinemaRes.data || []);
+        if (movieRes.isSuccess) setMovies(movieRes.data || []);
+      } catch (err) {
+        console.error('Error fetching master data for booking bar:', err);
+      }
+    };
+    fetchMasterData();
+  }, []);
 
   useEffect(() => {
     fetchMovies();
@@ -85,23 +229,29 @@ const HomePage: React.FC = () => {
     } finally { setLoading(false); }
   };
 
+  // 1. Date options
+  const dateOptions = dateList.map((d) => ({
+    value: d.value,
+    label: `${d.label} (${d.dayName === 'Today' ? t('home.today', 'Today') : d.dayName})`,
+  }));
+  const selectedDateOption = dateList.find((d) => d.value === selectedDate);
+  const selectedDateLabel = selectedDateOption
+    ? `${selectedDateOption.label} (${selectedDateOption.dayName === 'Today' ? t('home.today', 'Today') : selectedDateOption.dayName})`
+    : '';
 
+  // 2. Movie options
+  const movieOptions = [
+    { value: 'All', label: t('home.allMovies', 'All Movies') },
+    ...movies.map((m) => ({ value: m.movieId, label: m.movieName })),
+  ];
+  const selectedMovieLabel = movies.find((m) => m.movieId === selectedMovieId)?.movieName || t('home.allMovies', 'All Movies');
 
-  const handleLogoutClick = () => { setIsLogoutModalOpen(true); setLogoutError(null); };
-  const handleLogoutConfirm = async () => {
-    setLogoutError(null); setLogoutLoading(true);
-    try {
-      await authApi.logout();
-      localStorage.removeItem('user_info');
-      Cookies.remove('X-Access-Token');
-      setIsLogoutModalOpen(false);
-      navigate('/login');
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response) {
-        setLogoutError((error.response.data as ApiErrorResponse).message || 'Logout failed.');
-      } else { setLogoutError('Unable to connect to server.'); }
-    } finally { setLogoutLoading(false); }
-  };
+  // 3. Cinema options
+  const cinemaOptions = [
+    { value: 'All', label: t('home.allCinemas', 'All Cinemas') },
+    ...cinemas.map((c) => ({ value: c.cinemaId, label: c.cinemaName })),
+  ];
+  const selectedCinemaLabel = cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || t('home.allCinemas', 'All Cinemas');
 
   return (
     <>
@@ -114,253 +264,9 @@ const HomePage: React.FC = () => {
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
 
       {/* Redesigned Unified Header */}
-      <Header
-        showSidebarToggle={true}
-        onMenuToggle={() => setIsMobileMenuOpen(true)}
-        rightContent={
-          <div className="hidden md:block">
-            <PublicCitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
-          </div>
-        }
-      />
+      <Header />
 
-      {/* ============================================
-          MOBILE SIDEBAR (Drawer)
-          ============================================ */}
-      {/* Overlay backdrop */}
-      <div
-        onClick={() => setIsMobileMenuOpen(false)}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 99,
-          backgroundColor: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(6px)',
-          WebkitBackdropFilter: 'blur(6px)',
-          transition: 'opacity 350ms ease, visibility 350ms ease',
-          opacity: isMobileMenuOpen ? 1 : 0,
-          visibility: isMobileMenuOpen ? 'visible' : 'hidden',
-          pointerEvents: isMobileMenuOpen ? 'auto' : 'none',
-        }}
-      />
 
-      {/* Panel */}
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: 'min(82vw, 320px)',
-        maxWidth: 320,
-        height: '100vh',
-        zIndex: 100,
-        backgroundColor: '#111114',
-        borderRight: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '4px 0 40px rgba(0,0,0,0.5)',
-        display: 'flex',
-        flexDirection: 'column',
-        transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 350ms cubic-bezier(0.4, 0, 0.2, 1)',
-      }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '20px 16px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          <span style={{
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: 22,
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #ffb77f, #ff8a00)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            lineHeight: 1,
-            userSelect: 'none',
-          }}>
-            CINEMA
-          </span>
-          <button
-            onClick={() => setIsMobileMenuOpen(false)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              border: 'none',
-              background: 'rgba(255,255,255,0.05)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              flexShrink: 0,
-            }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 4,
-        }}>
-          {!user ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingTop: 8 }}>
-              <button onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  minHeight: 48, borderRadius: 12, fontWeight: 600, fontSize: 15,
-                  gap: 8, border: 'none', cursor: 'pointer', padding: '12px 24px',
-                  background: 'linear-gradient(135deg, #ff8a00, #ea580c)',
-                  color: '#fff',
-                }}>
-                {t('header.login')}
-              </button>
-              <button onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  minHeight: 48, borderRadius: 12, fontWeight: 600, fontSize: 15,
-                  gap: 8, border: '1px solid var(--border-color)',
-                  cursor: 'pointer', padding: '12px 24px',
-                  background: 'transparent', color: 'var(--text-primary)',
-                }}>
-                {t('header.register')}
-              </button>
-            </div>
-          ) : (
-            <>
-              {/* User card */}
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                padding: '12px 12px',
-                borderRadius: 12,
-                backgroundColor: 'rgba(255,255,255,0.03)',
-                marginBottom: 8,
-              }}>
-                <div style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: 'rgba(255,138,0,0.12)',
-                  flexShrink: 0,
-                }}>
-                  <User size={20} style={{ color: 'var(--accent)' }} />
-                </div>
-                <div style={{ minWidth: 0, flex: 1 }}>
-                  <p style={{
-                    fontSize: 11, margin: 0,
-                    color: 'var(--text-muted)',
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    fontWeight: 600,
-                    lineHeight: 1.3,
-                  }}>{t('header.signedInAs')}</p>
-                  <p style={{
-                    fontSize: 15, fontWeight: 600, margin: 0,
-                    color: 'var(--text-primary)',
-                    lineHeight: 1.4,
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    maxWidth: '100%',
-                  }}>{user.username}</p>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '4px 0 8px' }} />
-
-              {/* Account Info */}
-              <SidebarItem
-                icon={<UserCircle size={20} style={{ flexShrink: 0, color: 'var(--accent)' }} />}
-                label={t('header.accountInfo')}
-                onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
-              />
-
-              {/* Management hub */}
-              {user?.roles && user.roles.some(r => r !== 'User' && r !== 'Cashier') && (
-                <SidebarItem
-                  icon={<LayoutDashboard size={20} style={{ flexShrink: 0, color: 'var(--accent)' }} />}
-                  label="Management hub"
-                  onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
-                />
-              )}
-
-              {/* Switch Role */}
-              {user?.roles && user.roles.length > 1 && (
-                <SidebarItem
-                  icon={<ArrowLeftRight size={20} style={{ flexShrink: 0 }} />}
-                  label={t('header.switchRole')}
-                  onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
-                />
-              )}
-            </>
-          )}
-
-          {/* Spacer */}
-          <div style={{ flex: 1, minHeight: 16 }} />
-
-          {/* Language Section */}
-          <div style={{
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            paddingTop: 12,
-            marginTop: 4,
-          }}>
-            <p style={{
-              fontSize: 11, margin: '0 0 8px 14px',
-              color: 'var(--text-muted)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              fontWeight: 600,
-              lineHeight: 1.3,
-            }}>Language</p>
-            <div style={{ paddingLeft: 2 }}>
-              <LanguageSwitcher />
-            </div>
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: 1, backgroundColor: 'rgba(255,255,255,0.06)', margin: '8px 0' }} />
-
-          {/* Logout */}
-          <button
-            onClick={() => { handleLogoutClick(); setIsMobileMenuOpen(false); }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              width: '100%', minHeight: 48, padding: '12px 14px',
-              borderRadius: 10, background: 'transparent', border: 'none',
-              color: '#f87171', fontSize: 14, fontWeight: 500,
-              cursor: 'pointer', textAlign: 'left', lineHeight: 1.4,
-              transition: 'all 0.15s ease',
-            }}
-            className="hover:bg-red-500/10 hover:text-red-300"
-          >
-            <LogOut size={20} style={{ flexShrink: 0 }} />
-            <span>{t('header.logout')}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ===== LOGOUT ERROR ===== */}
-      {logoutError && (
-        <div style={{ paddingTop: 80, paddingLeft: 'clamp(12px, 3vw, 24px)', paddingRight: 'clamp(12px, 3vw, 24px)', maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ padding: 'var(--space-12) var(--space-16)', border: '1px solid var(--danger)', backgroundColor: 'rgba(255,180,171,0.06)', display: 'flex', alignItems: 'center', gap: 'var(--space-12)', borderRadius: 'var(--radius-md)' }}>
-            <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-            <span style={{ fontSize: 'var(--text-sm)' }}>{logoutError}</span>
-          </div>
-        </div>
-      )}
 
       {/* ===== HERO SECTION ===== */}
       <section style={{
@@ -369,7 +275,7 @@ const HomePage: React.FC = () => {
         paddingTop: 80, paddingLeft: 'clamp(12px, 4vw, 24px)',
         paddingRight: 'clamp(12px, 4vw, 24px)',
         minHeight: 'min(600px, 90vh)',
-        overflow: 'hidden'
+        overflow: 'visible'
       }}>
         <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <img alt="Cinema theater" src={HERO_IMG} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.3)' }} />
@@ -426,32 +332,64 @@ const HomePage: React.FC = () => {
           paddingRight: 'clamp(8px, 2vw, 20px)',
         }}>
           <div className="glass-card" style={{ padding: 8, borderRadius: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}
-              className="booking-grid-items md:grid-cols-3">
-              {[{ step: '1', label: 'home.date', value: 'home.today' }, { step: '2', label: 'home.movie', value: 'home.allMovies' }, { step: '3', label: 'home.cinema', value: 'home.allCinemas' }].map((item, idx) => (
-                <div key={idx} style={{
-                  padding: 'clamp(12px, 2vw, 16px) clamp(16px, 3vw, 24px)',
-                  cursor: 'pointer', display: 'flex', flexDirection: 'column',
-                  justifyContent: 'center', borderRadius: 8,
-                  borderTop: idx > 0 ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                  transition: 'background 0.3s ease',
-                }}>
-                  <span style={{ fontSize: 10, color: 'var(--accent)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>{item.step}. {t(item.label)}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontWeight: 500, color: 'white', fontSize: 'clamp(13px, 2vw, 14px)' }}>{t(item.value)}</span>
-                    <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }} />
-                  </div>
-                </div>
-              ))}
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_180px] gap-2 items-stretch">
+              
+              {/* 1. Date Selector */}
+              <CustomSelect
+                step="1"
+                label={t('home.date')}
+                value={selectedDate}
+                displayValue={selectedDateLabel}
+                options={dateOptions}
+                onChange={setSelectedDate}
+              />
+
+              {/* 2. Movie Selector */}
+              <CustomSelect
+                step="2"
+                label={t('home.movie')}
+                value={selectedMovieId}
+                displayValue={selectedMovieLabel}
+                options={movieOptions}
+                onChange={setSelectedMovieId}
+                borderLeft={true}
+              />
+
+              {/* 3. Cinema Selector */}
+              <CustomSelect
+                step="3"
+                label={t('home.cinema')}
+                value={selectedCinemaId}
+                displayValue={selectedCinemaLabel}
+                options={cinemaOptions}
+                onChange={setSelectedCinemaId}
+                borderLeft={true}
+              />
+
+              {/* Search Button */}
+              <button 
+                onClick={() => navigate(`/showtimes?date=${selectedDate}&movie=${selectedMovieId}&cinema=${selectedCinemaId}`)}
+                className="btn-primary cta-glow" 
+                style={{
+                  width: '100%',
+                  padding: '12px 24px',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  borderRadius: 12,
+                  border: 'none',
+                  cursor: 'pointer',
+                  minHeight: 48,
+                }}
+              >
+                <Search size={16} />
+                <span>{t('home.searchNow')}</span>
+              </button>
+
             </div>
-            <button className="btn-primary cta-glow" style={{
-              width: '100%', padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 32px)',
-              fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-              minHeight: 48,
-            }}>
-              <Search size={16} /> {t('home.searchNow')}
-            </button>
           </div>
         </div>
       </section>
@@ -617,46 +555,9 @@ const HomePage: React.FC = () => {
           © 2024 CinemaPro. All rights reserved.
         </div>
       </footer>
-
-      <LogoutModal isOpen={isLogoutModalOpen} onClose={() => setIsLogoutModalOpen(false)} onConfirm={handleLogoutConfirm} loading={logoutLoading} error={logoutError} />
       </div>
     </>
   );
 };
-
-/* ------------------------------------------------------------------ */
-/*  Sidebar item helper                                                */
-/* ------------------------------------------------------------------ */
-const SidebarItem: React.FC<{
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-}> = ({ icon, label, onClick }) => (
-  <button
-    onClick={onClick}
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      width: '100%',
-      minHeight: 48,
-      padding: '12px 14px',
-      borderRadius: 10,
-      background: 'transparent',
-      border: 'none',
-      color: 'var(--text-secondary)',
-      fontSize: 14,
-      fontWeight: 500,
-      cursor: 'pointer',
-      transition: 'all 0.15s ease',
-      textAlign: 'left',
-      lineHeight: 1.4,
-    }}
-    className="hover:bg-white/5 hover:text-white"
-  >
-    {icon}
-    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{label}</span>
-  </button>
-);
 
 export default HomePage;

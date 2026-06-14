@@ -48,6 +48,7 @@ function App() {
           <Route path="/offers" element={<OffersPage />} />
           <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><CashierPage /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
+          <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
           <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
           <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
           <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><FacilitiesManagerPage /></ProtectedRoute>} />

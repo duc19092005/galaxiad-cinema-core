@@ -16,7 +16,6 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import type { UserAccountInfo, BookingHistoryItem } from '../../types/booking.types';
 import type { UpdateProfileRequest } from '../../types/auth.types';
-import StaffShiftSelfService from './components/StaffShiftSelfService';
 
 const AccountPage: React.FC = () => {
     const navigate = useNavigate();
@@ -38,16 +37,6 @@ const AccountPage: React.FC = () => {
     const [editingField, setEditingField] = useState<string | null>(null);
     const [tempValue, setTempValue] = useState<string>('');
     const [updating, setUpdating] = useState(false);
-    const storedUserRoles = (() => {
-        try {
-            const stored = localStorage.getItem('user_info');
-            return stored ? (JSON.parse(stored).roles as string[] | undefined) || [] : [];
-        } catch {
-            return [];
-        }
-    })();
-    const showStaffShiftPanel = storedUserRoles.some((role) => ['Cashier', 'TheaterManager'].includes(role));
-
     const fetchAllData = async () => {
         setLoading(true);
         setError(null);
@@ -439,8 +428,6 @@ const AccountPage: React.FC = () => {
                                     {t('account.changePassword')}
                                 </button>
                             </div>
-
-                            {showStaffShiftPanel && <StaffShiftSelfService />}
                         </div>
                     ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

@@ -24,15 +24,15 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
-import Header from '../../components/Header';
+import ManagementChrome from '../../components/ManagementChrome';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import TransferRightsView from './components/TransferRightsView';
 import RolePermissionsSection from './components/RolePermissionsSection';
 import { adminApi } from '../../api/adminApi';
-import { authApi } from '../../api/authApi';
-import type { AdminUserDto, AuditLogDto } from '../../types/admin.types';
+import type { AdminUserDto, AuditLogDto, ManagementDashboardDto, RoleDto } from '../../types/admin.types';
 import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
@@ -43,19 +43,29 @@ import { VouchersSection } from './components/VouchersSection';
 // ============================================
 
 const statsCardStyle: React.CSSProperties = {
-  padding: '20px 24px',
-  background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
-  backdropFilter: 'blur(16px) saturate(1.2)',
-  WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-  border: '1px solid rgba(255,255,255,0.06)',
-  borderRadius: 16,
-  boxShadow: '0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
+  padding: '18px 20px',
+  background: 'linear-gradient(145deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005)), var(--bg-surface)',
+  backdropFilter: 'blur(18px) saturate(1.25)',
+  WebkitBackdropFilter: 'blur(18px) saturate(1.25)',
+  border: '1px solid var(--border-color)',
+  borderRadius: 12,
+  boxShadow: '0 18px 42px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.04)',
 };
 
 const getAdminErrorMessage = (error: unknown, fallback: string) => {
   if (typeof error !== 'object' || error === null) return fallback;
   const response = (error as { response?: { data?: { message?: string; Message?: string } } }).response;
   return response?.data?.message ?? response?.data?.Message ?? fallback;
+};
+
+const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
+const adminTabIds = new Set(['dashboard', 'users', 'vouchers', 'permissions', 'rights', 'audit']);
+
+const formatVnd = (value?: number | null) => {
+  const amount = value ?? 0;
+  if (Math.abs(amount) >= 1_000_000_000) return `VND ${(amount / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}B`;
+  if (Math.abs(amount) >= 1_000_000) return `VND ${(amount / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}M`;
+  return `VND ${amount.toLocaleString('vi-VN')}`;
 };
 
 // ============================================
@@ -98,9 +108,130 @@ const StatCard: React.FC<{
       )}
     </div>
     <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 6px', fontWeight: 500 }}>{label}</p>
-    <p style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
+    <p style={{ fontSize: 30, fontWeight: 850, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>{value}</p>
   </div>
 );
+
+const AdminRevenueChart: React.FC<{ data?: ManagementDashboardDto | null }> = ({ data }) => {
+  const revenueRows = data?.revenueByDay?.length
+    ? data.revenueByDay
+    : Array.from({ length: 7 }, (_, index) => ({
+      date: '',
+      dateLabel: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
+      revenue: 0,
+      ticketCount: 0,
+    }));
+  const maxRevenue = Math.max(...revenueRows.map((row) => row.revenue), 1);
+
+  return (
+    <section className="admin-dashboard-card" style={{ padding: 24, minHeight: 420 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.01em' }}>Revenue Overview</h3>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+            Daily gross revenue comparison across all regions.
+          </p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--accent)' }} /> Revenue</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--success)' }} /> Tickets</span>
+        </div>
+      </div>
+
+      <div style={{
+        height: 300,
+        display: 'grid',
+        gridTemplateColumns: `repeat(${revenueRows.length}, minmax(34px, 1fr))`,
+        alignItems: 'end',
+        gap: 14,
+        padding: '24px 4px 0',
+        borderBottom: '1px solid var(--border-color)',
+        backgroundImage: 'linear-gradient(to top, rgba(255,255,255,0.06) 1px, transparent 1px)',
+        backgroundSize: '100% 25%',
+      }}>
+        {revenueRows.map((row) => {
+          const revenueHeight = Math.max(4, Math.round((row.revenue / maxRevenue) * 100));
+          const ticketHeight = Math.max(4, Math.min(100, row.ticketCount * 8));
+          return (
+            <div key={`${row.dateLabel}-${row.date}`} style={{ height: '100%', display: 'grid', alignItems: 'end', gap: 10 }}>
+              <div style={{ height: '100%', display: 'flex', alignItems: 'end', justifyContent: 'center', gap: 5 }}>
+                <div title={`Revenue ${row.revenue.toLocaleString('vi-VN')} VND`} style={{
+                  width: '38%',
+                  maxWidth: 30,
+                  height: `${revenueHeight}%`,
+                  borderRadius: '8px 8px 2px 2px',
+                  background: 'linear-gradient(180deg, #ffc174, #ff8a00)',
+                  boxShadow: '0 10px 24px rgba(255,138,0,0.24)',
+                }} />
+                <div title={`${row.ticketCount} tickets`} style={{
+                  width: '26%',
+                  maxWidth: 20,
+                  height: `${ticketHeight}%`,
+                  borderRadius: '8px 8px 2px 2px',
+                  background: 'rgba(34,197,94,0.78)',
+                }} />
+              </div>
+              <span style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase' }}>
+                {row.dateLabel}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+};
+
+const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ data }) => {
+  const topMovie = data?.hotMovies?.[0];
+  const latestTransaction = data?.recentTransactions?.[0];
+  const latestCinema = data?.recentCinemas?.[0];
+
+  return (
+  <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+    <div className="admin-dashboard-card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16, borderLeft: '4px solid var(--accent)' }}>
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top Movie</p>
+        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{topMovie?.movieName || 'No ticket data'}</h4>
+        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+          {formatCompactNumber(topMovie?.ticketsSold)} tickets sold
+        </p>
+      </div>
+      <Film size={34} style={{ color: 'var(--accent)' }} />
+    </div>
+
+    <div className="admin-dashboard-card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16, borderLeft: '4px solid var(--success)' }}>
+      <div style={{ flex: 1 }}>
+        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Latest Booking</p>
+        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{latestTransaction?.movieName || 'No recent booking'}</h4>
+        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+          {latestTransaction ? formatVnd(latestTransaction.totalPrice) : 'Waiting for paid orders'}
+        </p>
+      </div>
+      <CheckCircle size={36} style={{ color: 'var(--success)' }} />
+    </div>
+
+    <div className="admin-dashboard-card" style={{
+      padding: 20,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 16,
+      borderColor: 'rgba(255,138,0,0.28)',
+      background: 'linear-gradient(120deg, rgba(255,138,0,0.16), rgba(255,255,255,0.035))',
+    }}>
+      <div>
+        <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent)', fontWeight: 800 }}>Latest Branch</p>
+        <h4 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{latestCinema?.cinemaName || 'No cinema activity yet'}</h4>
+        <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
+          {latestCinema?.cinemaLocation || `${formatCompactNumber(data?.totalCinemas)} cinemas in the system`}
+        </p>
+      </div>
+      <button className="btn btn-primary" style={{ minWidth: 132 }}>View branches</button>
+    </div>
+  </section>
+  );
+};
 
 // ============================================
 // STATUS BADGE
@@ -435,7 +566,10 @@ const AuditSection: React.FC<AuditSectionProps> = ({ auditLogs, loading, onRefre
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const { tab } = useParams();
+  const initialTab = tab && adminTabIds.has(tab) ? tab : 'dashboard';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -444,6 +578,10 @@ const AdminPage: React.FC = () => {
   const [usersLoading, setUsersLoading] = useState(false);
   const [auditLogs, setAuditLogs] = useState<AuditLogDto[]>([]);
   const [auditLogsLoading, setAuditLogsLoading] = useState(false);
+  const [dashboardData, setDashboardData] = useState<ManagementDashboardDto | null>(null);
+  const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [staffRoles, setStaffRoles] = useState<RoleDto[]>([]);
+  const [rolesLoading, setRolesLoading] = useState(false);
 
   // Modals state
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -464,6 +602,7 @@ const AdminPage: React.FC = () => {
     identityCode: '',
     phoneNumber: '',
     dateOfBirth: '',
+    roleIds: [] as string[],
   });
   const [createUserPortraitFile, setCreateUserPortraitFile] = useState<File | null>(null);
   const [createUserPortraitPreview, setCreateUserPortraitPreview] = useState<string | null>(null);
@@ -492,13 +631,45 @@ const AdminPage: React.FC = () => {
     }
   }, [t]);
 
+  const fetchDashboard = useCallback(async () => {
+    setDashboardLoading(true);
+    try {
+      const res = await adminApi.getManagementDashboard();
+      setDashboardData(res.data || null);
+      setAuditLogs(res.data?.recentActivities || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setDashboardLoading(false);
+    }
+  }, [t]);
+
+  const fetchStaffRoles = useCallback(async () => {
+    setRolesLoading(true);
+    try {
+      const res = await adminApi.getRoles();
+      setStaffRoles(res.data || []);
+    } catch (err) {
+      showError(getAdminErrorMessage(err, 'Unable to load roles.'));
+    } finally {
+      setRolesLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const nextTab = tab && adminTabIds.has(tab) ? tab : 'dashboard';
+    setActiveTab(nextTab);
+  }, [tab]);
+
   useEffect(() => {
     if (activeTab === 'users') {
       fetchUsers();
-    } else if (activeTab === 'audit' || activeTab === 'dashboard') {
+    } else if (activeTab === 'audit') {
       fetchAuditLogs();
+    } else if (activeTab === 'dashboard') {
+      fetchDashboard();
     }
-  }, [activeTab, fetchAuditLogs, fetchUsers]);
+  }, [activeTab, fetchAuditLogs, fetchDashboard, fetchUsers]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -536,6 +707,11 @@ const AdminPage: React.FC = () => {
     fetchUsers();
   };
 
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    navigate(tabId === 'dashboard' ? '/admin' : `/admin/${tabId}`);
+  };
+
   const handleOpenCreateUser = () => {
     setCreateUserForm({
       userName: '',
@@ -546,10 +722,23 @@ const AdminPage: React.FC = () => {
       identityCode: '',
       phoneNumber: '',
       dateOfBirth: '',
+      roleIds: [],
     });
     setCreateUserPortraitFile(null);
     setCreateUserPortraitPreview(null);
     setCreateUserModalOpen(true);
+    if (staffRoles.length === 0) {
+      fetchStaffRoles();
+    }
+  };
+
+  const toggleCreateRole = (roleId: string) => {
+    setCreateUserForm((current) => ({
+      ...current,
+      roleIds: current.roleIds.includes(roleId)
+        ? current.roleIds.filter((id) => id !== roleId)
+        : [...current.roleIds, roleId],
+    }));
   };
 
   const handleCreateUserPortraitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -596,7 +785,7 @@ const AdminPage: React.FC = () => {
     }
     setCreateUserSubmitting(true);
     try {
-      const res = await authApi.regularRegister({
+      const res = await adminApi.createUser({
         userName: createUserForm.userName,
         userEmail: createUserForm.userEmail,
         userPassword: createUserForm.password,
@@ -604,11 +793,13 @@ const AdminPage: React.FC = () => {
         identityCode: createUserForm.identityCode,
         phoneNumber: createUserForm.phoneNumber,
         dateOfBirth: new Date(`${createUserForm.dateOfBirth}T00:00:00`).toISOString(),
+        roleIds: createUserForm.roleIds,
       });
       if (res.isSuccess) {
-        if (createUserPortraitFile && res.data) {
+        const createdUserId = res.data?.userId;
+        if (createUserPortraitFile && createdUserId) {
           try {
-            await adminApi.updateUserPortrait(res.data, createUserPortraitFile);
+            await adminApi.updateUserPortrait(createdUserId, createUserPortraitFile);
             showSuccess('User account and portrait created successfully!');
           } catch (portraitError) {
             showError(getAdminErrorMessage(portraitError, 'Account created, but portrait upload failed.'));
@@ -658,70 +849,97 @@ const AdminPage: React.FC = () => {
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="animate-in">
-            {/* Stats Grid */}
+          <div className="animate-in admin-dashboard-canvas" style={{ display: 'grid', gap: 22 }}>
+            <section className="admin-dashboard-hero" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, flexWrap: 'wrap' }}>
+              <div>
+                <p style={{ margin: '0 0 8px', fontSize: 12, color: 'var(--accent)', fontWeight: 850, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  CinemaPro Admin
+                </p>
+                <h1 style={{ margin: 0, fontSize: 'clamp(32px, 4vw, 46px)', lineHeight: 1.05, fontWeight: 900, letterSpacing: '-0.035em' }}>
+                  Performance Dashboard
+                </h1>
+                <p style={{ margin: '10px 0 0', fontSize: 15, color: 'var(--text-secondary)', maxWidth: 620, lineHeight: 1.6 }}>
+                  Real-time overview of cinema operations, revenue, access control, and system activity.
+                </p>
+              </div>
+              <div style={{
+                display: 'inline-flex',
+                gap: 6,
+                padding: 5,
+                borderRadius: 12,
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-surface)',
+              }}>
+                <button className="btn btn-primary" style={{ minHeight: 36, padding: '8px 14px' }}>Last 30 days</button>
+                <button className="btn btn-secondary" style={{ minHeight: 36, padding: '8px 14px' }}>Quarter</button>
+                <button className="btn btn-secondary" style={{ minHeight: 36, width: 38, padding: 0 }} aria-label="Calendar filter">
+                  <Calendar size={16} />
+                </button>
+              </div>
+            </section>
+
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
               gap: 16,
-              marginBottom: 32,
             }}>
               <StatCard
                 label={t('Total Users')}
-                value={users.length ? users.length.toString() : "42"}
-                trend="+5 this month"
+                value={dashboardLoading ? '...' : formatCompactNumber(dashboardData?.activeUsers)}
+                trend="Live data"
                 icon={<Users size={22} />}
                 color="#ff8a00"
                 delay={0}
               />
               <StatCard
                 label={t('Total Cinemas')}
-                value="8"
-                trend="2 regions"
+                value={dashboardLoading ? '...' : formatCompactNumber(dashboardData?.totalCinemas)}
+                trend="Live data"
                 icon={<Building2 size={22} />}
-                color="#22c55e"
+                color="var(--success)"
                 delay={80}
               />
               <StatCard
                 label={t('Active Movies')}
-                value="24"
-                trend="+3 this week"
+                value={dashboardLoading ? '...' : formatCompactNumber(dashboardData?.activeMovies)}
+                trend="Live data"
                 icon={<Film size={22} />}
-                color="#3b82f6"
+                color="#b7c8e1"
                 delay={160}
               />
               <StatCard
                 label={t('Revenue (Month)')}
-                value="₫ 156.8M"
-                trend="+12.5% growth"
+                value={dashboardLoading ? '...' : formatVnd(dashboardData?.monthRevenue)}
+                trend="Paid orders"
                 icon={<DollarSign size={22} />}
-                color="#a855f7"
+                color="#ffc174"
                 delay={240}
               />
               <StatCard
                 label={t('Total Bookings')}
-                value="3,842"
-                trend="+18% vs last month"
+                value={dashboardLoading ? '...' : formatCompactNumber(dashboardData?.totalBookings)}
+                trend="Paid tickets"
                 icon={<Ticket size={22} />}
-                color="#06b6d4"
+                color="#d3e4fe"
                 delay={320}
               />
               <StatCard
                 label={t('Active Schedules')}
-                value="156"
-                trend="12 today"
+                value={dashboardLoading ? '...' : formatCompactNumber(dashboardData?.activeSchedules)}
+                trend="Active only"
                 icon={<Calendar size={22} />}
                 color="#f59e0b"
                 delay={400}
               />
             </div>
 
-            {/* Recent Activity */}
-            <div className="glass-card" style={{ padding: 24 }}>
+            <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(320px, 1fr)', gap: 16 }} className="admin-dashboard-main-grid">
+              <AdminRevenueChart data={dashboardData} />
+              <div className="admin-dashboard-card" style={{ padding: 24, minHeight: 420 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px' }}>
                 {t('Recent Activity')}
               </h3>
-              {auditLogsLoading ? (
+              {dashboardLoading || auditLogsLoading ? (
                 <div className="state-center" style={{ minHeight: 100 }}>
                   <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
                 </div>
@@ -750,7 +968,7 @@ const AdminPage: React.FC = () => {
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>{log.action}</p>
                         <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                          {log.actorName} → {log.entityName}
+                          {log.actorName} to {log.entityName}
                         </p>
                       </div>
                       <span style={{
@@ -768,7 +986,10 @@ const AdminPage: React.FC = () => {
                   )}
                 </div>
               )}
-            </div>
+              </div>
+            </section>
+
+            <AdminOpsTiles data={dashboardData} />
           </div>
         );
 
@@ -811,21 +1032,20 @@ const AdminPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <AppSidebar
         isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onToggle={() => setSidebarOpen((open) => !open)}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         sections={sidebarSections}
         role="Admin"
+        collapsibleDesktop
       />
 
-      <Header
-        title={t('Admin Panel')}
-        role="Administrator"
-        showSidebarToggle
-        onMenuToggle={() => setSidebarOpen(true)}
+      <ManagementChrome
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={() => setSidebarOpen((open) => !open)}
       />
 
-      <main className="main-content">
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
         <div className="page-container">
           {renderContent()}
         </div>
@@ -861,7 +1081,7 @@ const AdminPage: React.FC = () => {
         >
           <div
             style={{
-              width: '100%', maxWidth: 560,
+              width: '100%', maxWidth: 680,
               backgroundColor: 'var(--bg-elevated, #18181b)',
               border: '1px solid var(--border-color, #27272a)',
               borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
@@ -884,7 +1104,7 @@ const AdminPage: React.FC = () => {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleCreateUser} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <form onSubmit={handleCreateUser} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '78vh', overflowY: 'auto' }}>
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '96px 1fr',
@@ -1017,6 +1237,62 @@ const AdminPage: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <section style={{
+                display: 'grid',
+                gap: 12,
+                padding: 14,
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 'var(--radius-lg)',
+                background: 'rgba(255,255,255,0.035)',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 850, color: 'var(--text-primary)' }}>Staff roles</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Optional. Leave empty to create an account without staff access.
+                    </p>
+                  </div>
+                  {rolesLoading && <Loader2 size={18} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite', flexShrink: 0 }} />}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+                  {staffRoles.map((role) => {
+                    const checked = createUserForm.roleIds.includes(role.roleId);
+                    return (
+                      <label
+                        key={role.roleId}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          minHeight: 44,
+                          padding: '10px 12px',
+                          borderRadius: 'var(--radius-md)',
+                          border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.48)' : 'rgba(255,255,255,0.1)'}`,
+                          background: checked ? 'rgba(255, 138, 0, 0.12)' : 'rgba(255,255,255,0.025)',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleCreateRole(role.roleId)}
+                          style={{ width: 16, height: 16, accentColor: '#ff8a00' }}
+                        />
+                        <span style={{ fontSize: 14, fontWeight: 750, color: checked ? 'var(--accent)' : 'var(--text-primary)' }}>
+                          {role.roleName}
+                        </span>
+                      </label>
+                    );
+                  })}
+                  {!rolesLoading && staffRoles.length === 0 && (
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>
+                      No assignable staff roles found.
+                    </p>
+                  )}
+                </div>
+              </section>
 
               <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-color, #27272a)' }}>
                 <button type="button" onClick={() => setCreateUserModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>

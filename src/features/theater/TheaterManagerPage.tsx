@@ -9,7 +9,7 @@ import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
-import Header from '../../components/Header';
+import ManagementChrome from '../../components/ManagementChrome';
 import ScheduleManagerPage from '../schedule/ScheduleManagerPage';
 import FloatingActionButtons from '../../components/FloatingActionButtons';
 import GlassCard from '../../components/GlassCard';
@@ -128,21 +128,20 @@ const TheaterManagerPage: React.FC = () => {
     <div style={{ minHeight: '100vh', background: 'var(--bg-base)' }}>
       <AppSidebar
         isOpen={sidebarOpen}
-        onToggle={() => setSidebarOpen(!sidebarOpen)}
+        onToggle={() => setSidebarOpen((open) => !open)}
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as 'dashboard' | 'employees' | 'schedule')}
         sections={sidebarSections}
         role="Theater Manager"
+        collapsibleDesktop
       />
 
-      <Header
-        title={t('Theater Manager')}
-        role="Theater Manager"
-        showSidebarToggle
-        onMenuToggle={() => setSidebarOpen(true)}
+      <ManagementChrome
+        sidebarOpen={sidebarOpen}
+        onSidebarToggle={() => setSidebarOpen((open) => !open)}
       />
 
-      <main className="main-content">
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
         <div className="page-container">
           {renderContent()}
         </div>

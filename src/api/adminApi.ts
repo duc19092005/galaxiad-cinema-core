@@ -1,7 +1,7 @@
 // src/api/adminApi.ts
 import { identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, PermissionDto, RoleDto, RolePermissionsDto, UserRoleDto } from '../types/admin.types';
+import type { AdminCreateUserRequest, AdminCreateUserResponse, AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, PermissionDto, RoleDto, RolePermissionsDto, UserRoleDto } from '../types/admin.types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
     typeof value === 'object' && value !== null
@@ -112,6 +112,13 @@ const normalizeRolePermissions = (role: unknown): RolePermissionsDto => {
     };
 };
 
+const normalizeAdminCreateUserResponse = (payload: unknown): AdminCreateUserResponse => {
+    if (!isRecord(payload)) return { userId: '' };
+    return {
+        userId: readString(payload, 'userId', 'UserId'),
+    };
+};
+
 export const adminApi = {
     /** GET /api/v1/AdminManageUsers */
     getUsers: async (): Promise<ApiSuccessResponse<AdminUserDto[]>> => {
@@ -119,6 +126,19 @@ export const adminApi = {
             '/AdminManageUsers'
         );
         return response.data;
+    },
+
+    /** POST /api/v1/AdminManageUsers/create-user */
+    createUser: async (data: AdminCreateUserRequest): Promise<ApiSuccessResponse<AdminCreateUserResponse>> => {
+        const response = await identityAxios.post<unknown>(
+            '/AdminManageUsers/create-user',
+            data
+        );
+        const result = unwrapObjectResponse<unknown>(response.data);
+        return {
+            ...result,
+            data: normalizeAdminCreateUserResponse(result.data),
+        };
     },
 
     /** PUT /api/v1/AdminManageUsers/{userId}/status?status={STATUS_INT} */

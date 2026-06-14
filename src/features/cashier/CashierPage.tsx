@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import {
   BadgeCheck,
   BellRing,
+  Banknote,
   Camera,
   Clock,
   DoorOpen,
@@ -23,6 +24,7 @@ import { theaterShiftApi } from '../../api/theaterShiftApi';
 import { showError, showSuccess } from '../../utils/ToastUtils';
 import { useCinema } from '../../contexts/CinemaContext';
 import type { CashierShiftSession, ShiftRegistrationDto, StaffProfileDto } from '../../types/shift.types';
+import StaffShiftSelfService from '../booking/components/StaffShiftSelfService';
 
 const makeDemoVector = () => Array.from({ length: 128 }, (_, index) => Number((Math.sin(index + 1) * 0.08).toFixed(4)));
 
@@ -140,6 +142,7 @@ const CashierPage: React.FC = () => {
   const [reminderLoading, setReminderLoading] = useState(false);
   const [reminderError, setReminderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeView, setActiveView] = useState<'terminal' | 'profile'>('terminal');
 
   const effectiveStaffId = selectedStaffId || manualStaffId.trim();
 
@@ -307,6 +310,34 @@ const CashierPage: React.FC = () => {
       </header>
 
       <main style={{ maxWidth: 1180, margin: '0 auto', padding: '28px 20px 56px' }}>
+        <div style={{
+          display: 'inline-flex',
+          gap: 6,
+          padding: 4,
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--bg-surface)',
+          marginBottom: 18,
+        }}>
+          <button
+            className={activeView === 'terminal' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveView('terminal')}
+          >
+            <Ticket size={16} />
+            POS terminal
+          </button>
+          <button
+            className={activeView === 'profile' ? 'btn btn-primary' : 'btn btn-secondary'}
+            onClick={() => setActiveView('profile')}
+          >
+            <Banknote size={16} />
+            Cashier profile
+          </button>
+        </div>
+
+        {activeView === 'profile' ? (
+          <StaffShiftSelfService />
+        ) : (
         <section style={{
           display: 'grid',
           gridTemplateColumns: 'minmax(0, 1.15fr) minmax(320px, 0.85fr)',
@@ -603,6 +634,7 @@ const CashierPage: React.FC = () => {
             </div>
           </aside>
         </section>
+        )}
       </main>
     </div>
   );

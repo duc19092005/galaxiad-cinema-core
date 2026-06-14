@@ -1,7 +1,7 @@
 // src/components/ManagementDashboard.tsx
-// Unified dashboard with cinema dark theme
+// Unified dashboard with live management metrics.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,7 +13,12 @@ import {
   DollarSign,
   Activity,
   Loader2,
+  AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
+import { adminApi } from '../api/adminApi';
+import type { ManagementDashboardDto } from '../types/admin.types';
+import { showError } from '../utils/ToastUtils';
 
 interface DashboardStat {
   label: string;
@@ -27,43 +32,79 @@ interface ManagementDashboardProps {
   role: 'admin' | 'facilities' | 'movie' | 'theater' | 'schedule';
 }
 
+const formatNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
+
+const formatVnd = (value?: number | null) => {
+  const amount = value ?? 0;
+  if (Math.abs(amount) >= 1_000_000_000) return `VND ${(amount / 1_000_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}B`;
+  if (Math.abs(amount) >= 1_000_000) return `VND ${(amount / 1_000_000).toLocaleString('vi-VN', { maximumFractionDigits: 1 })}M`;
+  return `VND ${amount.toLocaleString('vi-VN')}`;
+};
+
+const colorToRgb = (color: string) => {
+  switch (color) {
+    case '#ff8a00': return '255, 138, 0';
+    case '#22c55e': return '34, 197, 94';
+    case '#3b82f6': return '59, 130, 246';
+    case '#a855f7': return '168, 85, 247';
+    case '#06b6d4': return '6, 182, 212';
+    default: return '245, 158, 11';
+  }
+};
+
 const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dashboard, setDashboard] = useState<ManagementDashboardDto | null>(null);
+
+  const loadDashboard = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await adminApi.getManagementDashboard();
+      setDashboard(response.data || null);
+    } catch (err) {
+      const message = 'Unable to load dashboard metrics.';
+      setError(message);
+      showError(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    loadDashboard();
   }, []);
 
-  const getStats = (): DashboardStat[] => {
+  const stats = useMemo<DashboardStat[]>(() => {
     const base: DashboardStat[] = [
       {
         label: t('Total Movies'),
-        value: '24',
-        trend: '+3 this week',
+        value: formatNumber(dashboard?.activeMovies),
+        trend: t('Active only'),
         icon: <Film size={20} />,
         color: '#ff8a00',
       },
       {
         label: t('Active Schedules'),
-        value: '156',
-        trend: '+12 today',
+        value: formatNumber(dashboard?.activeSchedules),
+        trend: t('Active only'),
         icon: <Calendar size={20} />,
         color: '#22c55e',
       },
       {
         label: t('Total Bookings'),
-        value: '1,284',
-        trend: '+18% vs last week',
+        value: formatNumber(dashboard?.totalBookings),
+        trend: t('Paid tickets'),
         icon: <Ticket size={20} />,
         color: '#3b82f6',
       },
       {
         label: t('Revenue'),
-        value: '₫ 45.6M',
-        trend: '+8.3% growth',
+        value: formatVnd(dashboard?.monthRevenue),
+        trend: t('This month'),
         icon: <DollarSign size={20} />,
         color: '#a855f7',
       },
@@ -74,8 +115,8 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
         ...base,
         {
           label: t('Active Users'),
-          value: '42',
-          trend: '+5 new',
+          value: formatNumber(dashboard?.activeUsers),
+          trend: t('Live data'),
           icon: <Users size={20} />,
           color: '#06b6d4',
         },
@@ -83,9 +124,7 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
     }
 
     return base;
-  };
-
-  const stats = getStats();
+  }, [dashboard, role, t]);
 
   const shortcuts = [
     { label: t('Manage Movies'), icon: <Film size={18} />, path: '/movie-manager', color: '#ff8a00' },
@@ -108,9 +147,21 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="glass-card state-center" style={{ minHeight: 300, padding: 24 }}>
+        <AlertCircle size={28} style={{ color: 'var(--danger)' }} />
+        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{error}</p>
+        <button className="btn btn-secondary" onClick={loadDashboard}>
+          <RefreshCw size={16} />
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-in">
-      {/* Stats Grid */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -119,7 +170,7 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
       }}>
         {stats.map((stat, i) => (
           <div
-            key={i}
+            key={stat.label}
             className="glass-card"
             style={{
               padding: '20px 24px',
@@ -130,18 +181,24 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
               <div style={{
-                width: 40, height: 40, borderRadius: 'var(--radius-md)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `rgba(${stat.color === '#ff8a00' ? '255, 138, 0' : stat.color === '#22c55e' ? '34, 197, 94' : stat.color === '#3b82f6' ? '59, 130, 246' : stat.color === '#a855f7' ? '168, 85, 247' : stat.color === '#06b6d4' ? '6, 182, 212' : '245, 158, 11'}, 0.1)`,
+                width: 40,
+                height: 40,
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `rgba(${colorToRgb(stat.color)}, 0.1)`,
                 color: stat.color,
               }}>
                 {stat.icon}
               </div>
               <span style={{
-                fontSize: 10, color: 'var(--text-muted)',
+                fontSize: 10,
+                color: 'var(--text-muted)',
                 fontFamily: "'JetBrains Mono', monospace",
                 background: 'rgba(255,255,255,0.03)',
-                padding: '2px 8px', borderRadius: 'var(--radius-full)',
+                padding: '2px 8px',
+                borderRadius: 'var(--radius-full)',
               }}>
                 {stat.trend}
               </span>
@@ -156,11 +213,13 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
         ))}
       </div>
 
-      {/* Quick Actions */}
       <div>
         <h3 style={{
-          fontSize: 13, fontWeight: 700, color: 'var(--text-primary)',
-          marginBottom: 12, letterSpacing: '-0.01em',
+          fontSize: 13,
+          fontWeight: 700,
+          color: 'var(--text-primary)',
+          marginBottom: 12,
+          letterSpacing: '-0.01em',
         }}>
           Quick Actions
         </h3>
@@ -171,12 +230,16 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
         }}>
           {shortcuts.map((item, i) => (
             <button
-              key={i}
+              key={item.path}
               onClick={() => navigate(item.path)}
               className="glass-card"
               style={{
-                padding: 16, cursor: 'pointer', border: 'none',
-                display: 'flex', alignItems: 'center', gap: 12,
+                padding: 16,
+                cursor: 'pointer',
+                border: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
                 transition: 'all 0.2s ease',
                 animation: 'fadeIn 0.4s ease-out forwards',
                 opacity: 0,
@@ -184,9 +247,13 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
               }}
             >
               <div style={{
-                width: 36, height: 36, borderRadius: 'var(--radius-md)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: `rgba(${item.color === '#ff8a00' ? '255, 138, 0' : item.color === '#22c55e' ? '34, 197, 94' : item.color === '#3b82f6' ? '59, 130, 246' : '168, 85, 247'}, 0.1)`,
+                width: 36,
+                height: 36,
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: `rgba(${colorToRgb(item.color)}, 0.1)`,
                 color: item.color,
               }}>
                 {item.icon}

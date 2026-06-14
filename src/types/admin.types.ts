@@ -10,6 +10,21 @@ export interface AdminUserDto {
     registerMethod: number;
 }
 
+export interface AdminCreateUserRequest {
+    userEmail: string;
+    userPassword: string;
+    userRepassword: string;
+    userName: string;
+    identityCode: string;
+    phoneNumber: string;
+    dateOfBirth: string;
+    roleIds: string[];
+}
+
+export interface AdminCreateUserResponse {
+    userId: string;
+}
+
 export interface ScheduleJobDto {
     jobId: string;
     targetId: string;
@@ -115,10 +130,17 @@ export interface RecentAuditoriumDto {
 }
 
 export interface ManagementDashboardDto {
+    activeUsers: number;
+    totalCinemas: number;
+    activeMovies: number;
+    activeSchedules: number;
+    totalBookings: number;
+    monthRevenue: number;
     ticketsSoldToday: number;
     revenueToday: number;
     totalTicketsSold: number;
     busiestHourLabel: string;
+    revenueByDay: DailyRevenueStatDto[];
     recentTransactions: RecentTransactionDto[];
     ticketsByMovie: MovieTicketStatDto[];
     ticketsByHour: HourlyTicketStatDto[];
@@ -127,6 +149,13 @@ export interface ManagementDashboardDto {
     recentCinemas: RecentCinemaDto[];
     recentAuditoriums: RecentAuditoriumDto[];
     recentActivities: AuditLogDto[];
+}
+
+export interface DailyRevenueStatDto {
+    date: string;
+    dateLabel: string;
+    revenue: number;
+    ticketCount: number;
 }
 
 export interface ManagerDto {
