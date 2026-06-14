@@ -537,7 +537,7 @@ const HomePage: React.FC = () => {
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Quick Links</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[{ label: 'Movies', path: '/home' }, { label: 'Showtimes', path: '/showtimes' }, { label: 'Theaters', path: '/theaters' }, { label: 'Offers', path: '/offers' }].map(link => (
+              {[{ label: 'Movies', path: '/home' }, { label: 'Showtimes', path: '/showtimes' }, { label: 'Theaters', path: '/theaters' }, { label: 'Offers', path: '/offers' }, { label: 'Services', path: '/services' }, { label: 'Help', path: '/help' }].map(link => (
                 <button key={link.label} onClick={() => navigate(link.path)} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>{link.label}</button>
               ))}
             </div>
@@ -551,6 +551,47 @@ const HomePage: React.FC = () => {
             </div>
           </div>
         </div>
+        {/* Help CTA Banner */}
+        <div style={{
+          marginTop: 'clamp(24px, 5vw, 40px)',
+          padding: '20px 24px',
+          maxWidth: 1280, marginLeft: 'auto', marginRight: 'auto',
+          borderRadius: 'var(--radius-lg)',
+          backgroundColor: 'rgba(255,138,0,0.06)',
+          border: '1px solid rgba(255,138,0,0.12)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexWrap: 'wrap', gap: 16,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 'var(--radius-md)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backgroundColor: 'rgba(255,138,0,0.12)', color: 'var(--accent)',
+              fontSize: 20, fontWeight: 800,
+            }}>
+              ?
+            </div>
+            <div>
+              <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t('help.stillNeedHelp', 'Cần giúp đỡ?')}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t('help.stillNeedHelpDesc', 'Đội hỗ trợ của chúng tôi luôn sẵn sàng 24/7.')}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate('/help')}
+            className="interactive"
+            style={{
+              padding: '10px 24px', fontSize: 13, fontWeight: 700,
+              background: 'var(--accent)', color: 'black', border: 'none',
+              borderRadius: 'var(--radius-full)', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+              transition: 'transform 0.2s ease',
+            }}
+          >
+            <span>?</span>
+            {t('help.contactSupport', 'Trợ giúp')}
+          </button>
+        </div>
+
         <div style={{ borderTop: '1px solid var(--border-color)', marginTop: 'clamp(24px, 5vw, 40px)', paddingTop: 24, textAlign: 'center', fontSize: 12, color: 'var(--text-secondary)' }}>
           © 2024 CinemaPro. All rights reserved.
         </div>
