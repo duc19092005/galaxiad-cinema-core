@@ -14,7 +14,7 @@ public class LocalizationService : ILocalizationService
     private const string HeaderAcceptLanguage = "Accept-Language";
 
     // Supported languages
-    private static readonly HashSet<string> SupportedLanguages = new() { "en", "vi" };
+    private static readonly HashSet<string> SupportedLanguages = new() { "en", "vi", "ru" };
 
     /// <summary>
     /// Regex-based dictionary mapping: en message pattern -> vi translation template
@@ -36,7 +36,19 @@ public class LocalizationService : ILocalizationService
         // Schedule Dynamic Messages
         (new Regex(@"^Format invalid or missing for movie '(.*)'.$", RegexOptions.IgnoreCase), "Định dạng phim '$1' không hợp lệ hoặc bị thiếu."),
         (new Regex(@"^Movie '(.*)' is available from (.*) to (.*).$", RegexOptions.IgnoreCase), "Phim '$1' chỉ được chiếu từ $2 đến $3."),
-        (new Regex(@"^Time slot from (.*) to (.*) conflicts with an existing schedule.$", RegexOptions.IgnoreCase), "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có.")
+        (new Regex(@"^Time slot from (.*) to (.*) conflicts with an existing schedule.$", RegexOptions.IgnoreCase), "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có."),
+        
+        // Russian Translations
+        (new Regex(@"^Error : There's already a cinema named (.*)$", RegexOptions.IgnoreCase), "Ошибка: Кинотеатр с названием $1 уже существует"),
+        (new Regex(@"^Error : There's already a cinema Description (.*)$", RegexOptions.IgnoreCase), "Ошибка: Кинотеатр с описанием $1 уже существует"),
+        (new Regex(@"^Error : There's already a cinema Location (.*)$", RegexOptions.IgnoreCase), "Ошибка: Кинотеатр в локации $1 уже существует"),
+        (new Regex(@"^Error : There's already a cinema hotline Number (.*)$", RegexOptions.IgnoreCase), "Ошибка: Кинотеатр с номером $1 уже существует"),
+        (new Regex(@"^Error : There is no cinema with Id : (.*)$", RegexOptions.IgnoreCase), "Ошибка: Кинотеатр с Id: $1 не найден"),
+        (new Regex(@"^Movie with Id : (.*) does not exist$", RegexOptions.IgnoreCase), "Фильм с Id: $1 не существует"),
+        (new Regex(@"^Movie ID (.*) does not exist or is inactive.$", RegexOptions.IgnoreCase), "Фильм $1 не существует или неактивен."),
+        (new Regex(@"^Format invalid or missing for movie '(.*)'.$", RegexOptions.IgnoreCase), "Формат фильма '$1' недействителен или отсутствует."),
+        (new Regex(@"^Movie '(.*)' is available from (.*) to (.*).$", RegexOptions.IgnoreCase), "Фильм '$1' доступен с $2 по $3."),
+        (new Regex(@"^Time slot from (.*) to (.*) conflicts with an existing schedule.$", RegexOptions.IgnoreCase), "Временной слот с $1 по $2 конфликтует с существующим расписанием.")
     };
 
     /// <summary>
@@ -200,9 +212,185 @@ public class LocalizationService : ILocalizationService
     };
 
     /// <summary>
+    /// Dictionary mapping: exact en message -> ru translation
+    /// </summary>
+    private static readonly Dictionary<string, string> EnToRuTranslations = new(StringComparer.OrdinalIgnoreCase)
+    {
+        // =============================================
+        // SUCCESS MESSAGES (BaseResponse.Message)
+        // =============================================
+
+        // Identity Access
+        { "Login SuccessFully", "Вход выполнен успешно" },
+        { "Register Successfully", "Регистрация прошла успешно" },
+        { "Validate Successfully", "Валидация прошла успешно" },
+        { "Change Password Completed", "Пароль успешно изменён" },
+        { "Logged out successfully", "Выход выполнен успешно" },
+        { "Token Has Expired", "Срок действия токена истёк" },
+
+        // Cinema Management
+        { "Add Cinema Completed", "Кинотеатр успешно добавлен" },
+        { "Update Cinema Completed", "Кинотеатр успешно обновлён" },
+        { "Get Cinema List SuccessFully", "Список кинотеатров получен успешно" },
+        { "Cinema Infos", "Информация о кинотеатре" },
+
+        // Auditorium Management
+        { "Add Auditorium completed", "Зал успешно добавлен" },
+        { "Update Auditorium completed", "Зал успешно обновлён" },
+        { "Get auditorium completed", "Информация о зале получена успешно" },
+
+        // Movie Management
+        { "Add Movie Completed", "Фильм успешно добавлен" },
+        { "Edit Movie Completed", "Фильм успешно обновлён" },
+        { "Get Movies Info Success", "Информация о фильмах получена успешно" },
+        { "Get Movie Info Successfully", "Информация о фильме получена успешно" },
+
+        // Movie Format
+        { "Movie Format Datas", "Данные форматов фильмов" },
+
+        // Movie Schedules
+        { "Create Movie Schedule Completed", "Расписание сеансов создано успешно" },
+
+        // =============================================
+        // ERROR MESSAGES (AppException / Errors)
+        // =============================================
+
+        // System Errors
+        { "There's an error with the system", "Произошла системная ошибка" },
+        { "There's a error with System", "Произошла системная ошибка" },
+        { "System Error", "Системная ошибка" },
+        { "Database Error", "Ошибка базы данных" },
+        { "Method not supported", "Метод не поддерживается" },
+        { "Multiple errors occurred", "Произошло несколько ошибок" },
+        { "Missing One or more Fields", "Отсутствуют одно или несколько полей" },
+
+        // Auth Errors
+        { "User Not Found or you're account is banned from the system", "Пользователь не найден или аккаунт заблокирован" },
+        { "Username or password is wrong", "Неверное имя пользователя или пароль" },
+        { "User Role Not Found", "Роль пользователя не найдена" },
+        { "Unauthorize", "Нет доступа" },
+        { "You Don't Have Right To Access This Resources", "У вас нет прав для доступа к этому ресурсу" },
+        { "Invalid User Type", "Неверный тип пользователя" },
+        { "Cannot Find User Information", "Не удалось найти информацию о пользователе" },
+        { "Old Password is Not Match !", "Старый пароль не совпадает!" },
+        { "New Password is the same of old password !", "Новый пароль совпадает со старым!" },
+
+        // Registration Errors
+        { "Email Already Exits", "Email уже существует" },
+        { "Identity Code is already Exits", "Идентификационный код уже существует" },
+
+        // Cinema Errors
+        { "Sorry, We can not find the cinema", "Извините, кинотеатр не найден" },
+
+        // Auditorium Errors
+        { "Error : Auditorium already exists", "Ошибка: Зал уже существует" },
+        { "Duplicate Auditorium Number", "Номер зала дублируется" },
+        { "Error : Can not find auditorium", "Ошибка: Зал не найден" },
+        { "Auditorium Not Found", "Зал не найден" },
+
+        // Movie Errors
+        { "Movie Name is already in use", "Название фильма уже используется" },
+        { "Movie Descriptions is already in use", "Описание фильма уже используется" },
+        { "Movie Name already exists", "Название фильма уже существует" },
+        { "Movie Description already exists", "Описание фильма уже существует" },
+        { "Error uploading image to Cloudinary", "Ошибка загрузки изображения в Cloudinary" },
+        { "Movie Duration Is Invalid Must be Higher than 0 and Lower than 500", "Длительность фильма должна быть от 1 до 500 минут" },
+
+        // Schedule Errors
+        { "Error Auditorium Not Found", "Ошибка: Зал не найден" },
+        { "Cannot schedule show times for a past date or time.", "Нельзя назначить сеанс на прошедшую дату или время." },
+        { "Overlapping schedules detected within the request.", "Обнаружено пересечение расписаний." },
+
+        // BCrypt / Utility Errors
+        { "Hashing password failed", "Ошибка хеширования пароля" },
+        { "Validate password failed", "Ошибка валидации пароля" },
+
+        // =============================================
+        // VALIDATION MESSAGES (DTO Annotations)
+        // =============================================
+
+        // Cinema DTO Validations
+        { "Cinema Location is Required", "Местоположение кинотеатра обязательно" },
+        { "Cinema Location cannot exceed 50 characters", "Местоположение не должно превышать 50 символов" },
+        { "Cinema Name is Required", "Название кинотеатра обязательно" },
+        { "Cinema Name cannot exceed 50 characters", "Название не должно превышать 50 символов" },
+        { "Cinema Hotline number is required", "Номер горячей линии обязателен" },
+        { "Cinema cinemaHotlineNumber cannot exceed 50 characters", "Номер горячей линии не должен превышать 50 символов" },
+        { "Cinema Description is Required", "Описание кинотеатра обязательно" },
+        { "Release Date is Required", "Дата релиза обязательна" },
+
+        // Auditorium DTO Validations
+        { "Error Auditorium Number cannot be empty", "Ошибка: Номер зала не может быть пустым" },
+        { "Auditorium Number must be between 3 and 10 characters", "Номер зала должен содержать от 3 до 10 символов" },
+        { "Error Movie Format cannot be empty", "Ошибка: Формат фильма не может быть пустым" },
+        { "Error Cinema cannot be empty", "Ошибка: Кинотеатр не может быть пустым" },
+        { "Auditorium must have at least one seat", "Зал должен иметь хотя бы одно место" },
+        { "Error Seat Number cannot be empty", "Ошибка: Номер места не может быть пустым" },
+        { "Seat Number must be between 3 and 10 characters", "Номер места должен содержать от 3 до 10 символов" },
+        { "coordX must be >= 0", "coordX должен быть >= 0" },
+        { "coordY must be >= 0", "coordY должен быть >= 0" },
+
+        // Movie DTO Validations
+        { "Movie Required Age is required", "Возрастное ограничение фильма обязательно" },
+        { "Movie Name is required", "Название фильма обязательно" },
+        { "Movie Name length must be between 1 and 50 characters", "Название фильма должно содержать от 1 до 50 символов" },
+        { "Movie Descriptions is required", "Описание фильма обязательно" },
+        { "Movie Descriptions length must be between 1 and 200 characters", "Описание фильма должно содержать от 1 до 200 символов" },
+        { "Movie Image is required", "Изображение фильма обязательно" },
+        { "Movie Ended Date is required", "Дата окончания показа фильма обязательна" },
+
+        // Schedule DTO Validations
+        { "Auditorium Id is required", "ID зала обязателен" },
+        { "TheaterManager is required", "Менеджер кинотеатра обязателен" },
+        {"The showtime list must not be left blank.", "Список сеансов не может быть пустым"},
+        {"Schedules is not found or it's been deleted or Movie is Inactive", "Расписание не найдено, удалено или фильм неактивен"},
+        {"Get Required Age Completed", "Список возрастных ограничений получен успешно"},
+
+        // Booking Messages
+        {"Get cities list successfully", "Список городов получен успешно"},
+        {"Get showtimes successfully", "Расписание сеансов получено успешно"},
+        {"Get seat map successfully", "Схема мест получена успешно"},
+        {"Get pricing successfully", "Информация о ценах получена успешно"},
+        {"Booking created successfully", "Бронирование создано успешно"},
+        {"Payment completed successfully", "Оплата прошла успешно"},
+        {"Schedule not found", "Расписание не найдено"},
+        {"Schedule not found or movie is inactive", "Расписание не найдено или фильм неактивен"},
+        {"This showtime has already started", "Этот сеанс уже начался"},
+        {"One or more selected seats are invalid", "Одно или несколько выбранных мест недействительны"},
+        {"One or more selected seats are already booked", "Одно или несколько мест уже забронированы"},
+        {"Payment failed", "Оплата не удалась"},
+        {"Order not found", "Заказ не найден"},
+
+        // Booking DTO Validations
+        {"Schedule Id is required", "ID расписания обязателен"},
+        {"Seat Ids are required", "ID мест обязательны"},
+        {"At least one seat must be selected", "Необходимо выбрать хотя бы одно место"},
+        {"Invalid email format", "Неверный формат email"},
+
+        // Additional common messages
+        {"Get user information successfully", "Информация о пользователе получена успешно"},
+        {"Get Movie Genres Successfully", "Жанры фильмов получены успешно"},
+        {"Get booking history successfully", "История бронирований получена успешно"},
+        {"Delete Cinema Completed", "Кинотеатр успешно удалён"},
+        {"Delete Auditorium completed", "Зал успешно удалён"},
+        {"Google authentication failed", "Ошибка аутентификации Google"},
+        {"Account with this email already exists. Please login using your original method.", "Аккаунт с таким email уже существует. Пожалуйста, войдите другим способом."},
+        {"Failed to exchange Google authorization code", "Не удалось обменять код авторизации Google"},
+        {"Failed to get user information from Google", "Не удалось получить информацию от Google"},
+        {"Cannot edit this cinema because it has active Booked bookings. Please wait until all bookings are completed.", "Нельзя редактировать кинотеатр с активными бронированиями."},
+        {"Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.", "Нельзя редактировать зал с активными бронированиями."},
+        {"Cannot edit seat layout because seats have been used in orders.", "Нельзя изменить схему мест, так как места были использованы в заказах."}
+    };
+
+    /// <summary>
     /// Reverse dictionary: vi -> en (auto-generated)
     /// </summary>
     private static readonly Dictionary<string, string> ViToEnTranslations;
+
+    /// <summary>
+    /// Reverse dictionary: ru -> en (auto-generated)
+    /// </summary>
+    private static readonly Dictionary<string, string> RuToEnTranslations;
 
     static LocalizationService()
     {
@@ -212,6 +400,15 @@ public class LocalizationService : ILocalizationService
             if (!ViToEnTranslations.ContainsKey(kvp.Value))
             {
                 ViToEnTranslations[kvp.Value] = kvp.Key;
+            }
+        }
+
+        RuToEnTranslations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in EnToRuTranslations)
+        {
+            if (!RuToEnTranslations.ContainsKey(kvp.Value))
+            {
+                RuToEnTranslations[kvp.Value] = kvp.Key;
             }
         }
     }
@@ -258,16 +455,50 @@ public class LocalizationService : ILocalizationService
             return key;
         }
 
+        // If requesting Russian
+        if (lang == "ru")
+        {
+            // Try exact match from EnToRuTranslations (key is English)
+            if (EnToRuTranslations.TryGetValue(key, out var ruValue))
+                return ruValue;
+
+            // If key is Vietnamese, find English via ViToEnTranslations, then translate to Russian
+            if (ViToEnTranslations.TryGetValue(key, out var enViaVi) &&
+                EnToRuTranslations.TryGetValue(enViaVi, out var ruViaEn))
+                return ruViaEn;
+
+            // Try Regex matches for Russian
+            foreach (var regexTemplate in RegexTranslations)
+            {
+                var match = regexTemplate.Pattern.Match(key);
+                if (match.Success)
+                {
+                    return regexTemplate.Pattern.Replace(key, regexTemplate.Replacement);
+                }
+            }
+
+            // If key is already Russian, return as-is
+            if (RuToEnTranslations.ContainsKey(key))
+                return key;
+
+            // No translation found, return original
+            return key;
+        }
+
         // If requesting English
         if (lang == "en")
         {
-            // Check if it's already English (in our dictionary)
-            if (EnToViTranslations.ContainsKey(key))
+            // Check if it's already English (in our dictionaries)
+            if (EnToViTranslations.ContainsKey(key) || EnToRuTranslations.ContainsKey(key))
                 return key;
 
             // If it's Vietnamese, translate back to English
             if (ViToEnTranslations.TryGetValue(key, out var enValue))
                 return enValue;
+
+            // If it's Russian, translate back to English
+            if (RuToEnTranslations.TryGetValue(key, out var enFromRu))
+                return enFromRu;
 
             // No translation found, return original
             return key;
