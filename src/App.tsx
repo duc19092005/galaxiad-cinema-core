@@ -26,6 +26,7 @@ import CashierPage from './features/cashier/CashierPage';
 import ServicesPage from './features/public/ServicesPage';
 import HelpPage from './features/public/HelpPage';
 import ShiftNotificationListener from './components/ShiftNotificationListener';
+import ChatBot from './components/ChatBot';
 
 function App() {
   return (
@@ -65,6 +66,7 @@ function App() {
 
           <Route path="*" element={<NotFound />} />
           </Routes>
+          <ChatBot />
         </Router>
       </CinemaProvider>
     </ThemeProvider>

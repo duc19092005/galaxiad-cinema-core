@@ -26,8 +26,6 @@ const FAQS: FaqItem[] = [
   { q: 'help.faq8Q', a: 'help.faq8A', category: 'help.catTechnical' },
 ];
 
-const CATEGORIES = ['help.catBooking', 'help.catPayment', 'help.catAccount', 'help.catTechnical'];
-
 const HelpPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -50,7 +48,7 @@ const HelpPage: React.FC = () => {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Header />
 
-      <main style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
+      <main className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
@@ -65,16 +63,19 @@ const HelpPage: React.FC = () => {
           >
             <ChevronLeft size={22} />
           </button>
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>{t('help.title', 'Help Center')}</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-              {t('help.subtitle', 'Find answers, get support, and explore our cinema guides')}
-            </p>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="amber-line" />
+              <div>
+                <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{t('help.title', 'Help Center')}</h1>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                  {t('help.subtitle', 'Find answers, get support, and explore our cinema guides')}
+                </p>
+              </div>
+            </div>
         </div>
 
         {/* Search */}
-        <div style={{
+        <div className="page-enter-d1" style={{
           position: 'relative', marginBottom: 36,
         }}>
           <Search size={18} style={{
@@ -98,7 +99,7 @@ const HelpPage: React.FC = () => {
         </div>
 
         {/* Quick Links Cards */}
-        <div style={{
+        <div className="page-enter-d2" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))',
           gap: 16, marginBottom: 40,
@@ -111,7 +112,7 @@ const HelpPage: React.FC = () => {
           ].map((card, i) => (
             <div
               key={i}
-              className="interactive"
+              className={`interactive page-enter-d${i+1}`}
               style={{
                 padding: 20, borderRadius: 'var(--radius-lg)', cursor: 'pointer',
                 backgroundColor: 'var(--bg-elevated)',
@@ -155,6 +156,7 @@ const HelpPage: React.FC = () => {
               {filteredFaqs.map((faq, i) => (
                 <div
                   key={i}
+                  className={`page-enter-d${(i % 5) + 1}`}
                   style={{
                     borderRadius: 'var(--radius-lg)',
                     backgroundColor: 'var(--bg-elevated)',
@@ -207,7 +209,7 @@ const HelpPage: React.FC = () => {
         </div>
 
         {/* Bottom CTA */}
-        <div style={{
+        <div className="page-enter-d3" style={{
           padding: 24, borderRadius: 'var(--radius-xl)',
           backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',

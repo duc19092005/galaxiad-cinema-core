@@ -672,6 +672,36 @@ tr:hover td {
 }
 
 /* ============================================
+   PAGE ENTRANCE ANIMATIONS
+   ============================================ */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter {
+  animation: fadeSlideUp 0.5s ease-out forwards;
+}
+
+.page-enter-d1 { animation: fadeSlideUp 0.5s ease-out 0.05s both; }
+.page-enter-d2 { animation: fadeSlideUp 0.5s ease-out 0.10s both; }
+.page-enter-d3 { animation: fadeSlideUp 0.5s ease-out 0.15s both; }
+.page-enter-d4 { animation: fadeSlideUp 0.5s ease-out 0.20s both; }
+.page-enter-d5 { animation: fadeSlideUp 0.5s ease-out 0.25s both; }
+
+/* ============================================
+   AMBER ACCENT LINE (Signature Element)
+   ============================================ */
+.amber-line {
+  display: inline-block;
+  width: 3px;
+  height: 24px;
+  background: var(--accent);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ============================================
    🔥 RESPONSIVE UTILITY CLASSES
    ============================================ */
 

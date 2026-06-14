@@ -2,10 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { 
-  ChevronLeft, Wifi, Coffee, Gift, Accessibility, 
-  Car, Music, Shirt, Star, Check, ChevronDown
-} from 'lucide-react';
+import { ChevronLeft, Wifi, Coffee, Gift, Accessibility, Car, Shirt, Star, Check, ChevronDown } from 'lucide-react';
 import Header from '../../components/Header';
 
 interface ServiceItem {
@@ -98,7 +95,7 @@ const ServicesPage: React.FC = () => {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Header />
 
-      <main style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>>
+      <main className="page-enter" style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
           <button
@@ -113,16 +110,19 @@ const ServicesPage: React.FC = () => {
           >
             <ChevronLeft size={22} />
           </button>
-          <div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>{t('services.title', 'Our Services')}</h1>
-            <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-              {t('services.subtitle', 'Everything we offer to elevate your cinema experience')}
-            </p>
-          </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span className="amber-line" />
+              <div>
+                <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.02em' }}>{t('services.title', 'Our Services')}</h1>
+                <p style={{ fontSize: 14, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                  {t('services.subtitle', 'Everything we offer to elevate your cinema experience')}
+                </p>
+              </div>
+            </div>
         </div>
 
         {/* Services Grid */}
-        <div style={{
+        <div className="page-enter-d2" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
           gap: 24,
@@ -137,7 +137,7 @@ const ServicesPage: React.FC = () => {
                 overflow: 'hidden',
                 transition: 'all 0.3s ease',
               }}
-              className={expandedIndex === index ? '' : 'interactive'}
+              className={`${expandedIndex === index ? '' : 'interactive'} page-enter-d${(index % 5) + 1}`}
             >
               {/* Card Header */}
               <div
@@ -224,7 +224,7 @@ const ServicesPage: React.FC = () => {
         </div>
 
         {/* CTA Banner */}
-        <div style={{
+        <div className="page-enter-d3" style={{
           marginTop: 48, padding: '32px', borderRadius: 'var(--radius-xl)',
           background: 'linear-gradient(135deg, rgba(255,138,0,0.1), rgba(255,183,127,0.05))',
           border: '1px solid rgba(255,138,0,0.15)',
