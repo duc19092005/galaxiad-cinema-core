@@ -156,7 +156,7 @@ const HelpPage: React.FC = () => {
               {filteredFaqs.map((faq, i) => (
                 <div
                   key={i}
-                  className={`page-enter-d${(i % 5) + 1}`}
+                  className={`page-enter-d${(i % 5) + 1}${openFaqIndex === i ? ' faq-item-active' : ''}`}
                   style={{
                     borderRadius: 'var(--radius-lg)',
                     backgroundColor: 'var(--bg-elevated)',
@@ -187,11 +187,13 @@ const HelpPage: React.FC = () => {
                     />
                   </button>
                   <div
+                    className={openFaqIndex === i ? 'faq-answer-open' : ''}
                     style={{
                       maxHeight: openFaqIndex === i ? 300 : 0,
                       overflow: 'hidden',
-                      transition: 'max-height 0.3s ease, opacity 0.2s ease',
+                      transition: 'max-height 0.35s cubic-bezier(0.16,1,0.3,1)',
                       opacity: openFaqIndex === i ? 1 : 0,
+                      transitionProperty: 'max-height, opacity',
                     }}
                   >
                     <p style={{

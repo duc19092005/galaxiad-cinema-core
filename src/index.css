@@ -702,6 +702,29 @@ tr:hover td {
 }
 
 /* ============================================
+   FAQ ACCORDION ANIMATIONS
+   ============================================ */
+@keyframes faqSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.faq-answer-open {
+  animation: faqSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.faq-item-active {
+  border-color: rgba(255, 138, 0, 0.25) !important;
+  box-shadow: 0 0 0 1px rgba(255, 138, 0, 0.08);
+}
+
+/* ============================================
    🔥 RESPONSIVE UTILITY CLASSES
    ============================================ */
 
