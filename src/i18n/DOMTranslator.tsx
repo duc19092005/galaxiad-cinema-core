@@ -1,45 +1,113 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import enDict from './locales/en/translation.json';
 import viDict from './locales/vi/translation.json';
 import ruDict from './locales/ru/translation.json';
 import i18n from './config';
 
 /**
- * Dàn phẳng toàn bộ JSON (kể cả lồng nhau) thành 1 từ điển phẳng.
- * VD: { "sidebar": { "dashboard": "Tổng quan" }, "Logout": "Đăng Xuất" }
- *   => { "dashboard": "Tổng quan", "Logout": "Đăng Xuất" }
+ * Flatten nested JSON object with dot-separated paths.
+ * { a: { b: "hello" } } => { "a.b": "hello" }
  */
-const flattenDict = (obj: Record<string, any>): Record<string, string> => {
+const flattenWithPaths = (obj: Record<string, any>, prefix = ''): Record<string, string> => {
     const result: Record<string, string> = {};
-    const recurse = (current: Record<string, any>) => {
-        for (const key in current) {
-            const value = current[key];
-            if (typeof value === 'string') {
-                result[key] = value;
-            } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                recurse(value);
-            }
+    for (const key in obj) {
+        const value = obj[key];
+        const path = prefix ? `${prefix}.${key}` : key;
+        if (typeof value === 'string') {
+            result[path] = value;
+        } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            Object.assign(result, flattenWithPaths(value, path));
         }
-    };
-    recurse(obj);
+    }
     return result;
 };
 
-// Build từ điển phẳng 1 lần duy nhất khi app khởi động
-const VI_DICT: Record<string, string> = flattenDict(viDict as Record<string, any>);
+// Build flattened dictionaries with dot paths (e.g. "sidebar.language": "Language")
+const EN_FLAT = flattenWithPaths(enDict as Record<string, any>);
+const VI_FLAT = flattenWithPaths(viDict as Record<string, any>);
+const RU_FLAT = flattenWithPaths(ruDict as Record<string, any>);
 
-// Tạo từ điển ngược: Tiếng Việt -> Tiếng Anh (để khi switch EN, có thể đổi ngược lại)
-const EN_DICT: Record<string, string> = {};
-for (const enKey in VI_DICT) {
-    EN_DICT[VI_DICT[enKey]] = enKey;
+// ============================================================
+// Build translation maps: English display text -> Target display text
+// ============================================================
+
+// EN -> VI: match by same dot-path
+const EN_TO_VI: Record<string, string> = {};
+for (const path in EN_FLAT) {
+    const enText = EN_FLAT[path];
+    if (VI_FLAT[path]) {
+        EN_TO_VI[enText] = VI_FLAT[path];
+    }
 }
 
-// Build từ điển phẳng cho tiếng Nga 1 lần duy nhất
-const RU_DICT: Record<string, string> = flattenDict(ruDict as Record<string, any>);
+// EN -> RU
+const EN_TO_RU: Record<string, string> = {};
+for (const path in EN_FLAT) {
+    const enText = EN_FLAT[path];
+    if (RU_FLAT[path]) {
+        EN_TO_RU[enText] = RU_FLAT[path];
+    }
+}
 
-// Tạo từ điển ngược: Tiếng Nga -> Tiếng Anh
-const RU_TO_EN_DICT: Record<string, string> = {};
-for (const enKey in RU_DICT) {
-    RU_TO_EN_DICT[RU_DICT[enKey]] = enKey;
+// Reverse maps: target display text -> English display text
+const VI_TO_EN: Record<string, string> = {};
+for (const enText in EN_TO_VI) {
+    VI_TO_EN[EN_TO_VI[enText]] = enText;
+}
+
+const RU_TO_EN: Record<string, string> = {};
+for (const enText in EN_TO_RU) {
+    RU_TO_EN[EN_TO_RU[enText]] = enText;
+}
+
+// All known texts (EN, VI, RU) for quick lookup
+const ALL_KNOWN_TEXTS = new Set<string>([
+    ...Object.keys(EN_TO_VI),        // English texts
+    ...Object.keys(VI_TO_EN),        // Vietnamese texts
+    ...Object.keys(RU_TO_EN),        // Russian texts
+]);
+
+/**
+ * Translate a single text string given the target language.
+ */
+function translateText(text: string, lang: string): string | null {
+    if (!text) return null;
+
+    if (lang === 'vi') {
+        // EN/current -> VI
+        if (EN_TO_VI[text]) return EN_TO_VI[text];
+        // RU -> EN -> VI
+        if (RU_TO_EN[text] && EN_TO_VI[RU_TO_EN[text]]) return EN_TO_VI[RU_TO_EN[text]];
+        // Already VI, return as-is
+        if (VI_TO_EN[text]) return text;
+        return null;
+    }
+
+    if (lang === 'ru') {
+        // EN -> RU
+        if (EN_TO_RU[text]) return EN_TO_RU[text];
+        // VI -> EN -> RU
+        if (VI_TO_EN[text] && EN_TO_RU[VI_TO_EN[text]]) return EN_TO_RU[VI_TO_EN[text]];
+        // Already RU, return as-is
+        if (RU_TO_EN[text]) return text;
+        return null;
+    }
+
+    // lang === 'en'
+    // VI -> EN
+    if (VI_TO_EN[text]) return VI_TO_EN[text];
+    // RU -> EN
+    if (RU_TO_EN[text]) return RU_TO_EN[text];
+    // Already EN, return as-is
+    if (EN_TO_VI[text]) return text;
+    return null;
+}
+
+/**
+ * Check if text looks like a translatable string (i.e. it exists in our dictionaries).
+ */
+function isKnownTranslatable(text: string): boolean {
+    return ALL_KNOWN_TEXTS.has(text);
 }
 
 export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -47,112 +115,87 @@ export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ childre
     const observerRef = useRef<MutationObserver | null>(null);
     const isTranslatingRef = useRef(false);
 
-    // Lắng nghe sự kiện đổi ngôn ngữ
+    // Listen for language changes from i18next
     useEffect(() => {
         const handleLangChange = (newLang: string) => setLang(newLang);
         i18n.on('languageChanged', handleLangChange);
         return () => { i18n.off('languageChanged', handleLangChange); };
     }, []);
 
+    /**
+     * Recursively translate all text nodes and attributes within a node.
+     */
     const translateNode = useCallback((node: Node) => {
-        if (node.nodeName === 'SCRIPT' || node.nodeName === 'STYLE' || node.nodeName === 'NOSCRIPT') return;
+        if (!node || node.nodeName === 'SCRIPT' || node.nodeName === 'STYLE' || node.nodeName === 'NOSCRIPT') return;
 
         if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.nodeValue?.trim();
-            if (!text) return;
+            const raw = node.nodeValue;
+            if (!raw) return;
+            const trimmed = raw.trim();
+            if (!trimmed) return;
 
-            if (lang === 'vi') {
-                // Tiếng Anh -> Tiếng Việt
-                if (VI_DICT[text]) {
-                    node.nodeValue = node.nodeValue!.replace(text, VI_DICT[text]);
-                    return;
-                }
-            } else if (lang === 'ru') {
-                // Tiếng Anh -> Tiếng Nga
-                if (RU_DICT[text]) {
-                    node.nodeValue = node.nodeValue!.replace(text, RU_DICT[text]);
-                    return;
-                }
-                // Tiếng Việt -> Tiếng Nga (qua trung gian Anh)
-                if (EN_DICT[text] && RU_DICT[EN_DICT[text]]) {
-                    node.nodeValue = node.nodeValue!.replace(text, RU_DICT[EN_DICT[text]]);
-                    return;
-                }
-                // Tiếng Nga -> Tiếng Anh (dùng từ điển ngược)
-                if (RU_TO_EN_DICT[text]) {
-                    node.nodeValue = node.nodeValue!.replace(text, RU_TO_EN_DICT[text]);
-                    return;
-                }
-            } else {
-                // Tiếng Việt -> Tiếng Anh (dùng từ điển ngược)
-                if (EN_DICT[text]) {
-                    node.nodeValue = node.nodeValue!.replace(text, EN_DICT[text]);
-                    return;
-                }
-                // Tiếng Nga -> Tiếng Anh
-                if (RU_TO_EN_DICT[text]) {
-                    node.nodeValue = node.nodeValue!.replace(text, RU_TO_EN_DICT[text]);
-                    return;
+            // Check if this text matches any known translatable text
+            if (isKnownTranslatable(trimmed)) {
+                const translated = translateText(trimmed, lang);
+                if (translated && translated !== trimmed) {
+                    node.nodeValue = raw.replace(trimmed, translated);
+                    return; // skip children since we replaced text
                 }
             }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
             const el = node as HTMLElement;
 
-            // Dịch placeholder
+            // Translate placeholder
             const ph = el.getAttribute('placeholder');
             if (ph) {
                 const phTrimmed = ph.trim();
-                if (lang === 'vi' && VI_DICT[phTrimmed]) {
-                    el.setAttribute('placeholder', VI_DICT[phTrimmed]);
-                } else if (lang === 'ru' && RU_DICT[phTrimmed]) {
-                    el.setAttribute('placeholder', RU_DICT[phTrimmed]);
-                } else if (lang === 'ru' && EN_DICT[phTrimmed] && RU_DICT[EN_DICT[phTrimmed]]) {
-                    el.setAttribute('placeholder', RU_DICT[EN_DICT[phTrimmed]]);
-                } else if (lang === 'en' && EN_DICT[phTrimmed]) {
-                    el.setAttribute('placeholder', EN_DICT[phTrimmed]);
-                } else if (lang === 'en' && RU_TO_EN_DICT[phTrimmed]) {
-                    el.setAttribute('placeholder', RU_TO_EN_DICT[phTrimmed]);
+                const translated = translateText(phTrimmed, lang);
+                if (translated && translated !== phTrimmed) {
+                    el.setAttribute('placeholder', translated);
                 }
             }
 
-            // Dịch title attribute
+            // Translate title
             const title = el.getAttribute('title');
             if (title) {
                 const titleTrimmed = title.trim();
-                if (lang === 'vi' && VI_DICT[titleTrimmed]) {
-                    el.setAttribute('title', VI_DICT[titleTrimmed]);
-                } else if (lang === 'ru' && RU_DICT[titleTrimmed]) {
-                    el.setAttribute('title', RU_DICT[titleTrimmed]);
-                } else if (lang === 'ru' && EN_DICT[titleTrimmed] && RU_DICT[EN_DICT[titleTrimmed]]) {
-                    el.setAttribute('title', RU_DICT[EN_DICT[titleTrimmed]]);
-                } else if (lang === 'en' && EN_DICT[titleTrimmed]) {
-                    el.setAttribute('title', EN_DICT[titleTrimmed]);
-                } else if (lang === 'en' && RU_TO_EN_DICT[titleTrimmed]) {
-                    el.setAttribute('title', RU_TO_EN_DICT[titleTrimmed]);
+                const translated = translateText(titleTrimmed, lang);
+                if (translated && translated !== titleTrimmed) {
+                    el.setAttribute('title', translated);
                 }
             }
         }
 
-        // Đệ quy xuống tất cả child
+        // Recurse children
         node.childNodes.forEach(child => translateNode(child));
     }, [lang]);
 
+    /**
+     * Perform a full pass on the entire DOM inside our wrapper.
+     */
+    const runFullPass = useCallback(() => {
+        if (isTranslatingRef.current) return;
+        isTranslatingRef.current = true;
+        if (observerRef.current) observerRef.current.disconnect();
+
+        translateNode(document.body);
+
+        if (observerRef.current) {
+            observerRef.current.observe(document.body, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+            });
+        }
+        isTranslatingRef.current = false;
+    }, [translateNode]);
+
+    // Set up MutationObserver
     useEffect(() => {
         const mutationConfig: MutationObserverInit = {
             childList: true,
             subtree: true,
             characterData: true,
-        };
-
-        const runFullPass = () => {
-            if (isTranslatingRef.current) return;
-            isTranslatingRef.current = true;
-            if (observerRef.current) observerRef.current.disconnect();
-
-            translateNode(document.body);
-
-            if (observerRef.current) observerRef.current.observe(document.body, mutationConfig);
-            isTranslatingRef.current = false;
         };
 
         const handleMutations = (mutations: MutationRecord[]) => {
@@ -168,20 +211,28 @@ export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ childre
                 }
             }
 
-            if (observerRef.current) observerRef.current.observe(document.body, mutationConfig);
+            if (observerRef.current) {
+                observerRef.current.observe(document.body, mutationConfig);
+            }
             isTranslatingRef.current = false;
         };
 
         observerRef.current = new MutationObserver(handleMutations);
 
-        // Delay nhỏ để React render xong
+        // Small delay to let React render first
         const timer = setTimeout(runFullPass, 100);
 
         return () => {
             clearTimeout(timer);
             if (observerRef.current) observerRef.current.disconnect();
         };
-    }, [lang, translateNode]);
+    }, [lang, translateNode, runFullPass]);
+
+    // Re-run full pass when lang changes
+    useEffect(() => {
+        const timer = setTimeout(runFullPass, 50);
+        return () => clearTimeout(timer);
+    }, [lang, runFullPass]);
 
     return <>{children}</>;
 };
