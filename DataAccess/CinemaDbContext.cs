@@ -199,6 +199,14 @@ public class CinemaDbContext : DbContext
                 .HasForeignKey<CashierDepartmentEntity>(d => d.SharedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<StaffProfileEntity>(entity =>
+        {
+            entity.HasOne(s => s.CashierDepartmentEntity)
+                .WithMany()
+                .HasForeignKey(s => s.DepartmentId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
         
         // AuditoriumInfoEntities
         

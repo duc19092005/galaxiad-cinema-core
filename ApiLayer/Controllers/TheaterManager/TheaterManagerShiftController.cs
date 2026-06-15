@@ -219,6 +219,8 @@ public class TheaterManagerShiftController : ControllerBase
                 WorkingStatus = s.WorkingStatus,
                 CinemaId = s.CinemaId,
                 CinemaName = s.CinemaInfoEntity.CinemaName,
+                DepartmentId = s.DepartmentId,
+                DepartmentName = s.CashierDepartmentEntity != null ? s.CashierDepartmentEntity.DepartmentName : null,
                 IsCinemaManager = s.IsCinemaManager,
                 HasFaceRegistered = !string.IsNullOrEmpty(s.FaceVector)
             })

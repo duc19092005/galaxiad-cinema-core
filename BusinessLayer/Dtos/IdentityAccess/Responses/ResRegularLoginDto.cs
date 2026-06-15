@@ -8,6 +8,7 @@ public class ResRegularLoginDto
     public string? Username { get; set; } = string.Empty;
     public string? PortraitImageUrl { get; set; }
     public string[] Roles { get; set; } = [];
+    public bool IsSharedPosAccount { get; set; }
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? AccessToken { get; set; }

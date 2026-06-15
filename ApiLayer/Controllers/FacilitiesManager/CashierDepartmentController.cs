@@ -31,7 +31,7 @@ public class CashierDepartmentController : ControllerBase
     /// <summary>Tạo phòng ban mới + tự động tạo tài khoản quầy</summary>
     [HttpPost]
     [Authorize(Roles = "FacilitiesManager,Admin")]
-    public async Task<IActionResult> CreateDepartment(CreateDepartmentReqDto request)
+    public async Task<IActionResult> CreateDepartment([FromBody] CreateDepartmentReqDto request)
     {
         var results = await _departmentService.CreateDepartmentAsync(request);
         return Ok(results);
@@ -40,7 +40,7 @@ public class CashierDepartmentController : ControllerBase
     /// <summary>Cập nhật thông tin phòng ban</summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "FacilitiesManager,Admin")]
-    public async Task<IActionResult> UpdateDepartment(Guid id, UpdateDepartmentReqDto request)
+    public async Task<IActionResult> UpdateDepartment(Guid id, [FromBody] UpdateDepartmentReqDto request)
     {
         var results = await _departmentService.UpdateDepartmentAsync(id, request);
         return Ok(results);

@@ -37,6 +37,11 @@ public class RegisterShiftUseCase
         }
 
         // 2. Kiểm tra ca trực mẫu có tồn tại không
+        if (dto.StartDate.Date < DateTime.UtcNow.Date || dto.EndDate.Date < DateTime.UtcNow.Date)
+        {
+            throw new AppException("Cannot register shifts in the past.", 400, "SHIFT_ERR");
+        }
+
         var template = await _unitOfWork.Repository<CinemaShiftTemplateEntity>().Query()
             .FirstOrDefaultAsync(t => t.ShiftTemplateId == dto.ShiftTemplateId && t.IsActive);
 

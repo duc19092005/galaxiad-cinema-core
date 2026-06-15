@@ -15,6 +15,9 @@ public class StaffProfileEntity
     [ForeignKey("CinemaInfoEntity")]
     public Guid CinemaId { get; set; }
 
+    [ForeignKey("CashierDepartmentEntity")]
+    public Guid? DepartmentId { get; set; }
+
     public bool IsCinemaManager { get; set; } = false;
 
     [Column(TypeName = "nvarchar(max)")]
@@ -22,6 +25,7 @@ public class StaffProfileEntity
 
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
     public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
+    public CashierDepartmentEntity? CashierDepartmentEntity { get; set; }
 
     public List<StaffWorkingLoggerEntity> StaffWorkingLoggerEntities { get; set; } = [];
     public List<StaffSalaryTotalLoggerEntity> StaffSalaryTotalLoggerEntities { get; set; } = [];

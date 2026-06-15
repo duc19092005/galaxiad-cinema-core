@@ -6,6 +6,7 @@ using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.IdentityAccess.Requests;
 using BusinessLayer.Dtos.IdentityAccess.Responses;
 using BusinessLayer.Interfaces.IIdentityAccess;
+using BusinessLayer.Entities.CinemaInfos;
 using BusinessLayer.Entities.UserInfos;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -109,6 +110,9 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                     }
 
                     List<ManagedCinemaInfoDto>? managedCinemasList = null;
+                    var isSharedPosAccount = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+                        .AnyAsync(d => d.SharedUserId == getUserInfo.UserId && d.IsActive);
+
                     if (result.Roles.Contains("Admin"))
                     {
                         managedCinemasList = await _unitOfWork.Repository<BusinessLayer.Entities.CinemaInfos.CinemaInfoEntity>().Query()
@@ -141,6 +145,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                             AccessToken = token,
                             Roles = result.Roles,
                             Username = result.Username,
+                            IsSharedPosAccount = isSharedPosAccount,
                             ManagedCinemas = managedCinemasList
                         },
                         Message = Messages.Auth.LoginSuccess

@@ -127,6 +127,8 @@ public class ResStaffProfileDto
     public bool WorkingStatus { get; set; }
     public Guid CinemaId { get; set; }
     public string CinemaName { get; set; } = string.Empty;
+    public Guid? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public bool IsCinemaManager { get; set; }
     public bool HasFaceRegistered { get; set; }
 }

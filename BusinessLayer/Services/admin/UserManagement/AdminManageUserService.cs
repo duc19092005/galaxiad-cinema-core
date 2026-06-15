@@ -16,6 +16,7 @@ using Shared.Exceptions;
 using Shared.Interfaces.Persistence;
 using Shared.Localization;
 using Shared.Utils;
+using System.Text.Json;
 
 namespace BusinessLayer.Services.Admin.UserManagement;
 
@@ -40,6 +41,9 @@ public class AdminCreateUserRequestDto
     public string PhoneNumber { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public List<Guid> RoleIds { get; set; } = [];
+    public Guid? CinemaId { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public float[]? FaceVector { get; set; }
 }
 
 public class AdminCreateUserResponseDto
@@ -137,6 +141,8 @@ public class AdminManageUserService
         try
         {
             var normalizedRoleIds = NormalizeStaffRoleIds(dto.RoleIds);
+            var staffCinemaId = await ValidateStaffAssignmentAsync(normalizedRoleIds, dto.CinemaId, dto.DepartmentId);
+            var encryptedFaceVector = EncryptFaceVector(dto.FaceVector);
             var validationErrors = new List<string>();
             var userRepository = Repository<UserInfoEntity>();
 
@@ -191,7 +197,7 @@ public class AdminManageUserService
                 UserName = dto.UserName
             });
 
-            await ReplaceStaffRolesAsync(userId, normalizedRoleIds);
+            await ReplaceStaffRolesAsync(userId, normalizedRoleIds, staffCinemaId, dto.DepartmentId, encryptedFaceVector);
 
             await _auditLogService.WriteAsync(
                 "Create",
@@ -235,7 +241,7 @@ public class AdminManageUserService
             }
 
             var normalizedRoleIds = NormalizeStaffRoleIds(roleIds);
-            await ReplaceStaffRolesAsync(userId, normalizedRoleIds);
+            await ReplaceStaffRolesAsync(userId, normalizedRoleIds, null, null, null);
 
             await _auditLogService.WriteAsync(
                 "Update",
@@ -421,6 +427,13 @@ public class AdminManageUserService
                 .ExecuteDeleteAsync();
 
             var nextPermissionIds = permissionIds.Distinct().ToList();
+            if (nextPermissionIds.Contains(userPermissions.ApproveShift) &&
+                roleId != userRoles.Admin &&
+                roleId != userRoles.TheaterManager)
+            {
+                throw new BadRequestException("ApproveShift can only be assigned to Admin or TheaterManager.", "PERMISSION_ERR");
+            }
+
             var validPermissionCount = await Query<PermissionEntity>()
                 .CountAsync(permission => nextPermissionIds.Contains(permission.PermissionId));
             if (validPermissionCount != nextPermissionIds.Count)
@@ -479,7 +492,7 @@ public class AdminManageUserService
         return nextRoleIds;
     }
 
-    private async Task ReplaceStaffRolesAsync(Guid userId, List<Guid> roleIds)
+    private async Task ReplaceStaffRolesAsync(Guid userId, List<Guid> roleIds, Guid? cinemaId, Guid? departmentId, string? encryptedFaceVector)
     {
         await Query<UserRoleInfoEntity>()
             .Where(ur => ur.UserId == userId && StaffRoleIds.Contains(ur.RoleId))
@@ -493,7 +506,7 @@ public class AdminManageUserService
                 RoleId = roleId
             }).ToList();
             await Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
-            await EnsureStaffProfileAsync(userId, roleIds);
+            await EnsureStaffProfileAsync(userId, roleIds, cinemaId, departmentId, encryptedFaceVector);
         }
         else
         {
@@ -508,33 +521,109 @@ public class AdminManageUserService
         }
     }
 
-    private async Task EnsureStaffProfileAsync(Guid userId, List<Guid> roleIds)
+    private async Task EnsureStaffProfileAsync(Guid userId, List<Guid> roleIds, Guid? cinemaId, Guid? departmentId, string? encryptedFaceVector)
     {
         var staffProfile = await Query<StaffProfileEntity>()
             .FirstOrDefaultAsync(sp => sp.UserId == userId);
 
+        var targetCinema = await ResolveTargetCinemaAsync(cinemaId);
+
         if (staffProfile != null)
         {
             staffProfile.WorkingStatus = true;
+            staffProfile.CinemaId = targetCinema.CinemaId;
+            staffProfile.DepartmentId = departmentId;
             staffProfile.IsCinemaManager = roleIds.Contains(userRoles.TheaterManager);
+            if (!string.IsNullOrWhiteSpace(encryptedFaceVector))
+            {
+                staffProfile.FaceVector = encryptedFaceVector;
+            }
             Repository<StaffProfileEntity>().Update(staffProfile);
             return;
-        }
-
-        var firstCinema = await Query<CinemaInfoEntity>().FirstOrDefaultAsync();
-        if (firstCinema == null)
-        {
-            throw new AppException("Cannot assign staff role because no cinema branch exists.", 400, "ROLE_ERR");
         }
 
         await Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
         {
             UserId = userId,
             WorkingStatus = true,
-            CinemaId = firstCinema.CinemaId,
+            CinemaId = targetCinema.CinemaId,
+            DepartmentId = departmentId,
             IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
-            FaceVector = null
+            FaceVector = encryptedFaceVector
         });
+    }
+
+    private async Task<Guid?> ValidateStaffAssignmentAsync(List<Guid> roleIds, Guid? cinemaId, Guid? departmentId)
+    {
+        if (roleIds.Count == 0)
+        {
+            return null;
+        }
+
+        var targetCinema = await ResolveTargetCinemaAsync(cinemaId);
+
+        if (departmentId.HasValue)
+        {
+            var department = await Query<CashierDepartmentEntity>()
+                .FirstOrDefaultAsync(d => d.DepartmentId == departmentId.Value && d.IsActive);
+
+            if (department == null)
+            {
+                throw new AppException("Selected department does not exist or is inactive.", 400, "STAFF_ASSIGNMENT_ERR");
+            }
+
+            if (department.CinemaId != targetCinema.CinemaId)
+            {
+                throw new AppException("Selected department does not belong to the selected cinema.", 400, "STAFF_ASSIGNMENT_ERR");
+            }
+        }
+
+        return targetCinema.CinemaId;
+    }
+
+    private async Task<CinemaInfoEntity> ResolveTargetCinemaAsync(Guid? cinemaId)
+    {
+        CinemaInfoEntity? cinema;
+        if (cinemaId.HasValue)
+        {
+            cinema = await Query<CinemaInfoEntity>()
+                .FirstOrDefaultAsync(c => c.CinemaId == cinemaId.Value && !c.IsDeleted);
+        }
+        else
+        {
+            cinema = await Query<CinemaInfoEntity>()
+                .FirstOrDefaultAsync(c => !c.IsDeleted);
+        }
+
+        if (cinema == null)
+        {
+            throw new AppException("Cannot assign staff role because no valid cinema branch exists.", 400, "ROLE_ERR");
+        }
+
+        return cinema;
+    }
+
+    private string? EncryptFaceVector(float[]? faceVector)
+    {
+        if (faceVector == null || faceVector.Length == 0)
+        {
+            return null;
+        }
+
+        if (faceVector.Length != 128)
+        {
+            throw new AppException("Face vector must contain exactly 128 values.", 400, "FACE_ERR");
+        }
+
+        var aesKey = _configuration["AES_256:Key"];
+        var aesIv = _configuration["AES_256:IV"];
+        if (string.IsNullOrEmpty(aesKey) || string.IsNullOrEmpty(aesIv))
+        {
+            _logger.LogError("Error AES Key and AES IV is null.");
+            throw CustomSystemException.SystemExceptionCaller();
+        }
+
+        return AES256Helper.Encrypt(JsonSerializer.Serialize(faceVector), aesKey, aesIv);
     }
 
     private IQueryable<TEntity> Query<TEntity>() where TEntity : class

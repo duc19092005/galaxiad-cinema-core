@@ -131,6 +131,7 @@ public class FacilitiesManageDepartmentService
             {
                 UserId = sharedUserId,
                 CinemaId = request.CinemaId,
+                DepartmentId = departmentId,
                 WorkingStatus = true,
                 IsCinemaManager = false
             });
