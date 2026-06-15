@@ -95,13 +95,13 @@ public class TheaterManagerShiftController : ControllerBase
             {
                 ShiftTemplateId = t.ShiftTemplateId,
                 CinemaId = t.CinemaId,
-                CinemaName = t.CinemaInfoEntity.CinemaName,
+                CinemaName = t.CinemaInfoEntity != null ? t.CinemaInfoEntity.CinemaName : "",
                 ShiftName = t.ShiftName,
                 StartTime = t.StartTime,
                 EndTime = t.EndTime,
                 MaxStaff = t.MaxStaff,
                 RoleId = t.RoleId,
-                RoleName = t.RoleListInfoEntity.RoleName
+                RoleName = t.RoleListInfoEntity != null ? t.RoleListInfoEntity.RoleName : ""
             })
             .ToListAsync();
 
@@ -140,11 +140,11 @@ public class TheaterManagerShiftController : ControllerBase
             {
                 ShiftRegistrationId = r.ShiftRegistrationId,
                 StaffId = r.StaffId,
-                StaffName = r.StaffProfileEntity.UserInfoEntity.UserName,
+                StaffName = r.StaffProfileEntity != null && r.StaffProfileEntity.UserInfoEntity != null ? r.StaffProfileEntity.UserInfoEntity.UserName : "",
                 ShiftTemplateId = r.ShiftTemplateId,
-                ShiftName = r.CinemaShiftTemplateEntity.ShiftName,
-                StartTime = r.CinemaShiftTemplateEntity.StartTime,
-                EndTime = r.CinemaShiftTemplateEntity.EndTime,
+                ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : "",
+                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : default,
+                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : default,
                 RegistrationDate = r.RegistrationDate,
                 Status = r.Status,
                 ApprovedAt = r.ApprovedAt,
@@ -213,12 +213,12 @@ public class TheaterManagerShiftController : ControllerBase
             .Select(s => new ResStaffProfileDto
             {
                 UserId = s.UserId,
-                UserName = s.UserInfoEntity.UserName,
-                Email = s.UserInfoEntity.UserEmail,
-                PortraitImageUrl = s.UserInfoEntity.PortraitImageUrl,
+                UserName = s.UserInfoEntity != null ? s.UserInfoEntity.UserName : "",
+                Email = s.UserInfoEntity != null ? s.UserInfoEntity.UserEmail : "",
+                PortraitImageUrl = s.UserInfoEntity != null ? s.UserInfoEntity.PortraitImageUrl : null,
                 WorkingStatus = s.WorkingStatus,
                 CinemaId = s.CinemaId,
-                CinemaName = s.CinemaInfoEntity.CinemaName,
+                CinemaName = s.CinemaInfoEntity != null ? s.CinemaInfoEntity.CinemaName : "",
                 DepartmentId = s.DepartmentId,
                 DepartmentName = s.CashierDepartmentEntity != null ? s.CashierDepartmentEntity.DepartmentName : null,
                 IsCinemaManager = s.IsCinemaManager,
@@ -324,7 +324,7 @@ public class TheaterManagerShiftController : ControllerBase
                 TotalReceived = p.TotalReceived,
                 ReceivedDay = p.ReceivedDay,
                 StaffId = p.StaffId,
-                StaffName = p.StaffProfileEntity.UserInfoEntity.UserName,
+                StaffName = p.StaffProfileEntity != null && p.StaffProfileEntity.UserInfoEntity != null ? p.StaffProfileEntity.UserInfoEntity.UserName : "",
                 PaidByUserId = p.PaidByUserId,
                 PaidByName = p.PaidByUser != null ? p.PaidByUser.UserName : null,
                 PaymentStatus = p.PaymentStatus,
@@ -373,7 +373,7 @@ public class TheaterManagerShiftController : ControllerBase
                 TotalReceived = p.TotalReceived,
                 ReceivedDay = p.ReceivedDay,
                 StaffId = p.StaffId,
-                StaffName = p.StaffProfileEntity.UserInfoEntity.UserName,
+                StaffName = p.StaffProfileEntity != null && p.StaffProfileEntity.UserInfoEntity != null ? p.StaffProfileEntity.UserInfoEntity.UserName : "",
                 PaidByUserId = p.PaidByUserId,
                 PaidByName = p.PaidByUser != null ? p.PaidByUser.UserName : null,
                 PaymentStatus = p.PaymentStatus,

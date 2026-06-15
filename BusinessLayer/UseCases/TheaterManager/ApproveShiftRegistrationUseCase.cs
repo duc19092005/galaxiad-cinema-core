@@ -169,9 +169,9 @@ public class ApproveShiftRegistrationUseCase
         var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
             .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
 
-        if (staffProfile == null)
+        if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
-            throw new AppException("Tài khoản nhân viên được gán không hợp lệ hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException("Tài khoản nhân viên được gán không hợp lệ, chưa được gán rạp hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
         }
 
         // Kiểm tra ca trực mẫu
@@ -205,9 +205,43 @@ public class ApproveShiftRegistrationUseCase
 
         try
         {
+            // Kiểm tra xem nhân viên đã có ca trực nào trùng khung giờ ngày này chưa (dù là Pending hay Approved)
+            var existingRegistrations = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
+                .Include(r => r.CinemaShiftTemplateEntity)
+                .Where(r => r.StaffId == staffId 
+                         && r.RegistrationDate == registrationDateOnly 
+                         && (r.Status == "Approved" || r.Status == "Pending"))
+                .ToListAsync();
+
+            bool isOverlapping = false;
+            var newStart = template.StartTime.TotalMinutes;
+            var newEnd = template.EndTime <= template.StartTime ? template.EndTime.TotalMinutes + 1440 : template.EndTime.TotalMinutes;
+
+            foreach (var reg in existingRegistrations)
+            {
+                var extTemplate = reg.CinemaShiftTemplateEntity;
+                if (extTemplate == null) continue;
+
+                // Nếu là cùng mẫu ca trực này, chúng ta sẽ xử lý cập nhật trạng thái bên dưới
+                if (extTemplate.ShiftTemplateId == shiftTemplateId) continue;
+
+                var extStart = extTemplate.StartTime.TotalMinutes;
+                var extEnd = extTemplate.EndTime <= extTemplate.StartTime ? extTemplate.EndTime.TotalMinutes + 1440 : extTemplate.EndTime.TotalMinutes;
+
+                if (newStart < extEnd && extStart < newEnd)
+                {
+                    isOverlapping = true;
+                    break;
+                }
+            }
+
+            if (isOverlapping)
+            {
+                throw new AppException("Nhân viên đã có lịch làm việc khác trùng khung giờ này.", 400, "SHIFT_ERR");
+            }
+
             // Kiểm tra xem nhân viên đã có ca trực nào trùng ở template này ngày này chưa (dù là Pending hay Approved)
-            var existing = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                .FirstOrDefaultAsync(r => r.StaffId == staffId && r.ShiftTemplateId == shiftTemplateId && r.RegistrationDate == registrationDateOnly);
+            var existing = existingRegistrations.FirstOrDefault(r => r.ShiftTemplateId == shiftTemplateId);
 
             if (existing != null)
             {

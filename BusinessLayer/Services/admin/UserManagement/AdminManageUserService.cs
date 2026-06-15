@@ -29,6 +29,7 @@ public class AdminUserDto
     public string UserRoles { get; set; } = string.Empty;
     public AccountStatusEnum AccountStatus { get; set; }
     public RegisterMethodEnum RegisterMethod { get; set; }
+    public string? CinemaName { get; set; }
 }
 
 public class AdminCreateUserRequestDto
@@ -93,7 +94,14 @@ public class AdminManageUserService
                 PortraitImageUrl = u.PortraitImageUrl,
                 AccountStatus = u.AccountStatus,
                 RegisterMethod = u.RegisterMethod,
-                UserRoles = string.Join(",", u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName))
+                UserRoles = string.Join(",", u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName)),
+                CinemaName = u.StaffProfileEntity != null && u.StaffProfileEntity.CinemaInfoEntity != null 
+                    ? u.StaffProfileEntity.CinemaInfoEntity.CinemaName 
+                    : u.TheaterManagedCinemas.Any() 
+                        ? u.TheaterManagedCinemas.First().CinemaName 
+                        : u.FacilitiesManagedCinemas.Any() 
+                            ? u.FacilitiesManagedCinemas.First().CinemaName 
+                            : null
             })
             .ToListAsync();
 
@@ -272,29 +280,60 @@ public class AdminManageUserService
         var cinema = await Repository<CinemaInfoEntity>().FindAsync(cinemaId);
         if (cinema == null) return new BaseResponse<string> { IsSuccess = false, Message = "Cinema not found." };
 
-        var userRole = await Query<UserRoleInfoEntity>()
+        var userRoles = await Query<UserRoleInfoEntity>()
             .Include(ur => ur.RoleListInfoEntity)
-            .FirstOrDefaultAsync(ur => ur.UserId == managerId &&
-                                       (ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager"));
+            .Where(ur => ur.UserId == managerId)
+            .ToListAsync();
 
-        if (userRole == null) return new BaseResponse<string> { IsSuccess = false, Message = "User must be a TheaterManager or FacilitiesManager." };
+        var isManager = userRoles.Any(ur => ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager");
+        var isStaff = userRoles.Any(ur => StaffRoleIds.Contains(ur.RoleId));
 
-        if (userRole.RoleListInfoEntity.RoleName == "TheaterManager")
+        if (!isManager && !isStaff)
         {
-            cinema.TheaterManagerId = managerId;
-        }
-        else
-        {
-            cinema.FacilitiesManagerId = managerId;
+            return new BaseResponse<string> { IsSuccess = false, Message = "User must be a staff member or manager." };
         }
 
-        Repository<CinemaInfoEntity>().Update(cinema);
+        if (isManager)
+        {
+            var managerRole = userRoles.First(ur => ur.RoleListInfoEntity.RoleName == "TheaterManager" || ur.RoleListInfoEntity.RoleName == "FacilitiesManager");
+            if (managerRole.RoleListInfoEntity.RoleName == "TheaterManager")
+            {
+                cinema.TheaterManagerId = managerId;
+            }
+            else
+            {
+                cinema.FacilitiesManagerId = managerId;
+            }
+            Repository<CinemaInfoEntity>().Update(cinema);
+        }
+
+        if (isStaff || isManager)
+        {
+            var staffProfile = await Query<StaffProfileEntity>().FirstOrDefaultAsync(sp => sp.UserId == managerId);
+            if (staffProfile != null)
+            {
+                staffProfile.CinemaId = cinemaId;
+                staffProfile.IsCinemaManager = userRoles.Any(ur => ur.RoleListInfoEntity.RoleName == "TheaterManager");
+                Repository<StaffProfileEntity>().Update(staffProfile);
+            }
+            else
+            {
+                await Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
+                {
+                    UserId = managerId,
+                    WorkingStatus = true,
+                    CinemaId = cinemaId,
+                    IsCinemaManager = userRoles.Any(ur => ur.RoleListInfoEntity.RoleName == "TheaterManager")
+                });
+            }
+        }
+
         await _auditLogService.WriteAsync(
             "Update",
             "Cinema",
             cinema.CinemaId,
             cinema.CinemaName,
-            $"Assigned {userRole.RoleListInfoEntity.RoleName} to cinema {cinema.CinemaName}.",
+            $"Assigned user to cinema {cinema.CinemaName}.",
             cinema.CinemaId);
         await _unitOfWork.SaveChangesAsync();
 

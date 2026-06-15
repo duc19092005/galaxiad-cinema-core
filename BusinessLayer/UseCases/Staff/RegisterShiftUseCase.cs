@@ -26,9 +26,9 @@ public class RegisterShiftUseCase
         var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
             .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
 
-        if (staffProfile == null)
+        if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
-            throw new AppException("Tài khoản nhân viên không hợp lệ hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException("Tài khoản của bạn không được gán vào chi nhánh rạp cụ thể hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
         }
 
         if (dto.StartDate.Date > dto.EndDate.Date)
@@ -75,13 +75,36 @@ public class RegisterShiftUseCase
 
             try
             {
-                // 3. Kiểm tra xem nhân viên đã đăng ký ca trực này cho ngày này chưa
-                var existingRegistration = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                    .FirstOrDefaultAsync(r => r.StaffId == staffId && r.ShiftTemplateId == dto.ShiftTemplateId && r.RegistrationDate == registrationDateOnly);
+                // 3. Kiểm tra xem nhân viên đã đăng ký ca trực bị trùng khung giờ cho ngày này chưa (Pending hoặc Approved)
+                var existingRegistrations = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
+                    .Include(r => r.CinemaShiftTemplateEntity)
+                    .Where(r => r.StaffId == staffId 
+                             && r.RegistrationDate == registrationDateOnly 
+                             && (r.Status == "Approved" || r.Status == "Pending"))
+                    .ToListAsync();
 
-                if (existingRegistration != null)
+                bool isOverlapping = false;
+                var newStart = template.StartTime.TotalMinutes;
+                var newEnd = template.EndTime <= template.StartTime ? template.EndTime.TotalMinutes + 1440 : template.EndTime.TotalMinutes;
+
+                foreach (var reg in existingRegistrations)
                 {
-                    failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (Đã đăng ký trước)");
+                    var extTemplate = reg.CinemaShiftTemplateEntity;
+                    if (extTemplate == null) continue;
+
+                    var extStart = extTemplate.StartTime.TotalMinutes;
+                    var extEnd = extTemplate.EndTime <= extTemplate.StartTime ? extTemplate.EndTime.TotalMinutes + 1440 : extTemplate.EndTime.TotalMinutes;
+
+                    if (newStart < extEnd && extStart < newEnd)
+                    {
+                        isOverlapping = true;
+                        break;
+                    }
+                }
+
+                if (isOverlapping)
+                {
+                    failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (Trùng khung giờ ca làm khác)");
                     continue;
                 }
 

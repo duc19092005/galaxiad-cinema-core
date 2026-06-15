@@ -63,7 +63,7 @@ public class StaffShiftController : ControllerBase
         var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
             .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
 
-        if (staffProfile == null)
+        if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
             return BadRequest(new BaseResponse<bool> { IsSuccess = false, Message = "Tài khoản của bạn không được gán vào chi nhánh rạp cụ thể." });
         }
@@ -127,11 +127,11 @@ public class StaffShiftController : ControllerBase
             {
                 ShiftRegistrationId = r.ShiftRegistrationId,
                 StaffId = r.StaffId,
-                StaffName = r.StaffProfileEntity.UserInfoEntity.UserName,
+                StaffName = r.StaffProfileEntity != null && r.StaffProfileEntity.UserInfoEntity != null ? r.StaffProfileEntity.UserInfoEntity.UserName : "",
                 ShiftTemplateId = r.ShiftTemplateId,
-                ShiftName = r.CinemaShiftTemplateEntity.ShiftName,
-                StartTime = r.CinemaShiftTemplateEntity.StartTime,
-                EndTime = r.CinemaShiftTemplateEntity.EndTime,
+                ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : "",
+                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : default,
+                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : default,
                 RegistrationDate = r.RegistrationDate,
                 Status = r.Status,
                 ApprovedAt = r.ApprovedAt,
@@ -140,6 +140,63 @@ public class StaffShiftController : ControllerBase
             .ToListAsync();
 
         return Ok(new BaseResponse<List<ResStaffShiftRegistrationDto>> { IsSuccess = true, Data = list });
+    }
+
+    // 3b. Nhân viên tự hủy yêu cầu đăng ký ca làm (khi ca trực đang ở trạng thái Chờ duyệt)
+    [HttpPost("my-registrations/{id}/cancel")]
+    public async Task<IActionResult> CancelPendingRegistration(Guid id)
+    {
+        var staffId = GetCurrentUserId();
+
+        var registration = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
+            .FirstOrDefaultAsync(r => r.ShiftRegistrationId == id && r.StaffId == staffId);
+
+        if (registration == null)
+        {
+            return NotFound(new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy yêu cầu đăng ký ca làm của bạn." });
+        }
+
+        if (registration.Status != "Pending")
+        {
+            return BadRequest(new BaseResponse<bool> { IsSuccess = false, Message = "Chỉ có thể hủy ca làm khi đang ở trạng thái Chờ duyệt." });
+        }
+
+        _unitOfWork.Repository<StaffShiftRegistrationEntity>().Remove(registration);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "Hủy yêu cầu đăng ký ca làm thành công." });
+    }
+
+    // 3c. Nhân viên tự hủy nhiều yêu cầu đăng ký ca làm cùng lúc (khi ca trực đang ở trạng thái Chờ duyệt)
+    [HttpPost("my-registrations/bulk-cancel")]
+    public async Task<IActionResult> CancelBulkPendingRegistrations([FromBody] List<Guid> ids)
+    {
+        if (ids == null || ids.Count == 0)
+        {
+            return BadRequest(new BaseResponse<bool> { IsSuccess = false, Message = "Danh sách ID ca trực cần hủy không hợp lệ." });
+        }
+
+        var staffId = GetCurrentUserId();
+
+        var registrations = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
+            .Where(r => ids.Contains(r.ShiftRegistrationId) && r.StaffId == staffId)
+            .ToListAsync();
+
+        if (registrations.Count == 0)
+        {
+            return NotFound(new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy yêu cầu đăng ký ca làm nào trong danh sách." });
+        }
+
+        var nonPending = registrations.Where(r => r.Status != "Pending").ToList();
+        if (nonPending.Count > 0)
+        {
+            return BadRequest(new BaseResponse<bool> { IsSuccess = false, Message = "Chỉ có thể hủy những ca làm đang ở trạng thái Chờ duyệt." });
+        }
+
+        _unitOfWork.Repository<StaffShiftRegistrationEntity>().RemoveRange(registrations);
+        await _unitOfWork.SaveChangesAsync();
+
+        return Ok(new BaseResponse<bool> { IsSuccess = true, Data = true, Message = $"Đã hủy thành công {registrations.Count} yêu cầu đăng ký ca làm." });
     }
 
     // 4. Đăng ký/Chụp ảnh chân dung mẫu lưu khuôn mặt (Face Vector)
@@ -201,7 +258,7 @@ public class StaffShiftController : ControllerBase
                 TotalReceived = p.TotalReceived,
                 ReceivedDay = p.ReceivedDay,
                 StaffId = p.StaffId,
-                StaffName = p.StaffProfileEntity.UserInfoEntity.UserName,
+                StaffName = p.StaffProfileEntity != null && p.StaffProfileEntity.UserInfoEntity != null ? p.StaffProfileEntity.UserInfoEntity.UserName : "",
                 PaidByUserId = p.PaidByUserId,
                 PaidByName = p.PaidByUser != null ? p.PaidByUser.UserName : null,
                 PaymentStatus = p.PaymentStatus,

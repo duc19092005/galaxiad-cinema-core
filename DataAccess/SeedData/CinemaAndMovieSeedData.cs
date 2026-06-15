@@ -233,5 +233,182 @@ public static class CinemaAndMovieSeedData
         });
 
         modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(schedules);
+
+        // 6. Seed Cinema Shift Templates (Mẫu ca trực)
+        var shiftTemplates = new List<CinemaShiftTemplateEntity>
+        {
+            // Galaxy Cinema Nguyễn Du
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-111111111111"),
+                CinemaId = cinemaHCMId,
+                ShiftName = "Ca Part-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(12, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-222222222222"),
+                CinemaId = cinemaHCMId,
+                ShiftName = "Ca Part-time Chiều",
+                StartTime = new TimeSpan(12, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-333333333333"),
+                CinemaId = cinemaHCMId,
+                ShiftName = "Ca Part-time Tối",
+                StartTime = new TimeSpan(18, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-444444444444"),
+                CinemaId = cinemaHCMId,
+                ShiftName = "Ca Full-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-555555555555"),
+                CinemaId = cinemaHCMId,
+                ShiftName = "Ca Full-time Chiều",
+                StartTime = new TimeSpan(14, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+
+            // Lotte Cinema West Lake
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-111111111111"),
+                CinemaId = cinemaHNId,
+                ShiftName = "Ca Part-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(12, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-222222222222"),
+                CinemaId = cinemaHNId,
+                ShiftName = "Ca Part-time Chiều",
+                StartTime = new TimeSpan(12, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-333333333333"),
+                CinemaId = cinemaHNId,
+                ShiftName = "Ca Part-time Tối",
+                StartTime = new TimeSpan(18, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-444444444444"),
+                CinemaId = cinemaHNId,
+                ShiftName = "Ca Full-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-555555555555"),
+                CinemaId = cinemaHNId,
+                ShiftName = "Ca Full-time Chiều",
+                StartTime = new TimeSpan(14, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+
+            // BHD Star Bitexco
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-111111111111"),
+                CinemaId = cinemaBHDId,
+                ShiftName = "Ca Part-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(12, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-222222222222"),
+                CinemaId = cinemaBHDId,
+                ShiftName = "Ca Part-time Chiều",
+                StartTime = new TimeSpan(12, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-333333333333"),
+                CinemaId = cinemaBHDId,
+                ShiftName = "Ca Part-time Tối",
+                StartTime = new TimeSpan(18, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-444444444444"),
+                CinemaId = cinemaBHDId,
+                ShiftName = "Ca Full-time Sáng",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-555555555555"),
+                CinemaId = cinemaBHDId,
+                ShiftName = "Ca Full-time Chiều",
+                StartTime = new TimeSpan(14, 0, 0),
+                EndTime = new TimeSpan(22, 0, 0),
+                MaxStaff = 5,
+                RoleId = userRoles.Cashier,
+                IsActive = true
+            }
+        };
+
+        modelBuilder.Entity<CinemaShiftTemplateEntity>().HasData(shiftTemplates);
     }
 }
