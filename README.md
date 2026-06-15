@@ -43,6 +43,26 @@ Hệ thống không sử dụng bảng giá vé cố định cứng nhắc, mà 
 
 ---
 
+## 🔐 Tài khoản đăng nhập (Môi trường Dev / Seed Data)
+
+> **Mật khẩu chung tất cả tài khoản:** `anhduc9a5`
+
+| Vai trò | Email | Mô tả |
+|---------|-------|-------|
+| **Admin** | `admin@cinema.com` | Quản trị hệ thống (full quyền) |
+| **Quản lý phim** | `movie.manager@cinema.com` | Quản lý nội dung phim |
+| **Quản lý rạp** | `theater.manager@cinema.com` | Quản lý vận hành rạp + duyệt ca trực |
+| **Quản lý CSVC** | `facilities.manager@cinema.com` | Quản lý cơ sở vật chất, tạo rạp |
+| **Thu ngân (Vé)** | `quay_ve_01@cinema.com` | Bán vé tại quầy |
+| **Thu ngân (Bắp nước)** | `quay_bapnuoc_01@cinema.com` | Bán bắp nước tại quầy |
+
+> **Lưu ý:** Khi **tạo rạp mới** qua API `/api/facilities/cinema` (POST), hệ thống sẽ **tự động sinh tài khoản thu ngân** cho rạp đó với:
+> - Email: `cashier_{CinemaId}@cinema.com`
+> - Mật khẩu mặc định: `123456`
+> - Quyền: `Cashier`
+
+---
+
 ## 👥 Phân hệ & Hệ thống Quyền hạn (Roles & Permission System)
 
 Hệ thống phân tách quyền truy cập chặt chẽ để đáp ứng hoạt động vận hành thực tế của chuỗi rạp với 6 vai trò (System Roles) riêng biệt:

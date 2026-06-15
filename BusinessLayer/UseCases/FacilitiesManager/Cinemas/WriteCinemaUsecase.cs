@@ -71,6 +71,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         {
             Guid cinemaId = Guid.NewGuid();
             var activeAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? DateTime.UtcNow;
+            var isAdmin = _userContext.IsInRole("Admin");
             var newCinemaInfoEntity = new CinemaInfoEntity()
             {
                 CinemaId = cinemaId,
@@ -83,8 +84,9 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 Longitude = request.Longitude,
                 CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = userId,
-                FacilitiesManagerId = userId,
-                TheaterManagerId = userId,
+                // Admin creates → no auto-assign; FacilitiesManager/others → assign self
+                FacilitiesManagerId = isAdmin ? null : userId,
+                TheaterManagerId = isAdmin ? null : userId,
                 ActiveAt = activeAt,
                 IsActive = activeAt < DateTime.UtcNow
             };

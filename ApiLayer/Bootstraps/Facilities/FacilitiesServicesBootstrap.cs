@@ -21,6 +21,7 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<FacilitiesManagerWriteAuditoriumService>();
         services.AddScoped<FacilitiesManagerReadMovieFormatService>();
         services.AddScoped<FacilitiesManagerReadAuditoriumService>();
+        services.AddScoped<FacilitiesManageDepartmentService>();
         services.AddScoped<TheaterManagerWriteSchedulesService>();
         services.AddScoped<TheaterManagerReadSchedulesService>();
         services.AddScoped<TheaterManagerDataService>();

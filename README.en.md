@@ -43,6 +43,26 @@ Rather than relying on static, hard-coded pricing, the platform features an inte
 
 ---
 
+## 🔐 Login Credentials (Dev Environment / Seed Data)
+
+> **Common password for all accounts:** `anhduc9a5`
+
+| Role | Email | Description |
+|------|-------|-------------|
+| **Admin** | `admin@cinema.com` | System administrator (full access) |
+| **Movie Manager** | `movie.manager@cinema.com` | Manage movie content |
+| **Theater Manager** | `theater.manager@cinema.com` | Manage theater operations + shift approval |
+| **Facilities Manager** | `facilities.manager@cinema.com` | Manage facilities, create cinemas |
+| **Cashier (Tickets)** | `quay_ve_01@cinema.com` | Ticket counter sales |
+| **Cashier (Food)** | `quay_bapnuoc_01@cinema.com` | Food & beverage counter sales |
+
+> **Note:** When a **new cinema is created** via API `POST /api/facilities/cinema`, the system **automatically creates a cashier account** for that cinema with:
+> - Email: `cashier_{CinemaId}@cinema.com`
+> - Default password: `123456`
+> - Role: `Cashier`
+
+---
+
 ## 👥 Modules & Permission System (Roles & User Segments)
 
 Access control is strictly partitioned to mirror real-world cinema operations, utilizing 6 distinct system roles:

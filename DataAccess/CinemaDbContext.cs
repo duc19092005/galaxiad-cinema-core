@@ -56,6 +56,8 @@ public class CinemaDbContext : DbContext
     
     public DbSet<StaffShiftRegistrationEntity> StaffShiftRegistrationEntity { get; set; }
     
+    public DbSet<CashierDepartmentEntity> CashierDepartmentEntity { get; set; }
+    
     public DbSet<AuditoriumInfoEntities>   AuditoriumInfoEntities { get; set; }
     
     public DbSet<CinemaInfoEntity>  CinemaInfoEntity { get; set; }
@@ -161,7 +163,7 @@ public class CinemaDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
         
-        // Shift Registration
+        // Shift Registration (Staff <-> Template)
         
         modelBuilder.Entity<StaffShiftRegistrationEntity>(entity =>
         {
@@ -180,6 +182,21 @@ public class CinemaDbContext : DbContext
             entity.HasOne(s => s.PaidByUser)
                 .WithMany()
                 .HasForeignKey(s => s.PaidByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+        
+        // Cashier Department
+        
+        modelBuilder.Entity<CashierDepartmentEntity>(entity =>
+        {
+            entity.HasOne(d => d.CinemaInfoEntity)
+                .WithMany(c => c.CashierDepartments)
+                .HasForeignKey(d => d.CinemaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.SharedUserInfoEntity)
+                .WithOne()
+                .HasForeignKey<CashierDepartmentEntity>(d => d.SharedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
         
