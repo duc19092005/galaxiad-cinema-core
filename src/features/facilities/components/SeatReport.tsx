@@ -33,12 +33,12 @@ const SeatReport: React.FC = () => {
           <select
             value={selectedPeriod}
             onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="input h-9 text-xs cursor-pointer"
+            className="input h-9 text-xs cursor-pointer select"
           >
-            <option value="week">Tuần này</option>
-            <option value="month">Tháng này</option>
-            <option value="quarter">Quý này</option>
-            <option value="year">Năm nay</option>
+            <option value="week" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Tuần này</option>
+            <option value="month" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Tháng này</option>
+            <option value="quarter" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Quý này</option>
+            <option value="year" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Năm nay</option>
           </select>
           <button
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-[0.97]"

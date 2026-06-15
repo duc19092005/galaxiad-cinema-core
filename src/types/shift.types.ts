@@ -128,6 +128,7 @@ export interface ShiftNotification {
 }
 
 export interface CashierShiftSession {
+  staffId: string;
   staffName: string;
   accessToken: string;
   clockedInAt: string;

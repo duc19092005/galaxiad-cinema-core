@@ -235,9 +235,9 @@ export const adminApi = {
     },
 
     /** GET /api/v1/admin/dashboard/management */
-    getManagementDashboard: async (): Promise<ApiSuccessResponse<ManagementDashboardDto>> => {
+    getManagementDashboard: async (cinemaId?: string): Promise<ApiSuccessResponse<ManagementDashboardDto>> => {
         const response = await identityAxios.get<unknown>(
-            '/admin/dashboard/management'
+            cinemaId ? `/admin/dashboard/management?cinemaId=${cinemaId}` : '/admin/dashboard/management'
         );
         return unwrapObjectResponse<ManagementDashboardDto>(response.data);
     },

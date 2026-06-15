@@ -30,6 +30,7 @@ const statusClass = (status: string) => {
 };
 
 const StaffShiftSelfService: React.FC = () => {
+  const [currentUser, setCurrentUser] = useState<{ roles?: string[] } | null>(null);
   const [availableDate, setAvailableDate] = useState(todayInput);
   const [startDate, setStartDate] = useState(todayInput);
   const [endDate, setEndDate] = useState(todayInput);
@@ -41,6 +42,18 @@ const StaffShiftSelfService: React.FC = () => {
   const [history, setHistory] = useState<StaffWorkingLogDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [registering, setRegistering] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user_info');
+      if (stored) setCurrentUser(JSON.parse(stored));
+    } catch { /* ignore */ }
+  }, []);
+
+  const storedSession = localStorage.getItem('cashier_shift_session');
+  const session = storedSession ? JSON.parse(storedSession) : null;
+  const staffToken = session?.accessToken;
+  const isCashierAccount = currentUser?.roles?.includes('Cashier') ?? false;
 
   const totalPaid = useMemo(
     () => payrolls.filter((item) => item.paymentStatus === 'Paid').reduce((sum, item) => sum + item.totalReceived, 0),
@@ -58,13 +71,14 @@ const StaffShiftSelfService: React.FC = () => {
   const approvedCount = registrations.filter((item) => item.status === 'Approved').length;
 
   const loadSelfService = useCallback(async () => {
+    if (isCashierAccount && !staffToken) return;
     setLoading(true);
     try {
       const [availableRes, registrationsRes, payrollRes, historyRes] = await Promise.all([
-        staffShiftApi.getAvailableShifts(availableDate),
-        staffShiftApi.getMyRegistrations(),
-        staffShiftApi.getMyPayroll(),
-        staffShiftApi.getMyHistory(),
+        staffShiftApi.getAvailableShifts(availableDate, staffToken),
+        staffShiftApi.getMyRegistrations(staffToken),
+        staffShiftApi.getMyPayroll(staffToken),
+        staffShiftApi.getMyHistory(staffToken),
       ]);
       setAvailableShifts(availableRes.data || []);
       setRegistrations(registrationsRes.data || []);
@@ -76,7 +90,7 @@ const StaffShiftSelfService: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [availableDate]);
+  }, [availableDate, isCashierAccount, staffToken]);
 
   useEffect(() => {
     loadSelfService();
@@ -94,7 +108,7 @@ const StaffShiftSelfService: React.FC = () => {
         startDate: `${startDate}T00:00:00Z`,
         endDate: `${endDate}T00:00:00Z`,
         notes: notes.trim() || undefined,
-      });
+      }, staffToken);
       showSuccess(response.message || 'Shift registration submitted.');
       setNotes('');
       await loadSelfService();
@@ -115,6 +129,26 @@ const StaffShiftSelfService: React.FC = () => {
     const shiftTemplateId = event.dataTransfer.getData('text/plain');
     if (shiftTemplateId) setSelectedTemplateId(shiftTemplateId);
   };
+
+  if (isCashierAccount && !staffToken) {
+    return (
+      <div className="glass-card" style={{ padding: '48px 24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: '50%',
+          background: 'var(--accent-soft)', color: 'var(--accent)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <Banknote size={24} />
+        </div>
+        <div>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Chưa có nhân viên trực ca</h3>
+          <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.6 }}>
+            Vui lòng quay lại tab <strong>POS terminal</strong> và thực hiện điểm danh (Clock-In) trước khi truy cập hồ sơ ca làm.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <section className="glass-card" style={{ padding: 24, display: 'grid', gap: 20 }}>

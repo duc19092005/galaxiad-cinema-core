@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Cookies from 'js-cookie';
 import {
   BadgeCheck,
   BellRing,
@@ -19,7 +18,7 @@ import {
   Ticket,
   UserRound,
 } from 'lucide-react';
-import { staffShiftApi, CASHIER_SHIFT_SESSION_KEY, POS_TERMINAL_TOKEN_KEY, readCashierShiftSession } from '../../api/staffShiftApi';
+import { staffShiftApi, CASHIER_SHIFT_SESSION_KEY, readCashierShiftSession } from '../../api/staffShiftApi';
 import { theaterShiftApi } from '../../api/theaterShiftApi';
 import { showError, showSuccess } from '../../utils/ToastUtils';
 import { useCinema } from '../../contexts/CinemaContext';
@@ -164,18 +163,27 @@ const CashierPage: React.FC = () => {
   }, [loadStaffProfiles]);
 
   const loadShiftReminders = useCallback(async () => {
+    if (!activeCinemaId) return;
     setReminderLoading(true);
     setReminderError(null);
     try {
-      const response = await staffShiftApi.getMyRegistrations();
-      setRegistrations(response.data || []);
+      if (session?.accessToken) {
+        const response = await staffShiftApi.getMyRegistrations(session.accessToken);
+        setRegistrations(response.data || []);
+      } else if (effectiveStaffId) {
+        const response = await theaterShiftApi.getShiftRegistrations(activeCinemaId, 'Approved');
+        const filtered = (response.data || []).filter(reg => reg.staffId === effectiveStaffId);
+        setRegistrations(filtered);
+      } else {
+        setRegistrations([]);
+      }
     } catch {
       setRegistrations([]);
-      setReminderError('Chưa tải được lịch ca của bạn. Hãy refresh lại hoặc kiểm tra đăng nhập.');
+      setReminderError('Chưa tải được lịch ca của nhân viên. Hãy chọn lại hoặc refresh.');
     } finally {
       setReminderLoading(false);
     }
-  }, []);
+  }, [activeCinemaId, effectiveStaffId, session]);
 
   useEffect(() => {
     loadShiftReminders();
@@ -215,19 +223,14 @@ const CashierPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const currentToken = Cookies.get('X-Access-Token');
-      if (currentToken) {
-        sessionStorage.setItem(POS_TERMINAL_TOKEN_KEY, currentToken);
-      }
-
       const response = await staffShiftApi.clockIn({
         staffId: effectiveStaffId,
         faceVector,
         simulatedDateTime: simulatedDateTime ? new Date(simulatedDateTime).toISOString() : null,
       });
 
-      Cookies.set('X-Access-Token', response.data.accessToken, { expires: 1, sameSite: 'Lax', path: '/' });
       const nextSession: CashierShiftSession = {
+        staffId: effectiveStaffId,
         staffName: response.data.staffName,
         accessToken: response.data.accessToken,
         clockedInAt: new Date().toISOString(),
@@ -236,8 +239,6 @@ const CashierPage: React.FC = () => {
       setSession(nextSession);
       showSuccess(response.message || `Welcome ${response.data.staffName}.`);
     } catch (error) {
-      const previousToken = sessionStorage.getItem(POS_TERMINAL_TOKEN_KEY);
-      if (previousToken) Cookies.set('X-Access-Token', previousToken, { expires: 7, sameSite: 'Lax', path: '/' });
       showError(getApiErrorMessage(error, 'Clock-in failed.'));
     } finally {
       setSubmitting(false);
@@ -247,16 +248,11 @@ const CashierPage: React.FC = () => {
   const handleClockOut = async () => {
     setSubmitting(true);
     try {
+      const staffToken = session?.accessToken;
       const response = await staffShiftApi.clockOut({
         simulatedDateTime: simulatedDateTime ? new Date(simulatedDateTime).toISOString() : null,
-      });
-      const posToken = sessionStorage.getItem(POS_TERMINAL_TOKEN_KEY);
-      if (posToken) {
-        Cookies.set('X-Access-Token', posToken, { expires: 7, sameSite: 'Lax', path: '/' });
-      } else {
-        Cookies.remove('X-Access-Token', { path: '/' });
-      }
-      sessionStorage.removeItem(POS_TERMINAL_TOKEN_KEY);
+      }, staffToken);
+
       localStorage.removeItem(CASHIER_SHIFT_SESSION_KEY);
       setSession(null);
       showSuccess(response.message || 'Clock-out completed.');

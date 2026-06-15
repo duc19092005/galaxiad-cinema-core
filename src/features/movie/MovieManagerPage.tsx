@@ -39,6 +39,7 @@ import ManagementDashboard from '../../components/ManagementDashboard';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
+import { useCinema } from '../../contexts/CinemaContext';
 import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 
 // =============================================
@@ -893,6 +894,7 @@ const MoviesListTab: React.FC<MoviesListTabProps> = ({
 const MovieManagerPage: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
+    const { activeCinemaId, activeCinemaName, setActiveCinemaId } = useCinema();
     const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
     const [movies, setMovies] = useState<Movie[]>([]);
@@ -944,7 +946,6 @@ const MovieManagerPage: React.FC = () => {
             const roles = parsed.roles || [];
             if (!roles.includes('MovieManager') && !roles.includes('Admin')) { navigate('/role-selection'); return; }
             setUser(parsed);
-            fetchMovies();
             fetchFormats();
             fetchRequiredAges();
             fetchGenres();
@@ -953,11 +954,18 @@ const MovieManagerPage: React.FC = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
 
+    useEffect(() => {
+        if (user) {
+            fetchMovies();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeCinemaId, user]);
+
     const fetchMovies = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await movieApi.getMovieList();
+            const res = await movieApi.getMovieList(activeCinemaId || undefined);
             setMovies(res.data || []);
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
@@ -1074,9 +1082,15 @@ const MovieManagerPage: React.FC = () => {
             <ManagementChrome
                 sidebarOpen={sidebarOpen}
                 onSidebarToggle={() => setSidebarOpen((open) => !open)}
+                cinemaSelector={isAdmin ? {
+                    cinemas,
+                    activeCinemaId,
+                    activeCinemaName,
+                    onChange: (id) => setActiveCinemaId(id),
+                } : undefined}
             />
 
-            <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
+            <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
                 <div className="page-container">
                     {renderContent()}
                 </div>

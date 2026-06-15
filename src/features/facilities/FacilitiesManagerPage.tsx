@@ -179,7 +179,7 @@ const FacilitiesManagerPage: React.FC = () => {
         } : undefined}
       />
 
-      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
         <div className="page-container">
           {logoutError && (
             <div className="alert alert-error" style={{ marginBottom: 16 }}>

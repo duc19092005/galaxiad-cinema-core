@@ -16,13 +16,13 @@ import type {
 const btnPrimary: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6,
   padding: '8px 20px', borderRadius: 8, border: 'none',
-  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+  background: 'linear-gradient(135deg, var(--accent), var(--accent-hover))',
   color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer',
   transition: 'all .2s',
 };
 const btnOutline: React.CSSProperties = {
   ...btnPrimary,
-  background: 'transparent', border: '1px solid rgba(255,255,255,.15)',
+  background: 'transparent', border: '1px solid var(--border-color)',
   color: 'var(--text-secondary)',
 };
 const badgeBase: React.CSSProperties = {
@@ -221,8 +221,8 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
               <button
                 onClick={() => setNewType('TicketPOS')}
                 style={{
-                  flex: 1, padding: '10px 0', borderRadius: 8, border: newType === 'TicketPOS' ? '2px solid #6366f1' : '1px solid var(--border-color)',
-                  background: newType === 'TicketPOS' ? 'rgba(99,102,241,.1)' : 'var(--bg-base)',
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: newType === 'TicketPOS' ? '2px solid var(--accent)' : '1px solid var(--border-color)',
+                  background: newType === 'TicketPOS' ? 'var(--accent-soft)' : 'var(--bg-base)',
                   color: 'var(--text-primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}
@@ -232,8 +232,8 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
               <button
                 onClick={() => setNewType('FoodPOS')}
                 style={{
-                  flex: 1, padding: '10px 0', borderRadius: 8, border: newType === 'FoodPOS' ? '2px solid #6366f1' : '1px solid var(--border-color)',
-                  background: newType === 'FoodPOS' ? 'rgba(99,102,241,.1)' : 'var(--bg-base)',
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: newType === 'FoodPOS' ? '2px solid var(--accent)' : '1px solid var(--border-color)',
+                  background: newType === 'FoodPOS' ? 'var(--accent-soft)' : 'var(--bg-base)',
                   color: 'var(--text-primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                 }}
@@ -316,8 +316,8 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
                   <div style={{
                     width: 36, height: 36, borderRadius: 10,
                     background: dept.departmentType === 'TicketPOS'
-                      ? 'linear-gradient(135deg, #6366f1, #8b5cf6)'
-                      : 'linear-gradient(135deg, #f59e0b, #ef4444)',
+                      ? 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
+                      : 'linear-gradient(135deg, var(--warning), var(--danger))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {dept.departmentType === 'TicketPOS' ? <Ticket size={16} color="#fff" /> : <Coffee size={16} color="#fff" />}

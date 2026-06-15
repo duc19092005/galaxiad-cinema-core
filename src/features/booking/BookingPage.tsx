@@ -28,6 +28,7 @@ const BookingPage: React.FC = () => {
 
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [isCashierMode, setIsCashierMode] = useState<boolean>(false);
     const [userRole, setUserRole] = useState<string>('Guest');
     const [myVouchers, setMyVouchers] = useState<UserVoucherDto[]>([]);
     const [selectedVoucherId, setSelectedVoucherId] = useState<string>('');
@@ -43,12 +44,17 @@ const BookingPage: React.FC = () => {
             setUserName(user.username || user.userName || 'Guest');
             
             const roles: string[] = user.roles || [];
+            const isCashier = roles.includes('Cashier');
+            setIsCashierMode(isCashier);
+
             if (roles.includes('VIP')) {
                 setUserRole('VIP');
             } else if (roles.includes('Student')) {
                 setUserRole('Student');
             } else if (roles.includes('Customer') || roles.includes('User')) {
                 setUserRole('User');
+            } else if (isCashier) {
+                setUserRole('Cashier');
             } else {
                 setUserRole('User');
             }
@@ -57,6 +63,7 @@ const BookingPage: React.FC = () => {
             setUserName('Guest');
             setUserRole('Guest');
             setIsLoggedIn(false);
+            setIsCashierMode(false);
         }
 
         if (scheduleId) {
@@ -162,21 +169,31 @@ const BookingPage: React.FC = () => {
 
     const handleBooking = async () => {
         if (selectedSeats.length === 0) { showError(t('toast.selectSeat')); return; }
-        if (!isLoggedIn) {
+        if (!isLoggedIn || isCashierMode) {
             if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
                 showError(t('toast.fillContactInfo')); return;
             }
         }
         setBookingLoading(true);
         try {
+            const storedSession = localStorage.getItem('cashier_shift_session');
+            let staffIdFromSession: string | null = null;
+            if (storedSession) {
+                try {
+                    const sessionData = JSON.parse(storedSession);
+                    staffIdFromSession = sessionData.staffId || null;
+                } catch { /* ignore */ }
+            }
+
             const payload: any = {
                 scheduleId: scheduleId!.trim(),
                 seatSelections: selectedSeats.map(s => ({ seatId: s.seatId, userSegmentId: seatSegmentMap[s.seatId] })),
-                customerName: isLoggedIn ? undefined : customerInfo.name.trim(),
-                customerEmail: isLoggedIn ? undefined : customerInfo.email.trim(),
-                customerPhone: isLoggedIn ? undefined : customerInfo.phone.trim(),
-                customerAddress: isLoggedIn ? undefined : customerInfo.address.trim(),
-                voucherId: selectedVoucherId ? selectedVoucherId : undefined
+                customerName: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.name.trim(),
+                customerEmail: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.email.trim(),
+                customerPhone: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.phone.trim(),
+                customerAddress: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.address.trim(),
+                voucherId: selectedVoucherId ? selectedVoucherId : undefined,
+                staffId: staffIdFromSession
             };
             const res = await bookingApi.createBooking(payload);
             if (res.data.paymentUrl) {
@@ -399,7 +416,7 @@ const BookingPage: React.FC = () => {
                                 </div>
                             </div>
                             {/* Voucher Selector Dropdown */}
-                             {isLoggedIn && (
+                             {isLoggedIn && !isCashierMode && (
                                  <div className="mb-6">
                                      <label className="text-zinc-400 text-xs uppercase tracking-wider block mb-2 font-semibold">
                                          Apply Voucher
@@ -455,10 +472,18 @@ const BookingPage: React.FC = () => {
                              </div>
 
                             {/* Contact Form */}
-                            {!isLoggedIn ? (
+                            {!isLoggedIn || isCashierMode ? (
                                 <div className="mb-8 p-4 bg-red-950/10 border border-red-900/20 rounded-xl">
                                     <p className="text-xs text-zinc-400 mb-3 leading-relaxed">
-                                        Booking as <span className="text-[#ff8a00] font-bold">Guest</span>. Please fill your details to proceed.
+                                        {isCashierMode ? (
+                                            <>
+                                                Bán vé tại quầy. Nhập <span className="text-[#ff8a00] font-bold">thông tin khách hàng</span> (nhập Email để tích điểm/tính giảm giá thành viên).
+                                            </>
+                                        ) : (
+                                            <>
+                                                Booking as <span className="text-[#ff8a00] font-bold">Guest</span>. Please fill your details to proceed.
+                                            </>
+                                        )}
                                     </p>
                                     <div className="space-y-3">
                                         <input

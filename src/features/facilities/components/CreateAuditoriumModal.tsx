@@ -41,6 +41,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   // Drawing mode
   type DrawingMode = 'seat' | 'exit' | 'aisle';
   const [drawingMode, setDrawingMode] = useState<DrawingMode>('seat');
+  const [isClearDropdownOpen, setIsClearDropdownOpen] = useState(false);
 
   // Exit/Doors - người dùng tự vẽ
   interface ExitArea {
@@ -64,6 +65,11 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   }
   const [aisles, setAisles] = useState<AisleArea[]>([]);
   const [aisleDragStart, setAisleDragStart] = useState<{ col: number; row: number } | null>(null);
+
+  // Computed visible elements based on active column and row bounds
+  const visibleSeats = seats.filter(s => s.colIndex < roomCols && s.rowIndex < roomRows);
+  const visibleExits = exits.filter(e => e.colIndex < roomCols && e.rowIndex < roomRows);
+  const visibleAisles = aisles.filter(a => a.colIndex < roomCols && a.rowIndex < roomRows);
 
   // Create state
   const [createLoading, setCreateLoading] = useState(false);
@@ -274,9 +280,23 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     });
   };
 
-  // Clear all seats
-  const handleClearAllSeats = () => {
-    setSeats([]);
+  // Clear functions
+  const handleClearSeats = () => {
+    setSeats(seats.filter(s => !(s.colIndex < roomCols && s.rowIndex < roomRows)));
+  };
+
+  const handleClearExits = () => {
+    setExits(exits.filter(e => !(e.colIndex < roomCols && e.rowIndex < roomRows)));
+  };
+
+  const handleClearAisles = () => {
+    setAisles(aisles.filter(a => !(a.colIndex < roomCols && a.rowIndex < roomRows)));
+  };
+
+  const handleClearAll = () => {
+    setSeats(seats.filter(s => !(s.colIndex < roomCols && s.rowIndex < roomRows)));
+    setExits(exits.filter(e => !(e.colIndex < roomCols && e.rowIndex < roomRows)));
+    setAisles(aisles.filter(a => !(a.colIndex < roomCols && a.rowIndex < roomRows)));
   };
 
   const handlePrevStep = () => {
@@ -766,7 +786,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   };
 
   const handleSubmit = async () => {
-    if (!selectedFormat || !auditoriumNumber.trim() || seats.length === 0) {
+    if (!selectedFormat || !auditoriumNumber.trim() || visibleSeats.length === 0) {
       setCreateError('Please fill in all information: select movie format, enter room name and add at least one seat.');
       return;
     }
@@ -775,12 +795,18 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     setCreateLoading(true);
 
     try {
+      const normalizedSeats = visibleSeats.map(s => ({
+        ...s,
+        coordX: (s.colIndex ?? 0) * 40,
+        coordY: (s.rowIndex ?? 0) * 40,
+      }));
+
       if (editAuditoriumId) {
         // UPDATE mode
         const requestData = {
           auditoriumNumber: auditoriumNumber.trim(),
-          addReqSeatsAuditoriumDto: seats,
-          seats: seats,
+          addReqSeatsAuditoriumDto: normalizedSeats,
+          seats: normalizedSeats,
         };
         const response = await facilitiesApi.updateAuditorium(editAuditoriumId, requestData as any);
         if (response.isSuccess) {
@@ -796,8 +822,8 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           auditoriumNumber: auditoriumNumber.trim(),
           movieFormatId: [selectedFormat.formatId],
           cinemaId,
-          addReqSeatsAuditoriumDto: seats,
-          seats: seats,
+          addReqSeatsAuditoriumDto: normalizedSeats,
+          seats: normalizedSeats,
         };
         const response = await facilitiesApi.createAuditorium(requestData as any);
         if (response.isSuccess) {
@@ -837,7 +863,8 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: 'var(--bg-overlay)' }}
         onClick={onClose}
       />
 
@@ -1058,7 +1085,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           Vẽ Ghế
                         </p>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {seats.length} ghế hiện có
+                          {visibleSeats.length} ghế hiện có
                         </p>
                       </div>
                     </button>
@@ -1080,7 +1107,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           Vẽ Lối Ra
                         </p>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {exits.length} lối ra
+                          {visibleExits.length} lối ra
                         </p>
                       </div>
                     </button>
@@ -1102,7 +1129,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           Vẽ Lối Đi
                         </p>
                         <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {aisles.length} lối đi
+                          {visibleAisles.length} lối đi
                         </p>
                       </div>
                     </button>
@@ -1127,16 +1154,74 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                         <Plus className="w-4 h-4" />
                         {t('createAuditorium.autoFillSeats')}
                       </button>
-                      <button
-                        onClick={handleClearAllSeats}
-                        disabled={seats.length === 0}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
-                          seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                        } ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : isModern ? 'bg-surface-variant/50 text-on-surface-variant hover:bg-error-container/20 hover:text-error' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                      >
-                        <X className="w-4 h-4" />
-                        Xóa Tất Cả
-                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsClearDropdownOpen(!isClearDropdownOpen)}
+                          disabled={visibleSeats.length === 0 && visibleExits.length === 0 && visibleAisles.length === 0}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+                            (visibleSeats.length === 0 && visibleExits.length === 0 && visibleAisles.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
+                          } ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : isModern ? 'bg-surface-variant/50 text-on-surface-variant hover:bg-error-container/20 hover:text-error' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                        >
+                          <X className="w-4 h-4" />
+                          Xóa...
+                        </button>
+                        
+                        {isClearDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setIsClearDropdownOpen(false)} />
+                            <div
+                              className={`absolute right-0 mt-2 w-48 rounded-xl border shadow-xl z-50 py-1 transition-all overflow-hidden ${
+                                isDark
+                                  ? 'bg-gray-800 border-gray-700 text-gray-200'
+                                  : isModern
+                                    ? 'bg-[#0b1326]/95 backdrop-blur-2xl border-cinema-accent/15 text-white'
+                                    : 'bg-white border-gray-200 text-gray-700'
+                              }`}
+                            >
+                              <button
+                                onClick={() => {
+                                  handleClearSeats();
+                                  setIsClearDropdownOpen(false);
+                                }}
+                                disabled={visibleSeats.length === 0}
+                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Xóa Ghế ({visibleSeats.length})
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleClearExits();
+                                  setIsClearDropdownOpen(false);
+                                }}
+                                disabled={visibleExits.length === 0}
+                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Xóa Lối Ra ({visibleExits.length})
+                              </button>
+                              <button
+                                onClick={() => {
+                                  handleClearAisles();
+                                  setIsClearDropdownOpen(false);
+                                }}
+                                disabled={visibleAisles.length === 0}
+                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Xóa Lối Đi ({visibleAisles.length})
+                              </button>
+                              <div className={`border-t my-1 ${isDark ? 'border-gray-700' : isModern ? 'border-cinema-accent/15' : 'border-gray-100'}`} />
+                              <button
+                                onClick={() => {
+                                  handleClearAll();
+                                  setIsClearDropdownOpen(false);
+                                }}
+                                className="w-full text-left px-4 py-2 text-xs transition-colors font-bold text-red-500 hover:bg-red-500/10"
+                              >
+                                Xóa Tất Cả
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/70">
                       <p className="text-xs text-cinema-text-muted/70 mt-3 italic">
@@ -1154,8 +1239,8 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                     </div>
 
                     {/* Grid */}
-                    <div className="overflow-auto max-h-96 w-full flex justify-center">
-                      <div className="relative inline-block">
+                    <div className="overflow-auto max-h-96 w-full flex p-2">
+                      <div className="relative inline-block mx-auto">
                         <div
                           ref={canvasRef}
                           className={`relative border-2 ${
@@ -1179,7 +1264,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           onTouchEnd={handleTouchEnd}
                         >
                           {/* Exit overlays */}
-                          {exits.map((exit) => (
+                          {visibleExits.map((exit) => (
                             <div
                               key={exit.id}
                               className="absolute border-2 cursor-pointer"
@@ -1196,7 +1281,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           ))}
 
                           {/* Aisle overlays */}
-                          {aisles.map((aisle) => (
+                          {visibleAisles.map((aisle) => (
                             <div
                               key={aisle.id}
                               className="absolute border-2 cursor-pointer"
@@ -1213,7 +1298,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           ))}
 
                           {/* Seats */}
-                          {seats.map((seat, index) => (
+                          {visibleSeats.map((seat, index) => (
                             <div
                               key={index}
                               onClick={() => handleRemoveSeat(seat.colIndex, seat.rowIndex)}
@@ -1221,8 +1306,8 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                                 isModern ? 'bg-primary-container text-white' : 'bg-primary-container text-white'
                               }`}
                               style={{
-                                left: seat.coordX,
-                                top: seat.coordY,
+                                left: seat.colIndex * cellSize.width,
+                                top: seat.rowIndex * cellSize.height,
                                 width: cellSize.width - 4,
                                 height: cellSize.height - 4,
                                 margin: '2px',
@@ -1272,7 +1357,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                       </div>
                       <div>
                         <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Tổng Ghế</p>
-                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{seats.length}</p>
+                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{visibleSeats.length}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 text-on-surface-variant/60 text-xs">
@@ -1303,9 +1388,9 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           {currentStep === 'seats' ? (
             <button
               onClick={handleSubmit}
-              disabled={createLoading || seats.length === 0}
+              disabled={createLoading || visibleSeats.length === 0}
               className={`flex items-center gap-2 px-8 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95 ${
-                createLoading || seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                createLoading || visibleSeats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
               } bg-primary-container text-white hover:bg-inverse-primary shadow-[0_4px_20px_rgba(225,29,72,0.4)]`}
             >
               {createLoading ? (

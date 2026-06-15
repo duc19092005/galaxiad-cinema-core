@@ -6,7 +6,7 @@ import React, { useState } from 'react';
 import {
   Building2, Plus, Search, Edit, MapPin, Phone, Film, Eye, Loader2,
   AlertCircle, X, Trash2, Monitor, Users, Store, TrendingUp,
-  SlidersHorizontal, ChevronDown, UserCog, Settings,
+  SlidersHorizontal, ChevronDown, UserCog, Settings, Check,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -44,6 +44,8 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState('newest');
+  const [isEditCityOpen, setIsEditCityOpen] = useState(false);
+  const [isCreateCityOpen, setIsCreateCityOpen] = useState(false);
 
   // Create cinema modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -113,6 +115,8 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
     (c.facilitiesManagerName && c.facilitiesManagerName !== 'Chưa có')
   ).length;
 
+
+
   // ============ CREATE ============
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -127,6 +131,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
     setIsCreateModalOpen(false);
     setCreateError(null);
     setCreateSuccess(false);
+    setIsCreateCityOpen(false);
     setFormData({
       cinemaName: '',
       cinemaDescription: '',
@@ -226,86 +231,91 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
 
   const isModern = theme === 'modern';
   const isDark = theme === 'dark';
-  const cardBorder = isModern ? 'border-cinema-accent/15' : 'border-cinema-border/50';
 
   return (
     <div className="animate-fade-in">
       {/* ========== STATS BENTO GRID ========== */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className={`p-5 bg-cinema-surface border ${cardBorder} rounded-2xl shadow-sm hover:border-cinema-accent/20 transition-all duration-200`}>
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 bg-cinema-accent/10 rounded-lg text-cinema-accent">
-              <Store size={20} />
-            </span>
-            <span className="text-emerald-400 text-xs font-semibold px-2 py-0.5 bg-emerald-500/10 rounded-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        {/* Card: Tổng cụm rạp */}
+        <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 relative overflow-hidden shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-4">
+            <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
+              <Store size={24} />
+            </div>
+            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-bold">
               +2 {t('cinemaManagement.thisMonth')}
             </span>
           </div>
-          <p className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalCinemas')}</p>
-          <p className="text-2xl font-bold mt-1 text-cinema-text">{totalCinemas}</p>
+          <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalCinemas')}</h3>
+          <p className="text-3xl font-bold mt-1 text-cinema-text">{totalCinemas}</p>
         </div>
-        <div className={`p-5 bg-cinema-surface border ${cardBorder} rounded-2xl shadow-sm hover:border-cinema-accent/20 transition-all duration-200`}>
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 bg-cinema-accent/10 rounded-lg text-cinema-accent">
-              <TrendingUp size={20} />
-            </span>
-            <span className="text-emerald-400 text-xs font-semibold px-2 py-0.5 bg-emerald-500/10 rounded-full">
+
+        {/* Card: Rạp đang hoạt động */}
+        <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-4">
+            <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
+              <TrendingUp size={24} />
+            </div>
+            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-bold">
               {totalCinemas > 0 ? `${Math.round((activeCinemas / totalCinemas) * 100)}%` : '0%'}
             </span>
           </div>
-          <p className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.activeCinemas')}</p>
-          <p className="text-2xl font-bold mt-1 text-cinema-text">{activeCinemas}</p>
+          <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.activeCinemas')}</h3>
+          <p className="text-3xl font-bold mt-1 text-cinema-text">{activeCinemas}</p>
         </div>
-        <div className={`p-5 bg-cinema-surface border ${cardBorder} rounded-2xl shadow-sm hover:border-cinema-accent/20 transition-all duration-200`}>
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 bg-cinema-accent/10 rounded-lg text-cinema-accent">
-              <Monitor size={20} />
-            </span>
+
+        {/* Card: Tổng số phòng chiếu */}
+        <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-4">
+            <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
+              <Monitor size={24} />
+            </div>
           </div>
-          <p className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalRooms')}</p>
-          <p className="text-2xl font-bold mt-1 text-cinema-text">{totalRooms}</p>
+          <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalRooms')}</h3>
+          <p className="text-3xl font-bold mt-1 text-cinema-text">{totalRooms}</p>
         </div>
-        <div className={`p-5 bg-cinema-surface border ${cardBorder} rounded-2xl shadow-sm hover:border-cinema-accent/20 transition-all duration-200`}>
-          <div className="flex justify-between items-start mb-3">
-            <span className="p-2 bg-cinema-text/5 rounded-lg text-cinema-text">
-              <Users size={20} />
-            </span>
+
+        {/* Card: Tổng số ghế */}
+        <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
+          <div className="flex justify-between items-start mb-4">
+            <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
+              <Users size={24} />
+            </div>
           </div>
-          <p className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalSeats')}</p>
-          <p className="text-2xl font-bold mt-1 text-cinema-text">{totalSeats.toLocaleString('vi-VN')}</p>
+          <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalSeats')}</h3>
+          <p className="text-3xl font-bold mt-1 text-cinema-text">{totalSeats.toLocaleString('vi-VN')}</p>
         </div>
       </div>
 
       {/* ========== HEADER & SEARCH ========== */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-cinema-accent tracking-tight">
+          <h1 className="text-3xl font-bold text-cinema-accent tracking-tight">
             {t('cinemaManagement.systemTitle')}
           </h1>
-          <p className="text-sm text-cinema-text-muted mt-1">
+          <p className="text-cinema-text-muted text-sm mt-1">
             {t('cinemaManagement.systemDesc')}
           </p>
         </div>
         <button
           onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 bg-cinema-accent hover:bg-cinema-accent-hover text-black font-bold text-xs rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-cinema-accent/10 whitespace-nowrap"
+          className="bg-cinema-accent text-black font-bold py-3 px-6 rounded-xl flex items-center gap-2 hover:bg-cinema-accent-hover transition-all shadow-lg shadow-cinema-accent/20 text-xs uppercase tracking-wider active:scale-[0.98]"
         >
-          <Plus size={16} />
+          <Plus size={18} />
           {t('cinemaManagement.addNew')}
         </button>
       </div>
 
       {/* ========== FILTER BAR ========== */}
-      <div className="flex items-center gap-4 mb-8 flex-wrap">
-        <div className={`flex items-center p-1 rounded-xl border ${cardBorder} flex-1 min-w-[280px]`}
-          style={{ background: isModern ? 'rgba(30, 41, 59, 0.6)' : isDark ? 'rgba(23, 31, 51, 0.6)' : 'var(--bg-surface)' }}>
+      <div className="flex flex-wrap items-center gap-4 bg-cinema-surface/30 p-2 rounded-2xl border border-cinema-border/50 mb-8">
+        <div className="flex bg-cinema-surface rounded-xl p-1 overflow-hidden">
           {regions.map(r => (
             <button
               key={r.id || 'all'}
               onClick={() => setRegionFilter(r.id)}
-              className={`flex-1 px-4 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-6 md:px-8 py-2.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
                 regionFilter === r.id
-                  ? 'bg-cinema-accent/10 text-cinema-accent'
+                  ? 'bg-cinema-elevated text-cinema-text'
                   : 'text-cinema-text-muted hover:text-cinema-text'
               }`}
             >
@@ -313,32 +323,33 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <div className="input flex items-center gap-2 px-3 h-9" style={{ minWidth: 180 }}>
-            <Search size={14} className="text-cinema-text-muted shrink-0" />
-            <input
-              type="text"
-              placeholder={t('cinemaManagement.searchPlaceholder')}
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="bg-transparent border-none outline-none text-sm text-cinema-text w-full placeholder:text-cinema-text-muted/50"
-              style={{ all: 'unset', width: '100%', fontSize: 13, color: 'var(--text-primary)' }}
-            />
-          </div>
+        <div className="flex-1 min-w-[200px] relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cinema-text-muted" />
+          <input
+            type="text"
+            placeholder={t('cinemaManagement.searchPlaceholder')}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full bg-cinema-surface border-none rounded-xl pl-12 py-3 text-sm focus:ring-1 focus:ring-cinema-accent text-cinema-text placeholder:text-cinema-text-muted/50 outline-none"
+            style={{ all: 'unset', boxSizing: 'border-box', width: '100%', backgroundColor: 'var(--bg-surface)', paddingLeft: '3rem', paddingRight: '1rem', paddingTop: '0.75rem', paddingBottom: '0.75rem', borderRadius: '0.75rem', fontSize: '0.875rem', color: 'var(--text-primary)' }}
+          />
+        </div>
+        <div className="flex items-center gap-2 bg-cinema-surface px-4 py-3 rounded-xl border border-cinema-border/50 min-w-[180px]">
+          <span className="text-xs text-cinema-text-muted whitespace-nowrap">Sắp xếp:</span>
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
-            className="input h-9 text-xs cursor-pointer min-w-[130px] appearance-auto"
+            className="bg-transparent border-none p-0 text-sm focus:ring-0 w-full cursor-pointer select select-transparent text-cinema-text"
           >
-            <option value="newest">{t('cinemaManagement.sortNewest')}</option>
-            <option value="oldest">{t('cinemaManagement.sortOldest')}</option>
-            <option value="name-asc">{t('cinemaManagement.sortNameAsc')}</option>
-            <option value="name-desc">{t('cinemaManagement.sortNameDesc')}</option>
+            <option value="newest" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>{t('cinemaManagement.sortNewest')}</option>
+            <option value="oldest" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>{t('cinemaManagement.sortOldest')}</option>
+            <option value="name-asc" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>{t('cinemaManagement.sortNameAsc')}</option>
+            <option value="name-desc" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>{t('cinemaManagement.sortNameDesc')}</option>
           </select>
-          <button className="btn btn-secondary w-9 h-9 flex items-center justify-center p-0" title="Filters">
-            <SlidersHorizontal size={14} />
-          </button>
         </div>
+        <button className="bg-cinema-surface p-3 rounded-xl border border-cinema-border/50 hover:bg-cinema-elevated transition-colors">
+          <SlidersHorizontal size={18} className="text-cinema-text-muted" />
+        </button>
       </div>
 
       {/* ========== LOADING ========== */}
@@ -370,174 +381,158 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
       )}
 
       {!loading && !error && displayCinemas.length > 0 && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {displayCinemas.map(cinema => (
-            <article
-              key={cinema.cinemaId}
-              className={`group bg-cinema-surface border ${cardBorder} rounded-3xl overflow-hidden transition-all duration-300`}
-              style={{ backdropFilter: isModern ? 'blur(12px)' : undefined }}
-              onMouseEnter={e => {
-                if (isDark || isModern) {
-                  e.currentTarget.style.transform = 'translateY(-6px)';
-                  e.currentTarget.style.boxShadow = '0 20px 50px rgba(0,0,0,0.4)';
-                }
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {/* Card Image Placeholder */}
-              <div className="h-36 relative overflow-hidden" style={{ background: isModern ? 'linear-gradient(135deg, #1e293b, #0f172a)' : 'var(--bg-surface-elevated)' }}>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                {/* Status Badge */}
-                <div className="absolute top-3 left-3">
-                  <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                      cinema.theaterManagerName
-                        ? 'text-emerald-400 bg-emerald-500/10'
-                        : 'text-rose-400 bg-rose-500/10'
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+          {displayCinemas.map(cinema => {
+            const hasTheaterManager = cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có';
+            return (
+              <div
+                key={cinema.cinemaId}
+                className="bg-cinema-surface rounded-3xl border border-cinema-border/50 overflow-hidden p-6 flex flex-col gap-6 relative group hover:border-cinema-accent/50 transition-colors duration-300"
+              >
+                <div className="flex justify-between items-start">
+                  <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${
+                    hasTheaterManager ? 'text-green-500' : 'text-rose-500'
                   }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${cinema.theaterManagerName ? 'bg-emerald-400' : 'bg-rose-400'}`} />
-                    {cinema.theaterManagerName ? t('cinemaManagement.active') : t('cinemaManagement.noManager')}
-                  </span>
-                </div>
-                {/* Icon */}
-                <div className="absolute left-5 -bottom-6 w-14 h-14 rounded-2xl bg-cinema-accent flex items-center justify-center border-[3px] border-cinema-surface shadow-lg">
-                  <Film size={24} className="text-black" />
-                </div>
-              </div>
-
-              {/* Card Body */}
-              <div className="pt-10 px-6 pb-6">
-                {/* Title */}
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-cinema-text truncate">
-                      {cinema.cinemaName}
-                    </h3>
-                    <p className="text-xs text-cinema-text-muted mt-0.5">
-                      {cinema.cinemaCity || cinema.cinemaLocation}
-                    </p>
+                    <div className={`w-1.5 h-1.5 rounded-full ${
+                      hasTheaterManager ? 'bg-green-500 animate-pulse' : 'bg-rose-500'
+                    }`}></div>
+                    {hasTheaterManager ? t('cinemaManagement.active') : t('cinemaManagement.noManager')}
                   </div>
                 </div>
 
-                {/* Info */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center gap-2 text-cinema-text-muted">
-                    <MapPin size={14} className="text-cinema-accent shrink-0" />
+                <div className="flex flex-col gap-4">
+                  <div className="w-14 h-14 bg-cinema-accent rounded-2xl flex items-center justify-center shadow-inner">
+                    <Film className="text-black w-8 h-8" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-cinema-text truncate">{cinema.cinemaName}</h2>
+                    <p className="text-cinema-text-muted text-xs mt-1">{cinema.cinemaCity || cinema.cinemaLocation}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-cinema-text-muted">
+                    <MapPin className="w-4 h-4 text-cinema-accent shrink-0" />
                     <span className="text-xs truncate">{cinema.cinemaLocation}</span>
                   </div>
                   {cinema.cinemaHotlineNumber && (
-                    <div className="flex items-center gap-2 text-cinema-text-muted">
-                      <Phone size={14} className="text-cinema-accent shrink-0" />
+                    <div className="flex items-center gap-3 text-cinema-text-muted">
+                      <Phone className="w-4 h-4 text-cinema-accent shrink-0" />
                       <span className="text-xs">{cinema.cinemaHotlineNumber}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Stats Mini Grid */}
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="p-3 rounded-xl bg-cinema-elevated border border-cinema-border/30">
-                    <p className="text-[10px] text-cinema-text-muted font-semibold uppercase tracking-wider">{t('cinemaManagement.roomsLabel')}</p>
-                    <p className="text-lg font-extrabold text-cinema-text mt-0.5">{cinema.totalRooms || 0}</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-cinema-bg/50 p-4 rounded-2xl border border-cinema-border/50">
+                    <span className="text-[10px] text-cinema-text-muted uppercase font-semibold">{t('cinemaManagement.roomsLabel')}</span>
+                    <p className="text-xl font-bold text-cinema-text">{cinema.totalRooms || 0}</p>
                   </div>
-                  <div className="p-3 rounded-xl bg-cinema-elevated border border-cinema-border/30">
-                    <p className="text-[10px] text-cinema-text-muted font-semibold uppercase tracking-wider">{t('cinemaManagement.totalSeatsLabel')}</p>
-                    <p className="text-lg font-extrabold text-cinema-text mt-0.5">{((cinema.totalRooms || 0) * 150).toLocaleString('vi-VN')}</p>
+                  <div className="bg-cinema-bg/50 p-4 rounded-2xl border border-cinema-border/50">
+                    <span className="text-[10px] text-cinema-text-muted uppercase font-semibold">{t('cinemaManagement.totalSeatsLabel')}</span>
+                    <p className="text-xl font-bold text-cinema-text">{((cinema.totalRooms || 0) * 150).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
 
-                {/* Occupancy Bar */}
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-1.5">
-                    <span className="text-[10px] text-cinema-text-muted font-semibold">{t('cinemaManagement.occupancyRate')}</span>
-                    <span className="text-[10px] font-bold text-cinema-text">
-                      {cinema.theaterManagerName ? `${Math.round(70 + Math.random() * 25)}%` : '—'}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-[10px] font-medium">
+                    <span className="text-cinema-text-muted">{t('cinemaManagement.occupancyRate')}</span>
+                    <span className="text-cinema-text">
+                      {hasTheaterManager ? `${Math.round(70 + Math.random() * 25)}%` : '—'}
                     </span>
                   </div>
-                  <div className="w-full h-1.5 rounded-full bg-cinema-elevated overflow-hidden">
+                  <div className="h-2 bg-cinema-border/50 rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-cinema-accent to-cinema-accent-hover transition-all duration-500"
-                      style={{ width: cinema.theaterManagerName ? `${70 + Math.random() * 25}%` : '0%' }}
-                    />
+                      className="h-full bg-cinema-accent rounded-full transition-all duration-500"
+                      style={{ width: hasTheaterManager ? `${70 + Math.random() * 25}%` : '0%' }}
+                    ></div>
                   </div>
                 </div>
-                {/* Personnel */}
-                <div className="space-y-1.5 mb-1">
-                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-500/5 border border-indigo-500/15">
-                    <UserCog size={12} className="text-indigo-400 shrink-0" />
-                    <span className="text-[10px] text-indigo-300/70 font-medium">{t('cinemaManagement.assignTheaterManager')}:</span>
-                    <span className="text-[11px] font-semibold" style={{ color: cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có' ? '#a5b4fc' : 'var(--text-muted)' }}>
-                      {cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có' ? cinema.theaterManagerName : t('cinemaManagement.notAssigned')}
+
+                <div className="flex flex-col gap-2">
+                  <div className="bg-[#1D1E2D] p-3 rounded-xl flex items-center gap-3 text-xs">
+                    <UserCog size={16} className="text-blue-400 shrink-0" />
+                    <span className="text-gray-500 font-medium">QL Rạp:</span>
+                    <span className="text-gray-300 font-semibold truncate">
+                      {cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có' 
+                        ? cinema.theaterManagerName 
+                        : t('cinemaManagement.notAssigned')}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
-                    <Settings size={12} className="text-emerald-400 shrink-0" />
-                    <span className="text-[10px] text-emerald-300/70 font-medium">{t('cinemaManagement.assignFacilitiesManager')}:</span>
-                    <span className="text-[11px] font-semibold" style={{ color: cinema.facilitiesManagerName && cinema.facilitiesManagerName !== 'Chưa có' ? '#6ee7b7' : 'var(--text-muted)' }}>
-                      {cinema.facilitiesManagerName && cinema.facilitiesManagerName !== 'Chưa có' ? cinema.facilitiesManagerName : t('cinemaManagement.notAssigned')}
+                  <div className="bg-[#1A251E] p-3 rounded-xl flex items-center gap-3 text-xs">
+                    <Settings size={16} className="text-green-400 shrink-0" />
+                    <span className="text-gray-500 font-medium">QL CSVC:</span>
+                    <span className="text-gray-300 font-semibold truncate">
+                      {cinema.facilitiesManagerName && cinema.facilitiesManagerName !== 'Chưa có' 
+                        ? cinema.facilitiesManagerName 
+                        : <span className="text-gray-400 italic">Chưa có</span>}
                     </span>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Primary Card Actions */}
+                <div className="grid grid-cols-3 gap-3 pt-4 border-t border-cinema-border/50">
                   <button
                     onClick={() => { setSelectedCinemaId(cinema.cinemaId); setIsDetailModalOpen(true); }}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/10 hover:border-cinema-accent/20 transition-all"
+                    className="flex items-center justify-center gap-2 bg-cinema-elevated/50 hover:bg-cinema-elevated py-2.5 rounded-lg text-xs font-medium text-cinema-text transition-colors"
                   >
-                    <Eye size={13} />
+                    <Eye className="w-3.5 h-3.5" />
                     {t('cinemaManagement.viewDetail')}
                   </button>
                   <button
                     onClick={() => handleOpenEditModal(cinema)}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/10 hover:border-cinema-accent/20 transition-all"
+                    className="flex items-center justify-center gap-2 bg-cinema-elevated/50 hover:bg-cinema-elevated py-2.5 rounded-lg text-xs font-medium text-cinema-text transition-colors"
                   >
-                    <Edit size={13} />
+                    <Edit className="w-3.5 h-3.5" />
                     {t('cinemaManagement.edit')}
                   </button>
                   <button
                     onClick={() => setDeleteConfirmCinemaId(cinema.cinemaId)}
-                    className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-all"
+                    className="flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 py-2.5 rounded-lg text-xs font-medium text-rose-400 transition-colors"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 className="w-3.5 h-3.5" />
                     {t('cinemaManagement.delete')}
                   </button>
-                  {isAdmin && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setItemToAssign({ id: cinema.cinemaId, name: cinema.cinemaName, assignType: 2 });
-                          setIsAssignModalOpen(true);
-                        }}
-                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-cinema-accent/10 border border-cinema-accent/20 text-cinema-accent hover:bg-cinema-accent/20 transition-all"
-                      >
-                        <UserCog size={13} />
-                        {t('cinemaManagement.assignTheaterManager')}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setItemToAssign({ id: cinema.cinemaId, name: cinema.cinemaName, assignType: 1 });
-                          setIsAssignModalOpen(true);
-                        }}
-                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 hover:bg-indigo-500/20 transition-all"
-                      >
-                        <Settings size={13} />
-                        {t('cinemaManagement.assignFacilitiesManager')}
-                      </button>
-                      <button
-                        onClick={() => setDepartmentModalCinemaId(cinema.cinemaId)}
-                        className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-semibold bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                      >
-                        <Users size={13} />
-                        {t('cinemaManagement.departments')}
-                      </button>
-                    </>
-                  )}
                 </div>
+
+                {/* Admin Assignment Actions */}
+                {isAdmin && (
+                  <div className="grid grid-cols-3 gap-2 mt-2 pt-2 border-t border-cinema-border/30">
+                    <button
+                      onClick={() => {
+                        setItemToAssign({ id: cinema.cinemaId, name: cinema.cinemaName, assignType: 2 });
+                        setIsAssignModalOpen(true);
+                      }}
+                      className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[9px] font-semibold bg-cinema-accent/5 border border-cinema-accent/10 text-cinema-accent hover:bg-cinema-accent/15 transition-all text-center"
+                      title={t('cinemaManagement.assignTheaterManager')}
+                    >
+                      <UserCog size={12} className="mb-0.5" />
+                      <span>QL Rạp</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setItemToAssign({ id: cinema.cinemaId, name: cinema.cinemaName, assignType: 1 });
+                        setIsAssignModalOpen(true);
+                      }}
+                      className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[9px] font-semibold bg-indigo-500/5 border border-indigo-500/10 text-indigo-400 hover:bg-indigo-500/15 transition-all text-center"
+                      title={t('cinemaManagement.assignFacilitiesManager')}
+                    >
+                      <Settings size={12} className="mb-0.5" />
+                      <span>QL CSVC</span>
+                    </button>
+                    <button
+                      onClick={() => setDepartmentModalCinemaId(cinema.cinemaId)}
+                      className="flex flex-col items-center justify-center p-1.5 rounded-lg text-[9px] font-semibold bg-emerald-500/5 border border-emerald-500/10 text-emerald-400 hover:bg-emerald-500/15 transition-all text-center"
+                      title={t('cinemaManagement.departments')}
+                    >
+                      <Users size={12} className="mb-0.5" />
+                      <span>Phòng ban</span>
+                    </button>
+                  </div>
+                )}
               </div>
-            </article>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -546,156 +541,324 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
         <div className="mt-10 flex justify-center">
           <button className="flex items-center gap-2 px-7 py-2.5 rounded-xl border border-cinema-border/50 text-xs font-semibold text-cinema-text bg-cinema-surface hover:bg-cinema-elevated transition-all">
             {t('cinemaManagement.loadMore')}
-            <ChevronDown size={14} />
           </button>
         </div>
       )}
-
-      {/* ========== CREATE MODAL ========== */}
+        {/* ========== CREATE MODAL ========== */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={handleCloseCreateModal}>
-          <div className={`relative w-full max-w-lg max-h-[90vh] rounded-2xl border shadow-2xl overflow-hidden ${
-            isModern ? 'bg-[#0f172a]/95 backdrop-blur-2xl border-cinema-accent/20' : isDark ? 'bg-cinema-surface border-cinema-border/30' : 'bg-white border-gray-200'
-          }`} onClick={e => e.stopPropagation()}>
-            <div className={`flex items-center justify-between p-5 border-b ${isModern ? 'border-cinema-accent/20' : isDark ? 'border-cinema-border/30' : 'border-gray-200'}`}>
-              <h2 className={`text-lg font-black ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{t('cinemaManagement.addNew')}</h2>
-              <button onClick={handleCloseCreateModal} disabled={createLoading} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                <X size={16} className="text-cinema-text-muted" />
+        <div className="modal-overlay" onClick={handleCloseCreateModal}>
+          <div
+            className="w-full max-w-xl bg-cinema-elevated border border-cinema-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-48px)] min-h-0 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-cinema-border flex-shrink-0">
+              <div className="flex items-center gap-2 text-cinema-accent">
+                <Building2 size={20} />
+                <h3 className="text-lg font-extrabold text-cinema-text">
+                  {t('cinemaManagement.addNew')}
+                </h3>
+              </div>
+              <button
+                onClick={handleCloseCreateModal}
+                disabled={createLoading}
+                className="p-1.5 bg-cinema-bg hover:bg-cinema-surface rounded-full text-cinema-text-muted hover:text-cinema-text transition-colors flex-shrink-0"
+              >
+                <X size={16} />
               </button>
             </div>
-            <form onSubmit={handleCreateSubmit} className="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
-              {createSuccess && (
-                <p className="text-sm text-cinema-text-muted">
-                  {t('toast.cinemaCreated')}
-                </p>
-              )}
-              {createError && (
-                <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-2">
-                  <AlertCircle size={14} className="text-rose-400" />
-                  <span className="text-xs text-rose-400">{createError}</span>
+
+            {/* Scrollable Form Body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5 min-h-0">
+              <form id="cinema-form" onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+                {createSuccess && (
+                  <p className="text-sm text-cinema-text-muted">
+                    {t('toast.cinemaCreated')}
+                  </p>
+                )}
+                {createError && (
+                  <div className="p-3 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-2">
+                    <AlertCircle size={14} className="text-rose-400" />
+                    <span className="text-xs text-rose-400">{createError}</span>
+                  </div>
+                )}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-cinema-text-muted">Cinema Name *</label>
+                  <input
+                    name="cinemaName"
+                    value={formData.cinemaName}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="e.g. Galaxy Cinema Nguyễn Du"
+                    className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                  />
                 </div>
-              )}
-              <div>
-                <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Cinema Name *</label>
-                <input name="cinemaName" value={formData.cinemaName} onChange={handleInputChange} required
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all placeholder:text-cinema-text-muted/40"
-                  placeholder="e.g. Galaxy Cinema Nguyễn Du" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">{t('cinemaManagement.locationLabel')}</label>
-                  <input name="cinemaLocation" value={formData.cinemaLocation} onChange={handleInputChange} required
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all"
-                    placeholder="e.g. 116 Nguyễn Du" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-cinema-text-muted">{t('cinemaManagement.locationLabel')} *</label>
+                    <input
+                      name="cinemaLocation"
+                      value={formData.cinemaLocation}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g. 116 Nguyễn Du"
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 relative">
+                    <label className="text-xs font-bold text-cinema-text-muted">City *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCreateCityOpen(!isCreateCityOpen)}
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none flex items-center justify-between cursor-pointer text-left"
+                    >
+                      <span className={formData.cinemaCity ? 'text-cinema-text' : 'text-cinema-text-muted/40'}>
+                        {formData.cinemaCity || t('cinemaManagement.cityLabel')}
+                      </span>
+                      <ChevronDown size={16} className={`text-cinema-text-muted transition-transform duration-200 ${isCreateCityOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isCreateCityOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsCreateCityOpen(false)} />
+                        <div className="absolute z-50 w-full mt-14.5 bg-cinema-surface border border-cinema-border rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+                          {VIETNAM_CITIES.map(city => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, cinemaCity: city }));
+                                setIsCreateCityOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                                formData.cinemaCity === city
+                                  ? 'bg-cinema-accent text-black font-bold'
+                                  : 'text-cinema-text hover:bg-cinema-elevated hover:text-cinema-accent'
+                              }`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">City *</label>
-                  <select name="cinemaCity" value={formData.cinemaCity} onChange={handleInputChange} required
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all">
-                    <option value="" disabled>{t('cinemaManagement.cityLabel')}</option>
-                    {VIETNAM_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-cinema-text-muted">Hotline *</label>
+                    <input
+                      name="cinemaHotlineNumber"
+                      value={formData.cinemaHotlineNumber}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g. 19002235"
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-cinema-text-muted">Opening Date</label>
+                    <input
+                      type="datetime-local"
+                      value={toVietnamDateTimeLocalValue(formData.activeAt)}
+                      onChange={handleDateChange}
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Hotline *</label>
-                  <input name="cinemaHotlineNumber" value={formData.cinemaHotlineNumber} onChange={handleInputChange} required
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all"
-                    placeholder="e.g. 19002235" />
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-cinema-text-muted">Description</label>
+                  <textarea
+                    name="cinemaDescription"
+                    value={formData.cinemaDescription}
+                    onChange={handleInputChange}
+                    rows={3}
+                    placeholder="Optional description..."
+                    className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none resize-none"
+                  />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Opening Date</label>
-                  <input type="datetime-local" value={toVietnamDateTimeLocalValue(formData.activeAt)} onChange={handleDateChange}
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Description</label>
-                <textarea name="cinemaDescription" value={formData.cinemaDescription} onChange={handleInputChange} rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all resize-none"
-                  placeholder="Optional description" />
-              </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-cinema-border/30">
-                <button type="button" onClick={handleCloseCreateModal} disabled={createLoading}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-surface transition-all">
-                  {t('cinemaManagement.cancel')}
-                </button>
-                <button type="submit" disabled={createLoading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold bg-cinema-accent text-black hover:bg-cinema-accent-hover transition-all disabled:opacity-50">
-                  {createLoading ? <><Loader2 size={12} className="animate-spin" /> {t('cinemaManagement.creating')}</> : t('cinemaManagement.createCinema')}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="px-6 py-4 border-t border-cinema-border flex gap-3 flex-shrink-0 bg-cinema-elevated">
+              <button
+                type="button"
+                onClick={handleCloseCreateModal}
+                disabled={createLoading}
+                className="flex-1 py-2.5 bg-cinema-surface hover:bg-cinema-bg text-cinema-text border border-cinema-border rounded-xl text-sm font-semibold transition-colors duration-200"
+              >
+                {t('cinemaManagement.cancel')}
+              </button>
+              <button
+                form="cinema-form"
+                type="submit"
+                disabled={createLoading}
+                className="flex-[2] py-2.5 bg-cinema-accent hover:bg-cinema-accent-hover disabled:bg-cinema-accent/50 disabled:cursor-not-allowed text-black rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-200 active:scale-[0.99] shadow-lg shadow-cinema-accent/15"
+              >
+                {createLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {t('cinemaManagement.creating')}
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    {t('cinemaManagement.createCinema')}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* ========== EDIT MODAL ========== */}
       {isEditModalOpen && editCinema && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)}>
-          <div className={`relative w-full max-w-lg rounded-xl border shadow-2xl overflow-hidden ${
-            isModern ? 'bg-[#0f172a]/95 backdrop-blur-2xl border-cinema-accent/20' : isDark ? 'bg-cinema-surface border-cinema-border/30' : 'bg-white border-gray-200'
-          }`} onClick={e => e.stopPropagation()}>
-            <div className={`flex items-center justify-between p-5 border-b ${isModern ? 'border-cinema-accent/20' : isDark ? 'border-cinema-border/30' : 'border-gray-200'}`}>
-              <h2 className={`text-lg font-black ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{t('cinemaManagement.editCinema')}</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
-                <X size={16} className="text-cinema-text-muted" />
+        <div className="modal-overlay" onClick={() => setIsEditModalOpen(false)}>
+          <div
+            className="w-full max-w-xl bg-cinema-elevated border border-cinema-border rounded-2xl shadow-2xl flex flex-col max-h-[calc(100vh-48px)] min-h-0 overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-6 py-4 border-b border-cinema-border flex-shrink-0">
+              <div className="flex items-center gap-2 text-cinema-accent">
+                <Edit size={20} />
+                <h3 className="text-lg font-extrabold text-cinema-text">
+                  {t('cinemaManagement.editCinema')}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1.5 bg-cinema-bg hover:bg-cinema-surface rounded-full text-cinema-text-muted hover:text-cinema-text transition-colors flex-shrink-0"
+              >
+                <X size={16} />
               </button>
             </div>
-            <form onSubmit={handleEditSubmit} className="p-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">{t('cinemaManagement.cinemaNameLabel')}</label>
-                  <input value={editFormData.cinemaName} onChange={e => setEditFormData(p => ({ ...p, cinemaName: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none" />
+
+            {/* Scrollable Form Body */}
+            <div className="overflow-y-auto flex-1 px-6 py-5 min-h-0">
+              <form id="edit-cinema-form" onSubmit={handleEditSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-cinema-text-muted">{t('cinemaManagement.cinemaNameLabel')} *</label>
+                  <input
+                    value={editFormData.cinemaName}
+                    onChange={e => setEditFormData(p => ({ ...p, cinemaName: e.target.value }))}
+                    required
+                    className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                  />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">{t('cinemaManagement.cityLabel')}</label>
-                  <select value={editFormData.cinemaCity} onChange={e => setEditFormData(p => ({ ...p, cinemaCity: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none">
-                    {VIETNAM_CITIES.map(city => <option key={city} value={city}>{city}</option>)}
-                  </select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-cinema-text-muted">Location *</label>
+                    <input
+                      value={editFormData.cinemaLocation}
+                      onChange={e => setEditFormData(p => ({ ...p, cinemaLocation: e.target.value }))}
+                      required
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5 relative">
+                    <label className="text-xs font-bold text-cinema-text-muted">{t('cinemaManagement.cityLabel')} *</label>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditCityOpen(!isEditCityOpen)}
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none flex items-center justify-between cursor-pointer text-left"
+                    >
+                      <span className={editFormData.cinemaCity ? 'text-cinema-text' : 'text-cinema-text-muted/40'}>
+                        {editFormData.cinemaCity || t('cinemaManagement.cityLabel')}
+                      </span>
+                      <ChevronDown size={16} className={`text-cinema-text-muted transition-transform duration-200 ${isEditCityOpen ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {isEditCityOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setIsEditCityOpen(false)} />
+                        <div className="absolute z-50 w-full mt-14.5 bg-cinema-surface border border-cinema-border rounded-xl shadow-xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-150">
+                          {VIETNAM_CITIES.map(city => (
+                            <button
+                              key={city}
+                              type="button"
+                              onClick={() => {
+                                setEditFormData(prev => ({ ...prev, cinemaCity: city }));
+                                setIsEditCityOpen(false);
+                              }}
+                              className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
+                                editFormData.cinemaCity === city
+                                  ? 'bg-cinema-accent text-black font-bold'
+                                  : 'text-cinema-text hover:bg-cinema-elevated hover:text-cinema-accent'
+                              }`}
+                            >
+                              {city}
+                            </button>
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Location</label>
-                <input value={editFormData.cinemaLocation} onChange={e => setEditFormData(p => ({ ...p, cinemaLocation: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">{t('cinemaManagement.hotlineLabel')}</label>
-                  <input value={editFormData.cinemaHotlineNumber} onChange={e => setEditFormData(p => ({ ...p, cinemaHotlineNumber: e.target.value }))}
-                    className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-cinema-text-muted">{t('cinemaManagement.hotlineLabel')} *</label>
+                    <input
+                      value={editFormData.cinemaHotlineNumber}
+                      onChange={e => setEditFormData(p => ({ ...p, cinemaHotlineNumber: e.target.value }))}
+                      required
+                      className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-cinema-text-muted mb-1.5">Description</label>
-                <textarea value={editFormData.cinemaDescription} onChange={e => setEditFormData(p => ({ ...p, cinemaDescription: e.target.value }))} rows={2}
-                  className="w-full px-3.5 py-2.5 rounded-lg border text-sm bg-transparent text-cinema-text border-cinema-border/50 focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none resize-none" />
-              </div>
-              <div className="flex justify-end gap-3 pt-2 border-t border-cinema-border/30">
-                <button type="button" onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-surface transition-all">Hủy</button>
-                <button type="submit" disabled={editLoading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold bg-cinema-accent text-black hover:bg-cinema-accent-hover transition-all disabled:opacity-50">
-                  {editLoading ? <><Loader2 size={12} className="animate-spin" /> {t('cinemaManagement.saving')}</> : t('cinemaManagement.saveChanges')}
-                </button>
-              </div>
-            </form>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-bold text-cinema-text-muted">Description</label>
+                  <textarea
+                    value={editFormData.cinemaDescription}
+                    onChange={e => setEditFormData(p => ({ ...p, cinemaDescription: e.target.value }))}
+                    rows={3}
+                    className="w-full px-4 py-2 bg-cinema-surface border border-cinema-border/80 rounded-xl text-sm text-cinema-text focus:ring-1 focus:ring-cinema-accent focus:border-cinema-accent outline-none resize-none"
+                  />
+                </div>
+              </form>
+            </div>
+
+            {/* Sticky Footer */}
+            <div className="px-6 py-4 border-t border-cinema-border flex gap-3 flex-shrink-0 bg-cinema-elevated">
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                disabled={editLoading}
+                className="flex-1 py-2.5 bg-cinema-surface hover:bg-cinema-bg text-cinema-text border border-cinema-border rounded-xl text-sm font-semibold transition-colors duration-200"
+              >
+                Hủy
+              </button>
+              <button
+                form="edit-cinema-form"
+                type="submit"
+                disabled={editLoading}
+                className="flex-[2] py-2.5 bg-cinema-accent hover:bg-cinema-accent-hover disabled:bg-cinema-accent/50 disabled:cursor-not-allowed text-black rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all duration-200 active:scale-[0.99] shadow-lg shadow-cinema-accent/15"
+              >
+                {editLoading ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    {t('cinemaManagement.saving')}
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    {t('cinemaManagement.saveChanges')}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
-
+ 
       {/* ========== DELETE CONFIRM ========== */}
       {deleteConfirmCinemaId && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteConfirmCinemaId(null)}>
-          <div className={`relative w-full max-w-sm rounded-xl border shadow-2xl ${
-            isModern ? 'bg-[#0f172a]/95 backdrop-blur-2xl border-cinema-accent/20' : isDark ? 'bg-cinema-surface border-cinema-border/30' : 'bg-white border-gray-200'
-          }`} onClick={e => e.stopPropagation()}>
-            <div className={`flex items-center justify-between p-5 border-b ${isModern ? 'border-cinema-accent/20' : isDark ? 'border-cinema-border/30' : 'border-gray-200'}`}>
-              <h2 className={`text-lg font-black ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{t('cinemaManagement.confirmDelete')}</h2>
+        <div className="modal-overlay" onClick={() => setDeleteConfirmCinemaId(null)}>
+          <div className="modal-content max-w-sm" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2 className="text-lg font-black text-cinema-text">{t('cinemaManagement.confirmDelete')}</h2>
               <button onClick={() => setDeleteConfirmCinemaId(null)} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <X size={16} className="text-cinema-text-muted" />
               </button>
@@ -740,7 +903,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
 
       {/* ========== DEPARTMENT MODAL ========== */}
       {isAdmin && departmentModalCinemaId && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setDepartmentModalCinemaId(null)}>
+        <div className="modal-overlay z-[70]" onClick={() => setDepartmentModalCinemaId(null)}>
           <div className={`relative w-full max-w-2xl max-h-[85vh] rounded-2xl border shadow-2xl overflow-hidden ${
             isModern ? 'bg-[#0b1326]/95 backdrop-blur-2xl border-cinema-accent/15' : isDark ? 'bg-cinema-surface border-cinema-border/30' : 'bg-white border-gray-200'
           }`} onClick={e => e.stopPropagation()}>

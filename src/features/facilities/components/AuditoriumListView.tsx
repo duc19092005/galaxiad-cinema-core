@@ -173,7 +173,7 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
                     width: 36, height: 36,
                     borderRadius: 10,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: isModern ? 'rgba(99,102,241,0.15)' : 'var(--accent-soft)',
+                    background: 'var(--accent-soft)',
                   }}>
                     <Monitor size={16} style={{ color: 'var(--accent)' }} />
                   </div>
@@ -187,7 +187,7 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
                           fontSize: 10,
                           padding: '1px 6px',
                           borderRadius: 4,
-                          background: isModern ? 'rgba(99,102,241,0.12)' : 'var(--accent-soft)',
+                          background: 'var(--accent-soft)',
                           color: 'var(--accent)',
                           fontWeight: 600,
                         }}>
@@ -234,9 +234,9 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
                   style={{
                     flex: 1, height: 30, fontSize: 11,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                    background: isModern ? 'rgba(99,102,241,0.12)' : 'rgba(59,130,246,0.08)',
-                    color: '#6366f1',
-                    border: `1px solid ${isModern ? 'rgba(99,102,241,0.2)' : 'rgba(59,130,246,0.15)'}`,
+                    background: 'var(--accent-soft)',
+                    color: 'var(--accent)',
+                    border: '1px solid var(--accent-soft)',
                     borderRadius: 8,
                     cursor: 'pointer',
                   }}
@@ -252,9 +252,9 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
                   style={{
                     flex: 1, height: 30, fontSize: 11,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                    background: isModern ? 'rgba(239,68,68,0.12)' : 'rgba(239,68,68,0.08)',
+                    background: 'var(--danger-soft)',
                     color: 'var(--danger)',
-                    border: `1px solid ${isModern ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.15)'}`,
+                    border: '1px solid var(--danger-soft)',
                     borderRadius: 8,
                     cursor: deletingId === aud.auditoriumId ? 'not-allowed' : 'pointer',
                   }}
