@@ -10,6 +10,9 @@ import type {
   CreateAuditoriumRequest,
   UpdateAuditoriumRequest,
   MovieFormat,
+  Department,
+  CreateDepartmentRequest,
+  UpdateDepartmentRequest,
 } from '../types/facilities.types';
 
 // Re-export types for backward compatibility
@@ -22,6 +25,9 @@ export type {
   CreateAuditoriumRequest,
   UpdateAuditoriumRequest,
   MovieFormat,
+  Department,
+  CreateDepartmentRequest,
+  UpdateDepartmentRequest,
 };
 import type { SeatInfo } from '../types/facilities.types';
 export type Room = AuditoriumDetail;
@@ -128,5 +134,36 @@ export const facilitiesApi = {
       '/facilities/movie-format'
     );
     return response.data;
+  },
+
+  // =============================================
+  // DEPARTMENT APIs
+  // =============================================
+
+  /** GET /api/facilities/departments?cinemaId={id} */
+  getDepartments: async (cinemaId: string): Promise<ApiSuccessResponse<Department[]>> => {
+    const response = await facilitiesAxios.get<ApiSuccessResponse<Department[]>>(
+      '/facilities/departments',
+      { params: { cinemaId } }
+    );
+    return response.data;
+  },
+
+  /** POST /api/facilities/departments */
+  createDepartment: async (data: CreateDepartmentRequest): Promise<ApiSuccessResponse<string>> => {
+    const response = await facilitiesAxios.post<any>('/facilities/departments', data);
+    return normalizeSuccessResponse(response);
+  },
+
+  /** PUT /api/facilities/departments/{id} */
+  updateDepartment: async (id: string, data: UpdateDepartmentRequest): Promise<ApiSuccessResponse> => {
+    const response = await facilitiesAxios.put<any>(`/facilities/departments/${id}`, data);
+    return normalizeSuccessResponse(response);
+  },
+
+  /** DELETE /api/facilities/departments/{id} */
+  deleteDepartment: async (id: string): Promise<ApiSuccessResponse> => {
+    const response = await facilitiesAxios.delete<any>(`/facilities/departments/${id}`);
+    return normalizeSuccessResponse(response);
   },
 };

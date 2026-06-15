@@ -1,28 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { X, Film, Users, Loader2, AlertCircle, Activity, Plus, Check } from 'lucide-react';
+import { X, Film, Users, Loader2, AlertCircle, Pencil } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
-import { facilitiesApi, type Room, type MovieFormat } from '../../../api/facilitiesApi';
+import { facilitiesApi, type Room } from '../../../api/facilitiesApi';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../../types/auth.types';
+import { useTranslation } from 'react-i18next';
+import CreateAuditoriumModal from './CreateAuditoriumModal';
 
 interface RoomDetailModalProps {
   roomId: string;
+  cinemaId?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, isOpen, onClose }) => {
+const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, cinemaId: propCinemaId, isOpen, onClose }) => {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Movie format selection modal state
-  const [isMovieFormatModalOpen, setIsMovieFormatModalOpen] = useState(false);
-  const [movieFormats, setMovieFormats] = useState<MovieFormat[]>([]);
-  const [formatsLoading, setFormatsLoading] = useState(false);
-  const [formatsError, setFormatsError] = useState<string | null>(null);
-  const [selectedFormat, setSelectedFormat] = useState<MovieFormat | null>(null);
+  // Use prop cinemaId, or try to extract from room API data as fallback
+  const [roomCinemaId, setRoomCinemaId] = useState<string | null>(null);
+  const effectiveCinemaId = propCinemaId || roomCinemaId;
+
+  // Edit auditorium modal state
+  const [isEditAuditoriumModalOpen, setIsEditAuditoriumModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && roomId) {
@@ -38,7 +42,12 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, isOpen, onClo
     setError(null);
     try {
       const res = await facilitiesApi.getAuditoriumDetail(roomId);
-      setRoom(res.data as any);
+      const data = res.data as any;
+      setRoom(data);
+      // Try to extract cinemaId from response as fallback
+      if (data?.cinemaId) {
+        setRoomCinemaId(data.cinemaId);
+      }
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
@@ -51,392 +60,212 @@ const RoomDetailModal: React.FC<RoomDetailModalProps> = ({ roomId, isOpen, onClo
     }
   };
 
-  const handleCreateShowtime = () => {
-    setIsMovieFormatModalOpen(true);
-    fetchMovieFormats();
-  };
-
-  const fetchMovieFormats = async () => {
-    setFormatsLoading(true);
-    setFormatsError(null);
-    setSelectedFormat(null);
-    try {
-      const res = await facilitiesApi.getMovieFormats();
-      setMovieFormats(res.data || []);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        const data = err.response.data as ApiErrorResponse;
-        setFormatsError(data.message || 'Cannot load movie formats list.');
-      } else {
-        setFormatsError('Cannot connect to server.');
-      }
-    } finally {
-      setFormatsLoading(false);
-    }
-  };
-
-  const handleFormatSelect = (format: MovieFormat) => {
-    setSelectedFormat(format);
-  };
-
-  const handleConfirmFormat = () => {
-    if (selectedFormat) {
-      // TODO: Xử lý logic tạo phòng chiếu với format đã chọn
-      console.log('Selected format:', selectedFormat);
-      // Có thể gọi API tạo showtime ở đây
-      // Sau đó đóng modal
-      setIsMovieFormatModalOpen(false);
-      setSelectedFormat(null);
-    }
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND',
-    }).format(price);
-  };
-
   if (!isOpen) return null;
 
+  const isDark = theme === 'dark';
+  const isModern = theme === 'modern';
+
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      {/* Overlay */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        {/* Overlay */}
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        />
 
-      {/* Modal */}
-      <div
-        className={`relative w-full max-w-lg rounded-xl border shadow-2xl transition-all ${theme === 'dark'
-          ? 'bg-gray-900 border-gray-800'
-          : 'bg-white border-gray-200'
+        {/* Modal */}
+        <div
+          className={`relative w-full max-w-lg rounded-xl border shadow-2xl transition-all overflow-hidden ${
+            isDark
+              ? 'bg-[#131316] border-[#2e2e38]'
+              : isModern
+                ? 'bg-[#0b1326]/95 backdrop-blur-2xl border-[rgba(99,102,241,0.15)]'
+                : 'bg-white border-gray-200'
           }`}
-      >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'
+        >
+          {/* Header */}
+          <div className={`flex items-center justify-between px-6 py-5 border-b ${
+            isDark ? 'border-[#2e2e38]' : isModern ? 'border-[rgba(99,102,241,0.1)]' : 'border-gray-200'
           }`}>
-          <h2 className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-            }`}>
-            Details phòng chiếu
-          </h2>
-          <button
-            onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-              ? 'hover:bg-gray-800 text-gray-400'
-              : 'hover:bg-gray-100 text-gray-600'
-              }`}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
-          {loading && (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <Loader2 className="w-12 h-12 animate-spin text-red-600 mx-auto mb-4" />
-                <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
-                  Loading thông tin...
-                </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'var(--primary-soft)' }}>
+                <Film className="w-5 h-5" style={{ color: 'var(--primary)' }} />
               </div>
+              <h2 className={`text-lg font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                {t('roomDetail.title')}
+              </h2>
             </div>
-          )}
+            <button
+              onClick={onClose}
+              className={`p-2 rounded-lg transition-colors ${
+                isDark
+                  ? 'hover:bg-[#2e2e38] text-gray-400'
+                  : isModern
+                    ? 'hover:bg-[rgba(99,102,241,0.1)] text-gray-400'
+                    : 'hover:bg-gray-100 text-gray-600'
+              }`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
 
-          {error && (
-            <div className={`p-4 rounded-lg border flex items-center ${theme === 'dark'
-              ? 'bg-red-900/40 border-red-500/50 text-red-100'
-              : 'bg-red-50 border-red-200 text-red-800'
+          {/* Content */}
+          <div className="px-6 py-5">
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" style={{ color: 'var(--primary)' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                    {t('common.loading')}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className={`p-4 rounded-lg border ${
+                isDark || isModern
+                  ? 'bg-red-900/20 border-red-500/30'
+                  : 'bg-red-50 border-red-200'
               }`}>
-              <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-              <span className="text-sm font-medium">{error}</span>
-            </div>
-          )}
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                  <span className={`text-sm font-medium ${isDark || isModern ? 'text-red-200' : 'text-red-800'}`}>
+                    {error}
+                  </span>
+                </div>
+              </div>
+            )}
 
-          {!loading && !error && room && (
-            <div className="space-y-6">
-              {/* Room Info Card */}
-              <div className={`p-6 rounded-lg border ${theme === 'dark'
-                ? 'bg-gray-800 border-gray-700'
-                : 'bg-gray-50 border-gray-200'
-                }`}>
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center">
-                    <Film className="w-8 h-8 text-white" />
+            {!loading && !error && room && (
+              <div className="space-y-5">
+                {/* Room Number */}
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'var(--primary)' }}>
+                    <Film className="w-7 h-7 text-black" />
                   </div>
                   <div>
-                    <h3 className={`text-2xl font-black mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>
-                      {room.auditoriumNumber}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${true
-                      ? theme === 'dark'
-                        ? 'bg-green-900/40 text-green-400 border-green-700'
-                        : 'bg-green-50 text-green-700 border-green-300'
-                      : theme === 'dark'
-                        ? 'bg-yellow-900/40 text-yellow-400 border-yellow-700'
-                        : 'bg-yellow-50 text-yellow-700 border-yellow-300'
-                      }`}>
-                      Hoạt động
-                    </span>
-                  </div>
-                </div>
-
-                {/* Details */}
-                <div className="space-y-4">
-                  <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-                    }`}>
-                    <div className="flex items-center gap-3">
-                      <Users className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-500' : 'text-blue-600'
-                        }`} />
-                      <div>
-                        <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                          }`}>
-                          Capacity
-                        </p>
-                        <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                          }`}>
-                          {room.totalSeats} ghế
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {true && (
-                    <div className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'
-                      }`}>
-                      <div className="flex items-center gap-3">
-                        <Activity className={`w-5 h-5 ${theme === 'dark' ? 'text-white0' : 'text-white/90'
-                          }`} />
-                        <div>
-                          <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                            }`}>
-                            Status
-                          </p>
-                          <p className={theme === 'dark' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'}>
-                            Hoạt động
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Room ID (for reference) */}
-              {room.auditoriumId && (
-                <div className={`p-3 rounded-lg border ${theme === 'dark'
-                  ? 'bg-gray-800 border-gray-700'
-                  : 'bg-gray-50 border-gray-200'
-                  }`}>
-                  <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-                    }`}>
-                    Room ID
-                  </p>
-                  <p className={`text-xs font-mono ${theme === 'dark' ? 'text-gray-500' : 'text-gray-500'
-                    }`}>
-                    {room.auditoriumId}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className={`flex justify-between gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-800' : 'border-gray-200'
-          }`}>
-          <button
-            onClick={handleCreateShowtime}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'modern'
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 hover:from-indigo-500 hover:to-purple-500 hover:opacity-100 hover:shadow-[0_0_10px_rgba(129,140,248,0.3)] hover:-translate-y-0.5 shadow-lg shadow-indigo-500/10 border-none text-white transition-all border border-indigo-500/30 shadow-md text-white'
-              : 'bg-red-600 hover:bg-red-700 text-white'
-              }`}
-          >
-            <Plus className="w-4 h-4" />
-            Create Auditorium
-          </button>
-          <button
-            onClick={onClose}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark'
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-              }`}
-          >
-            Đóng
-          </button>
-        </div>
-      </div>
-
-      {/* Movie Format Selection Modal */}
-      {isMovieFormatModalOpen && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => {
-              setIsMovieFormatModalOpen(false);
-              setSelectedFormat(null);
-            }}
-          />
-
-          {/* Modal */}
-          <div
-            className={`relative w-full max-w-3xl max-h-[90vh] rounded-xl border shadow-2xl transition-all flex flex-col ${theme === 'dark'
-              ? 'bg-gray-900 border-gray-800'
-              : theme === 'modern'
-                ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20 shadow-sm'
-                : 'bg-white border-gray-200'
-              }`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-              }`}>
-              <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                }`}>
-                Select Movie Format
-              </h2>
-              <button
-                onClick={() => {
-                  setIsMovieFormatModalOpen(false);
-                  setSelectedFormat(null);
-                }}
-                className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-                  ? 'hover:bg-gray-800 text-gray-400'
-                  : theme === 'modern'
-                    ? 'hover:bg-indigo-500/10 text-white font-medium'
-                    : 'hover:bg-gray-100 text-gray-600'
-                  }`}
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {formatsLoading && (
-                <div className="flex items-center justify-center py-12">
-                  <div className="text-center">
-                    <Loader2 className={`w-12 h-12 animate-spin mx-auto mb-4 ${theme === 'modern' ? 'text-white/60' : 'text-red-600'
-                      }`} />
-                    <p className={theme === 'dark' || theme === 'modern' ? 'text-gray-400' : 'text-gray-600'}>
-                      Loading list định dạng...
+                    <p className="text-2xl font-extrabold" style={{ color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}>
+                      {room.auditoriumNumber || t('roomDetail.room')}
+                    </p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {(room as any).cinemaName || t('roomDetail.room')}
                     </p>
                   </div>
                 </div>
-              )}
 
-              {formatsError && (
-                <div className={`p-4 rounded-lg border flex items-center ${theme === 'dark'
-                  ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                  : theme === 'modern'
-                    ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                    : 'bg-red-50 border-red-200 text-red-800'
+                {/* Stats */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className={`p-4 rounded-xl border ${
+                    isDark
+                      ? 'bg-[#1a1a20] border-[#2e2e38]'
+                      : isModern
+                        ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)]'
+                        : 'bg-gray-50 border-gray-200'
                   }`}>
-                  <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-                  <span className="text-sm font-medium">{formatsError}</span>
-                </div>
-              )}
+                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>
+                      {t('roomDetail.totalSeats')}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5" style={{ color: 'var(--primary)' }} />
+                      <span className="text-2xl font-extrabold" style={{ color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}>
+                        {room.totalSeats || 0}
+                      </span>
+                    </div>
+                  </div>
 
-              {!formatsLoading && !formatsError && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {movieFormats.map((format) => (
-                    <button
-                      key={format.formatId}
-                      onClick={() => handleFormatSelect(format)}
-                      className={`p-4 rounded-lg border text-left transition-all ${selectedFormat?.formatId === format.formatId
-                        ? theme === 'modern'
-                          ? 'border-indigo-500/30 text-white shadow-md bg-white/[0.08] backdrop-blur-md shadow-lg'
-                          : 'border-red-600 bg-red-50 shadow-lg'
-                        : theme === 'dark'
-                          ? 'bg-gray-800 border-gray-700 hover:border-gray-600'
-                          : theme === 'modern'
-                            ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm hover:border-indigo-500/30 text-white shadow-md/50'
-                            : 'bg-white border-gray-200 hover:border-red-300'
-                        }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className={`font-bold text-lg ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                              }`}>
-                              {format.formatName}
-                            </h3>
-                            {selectedFormat?.formatId === format.formatId && (
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${theme === 'modern'
-                                ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white shadow-md text-white'
-                                : 'bg-red-600'
-                                }`}>
-                                <Check className="w-4 h-4 text-white" />
-                              </div>
-                            )}
-                          </div>
-                          <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                            }`}>
-                            {format.formatDescription}
-                          </p>
-                          <p className={`text-lg font-black ${theme === 'modern'
-                            ? 'text-white font-medium'
-                            : 'text-red-600'
-                            }`}>
-                            {formatPrice(format.movieFormatPrice)}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                  <div className={`p-4 rounded-xl border ${
+                    isDark
+                      ? 'bg-[#1a1a20] border-[#2e2e38]'
+                      : isModern
+                        ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)]'
+                        : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <p className="text-xs font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>
+                      {t('roomDetail.format')}
+                    </p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {room.formatInfos?.length ? room.formatInfos.map((f: any, i: number) => (
+                        <span key={i} className="px-2.5 py-1 rounded text-xs font-bold" style={{
+                          background: isModern ? 'rgba(99,102,241,0.1)' : 'rgba(255,138,0,0.1)',
+                          color: isModern ? '#818cf8' : 'var(--primary)',
+                          border: `1px solid ${isModern ? 'rgba(99,102,241,0.15)' : 'rgba(255,138,0,0.15)'}`,
+                        }}>
+                          {f.formatName}
+                        </span>
+                      )) : (
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('roomDetail.noFormat')}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              )}
 
-              {!formatsLoading && !formatsError && movieFormats.length === 0 && (
-                <div className="text-center py-12">
-                  <Film className={`w-12 h-12 mx-auto mb-4 ${theme === 'dark' ? 'text-gray-600' : theme === 'modern' ? 'text-white/90' : 'text-gray-400'
-                    }`} />
-                  <p className={theme === 'dark' || theme === 'modern' ? 'text-gray-400' : 'text-gray-500'}>
-                    No movie formats
-                  </p>
-                </div>
-              )}
-            </div>
+                {/* Room ID reference */}
+                {room.auditoriumId && (
+                  <div className={`p-3 rounded-lg border ${
+                    isDark
+                      ? 'bg-[#1a1a20] border-[#2e2e38]'
+                      : isModern
+                        ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)]'
+                        : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <p className="text-xs mb-0.5" style={{ color: 'var(--text-muted)' }}>{t('roomDetail.roomId')}</p>
+                    <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{room.auditoriumId}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-            {/* Footer */}
-            <div className={`flex justify-end gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-              }`}>
-              <button
-                onClick={() => {
-                  setIsMovieFormatModalOpen(false);
-                  setSelectedFormat(null);
-                }}
-                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${theme === 'dark'
-                  ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-                  : theme === 'modern'
-                    ? 'bg-[#1e293b]/30 backdrop-blur-xl hover:bg-slate-600/50 text-white font-medium'
-                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-                  }`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmFormat}
-                disabled={!selectedFormat}
-                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${!selectedFormat
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
-                  } ${theme === 'modern'
-                    ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 hover:from-indigo-500 hover:to-purple-500 hover:opacity-100 hover:shadow-[0_0_10px_rgba(129,140,248,0.3)] hover:-translate-y-0.5 shadow-lg shadow-indigo-500/10 border-none text-white transition-all border border-indigo-500/30 shadow-md text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
-                  }`}
-              >
-                Xác nhận
-              </button>
-            </div>
+          {/* Footer */}
+          <div className={`flex justify-between gap-3 px-6 py-4 border-t ${
+            isDark ? 'border-[#2e2e38]' : isModern ? 'border-[rgba(99,102,241,0.1)]' : 'border-gray-200'
+          }`}>
+            <button
+              onClick={() => setIsEditAuditoriumModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all active:scale-[0.97]"
+              style={{
+                background: 'var(--primary)',
+                color: '#000',
+              }}
+            >
+              <Pencil className="w-4 h-4" />
+              {t('roomDetail.editRoom')}
+            </button>
+            <button
+              onClick={onClose}
+              className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                isDark
+                  ? 'bg-[#2e2e38] hover:bg-[#3e3e4e] text-gray-300'
+                  : isModern
+                    ? 'bg-[rgba(30,41,59,0.5)] hover:bg-[rgba(30,41,59,0.7)] text-gray-300 backdrop-blur-sm border border-[rgba(99,102,241,0.1)]'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+            >
+              {t('common.close')}
+            </button>
           </div>
         </div>
+      </div>
+
+      {/* Edit Auditorium Modal */}
+      {isEditAuditoriumModalOpen && effectiveCinemaId && (
+        <CreateAuditoriumModal
+          cinemaId={effectiveCinemaId}
+          isOpen={isEditAuditoriumModalOpen}
+          onClose={() => {
+            setIsEditAuditoriumModalOpen(false);
+            fetchRoomDetail(); // Refresh after edit
+          }}
+          onSuccess={() => {
+            setIsEditAuditoriumModalOpen(false);
+            fetchRoomDetail();
+          }}
+          editAuditoriumId={roomId}
+        />
       )}
-    </div>
+    </>
   );
 };
 

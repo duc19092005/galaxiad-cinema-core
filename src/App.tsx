@@ -1,7 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CinemaProvider } from './contexts/CinemaContext';
 import { Toaster } from 'react-hot-toast';
+import PageTransition from './components/PageTransition';
 import RegisterForm from './features/auth/RegisterForm';
 import LoginForm from './features/auth/LoginForm';
 import GoogleCallback from './features/auth/GoogleCallback';
@@ -28,6 +30,46 @@ import HelpPage from './features/public/HelpPage';
 import ShiftNotificationListener from './components/ShiftNotificationListener';
 import ChatBot from './components/ChatBot';
 
+function AppRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Route root - check token và redirect */}
+        <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+
+        <Route path="/register" element={<PageTransition><RegisterForm /></PageTransition>} />
+        <Route path="/login" element={<PageTransition><LoginForm /></PageTransition>} />
+        <Route path="/auth/google-callback" element={<PageTransition><GoogleCallback /></PageTransition>} />
+
+        {/* Protected Routes */}
+        <Route path="/role-selection" element={<ProtectedRoute><PageTransition><RoleSelectionPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
+        <Route path="/showtimes" element={<PageTransition><ShowtimesPage /></PageTransition>} />
+        <Route path="/theaters" element={<PageTransition><TheatersPage /></PageTransition>} />
+        <Route path="/offers" element={<PageTransition><OffersPage /></PageTransition>} />
+        <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><PageTransition><ScheduleManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/movie/:movieId" element={<PageTransition><MovieDetailPage /></PageTransition>} />
+        <Route path="/booking/:scheduleId" element={<PageTransition><BookingPage /></PageTransition>} />
+        <Route path="/booking/success" element={<PageTransition><BookingSuccessPage /></PageTransition>} />
+        <Route path="/booking/failed" element={<PageTransition><BookingFailedPage /></PageTransition>} />
+        <Route path="/account" element={<ProtectedRoute><PageTransition><AccountPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/services" element={<PageTransition><ServicesPage /></PageTransition>} />
+        <Route path="/help" element={<PageTransition><HelpPage /></PageTransition>} />
+
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -35,37 +77,7 @@ function App() {
         <Toaster position="top-right" />
         <Router>
           <ShiftNotificationListener />
-          <Routes>
-          {/* Route root - check token và redirect */}
-          <Route path="/" element={<HomePage />} />
-
-          <Route path="/register" element={<RegisterForm />} />
-          <Route path="/login" element={<LoginForm />} />
-          <Route path="/auth/google-callback" element={<GoogleCallback />} />
-
-          {/* Protected Routes */}
-          <Route path="/role-selection" element={<ProtectedRoute><RoleSelectionPage /></ProtectedRoute>} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/showtimes" element={<ShowtimesPage />} />
-          <Route path="/theaters" element={<TheatersPage />} />
-          <Route path="/offers" element={<OffersPage />} />
-          <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><CashierPage /></ProtectedRoute>} />
-          <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
-          <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><AdminPage /></ProtectedRoute>} />
-          <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><MovieManagerPage /></ProtectedRoute>} />
-          <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><TheaterManagerPage /></ProtectedRoute>} />
-          <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><FacilitiesManagerPage /></ProtectedRoute>} />
-          <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><ScheduleManagerPage /></ProtectedRoute>} />
-          <Route path="/movie/:movieId" element={<MovieDetailPage />} />
-          <Route path="/booking/:scheduleId" element={<BookingPage />} />
-          <Route path="/booking/success" element={<BookingSuccessPage />} />
-          <Route path="/booking/failed" element={<BookingFailedPage />} />
-          <Route path="/account" element={<ProtectedRoute><AccountPage /></ProtectedRoute>} />
-          <Route path="/services" element={<ServicesPage />} />
-          <Route path="/help" element={<HelpPage />} />
-
-          <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
           <ChatBot />
         </Router>
       </CinemaProvider>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChevronDown, AlertCircle, Loader2,
+  ChevronDown, ChevronLeft, ChevronRight, AlertCircle, Loader2,
   Sparkles, Play, Ticket,
   Search,
 } from 'lucide-react';
@@ -408,26 +408,48 @@ const HomePage: React.FC = () => {
           </div>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-          gap: 'clamp(16px, 4vw, 40px)',
-        }}>
-          {TRENDING_DATA.map((item, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
-              <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                <img src={TRENDING_IMGS[i]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
-                <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
-                  <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8 }}>{item.title}</h3>
-                  <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
-                  <button className="btn-primary cta-glow" style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                    <Ticket size={14} /> Book Now
-                  </button>
+        <div className="trending-carousel-wrapper" style={{ position: 'relative' }}>
+          {/* Prev Arrow */}
+          <button
+            onClick={() => { const el = document.querySelector('.trending-carousel'); if (el) el.scrollBy({ left: -320, behavior: 'smooth' }); }}
+            className="carousel-nav carousel-nav-prev"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={20} />
+          </button>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+            gap: 'clamp(16px, 4vw, 40px)',
+          }}
+            className="trending-carousel"
+          >
+            {TRENDING_DATA.map((item, i) => (
+              <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
+                  <img src={TRENDING_IMGS[i]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
+                  <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
+                    <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8 }}>{item.title}</h3>
+                    <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
+                    <button className="btn-primary cta-glow" style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      <Ticket size={14} /> Book Now
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
+          {/* Next Arrow */}
+          <button
+            onClick={() => { const el = document.querySelector('.trending-carousel'); if (el) el.scrollBy({ left: 320, behavior: 'smooth' }); }}
+            className="carousel-nav carousel-nav-next"
+            aria-label="Next"
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       </section>
 
@@ -455,30 +477,50 @@ const HomePage: React.FC = () => {
             <p style={{ color: 'var(--danger)', marginTop: 'var(--space-16)' }}>{error}</p>
           </div>
         ) : (
-          <div className="movie-grid">
-            {nowShowing.map(movie => (
-              <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
-                onClick={() => navigate(`/movie/${movie.movieId}`)}>
-                <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
-                  <img
-                    src={movie.moviePosterURL || PLACEHOLDER_POSTER}
-                    alt={movie.movieName}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                    loading="lazy"
-                  />
-                </div>
-                <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
-                  <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
-                      <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
-                        {f}
-                      </span>
-                    ))}
+          <div className="carousel-nav-wrapper" style={{ position: 'relative' }}>
+            {/* Prev Arrow */}
+            <button
+              onClick={() => { const el = document.querySelector('.now-showing-carousel'); if (el) el.scrollBy({ left: -280, behavior: 'smooth' }); }}
+              className="carousel-nav carousel-nav-prev"
+              aria-label="Previous"
+            >
+              <ChevronLeft size={20} />
+            </button>
+
+            <div className="movie-grid now-showing-carousel">
+              {nowShowing.map(movie => (
+                <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
+                  onClick={() => navigate(`/movie/${movie.movieId}`)}>
+                  <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
+                    <img
+                      src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                      alt={movie.movieName}
+                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      loading="lazy"
+                    />
+                  </div>
+                  <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
+                    <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
+                        <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
+                          {f}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Next Arrow */}
+            <button
+              onClick={() => { const el = document.querySelector('.now-showing-carousel'); if (el) el.scrollBy({ left: 280, behavior: 'smooth' }); }}
+              className="carousel-nav carousel-nav-next"
+              aria-label="Next"
+            >
+              <ChevronRight size={20} />
+            </button>
           </div>
         )}
       </section>

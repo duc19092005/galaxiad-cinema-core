@@ -5,8 +5,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle, Loader2,
-  LayoutDashboard, Building2, BarChart3,
+  LayoutDashboard, Building2, BarChart3, Monitor,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { facilitiesApi, type Cinema } from '../../api/facilitiesApi';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
@@ -15,7 +16,8 @@ import { useCinema } from '../../contexts/CinemaContext';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
-import CinemaManagement from './components/CinemaManagement';
+
+import AuditoriumListView from './components/AuditoriumListView';
 import SeatReport from './components/SeatReport';
 import LogoutModal from '../../components/LogoutModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
@@ -24,7 +26,7 @@ import Cookies from 'js-cookie';
 const FacilitiesManagerPage: React.FC = () => {
   const navigate = useNavigate();
 
-  const { managedCinemas, activeCinemaId, loading: cinemaContextLoading } = useCinema();
+  const { managedCinemas, activeCinemaId, activeCinemaName, setActiveCinemaId, loading: cinemaContextLoading } = useCinema();
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
@@ -36,6 +38,10 @@ const FacilitiesManagerPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const storedUser = localStorage.getItem('user_info');
+  const userRoles = storedUser ? JSON.parse(storedUser).roles || [] : [];
+  const { t } = useTranslation();
+  const isAdmin = userRoles.includes('Admin');
 
   useEffect(() => {
     const handleClickOutside = (_event: MouseEvent) => {
@@ -93,7 +99,7 @@ const FacilitiesManagerPage: React.FC = () => {
     {
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-        { id: 'cinemas', label: 'Cinemas', icon: <Building2 size={18} /> },
+        { id: 'auditoriums', label: 'Auditoriums', icon: <Monitor size={18} /> },
         { id: 'seat-reports', label: 'Seat Reports', icon: <BarChart3 size={18} /> },
       ],
     },
@@ -117,7 +123,7 @@ const FacilitiesManagerPage: React.FC = () => {
           <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
           <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '12px 0 4px' }}>Access Restricted</h2>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 400 }}>
-            Tài khoản của bạn chưa được chỉ định quản lý Rạp phim nào. Vui lòng liên hệ Admin
+            {t('facilitiesManager.noCinemaAssigned')}
           </p>
         </div>
       );
@@ -134,7 +140,17 @@ const FacilitiesManagerPage: React.FC = () => {
 
     switch (activeTab) {
       case 'dashboard': return <ManagementDashboard role="facilities" />;
-      case 'cinemas': return <CinemaManagement cinemas={cinemas} loading={loading} error={error} onRefresh={fetchCinemas} />;
+      case 'auditoriums':
+        return activeCinemaId ? (
+          <AuditoriumListView cinemaId={activeCinemaId} cinemaName={activeCinemaName || ''} />
+        ) : (
+          <div className="state-center" style={{ minHeight: 160 }}>
+            <Building2 size={40} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
+            <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
+              {isAdmin ? 'Please select a cinema from the top-right selector.' : 'No cinema assigned. Please contact an admin.'}
+            </p>
+          </div>
+        );
       case 'seat-reports': return <SeatReport />;
       default: return <ManagementDashboard role="facilities" />;
     }
@@ -155,6 +171,12 @@ const FacilitiesManagerPage: React.FC = () => {
       <ManagementChrome
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((open) => !open)}
+        cinemaSelector={isAdmin ? {
+          cinemas,
+          activeCinemaId,
+          activeCinemaName,
+          onChange: (id) => setActiveCinemaId(id),
+        } : undefined}
       />
 
       <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>

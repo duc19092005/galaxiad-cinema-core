@@ -586,7 +586,6 @@ tr:hover td {
   margin: 0 auto;
   padding: 24px;
 }
-
 .management-floating-controls {
   position: fixed;
   top: 18px;
@@ -907,4 +906,37 @@ tr:hover td {
     grid-template-columns: 1fr;
     gap: 12px;
   }
+}
+
+.management-cinema-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(11, 19, 38, 0.78);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 138, 0, 0.15);
+  border-radius: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.management-cinema-dropdown {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 2px;
+  cursor: pointer;
+  outline: none;
+  min-width: 110px;
+  max-width: 160px;
+}
+
+.management-cinema-dropdown option {
+  background: #0b1326;
+  color: #fff;
+  font-size: 11px;
+  padding: 4px;
 }

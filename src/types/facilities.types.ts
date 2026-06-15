@@ -11,9 +11,12 @@ export interface Cinema {
     cinemaHotlineNumber: string;
     cinemaLocation: string;
     cinemaCity?: string;
+    latitude?: number;
+    longitude?: number;
     totalRooms: number;
-    managerId?: string | null;
-    managerName?: string | null;
+    theaterManagerId?: string | null;
+    theaterManagerName?: string | null;
+    facilitiesManagerName?: string | null;
 }
 
 export interface CreateCinemaRequest {
@@ -83,9 +86,41 @@ export interface UpdateAuditoriumRequest {
 // MOVIE FORMAT TYPES
 // =============================================
 
+// =============================================
+// MOVIE FORMAT TYPES
+// =============================================
+
 export interface MovieFormat {
     formatId: string;
     formatName: string;
     formatDescription: string;
     movieFormatPrice: number;
+}
+
+// =============================================
+// DEPARTMENT (PHÒNG BAN THU NGÂN) TYPES
+// =============================================
+
+export type CashierDepartmentType = 'TicketPOS' | 'FoodPOS';
+
+export interface Department {
+    departmentId: string;
+    cinemaId: string;
+    cinemaName: string;
+    departmentName: string;
+    departmentType: CashierDepartmentType;
+    sharedUserId: string | null;
+    sharedUserEmail: string | null;
+    isActive: boolean;
+}
+
+export interface CreateDepartmentRequest {
+    cinemaId: string;
+    departmentName: string;
+    departmentType: CashierDepartmentType;
+}
+
+export interface UpdateDepartmentRequest {
+    departmentName?: string;
+    isActive?: boolean;
 }

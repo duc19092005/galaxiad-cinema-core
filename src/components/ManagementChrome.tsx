@@ -1,13 +1,22 @@
 import React from 'react';
-import { Menu } from 'lucide-react';
+import { Menu, Building2 } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
+import type { Cinema } from '../api/facilitiesApi';
+
+interface CinemaSelectorOption {
+  cinemas: Cinema[];
+  activeCinemaId: string | null;
+  activeCinemaName: string | null;
+  onChange: (id: string | null) => void;
+}
 
 interface ManagementChromeProps {
   sidebarOpen: boolean;
   onSidebarToggle: () => void;
+  cinemaSelector?: CinemaSelectorOption;
 }
 
-const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSidebarToggle }) => (
+const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSidebarToggle, cinemaSelector }) => (
   <>
     {/* Mobile-only toggle button at the top-left when the sidebar is closed */}
     {!sidebarOpen && (
@@ -47,11 +56,27 @@ const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSide
       </div>
     )}
 
-    {/* Floating Controls on the top-right containing the language switcher */}
+    {/* Floating Controls on the top-right */}
     <div className="management-floating-controls">
       <div className="management-language-control">
         <LanguageSwitcher />
       </div>
+      {/* Cinema Selector for Admin */}
+      {cinemaSelector && (
+        <div className="management-cinema-selector">
+          <Building2 size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <select
+            value={cinemaSelector.activeCinemaId || ''}
+            onChange={e => cinemaSelector.onChange(e.target.value || null)}
+            className="management-cinema-dropdown"
+          >
+            <option value="">-- Chọn Rạp --</option>
+            {cinemaSelector.cinemas.map(c => (
+              <option key={c.cinemaId} value={c.cinemaId}>{c.cinemaName}</option>
+            ))}
+          </select>
+        </div>
+      )}
     </div>
   </>
 );

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Loader2, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Grid3x3, Move, DoorOpen, Square } from 'lucide-react';
+import { X, Plus, Loader2, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Grid3x3, DoorOpen, Square } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { facilitiesApi, type MovieFormat, type SeatPosition } from '../../../api/facilitiesApi';
 import { useTranslation } from 'react-i18next';
@@ -11,11 +11,12 @@ interface CreateAuditoriumModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  editAuditoriumId?: string;
 }
 
 type Step = 'format' | 'seats';
 
-const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId, isOpen, onClose, onSuccess }) => {
+const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId, isOpen, onClose, onSuccess, editAuditoriumId }) => {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<Step>('format');
@@ -84,14 +85,109 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Update grid size when room size changes
+  // Track when we are loading existing data for edit mode
+  const isLoadingExisting = useRef(false);
+
+  // Load existing auditorium data for edit mode
+  useEffect(() => {
+    if (isOpen && editAuditoriumId) {
+      loadExistingAuditorium(editAuditoriumId);
+    }
+  }, [isOpen, editAuditoriumId]);
+
+  const loadExistingAuditorium = async (auditoriumId: string) => {
+    isLoadingExisting.current = true;
+    try {
+      const res = await facilitiesApi.getAuditoriumDetail(auditoriumId);
+      const data = res.data as any;
+      if (data) {
+        setAuditoriumNumber(data.auditoriumNumber || '');
+
+        // Infer grid dimensions from seat data
+        if (data.seatsInfos && data.seatsInfos.length > 0) {
+          const seatsArray = data.seatsInfos as any[];
+          let maxCol = 0;
+          let maxRow = 0;
+
+          // First pass: determine actual col/row count
+          seatsArray.forEach((s: any) => {
+            const col = s.colIndex;
+            const row = s.rowIndex;
+            if (typeof col === 'number' && col >= 0) maxCol = Math.max(maxCol, col);
+            if (typeof row === 'number' && row >= 0) maxRow = Math.max(maxRow, row);
+          });
+
+          // Also check exits/aisles for grid size
+          if (data.exitsInfos) {
+            (data.exitsInfos as any[]).forEach((e: any) => {
+              maxCol = Math.max(maxCol, (e.colIndex ?? 0) + (e.width ?? 1) - 1);
+              maxRow = Math.max(maxRow, (e.rowIndex ?? 0) + (e.height ?? 1) - 1);
+            });
+          }
+          if (data.aislesInfos) {
+            (data.aislesInfos as any[]).forEach((a: any) => {
+              maxCol = Math.max(maxCol, (a.colIndex ?? 0) + (a.width ?? 1) - 1);
+              maxRow = Math.max(maxRow, (a.rowIndex ?? 0) + (a.height ?? 1) - 1);
+            });
+          }
+
+          // Infer grid cols/rows (add 3 for padding)
+          const inferredCols = Math.max(maxCol + 3, 5);
+          const inferredRows = Math.max(maxRow + 3, 5);
+
+          setRoomCols(inferredCols);
+          setRoomRows(inferredRows);
+
+          // Load seats with snapped positions
+          const recalculatedSeats = seatsArray.map((s: any) => ({
+            seatNumber: s.seatNumber ?? `${String.fromCharCode(65 + (s.rowIndex ?? 0))}${(s.colIndex ?? 0) + 1}`,
+            coordX: (s.colIndex ?? 0) * cellSize.width,
+            coordY: (s.rowIndex ?? 0) * cellSize.height,
+            colIndex: typeof s.colIndex === 'number' ? s.colIndex : 0,
+            rowIndex: typeof s.rowIndex === 'number' ? s.rowIndex : 0,
+          }));
+          setSeats(recalculatedSeats);
+        }
+
+        // Load format info
+        if (data.formatInfos && data.formatInfos.length > 0) {
+          const formatId = data.formatInfos[0].formatId;
+          const formatsRes = await facilitiesApi.getMovieFormats();
+          const formats = formatsRes.data || [];
+          const matched = formats.find((f: any) => f.formatId === formatId);
+          if (matched) {
+            setSelectedFormat(matched);
+            setCurrentStep('seats');
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load auditorium for edit:', err);
+    } finally {
+      isLoadingExisting.current = false;
+    }
+  };
+
+  // Update gridSize state when roomCols/roomRows change
   useEffect(() => {
     setGridSize({ cols: roomCols, rows: roomRows });
-    // Clear seats, exits and aisles when grid size changes
-    setSeats([]);
-    setExits([]);
-    setAisles([]);
   }, [roomCols, roomRows]);
+
+  // Only clear seats on grid change when NOT in edit mode loading
+  // and only when the grid actually resizes due to user input
+  useEffect(() => {
+    if (!isLoadingExisting.current) {
+      setExits([]);
+      setAisles([]);
+    }
+  }, [roomCols, roomRows]);
+
+  // Fetch movie formats
+  useEffect(() => {
+    if (isOpen && currentStep === 'format') {
+      fetchMovieFormats();
+    }
+  }, [isOpen, currentStep]);
 
   // Fetch movie formats
   useEffect(() => {
@@ -103,7 +199,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   // Reset when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setCurrentStep('format');
+      setCurrentStep(editAuditoriumId ? 'seats' : 'format');
       setSelectedFormat(null);
       setAuditoriumNumber('');
       setRoomCols(10);
@@ -679,33 +775,38 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     setCreateLoading(true);
 
     try {
-      const requestData = {
-        auditoriumNumber: auditoriumNumber.trim(),
-        movieFormatId: [selectedFormat.formatId],
-        cinemaId,
-        // Backend often expects singular or plural, or simply 'seats'
-        // We provide the official type name and a common fallback
-        addReqSeatsAuditoriumDto: seats,
-        seats: seats // Fallback just in case
-      };
-
-      console.log('--- CREATING AUDITORIUM PAYLOAD ---');
-      console.log('Data:', JSON.stringify(requestData, null, 2));
-      console.log('Seats count:', seats.length);
-      
-      const response = await facilitiesApi.createAuditorium(requestData as any);
-      console.log('Create auditorium response:', response);
-
-      if (response.isSuccess) {
-        setCreateSuccess(true);
-        if (onSuccess) {
-          await onSuccess();
+      if (editAuditoriumId) {
+        // UPDATE mode
+        const requestData = {
+          auditoriumNumber: auditoriumNumber.trim(),
+          addReqSeatsAuditoriumDto: seats,
+          seats: seats,
+        };
+        const response = await facilitiesApi.updateAuditorium(editAuditoriumId, requestData as any);
+        if (response.isSuccess) {
+          setCreateSuccess(true);
+          if (onSuccess) await onSuccess();
+          setTimeout(() => onClose(), 1500);
+        } else {
+          setCreateError(response.message || 'Failed to update auditorium.');
         }
-        setTimeout(() => {
-          onClose();
-        }, 1500);
       } else {
-        setCreateError(response.message || 'Failed to create auditorium. Please try again.');
+        // CREATE mode
+        const requestData = {
+          auditoriumNumber: auditoriumNumber.trim(),
+          movieFormatId: [selectedFormat.formatId],
+          cinemaId,
+          addReqSeatsAuditoriumDto: seats,
+          seats: seats,
+        };
+        const response = await facilitiesApi.createAuditorium(requestData as any);
+        if (response.isSuccess) {
+          setCreateSuccess(true);
+          if (onSuccess) await onSuccess();
+          setTimeout(() => onClose(), 1500);
+        } else {
+          setCreateError(response.message || 'Failed to create auditorium.');
+        }
       }
     } catch (err) {
       console.error('Error creating auditorium:', err);
@@ -729,6 +830,9 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
 
   if (!isOpen) return null;
 
+  const isModern = theme === 'modern';
+  const isDark = theme === 'dark';
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       {/* Overlay */}
@@ -739,148 +843,100 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
 
       {/* Modal */}
       <div
-        className={`relative w-full max-w-4xl max-h-[90vh] rounded-xl border shadow-2xl transition-all flex flex-col ${theme === 'dark'
-          ? 'bg-gray-900 border-gray-800'
-          : theme === 'modern'
-            ? 'bg-[#0f172a]/40 backdrop-blur-2xl border-indigo-500/20 shadow-sm'
-            : 'bg-white border-gray-200'
-          }`}
+        className={`relative w-full max-w-6xl max-h-[95vh] rounded-xl border shadow-2xl transition-all flex flex-col ${
+          isModern
+            ? 'bg-[#0b1326]/95 backdrop-blur-2xl border-outline-variant/40'
+            : isDark
+              ? 'bg-cinema-surface border-cinema-border/30'
+              : 'bg-white border-gray-200'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className={`flex items-center justify-between p-6 border-b ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-          }`}>
+        {/* ====== HEADER ====== */}
+        <div className={`flex items-center justify-between px-6 py-4 border-b ${
+          isDark ? 'border-cinema-border/30' : isModern ? 'border-outline-variant/20' : 'border-gray-200'
+        }`}>
           <div>
-            <h2 className={`text-2xl font-black ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-              }`}>
-              {t('createAuditorium.title')}
+            <h2 className={`text-xl font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+              {currentStep === 'format' ? t('createAuditorium.title') : editAuditoriumId ? 'Chỉnh Sửa Phòng Chiếu' : 'Tạo Phòng Chiếu'}
             </h2>
-            <div className="flex items-center gap-2 mt-2">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentStep === 'format'
-                ? theme === 'modern' ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white text-white shadow-md' : 'bg-red-600 text-white'
-                : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                1
-              </div>
-              <div className={`h-1 w-8 ${currentStep === 'seats'
-                ? theme === 'modern' ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white shadow-md text-white' : 'bg-red-600'
-                : theme === 'dark' ? 'bg-gray-700' : 'bg-gray-300'
-                }`} />
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${currentStep === 'seats'
-                ? theme === 'modern' ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white text-white shadow-md' : 'bg-red-600 text-white'
-                : theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-300 text-gray-600'
-                }`}>
-                2
-              </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="text-[11px] text-on-surface-variant/60">Cinema Complexes</span>
+              <span className="text-[11px] text-on-surface-variant/60">›</span>
+              <span className="text-[11px] text-on-surface-variant/60">Quản Lý Cụm Rạp</span>
+              <span className="text-[11px] text-on-surface-variant/60">›</span>
+              <span className="text-[11px] text-primary">Tạo Phòng</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className={`p-2 rounded-lg transition-colors ${theme === 'dark'
-              ? 'hover:bg-gray-800 text-gray-400'
-              : theme === 'modern'
-                ? 'hover:bg-indigo-500/10 text-white font-medium'
-                : 'hover:bg-gray-100 text-gray-600'
-              }`}
+            className={`p-2 rounded-lg transition-colors ${
+              isDark || isModern ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-gray-100 text-gray-600'
+            }`}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
+        {/* ====== CONTENT ====== */}
         <div className="flex-1 overflow-y-auto p-6">
           {/* Success Message */}
           {createSuccess && (
-            <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark'
-              ? 'bg-green-900/40 border-green-500/50 text-green-100'
-              : theme === 'modern'
-                ? 'bg-green-900/40 border-green-500/50 text-green-100'
-                : 'bg-green-50 border-green-200 text-green-800'
-              }`}>
-              <CheckCircle className="w-5 h-5 mr-3 shrink-0 text-green-500" />
-              <span className="text-sm font-medium">Auditorium added successfully! Updating...</span>
+            <div className="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span className="text-sm text-emerald-300 font-medium">Auditorium added successfully! Updating...</span>
             </div>
           )}
-
-          {/* Error Message */}
           {createError && (
-            <div className={`mb-4 p-4 rounded-lg border flex items-center ${theme === 'dark'
-              ? 'bg-red-900/40 border-red-500/50 text-red-100'
-              : theme === 'modern'
-                ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                : 'bg-red-50 border-red-200 text-red-800'
-              }`}>
-              <AlertCircle className="w-5 h-5 mr-3 shrink-0 text-red-500" />
-              <span className="text-sm font-medium">{createError}</span>
+            <div className="mb-4 p-4 rounded-xl border border-rose-500/30 bg-rose-500/10 flex items-center gap-3">
+              <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+              <span className="text-sm text-rose-300">{createError}</span>
             </div>
           )}
 
-          {/* Step 1: Select Movie Format */}
+          {/* Step 1: Format Selection */}
           {currentStep === 'format' && (
             <div className="space-y-4">
-              <h3 className={`text-xl font-bold mb-4 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                }`}>
+              <h3 className={`text-lg font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
                 {t('createAuditorium.step1')}
               </h3>
-
-              {formatsLoading && (
+              {formatsLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className={`w-12 h-12 animate-spin ${theme === 'modern' ? 'text-white/60' : 'text-red-600'
-                    }`} />
+                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
                 </div>
-              )}
-
-              {formatsError && (
-                <div className={`p-4 rounded-lg border ${theme === 'dark'
-                  ? 'bg-red-900/40 border-red-500/50 text-red-100'
-                  : 'bg-red-50 border-red-200 text-red-800'
-                  }`}>
-                  {formatsError}
+              ) : formatsError ? (
+                <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-rose-400" />
+                  <span className="text-sm text-rose-300">{formatsError}</span>
+                  <button className="ml-auto px-3 py-1.5 text-xs rounded-lg bg-cinema-elevated border border-cinema-border/30 text-cinema-text" onClick={fetchMovieFormats}>Retry</button>
                 </div>
-              )}
-
-              {!formatsLoading && !formatsError && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {movieFormats.map((format) => (
                     <button
                       key={format.formatId}
                       onClick={() => handleFormatSelect(format)}
-                      className={`p-4 rounded-lg border text-left transition-all ${selectedFormat?.formatId === format.formatId
-                        ? theme === 'modern'
-                          ? 'border-indigo-500/30 text-white shadow-md bg-white/[0.08] backdrop-blur-md shadow-lg'
-                          : theme === 'dark'
-                            ? 'border-red-500 bg-red-900/30 shadow-lg'
-                            : 'border-red-600 bg-red-50 shadow-lg'
-                        : theme === 'dark'
-                          ? 'bg-gray-800 border-gray-700 hover:border-gray-600'
-                          : theme === 'modern'
-                            ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm hover:border-indigo-500/30 text-white shadow-md/50'
-                            : 'bg-white border-gray-200 hover:border-red-300'
-                        }`}
+                      className={`p-5 rounded-xl border text-left transition-all ${
+                        selectedFormat?.formatId === format.formatId
+                          ? 'border-primary-container bg-primary-container/15 shadow-lg'
+                          : `${isDark ? 'bg-gray-800 border-gray-700 hover:border-gray-600' : isModern ? 'bg-surface-container/30 border-outline-variant/30 hover:border-primary-container/50' : 'bg-white border-gray-200 hover:border-primary/50'}`
+                      }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className={`font-bold text-lg ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                              }`}>
-                              {format.formatName}
-                            </h4>
-                            {selectedFormat?.formatId === format.formatId && (
-                              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${theme === 'modern' ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white shadow-md text-white' : 'bg-red-600'
-                                }`}>
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              </div>
-                            )}
-                          </div>
-                          <p className={`text-sm mb-3 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                            }`}>
+                          <h4 className={`font-bold text-base mb-2 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                            {format.formatName}
+                          </h4>
+                          <p className={`text-xs mb-3 ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-600'}`}>
                             {format.formatDescription}
                           </p>
-                          <p className={`text-lg font-black ${theme === 'modern' ? 'text-white font-medium' : 'text-red-600'
-                            }`}>
+                          <p className="text-lg font-black text-primary-container">
                             {formatPrice(format.movieFormatPrice)}
                           </p>
                         </div>
+                        {selectedFormat?.formatId === format.formatId && (
+                          <CheckCircle className="w-5 h-5 text-primary-container shrink-0" />
+                        )}
                       </div>
                     </button>
                   ))}
@@ -889,468 +945,384 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
             </div>
           )}
 
-          {/* Step 2: Seats Layout & Exit Drawing */}
+          {/* Step 2: Seats Layout - Premium Layout */}
           {currentStep === 'seats' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-xl font-bold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                  }`}>
-                  {t('createAuditorium.step2')}
-                </h3>
-                {selectedFormat && (
-                  <div className={`px-3 py-1 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'modern' ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm' : 'bg-gray-50 border-gray-200'
-                    }`}>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                      }`}>
-                      Format: <span className={`font-bold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                        }`}>{selectedFormat.formatName}</span>
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Auditorium Number */}
-              <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'modern' ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm' : 'bg-gray-50 border-gray-200'
+            <div className="max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6">
+              
+              {/* ====== LEFT COLUMN (4/12) ====== */}
+              <div className="xl:col-span-4 space-y-6">
+                
+                {/* Room Info */}
+                <div className={`rounded-xl p-5 ${
+                  isModern 
+                    ? 'bg-surface-container/40 backdrop-blur-xl border border-outline-variant/30' 
+                    : isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
                 }`}>
-                <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                  }`}>
-                  Thông Tin Phòng Chiếu
-                </h4>
-                <div>
-                  <label className={`block text-sm font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                    }`}>
-                    Room Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={auditoriumNumber}
-                    onChange={(e) => setAuditoriumNumber(e.target.value)}
-                    required
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none transition-colors ${theme === 'modern' ? 'focus:border-indigo-500/30 text-white shadow-md' : 'focus:border-indigo-500/50 focus:shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-                      } ${theme === 'dark'
-                        ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500'
-                        : theme === 'modern'
-                          ? 'bg-white/[0.08] backdrop-blur-md border-indigo-500/20 shadow-sm text-white placeholder-slate-400/70'
-                          : 'bg-white border-gray-300 text-gray-900 dark:text-white modern:text-white placeholder-gray-400'
-                      }`}
-                    placeholder="e.g., Room 1, Room A, VIP Room 1..."
-                  />
-                </div>
-              </div>
-
-              {/* Room Size Configuration */}
-              <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'modern' ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm' : 'bg-gray-50 border-gray-200'
-                }`}>
-                <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                  }`}>
-                  Kích Thước Phòng
-                </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={`block text-xs font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>
-                      Columns <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="5"
-                      max="20"
-                      value={roomCols}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 5;
-                        setRoomCols(Math.max(5, Math.min(20, value)));
-                      }}
-                      required
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none transition-colors text-sm ${theme === 'modern' ? 'focus:border-indigo-500/30 text-white shadow-md' : 'focus:border-indigo-500/50 focus:shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-                        } ${theme === 'dark'
-                          ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500'
-                          : theme === 'modern'
-                            ? 'bg-white/[0.08] backdrop-blur-md border-indigo-500/20 shadow-sm text-white placeholder-slate-400/70'
-                            : 'bg-white border-gray-300 text-gray-900 dark:text-white modern:text-white placeholder-gray-400'
+                  <h3 className={`font-bold text-base mb-5 flex items-center gap-2 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                    <span className="w-2 h-2 rounded-full bg-primary-container inline-block" />
+                    Thông Tin Phòng Chiếu
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className={`block text-xs font-semibold mb-1.5 ${isDark || isModern ? 'text-on-surface-variant/80' : 'text-gray-600'}`}>
+                        Tên Phòng <span className="text-primary-container">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={auditoriumNumber}
+                        onChange={(e) => setAuditoriumNumber(e.target.value)}
+                        required
+                        className={`w-full px-3.5 py-2.5 rounded-lg border text-sm outline-none transition-all ${
+                          isDark
+                            ? 'bg-cinema-surface border-cinema-border/30 text-white placeholder-gray-500 focus:border-primary-container'
+                            : isModern
+                              ? 'bg-surface-container-lowest border-outline-variant/50 text-white placeholder-on-surface-variant/50 focus:border-primary-container'
+                              : 'bg-white border-gray-300 text-gray-900 focus:border-primary'
                         }`}
-                      placeholder="5-20"
-                    />
-                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white/50' : 'text-gray-500'
-                      }`}>
-                      Min: 5, Max: 20
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className={`block text-xs font-semibold mb-2 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                      }`}>
-                      Rows <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="5"
-                      max="15"
-                      value={roomRows}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 5;
-                        setRoomRows(Math.max(5, Math.min(15, value)));
-                      }}
-                      required
-                      className={`w-full px-3 py-2 border rounded-lg focus:outline-none transition-colors text-sm ${theme === 'modern' ? 'focus:border-indigo-500/30 text-white shadow-md' : 'focus:border-indigo-500/50 focus:shadow-[0_0_15px_rgba(99,102,241,0.3)]'
-                        } ${theme === 'dark'
-                          ? 'bg-gray-900 border-gray-700 text-white placeholder-gray-500'
-                          : theme === 'modern'
-                            ? 'bg-white/[0.08] backdrop-blur-md border-indigo-500/20 shadow-sm text-white placeholder-slate-400/70'
-                            : 'bg-white border-gray-300 text-gray-900 dark:text-white modern:text-white placeholder-gray-400'
-                        }`}
-                      placeholder="5-15"
-                    />
-                    <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-500' : theme === 'modern' ? 'text-white/50' : 'text-gray-500'
-                      }`}>
-                      Min: 5, Max: 15
-                    </p>
+                        placeholder="VD: Room 1, Room A, VIP Room 1..."
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={`block text-xs font-semibold mb-1.5 ${isDark || isModern ? 'text-on-surface-variant/80' : 'text-gray-600'}`}>
+                          Số Cột <span className="text-primary-container">*</span>
+                        </label>
+                        <input
+                          type="number" min="5" max="20"
+                          value={roomCols}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 5;
+                            setRoomCols(Math.max(5, Math.min(20, value)));
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-all ${
+                            isDark
+                              ? 'bg-cinema-surface border-cinema-border/30 text-white focus:border-primary-container'
+                              : isModern
+                                ? 'bg-surface-container-lowest border-outline-variant/50 text-white focus:border-primary-container'
+                                : 'bg-white border-gray-300 text-gray-900 focus:border-primary'
+                          }`}
+                        />
+                        <p className="text-[10px] text-on-surface-variant/60 mt-1">Tối thiểu: 5, Tối đa: 20</p>
+                      </div>
+                      <div>
+                        <label className={`block text-xs font-semibold mb-1.5 ${isDark || isModern ? 'text-on-surface-variant/80' : 'text-gray-600'}`}>
+                          Số Hàng <span className="text-primary-container">*</span>
+                        </label>
+                        <input
+                          type="number" min="5" max="15"
+                          value={roomRows}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 5;
+                            setRoomRows(Math.max(5, Math.min(15, value)));
+                          }}
+                          className={`w-full px-3 py-2 rounded-lg border text-sm outline-none transition-all ${
+                            isDark
+                              ? 'bg-cinema-surface border-cinema-border/30 text-white focus:border-primary-container'
+                              : isModern
+                                ? 'bg-surface-container-lowest border-outline-variant/50 text-white focus:border-primary-container'
+                                : 'bg-white border-gray-300 text-gray-900 focus:border-primary'
+                          }`}
+                        />
+                        <p className="text-[10px] text-on-surface-variant/60 mt-1">Tối thiểu: 5, Tối đa: 15</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Drawing Mode Selection */}
-              <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'modern' ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm' : 'bg-gray-50 border-gray-200'
+                {/* Drawing Mode */}
+                <div className={`rounded-xl p-5 ${
+                  isModern 
+                    ? 'bg-surface-container/40 backdrop-blur-xl border border-outline-variant/30' 
+                    : isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
                 }`}>
-                <h4 className={`text-sm font-semibold mb-3 ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                  }`}>
-                  Draw Mode
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                  <button
-                    onClick={() => setDrawingMode('seat')}
-                    className={`p-4 rounded-lg border transition-all ${drawingMode === 'seat'
-                      ? theme === 'modern'
-                        ? 'border-indigo-500/30 text-white shadow-md bg-white/[0.08] backdrop-blur-md shadow-lg'
-                        : theme === 'dark'
-                          ? 'border-red-500 bg-red-900/30 shadow-lg'
-                          : 'border-red-600 bg-red-50 shadow-lg'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 hover:border-gray-500'
-                        : theme === 'modern'
-                          ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm hover:border-indigo-500/30 text-white shadow-md/50'
-                          : 'bg-white border-gray-200 hover:border-red-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${drawingMode === 'seat'
-                        ? theme === 'modern' ? 'bg-white/20 hover:bg-white/30 backdrop-blur-md border border-indigo-500/20 text-white shadow-md text-white' : 'bg-red-600'
-                        : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-                        }`}>
-                        <Grid3x3 className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                          }`}>
-                          {t('createAuditorium.drawSeat')}
-                        </p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                          }`}>
-                          {t('createAuditorium.seatsCount', { count: seats.length })}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setDrawingMode('exit')}
-                    className={`p-4 rounded-lg border transition-all ${drawingMode === 'exit'
-                      ? theme === 'modern'
-                        ? 'border-green-400 bg-green-800/30 shadow-lg'
-                        : theme === 'dark'
-                          ? 'border-green-500 bg-green-900/30 shadow-lg'
-                          : 'border-green-600 bg-green-50 shadow-lg'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 hover:border-gray-500'
-                        : theme === 'modern'
-                          ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm hover:border-green-400/50'
-                          : 'bg-white border-gray-200 hover:border-green-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${drawingMode === 'exit'
-                        ? theme === 'modern' ? 'bg-green-500' : 'bg-green-600'
-                        : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-                        }`}>
-                        <DoorOpen className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                          }`}>
-                          {t('createAuditorium.drawExit')}
-                        </p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                          }`}>
-                          {t('createAuditorium.exitsCount', { count: exits.length })}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => setDrawingMode('aisle')}
-                    className={`p-4 rounded-lg border transition-all ${drawingMode === 'aisle'
-                      ? theme === 'modern'
-                        ? 'border-blue-400 bg-blue-800/30 shadow-lg'
-                        : theme === 'dark'
-                          ? 'border-blue-500 bg-blue-900/30 shadow-lg'
-                          : 'border-blue-600 bg-blue-50 shadow-lg'
-                      : theme === 'dark'
-                        ? 'bg-gray-700 border-gray-600 hover:border-gray-500'
-                        : theme === 'modern'
-                          ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm hover:border-blue-400/50'
-                          : 'bg-white border-gray-200 hover:border-blue-300'
-                      }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${drawingMode === 'aisle'
-                        ? theme === 'modern' ? 'bg-blue-500' : 'bg-blue-600'
-                        : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
-                        }`}>
-                        <Square className="w-5 h-5 text-white" />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold ${theme === 'dark' || theme === 'modern' ? 'text-white' : 'text-gray-900 dark:text-white modern:text-white'
-                          }`}>
-                          {t('createAuditorium.drawAisle')}
-                        </p>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                          }`}>
-                          {t('createAuditorium.aislesCount', { count: aisles.length })}
-                        </p>
-                      </div>
-                    </div>
-                  </button>
-                </div>
-
-                {/* Helper buttons for seat mode */}
-                {drawingMode === 'seat' && (
-                  <div className="flex flex-wrap gap-3 mt-3">
+                  <h3 className={`font-bold text-base mb-5 flex items-center gap-2 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                    <span className="w-2 h-2 rounded-full bg-secondary-container inline-block" />
+                    Chế Độ Vẽ
+                  </h3>
+                  <div className="space-y-2.5">
                     <button
-                      onClick={handleAutoFillSeats}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${theme === 'modern'
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 hover:from-indigo-500 hover:to-purple-500 hover:opacity-100 hover:shadow-[0_0_10px_rgba(129,140,248,0.3)] hover:-translate-y-0.5 shadow-lg shadow-indigo-500/10 border-none text-white transition-all border border-indigo-500/30 shadow-md text-white'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }`}
+                      onClick={() => setDrawingMode('seat')}
+                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
+                        drawingMode === 'seat'
+                          ? 'bg-cinema-accent/15 border-cinema-accent'
+                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-cinema-accent/50' : 'bg-white border-gray-200 hover:border-primary'}`
+                      }`}
                     >
-                      <Plus className="w-4 h-4" />
-                      Auto Fill Seats
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        drawingMode === 'seat' ? 'bg-cinema-accent' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
+                      }`}>
+                        <Grid3x3 className={`w-5 h-5 ${drawingMode === 'seat' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                          Vẽ Ghế
+                        </p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
+                          {seats.length} ghế hiện có
+                        </p>
+                      </div>
                     </button>
                     <button
-                      onClick={handleClearAllSeats}
-                      disabled={seats.length === 0}
-                      className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                        } ${theme === 'dark'
-                          ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
-                          : theme === 'modern'
-                            ? 'bg-[#1e293b]/30 backdrop-blur-xl hover:bg-slate-600/50 text-white font-medium'
-                            : 'bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-                        }`}
+                      onClick={() => setDrawingMode('exit')}
+                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
+                        drawingMode === 'exit'
+                          ? 'border-rose-500 bg-rose-500/20'
+                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-rose-500/50' : 'bg-white border-gray-200 hover:border-rose-500'}`
+                      }`}
                     >
-                      <X className="w-4 h-4" />
-                      Clear All Seats
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        drawingMode === 'exit' ? 'bg-rose-500' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
+                      }`}>
+                        <DoorOpen className={`w-5 h-5 ${drawingMode === 'exit' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                          Vẽ Lối Ra
+                        </p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
+                          {exits.length} lối ra
+                        </p>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => setDrawingMode('aisle')}
+                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
+                        drawingMode === 'aisle'
+                          ? 'border-cyan-500 bg-cyan-500/20'
+                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-cyan-500/50' : 'bg-white border-gray-200 hover:border-cyan-500'}`
+                      }`}
+                    >
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        drawingMode === 'aisle' ? 'bg-cyan-500' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
+                      }`}>
+                        <Square className={`w-5 h-5 ${drawingMode === 'aisle' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
+                      </div>
+                      <div className="text-left">
+                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                          Vẽ Lối Đi
+                        </p>
+                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
+                          {aisles.length} lối đi
+                        </p>
+                      </div>
                     </button>
                   </div>
-                )}
-
-                {/* Instructions */}
-                <div className={`mt-3 p-3 rounded ${theme === 'dark' ? 'bg-gray-900/50' : theme === 'modern' ? 'bg-white/[0.08] backdrop-blur-md' : 'bg-blue-50'
-                  }`}>
-                  {drawingMode === 'seat' && (
-                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : theme === 'modern' ? 'text-white font-medium' : 'text-blue-700'
-                      }`}>
-                      💡 Click and drag on grid to draw seats. Click on a seat to remove.
-                    </p>
-                  )}
-                  {drawingMode === 'exit' && (
-                    <p className={`text-xs ${theme === 'dark' ? 'text-green-300' : theme === 'modern' ? 'text-green-200' : 'text-green-700'
-                      }`}>
-                      💡 Click and drag on grid to draw exit. Click on an exit to remove.
-                    </p>
-                  )}
-                  {drawingMode === 'aisle' && (
-                    <p className={`text-xs ${theme === 'dark' ? 'text-blue-300' : theme === 'modern' ? 'text-blue-200' : 'text-blue-700'
-                      }`}>
-                      💡 Click and drag on grid to draw walkway. Click on an walkway to remove.
-                    </p>
-                  )}
                 </div>
               </div>
 
-              <div className={`p-4 rounded-lg border ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : theme === 'modern' ? 'bg-slate-800/20 border-indigo-500/20 shadow-sm' : 'bg-gray-50 border-gray-200'
+              {/* ====== RIGHT COLUMN (8/12) - Interactive Editor ====== */}
+              <div className="xl:col-span-8 flex flex-col gap-6">
+                <div className={`flex-1 rounded-xl p-6 ${
+                  isModern 
+                    ? 'bg-surface-container/40 backdrop-blur-xl border border-outline-variant/30' 
+                    : isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
                 }`}>
-                <p className={`text-sm mb-2 flex items-center gap-2 ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                  }`}>
-                  <Move className="w-4 h-4" />
-                  {drawingMode === 'seat' && (isMobile
-                    ? 'Touch and drag to add seat, click on seat to remove'
-                    : 'Click and drag to add seat, click on seat to remove')}
-                  {drawingMode === 'exit' && (isMobile
-                    ? 'Touch and drag to draw exit, click on exit to remove'
-                    : 'Click and drag to draw exit, click on exit to remove')}
-                  {drawingMode === 'aisle' && (isMobile
-                    ? 'Touch and drag to draw walkway, click on walkway to remove'
-                    : 'Click and drag to draw walkway, click on walkway to remove')}
-                </p>
-              </div>
-
-              {/* Screen */}
-              <div className={`text-center py-2 mb-4 rounded ${theme === 'dark' ? 'bg-gray-800' : theme === 'modern' ? 'bg-white/[0.08] backdrop-blur-md' : 'bg-gray-200'
-                }`}>
-                <p className={`text-sm font-semibold ${theme === 'dark' ? 'text-gray-400' : theme === 'modern' ? 'text-white font-medium' : 'text-gray-600'
-                  }`}>
-                  SCREEN
-                </p>
-              </div>
-
-
-              {/* Grid Canvas */}
-              <div className="overflow-auto max-h-96 flex items-center justify-center">
-                <div className="relative inline-block">
-                  <div
-                    ref={canvasRef}
-                    className={`relative border-2 ${theme === 'dark' ? 'border-gray-700' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-300'
-                      }`}
-                    style={{
-                      width: gridSize.cols * cellSize.width,
-                      height: gridSize.rows * cellSize.height,
-                      backgroundImage: `
-                        linear-gradient(to right, ${theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : theme === 'modern' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(209, 213, 219, 0.3)'} 1px, transparent 1px),
-                        linear-gradient(to bottom, ${theme === 'dark' ? 'rgba(75, 85, 99, 0.3)' : theme === 'modern' ? 'rgba(147, 51, 234, 0.2)' : 'rgba(209, 213, 219, 0.3)'} 1px, transparent 1px)
-                      `,
-                      backgroundSize: `${cellSize.width}px ${cellSize.height}px`,
-                    }}
-                    onMouseDown={handleMouseDown}
-                    onMouseMove={handleMouseMove}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
-                    onTouchStart={handleTouchStart}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
-                  >
-                    {/* Exit overlays - can be anywhere in grid */}
-                    {exits.map((exit) => (
-                      <div
-                        key={exit.id}
-                        className={`absolute border-2 cursor-pointer ${theme === 'dark' ? 'border-green-500 bg-green-800/40' : theme === 'modern' ? 'border-green-400 bg-green-800/40' : 'border-green-500 bg-green-200/50'
-                          }`}
-                        style={{
-                          left: exit.colIndex * cellSize.width,
-                          top: exit.rowIndex * cellSize.height,
-                          width: exit.width * cellSize.width,
-                          height: exit.height * cellSize.height,
-                        }}
-                        title="Exit"
-                      />
-                    ))}
-
-                    {/* Aisles */}
-                    {aisles.map((aisle) => (
-                      <div
-                        key={aisle.id}
-                        className={`absolute border-2 cursor-pointer ${theme === 'dark' ? 'border-blue-500 bg-blue-800/40' : theme === 'modern' ? 'border-blue-400 bg-blue-800/40' : 'border-blue-500 bg-blue-200/50'
-                          }`}
-                        style={{
-                          left: aisle.colIndex * cellSize.width,
-                          top: aisle.rowIndex * cellSize.height,
-                          width: aisle.width * cellSize.width,
-                          height: aisle.height * cellSize.height,
-                        }}
-                        title="Aisle"
-                      />
-                    ))}
-
-                    {/* Seats */}
-                    {seats.map((seat, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleRemoveSeat(seat.colIndex, seat.rowIndex)}
-                        className={`absolute cursor-pointer rounded transition-all hover:scale-110 flex items-center justify-center text-xs font-bold ${theme === 'modern'
-                          ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 border-none text-white shadow-md text-white'
-                          : 'bg-gradient-to-br from-red-600 to-red-800 text-white'
-                          }`}
-                        style={{
-                          left: seat.coordX,
-                          top: seat.coordY,
-                          width: cellSize.width - 4,
-                          height: cellSize.height - 4,
-                          margin: '2px',
-                        }}
-                        title={seat.seatNumber}
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={handleAutoFillSeats}
+                        className="flex items-center gap-2 px-4 py-2 bg-cinema-accent text-black rounded-lg text-xs font-semibold transition-all active:scale-95 hover:brightness-110"
                       >
-                        {!isMobile && seat.seatNumber}
+                        <Plus className="w-4 h-4" />
+                        {t('createAuditorium.autoFillSeats')}
+                      </button>
+                      <button
+                        onClick={handleClearAllSeats}
+                        disabled={seats.length === 0}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+                          seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                        } ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : isModern ? 'bg-surface-variant/50 text-on-surface-variant hover:bg-error-container/20 hover:text-error' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                      >
+                        <X className="w-4 h-4" />
+                        Xóa Tất Cả
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/70">
+                      <p className="text-xs text-cinema-text-muted/70 mt-3 italic">
+                        {t('createAuditorium.hintSeat')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Grid Canvas */}
+                  <div className="bg-surface-container-lowest/50 rounded-xl border border-outline-variant/30 p-8 flex flex-col items-center">
+                    {/* Screen Indicator */}
+                    <div className="w-full max-w-2xl mb-10">
+                      <div className="w-full h-1.5 bg-gradient-to-r from-transparent via-primary/40 to-transparent rounded-full shadow-[0_0_20px_rgba(255,179,182,0.3)]"></div>
+                      <p className="text-center text-[11px] font-bold tracking-[0.2em] text-primary mt-2 uppercase">MÀN HÌNH</p>
+                    </div>
+
+                    {/* Grid */}
+                    <div className="overflow-auto max-h-96 w-full flex justify-center">
+                      <div className="relative inline-block">
+                        <div
+                          ref={canvasRef}
+                          className={`relative border-2 ${
+                            isDark ? 'border-gray-700' : isModern ? 'border-outline-variant/30' : 'border-gray-300'
+                          }`}
+                          style={{
+                            width: gridSize.cols * cellSize.width,
+                            height: gridSize.rows * cellSize.height,
+                            backgroundImage: `
+                              linear-gradient(to right, ${isDark ? 'rgba(75, 85, 99, 0.3)' : isModern ? 'rgba(51, 65, 85, 0.3)' : 'rgba(209, 213, 219, 0.3)'} 1px, transparent 1px),
+                              linear-gradient(to bottom, ${isDark ? 'rgba(75, 85, 99, 0.3)' : isModern ? 'rgba(51, 65, 85, 0.3)' : 'rgba(209, 213, 219, 0.3)'} 1px, transparent 1px)
+                            `,
+                            backgroundSize: `${cellSize.width}px ${cellSize.height}px`,
+                          }}
+                          onMouseDown={handleMouseDown}
+                          onMouseMove={handleMouseMove}
+                          onMouseUp={handleMouseUp}
+                          onMouseLeave={handleMouseUp}
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                        >
+                          {/* Exit overlays */}
+                          {exits.map((exit) => (
+                            <div
+                              key={exit.id}
+                              className="absolute border-2 cursor-pointer"
+                              style={{
+                                left: exit.colIndex * cellSize.width,
+                                top: exit.rowIndex * cellSize.height,
+                                width: exit.width * cellSize.width,
+                                height: exit.height * cellSize.height,
+                                borderColor: '#f43f5e',
+                                backgroundColor: isDark ? 'rgba(244,63,94,0.25)' : isModern ? 'rgba(244,63,94,0.18)' : 'rgba(244,63,94,0.15)',
+                              }}
+                              title="Exit"
+                            />
+                          ))}
+
+                          {/* Aisle overlays */}
+                          {aisles.map((aisle) => (
+                            <div
+                              key={aisle.id}
+                              className="absolute border-2 cursor-pointer"
+                              style={{
+                                left: aisle.colIndex * cellSize.width,
+                                top: aisle.rowIndex * cellSize.height,
+                                width: aisle.width * cellSize.width,
+                                height: aisle.height * cellSize.height,
+                                borderColor: '#06b6d4',
+                                backgroundColor: isDark ? 'rgba(6,182,212,0.25)' : isModern ? 'rgba(6,182,212,0.18)' : 'rgba(6,182,212,0.15)',
+                              }}
+                              title="Aisle"
+                            />
+                          ))}
+
+                          {/* Seats */}
+                          {seats.map((seat, index) => (
+                            <div
+                              key={index}
+                              onClick={() => handleRemoveSeat(seat.colIndex, seat.rowIndex)}
+                              className={`absolute cursor-pointer rounded transition-all hover:scale-110 flex items-center justify-center text-[10px] font-bold ${
+                                isModern ? 'bg-primary-container text-white' : 'bg-primary-container text-white'
+                              }`}
+                              style={{
+                                left: seat.coordX,
+                                top: seat.coordY,
+                                width: cellSize.width - 4,
+                                height: cellSize.height - 4,
+                                margin: '2px',
+                              }}
+                              title={seat.seatNumber}
+                            >
+                              {!isMobile && seat.seatNumber}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="mt-8 flex gap-6 text-xs text-on-surface-variant/60 font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm bg-cinema-accent" />
+                        Ghế (Seat)
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm" style={{backgroundColor: '#f43f5e'}} />
+                        Lối ra (Exit)
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm bg-gray-500/30 border" style={{borderColor: '#475569'}} />
+                        Trống (Empty)
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm" style={{backgroundColor: '#06b6d4'}} />
+                        Lối đi (Aisle)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grid Info Bar */}
+                  <div className={`mt-4 p-3.5 rounded-lg flex justify-between items-center ${
+                    isDark ? 'bg-cinema-surface/50 border border-cinema-border/20' : isModern ? 'bg-surface-container-high/40 border border-outline-variant/20' : 'bg-gray-100 border border-gray-200'
+                  }`}>
+                    <div className="flex gap-6">
+                      <div>
+                        <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Kích Thước</p>
+                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{gridSize.cols} columns × {gridSize.rows} rows</p>
+                      </div>
+                      <div>
+                        <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Tổng Diện Tích</p>
+                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{cellSize.width}px × {cellSize.height}px cell</p>
+                      </div>
+                      <div>
+                        <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Tổng Ghế</p>
+                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{seats.length}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-on-surface-variant/60 text-xs">
+                      Click and drag to add seat, click on seat to remove
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Grid Info */}
-              <div className={`p-3 rounded-lg text-sm ${theme === 'dark' ? 'bg-gray-800 text-gray-400' : theme === 'modern' ? 'bg-slate-800/20 text-white font-medium' : 'bg-gray-50 text-gray-600'
-                }`}>
-                <p>Size: {gridSize.cols} columns × {gridSize.rows} rows</p>
-                <p>Cell size: {cellSize.width}px × {cellSize.height}px</p>
-                {exits.length > 0 && (
-                  <p className="mt-1">
-                    <span className="font-semibold">Exits:</span> {exits.length} lối ra đã vẽ
-                  </p>
-                )}
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className={`flex justify-between gap-3 p-6 border-t ${theme === 'dark' ? 'border-gray-800' : theme === 'modern' ? 'border-indigo-500/20 shadow-sm' : 'border-gray-200'
-          }`}>
+        {/* ====== FOOTER ====== */}
+        <div className={`flex justify-between items-center px-6 py-4 border-t ${
+          isDark ? 'border-cinema-border/20' : isModern ? 'border-outline-variant/20' : 'border-gray-200'
+        }`}>
           <button
             onClick={currentStep === 'format' ? onClose : handlePrevStep}
             disabled={createLoading}
-            className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${theme === 'dark'
-              ? 'bg-gray-800 hover:bg-gray-700 text-gray-300'
-              : theme === 'modern'
-                ? 'bg-[#1e293b]/30 backdrop-blur-xl hover:bg-slate-600/50 text-white font-medium'
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-300 modern:text-gray-200'
-              } ${createLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all active:scale-95 ${
+              isDark ? 'bg-gray-700 hover:bg-gray-600 text-gray-300' : isModern ? 'border border-outline-variant/30 text-on-surface-variant hover:bg-surface-bright/30' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+            } ${createLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {currentStep !== 'format' && <ArrowLeft className="w-4 h-4" />}
-            {currentStep === 'format' ? 'Cancel' : 'Back'}
+            {currentStep === 'format' ? 'Quay Lại' : 'Quay Lại'}
           </button>
 
           {currentStep === 'seats' ? (
             <button
               onClick={handleSubmit}
               disabled={createLoading || seats.length === 0}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${createLoading || seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-                } ${theme === 'modern'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 hover:from-indigo-500 hover:to-purple-500 hover:opacity-100 hover:shadow-[0_0_10px_rgba(129,140,248,0.3)] hover:-translate-y-0.5 shadow-lg shadow-indigo-500/10 border-none text-white transition-all border border-indigo-500/30 shadow-md text-white'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-                }`}
+              className={`flex items-center gap-2 px-8 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95 ${
+                createLoading || seats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+              } bg-primary-container text-white hover:bg-inverse-primary shadow-[0_4px_20px_rgba(225,29,72,0.4)]`}
             >
               {createLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Creating...
-                </>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {editAuditoriumId ? 'Dang cap nhat...' : 'Dang tao...'}</>
               ) : (
-                <>
-                  <Plus className="w-4 h-4" />
-                  Create Auditorium
-                </>
+                <><Plus className="w-4 h-4" /> {editAuditoriumId ? 'Cap Nhat Phong' : 'Tao Phong'}</>
               )}
             </button>
           ) : (
             <button
               onClick={handleNextStep}
               disabled={currentStep === 'format' && !selectedFormat}
-              className={`px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2 ${currentStep === 'format' && !selectedFormat
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
-                } ${theme === 'modern'
-                  ? 'bg-gradient-to-r from-indigo-600 to-purple-700 opacity-90 hover:from-indigo-500 hover:to-purple-500 hover:opacity-100 hover:shadow-[0_0_10px_rgba(129,140,248,0.3)] hover:-translate-y-0.5 shadow-lg shadow-indigo-500/10 border-none text-white transition-all border border-indigo-500/30 shadow-md text-white'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-                }`}
+              className={`flex items-center gap-2 px-8 py-2.5 rounded-lg text-sm font-bold transition-all active:scale-95 ${
+                currentStep === 'format' && !selectedFormat ? 'opacity-50 cursor-not-allowed' : ''
+              } bg-primary-container text-white hover:bg-inverse-primary shadow-[0_4px_20px_rgba(225,29,72,0.4)]`}
             >
-              Next
+              Tiếp Theo
               <ArrowRight className="w-4 h-4" />
             </button>
           )}

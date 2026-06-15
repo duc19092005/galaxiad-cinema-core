@@ -1,3 +1,6 @@
+// src/features/admin/components/RolePermissionsSection.tsx
+// Styled to match VouchersSection color scheme using cinema-* classes
+
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertCircle, Check, KeyRound, Loader2, RefreshCw, RotateCcw, Save, Search, ShieldCheck } from 'lucide-react';
 import { adminApi } from '../../../api/adminApi';
@@ -131,193 +134,170 @@ const RolePermissionsSection: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="state-center" style={{ minHeight: '55vh' }}>
-        <Loader2 size={28} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-        <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
-          Loading permissions...
-        </p>
+      <div className="flex flex-col items-center justify-center py-16">
+        <Loader2 size={28} className="text-cinema-accent animate-spin" />
+        <p className="text-sm text-cinema-text-muted mt-3 font-mono">Loading permissions...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="glass-card state-center" style={{ minHeight: 260, padding: 24 }}>
-        <AlertCircle size={28} style={{ color: 'var(--danger)' }} />
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{error}</p>
-        <button className="btn btn-secondary" onClick={loadData}>
-          <RefreshCw size={16} />
-          Retry
+      <div className="flex flex-col items-center justify-center py-12 bg-cinema-surface rounded-2xl border border-cinema-border/50 gap-3">
+        <AlertCircle size={28} className="text-cinema-danger" />
+        <p className="text-sm text-cinema-text-muted">{error}</p>
+        <button className="px-4 py-2 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-surface transition-all flex items-center gap-2" onClick={loadData}>
+          <RefreshCw size={14} /> Retry
         </button>
       </div>
     );
   }
 
   return (
-    <div className="animate-in" style={{ display: 'grid', gap: 22 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 850, color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>Role permissions</h2>
-          <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: 15, lineHeight: 1.6 }}>
-            Configure permission claims for each role. Active users receive changes after their next login.
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button className="btn btn-secondary" onClick={loadData} disabled={saving}>
-            <RefreshCw size={16} />
-            Refresh
-          </button>
-          <button className="btn btn-primary" onClick={handleSave} disabled={!selectedRole || !hasUnsavedChanges || saving}>
-            {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
-            Save changes
-          </button>
-        </div>
-      </div>
+    <div className="flex flex-col xl:flex-row gap-6 p-1 min-w-0 animate-fade-in">
+      {/* Main Section */}
+      <div className="flex-1 space-y-6 min-w-0">
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px, 0.36fr) minmax(0, 1fr)', gap: 18 }} className="admin-permissions-grid">
-        <aside className="glass-card" style={{ padding: 20, display: 'grid', gap: 16, alignSelf: 'start', background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--accent-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <ShieldCheck size={17} style={{ color: 'var(--accent)' }} />
-            </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 850 }}>Roles</h3>
-              <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>{roles.length} configured</p>
-            </div>
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-cinema-accent tracking-tight">Role Permissions</h1>
+            <p className="text-sm text-cinema-text-muted mt-1">Configure permission claims for each role. Active users receive changes after their next login.</p>
           </div>
-
-          <div style={{ display: 'grid', gap: 8 }}>
-            {roles.map((role) => {
-              const isActive = role.roleId === selectedRoleId;
-              return (
-                <button
-                  key={role.roleId}
-                  type="button"
-                  onClick={() => handleSelectRole(role.roleId)}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 10,
-                    width: '100%',
-                    padding: '14px 14px',
-                    borderRadius: 'var(--radius-md)',
-                    border: `1px solid ${isActive ? 'rgba(255, 138, 0, 0.52)' : 'rgba(255,255,255,0.11)'}`,
-                    background: isActive ? 'rgba(255, 138, 0, 0.14)' : 'rgba(255,255,255,0.04)',
-                    color: isActive ? 'var(--accent)' : 'var(--text-primary)',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <span style={{ fontSize: 15, fontWeight: 800 }}>{role.roleName}</span>
-                  <span className="badge badge-default">{role.permissions.length}</span>
-                </button>
-              );
-            })}
+          <div className="flex items-center gap-2">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 border border-cinema-border/50 bg-cinema-surface text-cinema-text hover:bg-cinema-elevated text-xs font-semibold rounded-xl transition-all" onClick={loadData} disabled={saving}>
+              <RefreshCw size={14} />
+              Refresh
+            </button>
+            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-cinema-accent hover:bg-cinema-accent-hover text-black font-bold text-xs rounded-xl transition-all disabled:opacity-50 active:scale-[0.98] shadow-lg shadow-cinema-accent/10" onClick={handleSave} disabled={!selectedRole || !hasUnsavedChanges || saving}>
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+              Save changes
+            </button>
           </div>
-        </aside>
+        </div>
 
-        <section className="glass-card" style={{ padding: 22, display: 'grid', gap: 18, minWidth: 0, background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.12)' }}>
-          {selectedRole ? (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* Two-column grid: Roles | Permissions */}
+        <div className="grid grid-cols-1 xl:grid-cols-[260px_1fr] gap-6">
+
+          {/* Roles Sidebar */}
+          <aside className="space-y-4">
+            <div className="p-5 bg-cinema-surface border border-cinema-border/50 rounded-2xl shadow-sm">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="p-2 bg-cinema-accent/10 rounded-lg text-cinema-accent">
+                  <ShieldCheck size={18} />
+                </span>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <h3 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{selectedRole.roleName}</h3>
-                    {hasUnsavedChanges && <span className="badge badge-warning">Unsaved changes</span>}
-                  </div>
-                  <p style={{ margin: '6px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>
-                    {selectedPermissionIds.length} of {permissions.length} permissions selected.
-                  </p>
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button className="btn btn-secondary" onClick={() => updateVisiblePermissions(true)} disabled={filteredPermissions.length === 0}>
-                    <Check size={15} />
-                    Select visible
-                  </button>
-                  <button className="btn btn-secondary" onClick={() => updateVisiblePermissions(false)} disabled={filteredPermissions.length === 0}>
-                    Clear visible
-                  </button>
-                  <button className="btn btn-ghost" onClick={handleReset} disabled={!hasUnsavedChanges}>
-                    <RotateCcw size={15} />
-                    Reset
-                  </button>
+                  <h3 className="text-sm font-bold text-cinema-text">Roles</h3>
+                  <p className="text-xs text-cinema-text-muted">{roles.length} configured</p>
                 </div>
               </div>
-
-              <label style={{ display: 'grid', gap: 6 }}>
-                <span className="input-label" style={{ margin: 0, fontSize: 13 }}>Search permissions</span>
-                <div style={{ position: 'relative' }}>
-                  <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    className="input"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search permission name..."
-                    style={{ paddingLeft: 38, fontSize: 15, minHeight: 42 }}
-                  />
-                </div>
-              </label>
-
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                gap: 12,
-                maxHeight: 500,
-                overflowY: 'auto',
-                paddingRight: 4,
-              }}>
-                {filteredPermissions.map((permission) => {
-                  const checked = selectedPermissionSet.has(permission.permissionId);
+              <div className="space-y-2">
+                {roles.map((role) => {
+                  const isActive = role.roleId === selectedRoleId;
                   return (
-                    <label
-                      key={permission.permissionId}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 12,
-                        padding: '14px 15px',
-                        borderRadius: 'var(--radius-md)',
-                        border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.45)' : 'rgba(255,255,255,0.12)'}`,
-                        background: checked ? 'rgba(255, 138, 0, 0.12)' : 'rgba(255,255,255,0.04)',
-                        cursor: 'pointer',
-                        minWidth: 0,
-                        minHeight: 72,
-                      }}
+                    <button
+                      key={role.roleId}
+                      type="button"
+                      onClick={() => handleSelectRole(role.roleId)}
+                      className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+                        isActive
+                          ? 'bg-cinema-accent/10 border border-cinema-accent/30 text-cinema-accent'
+                          : 'bg-cinema-elevated/50 border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20'
+                      }`}
                     >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => togglePermission(permission.permissionId)}
-                        style={{ marginTop: 3, width: 18, height: 18, accentColor: '#ff8a00', flexShrink: 0 }}
-                      />
-                      <span style={{ display: 'grid', gap: 4, minWidth: 0 }}>
-                        <span style={{ color: 'var(--text-primary)', fontSize: 15, fontWeight: 800, lineHeight: 1.35, overflowWrap: 'anywhere' }}>
-                          {permission.permissionInfo}
-                        </span>
-                        <span style={{ color: 'var(--text-secondary)', fontSize: 11, fontFamily: "'JetBrains Mono', monospace", overflowWrap: 'anywhere', opacity: 0.82 }}>
-                          {permission.permissionId}
-                        </span>
-                      </span>
-                    </label>
+                      <span className="text-sm font-bold">{role.roleName}</span>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cinema-elevated border border-cinema-border/30 text-cinema-text-muted">{role.permissions.length}</span>
+                    </button>
                   );
                 })}
               </div>
-
-              {filteredPermissions.length === 0 && (
-                <div className="state-center" style={{ minHeight: 180, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-                  <KeyRound size={24} style={{ color: 'var(--text-muted)' }} />
-                  <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 13 }}>No permissions match your search.</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="state-center" style={{ minHeight: 260 }}>
-              <KeyRound size={28} style={{ color: 'var(--text-muted)' }} />
-              <p style={{ margin: 0, color: 'var(--text-muted)' }}>No roles found.</p>
             </div>
-          )}
-        </section>
+          </aside>
+
+          {/* Permissions Panel */}
+          <section className="p-5 bg-cinema-surface border border-cinema-border/50 rounded-2xl shadow-sm min-w-0">
+            {selectedRole ? (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <h3 className="text-xl font-extrabold text-cinema-text">{selectedRole.roleName}</h3>
+                      {hasUnsavedChanges && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Unsaved changes</span>
+                      )}
+                    </div>
+                    <p className="text-sm text-cinema-text-muted mt-0.5">
+                      {selectedPermissionIds.length} of {permissions.length} permissions selected.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={() => updateVisiblePermissions(true)} disabled={filteredPermissions.length === 0}>
+                      <Check size={13} /> Select visible
+                    </button>
+                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={() => updateVisiblePermissions(false)} disabled={filteredPermissions.length === 0}>
+                      Clear visible
+                    </button>
+                    <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={handleReset} disabled={!hasUnsavedChanges}>
+                      <RotateCcw size={13} /> Reset
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="mb-4 relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-cinema-text-muted" />
+                  <input
+                    className="w-full h-10 pl-9 pr-3 rounded-xl border bg-cinema-elevated border-cinema-border/50 text-sm text-cinema-text outline-none focus:border-cinema-accent/30 transition-all placeholder:text-cinema-text-muted/50"
+                    value={searchTerm}
+                    onChange={(event) => setSearchTerm(event.target.value)}
+                    placeholder="Search permission name..."
+                  />
+                </div>
+
+                {/* Permission Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
+                  {filteredPermissions.map((permission) => {
+                    const checked = selectedPermissionSet.has(permission.permissionId);
+                    return (
+                      <label
+                        key={permission.permissionId}
+                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all min-w-0 ${
+                          checked
+                            ? 'bg-cinema-accent/10 border-cinema-accent/30'
+                            : 'bg-cinema-elevated border-cinema-border/30 hover:border-cinema-accent/20'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => togglePermission(permission.permissionId)}
+                          className="mt-0.5 w-4 h-4 rounded accent-cinema-accent shrink-0"
+                          style={{ accentColor: '#ffb3b6' }}
+                        />
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-cinema-text leading-tight break-words">{permission.permissionInfo}</p>
+                          <p className="text-[10px] text-cinema-text-muted font-mono mt-1 break-all opacity-70">{permission.permissionId}</p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {filteredPermissions.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 border border-dashed border-cinema-border/50 rounded-xl">
+                    <KeyRound size={28} className="text-cinema-text-muted opacity-40" />
+                    <p className="text-sm text-cinema-text-muted mt-2">No permissions match your search.</p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16">
+                <KeyRound size={32} className="text-cinema-text-muted opacity-30" />
+                <p className="text-sm text-cinema-text-muted mt-3">No roles found.</p>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
     </div>
   );

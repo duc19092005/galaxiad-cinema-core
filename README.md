@@ -1,74 +1,49 @@
+# 🎬 Cinema Management - Frontend
 
-# React + TypeScript + Vite
+## Giới thiệu
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend cho hệ thống quản lý rạp chiếu phim, xây dựng với **React + TypeScript + Vite**.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tài khoản đăng nhập (môi trường Dev / Seed Data)
 
-## React Compiler
+> **Mật khẩu chung tất cả tài khoản:** `anhduc9a5`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+| Vai trò | Email | Mô tả |
+|---------|-------|-------|
+| **Admin** | `admin@cinema.com` | Quản trị hệ thống (full quyền) |
+| **Quản lý phim** | `movie.manager@cinema.com` | Quản lý nội dung phim |
+| **Quản lý rạp** | `theater.manager@cinema.com` | Quản lý vận hành rạp + duyệt ca |
+| **Quản lý CSVC** | `facilities.manager@cinema.com` | Quản lý cơ sở vật chất |
+| **Thu ngân (Vé)** | `quay_ve_01@cinema.com` | Bán vé tại quầy |
+| **Thu ngân (Bắp nước)** | `quay_bapnuoc_01@cinema.com` | Bán bắp nước tại quầy |
 
-## Expanding the ESLint configuration
+> **Lưu ý:** Khi tạo rạp mới trên trang Admin / Facilities Manager, hệ thống sẽ **tự động tạo tài khoản thu ngân** cho rạp đó với mật khẩu mặc định `123456`. Email có dạng `cashier_{ma_rap}@cinema.com`.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Công nghệ sử dụng
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+- React 19 + TypeScript
+- Vite 7
+- React Router v7
+- Axios / SignalR
+- React i18next (đa ngôn ngữ: EN, RU, VI)
+- Lucide React (icons)
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Hướng dẫn chạy
+
+```bash
+cd Frontend/renew_cinema_project_frontend
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Truy cập: `http://localhost:5173`
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Build production
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```

@@ -37,6 +37,9 @@ import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { VouchersSection } from './components/VouchersSection';
+import CinemaManagement from '../facilities/components/CinemaManagement';
+import { facilitiesApi } from '../../api/facilitiesApi';
+import type { Cinema } from '../../types/facilities.types';
 
 // ============================================
 // CONSTANTS
@@ -59,7 +62,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'vouchers', 'permissions', 'rights', 'audit']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'permissions', 'rights', 'audit']);
 
 const formatVnd = (value?: number | null) => {
   const amount = value ?? 0;
@@ -582,6 +585,8 @@ const AdminPage: React.FC = () => {
   const [dashboardLoading, setDashboardLoading] = useState(false);
   const [staffRoles, setStaffRoles] = useState<RoleDto[]>([]);
   const [rolesLoading, setRolesLoading] = useState(false);
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
+  const [cinemasLoading, setCinemasLoading] = useState(false);
 
   // Modals state
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -656,6 +661,18 @@ const AdminPage: React.FC = () => {
     }
   }, []);
 
+  const fetchCinemas = useCallback(async () => {
+    setCinemasLoading(true);
+    try {
+      const res = await facilitiesApi.getCinemaList();
+      setCinemas(res.data || []);
+    } catch {
+      showError(t('toast.loadDataFailed'));
+    } finally {
+      setCinemasLoading(false);
+    }
+  }, [t]);
+
   useEffect(() => {
     const nextTab = tab && adminTabIds.has(tab) ? tab : 'dashboard';
     setActiveTab(nextTab);
@@ -666,10 +683,12 @@ const AdminPage: React.FC = () => {
       fetchUsers();
     } else if (activeTab === 'audit') {
       fetchAuditLogs();
+    } else if (activeTab === 'cinemas') {
+      fetchCinemas();
     } else if (activeTab === 'dashboard') {
       fetchDashboard();
     }
-  }, [activeTab, fetchAuditLogs, fetchDashboard, fetchUsers]);
+  }, [activeTab, fetchAuditLogs, fetchDashboard, fetchCinemas, fetchUsers]);
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 800);
@@ -826,6 +845,7 @@ const AdminPage: React.FC = () => {
       items: [
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
+        { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
         { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
@@ -1007,6 +1027,17 @@ const AdminPage: React.FC = () => {
 
       case 'vouchers':
         return <VouchersSection />;
+
+      case 'cinemas':
+        return (
+          <div className="animate-in">
+            <CinemaManagement
+              cinemas={cinemas}
+              loading={cinemasLoading}
+              onRefresh={fetchCinemas}
+            />
+          </div>
+        );
 
       case 'permissions':
         return <RolePermissionsSection />;
