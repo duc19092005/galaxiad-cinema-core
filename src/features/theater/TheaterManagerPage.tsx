@@ -19,6 +19,8 @@ import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
 import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar } from 'lucide-react';
 import EmployeesShiftWorkspace from './components/EmployeesShiftWorkspace';
+import { facilitiesApi } from '../../api/facilitiesApi';
+import type { Cinema } from '../../types/facilities.types';
 
 /**
  * TheaterManagerPage – UI for theater schedule management with dark cinema theme.
@@ -27,13 +29,15 @@ import EmployeesShiftWorkspace from './components/EmployeesShiftWorkspace';
 const TheaterManagerPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { managedCinemas, activeCinemaId, loading: cinemaLoading } = useCinema();
+  const { managedCinemas, activeCinemaId, activeCinemaName, setActiveCinemaId, loading: cinemaLoading } = useCinema();
   const [user, setUser] = useState<{ username: string; roles?: string[] } | null>(null);
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'schedule'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const isAdmin = user?.roles?.includes('Admin') ?? false;
 
   // Load user information & permissions
   useEffect(() => {
@@ -47,6 +51,11 @@ const TheaterManagerPage: React.FC = () => {
         return;
       }
       setUser(parsed);
+      if (roles.includes('Admin')) {
+        facilitiesApi.getCinemaList()
+          .then((res) => setCinemas(res.data || []))
+          .catch((err) => console.error('Failed to load cinemas list', err));
+      }
     } catch { navigate('/login'); }
   }, [navigate]);
 
@@ -88,7 +97,6 @@ const TheaterManagerPage: React.FC = () => {
     }
 
     if (!user) return null;
-    const isAdmin = user.roles?.includes('Admin') ?? false;
     if (!isAdmin && managedCinemas.length === 0) {
       return (
         <GlassCard className="flex flex-col items-center justify-center p-8">
@@ -139,9 +147,15 @@ const TheaterManagerPage: React.FC = () => {
       <ManagementChrome
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((open) => !open)}
+        cinemaSelector={isAdmin ? {
+          cinemas,
+          activeCinemaId,
+          activeCinemaName,
+          onChange: (id) => setActiveCinemaId(id),
+        } : undefined}
       />
 
-      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
         <div className="page-container">
           {renderContent()}
         </div>

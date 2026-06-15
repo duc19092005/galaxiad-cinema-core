@@ -25,6 +25,9 @@ interface ScheduleManagerPageProps {
 const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = false }) => {
     const { t } = useTranslation();
     const { activeCinemaId, setActiveCinemaId, managedCinemas } = useCinema();
+    const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
+    const isAdmin = (storedUser.roles || []).includes('Admin') || storedUser.selectedRole === 'Admin';
+
     const [scheduleData, setScheduleData] = useState<ScheduleData>({ cinemaId: 'default', data: [] });
     const [draggingMovie, setDraggingMovie] = useState<ScheduleMovie | null>(null);
     const [manualAddMovie, setManualAddMovie] = useState<ScheduleMovie | null>(null);
@@ -73,9 +76,6 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
 
     useEffect(() => {
         const loadCinemas = async () => {
-            const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
-            const isAdmin = (storedUser.roles || []).includes('Admin') || storedUser.selectedRole === 'Admin';
-
             if (isAdmin) {
                 try {
                     const res = await facilitiesApi.getCinemaList();
@@ -310,8 +310,14 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
               <ManagementChrome
                 sidebarOpen={false}
                 onSidebarToggle={() => {}}
+                cinemaSelector={isAdmin ? {
+                    cinemas: availableCinemas,
+                    activeCinemaId,
+                    activeCinemaName: availableCinemas.find(c => c.cinemaId === activeCinemaId)?.cinemaName || null,
+                    onChange: (id) => setActiveCinemaId(id),
+                } : undefined}
               />
-              <main className="main-content" style={{ paddingTop: 0, marginLeft: 0 }}>
+              <main className="main-content" style={{ marginLeft: 0 }}>
                 <div className="page-container">
                   <div className="state-center" style={{ minHeight: '60vh' }}>
                       <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
@@ -527,6 +533,12 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
             <ManagementChrome
                 sidebarOpen={sidebarOpen}
                 onSidebarToggle={() => setSidebarOpen((open) => !open)}
+                cinemaSelector={isAdmin ? {
+                    cinemas: availableCinemas,
+                    activeCinemaId,
+                    activeCinemaName: availableCinemas.find(c => c.cinemaId === activeCinemaId)?.cinemaName || null,
+                    onChange: (id) => setActiveCinemaId(id),
+                } : undefined}
             />
 
             <main
@@ -535,7 +547,6 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                     display: 'flex',
                     flexDirection: 'column',
                     overflow: 'hidden',
-                    paddingTop: 0,
                 }}
             >
                 {renderWorkspace()}

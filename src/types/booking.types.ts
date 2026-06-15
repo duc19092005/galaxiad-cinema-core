@@ -12,6 +12,8 @@ export interface CreateBookingRequest {
     customerEmail?: string;
     customerPhone?: string;
     customerAddress?: string;
+    voucherId?: string | null;
+    staffId?: string | null;
 }
 
 export interface CreateBookingResponse {

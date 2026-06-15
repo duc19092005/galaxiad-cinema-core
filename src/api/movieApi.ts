@@ -12,9 +12,9 @@ const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T>
 
 export const movieApi = {
     /** GET /api/movieManager/movies */
-    getMovieList: async (): Promise<ApiSuccessResponse<Movie[]>> => {
+    getMovieList: async (cinemaId?: string): Promise<ApiSuccessResponse<Movie[]>> => {
         const response = await movieAxios.get<ApiSuccessResponse<Movie[]>>(
-            '/movieManager/movies'
+            cinemaId ? `/movieManager/movies?cinemaId=${cinemaId}` : '/movieManager/movies'
         );
         return response.data;
     },

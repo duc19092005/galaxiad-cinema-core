@@ -1,7 +1,7 @@
 // src/components/ManagementDashboard.tsx
 // Unified dashboard with live management metrics.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -19,6 +19,7 @@ import {
 import { adminApi } from '../api/adminApi';
 import type { ManagementDashboardDto } from '../types/admin.types';
 import { showError } from '../utils/ToastUtils';
+import { useCinema } from '../contexts/CinemaContext';
 
 interface DashboardStat {
   label: string;
@@ -55,15 +56,16 @@ const colorToRgb = (color: string) => {
 const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { activeCinemaId } = useCinema();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dashboard, setDashboard] = useState<ManagementDashboardDto | null>(null);
 
-  const loadDashboard = async () => {
+  const loadDashboard = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await adminApi.getManagementDashboard();
+      const response = await adminApi.getManagementDashboard(activeCinemaId || undefined);
       setDashboard(response.data || null);
     } catch (err) {
       const message = 'Unable to load dashboard metrics.';
@@ -72,11 +74,11 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeCinemaId]);
 
   useEffect(() => {
     loadDashboard();
-  }, []);
+  }, [loadDashboard]);
 
   const stats = useMemo<DashboardStat[]>(() => {
     const base: DashboardStat[] = [

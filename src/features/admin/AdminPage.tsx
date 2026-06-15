@@ -24,7 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
@@ -40,6 +40,7 @@ import { VouchersSection } from './components/VouchersSection';
 import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema } from '../../types/facilities.types';
+import { useCinema } from '../../contexts/CinemaContext';
 
 // ============================================
 // CONSTANTS
@@ -569,8 +570,8 @@ const AuditSection: React.FC<AuditSectionProps> = ({ auditLogs, loading, onRefre
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { tab } = useParams();
+  const { activeCinemaId, activeCinemaName, setActiveCinemaId } = useCinema();
   const initialTab = tab && adminTabIds.has(tab) ? tab : 'dashboard';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -639,7 +640,7 @@ const AdminPage: React.FC = () => {
   const fetchDashboard = useCallback(async () => {
     setDashboardLoading(true);
     try {
-      const res = await adminApi.getManagementDashboard();
+      const res = await adminApi.getManagementDashboard(activeCinemaId || undefined);
       setDashboardData(res.data || null);
       setAuditLogs(res.data?.recentActivities || []);
     } catch {
@@ -647,7 +648,7 @@ const AdminPage: React.FC = () => {
     } finally {
       setDashboardLoading(false);
     }
-  }, [t]);
+  }, [t, activeCinemaId]);
 
   const fetchStaffRoles = useCallback(async () => {
     setRolesLoading(true);
@@ -695,6 +696,10 @@ const AdminPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    fetchCinemas();
+  }, [fetchCinemas]);
+
   const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
     try {
       await adminApi.updateUserStatus(userId, newStatus);
@@ -728,7 +733,8 @@ const AdminPage: React.FC = () => {
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
-    navigate(tabId === 'dashboard' ? '/admin' : `/admin/${tabId}`);
+    const newPath = tabId === 'dashboard' ? '/admin' : `/admin/${tabId}`;
+    window.history.pushState(null, '', newPath);
   };
 
   const handleOpenCreateUser = () => {
@@ -1074,9 +1080,15 @@ const AdminPage: React.FC = () => {
       <ManagementChrome
         sidebarOpen={sidebarOpen}
         onSidebarToggle={() => setSidebarOpen((open) => !open)}
+        cinemaSelector={{
+          cinemas,
+          activeCinemaId,
+          activeCinemaName,
+          onChange: (id) => setActiveCinemaId(id),
+        }}
       />
 
-      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`} style={{ paddingTop: 0 }}>
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
         <div className="page-container">
           {renderContent()}
         </div>

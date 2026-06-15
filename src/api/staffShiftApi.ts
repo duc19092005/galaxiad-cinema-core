@@ -34,26 +34,30 @@ export const POS_TERMINAL_TOKEN_KEY = 'pos_terminal_token';
 
 export const staffShiftApi = {
   /** GET /api/v1/Staff/Shifts/available?date=yyyy-MM-dd */
-  getAvailableShifts: async (date: string): Promise<ApiSuccessResponse<ShiftTemplateDto[]>> => {
-    const response = await shiftAxios.get<ServerResponse<ShiftTemplateDto[]>>('/Staff/Shifts/available', { params: { date } });
+  getAvailableShifts: async (date: string, token?: string): Promise<ApiSuccessResponse<ShiftTemplateDto[]>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.get<ServerResponse<ShiftTemplateDto[]>>('/Staff/Shifts/available', { params: { date }, headers });
     return normalizeSuccessResponse<ShiftTemplateDto[]>(response);
   },
 
   /** POST /api/v1/Staff/Shifts/register */
-  registerShift: async (data: RegisterShiftRequest): Promise<ApiSuccessResponse<boolean>> => {
-    const response = await shiftAxios.post<ServerResponse<boolean>>('/Staff/Shifts/register', data);
+  registerShift: async (data: RegisterShiftRequest, token?: string): Promise<ApiSuccessResponse<boolean>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.post<ServerResponse<boolean>>('/Staff/Shifts/register', data, { headers });
     return normalizeSuccessResponse<boolean>(response);
   },
 
   /** GET /api/v1/Staff/Shifts/my-registrations */
-  getMyRegistrations: async (): Promise<ApiSuccessResponse<ShiftRegistrationDto[]>> => {
-    const response = await shiftAxios.get<ServerResponse<ShiftRegistrationDto[]>>('/Staff/Shifts/my-registrations');
+  getMyRegistrations: async (token?: string): Promise<ApiSuccessResponse<ShiftRegistrationDto[]>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.get<ServerResponse<ShiftRegistrationDto[]>>('/Staff/Shifts/my-registrations', { headers });
     return normalizeSuccessResponse<ShiftRegistrationDto[]>(response);
   },
 
   /** POST /api/v1/Staff/Shifts/{staffId}/register-face */
-  registerFace: async (staffId: string, data: RegisterFaceRequest): Promise<ApiSuccessResponse<boolean>> => {
-    const response = await shiftAxios.post<ServerResponse<boolean>>(`/Staff/Shifts/${staffId}/register-face`, data);
+  registerFace: async (staffId: string, data: RegisterFaceRequest, token?: string): Promise<ApiSuccessResponse<boolean>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.post<ServerResponse<boolean>>(`/Staff/Shifts/${staffId}/register-face`, data, { headers });
     return normalizeSuccessResponse<boolean>(response);
   },
 
@@ -64,20 +68,23 @@ export const staffShiftApi = {
   },
 
   /** POST /api/v1/Staff/Shifts/clock-out */
-  clockOut: async (data: ClockOutRequest): Promise<ApiSuccessResponse<boolean>> => {
-    const response = await shiftAxios.post<ServerResponse<boolean>>('/Staff/Shifts/clock-out', data);
+  clockOut: async (data: ClockOutRequest, token?: string): Promise<ApiSuccessResponse<boolean>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.post<ServerResponse<boolean>>('/Staff/Shifts/clock-out', data, { headers });
     return normalizeSuccessResponse<boolean>(response);
   },
 
   /** GET /api/v1/Staff/Shifts/my-history */
-  getMyHistory: async (): Promise<ApiSuccessResponse<StaffWorkingLogDto[]>> => {
-    const response = await shiftAxios.get<ServerResponse<StaffWorkingLogDto[]>>('/Staff/Shifts/my-history');
+  getMyHistory: async (token?: string): Promise<ApiSuccessResponse<StaffWorkingLogDto[]>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.get<ServerResponse<StaffWorkingLogDto[]>>('/Staff/Shifts/my-history', { headers });
     return normalizeSuccessResponse<StaffWorkingLogDto[]>(response);
   },
 
   /** GET /api/v1/Staff/Shifts/my-payroll */
-  getMyPayroll: async (): Promise<ApiSuccessResponse<PayrollDto[]>> => {
-    const response = await shiftAxios.get<ServerResponse<PayrollDto[]>>('/Staff/Shifts/my-payroll');
+  getMyPayroll: async (token?: string): Promise<ApiSuccessResponse<PayrollDto[]>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.get<ServerResponse<PayrollDto[]>>('/Staff/Shifts/my-payroll', { headers });
     return normalizeSuccessResponse<PayrollDto[]>(response);
   },
 
