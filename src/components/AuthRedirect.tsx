@@ -6,7 +6,7 @@ import { verifyAuthAndGetUser } from '../utils/authHelpers';
 
 const roleConfig: Record<string, string> = {
   Customer: '/home',
-  Cashier: '/cashier',
+  Cashier: '/staff',
   Admin: '/admin',
   MovieManager: '/movie-manager',
   TheaterManager: '/theater-manager',
@@ -23,7 +23,8 @@ const AuthRedirect: React.FC = () => {
       if (!userInfo) { setRedirectPath('/login'); setIsChecking(false); return; }
 
       if (userInfo.roles.length === 1) {
-        setRedirectPath(roleConfig[userInfo.roles[0]] || '/role-selection');
+        const onlyRole = userInfo.roles[0];
+        setRedirectPath(onlyRole === 'Cashier' && userInfo.isSharedPosAccount ? '/cashier' : roleConfig[onlyRole] || '/role-selection');
       } else if (userInfo.roles.length > 1) {
         setRedirectPath('/role-selection');
       } else {

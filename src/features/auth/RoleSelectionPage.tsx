@@ -13,7 +13,7 @@ import Cookies from 'js-cookie';
 
 const roleConfig: Record<string, { icon: React.ElementType; label: string; route: string; description: string; gradient: string }> = {
   Customer: { icon: Ticket, label: 'roles.customer', route: '/home', description: 'Browse movies and book tickets', gradient: 'linear-gradient(135deg, #ff8a00, #ea580c)' },
-  Cashier: { icon: Ticket, label: 'roles.cashier', route: '/cashier', description: 'Process ticket sales and payments', gradient: 'linear-gradient(135deg, #059669, #10b981)' },
+  Cashier: { icon: Ticket, label: 'roles.cashier', route: '/staff', description: 'Manage personal shifts and attendance', gradient: 'linear-gradient(135deg, #059669, #10b981)' },
   Admin: { icon: Shield, label: 'roles.admin', route: '/admin', description: 'Full system administration', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
   MovieManager: { icon: Film, label: 'roles.movieManager', route: '/movie-manager', description: 'Manage movie listings', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
   TheaterManager: { icon: Building2, label: 'roles.theaterManager', route: '/theater-manager', description: 'Manage theater schedules', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
@@ -23,7 +23,7 @@ const roleConfig: Record<string, { icon: React.ElementType; label: string; route
 const RoleSelectionPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [user, setUser] = useState<{ username: string; roles: string[] } | null>(null);
+  const [user, setUser] = useState<{ username: string; roles: string[]; isSharedPosAccount?: boolean } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
@@ -37,7 +37,7 @@ const RoleSelectionPage: React.FC = () => {
         setUser(userData);
         if (userData.roles && userData.roles.length === 1) {
           const roleInfo = roleConfig[userData.roles[0]];
-          if (roleInfo) { navigate(roleInfo.route); return; }
+          if (roleInfo) { navigate(userData.roles[0] === 'Cashier' && userData.isSharedPosAccount ? '/cashier' : roleInfo.route); return; }
         }
         testAuthentication();
       } catch { setError('Invalid user data'); setLoading(false); }
@@ -78,7 +78,7 @@ const RoleSelectionPage: React.FC = () => {
       const userData = { ...user, selectedRole: role };
       localStorage.setItem('user_info', JSON.stringify(userData));
       window.dispatchEvent(new Event('user_info_updated'));
-      navigate(roleInfo.route);
+      navigate(role === 'Cashier' && user?.isSharedPosAccount ? '/cashier' : roleInfo.route);
     }
   };
 

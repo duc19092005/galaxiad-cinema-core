@@ -31,7 +31,7 @@ const LoginForm: React.FC = () => {
         if (userInfo && userInfo.roles && userInfo.roles.length > 0) {
           if (userInfo.roles.length === 1) {
             const roleConfig: Record<string, string> = {
-              Customer: '/home', Cashier: '/cashier', Admin: '/admin',
+              Customer: '/home', Cashier: userInfo.isSharedPosAccount ? '/cashier' : '/staff', Admin: '/admin',
               MovieManager: '/movie-manager', TheaterManager: '/theater-manager', FacilitiesManager: '/facilities-manager',
             };
             navigate(roleConfig[userInfo.roles[0]] || '/role-selection', { replace: true });
@@ -53,7 +53,19 @@ const LoginForm: React.FC = () => {
         localStorage.setItem('user_info', JSON.stringify(res.data));
         window.dispatchEvent(new Event('user_info_updated'));
         if (res.data.accessToken) Cookies.set('X-Access-Token', res.data.accessToken, { expires: 7, sameSite: 'Lax' });
-        navigate('/role-selection');
+        if (res.data.roles?.length === 1) {
+          const roleConfig: Record<string, string> = {
+            Customer: '/home',
+            Cashier: res.data.isSharedPosAccount ? '/cashier' : '/staff',
+            Admin: '/admin',
+            MovieManager: '/movie-manager',
+            TheaterManager: '/theater-manager',
+            FacilitiesManager: '/facilities-manager',
+          };
+          navigate(roleConfig[res.data.roles[0]] || '/role-selection');
+        } else {
+          navigate('/role-selection');
+        }
       } else { setErrorMsg('Login failed. Please check your credentials.'); }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {

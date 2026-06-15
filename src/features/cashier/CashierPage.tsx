@@ -145,6 +145,18 @@ const CashierPage: React.FC = () => {
 
   const effectiveStaffId = selectedStaffId || manualStaffId.trim();
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('user_info');
+      const user = stored ? JSON.parse(stored) : null;
+      if (user?.roles?.includes('Cashier') && !user?.isSharedPosAccount) {
+        navigate('/staff', { replace: true });
+      }
+    } catch {
+      // ignore invalid cached user data
+    }
+  }, [navigate]);
+
   const loadStaffProfiles = useCallback(async () => {
     if (!activeCinemaId) return;
     setStaffLoading(true);

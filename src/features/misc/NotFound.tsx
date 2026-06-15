@@ -6,7 +6,7 @@ import { Film, AlertTriangle, Home } from 'lucide-react';
 // Map role -> route chính của role đó
 const roleRouteMap: Record<string, string> = {
   Customer: '/home',
-  Cashier: '/cashier',
+  Cashier: '/staff',
   Admin: '/admin',
   MovieManager: '/movie-manager',
   TheaterManager: '/theater-manager',

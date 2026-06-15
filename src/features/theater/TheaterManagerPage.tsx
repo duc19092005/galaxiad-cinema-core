@@ -30,7 +30,7 @@ const TheaterManagerPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { managedCinemas, activeCinemaId, activeCinemaName, setActiveCinemaId, loading: cinemaLoading } = useCinema();
-  const [user, setUser] = useState<{ username: string; roles?: string[] } | null>(null);
+  const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'schedule'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,9 +44,13 @@ const TheaterManagerPage: React.FC = () => {
     const raw = localStorage.getItem('user_info');
     if (!raw) { navigate('/login'); return; }
     try {
-      const parsed = JSON.parse(raw) as { username: string; roles?: string[] };
+      const parsed = JSON.parse(raw) as { username: string; roles?: string[]; selectedRole?: string };
       const roles = parsed.roles || [];
       if (!roles.includes('TheaterManager') && !roles.includes('Admin')) {
+        navigate('/role-selection');
+        return;
+      }
+      if (parsed.selectedRole && !['TheaterManager', 'Admin'].includes(parsed.selectedRole)) {
         navigate('/role-selection');
         return;
       }

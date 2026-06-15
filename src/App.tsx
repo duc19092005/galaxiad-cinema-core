@@ -25,6 +25,7 @@ import { ShowtimesPage } from './features/booking/ShowtimesPage';
 import { TheatersPage } from './features/booking/TheatersPage';
 import { OffersPage } from './features/booking/OffersPage';
 import CashierPage from './features/cashier/CashierPage';
+import StaffPortalPage from './features/staff/StaffPortalPage';
 import ServicesPage from './features/public/ServicesPage';
 import HelpPage from './features/public/HelpPage';
 import ShiftNotificationListener from './components/ShiftNotificationListener';
@@ -50,6 +51,7 @@ function AppRoutes() {
         <Route path="/theaters" element={<PageTransition><TheatersPage /></PageTransition>} />
         <Route path="/offers" element={<PageTransition><OffersPage /></PageTransition>} />
         <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/staff" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />
