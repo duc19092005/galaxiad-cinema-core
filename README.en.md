@@ -41,6 +41,15 @@ Rather than relying on static, hard-coded pricing, the platform features an inte
    $$\text{Final Price} = \text{Price after Surcharge} \times \left(1 - \frac{\text{Discount Percent}}{100}\right)$$
    *Discounts are automatically determined by the user's loyalty segment: Standard (5%), Student (10%), or VIP (15%).*
 
+### 4. POS, Department & Attendance Flow Integration
+*   **Cashier Department Sync:** Supports isolated POS departments per cinema branch. Automatically spins up shared cashier accounts (role `Cashier`) and ensures immediate deactivation (`AccountStatus = Banned`) and staff status changes (`WorkingStatus = false`) using Database Transactions when a department is deleted or deactivated.
+*   **Biometric Attendance (128d Face Vector Match):** Staff members clock in and clock out directly at the POS terminal using webcam-based facial recognition (comparing 128-dimensional embedding vectors) without needing their own credentials on the terminal.
+*   **Staff Attribution & VIP POS Checkout:** Differentiates the cashier (`StaffId` - automatically resolved via active shifts if not provided) from the buyer (`UserId` - resolved by email to allow points accumulation and member pricing segments VIP 15% / Student 10% dynamically).
+
+### 5. Cinema-based Query Filtering
+*   **Movie Manager Filter:** Allows filtering movies lists (`GET /api/movieManager/movies?cinemaId=...`) to only display movies allocated/assigned to a specific cinema.
+*   **Admin Dashboard Stats Filter:** Managers can filter the entire management dashboard stats (`GET /api/v1/admin/dashboard/management?cinemaId=...`) to track revenue, tickets sold, daily/hourly graphs, movie rankings, transactions, and audit logs of a single theater.
+
 ---
 
 ## 🔐 Login Credentials (Dev Environment / Seed Data)
@@ -120,6 +129,7 @@ For technical deep-dives, setting up the local environment, or code contribution
 
 *   **[Technical Implementation Plan](./docs/dev/implementation_plan.md)**: Detailed class structures, EF Core entity relationships, and architectural blueprints.
 *   **[Task Tracker](./docs/dev/task.md)**: Work items, refactoring progress, and current roadmap status.
+*   **[POS & Attendance Flow Integration Guide](./README_POS_FLOW.md)**: Comprehensive guide for Frontend developers to integrate counter POS endpoints, facial recognition, and staff attribution.
 
 ---
 

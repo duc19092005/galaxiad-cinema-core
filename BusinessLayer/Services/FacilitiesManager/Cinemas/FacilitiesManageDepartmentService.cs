@@ -59,7 +59,7 @@ public class FacilitiesManageDepartmentService
                 CinemaId = d.CinemaId,
                 CinemaName = d.CinemaInfoEntity.CinemaName,
                 DepartmentName = d.DepartmentName,
-                DepartmentType = d.DepartmentType == CashierDepartmentType.TicketPOS ? "TicketPOS" : "FoodPOS",
+                DepartmentType = d.DepartmentType.ToString(),
                 SharedUserId = d.SharedUserId,
                 SharedUserEmail = d.SharedUserInfoEntity != null ? d.SharedUserInfoEntity.UserEmail : null,
                 IsActive = d.IsActive
@@ -172,6 +172,8 @@ public class FacilitiesManageDepartmentService
 
         var department = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
             .Include(d => d.CinemaInfoEntity)
+            .Include(d => d.SharedUserInfoEntity)
+                .ThenInclude(u => u!.StaffProfileEntity)
             .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
 
         if (department == null)
@@ -180,21 +182,65 @@ public class FacilitiesManageDepartmentService
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
             throw new AppException("Bạn không có quyền sửa phòng ban này.", 403, "DEPT_ERR");
 
-        if (request.DepartmentName != null)
-            department.DepartmentName = request.DepartmentName;
+        // 1. Kiểm tra tính duy nhất của tên nếu đổi tên hoặc kích hoạt lại phòng ban
+        bool nameChanging = request.DepartmentName != null && request.DepartmentName != department.DepartmentName;
+        bool activating = request.IsActive == true && !department.IsActive;
 
-        if (request.IsActive.HasValue)
-            department.IsActive = request.IsActive.Value;
-
-        _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
-        await _unitOfWork.SaveChangesAsync();
-
-        return new BaseResponse<bool>
+        if (nameChanging || activating)
         {
-            IsSuccess = true,
-            Data = true,
-            Message = "Cập nhật phòng ban thành công."
-        };
+            string targetName = request.DepartmentName ?? department.DepartmentName;
+            var exists = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+                .AnyAsync(d => d.CinemaId == department.CinemaId && 
+                               d.DepartmentName == targetName && 
+                               d.IsActive && 
+                               d.DepartmentId != departmentId);
+            if (exists)
+                throw new AppException($"Phòng ban '{targetName}' đã tồn tại trong rạp này.", 400, "DEPT_ERR");
+        }
+
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            if (request.DepartmentName != null)
+                department.DepartmentName = request.DepartmentName;
+
+            if (request.IsActive.HasValue)
+            {
+                department.IsActive = request.IsActive.Value;
+                
+                // Đồng bộ hóa trạng thái tài khoản dùng chung
+                if (department.SharedUserInfoEntity != null)
+                {
+                    department.SharedUserInfoEntity.AccountStatus = request.IsActive.Value 
+                        ? AccountStatusEnum.Active 
+                        : AccountStatusEnum.Banned;
+                    _unitOfWork.Repository<UserInfoEntity>().Update(department.SharedUserInfoEntity);
+
+                    if (department.SharedUserInfoEntity.StaffProfileEntity != null)
+                    {
+                        department.SharedUserInfoEntity.StaffProfileEntity.WorkingStatus = request.IsActive.Value;
+                        _unitOfWork.Repository<StaffProfileEntity>().Update(department.SharedUserInfoEntity.StaffProfileEntity);
+                    }
+                }
+            }
+
+            _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
+            await _unitOfWork.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new BaseResponse<bool>
+            {
+                IsSuccess = true,
+                Data = true,
+                Message = "Cập nhật phòng ban thành công."
+            };
+        }
+        catch (AppException) { await transaction.RollbackAsync(); throw; }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw new AppException($"Lỗi khi cập nhật phòng ban: {ex.Message}", 500, "DEPT_ERR");
+        }
     }
 
     /// <summary>Xoá mềm phòng ban</summary>
@@ -205,6 +251,8 @@ public class FacilitiesManageDepartmentService
 
         var department = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
             .Include(d => d.CinemaInfoEntity)
+            .Include(d => d.SharedUserInfoEntity)
+                .ThenInclude(u => u!.StaffProfileEntity)
             .FirstOrDefaultAsync(d => d.DepartmentId == departmentId);
 
         if (department == null)
@@ -213,15 +261,40 @@ public class FacilitiesManageDepartmentService
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
             throw new AppException("Bạn không có quyền xoá phòng ban này.", 403, "DEPT_ERR");
 
-        department.IsActive = false;
-        _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
-        await _unitOfWork.SaveChangesAsync();
-
-        return new BaseResponse<bool>
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
         {
-            IsSuccess = true,
-            Data = true,
-            Message = "Đã vô hiệu hoá phòng ban."
-        };
+            department.IsActive = false;
+
+            // Đồng bộ khóa tài khoản dùng chung
+            if (department.SharedUserInfoEntity != null)
+            {
+                department.SharedUserInfoEntity.AccountStatus = AccountStatusEnum.Banned;
+                _unitOfWork.Repository<UserInfoEntity>().Update(department.SharedUserInfoEntity);
+
+                if (department.SharedUserInfoEntity.StaffProfileEntity != null)
+                {
+                    department.SharedUserInfoEntity.StaffProfileEntity.WorkingStatus = false;
+                    _unitOfWork.Repository<StaffProfileEntity>().Update(department.SharedUserInfoEntity.StaffProfileEntity);
+                }
+            }
+
+            _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
+            await _unitOfWork.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return new BaseResponse<bool>
+            {
+                IsSuccess = true,
+                Data = true,
+                Message = "Đã vô hiệu hoá phòng ban."
+            };
+        }
+        catch (AppException) { await transaction.RollbackAsync(); throw; }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            throw new AppException($"Lỗi khi xoá phòng ban: {ex.Message}", 500, "DEPT_ERR");
+        }
     }
 }

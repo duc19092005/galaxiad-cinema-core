@@ -41,6 +41,15 @@ Hệ thống không sử dụng bảng giá vé cố định cứng nhắc, mà 
    $$\text{Giá cuối cùng} = \text{Giá sau phụ thu} \times \left(1 - \frac{\text{Phần trăm ưu đãi}}{100}\right)$$
    *Mức ưu đãi được xác định tự động dựa trên phân khúc khách hàng: Standard (5%), Student (10%), hoặc VIP (15%).*
 
+### 4. Phân hệ POS, Quản lý Phòng ban & Chấm công Chặt chẽ (POS, Cashier Department & Attendance Flow)
+*   **Quản lý Phòng ban (Cashier Department):** Hỗ trợ tạo các phòng ban/quầy thu ngân độc lập cho từng rạp, tự động cấp tài khoản dùng chung (Shared POS Account) có role `Cashier`. Đồng bộ hóa trạng thái tài khoản (`AccountStatus = Banned`) và hồ sơ nhân sự (`WorkingStatus = false`) của quầy bằng Database Transaction ngay khi phòng ban bị xóa hoặc vô hiệu hóa.
+*   **Điểm danh sinh trắc học (Biometric Face Match):** Nhân viên khi nhận ca trực tại máy POS chỉ cần quét mặt (so khớp Face Vector 128 chiều) để nhận phiên làm việc (Clock-In) và kết thúc ca trực (Clock-Out).
+*   **Bán vé và ghi nhận lịch sử tại quầy (POS Checkout):** Tách biệt rõ ràng thực thể người bán (StaffId - tự động phân giải qua ca trực đang mở nếu FE không truyền) và người mua (UserId - tra cứu từ email thành viên để tích điểm thưởng và áp dụng giảm giá VIP/Student).
+
+### 5. Bộ lọc dữ liệu theo Cụm rạp (Cinema-based Query Filtering)
+*   **Quản lý phim thông minh:** Cho phép lọc danh sách phim của Movie Manager (`GET /api/movieManager/movies?cinemaId=...`) để chỉ hiển thị các bộ phim đã được phân bổ chiếu tại cụm rạp được chọn.
+*   **Báo cáo Dashboard chi tiết:** Admin và Quản lý có thể lọc dữ liệu của toàn bộ màn hình Dashboard (`GET /api/v1/admin/dashboard/management?cinemaId=...`) để theo dõi doanh thu, biểu đồ lượng vé bán ra theo ngày/giờ, top phim hot, giao dịch và audit log của riêng rạp đó.
+
 ---
 
 ## 🔐 Tài khoản đăng nhập (Môi trường Dev / Seed Data)
@@ -120,9 +129,11 @@ Nếu bạn là nhà phát triển muốn tìm hiểu sâu về cấu trúc code
 
 *   **[Kế hoạch triển khai kỹ thuật (Technical Implementation Plan)](./docs/dev/implementation_plan.md)**: Chi tiết thiết kế các lớp (classes), kiến trúc liên kết thực thể EF Core và sơ đồ luồng dữ liệu.
 *   **[Bảng theo dõi công việc (Task Tracker)](./docs/dev/task.md)**: Danh sách chi tiết các công việc, trạng thái tiến độ refactor và các hạng mục đã hoàn thành.
+*   **[Hướng dẫn tích hợp luồng POS, Phòng ban & Điểm danh (POS & Attendance Flow Integration Guide)](./README_POS_FLOW.md)**: Tài liệu chi tiết hướng dẫn Frontend tích hợp các API quản lý quầy, điểm danh khuôn mặt và liên kết nhân viên bán vé.
 
 ---
 
 ## 📈 Trạng thái Dự án (Build Status)
 *   **Trạng thái Build:** ✅ Thành công 100% (`dotnet build` -> 0 lỗi).
 *   **Độ ổn định:** Đã áp dụng các bản vá cơ sở dữ liệu (migrations) cập nhật mới nhất, đảm bảo tính toàn vẹn dữ liệu cho các tính năng liên quan đến phân khúc khách hàng VIP.
+

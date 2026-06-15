@@ -121,6 +121,9 @@ public class ReqCreateBookingDto
     public string? CustomerEmail { get; set; }
 
     public Guid? VoucherId { get; set; }
+
+    /// <summary>Id của nhân viên đứng quầy bán vé (truyền lên từ máy POS)</summary>
+    public Guid? StaffId { get; set; }
 }
 
 public class SeatSelectionDto

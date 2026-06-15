@@ -646,6 +646,46 @@ public class BookingService
         try
         {
             var userId = _userContextService.TryGetUserId();
+            var isCashier = _userContextService.IsInRole("Cashier");
+
+            Guid? orderUserId = null;
+            Guid? orderStaffId = null;
+
+            if (isCashier)
+            {
+                orderStaffId = request.StaffId;
+                
+                // Fallback: Tìm kiếm nhân viên đang có ca làm hoạt động tại rạp của quầy này
+                if (!orderStaffId.HasValue && userId.HasValue)
+                {
+                    var dept = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+                        .FirstOrDefaultAsync(d => d.SharedUserId == userId.Value);
+                    if (dept != null)
+                    {
+                        var activeLog = await _unitOfWork.Repository<StaffWorkingLoggerEntity>().Query()
+                            .Include(l => l.StaffProfileEntity)
+                            .FirstOrDefaultAsync(l => l.StaffProfileEntity.CinemaId == dept.CinemaId && l.EndedShiftTime == null);
+                        if (activeLog != null)
+                        {
+                            orderStaffId = activeLog.StaffId;
+                        }
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.CustomerEmail))
+                {
+                    var customer = await _unitOfWork.Repository<UserInfoEntity>().Query()
+                        .FirstOrDefaultAsync(u => u.UserEmail == request.CustomerEmail);
+                    if (customer != null)
+                    {
+                        orderUserId = customer.UserId;
+                    }
+                }
+            }
+            else
+            {
+                orderUserId = userId;
+            }
 
             // Validate schedule
             var schedule = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
@@ -740,11 +780,11 @@ public class BookingService
 
             // Calculate segment-based discount
             decimal roleDiscountPercent = 0;
-            if (userId.HasValue)
+            if (orderUserId.HasValue)
             {
                 var customerProfile = await _unitOfWork.Repository<CustomerProfileEntity>().Query()
                     .Include(cp => cp.UserSegmentsInfoEntity)
-                    .FirstOrDefaultAsync(cp => cp.UserId == userId.Value);
+                    .FirstOrDefaultAsync(cp => cp.UserId == orderUserId.Value);
 
                 if (customerProfile != null && customerProfile.UserSegmentsInfoEntity != null)
                 {
@@ -772,7 +812,7 @@ public class BookingService
             decimal voucherDiscountPercent = 0;
             if (request.VoucherId.HasValue)
             {
-                if (!userId.HasValue)
+                if (!orderUserId.HasValue)
                 {
                     throw new BadRequestException("Guests cannot apply vouchers.", "BK07");
                 }
@@ -780,7 +820,7 @@ public class BookingService
                 var userVoucher = await _unitOfWork.Repository<UserVoucherEntity>().Query()
                     .Include(uv => uv.VoucherInfoEntity)
                     .FirstOrDefaultAsync(uv => uv.VoucherId == request.VoucherId.Value &&
-                                               uv.UserId == userId.Value &&
+                                               uv.UserId == orderUserId.Value &&
                                                !uv.IsUsed);
 
                 if (userVoucher == null)
@@ -808,10 +848,10 @@ public class BookingService
             string? finalCustomerName = null;
             string? finalCustomerEmail = null;
 
-            if (userId.HasValue)
+            if (orderUserId.HasValue)
             {
                 var user = await _unitOfWork.Repository<UserInfoEntity>().Query()
-                    .FirstOrDefaultAsync(u => u.UserId == userId);
+                    .FirstOrDefaultAsync(u => u.UserId == orderUserId);
                 
                 finalCustomerName = user?.UserName;
                 finalCustomerEmail = user?.UserEmail;
@@ -829,7 +869,8 @@ public class BookingService
             var order = new OrderInfoEntity
             {
                 OrderId = orderId,
-                UserId = userId,
+                UserId = orderUserId,
+                StaffId = orderStaffId,
                 OrderStatus = OrderStatusEnum.Pending,
                 PaymentMethod = PaymentMethodEnum.VNPAY,
                 TotalPrice = finalPrice,
@@ -837,7 +878,7 @@ public class BookingService
                 TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
                 CustomerEmail = finalCustomerEmail,
-                CustomerAddress = userId.HasValue ? null : request.CustomerAddress,
+                CustomerAddress = orderUserId.HasValue ? null : request.CustomerAddress,
                 VoucherId = request.VoucherId
             };
 

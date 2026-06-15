@@ -22,7 +22,7 @@ public class ManagementDashboardService
         _userContextService = userContextService;
     }
 
-    public async Task<BaseResponse<ManagementDashboardDto>> GetDashboardAsync()
+    public async Task<BaseResponse<ManagementDashboardDto>> GetDashboardAsync(Guid? cinemaId = null)
     {
         var userId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
@@ -39,6 +39,10 @@ public class ManagementDashboardService
                     (isFacilitiesManager && c.FacilitiesManagerId == userId) ||
                     (isTheaterManager && c.TheaterManagerId == userId))
                 .Select(c => c.CinemaId);
+        }
+        if (cinemaId.HasValue)
+        {
+            cinemaIdsQuery = cinemaIdsQuery.Where(id => id == cinemaId.Value);
         }
 
         var movieIdsQuery = Query<MovieInfoEntity>().AsNoTracking().Select(m => m.MovieId);
@@ -58,33 +62,54 @@ public class ManagementDashboardService
         var monthStart = TimeZoneInfo.ConvertTimeToUtc(new DateTime(vietnamToday.Year, vietnamToday.Month, 1), vietnamTimeZone);
         var lastSevenDaysStart = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(-6), vietnamTimeZone);
 
-        var activeUsers = isAdmin
+        var activeUsers = isAdmin && !cinemaId.HasValue
             ? await Query<UserInfoEntity>().AsNoTracking().CountAsync(u => u.AccountStatus == AccountStatusEnum.Active)
             : 0;
 
-        var totalCinemas = await Query<CinemaInfoEntity>()
+        var totalCinemasQuery = Query<CinemaInfoEntity>()
             .AsNoTracking()
-            .Where(c => !c.IsDeleted)
-            .Where(c => isAdmin || cinemaIdsQuery.Contains(c.CinemaId))
-            .CountAsync();
+            .Where(c => !c.IsDeleted);
+        if (cinemaId.HasValue)
+        {
+            totalCinemasQuery = totalCinemasQuery.Where(c => c.CinemaId == cinemaId.Value);
+        }
+        else if (!isAdmin)
+        {
+            totalCinemasQuery = totalCinemasQuery.Where(c => cinemaIdsQuery.Contains(c.CinemaId));
+        }
+        var totalCinemas = await totalCinemasQuery.CountAsync();
 
-        var activeMovies = await Query<MovieInfoEntity>()
+        var activeMoviesQuery = Query<MovieInfoEntity>()
             .AsNoTracking()
-            .Where(m => !m.IsDeleted && m.IsActive)
-            .Where(m => isAdmin || !isMovieManager || movieIdsQuery.Contains(m.MovieId))
-            .CountAsync();
+            .Where(m => !m.IsDeleted && m.IsActive);
+        if (cinemaId.HasValue)
+        {
+            activeMoviesQuery = activeMoviesQuery.Where(m => m.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
+        }
+        else if (!isAdmin && isMovieManager)
+        {
+            activeMoviesQuery = activeMoviesQuery.Where(m => movieIdsQuery.Contains(m.MovieId));
+        }
+        var activeMovies = await activeMoviesQuery.CountAsync();
 
         var activeSchedulesQuery = Query<MovieScheduleInfoEntity>()
             .AsNoTracking()
             .Where(schedule => !schedule.IsDeleted && schedule.IsActive);
-        if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+        if (cinemaId.HasValue)
         {
-            activeSchedulesQuery = activeSchedulesQuery.Where(schedule =>
-                cinemaIdsQuery.Contains(schedule.AuditoriumInfoEntities!.CinemaId));
+            activeSchedulesQuery = activeSchedulesQuery.Where(schedule => schedule.AuditoriumInfoEntities!.CinemaId == cinemaId.Value);
         }
-        if (!isAdmin && isMovieManager)
+        else
         {
-            activeSchedulesQuery = activeSchedulesQuery.Where(schedule => movieIdsQuery.Contains(schedule.MovieId));
+            if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+            {
+                activeSchedulesQuery = activeSchedulesQuery.Where(schedule =>
+                    cinemaIdsQuery.Contains(schedule.AuditoriumInfoEntities!.CinemaId));
+            }
+            if (!isAdmin && isMovieManager)
+            {
+                activeSchedulesQuery = activeSchedulesQuery.Where(schedule => movieIdsQuery.Contains(schedule.MovieId));
+            }
         }
         var activeSchedules = await activeSchedulesQuery.CountAsync();
 
@@ -92,22 +117,34 @@ public class ManagementDashboardService
             .AsNoTracking()
             .Where(od => paidStatuses.Contains(od.OrderInfoEntity.OrderStatus));
 
-        if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+        if (cinemaId.HasValue)
         {
             orderDetailsQuery = orderDetailsQuery.Where(od =>
-                cinemaIdsQuery.Contains(od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId));
+                od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId == cinemaId.Value);
         }
-
-        if (!isAdmin && isMovieManager)
+        else
         {
-            orderDetailsQuery = orderDetailsQuery.Where(od =>
-                movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId));
+            if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+            {
+                orderDetailsQuery = orderDetailsQuery.Where(od =>
+                    cinemaIdsQuery.Contains(od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId));
+            }
+            if (!isAdmin && isMovieManager)
+            {
+                orderDetailsQuery = orderDetailsQuery.Where(od =>
+                    movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId));
+            }
         }
 
         var paidOrdersQuery = Query<OrderInfoEntity>()
             .AsNoTracking()
             .Where(o => paidStatuses.Contains(o.OrderStatus));
-        if (!isAdmin)
+        if (cinemaId.HasValue)
+        {
+            paidOrdersQuery = paidOrdersQuery.Where(o =>
+                o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId == cinemaId.Value));
+        }
+        else if (!isAdmin)
         {
             paidOrdersQuery = paidOrdersQuery.Where(o =>
                 o.OrderDetailsInfo.Any(od =>
@@ -218,13 +255,23 @@ public class ManagementDashboardService
             .Take(8)
             .ToListAsync();
 
-        var recentTransactions = await Query<OrderInfoEntity>()
+        var recentTransactionsQuery = Query<OrderInfoEntity>()
             .AsNoTracking()
-            .Where(o => paidStatuses.Contains(o.OrderStatus))
-            .Where(o => isAdmin ||
+            .Where(o => paidStatuses.Contains(o.OrderStatus));
+        if (cinemaId.HasValue)
+        {
+            recentTransactionsQuery = recentTransactionsQuery.Where(o =>
+                o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId == cinemaId.Value));
+        }
+        else if (!isAdmin)
+        {
+            recentTransactionsQuery = recentTransactionsQuery.Where(o =>
                 o.OrderDetailsInfo.Any(od =>
                     ((isFacilitiesManager || isTheaterManager) && cinemaIdsQuery.Contains(od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId)) ||
-                    (isMovieManager && movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId))))
+                    (isMovieManager && movieIdsQuery.Contains(od.MovieScheduleInfoEntity.MovieId))));
+        }
+
+        var recentTransactions = await recentTransactionsQuery
             .OrderByDescending(o => o.OrderDate)
             .Take(8)
             .Select(o => new RecentTransactionDto
@@ -240,7 +287,11 @@ public class ManagementDashboardService
             .ToListAsync();
 
         var recentMoviesQuery = Query<MovieInfoEntity>().AsNoTracking().Where(m => !m.IsDeleted);
-        if (!isAdmin && isMovieManager)
+        if (cinemaId.HasValue)
+        {
+            recentMoviesQuery = recentMoviesQuery.Where(m => m.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
+        }
+        else if (!isAdmin && isMovieManager)
         {
             recentMoviesQuery = recentMoviesQuery.Where(m => m.MovieManagerId == userId);
         }
@@ -262,7 +313,11 @@ public class ManagementDashboardService
             .ToListAsync();
 
         var recentCinemasQuery = Query<CinemaInfoEntity>().AsNoTracking().Where(c => !c.IsDeleted);
-        if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+        if (cinemaId.HasValue)
+        {
+            recentCinemasQuery = recentCinemasQuery.Where(c => c.CinemaId == cinemaId.Value);
+        }
+        else if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
             recentCinemasQuery = recentCinemasQuery.Where(c => cinemaIdsQuery.Contains(c.CinemaId));
         }
@@ -284,7 +339,11 @@ public class ManagementDashboardService
             .ToListAsync();
 
         var recentAuditoriumsQuery = Query<AuditoriumInfoEntities>().AsNoTracking().Where(a => !a.IsDeleted);
-        if (!isAdmin && (isFacilitiesManager || isTheaterManager))
+        if (cinemaId.HasValue)
+        {
+            recentAuditoriumsQuery = recentAuditoriumsQuery.Where(a => a.CinemaId == cinemaId.Value);
+        }
+        else if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
             recentAuditoriumsQuery = recentAuditoriumsQuery.Where(a => cinemaIdsQuery.Contains(a.CinemaId));
         }
@@ -305,11 +364,19 @@ public class ManagementDashboardService
             })
             .ToListAsync();
 
-        var recentActivities = await Query<AuditLogEntity>()
-            .AsNoTracking()
-            .Where(log => isAdmin ||
+        var recentActivitiesQuery = Query<AuditLogEntity>().AsNoTracking();
+        if (cinemaId.HasValue)
+        {
+            recentActivitiesQuery = recentActivitiesQuery.Where(log => log.CinemaId == cinemaId.Value);
+        }
+        else if (!isAdmin)
+        {
+            recentActivitiesQuery = recentActivitiesQuery.Where(log =>
                 ((isFacilitiesManager || isTheaterManager) && log.CinemaId != null && cinemaIdsQuery.Contains(log.CinemaId.Value)) ||
-                (isMovieManager && log.EntityType == "Movie" && log.ActorUserId == userId))
+                (isMovieManager && log.EntityType == "Movie" && log.ActorUserId == userId));
+        }
+
+        var recentActivities = await recentActivitiesQuery
             .OrderByDescending(log => log.CreatedAt)
             .Take(10)
             .Select(log => new AuditLogDto

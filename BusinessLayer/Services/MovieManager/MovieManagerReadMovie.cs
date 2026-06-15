@@ -15,9 +15,13 @@ public class MovieManagerReadMovie
         this._readFactory = readFactory;
     }
 
-    public async Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetAllMovieInfos()
+    public async Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetAllMovieInfos(Guid? cinemaId = null)
     {
         var worker = GetWorker();
+        if (worker is BusinessLayer.UseCases.MovieManager.MovieInfos.ReadMovieInfoUseCase readMovieUseCase)
+        {
+            return await readMovieUseCase.GetAll(cinemaId);
+        }
         return await worker.GetAll();
     }
 

@@ -39,9 +39,9 @@ public class movieController : ControllerBase
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> GetAllMovies()
+    public async Task<IActionResult> GetAllMovies([FromQuery] Guid? cinemaId)
     {
-        var results = await _movieManagerReadMovie.GetAllMovieInfos();
+        var results = await _movieManagerReadMovie.GetAllMovieInfos(cinemaId);
         return Ok(results);
     }
 

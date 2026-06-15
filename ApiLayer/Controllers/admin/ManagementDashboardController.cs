@@ -19,9 +19,9 @@ public class ManagementDashboardController : ControllerBase
     }
 
     [HttpGet("management")]
-    public async Task<IActionResult> GetManagementDashboard()
+    public async Task<IActionResult> GetManagementDashboard([FromQuery] Guid? cinemaId)
     {
-        var result = await _dashboardService.GetDashboardAsync();
+        var result = await _dashboardService.GetDashboardAsync(cinemaId);
         return Ok(result);
     }
 }

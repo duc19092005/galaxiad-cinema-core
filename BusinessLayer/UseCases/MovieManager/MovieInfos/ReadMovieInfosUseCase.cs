@@ -24,6 +24,11 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
 
     public async Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetAll()
     {
+        return await GetAll(null);
+    }
+
+    public async Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetAll(Guid? cinemaId)
+    {
         // Find By User Id
         var findUserId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
@@ -36,6 +41,11 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
         if (!isAdmin)
         {
             query = query.Where(x => x.MovieManagerId == findUserId);
+        }
+
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(x => x.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
         }
 
         var getUserMovieInfos = await query
