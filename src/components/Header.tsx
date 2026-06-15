@@ -258,21 +258,33 @@ const Header: React.FC<HeaderProps> = ({
                           </button>
                         )}
 
-                        <button
-                          onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
-                          className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
-                        >
-                          <User size={16} className="flex-shrink-0" />
-                          {t('Account Info')}
-                        </button>
+                        {user.roles && user.roles.length > 1 ? (
+                          <>
+                            <button
+                              onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                              className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
+                            >
+                              <User size={16} className="flex-shrink-0" />
+                              {t('Account Info')}
+                            </button>
 
-                        <button
-                          onClick={() => { navigate('/role-selection'); setIsDropdownOpen(false); }}
-                          className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
-                        >
-                          <ArrowLeftRight size={16} className="flex-shrink-0" />
-                          {t('Switch Role')}
-                        </button>
+                            <button
+                              onClick={() => { navigate('/role-selection'); setIsDropdownOpen(false); }}
+                              className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer"
+                            >
+                              <ArrowLeftRight size={16} className="flex-shrink-0" />
+                              {t('Switch Role')}
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => { navigate('/account'); setIsDropdownOpen(false); }}
+                            className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
+                          >
+                            <User size={16} className="flex-shrink-0" />
+                            {t('Vào trang cá nhân', 'Vào trang cá nhân')}
+                          </button>
+                        )}
 
                         <div className="h-px bg-zinc-800 my-1 mx-2" />
                       </>
@@ -412,19 +424,30 @@ const Header: React.FC<HeaderProps> = ({
                 />
               )}
 
-              <MobileNavItem
-                icon={<User size={18} />}
-                label={t('Account Info')}
-                onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
-                active={location.pathname === '/account'}
-              />
+              {user.roles && user.roles.length > 1 ? (
+                <>
+                  <MobileNavItem
+                    icon={<User size={18} />}
+                    label={t('Account Info')}
+                    onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                    active={location.pathname === '/account'}
+                  />
 
-              <MobileNavItem
-                icon={<ArrowLeftRight size={18} />}
-                label={t('Switch Role')}
-                onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
-                active={false}
-              />
+                  <MobileNavItem
+                    icon={<ArrowLeftRight size={18} />}
+                    label={t('Switch Role')}
+                    onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                    active={false}
+                  />
+                </>
+              ) : (
+                <MobileNavItem
+                  icon={<User size={18} />}
+                  label={t('Vào trang cá nhân', 'Vào trang cá nhân')}
+                  onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                  active={location.pathname === '/account'}
+                />
+              )}
 
               <div className="h-px bg-white/5 my-2" />
 

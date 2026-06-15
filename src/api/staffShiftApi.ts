@@ -54,6 +54,20 @@ export const staffShiftApi = {
     return normalizeSuccessResponse<ShiftRegistrationDto[]>(response);
   },
 
+  /** POST /api/v1/Staff/Shifts/my-registrations/{id}/cancel */
+  cancelRegistration: async (id: string, token?: string): Promise<ApiSuccessResponse<boolean>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.post<ServerResponse<boolean>>(`/Staff/Shifts/my-registrations/${id}/cancel`, {}, { headers });
+    return normalizeSuccessResponse<boolean>(response);
+  },
+
+  /** POST /api/v1/Staff/Shifts/my-registrations/bulk-cancel */
+  cancelBulkRegistrations: async (ids: string[], token?: string): Promise<ApiSuccessResponse<boolean>> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const response = await shiftAxios.post<ServerResponse<boolean>>('/Staff/Shifts/my-registrations/bulk-cancel', ids, { headers });
+    return normalizeSuccessResponse<boolean>(response);
+  },
+
   /** POST /api/v1/Staff/Shifts/{staffId}/register-face */
   registerFace: async (staffId: string, data: RegisterFaceRequest, token?: string): Promise<ApiSuccessResponse<boolean>> => {
     const headers = token ? { Authorization: `Bearer ${token}` } : {};

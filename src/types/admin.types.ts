@@ -8,6 +8,7 @@ export interface AdminUserDto {
     userRoles: string; // e.g., "Admin,TheaterManager"
     accountStatus: number | string; // 1/"Active": Active, 2/"Banned": blocked
     registerMethod: number | string;
+    cinemaName?: string | null;
 }
 
 export interface AdminCreateUserRequest {

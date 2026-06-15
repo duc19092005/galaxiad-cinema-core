@@ -391,6 +391,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                 <th>{t('Name')}</th>
                 <th>{t('Email')}</th>
                 <th>{t('Role')}</th>
+                <th>{t('cinema')}</th>
                 <th>{t('Status')}</th>
                 <th style={{ width: 300 }}>{t('Actions')}</th>
               </tr>
@@ -416,6 +417,9 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                         </span>
                       ))}
                     </div>
+                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    {user.cinemaName || 'N/A'}
                   </td>
                   <td>
                     <StatusBadge status={getAccountStatusLabel(user.accountStatus)} />
@@ -476,7 +480,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     {t('No users found.')}
                   </td>
                 </tr>
@@ -1386,8 +1390,9 @@ const AdminPage: React.FC = () => {
                   {staffRoles.map((role) => {
                     const checked = createUserForm.roleIds.includes(role.roleId);
                     return (
-                      <label
+                      <div
                         key={role.roleId}
+                        onClick={() => toggleCreateRole(role.roleId)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1398,18 +1403,19 @@ const AdminPage: React.FC = () => {
                           border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.48)' : 'rgba(255,255,255,0.1)'}`,
                           background: checked ? 'rgba(255, 138, 0, 0.12)' : 'rgba(255,255,255,0.025)',
                           cursor: 'pointer',
+                          userSelect: 'none',
                         }}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
-                          onChange={() => toggleCreateRole(role.roleId)}
+                          readOnly
                           style={{ width: 16, height: 16, accentColor: '#ff8a00' }}
                         />
                         <span style={{ fontSize: 14, fontWeight: 750, color: checked ? 'var(--accent)' : 'var(--text-primary)' }}>
                           {role.roleName}
                         </span>
-                      </label>
+                      </div>
                     );
                   })}
                   {!rolesLoading && staffRoles.length === 0 && (

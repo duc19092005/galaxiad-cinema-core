@@ -12,6 +12,7 @@ import {
   Loader2,
   RefreshCw,
   TimerReset,
+  Trash2,
 } from 'lucide-react';
 import { staffShiftApi } from '../../../api/staffShiftApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
@@ -91,6 +92,17 @@ const getTimelineBlockStyle = (registration: ShiftRegistrationDto): React.CSSPro
   };
 };
 
+const getTemplateTimelineBlockStyle = (shift: ShiftTemplateDto): React.CSSProperties => {
+  const start = parseTimeMinutes(shift.startTime);
+  const offsetHours = Math.max((start - TIMELINE_START_MINUTES) / 60, 0);
+  const durationHours = Math.min(getShiftHours(shift), TIME_COLUMN_COUNT - offsetHours);
+
+  return {
+    top: offsetHours * TIME_SLOT_HEIGHT + 4,
+    height: Math.max(durationHours * TIME_SLOT_HEIGHT - 8, 32),
+  };
+};
+
 const getShiftWorkType = (shift: ShiftTemplateDto): ShiftWorkType | null => {
   const name = shift.shiftName.toLowerCase();
   if (name.includes('part')) return 'part-time';
@@ -101,12 +113,23 @@ const getShiftWorkType = (shift: ShiftTemplateDto): ShiftWorkType | null => {
   return null;
 };
 
-const pickTemplate = (shifts: ShiftTemplateDto[], workType: ShiftWorkType) => (
-  shifts
+const pickTemplate = (shifts: ShiftTemplateDto[], workType: ShiftWorkType, dropMinutes?: number) => {
+  const filtered = shifts
     .filter((shift) => getShiftWorkType(shift) === workType)
-    .filter((shift) => (shift.registeredCount ?? 0) < shift.maxStaff)
-    .sort((a, b) => parseTimeMinutes(a.startTime) - parseTimeMinutes(b.startTime))[0] || null
-);
+    .filter((shift) => (shift.registeredCount ?? 0) < shift.maxStaff);
+
+  if (filtered.length === 0) return null;
+
+  if (dropMinutes !== undefined) {
+    return filtered.sort((a, b) => {
+      const diffA = Math.abs(parseTimeMinutes(a.startTime) - dropMinutes);
+      const diffB = Math.abs(parseTimeMinutes(b.startTime) - dropMinutes);
+      return diffA - diffB;
+    })[0];
+  }
+
+  return filtered.sort((a, b) => parseTimeMinutes(a.startTime) - parseTimeMinutes(b.startTime))[0];
+};
 
 const registrationDateKey = (registration: ShiftRegistrationDto) => registration.registrationDate.slice(0, 10);
 
@@ -130,6 +153,33 @@ const StaffShiftSelfService: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [registeringKey, setRegisteringKey] = useState<string | null>(null);
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [dragOverY, setDragOverY] = useState<number | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isSelectMode, setIsSelectMode] = useState(false);
+
+  const dragOverMinutes = useMemo(() => {
+    if (dragOverY === null) return null;
+    return TIMELINE_START_MINUTES + (dragOverY / TIME_SLOT_HEIGHT) * 60;
+  }, [dragOverY]);
+
+  const previewShift = useMemo(() => {
+    if (!dragOverDate || dragOverMinutes === null || availableShifts.length === 0) return null;
+    return pickTemplate(availableShifts, selectedWorkType, dragOverMinutes);
+  }, [dragOverDate, dragOverMinutes, availableShifts, selectedWorkType]);
+
+  const pendingRegistrations = useMemo(
+    () => registrations.filter((r) => r.status === 'Pending'),
+    [registrations]
+  );
+
+  const groupedRegistrationsList = useMemo(() => {
+    const grouped = new Map<string, ShiftRegistrationDto[]>();
+    registrations.forEach((registration) => {
+      const key = registrationDateKey(registration);
+      grouped.set(key, [...(grouped.get(key) || []), registration]);
+    });
+    return Array.from(grouped.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [registrations]);
 
   useEffect(() => {
     try {
@@ -172,7 +222,6 @@ const StaffShiftSelfService: React.FC = () => {
     return grouped;
   }, [registrations]);
 
-  const selectedTypeTemplates = availableShifts.filter((shift) => getShiftWorkType(shift) === selectedWorkType);
 
   const loadSelfService = useCallback(async (dateOverride?: string) => {
     if (isSharedPosAccount && !staffToken) return;
@@ -187,6 +236,8 @@ const StaffShiftSelfService: React.FC = () => {
       ]);
       setAvailableShifts(availableRes.data || []);
       setRegistrations(registrationsRes.data || []);
+      setSelectedIds([]);
+      setIsSelectMode(false);
       setPayrolls(payrollRes.data || []);
       setHistory(historyRes.data || []);
     } catch (error) {
@@ -200,7 +251,7 @@ const StaffShiftSelfService: React.FC = () => {
     loadSelfService();
   }, [loadSelfService]);
 
-  const registerWorkTypeOnDate = async (workType: ShiftWorkType, targetDate: string) => {
+  const registerWorkTypeOnDate = async (workType: ShiftWorkType, targetDate: string, dropMinutes?: number) => {
     if (targetDate < today) {
       showError('Khong the dang ky ngay trong qua khu.');
       return;
@@ -215,7 +266,7 @@ const StaffShiftSelfService: React.FC = () => {
       const shiftsForDate = availableRes.data || [];
       setAvailableShifts(shiftsForDate);
 
-      const template = pickTemplate(shiftsForDate, workType);
+      const template = pickTemplate(shiftsForDate, workType, dropMinutes);
       if (!template) {
         showError(`Ngay ${formatDate(targetDate)} khong co ca ${workType === 'part-time' ? 'Part-time 4h' : 'Full-time 8h'} con slot.`);
         return;
@@ -236,7 +287,53 @@ const StaffShiftSelfService: React.FC = () => {
     } finally {
       setRegisteringKey(null);
       setDragOverDate(null);
+      setDragOverY(null);
     }
+  };
+
+  const handleCancelRegistration = async (registrationId: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn hủy đăng ký ca làm này?')) return;
+    try {
+      setLoading(true);
+      const res = await staffShiftApi.cancelRegistration(registrationId, isSharedPosAccount ? staffToken : undefined);
+      showSuccess(res.message || 'Hủy đăng ký ca làm thành công.');
+      await loadSelfService();
+    } catch (error) {
+      showError(getApiErrorMessage(error, 'Không thể hủy ca làm.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBulkCancel = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn hủy ${selectedIds.length} ca làm đã chọn?`)) return;
+
+    try {
+      setLoading(true);
+      const res = await staffShiftApi.cancelBulkRegistrations(selectedIds, isSharedPosAccount ? staffToken : undefined);
+      showSuccess(res.message || 'Hủy các ca làm đã chọn thành công.');
+      setSelectedIds([]);
+      await loadSelfService();
+    } catch (error) {
+      showError(getApiErrorMessage(error, 'Không thể hủy các ca làm đã chọn.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedIds.length === pendingRegistrations.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(pendingRegistrations.map((r) => r.shiftRegistrationId));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
   };
 
   const handleWorkTypeDragStart = (event: React.DragEvent<HTMLDivElement>, workType: ShiftWorkType) => {
@@ -250,7 +347,14 @@ const StaffShiftSelfService: React.FC = () => {
     const workType = event.dataTransfer.getData('application/x-shift-work-type') as ShiftWorkType;
     if (!workType) return;
     setSelectedWorkType(workType);
-    void registerWorkTypeOnDate(workType, targetDate);
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const relativeY = event.clientY - rect.top;
+    const dropMinutes = TIMELINE_START_MINUTES + (relativeY / TIME_SLOT_HEIGHT) * 60;
+
+    setDragOverY(null);
+    setDragOverDate(null);
+    void registerWorkTypeOnDate(workType, targetDate, dropMinutes);
   };
 
   const moveDateWindow = (amount: number) => {
@@ -305,6 +409,76 @@ const StaffShiftSelfService: React.FC = () => {
 
       <div className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 0.8fr) minmax(0, 1.6fr)', gap: 18, alignItems: 'start' }}>
         <div style={{ display: 'grid', gap: 18 }}>
+          <ListPanel title={`Các ca làm có sẵn ngày ${formatDate(activeDate)}`}>
+            {loading ? (
+              <EmptyLine label="Dang tai template..." />
+            ) : availableShifts.length === 0 ? (
+              <EmptyLine label="Ngay dang chon chua co template ca lam nao." />
+            ) : (
+              <div style={{ display: 'grid', padding: '10px 12px', gap: 10 }}>
+                {availableShifts.map((shift) => {
+                  const workType = getShiftWorkType(shift);
+                  const isPart = workType === 'part-time';
+                  const iconColor = isPart ? '#0ea5e9' : '#10b981';
+                  const IconComponent = isPart ? Clock4 : CalendarDays;
+
+                  return (
+                    <div
+                      key={shift.shiftTemplateId}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        padding: '11px 12px',
+                        background: 'var(--bg-elevated)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: 'var(--radius-md)',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 32,
+                          height: 32,
+                          borderRadius: 'var(--radius-sm)',
+                          background: isPart ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                          color: iconColor,
+                          flexShrink: 0,
+                        }}>
+                          <IconComponent size={16} />
+                        </div>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p style={{ margin: 0, fontSize: 13, fontWeight: 750, color: 'var(--text-primary)' }}>
+                            {shift.shiftName}
+                          </p>
+                          <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-secondary)', opacity: 0.95 }}>
+                            {shift.startTime.slice(0, 5)} - {shift.endTime.slice(0, 5)} | Đã đăng ký: {shift.registeredCount ?? 0}/{shift.maxStaff}
+                          </p>
+                        </div>
+                      </div>
+                      <span style={{
+                        fontSize: 9,
+                        fontWeight: 800,
+                        padding: '3px 7px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: isPart ? 'rgba(14, 165, 233, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                        color: iconColor,
+                        textTransform: 'uppercase',
+                        alignSelf: 'center',
+                        flexShrink: 0,
+                      }}>
+                        {isPart ? 'Part-time' : 'Full-time'}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ListPanel>
+
           <Panel title="Available shift templates" hint="Drag to calendar to register a work day.">
             <div style={{ display: 'grid', gap: 12 }}>
               {WORK_TYPES.map((workType) => {
@@ -345,6 +519,9 @@ const StaffShiftSelfService: React.FC = () => {
                 );
               })}
             </div>
+            <div style={{ marginTop: 8, padding: 10, borderRadius: 'var(--radius-sm)', background: 'rgba(255,138,0,0.06)', borderLeft: '3px solid var(--accent)', fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+              <strong>Mẹo:</strong> Kéo ca làm vào lịch. Hệ thống sẽ tự động chọn ca mẫu sớm nhất còn trống của loại ca đó (Sáng/Chiều/Tối) tại chi nhánh của bạn.
+            </div>
           </Panel>
 
           <Panel title="Overview">
@@ -371,21 +548,6 @@ const StaffShiftSelfService: React.FC = () => {
               />
             </label>
           </Panel>
-
-          <ListPanel title={`Template ${selectedWorkType === 'part-time' ? 'Part-time' : 'Full-time'} trong ngay`}>
-            {loading ? (
-              <EmptyLine label="Dang tai template..." />
-            ) : selectedTypeTemplates.length === 0 ? (
-              <EmptyLine label="Ngay dang chon chua co template phu hop." />
-            ) : selectedTypeTemplates.map((shift) => (
-              <Row
-                key={shift.shiftTemplateId}
-                title={shift.shiftName}
-                meta={`${shift.startTime} - ${shift.endTime} | ${shift.registeredCount ?? 0}/${shift.maxStaff}`}
-                badge={`${getShiftHours(shift).toLocaleString('vi-VN')}h`}
-              />
-            ))}
-          </ListPanel>
         </div>
 
         <div style={{ display: 'grid', gap: 18 }}>
@@ -476,8 +638,14 @@ const StaffShiftSelfService: React.FC = () => {
                           if (isPast) return;
                           event.preventDefault();
                           setDragOverDate(dateValue);
+                          const rect = event.currentTarget.getBoundingClientRect();
+                          const relativeY = event.clientY - rect.top;
+                          setDragOverY(relativeY);
                         }}
-                        onDragLeave={() => setDragOverDate((current) => current === dateValue ? null : current)}
+                        onDragLeave={() => {
+                          setDragOverDate((current) => current === dateValue ? null : current);
+                          setDragOverY(null);
+                        }}
                         onDrop={(event) => handleDateDrop(event, dateValue)}
                         style={{
                           minHeight: TIME_COLUMN_COUNT * TIME_SLOT_HEIGHT,
@@ -498,6 +666,41 @@ const StaffShiftSelfService: React.FC = () => {
                         <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateRows: `repeat(${TIME_COLUMN_COUNT}, ${TIME_SLOT_HEIGHT}px)`, pointerEvents: 'none' }}>
                           {TIME_AXIS.map((time) => <span key={time} style={{ borderBottom: '1px solid rgba(255,255,255,0.055)' }} />)}
                         </div>
+
+                        {previewShift && isDropping && (
+                          <div
+                            style={{
+                              ...getTemplateTimelineBlockStyle(previewShift),
+                              position: 'absolute',
+                              left: 8,
+                              right: 8,
+                              zIndex: 3,
+                              display: 'grid',
+                              alignContent: 'start',
+                              gap: 5,
+                              padding: '8px 9px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: '2px dashed var(--accent)',
+                              background: 'rgba(255, 138, 0, 0.15)',
+                              color: 'var(--accent)',
+                              pointerEvents: 'none',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                              {selectedWorkType === 'part-time' ? <Clock4 size={12} /> : <CalendarDays size={12} />}
+                              <span style={{ fontSize: 10, fontWeight: 850 }}>
+                                {previewShift.shiftName}
+                              </span>
+                            </span>
+                            <span style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace" }}>
+                              {previewShift.startTime.slice(0, 5)} - {previewShift.endTime.slice(0, 5)}
+                            </span>
+                            <span style={{ fontSize: 9, opacity: 0.8 }}>
+                              (Thả để đăng ký)
+                            </span>
+                          </div>
+                        )}
 
                         {!isPast && dayRegistrations.length === 0 && (
                           <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'var(--text-muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', pointerEvents: 'none', opacity: isDropping ? 1 : 0.42, writingMode: 'vertical-rl' }}>
@@ -536,8 +739,38 @@ const StaffShiftSelfService: React.FC = () => {
                                 overflow: 'hidden',
                               }}
                             >
+                              {registration.status === 'Pending' && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    void handleCancelRegistration(registration.shiftRegistrationId);
+                                  }}
+                                  style={{
+                                    position: 'absolute',
+                                    top: 4,
+                                    right: 4,
+                                    background: 'rgba(235, 87, 87, 0.1)',
+                                    border: '1px solid rgba(235, 87, 87, 0.2)',
+                                    color: 'var(--danger)',
+                                    cursor: 'pointer',
+                                    borderRadius: '50%',
+                                    width: 16,
+                                    height: 16,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: 10,
+                                    fontWeight: 'bold',
+                                    zIndex: 5,
+                                  }}
+                                  title="Hủy đăng ký"
+                                >
+                                  ×
+                                </button>
+                              )}
                               <span style={{ display: 'flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-                                {isPart ? <Clock4 size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} /> : <CalendarDays size={12} style={{ color: 'var(--accent)', flexShrink: 0 }} />}
+                                {isPart ? <Clock4 size={12} style={{ color: '#0ea5e9', flexShrink: 0 }} /> : <CalendarDays size={12} style={{ color: '#10b981', flexShrink: 0 }} />}
                                 <span style={{ fontSize: 10, fontWeight: 850, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                   {isPart ? 'PT' : 'FT'} {registration.startTime.slice(0, 5)}
                                 </span>
@@ -556,28 +789,237 @@ const StaffShiftSelfService: React.FC = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, padding: 14, borderTop: '1px solid var(--border-color)', background: 'var(--bg-surface)', flexWrap: 'wrap' }}>
-              <button className="btn btn-secondary" onClick={() => { setNotes(''); setActiveDate(today); setDateWindowStart(today); }}>
-                Reset Board
-              </button>
-              <button className="btn btn-primary" onClick={() => registerWorkTypeOnDate(selectedWorkType, activeDate)} disabled={Boolean(registeringKey)}>
-                {registeringKey === `${selectedWorkType}-${activeDate}` ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <CalendarPlus size={16} />}
-                Submit Registration
-              </button>
-            </div>
+
           </div>
 
-          <ListPanel title="My registrations">
-            {registrations.length === 0 ? (
+          <ListPanel
+            title={
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span>My registrations</span>
+                  {!isSelectMode && pendingRegistrations.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSelectMode(true)}
+                      style={{
+                        background: 'transparent',
+                        border: 0,
+                        padding: 4,
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 'var(--radius-sm)',
+                        transition: 'color 160ms, background 160ms',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
+                        e.currentTarget.style.color = 'var(--accent)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                      }}
+                      title="Chọn nhiều ca để hủy"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </span>
+                {isSelectMode && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 'bold' }}>
+                      Đã chọn: {selectedIds.length}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleSelectAll}
+                      className="btn btn-secondary"
+                      style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24, fontWeight: 'bold' }}
+                    >
+                      Chọn tất cả
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds([])}
+                      className="btn btn-secondary"
+                      style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24, fontWeight: 'bold' }}
+                    >
+                      Bỏ chọn tất cả
+                    </button>
+                    {selectedIds.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleBulkCancel}
+                        className="btn btn-primary"
+                        style={{
+                          padding: '3px 10px',
+                          fontSize: 11,
+                          height: 24,
+                          minHeight: 24,
+                          background: 'var(--danger)',
+                          borderColor: 'var(--danger)',
+                          color: '#fff',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Xóa ({selectedIds.length})
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSelectMode(false);
+                        setSelectedIds([]);
+                      }}
+                      className="btn btn-secondary"
+                      style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24 }}
+                    >
+                      Thoát
+                    </button>
+                  </div>
+                )}
+              </div>
+            }
+          >
+            {groupedRegistrationsList.length === 0 ? (
               <EmptyLine label="No shift registrations yet." />
-            ) : registrations.slice(0, 7).map((item) => (
-              <Row
-                key={item.shiftRegistrationId}
-                title={item.shiftName}
-                meta={`${formatDate(item.registrationDate)} - ${item.startTime} to ${item.endTime}${item.status === 'Rejected' && item.notes ? ` | Ly do: ${item.notes}` : ''}`}
-                badge={item.status}
-              />
-            ))}
+            ) : (
+              <div style={{ display: 'grid', gap: 14, padding: 14 }}>
+                {groupedRegistrationsList.slice(0, 10).map(([dateKey, dateItems]) => {
+                  const displayDate = formatDate(dateKey);
+                  return (
+                    <div key={dateKey} style={{ display: 'grid', gap: 8 }}>
+                      {/* Date Header */}
+                      <div style={{
+                        fontSize: 11,
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        color: 'var(--accent)',
+                        background: 'rgba(255,138,0,0.06)',
+                        padding: '6px 12px',
+                        borderRadius: 'var(--radius-sm)',
+                        width: 'fit-content',
+                        letterSpacing: '0.05em'
+                      }}>
+                        Ngày {displayDate}
+                      </div>
+
+                      {/* Shifts under this date */}
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 8 }}>
+                        {dateItems.map((item) => {
+                          const isPending = item.status === 'Pending';
+                          const isSelected = selectedIds.includes(item.shiftRegistrationId);
+                          const hours = getRegistrationHours(item);
+                          const isPart = hours <= 4.5;
+                          
+                          // Styling for Part-time / Full-time icons
+                          const iconColor = isPart ? '#0ea5e9' : '#10b981'; // Sky Blue vs Emerald Green
+                          const IconComponent = isPart ? Clock4 : CalendarDays;
+                          
+                          return (
+                            <li
+                              key={item.shiftRegistrationId}
+                              style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                gap: 12,
+                                padding: '10px 12px',
+                                background: isSelected ? 'rgba(255, 138, 0, 0.06)' : 'var(--bg-elevated)',
+                                border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+                                borderRadius: 'var(--radius-md)',
+                                alignItems: 'center',
+                                transition: 'background 160ms, border-color 160ms',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                                {isSelectMode && (
+                                  isPending ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={() => handleToggleSelect(item.shiftRegistrationId)}
+                                      style={{ cursor: 'pointer', width: 15, height: 15, flexShrink: 0 }}
+                                    />
+                                  ) : (
+                                    <input
+                                      type="checkbox"
+                                      disabled
+                                      style={{ opacity: 0.3, width: 15, height: 15, flexShrink: 0 }}
+                                    />
+                                  )
+                                )}
+                                
+                                {/* Icon & Info */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                                  <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 'var(--radius-sm)',
+                                    background: isPart ? 'rgba(14, 165, 233, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                                    color: iconColor,
+                                    flexShrink: 0,
+                                  }}>
+                                    <IconComponent size={16} />
+                                  </div>
+                                  <div style={{ minWidth: 0, flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <p style={{ margin: 0, fontSize: 13, fontWeight: 750, color: 'var(--text-primary)' }}>
+                                        {item.shiftName}
+                                      </p>
+                                      <span style={{
+                                        fontSize: 9,
+                                        fontWeight: 800,
+                                        padding: '1px 5px',
+                                        borderRadius: 'var(--radius-sm)',
+                                        background: isPart ? 'rgba(14, 165, 233, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                        color: iconColor,
+                                        textTransform: 'uppercase',
+                                      }}>
+                                        {isPart ? 'Part-time' : 'Full-time'}
+                                      </span>
+                                    </div>
+                                    <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-secondary)', opacity: 0.95, overflowWrap: 'anywhere' }}>
+                                      {item.startTime.slice(0, 5)} - {item.endTime.slice(0, 5)}
+                                      {item.status === 'Rejected' && item.notes ? ` | Lý do: ${item.notes}` : ''}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                <span className={statusClass(item.status)}>{item.status}</span>
+                                {!isSelectMode && isPending && (
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleCancelRegistration(item.shiftRegistrationId)}
+                                    className="btn btn-secondary"
+                                    style={{
+                                      padding: '4px 8px',
+                                      fontSize: 11,
+                                      height: 24,
+                                      minHeight: 24,
+                                      color: 'var(--danger)',
+                                      borderColor: 'rgba(235, 87, 87, 0.2)',
+                                      background: 'rgba(235, 87, 87, 0.05)',
+                                    }}
+                                  >
+                                    Hủy
+                                  </button>
+                                )}
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </ListPanel>
 
           <ListPanel title="Recent working logs">
@@ -626,9 +1068,9 @@ const Panel: React.FC<{ title: string; hint?: string; children: React.ReactNode 
   </div>
 );
 
-const ListPanel: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+const ListPanel: React.FC<{ title: string | React.ReactNode; children: React.ReactNode }> = ({ title, children }) => (
   <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', background: 'var(--bg-surface)' }}>
-    <h3 style={{ margin: 0, padding: '12px 14px', fontSize: 13, fontWeight: 800, borderBottom: '1px solid var(--border-color)' }}>{title}</h3>
+    <h3 style={{ margin: 0, padding: '12px 14px', fontSize: 13, fontWeight: 800, borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center' }}>{title}</h3>
     <div style={{ display: 'grid' }}>{children}</div>
   </div>
 );
@@ -637,7 +1079,7 @@ const Row: React.FC<{ title: string; meta: string; badge: string }> = ({ title, 
   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
     <div style={{ minWidth: 0 }}>
       <p style={{ margin: 0, fontSize: 13, fontWeight: 700 }}>{title}</p>
-      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-muted)', overflowWrap: 'anywhere' }}>{meta}</p>
+      <p style={{ margin: '4px 0 0', fontSize: 11, color: 'var(--text-secondary)', opacity: 0.95, overflowWrap: 'anywhere' }}>{meta}</p>
     </div>
     <span className={statusClass(badge)} style={{ alignSelf: 'center', flexShrink: 0 }}>{badge}</span>
   </div>

@@ -57,11 +57,17 @@ const TheaterManagerPage: React.FC = () => {
       setUser(parsed);
       if (roles.includes('Admin')) {
         facilitiesApi.getCinemaList()
-          .then((res) => setCinemas(res.data || []))
+          .then((res) => {
+            const list = res.data || [];
+            setCinemas(list);
+            if (list.length > 0 && !activeCinemaId) {
+              setActiveCinemaId(list[0].cinemaId);
+            }
+          })
           .catch((err) => console.error('Failed to load cinemas list', err));
       }
     } catch { navigate('/login'); }
-  }, [navigate]);
+  }, [navigate, activeCinemaId, setActiveCinemaId]);
 
   const handleLogout = async () => {
     setLogoutError(null);
