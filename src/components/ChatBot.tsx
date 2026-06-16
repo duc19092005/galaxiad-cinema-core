@@ -18,6 +18,34 @@ const ChatBot: React.FC = () => {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldReduceMotion = useReducedMotion();
+  const chatPanelRef = useRef<HTMLDivElement>(null);
+  const floatBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Close chatbot when scrolling or clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOutsideClick = (event: MouseEvent) => {
+      const clickedOutsidePanel = chatPanelRef.current && !chatPanelRef.current.contains(event.target as Node);
+      const clickedOutsideBtn = floatBtnRef.current && !floatBtnRef.current.contains(event.target as Node);
+      
+      if (clickedOutsidePanel && clickedOutsideBtn) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleScroll = () => {
+      setIsOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isOpen]);
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -58,6 +86,7 @@ const ChatBot: React.FC = () => {
     <>
       {/* Floating Button */}
       <motion.button
+        ref={floatBtnRef}
         onClick={() => setIsOpen(!isOpen)}
         aria-label={t('chatbot.ariaLabel')}
         whileHover={shouldReduceMotion ? {} : { scale: 1.1, translateY: -2 }}
@@ -80,6 +109,7 @@ const ChatBot: React.FC = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={chatPanelRef}
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}

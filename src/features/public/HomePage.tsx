@@ -308,6 +308,7 @@ const HomePage: React.FC = () => {
               padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 40px)',
               fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
               whiteSpace: 'nowrap', minHeight: 48,
+              borderRadius: 9999,
             }}>
               {t('home.exploreNow')}
             </button>
