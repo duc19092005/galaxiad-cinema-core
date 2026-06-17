@@ -208,7 +208,8 @@ public class BookingService
             .Select(c => new ResPublicSimpleCinemaDto
             {
                 CinemaId = c.CinemaId,
-                CinemaName = c.CinemaName
+                CinemaName = c.CinemaName,
+                CinemaCity = c.CinemaCity
             })
             .AsNoTracking()
             .ToListAsync();

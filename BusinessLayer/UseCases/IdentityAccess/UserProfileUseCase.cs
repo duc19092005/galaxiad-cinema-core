@@ -157,9 +157,9 @@ public class UserProfileUseCase : IProfileBehavior
         }
     }
 
-    public async Task<BaseResponse<ResGetUserInfo>> GetUserProfile()
+    public Task<BaseResponse<ResGetUserInfo>> GetUserProfile()
     {
-        return null!;
+        return Task.FromResult<BaseResponse<ResGetUserInfo>>(null!);
     }
 
     public async Task<BaseResponse<string>> UpdateUserProfile(ReqUpdateUserProfileDto request)

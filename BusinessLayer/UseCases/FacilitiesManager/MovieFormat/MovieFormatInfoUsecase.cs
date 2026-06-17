@@ -52,14 +52,13 @@ public class FacilitiesManagerReadMovieFormatUseCase : IReadBehavior<ResFaciliti
         }
     }
 
-    public async Task<BaseResponse<ResFacilitiesManagerMovieFormatDto>> GetById(Guid id)
+    public Task<BaseResponse<ResFacilitiesManagerMovieFormatDto>> GetById(Guid id)
     {
-        return null!;
+        return Task.FromResult<BaseResponse<ResFacilitiesManagerMovieFormatDto>>(null!);
     }
 
-    public async Task<BaseResponse<List<ResFacilitiesManagerMovieFormatDto>>> GetByEntityName(string name)
+    public Task<BaseResponse<List<ResFacilitiesManagerMovieFormatDto>>> GetByEntityName(string name)
     {
-        return null!;
+        return Task.FromResult<BaseResponse<List<ResFacilitiesManagerMovieFormatDto>>>(null!);
     }
 }
-

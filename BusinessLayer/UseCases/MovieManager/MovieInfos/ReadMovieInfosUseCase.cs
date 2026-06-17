@@ -65,7 +65,7 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                     .Select(mc => new ResMovieCinemaDto { 
                         CinemaId = mc.CinemaId, 
                         CinemaName = mc.CinemaInfoEntity.CinemaName 
-                    }).ToList(),
+                     }).ToList(),
                 Duration = x.MovieDuration ,
                 EndedDate = DateTime.SpecifyKind(x.EndedDate, DateTimeKind.Utc),
                 StartedDate = DateTime.SpecifyKind(x.ActiveAt, DateTimeKind.Utc),
@@ -161,9 +161,9 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
 
     }
 
-    public async Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetByEntityName(string name)
+    public Task<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>> GetByEntityName(string name)
     {
-        return null!;
+        return Task.FromResult<BaseResponse<List<ResGetMovieInfosMovieManagerDto>>>(null!);
     }
 
     private Guid GetUserId()
@@ -171,5 +171,3 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
         return _userContextService.GetUserId();
     }
 }
-
-

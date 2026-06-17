@@ -23,6 +23,7 @@ public class PublicController : ControllerBase
         this._unitOfWork = unitOfWork;
     }
 
+
     [HttpGet("MovieFormats")]
     public async Task<IActionResult> GetMovieFormats()
     {
@@ -65,7 +66,10 @@ public class PublicController : ControllerBase
     //   - không truyền   : Trả tất cả phim chưa bị xóa & (đang chiếu HOẶC sắp chiếu)
 
     [HttpGet("Movies")]
-    public async Task<IActionResult> GetMovies([FromQuery] string? city, [FromQuery] string? status)
+    public async Task<IActionResult> GetMovies(
+        [FromQuery] string? city,
+        [FromQuery] string? status,
+        [FromQuery] Guid? cinemaId)
     {
         var query = Query<MovieInfoEntity>()
             .Where(x => !x.IsDeleted);
@@ -92,6 +96,13 @@ public class PublicController : ControllerBase
         {
             query = query.Where(x => x.MovieCinemaEntities
                 .Any(mc => mc.CinemaInfoEntity.CinemaCity.Contains(city)));
+        }
+
+        // Lọc phim theo rạp
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(x => x.MovieCinemaEntities
+                .Any(mc => mc.CinemaId == cinemaId.Value));
         }
 
         var getMovies = await query.Select(x => new MovieInfoRes()

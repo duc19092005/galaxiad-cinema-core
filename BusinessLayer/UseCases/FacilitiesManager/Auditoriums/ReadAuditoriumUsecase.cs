@@ -172,14 +172,14 @@ public class FacilitiesManagerReadAuditoriumUseCase : IReadBehavior<GetResAudito
         }
     }
     
-    public async Task<BaseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaName(string name)
+    public Task<BaseResponse<List<GetResAuditoriumDtoCinema>>> GetByCinemaName(string name)
     {
-        return null!;
+        return Task.FromResult<BaseResponse<List<GetResAuditoriumDtoCinema>>>(null!);
     }
     
-    public async Task<BaseResponse<List<GetResAuditoriumDto>>> GetByEntityName(string name)
+    public Task<BaseResponse<List<GetResAuditoriumDto>>> GetByEntityName(string name)
     {
-        return null!;
+        return Task.FromResult<BaseResponse<List<GetResAuditoriumDto>>>(null!);
     }
 
     private Guid GetUserId()

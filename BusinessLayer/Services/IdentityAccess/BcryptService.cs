@@ -13,7 +13,7 @@ public class BCrypt_helper
             string hashedPassword = BCrypt.HashPassword(password);
             return hashedPassword;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new AppException(Messages.Utility.HashingPasswordFailed, 500 , "H01");
         }
@@ -24,7 +24,7 @@ public class BCrypt_helper
         try
         {
             return BCrypt.Verify(inputPassword , dbPassword);
-        }catch (Exception e)
+        }catch (Exception)
         {
             throw new AppException(Messages.Utility.ValidatePasswordFailed, 500 , "H01");
         }

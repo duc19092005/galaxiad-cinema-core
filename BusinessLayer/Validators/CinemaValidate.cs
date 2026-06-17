@@ -27,7 +27,7 @@ public class CinemaValidate
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
@@ -53,7 +53,7 @@ public class CinemaValidate
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
@@ -77,7 +77,7 @@ public class CinemaValidate
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }
@@ -102,7 +102,7 @@ public class CinemaValidate
         {
             throw;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
         }

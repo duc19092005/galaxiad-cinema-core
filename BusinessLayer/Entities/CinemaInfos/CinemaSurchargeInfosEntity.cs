@@ -17,7 +17,7 @@ public class CinemaSurchargeInfosEntity : BaseManagementStatus<UserInfoEntity>
     [Column(TypeName = "decimal(5,2)")]
     public decimal SurchangePercent { get; set; }
 
-    public CinemaInfoEntity CinemaInfoEntity { get; set; } = null;
+    public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
 
     public MovieFormatInfoEntity MovieFormatInfoEntity { get; set; } = null!;
 

@@ -53,9 +53,9 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
             {
                 ScheduleId = x.MovieScheduleInfoId,
                 MovieId = x.MovieId,
-                MovieName = x.MovieInfoEntity.MovieName,
+                MovieName = x.MovieInfoEntity!.MovieName,
                 FormatId = x.MovieFormatId,
-                FormatName = x.MovieFormatInfoEntity.MovieFormatName,
+                FormatName = x.MovieFormatInfoEntity!.MovieFormatName,
                 AuditoriumId = x.AuditoriumId,
                 StartedDate = x.ActiveAt,
                 EndedTime = x.EndedTime,

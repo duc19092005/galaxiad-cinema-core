@@ -304,19 +304,31 @@ public class MovieCommentService
         };
     }
 
-    public async Task<BaseResponse<List<ResTrendingMovieDto>>> GetTrendingMovies(int days = 30, int take = 10)
+    public async Task<BaseResponse<List<ResTrendingMovieDto>>> GetTrendingMovies(int days = 30, int take = 10, Guid? cinemaId = null, string? city = null)
     {
         days = Math.Clamp(days, 1, 365);
         take = Math.Clamp(take, 1, 30);
         var from = DateTime.UtcNow.AddDays(-days);
 
-        var movies = await _unitOfWork.Repository<MovieInfoEntity>().Query()
-            .Where(x => !x.IsDeleted && x.IsActive)
+        var moviesQuery = _unitOfWork.Repository<MovieInfoEntity>().Query()
+            .Where(x => !x.IsDeleted && x.IsActive);
+
+        if (cinemaId.HasValue)
+        {
+            moviesQuery = moviesQuery.Where(x => x.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
+        }
+        else if (!string.IsNullOrEmpty(city))
+        {
+            moviesQuery = moviesQuery.Where(x => x.MovieCinemaEntities.Any(mc => mc.CinemaInfoEntity.CinemaCity.ToLower() == city.ToLower()));
+        }
+
+        var movies = await moviesQuery
             .Select(x => new ResTrendingMovieDto
             {
                 MovieId = x.MovieId,
                 MovieName = x.MovieName,
                 MovieImageUrl = x.MovieImageUrl,
+                MovieBannerUrl = x.MovieBannerUrl,
                 MovieDescription = x.MovieDescription,
                 MovieDuration = x.MovieDuration,
                 MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
@@ -324,10 +336,21 @@ public class MovieCommentService
             .AsNoTracking()
             .ToListAsync();
 
-        var paidTicketCounts = await _unitOfWork.Repository<OrderDetailsInfo>().Query()
+        var ticketsQuery = _unitOfWork.Repository<OrderDetailsInfo>().Query()
             .Where(x => x.OrderInfoEntity.OrderDate >= from
                         && (x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked
-                            || x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Completed))
+                            || x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Completed));
+
+        if (cinemaId.HasValue)
+        {
+            ticketsQuery = ticketsQuery.Where(x => x.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaId == cinemaId.Value);
+        }
+        else if (!string.IsNullOrEmpty(city))
+        {
+            ticketsQuery = ticketsQuery.Where(x => x.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaCity.ToLower() == city.ToLower());
+        }
+
+        var paidTicketCounts = await ticketsQuery
             .GroupBy(x => x.MovieScheduleInfoEntity.MovieId)
             .Select(x => new { MovieId = x.Key, Count = x.Count() })
             .ToDictionaryAsync(x => x.MovieId, x => x.Count);
@@ -338,20 +361,22 @@ public class MovieCommentService
             .Select(x => new { MovieId = x.Key, Count = x.Count() })
             .ToDictionaryAsync(x => x.MovieId, x => x.Count);
 
-        var ratingAverages = await _unitOfWork.Repository<MovieCommentEntity>().Query()
+        var ratingInfos = await _unitOfWork.Repository<MovieCommentEntity>().Query()
             .Where(x => x.ParentCommentId == null
                         && x.Rating.HasValue
                         && x.Status == MovieCommentStatusEnum.Visible)
             .GroupBy(x => x.MovieId)
-            .Select(x => new { MovieId = x.Key, Average = x.Average(c => c.Rating!.Value) })
-            .ToDictionaryAsync(x => x.MovieId, x => Math.Round(x.Average, 1));
+            .Select(x => new { MovieId = x.Key, Average = x.Average(c => c.Rating!.Value), Count = x.Count() })
+            .ToDictionaryAsync(x => x.MovieId, x => new { Average = Math.Round(x.Average, 1), Count = x.Count });
 
         var result = movies
             .Select(movie =>
             {
                 movie.PaidTicketCount = paidTicketCounts.GetValueOrDefault(movie.MovieId);
                 movie.ViewCount = viewCounts.GetValueOrDefault(movie.MovieId);
-                movie.AverageRating = ratingAverages.GetValueOrDefault(movie.MovieId);
+                var ratingInfo = ratingInfos.GetValueOrDefault(movie.MovieId);
+                movie.AverageRating = ratingInfo?.Average ?? 0.0;
+                movie.RatingCount = ratingInfo?.Count ?? 0;
                 movie.TrendingScore = Math.Round(movie.PaidTicketCount * 3 + movie.ViewCount + movie.AverageRating * 10, 1);
                 return movie;
             })
@@ -365,6 +390,67 @@ public class MovieCommentService
         {
             IsSuccess = true,
             Message = "Lay phim thinh hanh thanh cong.",
+            Data = result
+        };
+    }
+
+    public async Task<BaseResponse<List<ResTrendingMovieDto>>> GetTopRatedMovies(int take = 5, Guid? cinemaId = null)
+    {
+        take = Math.Clamp(take, 1, 30);
+        var query = _unitOfWork.Repository<MovieInfoEntity>().Query()
+            .Where(x => !x.IsDeleted && x.IsActive);
+
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(x => x.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
+        }
+
+        var movies = await query
+            .Select(x => new ResTrendingMovieDto
+            {
+                MovieId = x.MovieId,
+                MovieName = x.MovieName,
+                MovieImageUrl = x.MovieImageUrl,
+                MovieBannerUrl = x.MovieBannerUrl,
+                MovieDescription = x.MovieDescription,
+                MovieDuration = x.MovieDuration,
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim()
+            })
+            .AsNoTracking()
+            .ToListAsync();
+
+        var ratingAverages = await _unitOfWork.Repository<MovieCommentEntity>().Query()
+            .Where(x => x.ParentCommentId == null
+                        && x.Rating.HasValue
+                        && x.Status == MovieCommentStatusEnum.Visible)
+            .GroupBy(x => x.MovieId)
+            .Select(x => new { MovieId = x.Key, Average = x.Average(c => c.Rating!.Value), Count = x.Count() })
+            .ToDictionaryAsync(x => x.MovieId, x => new { Average = Math.Round(x.Average, 1), Count = x.Count });
+
+        var viewCounts = await _unitOfWork.Repository<MovieViewEntity>().Query()
+            .GroupBy(x => x.MovieId)
+            .Select(x => new { MovieId = x.Key, Count = x.Count() })
+            .ToDictionaryAsync(x => x.MovieId, x => x.Count);
+
+        var result = movies
+            .Select(movie =>
+            {
+                var ratingInfo = ratingAverages.GetValueOrDefault(movie.MovieId);
+                movie.AverageRating = ratingInfo?.Average ?? 0.0;
+                movie.RatingCount = ratingInfo?.Count ?? 0;
+                movie.ViewCount = viewCounts.GetValueOrDefault(movie.MovieId);
+                return movie;
+            })
+            .Where(x => x.RatingCount > 0)
+            .OrderByDescending(x => x.AverageRating)
+            .ThenByDescending(x => x.RatingCount)
+            .Take(take)
+            .ToList();
+
+        return new BaseResponse<List<ResTrendingMovieDto>>
+        {
+            IsSuccess = true,
+            Message = "Lay danh sach phim danh gia cao thanh cong.",
             Data = result
         };
     }

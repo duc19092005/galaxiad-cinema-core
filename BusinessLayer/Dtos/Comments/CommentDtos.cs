@@ -68,12 +68,14 @@ public class ResTrendingMovieDto
     public Guid MovieId { get; set; }
     public string MovieName { get; set; } = string.Empty;
     public string MovieImageUrl { get; set; } = string.Empty;
+    public string MovieBannerUrl { get; set; } = string.Empty;
     public string MovieDescription { get; set; } = string.Empty;
     public int MovieDuration { get; set; }
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public int PaidTicketCount { get; set; }
     public int ViewCount { get; set; }
     public double AverageRating { get; set; }
+    public int RatingCount { get; set; }
     public double TrendingScore { get; set; }
 }
 

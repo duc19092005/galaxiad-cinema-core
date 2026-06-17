@@ -277,7 +277,7 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             var updatingScheduleIds = request.Slots.Select(s => s.ScheduleId).ToList();
             var movieNames = await Query<MovieScheduleInfoEntity>()
                 .Where(x => updatingScheduleIds.Contains(x.MovieScheduleInfoId)) 
-                .Select(x => x.MovieInfoEntity.MovieName)
+                .Select(x => x.MovieInfoEntity!.MovieName)
                 .Distinct()
                 .ToListAsync();
             var schedulesToUpdate = await Query<MovieScheduleInfoEntity>()
@@ -491,9 +491,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
             "Delete",
             "MovieSchedule",
             schedule.MovieScheduleInfoId,
-            schedule.MovieInfoEntity.MovieName,
-            $"Deleted schedule for movie {schedule.MovieInfoEntity.MovieName}.",
-            schedule.AuditoriumInfoEntities.CinemaId);
+            schedule.MovieInfoEntity!.MovieName,
+            $"Deleted schedule for movie {schedule.MovieInfoEntity!.MovieName}.",
+            schedule.AuditoriumInfoEntities!.CinemaId);
         await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<string>()

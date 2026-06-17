@@ -6,6 +6,7 @@ using BusinessLayer.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 using Shared.Interfaces.Persistence;
 using Shared.Localization;
+using Shared.Exceptions;
 
 namespace BusinessLayer.UseCases.TheaterManager.Auditoriums;
 
@@ -42,7 +43,7 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
 
         if (getCinemaByUserId == null)
         {
-            // Throw Error Here
+            throw new NotFoundException("Không tìm thấy rạp chiếu phim quản lý bởi người dùng này.");
         }
 
         var auditoriumLists =
@@ -60,7 +61,7 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
 
         if (!auditoriumLists.Any())
         {
-            // Throw Error Here
+            throw new NotFoundException("Không tìm thấy phòng chiếu nào cho rạp này.");
         }
 
         TheaterManagerAuditoriumRes res = new TheaterManagerAuditoriumRes()

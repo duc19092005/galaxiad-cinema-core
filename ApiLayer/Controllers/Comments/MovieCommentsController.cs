@@ -31,9 +31,22 @@ public class MovieCommentsController : ControllerBase
     }
 
     [HttpGet("movies/trending")]
-    public async Task<IActionResult> GetTrendingMovies([FromQuery] int days = 30, [FromQuery] int take = 10)
+    public async Task<IActionResult> GetTrendingMovies(
+        [FromQuery] int days = 30,
+        [FromQuery] int take = 10,
+        [FromQuery] Guid? cinemaId = null,
+        [FromQuery] string? city = null)
     {
-        var result = await _movieCommentService.GetTrendingMovies(days, take);
+        var result = await _movieCommentService.GetTrendingMovies(days, take, cinemaId, city);
+        return Ok(result);
+    }
+
+    [HttpGet("movies/top-rated")]
+    public async Task<IActionResult> GetTopRatedMovies(
+        [FromQuery] int take = 5,
+        [FromQuery] Guid? cinemaId = null)
+    {
+        var result = await _movieCommentService.GetTopRatedMovies(take, cinemaId);
         return Ok(result);
     }
 

@@ -10,6 +10,6 @@ public class MovieGenreMovieInfoEntity
 
     public MovieGenreInfoEntity MovieGenreInfoEntity { get; set; } = null!;
 
-    public MovieInfoEntity movie_info_entity { get; set; } = null;
+    public MovieInfoEntity movie_info_entity { get; set; } = null!;
 }
 
