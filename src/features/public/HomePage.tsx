@@ -2,20 +2,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ChevronDown, ChevronLeft, ChevronRight, AlertCircle, Loader2,
+  ChevronLeft, ChevronRight, AlertCircle, Loader2,
   Sparkles, Play, Ticket,
-  Search,
 } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { PublicMovieListItem, ActiveCinema, ActiveMovie } from '../../types/public.types';
+import type { PublicMovieListItem } from '../../types/public.types';
 import type { TrendingMovie } from '../../types/comment.types';
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/Header';
 import BackToTop from '../../components/BackToTop';
+import QuickBookingBar from './components/QuickBookingBar';
 
 
 const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
@@ -23,119 +23,6 @@ const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
 const HERO_IMG = IMG_BASE + 'AB6AXuBb-6tDUgXoRgmgTRBXwngoVTj0smOmB_NZPmcLz1kiOTfMsZE0q1zTRpwjaDJODAErtBJ69LZgGfxSCF235D75zmh3x90AFKmA4E50fgujmCJDv_krUSKoqOXBtr_0Z6tQHY2yYzlnyzvt3W84u1BzPRod5sWHQqooJXYQDH3li2GMZsqPNhuYHBa0rR_CYURrjmM2OHScCUYex2_0lm6k-PzDwfgVk2s3Wd8hToSbNZvc0g_kD8RZzigLOWt0bPO0hif73yxHvNs';
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
-
-interface CustomSelectProps {
-  step: string;
-  label: string;
-  value: string;
-  displayValue: string;
-  options: { value: string; label: string }[];
-  onChange: (val: string) => void;
-  borderLeft?: boolean;
-  onOpen?: () => void;
-}
-
-const CustomSelect: React.FC<CustomSelectProps> = ({
-  step,
-  label,
-  value,
-  displayValue,
-  options,
-  onChange,
-  borderLeft,
-  onOpen,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleToggle = () => {
-    const nextOpen = !isOpen;
-    setIsOpen(nextOpen);
-    if (nextOpen && onOpen) {
-      onOpen();
-    }
-  };
-
-  return (
-    <div
-      ref={dropdownRef}
-      style={{
-        position: 'relative',
-        padding: '12px 16px',
-        borderRadius: 12,
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        transition: 'background-color 0.2s ease',
-      }}
-      className={`hover:bg-white/5 ${borderLeft ? 'md:border-l md:border-white/10' : ''}`}
-      onClick={handleToggle}
-    >
-      <span style={{ fontSize: 10, color: 'var(--accent, #ff8a00)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
-        {step}. {label}
-      </span>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-        <span style={{ fontWeight: 500, color: 'white', fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '90%' }}>
-          {displayValue}
-        </span>
-        <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.4)', transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-      </div>
-
-      {isOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            marginTop: 8,
-            backgroundColor: '#18181b',
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 12,
-            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
-            zIndex: 50,
-            maxHeight: 250,
-            overflowY: 'auto',
-          }}
-          className="scrollbar-thin"
-        >
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
-              style={{
-                padding: '10px 16px',
-                fontSize: 13,
-                color: opt.value === value ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.8)',
-                backgroundColor: opt.value === value ? 'rgba(255,138,0,0.1)' : 'transparent',
-                fontWeight: opt.value === value ? 600 : 400,
-                transition: 'background-color 0.15s, color 0.15s',
-              }}
-              className="hover:bg-white/5 hover:text-white"
-            >
-              {opt.label}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const FooterLink: React.FC<{ label: string; path: string }> = ({ label, path }) => {
   const nav = useNavigate();
@@ -167,139 +54,33 @@ const HomePage: React.FC = () => {
   // City select sync state
   const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
 
-  // Quick Booking states
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedMovieId, setSelectedMovieId] = useState<string>('All');
-  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('All');
-  const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
-  const [movies, setMovies] = useState<ActiveMovie[]>([]);
-  const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
-
-  // Geolocation and nearest cinemas state
-  const [nearestCinemas, setNearestCinemas] = useState<any[]>([]);
-  const [loadingLocation, setLoadingLocation] = useState(false);
-
   // Sliders refs
   const nowShowingRef = useRef<HTMLDivElement>(null);
   const comingSoonRef = useRef<HTMLDivElement>(null);
 
-  const handleCinemaSelectOpen = () => {
-    if (loadingLocation || nearestCinemas.length > 0) return;
-
-    setLoadingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const res = await publicApi.getNearestCinemas(latitude, longitude);
-          if (res.isSuccess && res.data) {
-            setNearestCinemas(res.data);
-          }
-        } catch (err) {
-          console.error('Failed to load nearest cinemas:', err);
-        } finally {
-          setLoadingLocation(false);
-        }
-      },
-      (geoError) => {
-        console.error('Geolocation error:', geoError);
-        setLoadingLocation(false);
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
-  };
+  const [trendingTab, setTrendingTab] = useState<'system' | 'local'>('system');
 
   useEffect(() => {
     const handleCityChange = () => {
       setSelectedCity(localStorage.getItem('user_selected_city') || '');
-      setSelectedCinemaId('All');
     };
     window.addEventListener('user_selected_city_changed', handleCityChange);
     return () => window.removeEventListener('user_selected_city_changed', handleCityChange);
   }, []);
 
-  // Fetch available dates from API
-  useEffect(() => {
-    const fetchDates = async () => {
-      try {
-        const res = await publicApi.getUpcomingDates({
-          city: selectedCity || undefined
-        });
-        setAvailableDates(res.isSuccess ? (res.data || []) : []);
-      } catch (err) {
-        console.error('Error fetching upcoming dates:', err);
-        setAvailableDates([]);
-      }
-    };
-    fetchDates();
-  }, [selectedCity]);
-
-  // Generate date list from available dates
-  useEffect(() => {
-    const dates: { label: string; value: string; dayName: string }[] = [];
-    const today = new Date();
-    for (let i = 0; i < 7; i++) {
-      const d = new Date();
-      d.setDate(today.getDate() + i);
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const dateVal = String(d.getDate()).padStart(2, '0');
-      const valueStr = `${year}-${month}-${dateVal}`;
-      
-      let dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      if (i === 0) dayName = 'Today';
-      
-      dates.push({
-        label: `${d.getDate()}/${d.getMonth() + 1}`,
-        value: valueStr,
-        dayName,
-      });
-    }
-
-    // Chỉ giữ lại các ngày có lịch chiếu
-    const filteredDates = dates.filter(d => availableDates.includes(d.value));
-    const finalDates = filteredDates;
-    
-    setDateList(finalDates);
-    if (finalDates.length > 0) {
-      setSelectedDate(finalDates[0].value);
-    } else {
-      setSelectedDate('');
-    }
-
-    // Fetch master data for booking bar
-    const fetchMasterData = async () => {
-      try {
-        const [cinemaRes, movieRes] = await Promise.all([
-          publicApi.getActiveCinemas(),
-          publicApi.getActiveMovies(),
-        ]);
-        if (cinemaRes.isSuccess) setCinemas(cinemaRes.data || []);
-        if (movieRes.isSuccess) setMovies(movieRes.data || []);
-      } catch (err) {
-        console.error('Error fetching master data for booking bar:', err);
-      }
-    };
-    fetchMasterData();
-  }, [availableDates]);
-
-  const [trendingTab, setTrendingTab] = useState<'system' | 'local'>('system');
-
   useEffect(() => {
     fetchMovies();
-  }, [selectedCity, selectedCinemaId]);
+  }, [selectedCity]);
 
   useEffect(() => {
     fetchTrendingMovies();
-  }, [selectedCity, selectedCinemaId, trendingTab]);
+  }, [selectedCity, trendingTab]);
 
   const fetchMovies = async () => {
     setLoading(true); setError(null);
     try {
       const response = await publicApi.getAllMovies({
         city: selectedCity || undefined,
-        cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined,
         pageSize: 40
       });
       const items = response.data || [];
@@ -327,9 +108,7 @@ const HomePage: React.FC = () => {
         take: 3
       };
       if (trendingTab === 'local') {
-        if (selectedCinemaId !== 'All') {
-          params.cinemaId = selectedCinemaId;
-        } else if (selectedCity) {
+        if (selectedCity) {
           params.city = selectedCity;
         }
       }
@@ -352,50 +131,6 @@ const HomePage: React.FC = () => {
       });
     }
   };
-
-  // 1. Date options
-  const dateOptions = dateList.map((d) => ({
-    value: d.value,
-    label: `${d.label} (${d.dayName === 'Today' ? t('home.today', 'Today') : d.dayName})`,
-  }));
-  const selectedDateOption = dateList.find((d) => d.value === selectedDate);
-  const selectedDateLabel = selectedDateOption
-    ? `${selectedDateOption.label} (${selectedDateOption.dayName === 'Today' ? t('home.today', 'Today') : selectedDateOption.dayName})`
-    : '';
-
-  // 2. Movie options
-  const movieOptions = [
-    { value: 'All', label: t('home.allMovies', 'All Movies') },
-    ...movies.map((m) => ({ value: m.movieId, label: m.movieName })),
-  ];
-  const selectedMovieLabel = movies.find((m) => m.movieId === selectedMovieId)?.movieName || t('home.allMovies', 'All Movies');
-
-  // 3. Cinema options
-  const cinemaOptions = [
-    { value: 'All', label: t('home.allCinemas', 'All Cinemas') },
-    ...(nearestCinemas.length > 0
-      ? nearestCinemas
-          .filter((c) => !selectedCity || c.cinemaLocation?.toLowerCase().includes(selectedCity.toLowerCase()) || c.cinemaName.toLowerCase().includes(selectedCity.toLowerCase()))
-          .map((c) => ({
-            value: c.cinemaId,
-            label: `${c.cinemaName} (${c.distanceInKm} km)`,
-          }))
-      : cinemas
-          .filter((c) => !selectedCity || c.cinemaCity?.toLowerCase().includes(selectedCity.toLowerCase()))
-          .map((c) => ({ value: c.cinemaId, label: c.cinemaName }))),
-  ];
-
-  const getSelectedCinemaLabel = () => {
-    if (selectedCinemaId === 'All') return t('home.allCinemas', 'All Cinemas');
-    if (nearestCinemas.length > 0) {
-      const foundNearest = nearestCinemas.find((c) => c.cinemaId === selectedCinemaId);
-      if (foundNearest) {
-        return `${foundNearest.cinemaName} (${foundNearest.distanceInKm} km)`;
-      }
-    }
-    return cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || t('home.allCinemas', 'All Cinemas');
-  };
-  const selectedCinemaLabel = getSelectedCinemaLabel();
 
   return (
     <>
@@ -483,67 +218,7 @@ const HomePage: React.FC = () => {
           paddingLeft: 'clamp(8px, 2vw, 20px)',
           paddingRight: 'clamp(8px, 2vw, 20px)',
         }}>
-          <div className="glass-card" style={{ padding: 8, borderRadius: 16 }}>
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_180px] gap-2 items-stretch">
-              
-              {/* 1. Cinema Selector */}
-              <CustomSelect
-                step="1"
-                label={t('home.cinema')}
-                value={selectedCinemaId}
-                displayValue={loadingLocation ? t('home.loadingLocation', 'Locating...') : selectedCinemaLabel}
-                options={cinemaOptions}
-                onChange={setSelectedCinemaId}
-                onOpen={handleCinemaSelectOpen}
-              />
-
-              {/* 2. Movie Selector */}
-              <CustomSelect
-                step="2"
-                label={t('home.movie')}
-                value={selectedMovieId}
-                displayValue={selectedMovieLabel}
-                options={movieOptions}
-                onChange={setSelectedMovieId}
-                borderLeft={true}
-              />
-
-              {/* 3. Date Selector */}
-              <CustomSelect
-                step="3"
-                label={t('home.date')}
-                value={selectedDate}
-                displayValue={selectedDateLabel}
-                options={dateOptions}
-                onChange={setSelectedDate}
-                borderLeft={true}
-              />
-
-              {/* Search Button */}
-              <button 
-                onClick={() => navigate(`/showtimes?date=${selectedDate}&movie=${selectedMovieId}&cinema=${selectedCinemaId}`)}
-                className="btn-primary cta-glow" 
-                style={{
-                  width: '100%',
-                  padding: '12px 24px',
-                  fontWeight: 700,
-                  fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  borderRadius: 12,
-                  border: 'none',
-                  cursor: 'pointer',
-                  minHeight: 48,
-                }}
-              >
-                <Search size={16} />
-                <span>{t('home.searchNow')}</span>
-              </button>
-
-            </div>
-          </div>
+          <QuickBookingBar selectedCity={selectedCity} />
         </div>
       </section>
 

@@ -7,9 +7,8 @@ import { notificationApi } from '../api/commentApi';
 import type { UserNotification } from '../types/comment.types';
 import Cookies from 'js-cookie';
 import LanguageSwitcher from './LanguageSwitcher';
-import CinemaSelector from './CinemaSelector';
+// import CinemaSelector from './CinemaSelector';
 import LogoutModal from './LogoutModal';
-import { ProximitySelectorModal } from './ProximitySelectorModal';
 import PublicCitySelector from '../features/public/components/PublicCitySelector';
 import { 
   Menu, Search, MapPin, User, LayoutDashboard, 
@@ -37,9 +36,8 @@ const Header: React.FC<HeaderProps> = ({
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [selectedCinemaName, setSelectedCinemaName] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
@@ -59,31 +57,12 @@ const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('user_selected_city_changed', checkSelectedCity);
   }, []);
 
+
   const handleCityChange = (city: string) => {
     setSelectedCity(city);
     localStorage.setItem('user_selected_city', city);
     window.dispatchEvent(new Event('user_selected_city_changed'));
   };
-
-  useEffect(() => {
-    const checkSelectedCinema = () => {
-      const stored = localStorage.getItem('user_selected_cinema');
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setSelectedCinemaName(parsed.cinemaName);
-        } catch {
-          setSelectedCinemaName(null);
-        }
-      } else {
-        setSelectedCinemaName(null);
-      }
-    };
-
-    checkSelectedCinema();
-    window.addEventListener('user_selected_cinema_changed', checkSelectedCinema);
-    return () => window.removeEventListener('user_selected_cinema_changed', checkSelectedCinema);
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -230,9 +209,6 @@ const Header: React.FC<HeaderProps> = ({
             </div>
 
             <div className="flex gap-1 md:gap-2 items-center">
-              {/* Cinema Selector (Only for TheaterManager) */}
-              {user?.selectedRole === 'TheaterManager' && <CinemaSelector />}
-
               {/* Language Switcher */}
               <LanguageSwitcher />
 
@@ -240,21 +216,6 @@ const Header: React.FC<HeaderProps> = ({
               <div className="hidden md:block">
                 <PublicCitySelector selectedCity={selectedCity} onCityChange={handleCityChange} />
               </div>
-
-              {/* Location Select Button */}
-              <button 
-                onClick={() => setIsLocationModalOpen(true)}
-                title={selectedCinemaName || "Select Cinema Location"}
-                className="hover:bg-white/5 p-2 rounded-full transition-all duration-300 bg-transparent border-none cursor-pointer flex items-center gap-1.5"
-                style={{ color: selectedCinemaName ? 'var(--primary, #ff8a00)' : 'white' }}
-              >
-                <MapPin size={18} className="flex-shrink-0" />
-                {selectedCinemaName && (
-                  <span className="hidden lg:inline text-xs font-semibold max-w-[100px] overflow-hidden text-ellipsis whitespace-nowrap font-sans">
-                    {selectedCinemaName}
-                  </span>
-                )}
-              </button>
 
               {user && (
                 <div className="relative" ref={notificationRef}>
@@ -602,11 +563,6 @@ const Header: React.FC<HeaderProps> = ({
         onConfirm={handleLogout}
         loading={logoutLoading}
         error={logoutError}
-      />
-
-      <ProximitySelectorModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setIsLocationModalOpen(false)}
       />
     </>
   );
