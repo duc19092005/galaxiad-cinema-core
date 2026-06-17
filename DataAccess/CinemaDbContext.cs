@@ -83,6 +83,10 @@ public class CinemaDbContext : DbContext
     public DbSet<MovieScheduleInfoEntity> MovieScheduleInfoEntity { get; set; }
 
     public DbSet<MovieCinemaEntity> MovieCinemaEntities { get; set; }
+
+    public DbSet<MovieCommentEntity> MovieCommentEntity { get; set; }
+
+    public DbSet<MovieViewEntity> MovieViewEntity { get; set; }
     
     public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
     
@@ -95,6 +99,8 @@ public class CinemaDbContext : DbContext
     public DbSet<AuditLogEntity> AuditLogEntity { get; set; }
     
     public DbSet<UserVoucherEntity> UserVoucherEntity { get; set; }
+
+    public DbSet<UserNotificationEntity> UserNotificationEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -110,6 +116,66 @@ public class CinemaDbContext : DbContext
             entity.HasIndex(x => x.CreatedAt);
             entity.HasIndex(x => x.CinemaId);
             entity.HasIndex(x => new { x.EntityType, x.EntityId });
+        });
+
+        modelBuilder.Entity<MovieCommentEntity>(entity =>
+        {
+            entity.HasKey(x => x.CommentId);
+            entity.HasIndex(x => new { x.MovieId, x.Status, x.CreatedAt });
+            entity.HasIndex(x => new { x.UserId, x.MovieId, x.ParentCommentId });
+            entity.HasIndex(x => x.ParentCommentId);
+
+            entity.HasOne(x => x.MovieInfoEntity)
+                .WithMany(x => x.MovieCommentEntities)
+                .HasForeignKey(x => x.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany(x => x.MovieCommentEntities)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.OrderInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.OrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.ParentComment)
+                .WithMany(x => x.Replies)
+                .HasForeignKey(x => x.ParentCommentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MovieViewEntity>(entity =>
+        {
+            entity.HasKey(x => x.MovieViewId);
+            entity.HasIndex(x => new { x.MovieId, x.ViewedAt });
+
+            entity.HasOne(x => x.MovieInfoEntity)
+                .WithMany(x => x.MovieViewEntities)
+                .HasForeignKey(x => x.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<UserNotificationEntity>(entity =>
+        {
+            entity.HasKey(x => x.NotificationId);
+            entity.HasIndex(x => new { x.UserId, x.IsRead, x.CreatedAt });
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany(x => x.UserNotificationEntities)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.RelatedComment)
+                .WithMany()
+                .HasForeignKey(x => x.RelatedCommentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne(x => x.RelatedMovie)
+                .WithMany()
+                .HasForeignKey(x => x.RelatedMovieId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
         
         // User Infos 

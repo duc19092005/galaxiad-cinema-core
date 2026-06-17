@@ -98,6 +98,10 @@ namespace BusinessLayer.Entities.UserInfos
         // QL Order
 
         public virtual ICollection<OrderInfoEntity> OrderInfoEntity { get; set; } = [];
+
+        public virtual ICollection<MovieCommentEntity> MovieCommentEntities { get; set; } = [];
+
+        public virtual ICollection<UserNotificationEntity> UserNotificationEntities { get; set; } = [];
         
         // Staff & Customer Profiles (1-1)
         

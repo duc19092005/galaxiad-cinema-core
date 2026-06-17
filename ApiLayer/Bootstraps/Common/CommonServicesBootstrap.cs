@@ -9,6 +9,7 @@ using StackExchange.Redis;
 using Microsoft.Extensions.Configuration;
 using BusinessLayer.UseCases.Staff;
 using BusinessLayer.UseCases.TheaterManager;
+using BusinessLayer.Services.Comments;
 
 namespace ApiLayer.Bootstraps.Common;
 
@@ -51,6 +52,8 @@ public static class CommonServicesBootstrap
 
         services.AddScoped<IRedisLockService, RedisLockService>();
         services.AddSingleton<ISseNotificationService, SseNotificationService>();
+        services.AddScoped<DeepSeekModerationService>();
+        services.AddScoped<MovieCommentService>();
 
         // Register Shift Use Cases
         services.AddScoped<RegisterShiftUseCase>();

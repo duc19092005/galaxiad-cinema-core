@@ -52,6 +52,10 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     public List<movieFormatMovieInfoEntity> MovieFormatMovieInfoEntity { get; set; } = [];
 
     public List<MovieCinemaEntity> MovieCinemaEntities { get; set; } = [];
+
+    public List<MovieCommentEntity> MovieCommentEntities { get; set; } = [];
+
+    public List<MovieViewEntity> MovieViewEntities { get; set; } = [];
 }
 
 
