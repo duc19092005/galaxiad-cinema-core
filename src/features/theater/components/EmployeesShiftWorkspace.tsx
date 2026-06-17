@@ -108,6 +108,20 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
   const defaultStaffId = useMemo(() => staff[0]?.userId || '', [staff]);
   const defaultTemplateId = useMemo(() => templates[0]?.shiftTemplateId || '', [templates]);
 
+  const groupedRegistrations = useMemo(() => {
+    const groups: { date: string; items: ShiftRegistrationDto[] }[] = [];
+    registrations.forEach(r => {
+      const formattedDate = formatDate(r.registrationDate);
+      let group = groups.find(g => g.date === formattedDate);
+      if (!group) {
+        group = { date: formattedDate, items: [] };
+        groups.push(group);
+      }
+      group.items.push(r);
+    });
+    return groups;
+  }, [registrations]);
+
   const loadData = useCallback(async () => {
     if (!cinemaId) return;
     setLoading(true);
@@ -298,47 +312,81 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
           ) : registrations.length === 0 ? (
             <EmptyState label="No shift registrations match this filter." />
           ) : (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Staff</th>
-                    <th>Shift</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.map((registration) => (
-                    <tr key={registration.shiftRegistrationId}>
-                      <td>
-                        <strong>{registration.staffName}</strong>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{registration.notes || 'No notes'}</div>
-                      </td>
-                      <td>
-                        <div>{registration.shiftName}</div>
-                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{registration.startTime} to {registration.endTime}</div>
-                      </td>
-                      <td>{formatDate(registration.registrationDate)}</td>
-                      <td><span className={statusBadgeClass(registration.status)}>{registration.status}</span></td>
-                      <td>
-                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                          {registration.status === 'Pending' && (
-                            <>
-                              <ActionButton label="Approve" tone="success" icon={<Check size={13} />} loading={actionLoading === `approve-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'approve')} />
-                              <ActionButton label="Reject" tone="danger" icon={<X size={13} />} loading={actionLoading === `reject-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'reject')} />
-                            </>
-                          )}
-                          {registration.status === 'Approved' && (
-                            <ActionButton label="Cancel" tone="danger" icon={<X size={13} />} loading={actionLoading === `cancel-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'cancel')} />
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {groupedRegistrations.map((group) => (
+                <div key={group.date} style={{ 
+                  background: 'var(--bg-elevated)', 
+                  border: '1px solid var(--border-color)', 
+                  borderRadius: 'var(--radius-lg)', 
+                  padding: '16px 20px',
+                  boxShadow: 'var(--shadow-md)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ width: 6, height: 16, background: 'var(--accent)', borderRadius: '2px' }} />
+                    <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{group.date}</span>
+                    <span style={{ 
+                      fontSize: '11px', 
+                      color: 'var(--accent)', 
+                      background: 'var(--accent-soft)',
+                      padding: '2px 8px',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 700,
+                      marginLeft: '8px'
+                    }}>
+                      {group.items.length} đăng ký
+                    </span>
+                  </div>
+                  <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
+                    <table style={{ width: '100%' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Staff</th>
+                          <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Shift</th>
+                          <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Status</th>
+                          <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Lý do (Notes)</th>
+                          <th style={{ textAlign: 'right', color: 'var(--text-primary)', opacity: 0.9 }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {group.items.map((registration) => (
+                          <tr key={registration.shiftRegistrationId}>
+                            <td>
+                              <strong style={{ color: 'var(--text-primary)', fontWeight: 650 }}>{registration.staffName}</strong>
+                            </td>
+                            <td>
+                              <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{registration.shiftName}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-primary)', opacity: 0.8, marginTop: 2 }}>{registration.startTime} to {registration.endTime}</div>
+                            </td>
+                            <td><span className={statusBadgeClass(registration.status)}>{registration.status}</span></td>
+                            <td style={{ 
+                              color: registration.notes ? 'var(--text-primary)' : 'var(--text-secondary)', 
+                              fontSize: 13, 
+                              fontStyle: registration.notes ? 'normal' : 'italic',
+                              fontWeight: registration.notes ? 500 : 'normal',
+                              opacity: registration.notes ? 1 : 0.6
+                            }}>
+                              {registration.notes || '-'}
+                            </td>
+                            <td>
+                              <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                                {registration.status === 'Pending' && (
+                                  <>
+                                    <ActionButton label="Approve" tone="success" icon={<Check size={13} />} loading={actionLoading === `approve-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'approve')} />
+                                    <ActionButton label="Reject" tone="danger" icon={<X size={13} />} loading={actionLoading === `reject-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'reject')} />
+                                  </>
+                                )}
+                                {registration.status === 'Approved' && (
+                                  <ActionButton label="Cancel" tone="danger" icon={<X size={13} />} loading={actionLoading === `cancel-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'cancel')} />
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

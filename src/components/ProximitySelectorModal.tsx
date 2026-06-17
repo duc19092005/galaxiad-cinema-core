@@ -4,6 +4,7 @@ import { MapPin, X, Navigation, Locate, AlertCircle, Check } from 'lucide-react'
 import { publicApi } from '../api/publicApi';
 import type { ActiveCinema } from '../types/public.types';
 import { showSuccess, showError } from '../utils/ToastUtils';
+import { useTranslation } from 'react-i18next';
 
 interface ProximitySelectorModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ function getCinemaCoords(name: string, id: string): { lat: number; lng: number; 
   }
 }
 
-// Haversine distance formula in kilometers
+// Haversine {t('proximity.distance', 'distance')} formula in kilometers
 function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -68,6 +69,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
   onClose,
   onSelectCinema,
 }) => {
+  const { t } = useTranslation();
   const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string>('All');
@@ -98,11 +100,11 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
       if (res.isSuccess) {
         setCinemas(res.data || []);
       } else {
-        showError('Failed to load cinemas.');
+        showError(t('proximity.loadError', 'Failed to load cinemas.'));
       }
     } catch (err) {
       console.error(err);
-      showError('Error connecting to cinemas database.');
+      showError(t('proximity.connError', 'Error connecting to cinemas database.'));
     } finally {
       setLoading(false);
     }
@@ -112,7 +114,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
     setGettingLocation(true);
     setLocationError(null);
     if (!navigator.geolocation) {
-      setLocationError('Geolocation is not supported by your browser.');
+      setLocationError(t('proximity.geoNotSupported', 'Geolocation is not supported by your browser.'));
       setGettingLocation(false);
       return;
     }
@@ -124,15 +126,15 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
           lng: position.coords.longitude,
         });
         setGettingLocation(false);
-        showSuccess('Location detected! Cinemas sorted by nearest distance.');
+        showSuccess(t('proximity.locationDetected', 'Location detected! Cinemas sorted by nearest distance.'));
       },
       (error) => {
         console.warn('Geolocation error:', error);
         // Provide simulated current location in District 1 HCMC for demonstration
         setUserCoords({ lat: 10.7769, lng: 106.7009 });
         setGettingLocation(false);
-        setLocationError('Could not access GPS. Using simulated HCMC center location.');
-        showSuccess('Simulated HCMC location set! Cinemas sorted.');
+        setLocationError(t('proximity.gpsError', 'Could not access GPS. Using simulated HCMC center location.'));
+        showSuccess(t('proximity.simulatedLocation', 'Simulated HCMC location set! Cinemas sorted.'));
       },
       { timeout: 8000 }
     );
@@ -232,7 +234,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <MapPin style={{ color: 'var(--primary, #ff8a00)' }} size={24} />
             <h3 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--text-primary, #fff)' }}>
-              Select Cinema & Proximity
+              {t('proximity.title', 'Select Cinema & Proximity')}
             </h3>
           </div>
           <button
@@ -283,12 +285,12 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
             {gettingLocation ? (
               <>
                 <Locate size={18} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
-                Detecting GPS Location...
+                {t('proximity.detectingGPS', 'Detecting GPS Location...')}
               </>
             ) : (
               <>
                 <Navigation size={18} />
-                Find Nearest Cinemas (GPS)
+                {t('proximity.findNearest', 'Find Nearest Cinemas (GPS)')}
               </>
             )}
           </button>
@@ -316,7 +318,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
 
         {/* City Filter Tabs */}
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          {['All', 'Hồ Chí Minh', 'Hà Nội'].map((city) => (
+          {[t('proximity.all', 'All'), t('proximity.hcmc', 'Hồ Chí Minh'), t('proximity.hanoi', 'Hà Nội')].map((city) => (
             <button
               key={city}
               onClick={() => setSelectedCity(city)}
@@ -342,11 +344,11 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
         <div style={{ overflowY: 'auto', flex: 1, paddingRight: '4px', minHeight: '180px' }}>
           {loading ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100px' }}>
-              <span style={{ color: 'var(--text-secondary)' }}>Loading cinemas list...</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{t('proximity.loading', 'Loading cinemas list...')}</span>
             </div>
           ) : processedCinemas.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '30px 0', color: 'var(--text-secondary)' }}>
-              No cinemas found.
+              {t('proximity.noCinemas', 'No cinemas found.')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -398,7 +400,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
                         </span>
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                        Active Cinema
+                        {t('proximity.activeCinema', 'Active Cinema')}
                       </div>
                     </div>
                     
@@ -437,7 +439,7 @@ export const ProximitySelectorModal: React.FC<ProximitySelectorModalProps> = ({
                 gap: '4px',
               }}
             >
-              Clear selected cinema filter
+              {t('proximity.clearFilter', 'Clear selected cinema filter')}
             </button>
           </div>
         )}

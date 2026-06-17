@@ -117,8 +117,8 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
   const hasChanges = !sameRoleSet(selectedRoleIds, initialRoleIds);
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 620 }}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 620 }}>
         {/* Header */}
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
@@ -141,25 +141,25 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
         </div>
 
         {/* Body */}
-        <div className="modal-body" style={{ maxHeight: 420, overflowY: 'auto' }}>
+        <div className="modal-body" style={{ maxHeight: 420, overflowY: 'auto', padding: '24px 28px' }}>
           {loading ? (
-            <div className="state-center">
+            <div className="state-center" style={{ minHeight: '120px' }}>
               <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-              <span>Loading roles...</span>
+              <span className="text-muted">Loading roles...</span>
             </div>
           ) : error ? (
-            <div className="card" style={{ padding: 'var(--space-3) var(--space-4)', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <div className="card" style={{ padding: '12px 16px', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span className="text-sm">{error}</span>
+              <span className="text-sm" style={{ color: 'var(--danger)' }}>{error}</span>
             </div>
           ) : (
             <>
               {/* Current roles */}
-              <div style={{ marginBottom: 'var(--space-6)' }}>
-                <p className="text-muted" style={{ fontSize: 13, marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
+              <div style={{ marginBottom: '28px' }}>
+                <p className="text-muted" style={{ fontSize: 13, marginBottom: '10px', letterSpacing: '0.3px' }}>
                   Current roles
                 </p>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                   {currentRoleList.length === 0 ? (
                     <span className="text-muted" style={{ fontSize: 14, fontStyle: 'italic', opacity: 0.7 }}>
                       No roles assigned.
@@ -171,16 +171,17 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                       const isAdminRole = role.roleName === 'Admin';
                       const isProtected = isSelf && isAdminRole;
                       return (
-                        <span key={role.roleId} className="badge badge-accent" style={{ gap: 'var(--space-1)', padding: '7px 8px 7px 12px', fontSize: 13 }}>
+                        <span key={role.roleId} className="badge badge-accent" style={{ gap: '6px', padding: '7px 10px 7px 14px', fontSize: 13, borderRadius: 'var(--radius-md)' }}>
                           <span>{role.roleName}</span>
                           {isProtected ? (
-                            <Shield size={10} />
+                            <Shield size={12} />
                           ) : (
                             <button
                               onClick={() => toggleRole(role)}
                               style={{
                                 all: 'unset', cursor: 'pointer', display: 'flex',
-                                borderRadius: '50%', padding: 1,
+                                borderRadius: '50%', padding: 2,
+                                backgroundColor: 'rgba(0,0,0,0.15)',
                               }}
                             >
                               <X size={10} />
@@ -195,38 +196,54 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
 
               {/* Available roles */}
               <div>
-                <p className="text-muted" style={{ fontSize: 13, marginBottom: 'var(--space-2)', letterSpacing: '0.3px' }}>
+                <p className="text-muted" style={{ fontSize: 13, marginBottom: '10px', letterSpacing: '0.3px' }}>
                   Add roles
                 </p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {availableRoleList.length === 0 ? (
                     <span className="text-muted" style={{ fontSize: 14, fontStyle: 'italic', opacity: 0.7 }}>
                       All available roles assigned.
                     </span>
                   ) : (
-                    availableRoleList.map(role => (
-                      <button
-                        key={role.roleId}
-                        onClick={() => toggleRole(role)}
-                        className="card card-hover"
-                        style={{
-                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                          padding: '14px 16px', width: '100%', textAlign: 'left',
-                          cursor: 'pointer',
-                          backgroundColor: 'rgba(255,255,255,0.04)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                        }}
-                      >
-                        <span className="text-body" style={{ fontSize: 15, fontWeight: 750 }}>
-                          {role.roleName}
-                        </span>
-                        <div style={{
-                          width: 16, height: 16,
-                          borderRadius: '50%',
-                          border: '1px solid var(--border)',
-                        }} />
-                      </button>
-                    ))
+                    availableRoleList.map(role => {
+                      return (
+                        <button
+                          key={role.roleId}
+                          onClick={() => toggleRole(role)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '14px 18px',
+                            width: '100%',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            borderRadius: 'var(--radius-md)',
+                            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid var(--border-color)',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                            e.currentTarget.style.borderColor = 'var(--border-color)';
+                          }}
+                        >
+                          <span className="text-body" style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>
+                            {role.roleName}
+                          </span>
+                          <div style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: '50%',
+                            border: '2px solid var(--border-color)',
+                          }} />
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               </div>

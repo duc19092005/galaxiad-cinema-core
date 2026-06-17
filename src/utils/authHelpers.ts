@@ -30,7 +30,7 @@ export const verifyAuth = async (): Promise<boolean> => {
  * Verify authentication và lấy user info từ API get-profile
  * Nếu chưa đăng nhập (401), sẽ return null để redirect về login
  */
-export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null } | null> => {
+export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null; isSharedPosAccount?: boolean } | null> => {
   try {
     const response = await authApi.getProfile();
 
@@ -42,6 +42,7 @@ export const verifyAuthAndGetUser = async (): Promise<{ userId?: string; usernam
         roles: response.data.roles,
         permissions: response.data.permissions,
         portraitImageUrl: response.data.portraitImageUrl,
+        isSharedPosAccount: response.data.isSharedPosAccount,
       };
       // Cập nhật localStorage với thông tin mới nhất từ server
       localStorage.setItem('user_info', JSON.stringify(userData));

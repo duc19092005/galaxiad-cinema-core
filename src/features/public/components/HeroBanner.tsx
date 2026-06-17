@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * HeroBanner – full‑bleed hero section for the Home page.
@@ -8,6 +9,7 @@ import { Play } from 'lucide-react';
  * containing the featured movie title, tagline and a glowing CTA.
  */
 const HeroBanner: React.FC<{ posterUrl?: string; title: string; tagline?: string }> = ({ posterUrl, title, tagline }) => {
+  const { t } = useTranslation();
   const background = posterUrl ? `url(${posterUrl}) center/cover no-repeat` : 'none';
   return (
     <section
@@ -30,7 +32,7 @@ const HeroBanner: React.FC<{ posterUrl?: string; title: string; tagline?: string
           className="btn-primary cta-glow inline-flex items-center gap-2"
         >
           <Play size={20} />
-          Book Now
+          {t('hero.bookNow', 'Book Now')}
         </Link>
       </div>
     </section>

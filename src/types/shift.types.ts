@@ -85,6 +85,8 @@ export interface StaffProfileDto {
   workingStatus: boolean;
   cinemaId: string;
   cinemaName: string;
+  departmentId?: string | null;
+  departmentName?: string | null;
   isCinemaManager: boolean;
   hasFaceRegistered: boolean;
 }

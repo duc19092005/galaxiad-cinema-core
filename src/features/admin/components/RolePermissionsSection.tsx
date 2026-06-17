@@ -13,6 +13,9 @@ const sameSet = (a: string[], b: string[]) => {
   return b.every((item) => next.has(item));
 };
 
+const APPROVE_SHIFT_PERMISSION = 'ApproveShift';
+const APPROVE_SHIFT_ROLES = new Set(['Admin', 'TheaterManager']);
+
 const getApiMessage = (error: unknown, fallback: string) => {
   if (typeof error !== 'object' || error === null) return fallback;
   const response = (error as { response?: { data?: { message?: string; Message?: string } } }).response;
@@ -38,6 +41,18 @@ const RolePermissionsSection: React.FC = () => {
     () => selectedRole?.permissions.map((permission) => permission.permissionId) || [],
     [selectedRole],
   );
+  const approveShiftPermissionIds = useMemo(
+    () => permissions
+      .filter((permission) => permission.permissionInfo === APPROVE_SHIFT_PERMISSION)
+      .map((permission) => permission.permissionId),
+    [permissions],
+  );
+  const canSelectedRoleApproveShifts = Boolean(selectedRole && APPROVE_SHIFT_ROLES.has(selectedRole.roleName));
+  const applyRolePermissionRules = useCallback((permissionIds: string[]) => {
+    if (canSelectedRoleApproveShifts) return permissionIds;
+    const forbiddenIds = new Set(approveShiftPermissionIds);
+    return permissionIds.filter((permissionId) => !forbiddenIds.has(permissionId));
+  }, [approveShiftPermissionIds, canSelectedRoleApproveShifts]);
 
   const selectedPermissionSet = useMemo(() => new Set(selectedPermissionIds), [selectedPermissionIds]);
   const hasUnsavedChanges = !sameSet(selectedPermissionIds, savedPermissionIds);
@@ -75,8 +90,8 @@ const RolePermissionsSection: React.FC = () => {
   }, [loadData]);
 
   useEffect(() => {
-    setSelectedPermissionIds(savedPermissionIds);
-  }, [savedPermissionIds]);
+    setSelectedPermissionIds(applyRolePermissionRules(savedPermissionIds));
+  }, [applyRolePermissionRules, savedPermissionIds]);
 
   const handleSelectRole = (roleId: string) => {
     if (roleId === selectedRoleId) return;
@@ -85,6 +100,7 @@ const RolePermissionsSection: React.FC = () => {
   };
 
   const togglePermission = (permissionId: string) => {
+    if (!canSelectedRoleApproveShifts && approveShiftPermissionIds.includes(permissionId)) return;
     setSelectedPermissionIds((current) => (
       current.includes(permissionId)
         ? current.filter((item) => item !== permissionId)
@@ -100,7 +116,7 @@ const RolePermissionsSection: React.FC = () => {
         if (checked) next.add(id);
         else next.delete(id);
       });
-      return Array.from(next);
+      return applyRolePermissionRules(Array.from(next));
     });
   };
 
@@ -117,8 +133,9 @@ const RolePermissionsSection: React.FC = () => {
 
     setSaving(true);
     try {
-      const response = await adminApi.updateRolePermissions(selectedRole.roleId, selectedPermissionIds);
-      const nextPermissionSet = new Set(selectedPermissionIds);
+      const safePermissionIds = applyRolePermissionRules(selectedPermissionIds);
+      const response = await adminApi.updateRolePermissions(selectedRole.roleId, safePermissionIds);
+      const nextPermissionSet = new Set(safePermissionIds);
       setRoles((current) => current.map((role) => (
         role.roleId === selectedRole.roleId
           ? { ...role, permissions: permissions.filter((permission) => nextPermissionSet.has(permission.permissionId)) }
@@ -258,18 +275,20 @@ const RolePermissionsSection: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto pr-1">
                   {filteredPermissions.map((permission) => {
                     const checked = selectedPermissionSet.has(permission.permissionId);
+                    const isApproveShiftLocked = permission.permissionInfo === APPROVE_SHIFT_PERMISSION && !canSelectedRoleApproveShifts;
                     return (
                       <label
                         key={permission.permissionId}
-                        className={`flex items-start gap-3 p-4 rounded-xl border cursor-pointer transition-all min-w-0 ${
+                        className={`flex items-start gap-3 p-4 rounded-xl border transition-all min-w-0 ${
                           checked
                             ? 'bg-cinema-accent/10 border-cinema-accent/30'
                             : 'bg-cinema-elevated border-cinema-border/30 hover:border-cinema-accent/20'
-                        }`}
+                        } ${isApproveShiftLocked ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
+                          disabled={isApproveShiftLocked}
                           onChange={() => togglePermission(permission.permissionId)}
                           className="mt-0.5 w-4 h-4 rounded accent-cinema-accent shrink-0"
                           style={{ accentColor: '#ffb3b6' }}
@@ -277,6 +296,9 @@ const RolePermissionsSection: React.FC = () => {
                         <div className="min-w-0">
                           <p className="text-sm font-bold text-cinema-text leading-tight break-words">{permission.permissionInfo}</p>
                           <p className="text-[10px] text-cinema-text-muted font-mono mt-1 break-all opacity-70">{permission.permissionId}</p>
+                          {isApproveShiftLocked && (
+                            <p className="text-[10px] text-cinema-text-muted mt-1">Only Admin and TheaterManager can approve shifts.</p>
+                          )}
                         </div>
                       </label>
                     );

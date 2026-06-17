@@ -74,6 +74,7 @@ export interface UserLoginData {
   roles: string[];
   permissions?: string[];
   portraitImageUrl?: string | null;
+  isSharedPosAccount?: boolean;
   accessToken?: string;
   managedCinemaNames?: string[];
   managedCinemas?: ManagedCinemaDto[];
@@ -90,6 +91,7 @@ export interface UserProfileData {
   roles: string[];
   permissions?: string[];
   portraitImageUrl?: string | null;
+  isSharedPosAccount?: boolean;
   managedCinemaNames?: string[];
   managedCinemas?: ManagedCinemaDto[];
 }

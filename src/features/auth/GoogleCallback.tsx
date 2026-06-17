@@ -38,7 +38,7 @@ const GoogleCallback: React.FC = () => {
             const data = response.data.data;
             const userInfo: UserLoginData = {
               userId: data.userId || '', username: data.username || '', userName: data.username || '',
-              roles: data.roles || [], accessToken: data.accessToken,
+              roles: data.roles || [], accessToken: data.accessToken, isSharedPosAccount: data.isSharedPosAccount,
             };
             localStorage.setItem('user_info', JSON.stringify(userInfo));
             window.dispatchEvent(new Event('user_info_updated'));
@@ -47,7 +47,7 @@ const GoogleCallback: React.FC = () => {
             if (userInfo.roles && userInfo.roles.length > 0) {
               if (userInfo.roles.length === 1) {
                 const roleConfig: Record<string, string> = {
-                  Customer: '/home', Cashier: '/cashier', Admin: '/admin',
+                  Customer: '/home', Cashier: userInfo.isSharedPosAccount ? '/cashier' : '/staff', Admin: '/admin',
                   MovieManager: '/movie-manager', TheaterManager: '/theater-manager', FacilitiesManager: '/facilities-manager',
                 };
                 navigate(roleConfig[userInfo.roles[0]] || '/role-selection', { replace: true });

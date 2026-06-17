@@ -58,11 +58,11 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-panel" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: 540 }}>
         {/* Header */}
         <div className="modal-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
               width: 40, height: 40,
               borderRadius: 'var(--radius-md)',
@@ -72,8 +72,8 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
               <MapPin size={18} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h2 className="heading-md" style={{ margin: 0 }}>Assign cinema</h2>
-              <p className="text-muted" style={{ fontSize: 'var(--text-xs)', margin: 0 }}>
+              <h2 className="heading-md" style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Assign cinema</h2>
+              <p className="text-muted" style={{ fontSize: 12, margin: '2px 0 0' }}>
                 {currentUserEmail}
               </p>
             </div>
@@ -84,9 +84,27 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
         </div>
 
         {/* Search */}
-        <div style={{ padding: '0 var(--space-6)', paddingTop: 'var(--space-3)' }}>
-          <div className="input" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 0, paddingLeft: 'var(--space-3)' }}>
-            <Search size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+        <div style={{ padding: '0 24px', marginTop: '20px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 14px',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--radius-md)',
+            transition: 'all 0.2s ease',
+          }}
+          onFocusCapture={(e) => {
+            e.currentTarget.style.borderColor = 'var(--accent)';
+            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255, 138, 0, 0.15)';
+          }}
+          onBlurCapture={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border-color)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          >
+            <Search size={16} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
             <input
               type="text"
               placeholder="Search cinema name or address..."
@@ -95,8 +113,7 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
               style={{
                 all: 'unset',
                 width: '100%',
-                height: 34,
-                fontSize: 'var(--text-sm)',
+                fontSize: '14px',
                 color: 'var(--text-primary)',
               }}
             />
@@ -106,48 +123,66 @@ const CinemaAssignModal: React.FC<CinemaAssignModalProps> = ({
         {/* Content */}
         <div className="modal-body">
           {loading ? (
-            <div className="state-center">
+            <div className="state-center" style={{ minHeight: '120px' }}>
               <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-              <span>Loading cinemas...</span>
+              <span className="text-muted" style={{ fontSize: 13 }}>Loading cinemas...</span>
             </div>
           ) : error ? (
-            <div className="card" style={{ padding: 'var(--space-3) var(--space-4)', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <div className="card" style={{ padding: '12px 16px', borderColor: 'var(--danger)', backgroundColor: 'var(--danger-soft)', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <AlertCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0 }} />
-              <span className="text-sm">{error}</span>
+              <span className="text-sm" style={{ color: 'var(--danger)' }}>{error}</span>
             </div>
           ) : (
-            <div style={{ maxHeight: 300, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            <div style={{ maxHeight: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', paddingRight: '4px' }}>
               {filteredCinemas.length === 0 ? (
-                <div className="state-center">No cinemas found.</div>
+                <div className="state-center" style={{ minHeight: '100px', color: 'var(--text-secondary)' }}>No cinemas found.</div>
               ) : (
-                filteredCinemas.map(cinema => (
-                  <button
-                    key={cinema.cinemaId}
-                    onClick={() => setSelectedCinemaId(cinema.cinemaId)}
-                    className="card card-hover"
-                    style={{
-                      display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
-                      padding: 'var(--space-3) var(--space-4)',
-                      width: '100%',
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                      border: selectedCinemaId === cinema.cinemaId ? '1px solid var(--accent)' : undefined,
-                      backgroundColor: selectedCinemaId === cinema.cinemaId ? 'var(--accent-soft)' : undefined,
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                      <span className="text-body" style={{ fontWeight: 500, fontSize: 'var(--text-sm)' }}>
-                        {cinema.cinemaName}
+                filteredCinemas.map(cinema => {
+                  const isSelected = selectedCinemaId === cinema.cinemaId;
+                  return (
+                    <button
+                      key={cinema.cinemaId}
+                      onClick={() => setSelectedCinemaId(cinema.cinemaId)}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        padding: '14px 18px',
+                        width: '100%',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        borderRadius: 'var(--radius-md)',
+                        border: isSelected ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+                        backgroundColor: isSelected ? 'var(--accent-soft)' : 'rgba(255, 255, 255, 0.03)',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'var(--bg-hover)';
+                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isSelected) {
+                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                          e.currentTarget.style.borderColor = 'var(--border-color)';
+                        }
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <span className="text-body" style={{ fontWeight: 600, fontSize: '14px', color: isSelected ? 'var(--accent)' : 'var(--text-primary)' }}>
+                          {cinema.cinemaName}
+                        </span>
+                        {isSelected && (
+                          <Check size={16} style={{ color: 'var(--accent)' }} />
+                        )}
+                      </div>
+                      <span className="text-muted" style={{ fontSize: '12px', marginTop: '6px', lineHeight: 1.4 }}>
+                        {cinema.cinemaLocation}
                       </span>
-                      {selectedCinemaId === cinema.cinemaId && (
-                        <Check size={14} style={{ color: 'var(--accent)' }} />
-                      )}
-                    </div>
-                    <span className="text-muted" style={{ fontSize: 'var(--text-xs)', marginTop: 'var(--space-1)' }}>
-                      {cinema.cinemaLocation}
-                    </span>
-                  </button>
-                ))
+                    </button>
+                  );
+                })
               )}
             </div>
           )}

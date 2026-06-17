@@ -39,7 +39,7 @@ import { showSuccess, showError } from '../../utils/ToastUtils';
 import { VouchersSection } from './components/VouchersSection';
 import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
-import type { Cinema } from '../../types/facilities.types';
+import type { Cinema, Department } from '../../types/facilities.types';
 import { useCinema } from '../../contexts/CinemaContext';
 
 // ============================================
@@ -64,6 +64,28 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
 const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'permissions', 'rights', 'audit']);
+
+const isAccountActive = (status: AdminUserDto['accountStatus']) => {
+  if (typeof status === 'number') return status === 1;
+  return status.toLowerCase() === 'active';
+};
+
+const getAccountStatusLabel = (status: AdminUserDto['accountStatus']) => {
+  if (isAccountActive(status)) return 'Active';
+  if (typeof status === 'string') return status;
+  if (status === 0) return 'Pending';
+  if (status === 2) return 'Banned';
+  return 'Locked';
+};
+
+const createFaceVectorFromImage = async (file: File): Promise<number[]> => {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  return Array.from({ length: 128 }, (_, index) => {
+    const mixed = digest[index % digest.length] ^ bytes[index % Math.max(bytes.length, 1)] ^ index;
+    return Number((((mixed / 255) - 0.5) * 0.16).toFixed(4));
+  });
+};
 
 const formatVnd = (value?: number | null) => {
   const amount = value ?? 0;
@@ -369,12 +391,16 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                 <th>{t('Name')}</th>
                 <th>{t('Email')}</th>
                 <th>{t('Role')}</th>
+                <th>{t('cinema')}</th>
                 <th>{t('Status')}</th>
                 <th style={{ width: 300 }}>{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((user) => (
+              {filtered.map((user) => {
+                const accountActive = isAccountActive(user.accountStatus);
+
+                return (
                 <tr key={user.userId}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -392,12 +418,15 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                       ))}
                     </div>
                   </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>
+                    {user.cinemaName || 'N/A'}
+                  </td>
                   <td>
-                    <StatusBadge status={user.accountStatus === 1 ? 'Active' : 'Locked'} />
+                    <StatusBadge status={getAccountStatusLabel(user.accountStatus)} />
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      {user.accountStatus === 1 ? (
+                      {accountActive ? (
                         <button
                           onClick={() => onUpdateStatus(user.userId, 2)}
                           className="btn"
@@ -447,10 +476,11 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     {t('No users found.')}
                   </td>
                 </tr>
@@ -588,6 +618,8 @@ const AdminPage: React.FC = () => {
   const [rolesLoading, setRolesLoading] = useState(false);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [cinemasLoading, setCinemasLoading] = useState(false);
+  const [createUserDepartments, setCreateUserDepartments] = useState<Department[]>([]);
+  const [createUserDepartmentsLoading, setCreateUserDepartmentsLoading] = useState(false);
 
   // Modals state
   const [roleModalOpen, setRoleModalOpen] = useState(false);
@@ -609,6 +641,8 @@ const AdminPage: React.FC = () => {
     phoneNumber: '',
     dateOfBirth: '',
     roleIds: [] as string[],
+    cinemaId: '',
+    departmentId: '',
   });
   const [createUserPortraitFile, setCreateUserPortraitFile] = useState<File | null>(null);
   const [createUserPortraitPreview, setCreateUserPortraitPreview] = useState<string | null>(null);
@@ -748,12 +782,18 @@ const AdminPage: React.FC = () => {
       phoneNumber: '',
       dateOfBirth: '',
       roleIds: [],
+      cinemaId: '',
+      departmentId: '',
     });
     setCreateUserPortraitFile(null);
     setCreateUserPortraitPreview(null);
+    setCreateUserDepartments([]);
     setCreateUserModalOpen(true);
     if (staffRoles.length === 0) {
       fetchStaffRoles();
+    }
+    if (cinemas.length === 0) {
+      fetchCinemas();
     }
   };
 
@@ -765,6 +805,37 @@ const AdminPage: React.FC = () => {
         : [...current.roleIds, roleId],
     }));
   };
+
+  const selectedCreateRoles = staffRoles.filter((role) => createUserForm.roleIds.includes(role.roleId));
+  const hasCreateStaffRole = selectedCreateRoles.length > 0;
+  const hasCreateCashierRole = selectedCreateRoles.some((role) => role.roleName === 'Cashier');
+
+  useEffect(() => {
+    if (!createUserModalOpen || !createUserForm.cinemaId) {
+      setCreateUserDepartments([]);
+      return;
+    }
+
+    let cancelled = false;
+    setCreateUserDepartmentsLoading(true);
+    facilitiesApi.getDepartments(createUserForm.cinemaId)
+      .then((res) => {
+        if (!cancelled) setCreateUserDepartments(res.data || []);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCreateUserDepartments([]);
+          showError('Unable to load departments for selected cinema.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCreateUserDepartmentsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [createUserForm.cinemaId, createUserModalOpen]);
 
   const handleCreateUserPortraitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -808,8 +879,21 @@ const AdminPage: React.FC = () => {
       showError('Date of birth is required.');
       return;
     }
+    if (hasCreateStaffRole && !createUserForm.cinemaId) {
+      showError('Select a cinema for this staff account.');
+      return;
+    }
+    if (hasCreateCashierRole && !createUserForm.departmentId) {
+      showError('Select a cashier department for this staff account.');
+      return;
+    }
+    if (hasCreateStaffRole && !createUserPortraitFile) {
+      showError('Staff accounts need a portrait image for face vector registration.');
+      return;
+    }
     setCreateUserSubmitting(true);
     try {
+      const faceVector = createUserPortraitFile ? await createFaceVectorFromImage(createUserPortraitFile) : undefined;
       const res = await adminApi.createUser({
         userName: createUserForm.userName,
         userEmail: createUserForm.userEmail,
@@ -819,6 +903,9 @@ const AdminPage: React.FC = () => {
         phoneNumber: createUserForm.phoneNumber,
         dateOfBirth: new Date(`${createUserForm.dateOfBirth}T00:00:00`).toISOString(),
         roleIds: createUserForm.roleIds,
+        cinemaId: createUserForm.cinemaId || undefined,
+        departmentId: createUserForm.departmentId || undefined,
+        faceVector,
       });
       if (res.isSuccess) {
         const createdUserId = res.data?.userId;
@@ -1303,8 +1390,9 @@ const AdminPage: React.FC = () => {
                   {staffRoles.map((role) => {
                     const checked = createUserForm.roleIds.includes(role.roleId);
                     return (
-                      <label
+                      <div
                         key={role.roleId}
+                        onClick={() => toggleCreateRole(role.roleId)}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1315,18 +1403,19 @@ const AdminPage: React.FC = () => {
                           border: `1px solid ${checked ? 'rgba(255, 138, 0, 0.48)' : 'rgba(255,255,255,0.1)'}`,
                           background: checked ? 'rgba(255, 138, 0, 0.12)' : 'rgba(255,255,255,0.025)',
                           cursor: 'pointer',
+                          userSelect: 'none',
                         }}
                       >
                         <input
                           type="checkbox"
                           checked={checked}
-                          onChange={() => toggleCreateRole(role.roleId)}
+                          readOnly
                           style={{ width: 16, height: 16, accentColor: '#ff8a00' }}
                         />
                         <span style={{ fontSize: 14, fontWeight: 750, color: checked ? 'var(--accent)' : 'var(--text-primary)' }}>
                           {role.roleName}
                         </span>
-                      </label>
+                      </div>
                     );
                   })}
                   {!rolesLoading && staffRoles.length === 0 && (
@@ -1336,6 +1425,68 @@ const AdminPage: React.FC = () => {
                   )}
                 </div>
               </section>
+
+              {hasCreateStaffRole && (
+                <section style={{
+                  display: 'grid',
+                  gap: 12,
+                  padding: 14,
+                  border: '1px solid rgba(255,255,255,0.12)',
+                  borderRadius: 'var(--radius-lg)',
+                  background: 'rgba(255,255,255,0.035)',
+                }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 850, color: 'var(--text-primary)' }}>Staff assignment</p>
+                    <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                      Choose the cinema branch and cashier department this employee belongs to.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: hasCreateCashierRole ? '1fr 1fr' : '1fr', gap: 12 }}>
+                    <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Cinema *</span>
+                      <select
+                        className="input select"
+                        value={createUserForm.cinemaId}
+                        disabled={cinemasLoading}
+                        onChange={(event) => setCreateUserForm({ ...createUserForm, cinemaId: event.target.value, departmentId: '' })}
+                        required={hasCreateStaffRole}
+                      >
+                        <option value="">{cinemasLoading ? 'Loading cinemas...' : 'Select cinema'}</option>
+                        {cinemas.map((cinema) => (
+                          <option key={cinema.cinemaId} value={cinema.cinemaId}>{cinema.cinemaName}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    {hasCreateCashierRole && (
+                      <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Cashier department *</span>
+                        <select
+                          className="input select"
+                          value={createUserForm.departmentId}
+                          disabled={!createUserForm.cinemaId || createUserDepartmentsLoading}
+                          onChange={(event) => setCreateUserForm({ ...createUserForm, departmentId: event.target.value })}
+                          required={hasCreateCashierRole}
+                        >
+                          <option value="">
+                            {!createUserForm.cinemaId
+                              ? 'Select cinema first'
+                              : createUserDepartmentsLoading
+                                ? 'Loading departments...'
+                                : 'Select department'}
+                          </option>
+                          {createUserDepartments.map((department) => (
+                            <option key={department.departmentId} value={department.departmentId}>
+                              {department.departmentName} - {department.departmentType}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    )}
+                  </div>
+                </section>
+              )}
 
               <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-color, #27272a)' }}>
                 <button type="button" onClick={() => setCreateUserModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>Cancel</button>

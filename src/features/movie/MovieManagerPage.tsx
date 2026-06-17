@@ -24,10 +24,10 @@ import {
 } from 'lucide-react';
 import { movieApi } from '../../api/movieApi';
 import axios from 'axios';
-import { showSuccess, showError } from '../../utils/ToastUtils';
+import { dismissToast, showError, showLoading, showSuccess } from '../../utils/ToastUtils';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { Movie, MovieRequiredAge, MovieGenre } from '../../types/movie.types';
+import type { Movie, MovieRequiredAge, MovieGenre, UpdateMovieFormData } from '../../types/movie.types';
 import type { MovieFormat, Cinema } from '../../types/facilities.types';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import LogoutModal from '../../components/LogoutModal';
@@ -60,7 +60,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
 
     return (
         <div className="modal-overlay" style={{ zIndex: 70 }}>
-            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content" style={{ maxWidth: 860 }} onClick={e => e.stopPropagation()}>
                 <div className="relative h-48 sm:h-56 overflow-hidden" style={{ background: 'rgba(0,0,0,0.4)' }}>
                     <img
                         src={movie.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800'}
@@ -166,6 +166,203 @@ interface CreateMovieModalProps {
     cinemas: Cinema[];
 }
 
+const RequiredMark = () => <span style={{ color: 'var(--danger)' }}>*</span>;
+
+const fieldPanelStyle: React.CSSProperties = {
+    border: '1px solid rgba(255,255,255,0.08)',
+    background: 'rgba(255,255,255,0.025)',
+    borderRadius: 16,
+    padding: 16,
+};
+
+const optionGridStyle: React.CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: 10,
+};
+
+const FormPanel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+    <div style={fieldPanelStyle}>{children}</div>
+);
+
+const ChoiceGroup: React.FC<{
+    label: string;
+    required?: boolean;
+    selectedCount: number;
+    helper?: string;
+    children: React.ReactNode;
+    empty?: string;
+    isEmpty?: boolean;
+}> = ({ label, required, selectedCount, helper, children, empty, isEmpty }) => (
+    <FormPanel>
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 10, alignItems: 'flex-start' }}>
+            <div>
+                <label className="input-label" style={{ marginBottom: 4 }}>
+                    {label} {required && <RequiredMark />}
+                </label>
+                {helper && <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.5 }}>{helper}</p>}
+            </div>
+            <span
+                style={{
+                    border: '1px solid rgba(255,138,0,0.25)',
+                    background: selectedCount > 0 ? 'rgba(255,138,0,0.14)' : 'rgba(255,255,255,0.04)',
+                    color: selectedCount > 0 ? '#ffb77f' : 'var(--text-muted)',
+                    borderRadius: 999,
+                    fontSize: 11,
+                    fontWeight: 800,
+                    padding: '4px 9px',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {selectedCount} selected
+            </span>
+        </div>
+        {isEmpty ? (
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>{empty}</p>
+        ) : (
+            <div style={optionGridStyle}>{children}</div>
+        )}
+    </FormPanel>
+);
+
+const SelectableOption: React.FC<{
+    label: string;
+    description?: string;
+    selected: boolean;
+    onClick: () => void;
+}> = ({ label, description, selected, onClick }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        style={{
+            minHeight: 64,
+            textAlign: 'left',
+            borderRadius: 14,
+            padding: '12px 14px',
+            border: selected ? '1px solid #ff8a00' : '1px solid rgba(255,255,255,0.1)',
+            background: selected
+                ? 'linear-gradient(135deg, rgba(255,138,0,0.24), rgba(255,183,127,0.09))'
+                : 'rgba(255,255,255,0.035)',
+            color: selected ? '#fff7ed' : 'var(--text-secondary)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            boxShadow: selected ? '0 0 0 1px rgba(255,138,0,0.18), 0 12px 28px rgba(255,138,0,0.1)' : 'none',
+            transition: 'border-color 0.18s ease, background 0.18s ease, transform 0.18s ease',
+        }}
+        onMouseDown={(event) => {
+            event.currentTarget.style.transform = 'scale(0.99)';
+        }}
+        onMouseUp={(event) => {
+            event.currentTarget.style.transform = 'scale(1)';
+        }}
+        onMouseLeave={(event) => {
+            event.currentTarget.style.transform = 'scale(1)';
+        }}
+    >
+        <span
+            style={{
+                width: 20,
+                height: 20,
+                borderRadius: 999,
+                border: selected ? '1px solid #ffb77f' : '1px solid rgba(255,255,255,0.18)',
+                background: selected ? '#ff8a00' : 'rgba(255,255,255,0.04)',
+                color: selected ? '#111' : 'transparent',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: '0 0 auto',
+                marginTop: 1,
+            }}
+        >
+            <CheckCircle size={14} />
+        </span>
+        <span style={{ minWidth: 0 }}>
+            <span style={{ display: 'block', fontSize: 13, fontWeight: 800, color: selected ? '#fff' : 'var(--text-primary)', lineHeight: 1.25 }}>
+                {label}
+            </span>
+            {description && (
+                <span style={{ display: 'block', marginTop: 4, fontSize: 11, color: selected ? '#ffd7b5' : 'var(--text-muted)', lineHeight: 1.35 }}>
+                    {description}
+                </span>
+            )}
+        </span>
+    </button>
+);
+
+const PosterUploadBox: React.FC<{
+    imagePreview: string | null;
+    label: string;
+    onClick: () => void;
+}> = ({ imagePreview, label, onClick }) => (
+    <div
+        onClick={onClick}
+        className="upload-zone"
+        style={{
+            minHeight: 230,
+            border: imagePreview ? '1px solid rgba(255,138,0,0.55)' : '1px dashed rgba(255,255,255,0.18)',
+            background: imagePreview ? 'rgba(255,138,0,0.055)' : 'rgba(255,255,255,0.025)',
+            borderRadius: 16,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+            position: 'relative',
+        }}
+    >
+        {imagePreview ? (
+            <>
+                <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[220px] h-52 object-contain object-center rounded-lg mx-auto" />
+                <span
+                    style={{
+                        position: 'absolute',
+                        right: 12,
+                        bottom: 12,
+                        borderRadius: 999,
+                        padding: '7px 12px',
+                        background: '#ff8a00',
+                        color: '#111',
+                        fontSize: 12,
+                        fontWeight: 900,
+                    }}
+                >
+                    Change poster
+                </span>
+            </>
+        ) : (
+            <div style={{ textAlign: 'center', padding: 20 }}>
+                <Image size={42} style={{ color: '#ffb77f', marginBottom: 10 }} />
+                <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800, margin: 0 }}>{label}</p>
+                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0' }}>PNG, JPG or WebP poster image</p>
+            </div>
+        )}
+    </div>
+);
+
+const notifyFormError = (
+    message: string,
+    setError: React.Dispatch<React.SetStateAction<string | null>>
+) => {
+    setError(message);
+    showError(message, { duration: 4200 });
+};
+
+const getMovieManagerError = (err: unknown, fallback: string) => {
+    if (axios.isAxiosError(err) && err.response) {
+        const data = err.response.data as ApiErrorResponse;
+        return data.errors?.join(', ') || data.message || fallback;
+    }
+    return 'Unable to connect to server';
+};
+
+const sameStringSet = (left: string[], right: string[]) => {
+    if (left.length !== right.length) return false;
+    const rightSet = new Set(right);
+    return left.every(item => rightSet.has(item));
+};
+
 const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -237,18 +434,19 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         e.preventDefault();
         setError(null);
         setSuccess(false);
+
+        if (!formData.movieName.trim()) { notifyFormError('Please enter movie name', setError); return; }
+        if (!formData.movieImage) { notifyFormError('Please select a movie poster image', setError); return; }
+        if (!formData.startedDate) { notifyFormError('Please select start date', setError); return; }
+        if (!formData.endedDate) { notifyFormError('Please select end date', setError); return; }
+        if (!formData.duration || parseInt(formData.duration) <= 0) { notifyFormError('Please enter valid duration', setError); return; }
+        if (formData.movieFormatIds.length === 0) { notifyFormError('Please select at least one format', setError); return; }
+        if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError('Please select a required age rating', setError); return; }
+        if (formData.cinemaIds.length === 0) { notifyFormError('Please select at least one cinema', setError); return; }
+
         setLoading(true);
-
+        const toastId = showLoading('Creating movie...');
         try {
-            if (!formData.movieName.trim()) { setError('Please enter movie name'); setLoading(false); return; }
-            if (!formData.movieImage) { setError('Please select a movie poster image'); setLoading(false); return; }
-            if (!formData.startedDate) { setError('Please select start date'); setLoading(false); return; }
-            if (!formData.endedDate) { setError('Please select end date'); setLoading(false); return; }
-            if (!formData.duration || parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
-            if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
-            if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { setError('Please select a required age rating'); setLoading(false); return; }
-            if (formData.cinemaIds.length === 0) { setError('Please select at least one cinema'); setLoading(false); return; }
-
             const submissionData = {
                 movieRequiredAgeId: formData.movieRequiredAgeId,
                 movieName: formData.movieName.trim(),
@@ -266,22 +464,22 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             };
 
             await movieApi.createMovie(submissionData);
+            dismissToast(toastId);
             setSuccess(true);
+            showSuccess('Movie added successfully!');
             onSuccess();
             setTimeout(() => onClose(), 1200);
         } catch (err) {
-            if (axios.isAxiosError(err) && err.response) {
-                const data = err.response.data as ApiErrorResponse;
-                setError(data.errors?.join(', ') || data.message || 'Failed to create movie');
-            } else {
-                setError('Unable to connect to server');
-            }
+            dismissToast(toastId);
+            const message = getMovieManagerError(err, 'Failed to create movie');
+            setError(message);
+            showError(message, { duration: 4800 });
         } finally { setLoading(false); }
     };
 
     return (
         <div className="modal-overlay" style={{ zIndex: 70 }}>
-            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content" style={{ maxWidth: 860 }} onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div className="flex items-center gap-3">
                         <div style={{
@@ -316,41 +514,33 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div>
-                            <label className="input-label">Movie Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Movie Name <RequiredMark /></label>
                             <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
                         <div>
-                            <label className="input-label">Poster Image <span style={{ color: 'var(--danger)' }}>*</span></label>
-                            <div
+                            <label className="input-label">Poster Image <RequiredMark /></label>
+                            <PosterUploadBox
+                                imagePreview={imagePreview}
+                                label="Upload poster image"
                                 onClick={() => fileInputRef.current?.click()}
-                                className="upload-zone"
-                            >
-                                {imagePreview ? (
-                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto" />
-                                ) : (
-                                    <>
-                                        <Image size={40} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
-                                        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Click to upload poster image</p>
-                                    </>
-                                )}
-                            </div>
+                            />
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Start Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <label className="input-label">Start Date <RequiredMark /></label>
                                 <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className="input" />
                             </div>
                             <div>
-                                <label className="input-label">End Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <label className="input-label">End Date <RequiredMark /></label>
                                 <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className="input" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="input-label">Duration (minutes) <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Duration (minutes) <RequiredMark /></label>
                             <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
                         </div>
 
@@ -376,7 +566,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                         </div>
 
                         <div>
-                            <label className="input-label">Required Age <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Required Age <RequiredMark /></label>
                             <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
                                 <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
@@ -387,53 +577,61 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             </select>
                         </div>
 
-                        <div>
-                            <label className="input-label">Visual Formats <span style={{ color: 'var(--danger)' }}>*</span></label>
-                            <div className="flex flex-wrap gap-2">
-                                {formats.map((f: MovieFormat) => (
-                                    <button
-                                        key={f.formatId} type="button"
-                                        onClick={() => handleFormatToggle(f.formatId)}
-                                        className={`chip ${formData.movieFormatIds.includes(f.formatId) ? 'chip-active' : ''}`}
-                                    >
-                                        {f.formatName}
-                                    </button>
-                                ))}
-                                {formats.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No formats available.</p>}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Visual Formats"
+                            required
+                            selectedCount={formData.movieFormatIds.length}
+                            helper="Select every screening format that this movie can use."
+                            isEmpty={formats.length === 0}
+                            empty="No formats available."
+                        >
+                            {formats.map((f: MovieFormat) => (
+                                <SelectableOption
+                                    key={f.formatId}
+                                    label={f.formatName}
+                                    description={f.formatDescription}
+                                    selected={formData.movieFormatIds.includes(f.formatId)}
+                                    onClick={() => handleFormatToggle(f.formatId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
-                        <div>
-                            <label className="input-label">Genres</label>
-                            <div className="flex flex-wrap gap-2">
-                                {genres.map((g: MovieGenre) => (
-                                    <button
-                                        key={g.movieGenreId} type="button"
-                                        onClick={() => handleGenreToggle(g.movieGenreId)}
-                                        className={`chip ${formData.movieGenreIds.includes(g.movieGenreId) ? 'chip-active' : ''}`}
-                                    >
-                                        {g.movieGenreName}
-                                    </button>
-                                ))}
-                                {genres.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No genres available.</p>}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Genres"
+                            selectedCount={formData.movieGenreIds.length}
+                            helper="Selected genres are highlighted and will appear on public movie cards."
+                            isEmpty={genres.length === 0}
+                            empty="No genres available."
+                        >
+                            {genres.map((g: MovieGenre) => (
+                                <SelectableOption
+                                    key={g.movieGenreId}
+                                    label={g.movieGenreName}
+                                    description={g.movieGenreDescription}
+                                    selected={formData.movieGenreIds.includes(g.movieGenreId)}
+                                    onClick={() => handleGenreToggle(g.movieGenreId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
-                        <div>
-                            <label className="input-label">Authorized Cinemas <span style={{ color: 'var(--danger)' }}>*</span></label>
-                            <div className="flex flex-wrap gap-2">
-                                {cinemas.map((c: Cinema) => (
-                                    <button
-                                        key={c.cinemaId} type="button"
-                                        onClick={() => handleCinemaToggle(c.cinemaId)}
-                                        className={`chip ${formData.cinemaIds.includes(c.cinemaId) ? 'chip-active' : ''}`}
-                                    >
-                                        {c.cinemaName}
-                                    </button>
-                                ))}
-                                {cinemas.length === 0 && <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>No cinemas available.</p>}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Authorized Cinemas"
+                            required
+                            selectedCount={formData.cinemaIds.length}
+                            helper="Only selected cinemas can schedule and sell tickets for this movie."
+                            isEmpty={cinemas.length === 0}
+                            empty="No cinemas available."
+                        >
+                            {cinemas.map((c: Cinema) => (
+                                <SelectableOption
+                                    key={c.cinemaId}
+                                    label={c.cinemaName}
+                                    description={[c.cinemaCity, c.cinemaLocation].filter(Boolean).join(' - ')}
+                                    selected={formData.cinemaIds.includes(c.cinemaId)}
+                                    onClick={() => handleCinemaToggle(c.cinemaId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
@@ -474,7 +672,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
     const [imagePreview, setImagePreview] = useState<string | null>(movie.movieImageUrl);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         movieName: movie.movieName,
         movieDescription: movie.movieDescriptions,
         movieImage: null as File | null,
@@ -492,7 +690,9 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         director: movie.director || '',
         actors: movie.actors || '',
         cinemaIds: movie.movieCinemas?.map(c => c.cinemaId) || [] as string[],
-    });
+    };
+
+    const [formData, setFormData] = useState(initialFormData);
 
     if (!isOpen) return null;
 
@@ -542,46 +742,72 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         e.preventDefault();
         setError(null);
         setSuccess(false);
+
+        const movieNameChanged = formData.movieName.trim() !== initialFormData.movieName.trim();
+        const descriptionChanged = formData.movieDescription.trim() !== initialFormData.movieDescription.trim();
+        const startedDateChanged = formData.startedDate !== initialFormData.startedDate;
+        const endedDateChanged = formData.endedDate !== initialFormData.endedDate;
+        const durationChanged = formData.duration !== initialFormData.duration;
+        const formatChanged = !sameStringSet(formData.movieFormatIds, initialFormData.movieFormatIds);
+        const genreChanged = !sameStringSet(formData.movieGenreIds, initialFormData.movieGenreIds);
+        const requiredAgeChanged = formData.movieRequiredAgeId !== initialFormData.movieRequiredAgeId;
+        const trailerChanged = formData.trailerUrl.trim() !== initialFormData.trailerUrl.trim();
+        const directorChanged = formData.director.trim() !== initialFormData.director.trim();
+        const actorsChanged = formData.actors.trim() !== initialFormData.actors.trim();
+        const cinemaChanged = !sameStringSet(formData.cinemaIds, initialFormData.cinemaIds);
+
+        if (movieNameChanged && !formData.movieName.trim()) { notifyFormError('Please enter movie name', setError); return; }
+        if (startedDateChanged && !formData.startedDate) { notifyFormError('Please select start date', setError); return; }
+        if (endedDateChanged && !formData.endedDate) { notifyFormError('Please select end date', setError); return; }
+        if ((startedDateChanged || endedDateChanged) && formData.startedDate && formData.endedDate && formData.startedDate >= formData.endedDate) {
+            notifyFormError('Started Date must be lower than the ended date.', setError);
+            return;
+        }
+        if (durationChanged && (!formData.duration || parseInt(formData.duration) <= 0)) { notifyFormError('Please enter valid duration', setError); return; }
+        if (formatChanged && formData.movieFormatIds.length === 0) { notifyFormError('Please select at least one format', setError); return; }
+        if (requiredAgeChanged && formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError('Please select a required age rating', setError); return; }
+        if (cinemaChanged && formData.cinemaIds.length === 0) { notifyFormError('Please select at least one cinema', setError); return; }
+
+        const submissionData: UpdateMovieFormData = {};
+        if (requiredAgeChanged) submissionData.movieRequiredAgeId = formData.movieRequiredAgeId;
+        if (movieNameChanged) submissionData.movieName = formData.movieName.trim();
+        if (descriptionChanged) submissionData.movieDescription = formData.movieDescription.trim();
+        if (formData.movieImage) submissionData.movieImage = formData.movieImage;
+        if (startedDateChanged) submissionData.startedDate = vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate;
+        if (endedDateChanged) submissionData.endedDate = vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate;
+        if (durationChanged) submissionData.duration = parseInt(formData.duration);
+        if (formatChanged) submissionData.movieFormatIds = formData.movieFormatIds;
+        if (genreChanged) submissionData.movieGenreIds = formData.movieGenreIds;
+        if (trailerChanged) submissionData.trailerUrl = formData.trailerUrl.trim();
+        if (directorChanged) submissionData.director = formData.director.trim();
+        if (actorsChanged) submissionData.actors = formData.actors.trim();
+        if (cinemaChanged) submissionData.cinemaIds = formData.cinemaIds;
+
+        if (Object.keys(submissionData).length === 0) {
+            notifyFormError('No changes to save.', setError);
+            return;
+        }
+
         setLoading(true);
+        const toastId = showLoading('Saving movie changes...');
         try {
-            if (!formData.movieName.trim()) { setError('Please enter movie name'); setLoading(false); return; }
-            if (!formData.startedDate) { setError('Please select start date'); setLoading(false); return; }
-            if (!formData.endedDate) { setError('Please select end date'); setLoading(false); return; }
-            if (!formData.duration || parseInt(formData.duration) <= 0) { setError('Please enter valid duration'); setLoading(false); return; }
-            if (formData.movieFormatIds.length === 0) { setError('Please select at least one format'); setLoading(false); return; }
-
-            const submissionData = {
-                movieId: movie.movieId,
-                movieRequiredAgeId: formData.movieRequiredAgeId,
-                movieName: formData.movieName.trim(),
-                movieDescription: formData.movieDescription.trim(),
-                movieImage: formData.movieImage || undefined,
-                startedDate: vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate,
-                endedDate: vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate,
-                duration: parseInt(formData.duration),
-                movieFormatIds: formData.movieFormatIds,
-                movieGenreIds: formData.movieGenreIds,
-                trailerUrl: formData.trailerUrl.trim() || undefined,
-                director: formData.director.trim() || undefined,
-                actors: formData.actors.trim() || undefined,
-                cinemaIds: formData.cinemaIds,
-            };
-
             await movieApi.updateMovie(movie.movieId!, submissionData);
+            dismissToast(toastId);
             setSuccess(true);
+            showSuccess('Movie updated successfully!');
             onSuccess();
             setTimeout(() => onClose(), 1200);
         } catch (err) {
-            if (axios.isAxiosError(err) && err.response) {
-                const data = err.response.data as ApiErrorResponse;
-                setError(data.errors?.join(', ') || data.message || 'Failed to update movie');
-            } else { setError('Unable to connect to server'); }
+            dismissToast(toastId);
+            const message = getMovieManagerError(err, 'Failed to update movie');
+            setError(message);
+            showError(message, { duration: 4800 });
         } finally { setLoading(false); }
     };
 
     return (
         <div className="modal-overlay" style={{ zIndex: 70 }}>
-            <div className="modal-content" style={{ maxWidth: 672 }} onClick={e => e.stopPropagation()}>
+            <div className="modal-content" style={{ maxWidth: 860 }} onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
                     <div className="flex items-center gap-3">
                         <div style={{
@@ -616,38 +842,33 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
 
                     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                         <div>
-                            <label className="input-label">Movie Name <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Movie Name <RequiredMark /></label>
                             <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
                         <div>
                             <label className="input-label">Poster Image</label>
-                            <div onClick={() => fileInputRef.current?.click()} className="upload-zone">
-                                {imagePreview ? (
-                                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[200px] h-48 object-contain object-center rounded-lg mx-auto" />
-                                ) : (
-                                    <>
-                                        <Image size={40} style={{ color: 'var(--text-muted)', marginBottom: 8 }} />
-                                        <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Click to change poster image</p>
-                                    </>
-                                )}
-                            </div>
+                            <PosterUploadBox
+                                imagePreview={imagePreview}
+                                label="Upload a new poster image"
+                                onClick={() => fileInputRef.current?.click()}
+                            />
                             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Start Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <label className="input-label">Start Date <RequiredMark /></label>
                                 <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className="input" />
                             </div>
                             <div>
-                                <label className="input-label">End Date <span style={{ color: 'var(--danger)' }}>*</span></label>
+                                <label className="input-label">End Date <RequiredMark /></label>
                                 <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className="input" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="input-label">Duration (minutes) <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Duration (minutes) <RequiredMark /></label>
                             <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
                         </div>
 
@@ -673,7 +894,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                         </div>
 
                         <div>
-                            <label className="input-label">Required Age <span style={{ color: 'var(--danger)' }}>*</span></label>
+                            <label className="input-label">Required Age <RequiredMark /></label>
                             <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
                                 <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
@@ -684,41 +905,61 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             </select>
                         </div>
 
-                        <div>
-                            <label className="input-label">Visual Formats <span style={{ color: 'var(--danger)' }}>*</span></label>
-                            <div className="flex flex-wrap gap-2">
-                                {formats.map((f: MovieFormat) => (
-                                    <button key={f.formatId} type="button" onClick={() => handleFormatToggle(f.formatId)}
-                                        className={`chip ${formData.movieFormatIds.includes(f.formatId) ? 'chip-active' : ''}`}>
-                                        {f.formatName}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Visual Formats"
+                            required
+                            selectedCount={formData.movieFormatIds.length}
+                            helper="Select every screening format that this movie can use."
+                            isEmpty={formats.length === 0}
+                            empty="No formats available."
+                        >
+                            {formats.map((f: MovieFormat) => (
+                                <SelectableOption
+                                    key={f.formatId}
+                                    label={f.formatName}
+                                    description={f.formatDescription}
+                                    selected={formData.movieFormatIds.includes(f.formatId)}
+                                    onClick={() => handleFormatToggle(f.formatId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
-                        <div>
-                            <label className="input-label">Genres</label>
-                            <div className="flex flex-wrap gap-2">
-                                {genres.map((g: MovieGenre) => (
-                                    <button key={g.movieGenreId} type="button" onClick={() => handleGenreToggle(g.movieGenreId)}
-                                        className={`chip ${formData.movieGenreIds.includes(g.movieGenreId) ? 'chip-active' : ''}`}>
-                                        {g.movieGenreName}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Genres"
+                            selectedCount={formData.movieGenreIds.length}
+                            helper="Selected genres are highlighted and will appear on public movie cards."
+                            isEmpty={genres.length === 0}
+                            empty="No genres available."
+                        >
+                            {genres.map((g: MovieGenre) => (
+                                <SelectableOption
+                                    key={g.movieGenreId}
+                                    label={g.movieGenreName}
+                                    description={g.movieGenreDescription}
+                                    selected={formData.movieGenreIds.includes(g.movieGenreId)}
+                                    onClick={() => handleGenreToggle(g.movieGenreId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
-                        <div>
-                            <label className="input-label">Authorized Cinemas <span style={{ color: 'var(--danger)' }}>*</span></label>
-                            <div className="flex flex-wrap gap-2">
-                                {cinemas.map((c: Cinema) => (
-                                    <button key={c.cinemaId} type="button" onClick={() => handleCinemaToggle(c.cinemaId)}
-                                        className={`chip ${formData.cinemaIds.includes(c.cinemaId) ? 'chip-active' : ''}`}>
-                                        {c.cinemaName}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                        <ChoiceGroup
+                            label="Authorized Cinemas"
+                            required
+                            selectedCount={formData.cinemaIds.length}
+                            helper="Only selected cinemas can schedule and sell tickets for this movie."
+                            isEmpty={cinemas.length === 0}
+                            empty="No cinemas available."
+                        >
+                            {cinemas.map((c: Cinema) => (
+                                <SelectableOption
+                                    key={c.cinemaId}
+                                    label={c.cinemaName}
+                                    description={[c.cinemaCity, c.cinemaLocation].filter(Boolean).join(' - ')}
+                                    selected={formData.cinemaIds.includes(c.cinemaId)}
+                                    onClick={() => handleCinemaToggle(c.cinemaId)}
+                                />
+                            ))}
+                        </ChoiceGroup>
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">Cancel</button>

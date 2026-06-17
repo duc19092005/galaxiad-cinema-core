@@ -6,8 +6,9 @@ export interface AdminUserDto {
     fullName?: string; // Kept for backward compatibility if needed
     portraitImageUrl?: string | null;
     userRoles: string; // e.g., "Admin,TheaterManager"
-    accountStatus: number; // 1: Active, 2: Locked, 3: Banned...
-    registerMethod: number;
+    accountStatus: number | string; // 1/"Active": Active, 2/"Banned": blocked
+    registerMethod: number | string;
+    cinemaName?: string | null;
 }
 
 export interface AdminCreateUserRequest {
@@ -19,6 +20,9 @@ export interface AdminCreateUserRequest {
     phoneNumber: string;
     dateOfBirth: string;
     roleIds: string[];
+    cinemaId?: string;
+    departmentId?: string;
+    faceVector?: number[];
 }
 
 export interface AdminCreateUserResponse {
