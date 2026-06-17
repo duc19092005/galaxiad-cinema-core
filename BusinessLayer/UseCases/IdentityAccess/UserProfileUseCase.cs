@@ -56,7 +56,7 @@ public class UserProfileUseCase : IProfileBehavior
             if (result == null) 
                 throw new AppException(Messages.Auth.UserNotFound, 404, "UN01");
 
-            result.IsSharedPosAccount = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+            result.IsSharedPosAccount = await _unitOfWork.Repository<DepartmentEntity>().Query()
                 .AnyAsync(d => d.SharedUserId == userId && d.IsActive);
             
             if (string.IsNullOrEmpty(result.Username))

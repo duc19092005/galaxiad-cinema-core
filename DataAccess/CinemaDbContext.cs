@@ -56,7 +56,7 @@ public class CinemaDbContext : DbContext
     
     public DbSet<StaffShiftRegistrationEntity> StaffShiftRegistrationEntity { get; set; }
     
-    public DbSet<CashierDepartmentEntity> CashierDepartmentEntity { get; set; }
+    public DbSet<DepartmentEntity> DepartmentEntity { get; set; }
     
     public DbSet<AuditoriumInfoEntities>   AuditoriumInfoEntities { get; set; }
     
@@ -274,24 +274,26 @@ public class CinemaDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
         
-        // Cashier Department
+        // Departments
         
-        modelBuilder.Entity<CashierDepartmentEntity>(entity =>
+        modelBuilder.Entity<DepartmentEntity>(entity =>
         {
+            entity.ToTable("DepartmentEntity");
+
             entity.HasOne(d => d.CinemaInfoEntity)
-                .WithMany(c => c.CashierDepartments)
+                .WithMany(c => c.Departments)
                 .HasForeignKey(d => d.CinemaId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(d => d.SharedUserInfoEntity)
                 .WithOne()
-                .HasForeignKey<CashierDepartmentEntity>(d => d.SharedUserId)
+                .HasForeignKey<DepartmentEntity>(d => d.SharedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<StaffProfileEntity>(entity =>
         {
-            entity.HasOne(s => s.CashierDepartmentEntity)
+            entity.HasOne(s => s.DepartmentEntity)
                 .WithMany()
                 .HasForeignKey(s => s.DepartmentId)
                 .OnDelete(DeleteBehavior.SetNull);

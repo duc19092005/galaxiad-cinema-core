@@ -8,13 +8,13 @@ namespace ApiLayer.Controllers.FacilitiesManager;
 
 [ApiController]
 [Route("api/facilities/departments")]
-[Tags("Facilities Manager - Cashier Departments")]
+[Tags("Facilities Manager - Departments")]
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
-public class CashierDepartmentController : ControllerBase
+public class DepartmentController : ControllerBase
 {
     private readonly FacilitiesManageDepartmentService _departmentService;
 
-    public CashierDepartmentController(FacilitiesManageDepartmentService departmentService)
+    public DepartmentController(FacilitiesManageDepartmentService departmentService)
     {
         _departmentService = departmentService;
     }

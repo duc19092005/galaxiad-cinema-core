@@ -49,7 +49,7 @@ public class FacilitiesManageDepartmentService
                 };
         }
 
-        var departments = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+        var departments = await _unitOfWork.Repository<DepartmentEntity>().Query()
             .Include(d => d.CinemaInfoEntity)
             .Include(d => d.SharedUserInfoEntity)
             .Where(d => d.CinemaId == cinemaId)
@@ -60,6 +60,7 @@ public class FacilitiesManageDepartmentService
                 CinemaName = d.CinemaInfoEntity.CinemaName,
                 DepartmentName = d.DepartmentName,
                 DepartmentType = d.DepartmentType.ToString(),
+                CashierType = d.CashierType.ToString(),
                 SharedUserId = d.SharedUserId,
                 SharedUserEmail = d.SharedUserInfoEntity != null ? d.SharedUserInfoEntity.UserEmail : null,
                 IsActive = d.IsActive
@@ -91,14 +92,14 @@ public class FacilitiesManageDepartmentService
             throw new AppException("Bạn không có quyền tạo phòng ban cho rạp này.", 403, "DEPT_ERR");
 
         // Check unique name per cinema
-        var exists = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+        var exists = await _unitOfWork.Repository<DepartmentEntity>().Query()
             .AnyAsync(d => d.CinemaId == request.CinemaId && d.DepartmentName == request.DepartmentName && d.IsActive);
         if (exists)
             throw new AppException($"Phòng ban '{request.DepartmentName}' đã tồn tại trong rạp này.", 400, "DEPT_ERR");
 
         var departmentId = Guid.NewGuid();
         var sharedUserId = Guid.NewGuid();
-        var email = $"{request.DepartmentType.ToString().ToLower()}_{departmentId:N}@cinema.com";
+        var email = $"{request.CashierType.ToString().ToLower()}_{departmentId:N}@cinema.com";
         const string defaultPassword = "123456";
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -137,12 +138,13 @@ public class FacilitiesManageDepartmentService
             });
 
             // 4. Create Department
-            await _unitOfWork.Repository<CashierDepartmentEntity>().AddAsync(new CashierDepartmentEntity
+            await _unitOfWork.Repository<DepartmentEntity>().AddAsync(new DepartmentEntity
             {
                 DepartmentId = departmentId,
                 CinemaId = request.CinemaId,
                 DepartmentName = request.DepartmentName,
                 DepartmentType = request.DepartmentType,
+                CashierType = request.CashierType,
                 SharedUserId = sharedUserId,
                 IsActive = true
             });
@@ -171,7 +173,7 @@ public class FacilitiesManageDepartmentService
         var userId = _userContext.GetUserId();
         var isAdmin = _userContext.IsInRole("Admin");
 
-        var department = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+        var department = await _unitOfWork.Repository<DepartmentEntity>().Query()
             .Include(d => d.CinemaInfoEntity)
             .Include(d => d.SharedUserInfoEntity)
                 .ThenInclude(u => u!.StaffProfileEntity)
@@ -190,7 +192,7 @@ public class FacilitiesManageDepartmentService
         if (nameChanging || activating)
         {
             string targetName = request.DepartmentName ?? department.DepartmentName;
-            var exists = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+            var exists = await _unitOfWork.Repository<DepartmentEntity>().Query()
                 .AnyAsync(d => d.CinemaId == department.CinemaId && 
                                d.DepartmentName == targetName && 
                                d.IsActive && 
@@ -225,7 +227,7 @@ public class FacilitiesManageDepartmentService
                 }
             }
 
-            _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
+            _unitOfWork.Repository<DepartmentEntity>().Update(department);
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -250,7 +252,7 @@ public class FacilitiesManageDepartmentService
         var userId = _userContext.GetUserId();
         var isAdmin = _userContext.IsInRole("Admin");
 
-        var department = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+        var department = await _unitOfWork.Repository<DepartmentEntity>().Query()
             .Include(d => d.CinemaInfoEntity)
             .Include(d => d.SharedUserInfoEntity)
                 .ThenInclude(u => u!.StaffProfileEntity)
@@ -280,7 +282,7 @@ public class FacilitiesManageDepartmentService
                 }
             }
 
-            _unitOfWork.Repository<CashierDepartmentEntity>().Update(department);
+            _unitOfWork.Repository<DepartmentEntity>().Update(department);
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 

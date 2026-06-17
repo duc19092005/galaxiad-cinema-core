@@ -603,7 +603,7 @@ public class AdminManageUserService
 
         if (departmentId.HasValue)
         {
-            var department = await Query<CashierDepartmentEntity>()
+            var department = await Query<DepartmentEntity>()
                 .FirstOrDefaultAsync(d => d.DepartmentId == departmentId.Value && d.IsActive);
 
             if (department == null)

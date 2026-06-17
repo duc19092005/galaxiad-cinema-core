@@ -667,7 +667,7 @@ public class BookingService
                 // Fallback: Tìm kiếm nhân viên đang có ca làm hoạt động tại rạp của quầy này
                 if (!orderStaffId.HasValue && userId.HasValue)
                 {
-                    var dept = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+                    var dept = await _unitOfWork.Repository<DepartmentEntity>().Query()
                         .FirstOrDefaultAsync(d => d.SharedUserId == userId.Value);
                     if (dept != null)
                     {

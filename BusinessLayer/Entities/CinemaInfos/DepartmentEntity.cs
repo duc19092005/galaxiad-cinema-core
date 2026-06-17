@@ -9,7 +9,7 @@ namespace BusinessLayer.Entities.CinemaInfos;
 /// Phòng ban thu ngân của một rạp.
 /// Khi tạo phòng ban, hệ thống tự động sinh tài khoản dùng chung cho quầy.
 /// </summary>
-public class CashierDepartmentEntity
+public class DepartmentEntity
 {
     [Key]
     public Guid DepartmentId { get; set; }
@@ -22,8 +22,11 @@ public class CashierDepartmentEntity
     [Required]
     public string DepartmentName { get; set; } = string.Empty;
 
+    /// <summary>Loai phong ban tong quat. Hien tai chi co Cashier.</summary>
+    public DepartmentType DepartmentType { get; set; } = DepartmentType.Cashier;
+
     /// <summary>TicketPOS = 0, FoodPOS = 1</summary>
-    public CashierDepartmentType DepartmentType { get; set; } = CashierDepartmentType.TicketPOS;
+    public CashierType CashierType { get; set; } = CashierType.TicketPOS;
 
     /// <summary>FK đến tài khoản dùng chung được tạo tự động</summary>
     public Guid? SharedUserId { get; set; }
@@ -36,7 +39,12 @@ public class CashierDepartmentEntity
     public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
 }
 
-public enum CashierDepartmentType
+public enum DepartmentType
+{
+    Cashier = 0
+}
+
+public enum CashierType
 {
     TicketPOS = 0,   // Quầy Vé
     FoodPOS = 1      // Quầy Bắp Nước

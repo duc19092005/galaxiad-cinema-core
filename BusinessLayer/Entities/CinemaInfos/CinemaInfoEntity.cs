@@ -36,7 +36,7 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     public UserInfoEntity? FacilitiesManager { get; set; }
 
 
-    public List<CashierDepartmentEntity> CashierDepartments { get; set; } = [];
+    public List<DepartmentEntity> Departments { get; set; } = [];
 
     public List<AuditoriumInfoEntities> AuditoriumInfoEntities { get; set; } = [];
 

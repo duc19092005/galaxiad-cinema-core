@@ -110,7 +110,7 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto , Res
                     }
 
                     List<ManagedCinemaInfoDto>? managedCinemasList = null;
-                    var isSharedPosAccount = await _unitOfWork.Repository<CashierDepartmentEntity>().Query()
+                    var isSharedPosAccount = await _unitOfWork.Repository<DepartmentEntity>().Query()
                         .AnyAsync(d => d.SharedUserId == getUserInfo.UserId && d.IsActive);
 
                     if (result.Roles.Contains("Admin"))

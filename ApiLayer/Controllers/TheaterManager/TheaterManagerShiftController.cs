@@ -220,7 +220,7 @@ public class TheaterManagerShiftController : ControllerBase
                 CinemaId = s.CinemaId,
                 CinemaName = s.CinemaInfoEntity != null ? s.CinemaInfoEntity.CinemaName : "",
                 DepartmentId = s.DepartmentId,
-                DepartmentName = s.CashierDepartmentEntity != null ? s.CashierDepartmentEntity.DepartmentName : null,
+                DepartmentName = s.DepartmentEntity != null ? s.DepartmentEntity.DepartmentName : null,
                 IsCinemaManager = s.IsCinemaManager,
                 HasFaceRegistered = !string.IsNullOrEmpty(s.FaceVector)
             })
