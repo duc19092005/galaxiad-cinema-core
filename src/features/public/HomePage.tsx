@@ -9,8 +9,10 @@ import {
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { publicApi } from '../../api/publicApi';
+import { commentApi } from '../../api/commentApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
 import type { PublicMovieListItem, ActiveCinema, ActiveMovie } from '../../types/public.types';
+import type { TrendingMovie } from '../../types/comment.types';
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/Header';
 
@@ -18,18 +20,6 @@ import Header from '../../components/Header';
 const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
 
 const HERO_IMG = IMG_BASE + 'AB6AXuBb-6tDUgXoRgmgTRBXwngoVTj0smOmB_NZPmcLz1kiOTfMsZE0q1zTRpwjaDJODAErtBJ69LZgGfxSCF235D75zmh3x90AFKmA4E50fgujmCJDv_krUSKoqOXBtr_0Z6tQHY2yYzlnyzvt3W84u1BzPRod5sWHQqooJXYQDH3li2GMZsqPNhuYHBa0rR_CYURrjmM2OHScCUYex2_0lm6k-PzDwfgVk2s3Wd8hToSbNZvc0g_kD8RZzigLOWt0bPO0hif73yxHvNs';
-
-const TRENDING_IMGS = [
-  IMG_BASE + 'AB6AXuBsKQqKZqwwk8ExH3xxxIZVnMwZboVJ3uYny_qRLjMKINARFOmHWOXN0Th5Odn5uBeMX5z2kczB6DNJokbGlkQD7jmwrw5Urtj1iiaVa0l2qCB60o4wdqVo5I8b5Pw7qn-sU8WjuniuA1joA23jUKCX-zS4VDQprajtfxqVo6DnN_DdCUHtRG7vDcYp2U7aJKtHVg9Y8jof0PoJDBp0Ecq0eq9gGGdc0eQgMLWuYQSditLzPaagM1UtH5qAwvriO2EM0hWM-hmV3WY',
-  IMG_BASE + 'AB6AXuDAqs9Gw6k0ILUJlRA0qtwYbOLLQIp55LncUHiNZpPvIOPQv4roM3E9g8w_wfZHLoSzEdXbADEnmlmeSOdSPH7F5KLeh9cLlA23F6_mpcqjokMV1ddbzCZe_7x_ejTabsoAlFFz4b_QYjxUidsVKafLW5NsmV5-1KYb6P9LzuAALYbT-Z2KMv2UVKUiRIZv7qLWRxou8svln_vJOg_hc14zBmcUCQZPnYOSKYeeAAmi1sGFZcx3sr0XJWl2E0iTgYwYkhy6XHRg5Oc',
-  IMG_BASE + 'AB6AXuByZJ095eJoAbV3swmdF9iL9A0JHsJ5cSgcUbOeDqhHKpHR_YciZ0Ym-8F70L8bK82K8Yl5Wr2a4LehNOLuU0KmnFwTOtG6xHNBjnDTcO9Gp0c5MrPAIsUDs-T0loTDc2vBX4AKnrsslq9HOb_l_waWOdhkVHrBCv8TivxdP9HI8aTB5cxrljw6Pt0lQv6slreXWh29ABpi1I2W7JzUQ-Ki-EPeLh1lHrsLjuxVGDl7blnb584Eoh5KfqrtU-PmV6w8hxCjysAW3Ko',
-];
-
-const TRENDING_DATA = [
-  { title: 'Techno World', desc: 'In a future where reality is digital, one glitch could redefine humanity forever.' },
-  { title: 'Void Seekers', desc: 'The edge of the universe is just the beginning of the journey home.' },
-  { title: 'Dawn of Embers', desc: 'A historical epic of survival and legacy in a world on the brink of change.' },
-];
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
 
@@ -142,7 +132,9 @@ const HomePage: React.FC = () => {
 
   const [nowShowing, setNowShowing] = useState<PublicMovieListItem[]>([]);
   const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
+  const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingTrending, setLoadingTrending] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // City select sync state
@@ -202,6 +194,7 @@ const HomePage: React.FC = () => {
       }
     };
     fetchMasterData();
+    fetchTrendingMovies();
   }, []);
 
   useEffect(() => {
@@ -227,6 +220,19 @@ const HomePage: React.FC = () => {
         setError(data.message || 'Cannot load movies list.');
       } else { setError('Cannot connect to server.'); }
     } finally { setLoading(false); }
+  };
+
+  const fetchTrendingMovies = async () => {
+    setLoadingTrending(true);
+    try {
+      const response = await commentApi.getTrendingMovies({ days: 30, take: 3 });
+      setTrendingMovies(response.data || []);
+    } catch (err) {
+      console.error('Error fetching trending movies:', err);
+      setTrendingMovies([]);
+    } finally {
+      setLoadingTrending(false);
+    }
   };
 
   // 1. Date options
@@ -419,29 +425,81 @@ const HomePage: React.FC = () => {
             <ChevronLeft size={20} />
           </button>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-            gap: 'clamp(16px, 4vw, 40px)',
-          }}
-            className="trending-carousel"
-          >
-            {TRENDING_DATA.map((item, i) => (
-              <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)' }}>
-                  <img src={TRENDING_IMGS[i]} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, black 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
-                  <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
-                    <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8 }}>{item.title}</h3>
-                    <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{item.desc}</p>
-                    <button className="btn-primary cta-glow" style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                      <Ticket size={14} /> Book Now
-                    </button>
+          {loadingTrending ? (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+                gap: 'clamp(16px, 4vw, 40px)',
+              }}
+            >
+              {[1, 2, 3].map((item) => (
+                <div key={item} style={{ aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div style={{ height: '100%', width: '100%', background: 'linear-gradient(110deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1), rgba(255,255,255,0.04))' }} />
+                </div>
+              ))}
+            </div>
+          ) : trendingMovies.length === 0 ? (
+            <div className="glass-card" style={{ minHeight: 180, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
+              <div>
+                <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
+                <p style={{ color: 'white', fontWeight: 700, margin: 0 }}>Chưa có dữ liệu thịnh hành.</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Dữ liệu sẽ xuất hiện khi có lượt xem, đánh giá hoặc vé thanh toán thành công.</p>
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
+              gap: 'clamp(16px, 4vw, 40px)',
+            }}
+              className="trending-carousel"
+            >
+              {trendingMovies.map((item, i) => (
+                <div key={item.movieId} style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div
+                    onClick={() => navigate(`/movie/${item.movieId}`)}
+                    style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}
+                  >
+                    <img
+                      src={item.movieImageUrl || PLACEHOLDER_POSTER}
+                      alt={item.movieName}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }}
+                      loading={i === 0 ? 'eager' : 'lazy'}
+                      onError={(event) => {
+                        (event.target as HTMLImageElement).src = PLACEHOLDER_POSTER;
+                      }}
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 52%, rgba(0,0,0,0.08) 100%)' }} />
+                    <div style={{ position: 'absolute', top: 16, left: 16, minWidth: 44, height: 44, borderRadius: 14, background: 'rgba(255,138,0,0.92)', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>
+                      {i + 1}
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
+                      <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8, lineHeight: 1.25 }}>{item.movieName}</h3>
+                      <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, minHeight: 42, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {item.movieDescription || 'Bộ phim đang được khán giả quan tâm trong tháng này.'}
+                      </p>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.paidTicketCount} vé</span>
+                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.viewCount} lượt xem</span>
+                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.averageRating.toFixed(1)} sao</span>
+                      </div>
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/movie/${item.movieId}`);
+                        }}
+                        className="btn-primary cta-glow"
+                        style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer' }}
+                      >
+                        <Ticket size={14} /> Đặt Vé Ngay
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Next Arrow */}
           <button

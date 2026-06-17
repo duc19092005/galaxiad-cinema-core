@@ -4,8 +4,10 @@ import {
     Play, Loader2, AlertCircle
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
+import { commentApi } from '../../api/commentApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
 import Header from '../../components/Header';
+import MovieCommentsSection from './components/MovieCommentsSection';
 
 const MOCK_RECOMMENDATIONS: PublicMovieListItem[] = [
     {
@@ -79,6 +81,7 @@ const MovieDetailPage: React.FC = () => {
         try {
             const movieRes = await publicApi.getMovieDetail(movieId!);
             setMovie(movieRes.data);
+            commentApi.trackMovieView(movieId!).catch(() => undefined);
 
             // Hardcoded cities
             const commonCities = ['Hồ Chí Minh', 'Hà Nội'];
@@ -87,11 +90,24 @@ const MovieDetailPage: React.FC = () => {
 
             // Fetch recommended movies with fallback
             try {
-                let recRes = await publicApi.getNowShowing({ pageSize: 10 });
-                let list = recRes?.data || [];
+                const trendingRes = await commentApi.getTrendingMovies({ take: 8 });
+                let list: PublicMovieListItem[] = (trendingRes?.data || []).map(item => ({
+                    movieId: item.movieId,
+                    movieName: item.movieName,
+                    moviePosterURL: item.movieImageUrl,
+                    movieFormatInfos: '',
+                    movieDuration: item.movieDuration,
+                    movieRequiredAge: item.movieRequiredAgeSymbol,
+                    movieCategoryInfos: `Trending score ${item.trendingScore}`,
+                    isCommingSoon: false,
+                }));
                 if (list.length === 0) {
-                    const allRes = await publicApi.getAllMovies({ pageSize: 10 });
-                    list = allRes?.data || [];
+                    let recRes = await publicApi.getNowShowing({ pageSize: 10 });
+                    list = recRes?.data || [];
+                    if (list.length === 0) {
+                        const allRes = await publicApi.getAllMovies({ pageSize: 10 });
+                        list = allRes?.data || [];
+                    }
                 }
                 let filtered = list.filter(m => m.movieId !== movieId);
                 if (filtered.length === 0) {
@@ -402,6 +418,8 @@ const MovieDetailPage: React.FC = () => {
                         </div>
                     </div>
                 </section>
+
+                <MovieCommentsSection movieId={movie.movieId} />
 
                 {/* Recommended Movies */}
                 {recommendedMovies.length > 0 && (

@@ -95,16 +95,16 @@ export const movieApi = {
     updateMovie: async (movieId: string, data: UpdateMovieFormData): Promise<ApiSuccessResponse> => {
         const formData = new FormData();
 
-        if (data.movieRequiredAgeId) formData.append('MovieRequiredAgeId', data.movieRequiredAgeId);
-        if (data.movieName) formData.append('movieName', data.movieName);
-        if (data.movieDescription) formData.append('movieDescription', data.movieDescription);
+        if (data.movieRequiredAgeId !== undefined) formData.append('MovieRequiredAgeId', data.movieRequiredAgeId);
+        if (data.movieName !== undefined) formData.append('movieName', data.movieName);
+        if (data.movieDescription !== undefined) formData.append('movieDescription', data.movieDescription);
         if (data.movieImage) formData.append('movieImage', data.movieImage);
-        if (data.endedDate) formData.append('EndedDate', data.endedDate);
-        if (data.startedDate) formData.append('StartedDate', data.startedDate);
+        if (data.endedDate !== undefined && data.endedDate !== null) formData.append('EndedDate', data.endedDate);
+        if (data.startedDate !== undefined && data.startedDate !== null) formData.append('StartedDate', data.startedDate);
         if (data.duration !== undefined) formData.append('duration', data.duration.toString());
-        if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
-        if (data.director) formData.append('Director', data.director);
-        if (data.actors) formData.append('Actors', data.actors);
+        if (data.trailerUrl !== undefined) formData.append('TrailerUrl', data.trailerUrl);
+        if (data.director !== undefined) formData.append('Director', data.director);
+        if (data.actors !== undefined) formData.append('Actors', data.actors);
 
         if (data.movieFormatIds) {
             data.movieFormatIds.forEach((id) => {

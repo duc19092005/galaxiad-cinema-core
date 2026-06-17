@@ -3,6 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '../api/authApi';
+import { notificationApi } from '../api/commentApi';
+import type { UserNotification } from '../types/comment.types';
 import Cookies from 'js-cookie';
 import LanguageSwitcher from './LanguageSwitcher';
 import CinemaSelector from './CinemaSelector';
@@ -11,7 +13,7 @@ import { ProximitySelectorModal } from './ProximitySelectorModal';
 import PublicCitySelector from '../features/public/components/PublicCitySelector';
 import { 
   Menu, Search, MapPin, User, LayoutDashboard, 
-  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText 
+  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText, Bell
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -38,8 +40,12 @@ const Header: React.FC<HeaderProps> = ({
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [selectedCinemaName, setSelectedCinemaName] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const storedUserStr = localStorage.getItem('user_info');
   const user = storedUserStr ? JSON.parse(storedUserStr) : null;
@@ -84,10 +90,55 @@ const Header: React.FC<HeaderProps> = ({
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setIsNotificationOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchNotifications();
+  }, [storedUserStr]);
+
+  useEffect(() => {
+    const handler = () => {
+      if (!user) return;
+      fetchNotifications();
+    };
+    window.addEventListener('cinema-notification', handler);
+    return () => window.removeEventListener('cinema-notification', handler);
+  }, [storedUserStr]);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const res = await notificationApi.getNotifications();
+      setNotifications(res.data || []);
+    } catch {
+      setNotifications([]);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const handleNotificationClick = async (notification: UserNotification) => {
+    try {
+      if (!notification.isRead) {
+        await notificationApi.markAsRead(notification.notificationId);
+      }
+    } catch {
+      // Keep navigation responsive even if the read marker fails.
+    }
+
+    setNotifications(prev => prev.map(item => item.notificationId === notification.notificationId ? { ...item, isRead: true } : item));
+    setIsNotificationOpen(false);
+    if (notification.relatedMovieId) {
+      navigate(`/movie/${notification.relatedMovieId}`);
+    }
+  };
 
   const getRoleDashboardRoute = (role?: string) => {
     switch (role) {
@@ -204,6 +255,69 @@ const Header: React.FC<HeaderProps> = ({
                   </span>
                 )}
               </button>
+
+              {user && (
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => {
+                      setIsNotificationOpen(prev => !prev);
+                      if (!isNotificationOpen) fetchNotifications();
+                    }}
+                    className="relative hover:bg-white/5 p-2 rounded-full transition-all duration-300 text-[#ffb77f] bg-transparent border-none cursor-pointer flex items-center justify-center"
+                    aria-label="Notifications"
+                  >
+                    <Bell size={19} className="flex-shrink-0" />
+                    {notifications.some(item => !item.isRead) && (
+                      <span className="absolute top-1 right-1 h-2.5 w-2.5 rounded-full bg-[#ff8a00] border border-[#131313]" />
+                    )}
+                  </button>
+
+                  {isNotificationOpen && (
+                    <div
+                      className="absolute right-0 mt-2 rounded-xl z-50 overflow-hidden"
+                      style={{
+                        width: 340,
+                        maxWidth: 'calc(100vw - 24px)',
+                        background: 'var(--bg-elevated, #18181b)',
+                        border: '1px solid var(--border-color, #27272a)',
+                        boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
+                        <p className="text-sm font-bold text-white m-0">Thong bao</p>
+                        <button
+                          onClick={fetchNotifications}
+                          className="text-xs text-[#ffb77f] hover:text-[#ff8a00] bg-transparent border-none cursor-pointer font-semibold"
+                        >
+                          Lam moi
+                        </button>
+                      </div>
+
+                      <div className="max-h-[360px] overflow-y-auto">
+                        {loadingNotifications ? (
+                          <div className="px-4 py-6 text-sm text-zinc-400">Dang tai thong bao...</div>
+                        ) : notifications.length === 0 ? (
+                          <div className="px-4 py-6 text-sm text-zinc-400">Chua co thong bao moi.</div>
+                        ) : (
+                          notifications.map(notification => (
+                            <button
+                              key={notification.notificationId}
+                              onClick={() => handleNotificationClick(notification)}
+                              className={`w-full px-4 py-3 text-left border-none cursor-pointer transition-colors ${
+                                notification.isRead ? 'bg-transparent hover:bg-white/5' : 'bg-[#ff8a00]/10 hover:bg-[#ff8a00]/15'
+                              }`}
+                            >
+                              <span className="block text-sm font-bold text-white">{notification.title}</span>
+                              <span className="block text-xs text-[#ddc1ae] mt-1 leading-relaxed">{notification.message}</span>
+                              <span className="block text-[11px] text-zinc-500 mt-2">{new Date(notification.createdAt).toLocaleString('vi-VN')}</span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* User Dropdown */}
               <div className="relative" ref={dropdownRef}>
