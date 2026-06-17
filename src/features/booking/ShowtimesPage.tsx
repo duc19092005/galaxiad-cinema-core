@@ -153,10 +153,28 @@ export const ShowtimesPage: React.FC = () => {
 
   // Generate next 7 days for the quick horizontal picker
   const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
 
+  // Fetch available dates from API & generate date list
   useEffect(() => {
-    // Generate dates
-    const dates = [];
+    const fetchAndGenerateDates = async () => {
+      try {
+        const res = await publicApi.getUpcomingDates({
+          cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined
+        });
+        const availableFromApi: string[] = res.isSuccess ? (res.data || []) : [];
+        setAvailableDates(availableFromApi);
+      } catch (err) {
+        console.error('Error fetching upcoming dates:', err);
+        setAvailableDates([]);
+      }
+    };
+    fetchAndGenerateDates();
+  }, [selectedCinemaId]);
+
+  // Generate date list from available dates (max 7 days ahead)
+  useEffect(() => {
+    const dates: { label: string; value: string; dayName: string }[] = [];
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const d = new Date();
@@ -175,9 +193,18 @@ export const ShowtimesPage: React.FC = () => {
         dayName,
       });
     }
-    setDateList(dates);
-    setSelectedDate(dates[0].value);
-  }, []);
+
+    // Filter to only keep dates that exist in availableDates, but always keep at least 1 (today)
+    const filteredDates = dates.filter(d => availableDates.includes(d.value));
+    
+    // If no available dates match, keep all dates (fallback)
+    const finalDates = filteredDates.length > 0 ? filteredDates : dates;
+    
+    setDateList(finalDates);
+    if (finalDates.length > 0) {
+      setSelectedDate(finalDates[0].value);
+    }
+  }, [availableDates]);
 
   // Fetch filter master data on mount
   useEffect(() => {

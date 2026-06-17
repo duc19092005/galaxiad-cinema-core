@@ -110,5 +110,13 @@ export const publicApi = {
             baseURL: `${API_BASE_URL}/api/v1/public` 
         });
         return response.data;
+    },
+
+    /** 11. Get Upcoming Dates (all movies/cinemas) */
+    getUpcomingDates: async (params?: { city?: string; cinemaId?: string }): Promise<ApiSuccessResponse<string[]>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<string[]>>('/UpcomingDates', {
+            params
+        });
+        return response.data;
     }
 };

@@ -164,6 +164,7 @@ const HomePage: React.FC = () => {
   const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
   const [movies, setMovies] = useState<ActiveMovie[]>([]);
   const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
 
   useEffect(() => {
     const handleCityChange = () => {
@@ -173,9 +174,25 @@ const HomePage: React.FC = () => {
     return () => window.removeEventListener('user_selected_city_changed', handleCityChange);
   }, []);
 
+  // Fetch available dates from API
   useEffect(() => {
-    // Generate dates
-    const dates = [];
+    const fetchDates = async () => {
+      try {
+        const res = await publicApi.getUpcomingDates({
+          city: selectedCity || undefined
+        });
+        setAvailableDates(res.isSuccess ? (res.data || []) : []);
+      } catch (err) {
+        console.error('Error fetching upcoming dates:', err);
+        setAvailableDates([]);
+      }
+    };
+    fetchDates();
+  }, [selectedCity]);
+
+  // Generate date list from available dates
+  useEffect(() => {
+    const dates: { label: string; value: string; dayName: string }[] = [];
     const today = new Date();
     for (let i = 0; i < 7; i++) {
       const d = new Date();
@@ -194,8 +211,15 @@ const HomePage: React.FC = () => {
         dayName,
       });
     }
-    setDateList(dates);
-    setSelectedDate(dates[0].value);
+
+    // Chỉ giữ lại các ngày có lịch chiếu
+    const filteredDates = dates.filter(d => availableDates.includes(d.value));
+    const finalDates = filteredDates.length > 0 ? filteredDates : dates;
+    
+    setDateList(finalDates);
+    if (finalDates.length > 0) {
+      setSelectedDate(finalDates[0].value);
+    }
 
     // Fetch master data for booking bar
     const fetchMasterData = async () => {
@@ -212,7 +236,7 @@ const HomePage: React.FC = () => {
     };
     fetchMasterData();
     fetchTrendingMovies();
-  }, []);
+  }, [availableDates]);
 
   useEffect(() => {
     fetchMovies();
@@ -358,14 +382,14 @@ const HomePage: React.FC = () => {
           <div className="glass-card" style={{ padding: 8, borderRadius: 16 }}>
             <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_1fr_180px] gap-2 items-stretch">
               
-              {/* 1. Date Selector */}
+              {/* 1. Cinema Selector */}
               <CustomSelect
                 step="1"
-                label={t('home.date')}
-                value={selectedDate}
-                displayValue={selectedDateLabel}
-                options={dateOptions}
-                onChange={setSelectedDate}
+                label={t('home.cinema')}
+                value={selectedCinemaId}
+                displayValue={selectedCinemaLabel}
+                options={cinemaOptions}
+                onChange={setSelectedCinemaId}
               />
 
               {/* 2. Movie Selector */}
@@ -379,14 +403,14 @@ const HomePage: React.FC = () => {
                 borderLeft={true}
               />
 
-              {/* 3. Cinema Selector */}
+              {/* 3. Date Selector */}
               <CustomSelect
                 step="3"
-                label={t('home.cinema')}
-                value={selectedCinemaId}
-                displayValue={selectedCinemaLabel}
-                options={cinemaOptions}
-                onChange={setSelectedCinemaId}
+                label={t('home.date')}
+                value={selectedDate}
+                displayValue={selectedDateLabel}
+                options={dateOptions}
+                onChange={setSelectedDate}
                 borderLeft={true}
               />
 

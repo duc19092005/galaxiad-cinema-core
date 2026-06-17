@@ -5,6 +5,7 @@ export interface PublicMovieListItem {
     movieId: string;
     movieName: string;
     moviePosterURL: string;
+    movieBannerURL?: string;
     movieFormatInfos: string;
     movieDuration: number;
     movieRequiredAge: string;
@@ -28,6 +29,7 @@ export interface PublicMovieDetail extends PublicMovieListItem {
     director: string;
     actor: string;
     movieDescription: string;
+    movieBannerURL?: string;
 }
 
 export interface PublicCity {

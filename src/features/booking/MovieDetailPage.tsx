@@ -231,9 +231,9 @@ const MovieDetailPage: React.FC = () => {
                         <img
                             alt={movie.movieName}
                             className="w-full h-full object-cover filter blur-[20px] brightness-[0.4] scale-110"
-                            src={movie.moviePosterURL}
+                            src={movie.movieBannerURL || movie.moviePosterURL}
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                (e.target as HTMLImageElement).src = movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
                             }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>

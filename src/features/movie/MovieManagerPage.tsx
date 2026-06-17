@@ -368,12 +368,15 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         movieName: '',
         movieDescription: '',
         movieImage: null as File | null,
+        movieBanner: null as File | null,
         startedDate: '',
         endedDate: '',
         duration: '',
@@ -399,6 +402,16 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             setFormData(prev => ({ ...prev, movieImage: file }));
             const reader = new FileReader();
             reader.onloadend = () => setImagePreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({ ...prev, movieBanner: file }));
+            const reader = new FileReader();
+            reader.onloadend = () => setBannerPreview(reader.result as string);
             reader.readAsDataURL(file);
         }
     };
@@ -437,6 +450,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
         if (!formData.movieName.trim()) { notifyFormError('Please enter movie name', setError); return; }
         if (!formData.movieImage) { notifyFormError('Please select a movie poster image', setError); return; }
+        if (!formData.movieBanner) { notifyFormError('Please select a movie banner image', setError); return; }
         if (!formData.startedDate) { notifyFormError('Please select start date', setError); return; }
         if (!formData.endedDate) { notifyFormError('Please select end date', setError); return; }
         if (!formData.duration || parseInt(formData.duration) <= 0) { notifyFormError('Please enter valid duration', setError); return; }
@@ -452,6 +466,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 movieName: formData.movieName.trim(),
                 movieDescription: formData.movieDescription.trim(),
                 movieImage: formData.movieImage,
+                movieBanner: formData.movieBanner,
                 startedDate: vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate,
                 endedDate: vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate,
                 duration: parseInt(formData.duration),
@@ -518,14 +533,25 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
-                        <div>
-                            <label className="input-label">Poster Image <RequiredMark /></label>
-                            <PosterUploadBox
-                                imagePreview={imagePreview}
-                                label="Upload poster image"
-                                onClick={() => fileInputRef.current?.click()}
-                            />
-                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                                <label className="input-label">Poster Image <RequiredMark /></label>
+                                <PosterUploadBox
+                                    imagePreview={imagePreview}
+                                    label="Upload poster image"
+                                    onClick={() => fileInputRef.current?.click()}
+                                />
+                                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </div>
+                            <div>
+                                <label className="input-label">Banner Image <RequiredMark /></label>
+                                <PosterUploadBox
+                                    imagePreview={bannerPreview}
+                                    label="Upload banner image"
+                                    onClick={() => bannerFileInputRef.current?.click()}
+                                />
+                                <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                            </div>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -670,12 +696,15 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(movie.movieImageUrl);
+    const [bannerPreview, setBannerPreview] = useState<string | null>(movie.movieBannerUrl || null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
     const initialFormData = {
         movieName: movie.movieName,
         movieDescription: movie.movieDescriptions,
         movieImage: null as File | null,
+        movieBanner: null as File | null,
         startedDate: formatDateForInput(movie.startedDate),
         endedDate: formatDateForInput(movie.endedDate),
         duration: movie.duration.toString(),
@@ -710,6 +739,17 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             reader.readAsDataURL(file);
         }
     };
+
+    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFormData(prev => ({ ...prev, movieBanner: file }));
+            const reader = new FileReader();
+            reader.onloadend = () => setBannerPreview(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
 
     const handleFormatToggle = (formatId: string) => {
         setFormData(prev => ({
@@ -773,6 +813,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         if (movieNameChanged) submissionData.movieName = formData.movieName.trim();
         if (descriptionChanged) submissionData.movieDescription = formData.movieDescription.trim();
         if (formData.movieImage) submissionData.movieImage = formData.movieImage;
+        if (formData.movieBanner) submissionData.movieBanner = formData.movieBanner;
         if (startedDateChanged) submissionData.startedDate = vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate;
         if (endedDateChanged) submissionData.endedDate = vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate;
         if (durationChanged) submissionData.duration = parseInt(formData.duration);
@@ -846,14 +887,25 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             <input type="text" name="movieName" value={formData.movieName} onChange={handleInputChange} className="input" placeholder="Enter movie name" maxLength={50} />
                         </div>
 
-                        <div>
-                            <label className="input-label">Poster Image</label>
-                            <PosterUploadBox
-                                imagePreview={imagePreview}
-                                label="Upload a new poster image"
-                                onClick={() => fileInputRef.current?.click()}
-                            />
-                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                            <div>
+                                <label className="input-label">Poster Image</label>
+                                <PosterUploadBox
+                                    imagePreview={imagePreview}
+                                    label="Upload a new poster image"
+                                    onClick={() => fileInputRef.current?.click()}
+                                />
+                                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                            </div>
+                            <div>
+                                <label className="input-label">Banner Image</label>
+                                <PosterUploadBox
+                                    imagePreview={bannerPreview}
+                                    label="Upload a new banner image"
+                                    onClick={() => bannerFileInputRef.current?.click()}
+                                />
+                                <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                            </div>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

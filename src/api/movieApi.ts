@@ -58,11 +58,11 @@ export const movieApi = {
         formData.append('movieName', data.movieName);
         formData.append('movieDescription', data.movieDescription);
         formData.append('movieImage', data.movieImage);
+        if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
         formData.append('EndedDate', data.endedDate);
         formData.append('StartedDate', data.startedDate);
         formData.append('duration', data.duration.toString());
         if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
-        if (data.director) formData.append('Director', data.director);
         if (data.director) formData.append('Director', data.director);
         if (data.actors) formData.append('Actors', data.actors);
         if (data.cinemaIds) {
@@ -99,6 +99,7 @@ export const movieApi = {
         if (data.movieName !== undefined) formData.append('movieName', data.movieName);
         if (data.movieDescription !== undefined) formData.append('movieDescription', data.movieDescription);
         if (data.movieImage) formData.append('movieImage', data.movieImage);
+        if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
         if (data.endedDate !== undefined && data.endedDate !== null) formData.append('EndedDate', data.endedDate);
         if (data.startedDate !== undefined && data.startedDate !== null) formData.append('StartedDate', data.startedDate);
         if (data.duration !== undefined) formData.append('duration', data.duration.toString());
