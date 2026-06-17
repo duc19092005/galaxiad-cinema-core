@@ -79,7 +79,7 @@ namespace ApiLayer.Middlewares
                 ErrorCode = errorCode,
                 Message = message, 
                 Errors = errors,  
-                Timestamp = DateTime.Now
+                Timestamp = DateTime.UtcNow
             };
 
             await context.Response.WriteAsJsonAsync(response);

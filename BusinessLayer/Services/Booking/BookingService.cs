@@ -276,7 +276,7 @@ public class BookingService
 
     public async Task<BaseResponse<List<ResPublicSimpleMovieDto>>> GetActiveMovies()
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         var movies = await _unitOfWork.Repository<MovieInfoEntity>().Query()
             .Where(m => m.IsActive && !m.IsDeleted && m.EndedDate > now)
             .Select(m => new ResPublicSimpleMovieDto
@@ -300,16 +300,18 @@ public class BookingService
     // ==========================================
     public async Task<BaseResponse<List<ResAdvancedSearchMovieDto>>> GetAdvancedSearchSchedules(DateTime? date, Guid? movieId, Guid? cinemaId)
     {
-        var now = DateTime.Now;
-        var targetDate = date ?? DateTime.Today;
-        var startOfDay = targetDate.Date;
-        var endOfDay = startOfDay.AddDays(1);
+        // DB lưu UTC → convert ngày từ FE (giờ VN) sang UTC range, so sánh với DateTime.UtcNow
+        var nowUtc = DateTime.UtcNow;
+        var targetDateVn = date ?? DateTime.UtcNow.Date; // Nếu FE không gửi ngày, dùng ngày UTC hiện tại
+        // FE gửi ngày theo giờ VN → convert sang UTC range
+        var startUtc = DateTimeHelper.NormalizeIncoming(targetDateVn.Date);   // 00:00 VN → UTC
+        var endUtc = startUtc.AddDays(1);
 
         var query = _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
             .Where(s => !s.IsDeleted 
-                        && s.StartTime >= startOfDay 
-                        && s.StartTime < endOfDay
-                        && s.StartTime > now);
+                        && s.StartTime >= startUtc 
+                        && s.StartTime < endUtc
+                        && s.StartTime > nowUtc);
 
         if (movieId.HasValue)
             query = query.Where(s => s.MovieId == movieId.Value);
@@ -364,11 +366,12 @@ public class BookingService
                             {
                                 FormatId = fGroup.Key.FormatId,
                                 FormatName = fGroup.Key.FormatName,
+                                // Convert UTC → giờ Việt Nam trước khi trả về FE
                                 Showtimes = fGroup.Select(st => new ShowtimeSlot
                                 {
                                     ScheduleId = st.MovieScheduleInfoId,
-                                    StartTime = st.StartTime,
-                                    EndedTime = st.EndedTime,
+                                    StartTime = DateTimeHelper.ToVietnamTime(st.StartTime),
+                                    EndedTime = DateTimeHelper.ToVietnamTime(st.EndedTime),
                                     AuditoriumId = st.AuditoriumId,
                                     AuditoriumNumber = st.AuditoriumNumber
                                 }).OrderBy(st => st.StartTime).ToList()
@@ -437,58 +440,63 @@ public class BookingService
     public async Task<BaseResponse<List<ResPublicCinemaShowtimeDto>>> GetCinemaShowtimes(
         Guid movieId, string city, DateTime? date)
     {
-        var targetDate = date ?? DateTime.Today;
-        var startOfDay = targetDate.Date;
-        var endOfDay = startOfDay.AddDays(1);
-        var now = DateTime.Now;
+        // DB lưu UTC → convert ngày VN từ FE sang UTC range, so sánh với DateTime.UtcNow
+        var nowUtc = DateTime.UtcNow;
+        var targetDateVn = date ?? DateTime.UtcNow.Date;
+        var startUtc = DateTimeHelper.NormalizeIncoming(targetDateVn.Date);
+        var endUtc = startUtc.AddDays(1);
 
-        // Lấy tất cả schedule cho phim này, ở thành phố này, trong ngày này
-        var cinemas = await _unitOfWork.Repository<CinemaInfoEntity>().Query()
-            .Where(c => !c.IsDeleted && c.CinemaCity == city)
-            .Select(c => new ResPublicCinemaShowtimeDto
+        // Lấy raw schedules từ DB (StartTime = UTC)
+        var rawSchedules = await _unitOfWork.Repository<MovieScheduleInfoEntity>().Query()
+            .Where(s => !s.IsDeleted
+                        && s.MovieId == movieId
+                        && s.StartTime >= startUtc
+                        && s.StartTime < endUtc
+                        && s.StartTime > nowUtc)
+            .Select(s => new
             {
-                CinemaId = c.CinemaId,
-                CinemaName = c.CinemaName,
-                CinemaLocation = c.CinemaLocation,
-                CinemaCity = c.CinemaCity,
-                FormatShowtimes = c.AuditoriumInfoEntities
-                    .Where(a => !a.IsDeleted)
-                    .SelectMany(a => a.MovieScheduleInfoEntity
-                        .Where(s => s.MovieId == movieId
-                                    && !s.IsDeleted
-                                    && s.StartTime >= startOfDay
-                                    && s.StartTime < endOfDay
-                                    && s.StartTime > now)
-                        .Select(s => new
-                        {
-                            s.MovieFormatId,
-                            FormatName = s.MovieFormatInfoEntity != null
-                                ? s.MovieFormatInfoEntity.MovieFormatName
-                                : "",
-                            s.MovieScheduleInfoId,
-                            s.StartTime,
-                            s.EndedTime,
-                            s.AuditoriumId,
-                            AuditoriumNumber = a.AuditoriumNumber
-                        }))
-                    .GroupBy(x => new { x.MovieFormatId, x.FormatName })
-                    .Select(g => new FormatShowtimeGroup
+                s.MovieFormatId,
+                FormatName = s.MovieFormatInfoEntity != null ? s.MovieFormatInfoEntity.MovieFormatName : "",
+                s.MovieScheduleInfoId,
+                s.StartTime,
+                s.EndedTime,
+                s.AuditoriumId,
+                AuditoriumNumber = s.AuditoriumInfoEntities!.AuditoriumNumber,
+                CinemaId = s.AuditoriumInfoEntities.CinemaId,
+                CinemaName = s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaName,
+                CinemaLocation = s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaLocation,
+                CinemaCity = s.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity,
+            })
+            .Where(s => s.CinemaCity == city)
+            .AsNoTracking()
+            .ToListAsync();
+
+        // Group by Cinema → Format, convert StartTime UTC → giờ VN
+        var cinemas = rawSchedules
+            .GroupBy(s => new { s.CinemaId, s.CinemaName, s.CinemaLocation, s.CinemaCity })
+            .Select(cGroup => new ResPublicCinemaShowtimeDto
+            {
+                CinemaId = cGroup.Key.CinemaId,
+                CinemaName = cGroup.Key.CinemaName,
+                CinemaLocation = cGroup.Key.CinemaLocation,
+                CinemaCity = cGroup.Key.CinemaCity,
+                FormatShowtimes = cGroup.GroupBy(f => new { f.MovieFormatId, f.FormatName })
+                    .Select(fGroup => new FormatShowtimeGroup
                     {
-                        FormatId = g.Key.MovieFormatId,
-                        FormatName = g.Key.FormatName,
-                        Showtimes = g.Select(s => new ShowtimeSlot
+                        FormatId = fGroup.Key.MovieFormatId,
+                        FormatName = fGroup.Key.FormatName,
+                        Showtimes = fGroup.Select(s => new ShowtimeSlot
                         {
                             ScheduleId = s.MovieScheduleInfoId,
-                            StartTime = s.StartTime,
-                            EndedTime = s.EndedTime,
+                            StartTime = DateTimeHelper.ToVietnamTime(s.StartTime), // UTC → VN
+                            EndedTime = DateTimeHelper.ToVietnamTime(s.EndedTime), // UTC → VN
                             AuditoriumId = s.AuditoriumId,
                             AuditoriumNumber = s.AuditoriumNumber
                         }).OrderBy(s => s.StartTime).ToList()
                     }).ToList()
             })
             .Where(c => c.FormatShowtimes.Any())
-            .AsNoTracking()
-            .ToListAsync();
+            .ToList();
 
         return new BaseResponse<List<ResPublicCinemaShowtimeDto>>
         {
@@ -700,7 +708,7 @@ public class BookingService
                 throw new BadRequestException(Messages.Booking.ScheduleNotFoundOrInactive, "BK01");
             }
 
-            if (schedule.StartTime <= DateTime.Now)
+            if (schedule.StartTime <= DateTime.UtcNow)
             {
                 throw new BadRequestException(Messages.Booking.ShowtimeAlreadyStarted, "BK02");
             }
@@ -1165,7 +1173,7 @@ public class BookingService
     public async Task<BaseResponse<List<ResUserBookingHistoryDto>>> GetUserBookingHistory()
     {
         var userId = _userContextService.GetUserId();
-        var now = DateTime.Now;
+        var nowUtc = DateTime.UtcNow;
 
         var orders = await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .Where(o => o.UserId == userId)
@@ -1184,11 +1192,11 @@ public class BookingService
                 StartTime = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
                 Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList(),
                 
-                // Trạng thái phim
-                IsMovieAired = o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.StartTime <= now),
+                // Trạng thái phim (so sánh UTC với UTC)
+                IsMovieAired = o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.StartTime <= nowUtc),
                 MovieAiringStatus = o.OrderDetailsInfo.Select(od => 
-                    now < od.MovieScheduleInfoEntity.StartTime ? "Upcoming" :
-                    (now >= od.MovieScheduleInfoEntity.StartTime && now <= od.MovieScheduleInfoEntity.EndedTime) ? "Airing" : "Finished"
+                    nowUtc < od.MovieScheduleInfoEntity.StartTime ? "Upcoming" :
+                    (nowUtc >= od.MovieScheduleInfoEntity.StartTime && nowUtc <= od.MovieScheduleInfoEntity.EndedTime) ? "Airing" : "Finished"
                 ).FirstOrDefault() ?? ""
             })
             .AsNoTracking()

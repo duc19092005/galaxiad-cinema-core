@@ -9,6 +9,8 @@ public class ResGetMovieInfosMovieManagerDto
     public string MovieDescriptions { get; set; } = string.Empty;
     
     public string MovieImageUrl { get; set; } = string.Empty;
+
+    public string MovieBannerUrl { get; set; } = string.Empty;
     
     public DateTime EndedDate { get; set; }
     

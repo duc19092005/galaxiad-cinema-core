@@ -34,25 +34,26 @@ public class ScheduleJobsService : IScheduleJobsService
         string sId = string.Empty;
         string eId = string.Empty;
         
-        var localStart = DateTime.SpecifyKind(start, DateTimeKind.Local);
-        var localEnd = DateTime.SpecifyKind(end, DateTimeKind.Local);
-        var toleranceTime = DateTime.Now.AddSeconds(-20);
+        // start và end đã là UTC (từ DB), chỉ cần đảm bảo Kind=Utc cho Hangfire
+        var utcStart = DateTime.SpecifyKind(start, DateTimeKind.Utc);
+        var utcEnd = DateTime.SpecifyKind(end, DateTimeKind.Utc);
+        var toleranceTime = DateTime.UtcNow.AddSeconds(-20);
 
         if (type == SchedulesJobCategoryEnums.Movies)
         {
-            if (localStart > toleranceTime)
-                sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), localStart);
+            if (utcStart > toleranceTime)
+                sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), utcStart);
         
-            if (localEnd > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), localEnd);
+            if (utcEnd > toleranceTime)
+                eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), utcEnd);
         }
         else if (type == SchedulesJobCategoryEnums.Schedules)
         {
-            if (localStart > toleranceTime)
-                sId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleActiveStatus(targetId), localStart);
+            if (utcStart > toleranceTime)
+                sId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleActiveStatus(targetId), utcStart);
 
-            if (localEnd > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleInactiveStatus(targetId), localEnd);
+            if (utcEnd > toleranceTime)
+                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleInactiveStatus(targetId), utcEnd);
         }
         return (sId, eId);
     }
@@ -159,7 +160,7 @@ public class ScheduleJobsService : IScheduleJobsService
 
     public async Task SyncSeededJobs()
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         _logger.LogInformation("SyncSeededJobs: Starting full sync at {Now}", now);
 
         var allLogs = await Query<ScheduleJobLogger>().ToListAsync();

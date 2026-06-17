@@ -13,6 +13,7 @@ using Shared.Enums;
 using Shared.Exceptions;
 using Shared.Interfaces.Persistence;
 using Shared.Localization;
+using Shared.Utils;
 using BusinessLayer.Interfaces.IThirdPersonServices;
 
 namespace BusinessLayer.UseCases.TheaterManager.MovieSchedules;
@@ -147,11 +148,11 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
                     MovieId = slot.MovieId,
                     AuditoriumId = request.AuditoriumId,
                     MovieFormatId = slot.FormatId,
-                    ActiveAt = slot.StartedDate,
-                    StartTime = slot.StartedDate,
-                    EndedTime = endTime,
+                    StartTime = DateTimeHelper.NormalizeIncoming(slot.StartedDate),
+                    EndedTime = DateTimeHelper.NormalizeIncoming(endTime),
+                    ActiveAt = DateTimeHelper.NormalizeIncoming(slot.StartedDate),
                     CreatedByUserId = getCurrentUserId,
-                    IsActive = DateTime.UtcNow >= slot.StartedDate && DateTime.UtcNow < endTime,
+                    IsActive = DateTime.UtcNow >= DateTimeHelper.NormalizeIncoming(slot.StartedDate) && DateTime.UtcNow < DateTimeHelper.NormalizeIncoming(endTime),
                 });
             }
 
@@ -411,9 +412,9 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
                 entity.MovieId = slot.MovieId;
                 entity.MovieFormatId = slot.FormatId;
-                entity.ActiveAt = slot.StartedDate;
-                entity.StartTime = slot.StartedDate;
-                entity.EndedTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
+                entity.StartTime = DateTimeHelper.NormalizeIncoming(slot.StartedDate);
+                entity.ActiveAt = DateTimeHelper.NormalizeIncoming(slot.StartedDate);
+                entity.EndedTime = DateTimeHelper.NormalizeIncoming(slot.StartedDate.AddMinutes(movie.MovieDuration));
                 entity.UpdatedByUserId = getCurrentUserId;
                 entity.UpdatedAt = DateTime.UtcNow;
             }
@@ -566,18 +567,8 @@ public class WriteMovieSchedulesUseCase : IWriteBehavior<TheaterManagerAddMovieS
 
         foreach (var slot in slots)
         {
-            slot.StartedDate = NormalizeIncomingVietnamTime(slot.StartedDate);
+            slot.StartedDate = DateTimeHelper.NormalizeIncoming(slot.StartedDate);
         }
-    }
-
-    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
-    {
-        return value.Kind switch
-        {
-            DateTimeKind.Utc => value,
-            DateTimeKind.Local => value.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
-        };
     }
 
     private IQueryable<TEntity> Query<TEntity>() where TEntity : class

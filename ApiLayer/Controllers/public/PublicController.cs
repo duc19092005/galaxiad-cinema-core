@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Interfaces.Persistence;
 using Shared.Localization;
+using Shared.Utils;
 
 namespace ApiLayer.Controllers.Public;
 
@@ -13,7 +14,6 @@ namespace ApiLayer.Controllers.Public;
 public class PublicController : ControllerBase
 {
     // Đây là Controller Public ai cũng có thể Access được
-    // Controller naày làmdđơn giản thoi
     private readonly ILogger<PublicController> _logger;
     private readonly IUnitOfWork _unitOfWork;
 
@@ -21,23 +21,6 @@ public class PublicController : ControllerBase
     {
         this._logger = logger;
         this._unitOfWork = unitOfWork;
-    }
-
-    /// <summary>
-    /// Lấy thời gian hiện tại theo múi giờ Việt Nam (UTC+7)
-    /// </summary>
-    private static DateTime GetVietnamNow()
-    {
-        TimeZoneInfo vietnamTimeZone;
-        try
-        {
-            vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"); // Windows
-        }
-        catch (TimeZoneNotFoundException)
-        {
-            vietnamTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Ho_Chi_Minh"); // Linux/Mac
-        }
-        return TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, vietnamTimeZone);
     }
 
     [HttpGet("MovieFormats")]
@@ -99,7 +82,7 @@ public class PublicController : ControllerBase
                 query = query.Where(x => x.IsCommingSoon);
                 break;
             default:
-                // Mặc định: trả tất cả phim đang chiếu hoặc sắp chiếu
+                // Mặc định: tất cả phim chưa bị xóa và đang hoạt động hoặc sắp chiếu
                 query = query.Where(x => x.IsActive || x.IsCommingSoon);
                 break;
         }
@@ -117,9 +100,12 @@ public class PublicController : ControllerBase
             MovieName = x.MovieName,
             MovieDuration = x.MovieDuration,
             MoviePosterURL = x.MovieImageUrl,
+            MovieBannerURL = x.MovieBannerUrl,
             MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
             MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
+            MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),
             IsCommingSoon = x.IsCommingSoon,
+            // DB lưu UTC, convert sang giờ Việt Nam cho FE
             ExpectedReleaseDate = x.ActiveAt
         }).ToListAsync();
 
@@ -141,6 +127,7 @@ public class PublicController : ControllerBase
             MovieDuration = x.MovieDuration,
             MovieDescription = x.MovieDescription,
             MoviePosterURL = x.MovieImageUrl,
+            MovieBannerURL = x.MovieBannerUrl,
             MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
             MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
             IsCommingSoon = x.IsCommingSoon,
@@ -160,9 +147,10 @@ public class PublicController : ControllerBase
     [HttpGet("ScheduleDates/{MovieId}")]
     public async Task<IActionResult> GetScheduleDates(Guid MovieId, [FromQuery] string? city)
     {
-        var now = GetVietnamNow();
+        // DB lưu UTC → so sánh với DateTime.UtcNow
+        var nowUtc = DateTime.UtcNow;
         var query = Query<MovieScheduleInfoEntity>()
-            .Where(x => !x.IsDeleted && x.MovieId == MovieId && x.StartTime > now);
+            .Where(x => !x.IsDeleted && x.MovieId == MovieId && x.StartTime > nowUtc);
 
         // Lọc lịch chiếu theo thành phố
         if (!string.IsNullOrEmpty(city))
@@ -172,13 +160,20 @@ public class PublicController : ControllerBase
                 && x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity.Contains(city));
         }
 
-        var schedulesDatesObj = await query
-            .Select(x => x.StartTime.Date)
+        // Lấy danh sách UTC times từ DB
+        var scheduleUtcTimes = await query
+            .Select(x => x.StartTime)
             .Distinct()
             .OrderBy(d => d)
             .ToListAsync();
 
-        var findSchedulesDates = schedulesDatesObj.Select(x => x.ToString("yyyy-MM-dd")).ToList();
+        // Convert UTC → Việt Nam để lấy ngày theo giờ VN
+        var findSchedulesDates = scheduleUtcTimes
+            .Select(utc => DateTimeHelper.ToVietnamTime(utc).Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .Select(d => d.ToString("yyyy-MM-dd"))
+            .ToList();
 
         return Ok(new BaseResponse<List<string>>()
         {
@@ -191,14 +186,15 @@ public class PublicController : ControllerBase
     [HttpGet("ScheduleDetails/{MovieId}/{ScheduleDate}")]
     public async Task<IActionResult> GetScheduleDetails(Guid MovieId, DateTime ScheduleDate, [FromQuery] string? city)
     {
-        var startDate = ScheduleDate.Date;
-        var endDate = startDate.AddDays(1);
+        // ScheduleDate là ngày từ FE theo giờ Việt Nam → convert sang UTC range
+        var startOfDayVn = ScheduleDate.Date; // bắt đầu ngày VN
+        var startUtc = DateTimeHelper.ToUtc(startOfDayVn); // 00:00 VN → UTC
+        var endUtc = startUtc.AddDays(1);
+        var nowUtc = DateTime.UtcNow;
 
         _logger.LogInformation(
-            "GetScheduleDetails: MovieId={MovieId}, Date={ScheduleDate}, city={City}, range=[{Start}, {End})",
-            MovieId, ScheduleDate, city, startDate, endDate);
-
-        var now = GetVietnamNow();
+            "GetScheduleDetails: MovieId={MovieId}, Date={ScheduleDate}, city={City}, UTC range=[{Start}, {End})",
+            MovieId, ScheduleDate, city, startUtc, endUtc);
 
         // Step 1: Build base query with Include to load navigation properties
         var query = Query<MovieScheduleInfoEntity>()
@@ -207,9 +203,9 @@ public class PublicController : ControllerBase
             .Include(x => x.MovieFormatInfoEntity)
             .Where(x => !x.IsDeleted
                      && x.MovieId == MovieId
-                     && x.StartTime >= startDate
-                     && x.StartTime < endDate
-                     && x.StartTime > now);
+                     && x.StartTime >= startUtc
+                     && x.StartTime < endUtc
+                     && x.StartTime > nowUtc);
 
         // Step 2: Filter by city using CinemaCity field (not CinemaLocation)
         if (!string.IsNullOrEmpty(city))
@@ -224,7 +220,7 @@ public class PublicController : ControllerBase
 
         _logger.LogInformation("GetScheduleDetails: found {Count} raw schedules", flatSchedules.Count);
 
-        // Step 4: Group in memory — EF Core GroupBy with navigation properties is unreliable
+        // Step 4: Convert StartTime UTC → giờ Việt Nam trước khi trả về FE
         var getScheduleDetails = flatSchedules
             .GroupBy(x => new
             {
@@ -240,7 +236,7 @@ public class PublicController : ControllerBase
                 ScheduleTimesInfos = g.Select(s => new GetScheduleTimeRes()
                 {
                     ScheduleId = s.MovieScheduleInfoId,
-                    ShowTime = s.StartTime
+                    ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime) // UTC → giờ VN
                 })
                 .OrderBy(t => t.ShowTime)
                 .ToList()
@@ -292,6 +288,54 @@ public class PublicController : ControllerBase
         return Ok(new BaseResponse<GetAuditoriumInfosRes>
         {
             Data = getAuditoriumDetails,
+            IsSuccess = true,
+            Message = "Thành công"
+        });
+    }
+
+    /// <summary>
+    /// Lấy danh sách các ngày có lịch chiếu (không yêu cầu MovieId), dùng cho trang Home/Showtimes
+    /// </summary>
+    [HttpGet("UpcomingDates")]
+    public async Task<IActionResult> GetAllUpcomingDates([FromQuery] string? city, [FromQuery] Guid? cinemaId)
+    {
+        // DB lưu UTC → so sánh với DateTime.UtcNow
+        var nowUtc = DateTime.UtcNow;
+        var query = Query<MovieScheduleInfoEntity>()
+            .Where(x => !x.IsDeleted && x.StartTime > nowUtc);
+
+        // Lọc theo thành phố
+        if (!string.IsNullOrEmpty(city))
+        {
+            query = query.Where(x => x.AuditoriumInfoEntities != null
+                && x.AuditoriumInfoEntities.CinemaInfoEntity != null
+                && x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity.Contains(city));
+        }
+
+        // Lọc theo rạp
+        if (cinemaId.HasValue)
+        {
+            query = query.Where(x => x.AuditoriumInfoEntities!.CinemaId == cinemaId.Value);
+        }
+
+        var scheduleUtcTimes = await query
+            .Select(x => x.StartTime)
+            .Distinct()
+            .OrderBy(d => d)
+            .ToListAsync();
+
+        // Convert UTC → Việt Nam để lấy ngày theo giờ VN
+        var findSchedulesDates = scheduleUtcTimes
+            .Select(utc => DateTimeHelper.ToVietnamTime(utc).Date)
+            .Distinct()
+            .OrderBy(d => d)
+            .Select(d => d.ToString("yyyy-MM-dd"))
+            .Take(14) // Giới hạn 14 ngày tới
+            .ToList();
+
+        return Ok(new BaseResponse<List<string>>()
+        {
+            Data = findSchedulesDates,
             IsSuccess = true,
             Message = "Thành công"
         });

@@ -428,7 +428,7 @@ public class MovieCommentService
 
     private async Task<OrderInfoEntity?> FindEligibleViewedOrder(Guid userId, Guid movieId)
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         return await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .Include(x => x.OrderDetailsInfo)
             .ThenInclude(x => x.MovieScheduleInfoEntity)
@@ -442,7 +442,7 @@ public class MovieCommentService
 
     private async Task<bool> HasFuturePaidTicket(Guid userId, Guid movieId)
     {
-        var now = DateTime.Now;
+        var now = DateTime.UtcNow;
         return await _unitOfWork.Repository<OrderInfoEntity>().Query()
             .AnyAsync(x => x.UserId == userId
                            && (x.OrderStatus == OrderStatusEnum.Booked || x.OrderStatus == OrderStatusEnum.Completed)

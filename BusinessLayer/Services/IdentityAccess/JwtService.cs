@@ -33,13 +33,13 @@ public class Jwt_helper
         
         // Time is 7 days
         
-        var Days = DateTime.Now.AddDays(7);
+        var Days = DateTime.UtcNow.AddDays(7);
         // Tạo JWT_Token
         var genrateTokenString = new JwtSecurityToken
         (jwtIss,
             jwtAud,
             claims, 
-            DateTime.Now,
+            DateTime.UtcNow,
             Days, SigningCreatical
         );
 

@@ -90,6 +90,8 @@ public class BaseMovieInfoRes
 
     public string MoviePosterURL { get; set; } = string.Empty;
 
+    public string MovieBannerURL { get; set; } = string.Empty;
+
     public string MovieFormatInfos {get;set;} = String.Empty;
 
     public int MovieDuration { get; set; }

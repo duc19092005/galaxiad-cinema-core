@@ -1,7 +1,6 @@
 
 namespace BusinessLayer.Entities;
 
-
 public class BaseManagementStatus<T> where T : class
 {
     public bool IsDeleted { get; set; } = false;
@@ -11,9 +10,9 @@ public class BaseManagementStatus<T> where T : class
     
     public DateTime ActiveAt {get;set;}
 
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.Now;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public Guid CreatedByUserId { get; set; }
     public Guid? UpdatedByUserId { get; set; }

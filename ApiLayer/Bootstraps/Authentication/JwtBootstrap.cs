@@ -62,7 +62,7 @@ public static class JwtBootstrap
                             ErrorCode = errorCode,
                             Message = msg,
                             Errors = new List<string> { msg },
-                            Timestamp = DateTime.Now
+                            Timestamp = DateTime.UtcNow
                         };
                         
                         await context.Response.WriteAsJsonAsync(response);
@@ -77,7 +77,7 @@ public static class JwtBootstrap
                             ErrorCode = "AuthE01",
                             Message = Shared.Localization.Messages.Auth.Forbidden,
                             Errors = new List<string> { Shared.Localization.Messages.Auth.Forbidden },
-                            Timestamp = DateTime.Now
+                            Timestamp = DateTime.UtcNow
                         };
                         await context.Response.WriteAsJsonAsync(response);
                     },

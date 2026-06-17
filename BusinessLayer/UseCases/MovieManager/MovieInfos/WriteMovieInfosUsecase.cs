@@ -15,6 +15,7 @@ using BusinessLayer.Interfaces.IThirdPersonServices;
 using BusinessLayer.Validators;
 using Shared.Enums;
 using Shared.Interfaces.Persistence;
+using Shared.Utils;
 
 namespace BusinessLayer.UseCases.MovieManager.MovieInfos;
 
@@ -46,10 +47,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     {
         await using var transactions = await _unitOfWork.BeginTransactionAsync();
         (bool Success, string Result) cloudinaryStatus = (false, string.Empty);
+        (bool Success, string Result) bannerUploadStatus = (false, string.Empty);
         try
         {
-            request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
-            request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
+            request.StartedDate = DateTimeHelper.NormalizeIncoming(request.StartedDate);
+            request.EndedDate = DateTimeHelper.NormalizeIncoming(request.EndedDate);
             var getUserId = _userContextService.GetUserId();
             var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
             var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
@@ -98,12 +100,23 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 throw new AppException(Messages.Movie.ImageUploadError, 400, "E01");
             }
 
+            // Upload banner if provided
+            if (request.MovieBanner != null)
+            {
+                bannerUploadStatus = await _imageStorageService.PostImageAsync(request.MovieBanner);
+                if (!bannerUploadStatus.Success)
+                {
+                    throw new AppException("Failed to upload banner image", 400, "E01");
+                }
+            }
+
             var newMovieEntity = new MovieInfoEntity()
             {
                 MovieId = newMovieId,
                 MovieDescription = request.MovieDescription,
                 MovieName = request.MovieName,
                 MovieImageUrl = cloudinaryStatus.Result,
+                MovieBannerUrl = bannerUploadStatus.Result,
                 MovieRequiredAgeId = request.MovieRequiredAgeId,
                 ActiveAt = request.StartedDate,
                 EndedDate = request.EndedDate,
@@ -171,6 +184,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 await _imageStorageService.DeleteImageAsync(cloudinaryStatus.Result);
             }
+            if (bannerUploadStatus.Success)
+            {
+                await _imageStorageService.DeleteImageAsync(bannerUploadStatus.Result);
+            }
 
             if (ex is AppException)
             {
@@ -188,11 +205,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         // Update the Movie
         await using var transactions = await _unitOfWork.BeginTransactionAsync();
         (bool Success, string Result) fileUploadStatus = (false, "upload false");
+        (bool Success, string Result) bannerUploadStatus = (false, string.Empty);
         string oldImageUrl = null!;
+        string oldBannerUrl = null!;
         try
         {
-            request.StartedDate = NormalizeIncomingVietnamTime(request.StartedDate);
-            request.EndedDate = NormalizeIncomingVietnamTime(request.EndedDate);
+            request.StartedDate = DateTimeHelper.NormalizeIncoming(request.StartedDate);
+            request.EndedDate = DateTimeHelper.NormalizeIncoming(request.EndedDate);
             var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
             var orderDetailRepository = _unitOfWork.Repository<OrderDetailsInfo>();
             var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
@@ -290,6 +309,21 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     }
                 }
 
+                if (request.MovieBanner != null)
+                {
+                    bannerUploadStatus = await _imageStorageService.PostImageAsync(request.MovieBanner);
+                    if (bannerUploadStatus.Success)
+                    {
+                        oldBannerUrl = findTheMovie.MovieBannerUrl;
+                        findTheMovie.MovieBannerUrl = bannerUploadStatus.Result;
+                    }
+                    else
+                    {
+                        _logger.LogError(bannerUploadStatus.Result);
+                        throw CustomSystemException.SystemExceptionCaller();
+                    }
+                }
+
                 if (request.MovieFormatIds != null && request.MovieFormatIds.Any())
                 {
                     // Truy Van trong dbo
@@ -358,6 +392,17 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                         _logger.LogWarning(ex, "Could not delete old image: {Url}", oldImageUrl);
                     }
                 }
+                if (bannerUploadStatus.Success && !string.IsNullOrEmpty(oldBannerUrl))
+                {
+                    try
+                    {
+                        await _imageStorageService.DeleteImageAsync(oldBannerUrl);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Could not delete old banner: {Url}", oldBannerUrl);
+                    }
+                }
 
                 return new BaseResponse<string>()
                 {
@@ -377,6 +422,14 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 if (!deleteImageFromCloudinary)
                 {
                     _logger.LogError(ex, "Error while delete image from Cloudinary");
+                }
+            }
+            if (bannerUploadStatus.Success)
+            {
+                var deleteBannerFromCloudinary = await _imageStorageService.DeleteImageAsync(bannerUploadStatus.Result);
+                if (!deleteBannerFromCloudinary)
+                {
+                    _logger.LogError(ex, "Error while delete banner from Cloudinary");
                 }
             }
             if (ex is AppException)
@@ -523,20 +576,5 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 _logger.LogError(e, $"Error while update movie status id : {movieId}");
             }
         }
-    }
-
-    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
-    {
-        return value.Kind switch
-        {
-            DateTimeKind.Utc => value,
-            DateTimeKind.Local => value.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
-        };
-    }
-
-    private static DateTime? NormalizeIncomingVietnamTime(DateTime? value)
-    {
-        return value.HasValue ? NormalizeIncomingVietnamTime(value.Value) : null;
     }
 }

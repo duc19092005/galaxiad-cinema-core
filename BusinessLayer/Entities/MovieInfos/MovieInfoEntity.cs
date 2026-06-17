@@ -24,16 +24,19 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     [Column(TypeName = "varchar(2048)")]
     public string MovieImageUrl { get; set; } = string.Empty;
-    
+
+    [Column(TypeName = "varchar(2048)")]
+    public string MovieBannerUrl { get; set; } = string.Empty;
+
     [Column(TypeName = "varchar(2048)")]
     public string TrailerUrl { get; set; } = string.Empty;
-    
+
     [Column(TypeName = "nvarchar(200)")]
     public string Director { get; set; } = string.Empty;
-    
+
     [Column(TypeName = "nvarchar(500)")]
     public string Actors { get; set; } = string.Empty;
-    
+
     public int MovieDuration { get; set; }
 
     public bool IsCommingSoon { get; set; } = true;
@@ -57,6 +60,4 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     public List<MovieViewEntity> MovieViewEntities { get; set; } = [];
 }
-
-
 

@@ -56,6 +56,7 @@ public class ReadMovieInfoUseCase : IReadBehavior<ResGetMovieInfosMovieManagerDt
                 MovieGenresInfos = x.MovieGenreMovieInfoEntity
                     .Select(y => y.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 MovieImageUrl = x.MovieImageUrl,
+                MovieBannerUrl = x.MovieBannerUrl,
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity
                     .Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),

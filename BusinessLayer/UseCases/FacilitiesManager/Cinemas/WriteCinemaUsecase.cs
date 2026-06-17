@@ -1,6 +1,7 @@
 using Shared.Exceptions;
 using Shared.Enums;
 using Shared.Localization;
+using Shared.Utils;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.FacilitiesManager.Cinemas.Requests;
 using BusinessLayer.Interfaces.IBehaviors;
@@ -70,7 +71,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         try
         {
             Guid cinemaId = Guid.NewGuid();
-            var activeAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? DateTime.UtcNow;
+            var activeAt = DateTimeHelper.NormalizeIncoming(request.ActiveAt) ?? DateTime.UtcNow;
             var isAdmin = _userContext.IsInRole("Admin");
             var newCinemaInfoEntity = new CinemaInfoEntity()
             {
@@ -220,7 +221,7 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
                 if (request.Latitude.HasValue) findCinema.Latitude = request.Latitude.Value;
                 if (request.Longitude.HasValue) findCinema.Longitude = request.Longitude.Value;
 
-                findCinema.ActiveAt = NormalizeIncomingVietnamTime(request.ActiveAt) ?? findCinema.ActiveAt;
+                findCinema.ActiveAt = DateTimeHelper.NormalizeIncoming(request.ActiveAt) ?? findCinema.ActiveAt;
 
                 findCinema.UpdatedAt = DateTime.UtcNow;
 
@@ -360,18 +361,4 @@ public class FacilitiesManagerWriteCinemaUseCase : IWriteBehavior<AddCinemaReqDt
         }
     }
 
-    private static DateTime NormalizeIncomingVietnamTime(DateTime value)
-    {
-        return value.Kind switch
-        {
-            DateTimeKind.Utc => value,
-            DateTimeKind.Local => value.ToUniversalTime(),
-            _ => DateTime.SpecifyKind(value.AddHours(-7), DateTimeKind.Utc)
-        };
-    }
-
-    private static DateTime? NormalizeIncomingVietnamTime(DateTime? value)
-    {
-        return value.HasValue ? NormalizeIncomingVietnamTime(value.Value) : null;
-    }
 }

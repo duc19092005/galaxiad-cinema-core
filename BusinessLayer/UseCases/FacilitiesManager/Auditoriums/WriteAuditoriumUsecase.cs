@@ -56,7 +56,7 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
                 AuditoriumId = generateAuditoriumId,
                 CinemaId = request.CinemaId,
                 AuditoriumNumber = request.AuditoriumNumber,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 CreatedByUserId = userId
             };
 
@@ -181,8 +181,8 @@ public class FacilitiesManagerWriteAuditoriumUseCase : IWriteBehavior<AddReqAudi
             
             findAuditorium.AuditoriumNumber = request.AuditoriumNumber ?? findAuditorium.AuditoriumNumber;
             findAuditorium.CinemaId = request.CinemaId ?? findAuditorium.CinemaId;
-            findAuditorium.CreatedAt = DateTime.Now;
-            findAuditorium.UpdatedAt = DateTime.Now;
+            findAuditorium.CreatedAt = DateTime.UtcNow;
+            findAuditorium.UpdatedAt = DateTime.UtcNow;
             findAuditorium.UpdatedByUserId = getUserId;
 
             if (!(request.AddReqSeatsAuditoriumDto == null || request.AddReqSeatsAuditoriumDto.Count <= 0))
