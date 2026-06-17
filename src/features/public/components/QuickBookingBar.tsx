@@ -41,7 +41,7 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity }) => {
   // Auto-fetch nearest cinemas when selectedCity changes
   useEffect(() => {
     if (!selectedCity) {
-      // No city selected → fall back to active cinemas list
+      // No city selected → clear nearest, will use GPS on demand
       setNearestCinemas([]);
       return;
     }
@@ -71,6 +71,34 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity }) => {
       })
       .finally(() => setLoadingLocation(false));
   }, [selectedCity]);
+
+  // GPS geolocation — only used when NO city is selected
+  const handleCinemaSelectOpen = () => {
+    if (selectedCity) return; // City is selected, auto-fetch already handled
+    if (loadingLocation || nearestCinemas.length > 0) return;
+
+    setLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await publicApi.getNearestCinemas(latitude, longitude);
+          if (res.isSuccess && res.data) {
+            setNearestCinemas(res.data);
+          }
+        } catch (err) {
+          console.error('Failed to load nearest cinemas:', err);
+        } finally {
+          setLoadingLocation(false);
+        }
+      },
+      (geoError) => {
+        console.error('Geolocation error:', geoError);
+        setLoadingLocation(false);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   // Fetch available dates from API
   useEffect(() => {
@@ -191,6 +219,7 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity }) => {
           displayValue={loadingLocation ? t('home.loadingLocation', 'Locating...') : selectedCinemaLabel}
           options={cinemaOptions}
           onChange={setSelectedCinemaId}
+          onOpen={handleCinemaSelectOpen}
         />
 
         {/* 2. Movie Selector */}
