@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, MessageCircle, Reply, Send, Star, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { commentApi } from '../../../api/commentApi';
 import { getUserInfoFromStorage } from '../../../utils/authUtils';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
@@ -17,6 +18,7 @@ const emptySummary: MovieCommentsSummary = {
 };
 
 const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = getUserInfoFromStorage();
   const [summary, setSummary] = useState<MovieCommentsSummary>(emptySummary);
@@ -62,7 +64,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
       const visibleIds = new Set(flattenComments(commentsRes.data?.comments || []).map(comment => comment.commentId));
       setPendingComments(prev => prev.filter(comment => !visibleIds.has(comment.commentId) && Date.now() - new Date(comment.createdAt).getTime() < 30000));
     } catch {
-      showError('Khong the tai binh luan luc nay.');
+      showError(t('movieComment.loadError', 'Could not load comments at this time.'));
     } finally {
       setLoading(false);
     }
@@ -71,7 +73,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
   const handleSubmit = async () => {
     const value = content.trim();
     if (!value) {
-      showError('Vui long nhap noi dung binh luan.');
+      showError(t('movieComment.enterContent', 'Please enter your comment.'));
       return;
     }
 
@@ -82,17 +84,17 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
         setPendingComments(prev => [res.data, ...prev]);
       }
       setContent('');
-      showSuccess('Binh luan dang duoc kiem duyet.');
+      showSuccess(t('movieComment.pendingModeration', 'Comment is pending moderation.'));
       window.setTimeout(fetchAll, 2500);
       window.setTimeout(fetchAll, 9000);
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Khong the gui binh luan.');
+      showError(error?.response?.data?.message || t('movieComment.submitError', 'Could not submit comment.'));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const eligibilityMessage = eligibility?.message || 'Dang kiem tra dieu kien binh luan.';
+  const eligibilityMessage = eligibility?.message || t('movieComment.checkingEligibility', 'Checking comment eligibility.');
 
   return (
     <section className="px-6 md:px-16 pb-20 max-w-7xl mx-auto">
@@ -103,8 +105,8 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
               <Star size={22} fill="currentColor" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white m-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>Danh gia phim</h2>
-              <p className="text-sm text-[#ddc1ae]/75 m-0">Y kien tu khach hang da xem phim.</p>
+              <h2 className="text-2xl font-bold text-white m-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t('movieComment.ratingTitle', 'Movie Rating')}</h2>
+              <p className="text-sm text-[#ddc1ae]/75 m-0">{t('movieComment.ratingSubtitle', 'Reviews from customers who have watched the movie.')}</p>
             </div>
           </div>
 
@@ -112,7 +114,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
             <span className="text-5xl font-black text-white leading-none">{summary.averageRating.toFixed(1)}</span>
             <div className="pb-1">
               <StarRow value={Math.round(summary.averageRating)} readOnly />
-              <p className="text-xs text-[#ddc1ae]/70 mt-1">{summary.reviewCount} luot danh gia</p>
+              <p className="text-xs text-[#ddc1ae]/70 mt-1">{summary.reviewCount} {t('movieComment.reviewCount', 'reviews')}</p>
             </div>
           </div>
 
@@ -122,7 +124,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
               <textarea
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
-                placeholder="Chia se cam nhan cua ban ve bo phim..."
+                placeholder={t('movieComment.ratingPlaceholder', 'Share your thoughts about the movie...')}
                 className="w-full min-h-[130px] resize-none rounded-xl bg-[#171616] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-[#ddc1ae]/45 outline-none focus:border-[#ff8a00]/70 transition-colors"
                 maxLength={1000}
               />
@@ -132,7 +134,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
                 className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff8a00] px-5 py-3 text-sm font-bold text-black border-none cursor-pointer transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
-                Gui danh gia
+                {t("movieComment.submitRating", "Submit Rating")}
               </button>
             </div>
           ) : (
@@ -143,7 +145,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
                   onClick={() => navigate('/login')}
                   className="mt-4 rounded-xl bg-[#ff8a00] px-4 py-2 text-sm font-bold text-black border-none cursor-pointer active:scale-[0.98]"
                 >
-                  Dang nhap
+                  {t("movieComment.login", "Sign In")}
                 </button>
               )}
             </div>
@@ -154,13 +156,13 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
           <div className="flex items-center justify-between gap-4 mb-5">
             <div className="flex items-center gap-3">
               <MessageCircle size={22} className="text-[#ffb77f]" />
-              <h3 className="text-xl font-bold text-white m-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>Binh luan</h3>
+              <h3 className="text-xl font-bold text-white m-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t('movieComment.commentTitle', 'Comments')}</h3>
             </div>
             <button
               onClick={fetchAll}
               className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[#ddc1ae] hover:text-white hover:bg-white/10 cursor-pointer"
             >
-              Lam moi
+              {t("movieComment.refresh", "Refresh")}
             </button>
           </div>
 
@@ -169,8 +171,8 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
           ) : visibleAndPending.length === 0 ? (
             <div className="rounded-xl border border-dashed border-white/10 bg-[#131212] py-12 px-5 text-center">
               <MessageCircle size={32} className="mx-auto text-[#ffb77f]/70 mb-3" />
-              <p className="text-white font-semibold m-0">Chua co binh luan nao.</p>
-              <p className="text-sm text-[#ddc1ae]/70 mt-2 mb-0">Hay la nguoi dau tien chia se cam nhan sau khi xem phim.</p>
+              <p className="text-white font-semibold m-0">{t('movieComment.noComments', 'No comments yet.')}</p>
+              <p className="text-sm text-[#ddc1ae]/70 mt-2 mb-0">{t('movieComment.noCommentsDesc', 'Be the first to share your thoughts after watching the movie.')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -191,6 +193,7 @@ const CommentNode: React.FC<{
   onChanged: () => void;
   depth?: number;
 }> = ({ comment, userId, onChanged, depth = 0 }) => {
+  const { t } = useTranslation();
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
@@ -200,7 +203,7 @@ const CommentNode: React.FC<{
   const submitReply = async () => {
     const value = replyText.trim();
     if (!value) {
-      showError('Vui long nhap noi dung phan hoi.');
+      showError(t('movieComment.enterReply', 'Please enter your reply.'));
       return;
     }
 
@@ -212,11 +215,11 @@ const CommentNode: React.FC<{
       }
       setReplyText('');
       setReplying(false);
-      showSuccess('Phan hoi dang duoc kiem duyet.');
+      showSuccess(t('movieComment.replyPending', 'Reply is pending moderation.'));
       window.setTimeout(onChanged, 2500);
       window.setTimeout(onChanged, 9000);
     } catch (error: any) {
-      showError(error?.response?.data?.message || 'Khong the gui phan hoi.');
+      showError(error?.response?.data?.message || t('movieComment.replyError', 'Could not submit reply.'));
     } finally {
       setSubmittingReply(false);
     }
@@ -225,10 +228,10 @@ const CommentNode: React.FC<{
   const deleteComment = async () => {
     try {
       await commentApi.deleteComment(comment.commentId);
-      showSuccess('Da xoa binh luan.');
+      showSuccess(t('movieComment.deleted', 'Comment deleted.'));
       onChanged();
     } catch {
-      showError('Khong the xoa binh luan.');
+      showError(t('movieComment.deleteError', 'Could not delete comment.'));
     }
   };
 
@@ -248,7 +251,7 @@ const CommentNode: React.FC<{
               {isPending && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-[#ff8a00]/25 bg-[#ff8a00]/10 px-2 py-0.5 text-[11px] font-semibold text-[#ffb77f]">
                   <Loader2 size={12} className="animate-spin" />
-                  Dang kiem duyet
+                    {t("movieComment.pending", "Pending")}
                 </span>
               )}
             </div>
@@ -258,13 +261,13 @@ const CommentNode: React.FC<{
               {!isPending && (
                 <button onClick={() => setReplying(prev => !prev)} className="inline-flex items-center gap-1 text-[#ffb77f] hover:text-[#ff8a00] bg-transparent border-none cursor-pointer p-0 font-semibold">
                   <Reply size={14} />
-                  Phan hoi
+                    {t("movieComment.reply", "Reply")}
                 </button>
               )}
               {userId === comment.userId && (
                 <button onClick={deleteComment} className="inline-flex items-center gap-1 text-red-300 hover:text-red-200 bg-transparent border-none cursor-pointer p-0 font-semibold">
                   <Trash2 size={14} />
-                  Xoa
+                    {t("movieComment.delete", "Delete")}
                 </button>
               )}
             </div>
@@ -276,15 +279,15 @@ const CommentNode: React.FC<{
             <textarea
               value={replyText}
               onChange={(event) => setReplyText(event.target.value)}
-              placeholder="Viet phan hoi..."
+              placeholder={t('movieComment.replyPlaceholder', 'Write a reply...')}
               className="w-full min-h-[86px] resize-none rounded-xl bg-[#1d1b1a] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-[#ddc1ae]/45 outline-none focus:border-[#ff8a00]/70"
               maxLength={1000}
             />
             <div className="mt-2 flex justify-end gap-2">
-              <button onClick={() => setReplying(false)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[#ddc1ae] cursor-pointer">Huy</button>
+              <button onClick={() => setReplying(false)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[#ddc1ae] cursor-pointer">{t('movieComment.cancel', 'Cancel')}</button>
               <button onClick={submitReply} disabled={submittingReply} className="inline-flex items-center gap-2 rounded-lg bg-[#ff8a00] px-3 py-2 text-xs font-bold text-black border-none cursor-pointer disabled:opacity-70">
                 {submittingReply ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                Gui
+                {t("movieComment.send", "Send")}
               </button>
             </div>
           </div>
@@ -302,25 +305,28 @@ const CommentNode: React.FC<{
   );
 };
 
-const StarRow: React.FC<{ value: number; onChange?: (value: number) => void; readOnly?: boolean; compact?: boolean }> = ({ value, onChange, readOnly, compact }) => (
-  <div className={`flex items-center ${compact ? 'gap-0.5' : 'gap-1.5'}`}>
-    {[1, 2, 3, 4, 5].map(star => {
-      const active = star <= value;
-      return (
-        <button
-          key={star}
-          type="button"
-          onClick={() => !readOnly && onChange?.(star)}
-          disabled={readOnly}
-          className={`bg-transparent border-none p-0 ${readOnly ? 'cursor-default' : 'cursor-pointer active:scale-95'}`}
-          aria-label={`${star} sao`}
-        >
-          <Star size={compact ? 14 : 22} className={active ? 'text-[#ffb77f]' : 'text-white/20'} fill={active ? 'currentColor' : 'none'} />
-        </button>
-      );
-    })}
-  </div>
-);
+const StarRow: React.FC<{ value: number; onChange?: (value: number) => void; readOnly?: boolean; compact?: boolean }> = ({ value, onChange, readOnly, compact }) => {
+  const { t } = useTranslation();
+  return (
+    <div className={`flex items-center ${compact ? 'gap-0.5' : 'gap-1.5'}`}>
+      {[1, 2, 3, 4, 5].map(star => {
+        const active = star <= value;
+        return (
+          <button
+            key={star}
+            type="button"
+            onClick={() => !readOnly && onChange?.(star)}
+            disabled={readOnly}
+            className={`bg-transparent border-none p-0 ${readOnly ? 'cursor-default' : 'cursor-pointer active:scale-95'}`}
+            aria-label={`${star} ${t('movieComment.star', 'star')}`}
+          >
+            <Star size={compact ? 14 : 22} className={active ? 'text-[#ffb77f]' : 'text-white/20'} fill={active ? 'currentColor' : 'none'} />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
 
 const CommentSkeleton = () => (
   <div className="space-y-4">

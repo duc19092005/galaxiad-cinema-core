@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Film, ShieldAlert, LogIn } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const Unauthorized: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-black font-sans select-none">
-      {/* --- Background Layers (Giữ nguyên tone rạp phim) --- */}
+      {/* --- Background Layers --- */}
       <div
         className="absolute inset-0 z-0 opacity-30 bg-cover bg-center"
         style={{
@@ -15,7 +17,7 @@ const Unauthorized: React.FC = () => {
       ></div>
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/90 to-red-950/30"></div>
 
-      {/* --- Spotlight Effect (Hiệu ứng đèn chiếu nhấp nháy) --- */}
+      {/* --- Spotlight Effect --- */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-600/20 blur-[120px] rounded-full animate-pulse-slow"></div>
 
       {/* --- Main Content --- */}
@@ -38,15 +40,15 @@ const Unauthorized: React.FC = () => {
 
         {/* Headline */}
         <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-white uppercase tracking-widest">
-          Access Denied
+          {t('unauthorized.title', 'Access Denied')}
         </h2>
 
         {/* Description */}
         <p className="mt-4 text-gray-400 text-lg font-medium">
-          You don&apos;t have permission to view this scene.
+          {t('unauthorized.description', "You don't have permission to view this scene.")}
         </p>
         <p className="text-gray-500 text-sm">
-          (Error Code: UNAUTHORIZED_ACCESS)
+          {t('unauthorized.errorCode', '(Error Code: UNAUTHORIZED_ACCESS)')}
         </p>
 
         {/* Back to Login Button */}
@@ -56,17 +58,16 @@ const Unauthorized: React.FC = () => {
         >
           <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shine" />
           <LogIn className="w-5 h-5 relative z-10" />
-          <span className="relative z-10">Back to Login</span>
+          <span className="relative z-10">{t('unauthorized.backButton', 'Back to Login')}</span>
         </Link>
       </div>
 
       {/* Footer decoration */}
       <div className="absolute bottom-4 text-gray-600 text-xs uppercase tracking-[0.3em] font-bold opacity-50">
-        Cinema Paradiso System
+        {t('unauthorized.footer', 'Cinema Paradiso System')}
       </div>
     </div>
   );
 };
 
 export default Unauthorized;
-

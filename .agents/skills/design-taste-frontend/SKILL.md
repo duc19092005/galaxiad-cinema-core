@@ -1201,6 +1201,46 @@ But that is **web glassmorphism / frosted-glass approximation**, not official Ap
 
 **Important:** `prefers-reduced-transparency` has uneven browser support; test it. Always provide enough contrast even without blur.
 
+**End of appendices.** Install commands above are reality anchors. The Apple Liquid Glass skeleton is a labeled approximation, not an Apple-issued package. For canonical docs per design system, consult the system's official docs (links in Section 2 plus Appendix B).
+
 ---
 
-**End of appendices.** Install commands above are reality anchors. The Apple Liquid Glass skeleton is a labeled approximation, not an Apple-issued package. For canonical docs per design system, consult the system's official docs (links in Section 2 plus Appendix B).
+## 12. I18N & TRANSLATION RULES (Cinema Pro Project)
+
+### 12.1 Bắt buộc dùng i18n
+Mọi nội dung hiển thị trên UI (text, label, title, description, error message, tooltip, placeholder) PHẢI được đặt trong file translation và gọi qua `t()` hoặc `useTranslation()`.
+
+### 12.2 Hỗ trợ 3 ngôn ngữ
+Mỗi key translation phải có đủ 3 bản dịch:
+- 🇻🇳 **vi**: Tiếng Việt (bắt buộc có dấu đầy đủ)
+- 🇬🇧 **en**: Tiếng Anh
+- 🇷🇺 **ru**: Tiếng Nga
+
+### 12.3 Tiếng Việt bắt buộc có dấu
+Tất cả nội dung tiếng Việt trong file translation phải VIẾT CÓ DẤU đầy đủ. Không được dùng tiếng Việt không dấu.
+
+✅ Đúng: "Chính Sách Bảo Mật"
+❌ Sai: "Chinh Sach Bao Mat"
+
+### 12.4 Cấu trúc key
+Dùng cấu trúc phân cấp (nested JSON) theo module/page:
+```json
+{
+  "homePage": { "title": "...", "subtitle": "..." },
+  "cookiePolicy": { "title": "...", "useItem1": "..." }
+}
+```
+
+### 12.5 Khi thêm trang/nội dung mới
+Luôn làm theo trình tự:
+1. Thêm tất cả các key translation vào cả 3 file (vi, en, ru)
+2. Viết component dùng `useTranslation()` và `t()` để gọi
+3. Kiểm tra bằng `npm run build`
+
+### 12.6 Với nội dung có HTML
+Dùng `dangerouslySetInnerHTML` kèm component wrapper và lưu HTML string trong translation.
+
+### 12.7 Xử lý mảng bullet/list items
+Lưu mỗi item thành một key riêng, không lưu cả mảng. Ví dụ thay vì `items: ["a", "b"]`, dùng `item1: "a"`, `item2: "b"`.
+
+#

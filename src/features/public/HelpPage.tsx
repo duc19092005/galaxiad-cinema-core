@@ -52,7 +52,7 @@ const HelpPage: React.FC = () => {
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               width: 44, height: 44, borderRadius: 'var(--radius-md)',

@@ -28,8 +28,19 @@ import CashierPage from './features/cashier/CashierPage';
 import StaffPortalPage from './features/staff/StaffPortalPage';
 import ServicesPage from './features/public/ServicesPage';
 import HelpPage from './features/public/HelpPage';
+import CareerDetailPage from './features/public/CareerDetailPage';
+import PrivacyPolicyPage from './features/public/PrivacyPolicyPage';
+import TermsOfServicePage from './features/public/TermsOfServicePage';
+import AboutUsPage from './features/public/AboutUsPage';
+import CareersPage from './features/public/CareersPage';
+import CookiePolicyPage from './features/public/CookiePolicyPage';
+import SafetyRulesPage from './features/public/SafetyRulesPage';
+import LegalPage from './features/public/LegalPage';
+import ContactUsPage from './features/public/ContactUsPage';
 import ShiftNotificationListener from './components/ShiftNotificationListener';
 import ChatBot from './components/ChatBot';
+import ScrollToTop from './components/ScrollToTop';
+import ScrollRestore from './components/ScrollRestore';
 
 function AppRoutes() {
   const location = useLocation();
@@ -65,7 +76,15 @@ function AppRoutes() {
         <Route path="/account" element={<ProtectedRoute><PageTransition><AccountPage /></PageTransition></ProtectedRoute>} />
         <Route path="/services" element={<PageTransition><ServicesPage /></PageTransition>} />
         <Route path="/help" element={<PageTransition><HelpPage /></PageTransition>} />
-
+<Route path="/privacy-policy" element={<PageTransition><PrivacyPolicyPage /></PageTransition>} />
+        <Route path="/terms-of-service" element={<PageTransition><TermsOfServicePage /></PageTransition>} />
+        <Route path="/about-us" element={<PageTransition><AboutUsPage /></PageTransition>} />
+        <Route path="/careers" element={<PageTransition><CareersPage /></PageTransition>} />
+        <Route path="/careers/:jobId" element={<PageTransition><CareerDetailPage /></PageTransition>} />
+        <Route path="/cookie-policy" element={<PageTransition><CookiePolicyPage /></PageTransition>} />
+        <Route path="/safety-rules" element={<PageTransition><SafetyRulesPage /></PageTransition>} />
+        <Route path="/legal" element={<PageTransition><LegalPage /></PageTransition>} />
+        <Route path="/contact-us" element={<PageTransition><ContactUsPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
     </AnimatePresence>
@@ -79,6 +98,8 @@ function App() {
         <Toaster position="top-right" />
         <Router>
           <ShiftNotificationListener />
+          <ScrollToTop />
+          <ScrollRestore />
           <AppRoutes />
           <ChatBot />
         </Router>

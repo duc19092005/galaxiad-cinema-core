@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-    Play, Loader2, AlertCircle
-} from 'lucide-react';
+import { Play, Loader2, AlertCircle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import i18n from '../../i18n/config';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
@@ -55,6 +55,7 @@ const MOCK_RECOMMENDATIONS: PublicMovieListItem[] = [
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation();
 
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
     const [cities, setCities] = useState<string[]>([]);
@@ -120,7 +121,7 @@ const MovieDetailPage: React.FC = () => {
             }
         } catch (err) {
             console.error('Error fetching movie detail:', err);
-            setError('Failed to load movie details. Please try again later.');
+            setError(t('movieDetail.loadError', 'Failed to load movie details. Please try again later.'));
         } finally {
             setLoading(false);
         }
@@ -189,8 +190,8 @@ const MovieDetailPage: React.FC = () => {
         return (
             <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-center">
                 <AlertCircle size={64} className="text-red-400 mb-4" />
-                <p className="text-2xl font-bold text-white mb-6">{error || 'Movie not found'}</p>
-                <button className="px-6 py-3 rounded-xl font-bold text-black bg-[#ff8a00] border-none cursor-pointer" onClick={() => navigate('/home')}>Go Home</button>
+                                <p className="text-2xl font-bold text-white mb-6">{error || t('movieDetail.movieNotFound', 'Movie not found')}</p>
+                <button className="px-6 py-3 rounded-xl font-bold text-black bg-[#ff8a00] border-none cursor-pointer" onClick={() => navigate('/home')}>{t("movieDetail.goHome", "Go Home")}</button>
             </div>
         );
     }
@@ -255,19 +256,19 @@ const MovieDetailPage: React.FC = () => {
                             
                             <div className="flex-1">
                                 <div className="flex items-center gap-4 mb-4">
-                                    <span className="bg-[#e9c349] text-[#241a00] px-3 py-1 rounded font-extrabold text-sm">Age: {movie.movieRequiredAge}</span>
+                                                                        <span className="bg-[#e9c349] text-[#241a00] px-3 py-1 rounded font-extrabold text-sm">{t('movieDetail.age', 'Age')}: {movie.movieRequiredAge}</span>
                                     <span className="flex items-center gap-1 text-[#ffb77f]">
                                         <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="font-semibold text-sm">Must Watch</span>
+                                        <span className="font-semibold text-sm">{t("movieDetail.mustWatch", "Must Watch")}</span>
                                     </span>
                                 </div>
                                 <h1 className="font-bold text-4xl md:text-6xl text-white mb-6 tracking-tighter" style={{ fontFamily: "'Montserrat', sans-serif" }}>
                                     {movie.movieName}
                                 </h1>
                                 <div className="flex flex-wrap gap-6 text-[#ddc1ae] text-sm font-medium">
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">schedule</span> {movie.movieDuration} mins</span>
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">calendar_today</span> {movie.releaseDate ? formatDate(movie.releaseDate) : 'Coming Soon'}</span>
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">theaters</span> IMAX, 2D, 3D</span>
+                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">schedule</span> {movie.movieDuration} {t('movieDetail.minutes', 'mins')}</span>
+                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">calendar_today</span> {movie.releaseDate ? formatDate(movie.releaseDate) : t('movieDetail.comingSoon', 'Coming Soon')}</span>
+                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">theaters</span> {movie.movieFormatInfos || t('movieDetail.formatUpdating', 'Updating')}</span>
                                 </div>
                             </div>
                         </div>
@@ -282,28 +283,28 @@ const MovieDetailPage: React.FC = () => {
                             <div>
                                 <div className="flex items-center gap-3 mb-6">
                                     <span className="material-symbols-outlined text-[#ffb77f] text-[28px]">info</span>
-                                    <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>Storyline</h2>
+                                                                        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.storyline", "Storyline")}</h2>
                                 </div>
                                 <p className="text-lg text-white/80 leading-relaxed break-words">
-                                    {movie.movieDescription || 'No storyline details available.'}
+                                                                        {movie.movieDescription || t('movieDetail.noDescription', 'No storyline details available.')}
                                 </p>
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/10">
                                 <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">Director</p>
+                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.director", "Director")}</p>
                                     <p className="text-xl font-bold text-white">{movie.director || 'N/A'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">Cast</p>
+                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.cast", "Cast")}</p>
                                     <p className="text-xl font-bold text-white">{movie.actor || 'N/A'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">Genres</p>
+                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.genres", "Genres")}</p>
                                     <p className="text-xl font-bold text-white">{movie.movieCategoryInfos || 'N/A'}</p>
                                 </div>
                                 <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">Language</p>
+                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.language", "Language")}</p>
                                     <p className="text-xl font-bold text-white">English, Vietnamese</p>
                                 </div>
                             </div>
@@ -316,8 +317,7 @@ const MovieDetailPage: React.FC = () => {
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#ffb77f]/50 transition-all font-semibold text-white no-underline"
                                     >
-                                        <Play size={18} className="text-[#ffb77f] fill-[#ffb77f]" />
-                                        Watch Trailer
+                                        <Play size={18} className="text-[#ffb77f] fill-[#ffb77f]" />                                        {t('movieDetail.watchTrailer', 'Watch Trailer')}
                                     </a>
                                 </div>
                             )}
@@ -326,11 +326,11 @@ const MovieDetailPage: React.FC = () => {
                         {/* Right Column: Booking */}
                         <div className="lg:col-span-5">
                             <div className="glass-card p-8 rounded-2xl border border-white/5 orange-glow sticky top-32">
-                                <h2 className="text-2xl font-bold text-white mb-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>Book Tickets</h2>
+                                <h2 className="text-2xl font-bold text-white mb-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.bookTickets", "Book Tickets")}</h2>
                                 <div className="space-y-8">
                                     {/* City Selection */}
                                     <div>
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">SELECT CITY</label>
+                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectCity", "SELECT CITY")}</label>
                                         <div className="relative">
                                             <span className="material-symbols-outlined text-[#ffb77f] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">location_on</span>
                                             <select
@@ -348,15 +348,15 @@ const MovieDetailPage: React.FC = () => {
                                     
                                     {/* Date Selection */}
                                     <div>
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">SELECT DATE</label>
+                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectDate", "SELECT DATE")}</label>
                                         <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                                             {scheduleDates.length === 0 ? (
-                                                <div className="text-sm text-zinc-500 py-4 w-full text-center">No dates available</div>
+                                                <div className="text-sm text-zinc-500 py-4 w-full text-center">{t("movieDetail.noDates", "No dates available")}</div>
                                             ) : (
                                                 scheduleDates.map(date => {
                                                     const d = new Date(date);
                                                     const isSelected = selectedDate === date;
-                                                    const month = d.toLocaleDateString('en-US', { month: 'short' }).toUpperCase();
+                                                    const month = d.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' }).toUpperCase();
                                                     const dayNum = d.getDate();
                                                     return (
                                                         <button
@@ -379,15 +379,14 @@ const MovieDetailPage: React.FC = () => {
                                     
                                     {/* Location & Time */}
                                     <div>
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">SELECT CINEMA & TIME</label>
+                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectCinemaTime", "SELECT CINEMA & TIME")}</label>
                                         <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
                                             {loadingShowtimes ? (
                                                 <div className="flex items-center justify-center py-8">
                                                     <Loader2 className="animate-spin text-[#ff8a00]" size={24} />
                                                 </div>
                                             ) : showtimes.length === 0 ? (
-                                                <div className="text-center py-8 text-zinc-500 text-sm">
-                                                    No schedules found for this date.
+                                                <div className="text-center py-8 text-zinc-500 text-sm">                                                    {t('movieDetail.noSchedules', 'No schedules found for this date.')}
                                                 </div>
                                             ) : (
                                                 showtimes.map((cinema, idx) => (
@@ -427,11 +426,11 @@ const MovieDetailPage: React.FC = () => {
                         <div className="px-6 md:px-16 max-w-7xl mx-auto">
                             <div className="flex justify-between items-end mb-10">
                                 <div>
-                                    <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>More Like This</h2>
-                                    <p className="text-sm text-[#ddc1ae]/80">Curated cinematic events you might enjoy.</p>
+                                    <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
+                                    <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
                                 </div>
                                 <button onClick={() => navigate('/home')} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
-                                    View All <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                                                                        {t('movieDetail.viewAll', 'View All')} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                                 </button>
                             </div>
                             <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth">
@@ -451,13 +450,12 @@ const MovieDetailPage: React.FC = () => {
                                                 }}
                                             />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                                <button className="bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold text-sm border-none cursor-pointer">
-                                                    Quick Book
+                                                                                                <button className="bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold text-sm border-none cursor-pointer">                                                    {t('movieDetail.quickBook', 'Quick Book')}
                                                 </button>
                                             </div>
                                         </div>
                                         <h3 className="font-bold text-md text-white group-hover:text-[#ff8a00] transition-colors truncate">{recMovie.movieName}</h3>
-                                        <p className="text-xs text-[#ddc1ae] mt-1">{recMovie.movieCategoryInfos || 'Movie'} • {recMovie.movieDuration} mins</p>
+                                                                                <p className="text-xs text-[#ddc1ae] mt-1">{recMovie.movieCategoryInfos || t('movieDetail.movie', 'Movie')} • {recMovie.movieDuration} phút</p>
                                     </div>
                                 ))}
                             </div>

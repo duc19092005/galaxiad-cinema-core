@@ -15,6 +15,7 @@ import type { PublicMovieListItem, ActiveCinema, ActiveMovie } from '../../types
 import type { TrendingMovie } from '../../types/comment.types';
 import { useTranslation } from 'react-i18next';
 import Header from '../../components/Header';
+import BackToTop from '../../components/BackToTop';
 
 
 const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
@@ -123,6 +124,22 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         </div>
       )}
     </div>
+  );
+};
+
+const FooterLink: React.FC<{ label: string; path: string }> = ({ label, path }) => {
+  const nav = useNavigate();
+  return (
+    <button onClick={() => nav(path)} style={{
+      fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none',
+      background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+      padding: 0, transition: 'color 0.2s ease',
+    }}
+      onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+    >
+      {label}
+    </button>
   );
 };
 
@@ -623,9 +640,9 @@ const HomePage: React.FC = () => {
       <footer style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px)' }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
-          gap: 'clamp(24px, 5vw, 40px)',
-          maxWidth: 1280, margin: '0 auto'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 160px), 1fr))',
+          gap: 'clamp(24px, 4vw, 40px)',
+          maxWidth: 1280, marginLeft: 'auto', marginRight: 'auto',
         }}>
           <div>
             <h3 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 20, fontWeight: 800, background: 'linear-gradient(135deg, var(--accent), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', marginBottom: 16 }}>
@@ -636,15 +653,30 @@ const HomePage: React.FC = () => {
             </p>
           </div>
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Quick Links</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Liên Kết Nhanh</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {[{ label: 'Movies', path: '/home' }, { label: 'Showtimes', path: '/showtimes' }, { label: 'Theaters', path: '/theaters' }, { label: 'Offers', path: '/offers' }, { label: 'Services', path: '/services' }, { label: 'Help', path: '/help' }].map(link => (
-                <button key={link.label} onClick={() => navigate(link.path)} style={{ fontSize: 13, color: 'var(--text-secondary)', textDecoration: 'none', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', padding: 0 }}>{link.label}</button>
-              ))}
+              <FooterLink label="Chính Sách Bảo Mật" path="/privacy-policy" />
+              <FooterLink label="Điều Khoản Sử Dụng" path="/terms-of-service" />
+              <FooterLink label="Liên Hệ Ngay" path="/contact-us" />
             </div>
           </div>
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16 }}>Contact</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Company</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <FooterLink label="Tuyển Dụng" path="/careers" />
+              <FooterLink label="Phản Hồi" path="/contact-us" />
+              <FooterLink label="About Us" path="/about-us" />
+            </div>
+          </div>
+          <div>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Pháp Lý</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <FooterLink label="Cookie Policy" path="/cookie-policy" />
+              <FooterLink label="Safety Rules" path="/safety-rules" />
+            </div>
+          </div>
+          <div>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Liên Hệ</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
               <span>support@cinemapro.com</span>
               <span>1800-123-456</span>
@@ -698,6 +730,7 @@ const HomePage: React.FC = () => {
         </div>
       </footer>
       </div>
+      <BackToTop />
     </>
   );
 };

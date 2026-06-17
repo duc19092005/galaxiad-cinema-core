@@ -1,7 +1,7 @@
-// src/features/misc/NotFound.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Film, AlertTriangle, Home } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Map role -> route chính của role đó
 const roleRouteMap: Record<string, string> = {
@@ -15,6 +15,7 @@ const roleRouteMap: Record<string, string> = {
 
 const NotFound: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleBackToLobby = () => {
     const storedUser = localStorage.getItem('user_info');
@@ -53,7 +54,7 @@ const NotFound: React.FC = () => {
 
   return (
     <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-black font-sans select-none">
-      {/* --- Background Layers (Giữ nguyên tone rạp phim) --- */}
+      {/* --- Background Layers --- */}
       <div
         className="absolute inset-0 z-0 opacity-30 bg-cover bg-center"
         style={{
@@ -63,7 +64,7 @@ const NotFound: React.FC = () => {
       ></div>
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-black via-black/90 to-red-950/30"></div>
 
-      {/* --- Spotlight Effect (Hiệu ứng đèn chiếu nhấp nháy) --- */}
+      {/* --- Spotlight Effect --- */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-600/20 blur-[120px] rounded-full animate-pulse-slow"></div>
 
       {/* --- Main Content --- */}
@@ -91,15 +92,15 @@ const NotFound: React.FC = () => {
 
         {/* Headline */}
         <h2 className="mt-4 text-2xl sm:text-3xl font-bold text-white uppercase tracking-widest">
-          Scene Missing
+          {t('pageNotFound.title', 'Scene Missing')}
         </h2>
 
         {/* Description */}
         <p className="mt-4 text-gray-400 text-lg font-medium">
-          Oops! The reel broke, or this movie doesn't exist.
+          {t('pageNotFound.description', "Oops! The reel broke, or this movie doesn't exist.")}
         </p>
         <p className="text-gray-500 text-sm">
-          (Error Code: LOST_IN_CINEMA)
+          {t('pageNotFound.errorCode', '(Error Code: LOST_IN_CINEMA)')}
         </p>
 
         {/* Back to Lobby Button (điều hướng theo role) */}
@@ -110,13 +111,13 @@ const NotFound: React.FC = () => {
         >
           <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:animate-shine" />
           <Home className="w-5 h-5 relative z-10" />
-          <span className="relative z-10">Back to Lobby</span>
+          <span className="relative z-10">{t('pageNotFound.backButton', 'Back to Lobby')}</span>
         </button>
       </div>
 
       {/* Footer decoration */}
       <div className="absolute bottom-4 text-gray-600 text-xs uppercase tracking-[0.3em] font-bold opacity-50">
-        Cinema Paradiso System
+        {t('pageNotFound.footer', 'Cinema Paradiso System')}
       </div>
     </div>
   );
