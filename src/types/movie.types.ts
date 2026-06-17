@@ -21,11 +21,13 @@ export interface MovieGenre {
 }
 
 /** Movie list item / detail (from GET /api/movieManager/movies) */
+
 export interface Movie {
     movieId: string;
     movieName: string;
     movieDescriptions: string;
     movieImageUrl: string;
+    movieBannerUrl?: string;
     endedDate: string; // ISO datetime
     startedDate: string; // ISO datetime
     movieGenresInfos: string[];
@@ -49,6 +51,7 @@ export interface CreateMovieFormData {
     movieName: string;
     movieDescription: string;
     movieImage: File;
+    movieBanner?: File;
     endedDate: string; // ISO datetime
     startedDate: string; // ISO datetime
     movieFormatIds: string[];
@@ -66,6 +69,7 @@ export interface UpdateMovieFormData {
     movieName?: string;
     movieDescription?: string;
     movieImage?: File;
+    movieBanner?: File;
     endedDate?: string | null;
     startedDate?: string | null;
     movieFormatIds?: string[];

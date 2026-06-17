@@ -8,7 +8,7 @@ import { showSuccess, showError } from '../../utils/ToastUtils';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
 import { scheduleApi } from '../../api/scheduleApi';
-import { toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
+import { vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 import { useCinema } from '../../contexts/CinemaContext';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema } from '../../types/facilities.types';
@@ -254,7 +254,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                     scheduleId: s.id.startsWith('new-') ? "00000000-0000-0000-0000-000000000000" : s.id,
                     movieId: s.movieId,
                     formatId: s.formatId,
-                    startedDate: vietnamDateTimeLocalToOffsetString(toVietnamDateTimeLocalValue(s.start)) ?? s.start
+                    startedDate: vietnamDateTimeLocalToOffsetString(s.start) ?? s.start
                 }))
             };
             await scheduleApi.createSchedule(payload);

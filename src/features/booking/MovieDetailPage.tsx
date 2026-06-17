@@ -96,6 +96,7 @@ const MovieDetailPage: React.FC = () => {
                     movieId: item.movieId,
                     movieName: item.movieName,
                     moviePosterURL: item.movieImageUrl,
+                    movieBannerURL: item.movieBannerUrl,
                     movieFormatInfos: '',
                     movieDuration: item.movieDuration,
                     movieRequiredAge: item.movieRequiredAgeSymbol,
@@ -226,14 +227,14 @@ const MovieDetailPage: React.FC = () => {
 
             <main className="pt-20">
                 {/* Hero Section */}
-                <section className="relative h-[550px] md:h-[870px] w-full overflow-hidden flex items-end">
+                <section className="relative h-[480px] md:h-[720px] w-full overflow-hidden flex items-end">
                     <div className="absolute inset-0 z-0">
                         <img
                             alt={movie.movieName}
-                            className="w-full h-full object-cover filter blur-[20px] brightness-[0.4] scale-110"
-                            src={movie.moviePosterURL}
+                            className="w-full h-full object-cover object-center filter blur-[1px] brightness-[0.6] scale-105"
+                            src={movie.movieBannerURL || movie.moviePosterURL}
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                (e.target as HTMLImageElement).src = movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
                             }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>

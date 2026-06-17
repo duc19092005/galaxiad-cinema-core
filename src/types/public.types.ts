@@ -5,6 +5,7 @@ export interface PublicMovieListItem {
     movieId: string;
     movieName: string;
     moviePosterURL: string;
+    movieBannerURL?: string;
     movieFormatInfos: string;
     movieDuration: number;
     movieRequiredAge: string;
@@ -28,6 +29,7 @@ export interface PublicMovieDetail extends PublicMovieListItem {
     director: string;
     actor: string;
     movieDescription: string;
+    movieBannerURL?: string;
 }
 
 export interface PublicCity {
@@ -98,6 +100,14 @@ export interface PublicGenre {
 export interface ActiveCinema {
     cinemaId: string;
     cinemaName: string;
+    cinemaCity?: string;
+}
+
+export interface NearestCinema extends ActiveCinema {
+    cinemaLocation?: string;
+    latitude?: number;
+    longitude?: number;
+    distanceInKm: number;
 }
 
 export interface ActiveMovie {

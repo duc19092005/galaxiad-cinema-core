@@ -34,8 +34,13 @@ export const commentApi = {
     return response.data;
   },
 
-  getTrendingMovies: async (params: { days?: number; take?: number } = {}): Promise<ApiSuccessResponse<TrendingMovie[]>> => {
+  getTrendingMovies: async (params: { days?: number; take?: number; cinemaId?: string; city?: string } = {}): Promise<ApiSuccessResponse<TrendingMovie[]>> => {
     const response = await identityAxios.get<ApiSuccessResponse<TrendingMovie[]>>('/comments/movies/trending', { params });
+    return response.data;
+  },
+
+  getTopRatedMovies: async (params: { take?: number; cinemaId?: string } = {}): Promise<ApiSuccessResponse<TrendingMovie[]>> => {
+    const response = await identityAxios.get<ApiSuccessResponse<TrendingMovie[]>>('/comments/movies/top-rated', { params });
     return response.data;
   },
 
