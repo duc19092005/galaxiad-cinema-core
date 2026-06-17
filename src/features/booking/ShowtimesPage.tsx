@@ -139,10 +139,43 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 export const ShowtimesPage: React.FC = () => {
   const navigate = useNavigate();
 
+  // Read initial parameters from URL or localStorage to prevent race conditions on mount
+  const getInitialParams = () => {
+    const params = new URLSearchParams(window.location.search);
+    const qDate = params.get('date');
+    const qMovie = params.get('movie');
+    const qCinema = params.get('cinema');
+
+    let initialCinema = 'All';
+    if (qCinema) {
+      initialCinema = qCinema;
+    } else {
+      const stored = localStorage.getItem('user_selected_cinema');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed.cinemaId) {
+            initialCinema = parsed.cinemaId;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return {
+      date: qDate || '',
+      movie: qMovie || 'All',
+      cinema: initialCinema,
+    };
+  };
+
+  const initialParams = getInitialParams();
+
   // Filter States
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('All');
-  const [selectedMovieId, setSelectedMovieId] = useState<string>('All');
+  const [selectedDate, setSelectedDate] = useState<string>(initialParams.date);
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>(initialParams.cinema);
+  const [selectedMovieId, setSelectedMovieId] = useState<string>(initialParams.movie);
 
   // Master Data
   const [cinemas, setCinemas] = useState<ActiveCinema[]>([]);
@@ -157,19 +190,26 @@ export const ShowtimesPage: React.FC = () => {
 
   // Fetch available dates from API & generate date list
   useEffect(() => {
+    let active = true;
     const fetchAndGenerateDates = async () => {
       try {
         const res = await publicApi.getUpcomingDates({
           cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined
         });
+        if (!active) return;
         const availableFromApi: string[] = res.isSuccess ? (res.data || []) : [];
         setAvailableDates(availableFromApi);
       } catch (err) {
         console.error('Error fetching upcoming dates:', err);
-        setAvailableDates([]);
+        if (active) {
+          setAvailableDates([]);
+        }
       }
     };
     fetchAndGenerateDates();
+    return () => {
+      active = false;
+    };
   }, [selectedCinemaId]);
 
   // Generate date list from available dates (max 7 days ahead)
@@ -194,15 +234,17 @@ export const ShowtimesPage: React.FC = () => {
       });
     }
 
-    // Filter to only keep dates that exist in availableDates, but always keep at least 1 (today)
+    // Filter to only keep dates that exist in availableDates
     const filteredDates = dates.filter(d => availableDates.includes(d.value));
     
-    // If no available dates match, keep all dates (fallback)
-    const finalDates = filteredDates.length > 0 ? filteredDates : dates;
+    const finalDates = filteredDates;
     
     setDateList(finalDates);
     if (finalDates.length > 0) {
       setSelectedDate(finalDates[0].value);
+    } else {
+      setSelectedDate('');
+      setScheduleResults([]);
     }
   }, [availableDates]);
 
@@ -228,6 +270,10 @@ export const ShowtimesPage: React.FC = () => {
 
     // Check if user pre-selected a cinema in proximity selector
     const checkPreselectedCinema = () => {
+      // If cinema is in the URL, do not overwrite it with stored cinema
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('cinema')) return;
+
       const stored = localStorage.getItem('user_selected_cinema');
       if (stored) {
         try {
@@ -245,21 +291,10 @@ export const ShowtimesPage: React.FC = () => {
     return () => window.removeEventListener('user_selected_cinema_changed', checkPreselectedCinema);
   }, []);
 
-  // Read initial query params from URL (e.g. from Home page Quick Search)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const qDate = params.get('date');
-    const qMovie = params.get('movie');
-    const qCinema = params.get('cinema');
-    
-    if (qDate) setSelectedDate(qDate);
-    if (qMovie) setSelectedMovieId(qMovie);
-    if (qCinema) setSelectedCinemaId(qCinema);
-  }, []);
-
   // Fetch schedules when filters change
   useEffect(() => {
     if (!selectedDate) return;
+    let active = true;
     const fetchSchedules = async () => {
       setLoading(true);
       try {
@@ -268,6 +303,7 @@ export const ShowtimesPage: React.FC = () => {
           selectedMovieId === 'All' ? undefined : selectedMovieId,
           selectedCinemaId === 'All' ? undefined : selectedCinemaId
         );
+        if (!active) return;
         if (res.isSuccess) {
           setScheduleResults(res.data || []);
         } else {
@@ -275,12 +311,19 @@ export const ShowtimesPage: React.FC = () => {
         }
       } catch (err) {
         console.error(err);
-        showError('Error loading schedules.');
+        if (active) {
+          showError('Error loading schedules.');
+        }
       } finally {
-        setLoading(false);
+        if (active) {
+          setLoading(false);
+        }
       }
     };
     fetchSchedules();
+    return () => {
+      active = false;
+    };
   }, [selectedDate, selectedCinemaId, selectedMovieId]);
 
   const formatTime = (timeStr: string) => {

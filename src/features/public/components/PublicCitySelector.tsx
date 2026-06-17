@@ -17,7 +17,9 @@ const PublicCitySelector: React.FC<PublicCitySelectorProps> = ({ selectedCity, o
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -27,53 +29,63 @@ const PublicCitySelector: React.FC<PublicCitySelectorProps> = ({ selectedCity, o
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="btn btn-secondary"
-        style={{ padding: '6px 12px', gap: 'var(--space-2)', fontSize: 'var(--text-sm)', height: 'auto' }}
+        className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-white/5 transition-all duration-200 border border-transparent hover:border-white/10 text-white bg-transparent cursor-pointer"
+        style={{ fontSize: 13, fontWeight: 500 }}
       >
-        <MapPin size={14} />
+        <MapPin size={15} style={{ color: selectedCity ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.7)' }} />
         <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {selectedCity || t('All Cities')}
+          {selectedCity || t('All Cities', 'Tất cả thành phố')}
         </span>
-        <ChevronDown size={12} style={{
-          transition: 'transform 300ms var(--ease)',
-          transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-        }} />
+        <ChevronDown 
+          size={12} 
+          style={{
+            transition: 'transform 200ms',
+            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            color: 'rgba(255,255,255,0.4)'
+          }} 
+        />
       </button>
 
       {isOpen && (
-        <div className="card surface-elevated" style={{
-          position: 'absolute', right: 0, marginTop: 'var(--space-2)',
-          width: 240, padding: 'var(--space-1)', boxShadow: 'var(--shadow-lg)', zIndex: 100,
-        }}>
+        <div 
+          className="absolute right-0 mt-2 py-1 rounded-xl z-[1100] min-w-[180px]"
+          style={{
+            background: 'var(--bg-elevated, #18181b)',
+            border: '1px solid var(--border-color, #27272a)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          }}
+        >
+          {/* Option: All Cities */}
           <button
             onClick={() => { onCityChange(''); setIsOpen(false); }}
-            className="btn-ghost"
-            style={{
-              width: '100%', justifyContent: 'space-between', textAlign: 'left',
-              fontSize: 'var(--text-sm)',
-              backgroundColor: selectedCity === '' ? 'var(--accent-soft)' : 'transparent',
-              color: selectedCity === '' ? 'var(--accent)' : 'var(--text-secondary)',
-            }}
+            className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-sm border-none bg-transparent cursor-pointer transition-colors ${
+              selectedCity === ''
+                ? 'text-[#ffb77f] bg-[#ff8a00]/10 font-bold'
+                : 'text-zinc-300 hover:bg-white/5 hover:text-white'
+            }`}
           >
-            <span style={{ fontWeight: selectedCity === '' ? 500 : 400 }}>{t('All Cities')}</span>
-            {selectedCity === '' && <Check size={14} />}
+            <span>{t('All Cities', 'Tất cả thành phố')}</span>
+            {selectedCity === '' && <Check size={14} className="text-[#ffb77f] flex-shrink-0" />}
           </button>
-          {CITIES.map(city => (
-            <button
-              key={city}
-              onClick={() => { onCityChange(city); setIsOpen(false); }}
-              className="btn-ghost"
-              style={{
-                width: '100%', justifyContent: 'space-between', textAlign: 'left',
-                fontSize: 'var(--text-sm)',
-                backgroundColor: selectedCity === city ? 'var(--accent-soft)' : 'transparent',
-                color: selectedCity === city ? 'var(--accent)' : 'var(--text-secondary)',
-              }}
-            >
-              <span style={{ fontWeight: selectedCity === city ? 500 : 400 }}>{city}</span>
-              {selectedCity === city && <Check size={14} />}
-            </button>
-          ))}
+
+          {/* Option: Specific Cities */}
+          {CITIES.map(city => {
+            const isActive = selectedCity === city;
+            return (
+              <button
+                key={city}
+                onClick={() => { onCityChange(city); setIsOpen(false); }}
+                className={`w-full text-left px-4 py-2.5 flex items-center justify-between text-sm border-none bg-transparent cursor-pointer transition-colors ${
+                  isActive
+                    ? 'text-[#ffb77f] bg-[#ff8a00]/10 font-bold'
+                    : 'text-zinc-300 hover:bg-white/5 hover:text-white'
+                }`}
+              >
+                <span>{city}</span>
+                {isActive && <Check size={14} className="text-[#ffb77f] flex-shrink-0" />}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

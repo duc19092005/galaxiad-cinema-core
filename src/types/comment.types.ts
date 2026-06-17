@@ -51,12 +51,14 @@ export interface TrendingMovie {
   movieId: string;
   movieName: string;
   movieImageUrl: string;
+  movieBannerUrl?: string;
   movieDescription: string;
   movieDuration: number;
   movieRequiredAgeSymbol: string;
   paidTicketCount: number;
   viewCount: number;
   averageRating: number;
+  ratingCount?: number;
   trendingScore: number;
 }
 

@@ -100,6 +100,14 @@ export interface PublicGenre {
 export interface ActiveCinema {
     cinemaId: string;
     cinemaName: string;
+    cinemaCity?: string;
+}
+
+export interface NearestCinema extends ActiveCinema {
+    cinemaLocation?: string;
+    latitude?: number;
+    longitude?: number;
+    distanceInKm: number;
 }
 
 export interface ActiveMovie {

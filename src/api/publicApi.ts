@@ -10,7 +10,8 @@ import type {
     PublicGenre,
     ActiveCinema,
     ActiveMovie,
-    SearchScheduleResult
+    SearchScheduleResult,
+    NearestCinema
 } from '../types/public.types';
 
 export const publicApi = {
@@ -31,7 +32,7 @@ export const publicApi = {
     },
 
     /** 2.1 Get All Movies */
-    getAllMovies: async (params: { keyword?: string; city?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+    getAllMovies: async (params: { keyword?: string; city?: string; cinemaId?: string; pageIndex?: number; pageSize?: number }): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>('/Movies', {
             params
         });
@@ -116,6 +117,16 @@ export const publicApi = {
     getUpcomingDates: async (params?: { city?: string; cinemaId?: string }): Promise<ApiSuccessResponse<string[]>> => {
         const response = await publicAxios.get<ApiSuccessResponse<string[]>>('/UpcomingDates', {
             params
+        });
+        return response.data;
+    },
+
+    /** 12. Get Nearest Cinemas based on location */
+    getNearestCinemas: async (latitude: number, longitude: number): Promise<ApiSuccessResponse<NearestCinema[]>> => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<NearestCinema[]>>('/movies/nearest-cinemas', {
+            baseURL: `${API_BASE_URL}/api/v1/public`,
+            params: { latitude, longitude }
         });
         return response.data;
     }

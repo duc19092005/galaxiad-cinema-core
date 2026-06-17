@@ -32,6 +32,7 @@ interface CustomSelectProps {
   options: { value: string; label: string }[];
   onChange: (val: string) => void;
   borderLeft?: boolean;
+  onOpen?: () => void;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -42,6 +43,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   options,
   onChange,
   borderLeft,
+  onOpen,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,6 +57,14 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleToggle = () => {
+    const nextOpen = !isOpen;
+    setIsOpen(nextOpen);
+    if (nextOpen && onOpen) {
+      onOpen();
+    }
+  };
 
   return (
     <div
@@ -70,7 +80,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         transition: 'background-color 0.2s ease',
       }}
       className={`hover:bg-white/5 ${borderLeft ? 'md:border-l md:border-white/10' : ''}`}
-      onClick={() => setIsOpen(!isOpen)}
+      onClick={handleToggle}
     >
       <span style={{ fontSize: 10, color: 'var(--accent, #ff8a00)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
         {step}. {label}
@@ -166,9 +176,44 @@ const HomePage: React.FC = () => {
   const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
   const [availableDates, setAvailableDates] = useState<string[]>([]);
 
+  // Geolocation and nearest cinemas state
+  const [nearestCinemas, setNearestCinemas] = useState<any[]>([]);
+  const [loadingLocation, setLoadingLocation] = useState(false);
+
+  // Sliders refs
+  const nowShowingRef = useRef<HTMLDivElement>(null);
+  const comingSoonRef = useRef<HTMLDivElement>(null);
+
+  const handleCinemaSelectOpen = () => {
+    if (loadingLocation || nearestCinemas.length > 0) return;
+
+    setLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const res = await publicApi.getNearestCinemas(latitude, longitude);
+          if (res.isSuccess && res.data) {
+            setNearestCinemas(res.data);
+          }
+        } catch (err) {
+          console.error('Failed to load nearest cinemas:', err);
+        } finally {
+          setLoadingLocation(false);
+        }
+      },
+      (geoError) => {
+        console.error('Geolocation error:', geoError);
+        setLoadingLocation(false);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
+
   useEffect(() => {
     const handleCityChange = () => {
       setSelectedCity(localStorage.getItem('user_selected_city') || '');
+      setSelectedCinemaId('All');
     };
     window.addEventListener('user_selected_city_changed', handleCityChange);
     return () => window.removeEventListener('user_selected_city_changed', handleCityChange);
@@ -214,11 +259,13 @@ const HomePage: React.FC = () => {
 
     // Chỉ giữ lại các ngày có lịch chiếu
     const filteredDates = dates.filter(d => availableDates.includes(d.value));
-    const finalDates = filteredDates.length > 0 ? filteredDates : dates;
+    const finalDates = filteredDates;
     
     setDateList(finalDates);
     if (finalDates.length > 0) {
       setSelectedDate(finalDates[0].value);
+    } else {
+      setSelectedDate('');
     }
 
     // Fetch master data for booking bar
@@ -235,17 +282,26 @@ const HomePage: React.FC = () => {
       }
     };
     fetchMasterData();
-    fetchTrendingMovies();
   }, [availableDates]);
+
+  const [trendingTab, setTrendingTab] = useState<'system' | 'local'>('system');
 
   useEffect(() => {
     fetchMovies();
-  }, [selectedCity]);
+  }, [selectedCity, selectedCinemaId]);
+
+  useEffect(() => {
+    fetchTrendingMovies();
+  }, [selectedCity, selectedCinemaId, trendingTab]);
 
   const fetchMovies = async () => {
     setLoading(true); setError(null);
     try {
-      const response = await publicApi.getAllMovies({ city: selectedCity || undefined, pageSize: 20 });
+      const response = await publicApi.getAllMovies({
+        city: selectedCity || undefined,
+        cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined,
+        pageSize: 40
+      });
       const items = response.data || [];
       setNowShowing(items.filter(m => !m.isCommingSoon));
       setComingSoon(items.filter(m => m.isCommingSoon));
@@ -266,13 +322,34 @@ const HomePage: React.FC = () => {
   const fetchTrendingMovies = async () => {
     setLoadingTrending(true);
     try {
-      const response = await commentApi.getTrendingMovies({ days: 30, take: 3 });
+      const params: any = {
+        days: 30,
+        take: 3
+      };
+      if (trendingTab === 'local') {
+        if (selectedCinemaId !== 'All') {
+          params.cinemaId = selectedCinemaId;
+        } else if (selectedCity) {
+          params.city = selectedCity;
+        }
+      }
+      const response = await commentApi.getTrendingMovies(params);
       setTrendingMovies(response.data || []);
     } catch (err) {
       console.error('Error fetching trending movies:', err);
       setTrendingMovies([]);
     } finally {
       setLoadingTrending(false);
+    }
+  };
+
+  const scroll = (ref: React.RefObject<HTMLDivElement | null>, direction: 'left' | 'right') => {
+    if (ref.current) {
+      const scrollAmount = ref.current.clientWidth * 0.75;
+      ref.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -296,9 +373,29 @@ const HomePage: React.FC = () => {
   // 3. Cinema options
   const cinemaOptions = [
     { value: 'All', label: t('home.allCinemas', 'All Cinemas') },
-    ...cinemas.map((c) => ({ value: c.cinemaId, label: c.cinemaName })),
+    ...(nearestCinemas.length > 0
+      ? nearestCinemas
+          .filter((c) => !selectedCity || c.cinemaLocation?.toLowerCase().includes(selectedCity.toLowerCase()) || c.cinemaName.toLowerCase().includes(selectedCity.toLowerCase()))
+          .map((c) => ({
+            value: c.cinemaId,
+            label: `${c.cinemaName} (${c.distanceInKm} km)`,
+          }))
+      : cinemas
+          .filter((c) => !selectedCity || c.cinemaCity?.toLowerCase().includes(selectedCity.toLowerCase()))
+          .map((c) => ({ value: c.cinemaId, label: c.cinemaName }))),
   ];
-  const selectedCinemaLabel = cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || t('home.allCinemas', 'All Cinemas');
+
+  const getSelectedCinemaLabel = () => {
+    if (selectedCinemaId === 'All') return t('home.allCinemas', 'All Cinemas');
+    if (nearestCinemas.length > 0) {
+      const foundNearest = nearestCinemas.find((c) => c.cinemaId === selectedCinemaId);
+      if (foundNearest) {
+        return `${foundNearest.cinemaName} (${foundNearest.distanceInKm} km)`;
+      }
+    }
+    return cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || t('home.allCinemas', 'All Cinemas');
+  };
+  const selectedCinemaLabel = getSelectedCinemaLabel();
 
   return (
     <>
@@ -306,6 +403,13 @@ const HomePage: React.FC = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
         }
       `}</style>
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
@@ -387,9 +491,10 @@ const HomePage: React.FC = () => {
                 step="1"
                 label={t('home.cinema')}
                 value={selectedCinemaId}
-                displayValue={selectedCinemaLabel}
+                displayValue={loadingLocation ? t('home.loadingLocation', 'Locating...') : selectedCinemaLabel}
                 options={cinemaOptions}
                 onChange={setSelectedCinemaId}
+                onOpen={handleCinemaSelectOpen}
               />
 
               {/* 2. Movie Selector */}
@@ -444,7 +549,7 @@ const HomePage: React.FC = () => {
 
       {/* ===== TOP TRENDING SECTION ===== */}
       <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(40px, 8vw, 80px) clamp(16px, 4vw, 24px)', overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <Sparkles size={16} style={{ color: 'var(--accent)' }} />
@@ -453,6 +558,42 @@ const HomePage: React.FC = () => {
             <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
               {t('home.topTrending')}
             </h2>
+          </div>
+
+          {/* Trending Tab Switcher */}
+          <div style={{ display: 'flex', gap: 6, padding: 4, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <button
+              onClick={() => setTrendingTab('system')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                background: trendingTab === 'system' ? 'rgba(255,138,0,0.15)' : 'transparent',
+                color: trendingTab === 'system' ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Toàn Hệ Thống
+            </button>
+            <button
+              onClick={() => setTrendingTab('local')}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+                border: 'none',
+                background: trendingTab === 'local' ? 'rgba(255,138,0,0.15)' : 'transparent',
+                color: trendingTab === 'local' ? 'var(--accent)' : 'rgba(255,255,255,0.6)',
+                transition: 'all 0.2s',
+              }}
+            >
+              {selectedCity ? `Tại ${selectedCity}` : 'Tại Địa Phương'}
+            </button>
           </div>
         </div>
 
@@ -553,112 +694,249 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ===== NOW SHOWING SECTION ===== */}
+      {/* ===== MOVIES SECTION ===== */}
       <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px)' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 64, minWidth: 0 }}>
+          
+          {/* Now Showing Section */}
           <div>
-            <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-              {t('home.nowShowingBadge')}
-            </span>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
-              {t('home.nowShowing')}
-            </h2>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="state-center" style={{ minHeight: 300 }}>
-            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-16)' }}>Loading movies...</p>
-          </div>
-        ) : error ? (
-          <div className="state-center" style={{ minHeight: 300 }}>
-            <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
-            <p style={{ color: 'var(--danger)', marginTop: 'var(--space-16)' }}>{error}</p>
-          </div>
-        ) : (
-          <div className="carousel-nav-wrapper" style={{ position: 'relative' }}>
-            {/* Prev Arrow */}
-            <button
-              onClick={() => { const el = document.querySelector('.now-showing-carousel'); if (el) el.scrollBy({ left: -280, behavior: 'smooth' }); }}
-              className="carousel-nav carousel-nav-prev"
-              aria-label="Previous"
-            >
-              <ChevronLeft size={20} />
-            </button>
-
-            <div className="movie-grid now-showing-carousel">
-              {nowShowing.map(movie => (
-                <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
-                  onClick={() => navigate(`/movie/${movie.movieId}`)}>
-                  <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
-                    <img
-                      src={movie.moviePosterURL || PLACEHOLDER_POSTER}
-                      alt={movie.movieName}
-                      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      loading="lazy"
-                    />
-                  </div>
-                  <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
-                    <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
-                        <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
-                          {f}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 32px)' }}>
+              <div>
+                <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+                  {t('home.nowShowingBadge')}
+                </span>
+                <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+                  {t('home.nowShowing')}
+                </h2>
+              </div>
             </div>
 
-            {/* Next Arrow */}
-            <button
-              onClick={() => { const el = document.querySelector('.now-showing-carousel'); if (el) el.scrollBy({ left: 280, behavior: 'smooth' }); }}
-              className="carousel-nav carousel-nav-next"
-              aria-label="Next"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        )}
-      </section>
-
-      {/* ===== COMING SOON SECTION ===== */}
-      {comingSoon.length > 0 && (
-        <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px) 100px' }}>
-          <div style={{ marginBottom: 'clamp(24px, 5vw, 48px)' }}>
-            <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-              {t('home.comingSoonBadge')}
-            </span>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
-              {t('home.comingSoon')}
-            </h2>
-          </div>
-          <div className="movie-grid">
-            {comingSoon.map(movie => (
-              <div key={movie.movieId} className="glass-card interactive" style={{ borderRadius: 16, overflow: 'hidden', cursor: 'pointer', transition: 'transform 0.3s ease' }}
-                onClick={() => navigate(`/movie/${movie.movieId}`)}>
-                <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
-                  <img
-                    src={movie.moviePosterURL || PLACEHOLDER_POSTER}
-                    alt={movie.movieName}
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                    loading="lazy"
-                  />
-                </div>
-                <div style={{ padding: 'clamp(12px, 2vw, 16px)' }}>
-                  <h3 style={{ fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 700, marginBottom: 'var(--space-8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
-                  <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)' }}>
-                    Coming Soon
-                  </span>
-                </div>
+            {loading ? (
+              <div className="state-center" style={{ minHeight: 300 }}>
+                <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+                <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-16)' }}>Loading movies...</p>
               </div>
-            ))}
+            ) : error ? (
+              <div className="state-center" style={{ minHeight: 300 }}>
+                <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
+                <p style={{ color: 'var(--danger)', marginTop: 'var(--space-16)' }}>{error}</p>
+              </div>
+            ) : nowShowing.length === 0 ? (
+              <div className="glass-card" style={{ padding: 48, borderRadius: 16, textAlign: 'center', color: 'var(--text-secondary)' }}>
+                Không có phim đang chiếu tại rạp này.
+              </div>
+            ) : (
+              <div>
+                <div style={{ position: 'relative' }}>
+                  {/* Prev Button */}
+                  {nowShowing.length > 4 && (
+                    <button
+                      onClick={() => scroll(nowShowingRef, 'left')}
+                      className="carousel-nav carousel-nav-prev"
+                      style={{ position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      aria-label="Previous"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                  )}
+
+                  <div 
+                    ref={nowShowingRef}
+                    className="hide-scrollbar"
+                    style={{
+                      display: 'flex',
+                      gap: 20,
+                      overflowX: 'auto',
+                      scrollSnapType: 'x mandatory',
+                      scrollBehavior: 'smooth',
+                      padding: '10px 4px',
+                    }}
+                  >
+                    {nowShowing.slice(0, 10).map(movie => (
+                      <div 
+                        key={movie.movieId} 
+                        className="glass-card interactive" 
+                        style={{ 
+                          flex: '0 0 250px',
+                          borderRadius: 16, 
+                          overflow: 'hidden', 
+                          cursor: 'pointer', 
+                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          scrollSnapAlign: 'start',
+                        }}
+                        onClick={() => navigate(`/movie/${movie.movieId}`)}
+                      >
+                        <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
+                          <img
+                            src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                            alt={movie.movieName}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div style={{ padding: 16 }}>
+                          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {movie.movieFormatInfos.split('/').filter(Boolean).map((f: string, i: number) => (
+                              <span key={i} style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', border: '1px solid var(--border-color)' }}>
+                                {f}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  {nowShowing.length > 4 && (
+                    <button
+                      onClick={() => scroll(nowShowingRef, 'right')}
+                      className="carousel-nav carousel-nav-next"
+                      style={{ position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      aria-label="Next"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Xem Thêm Button */}
+                {nowShowing.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                    <button 
+                      onClick={() => navigate('/movies?tab=now-showing')}
+                      className="glass-card interactive"
+                      style={{
+                        padding: '10px 24px',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {t('home.seeMore', 'Xem thêm')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        </section>
-      )}
+
+          {/* Coming Soon Section */}
+          <div>
+            {comingSoon.length > 0 && (
+              <div>
+                <div style={{ marginBottom: 'clamp(16px, 3vw, 32px)' }}>
+                  <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+                    {t('home.comingSoonBadge')}
+                  </span>
+                  <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+                    {t('home.comingSoon')}
+                  </h2>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  {/* Prev Button */}
+                  {comingSoon.length > 4 && (
+                    <button
+                      onClick={() => scroll(comingSoonRef, 'left')}
+                      className="carousel-nav carousel-nav-prev"
+                      style={{ position: 'absolute', left: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      aria-label="Previous"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                  )}
+
+                  <div 
+                    ref={comingSoonRef}
+                    className="hide-scrollbar"
+                    style={{
+                      display: 'flex',
+                      gap: 20,
+                      overflowX: 'auto',
+                      scrollSnapType: 'x mandatory',
+                      scrollBehavior: 'smooth',
+                      padding: '10px 4px',
+                    }}
+                  >
+                    {comingSoon.slice(0, 10).map(movie => (
+                      <div 
+                        key={movie.movieId} 
+                        className="glass-card interactive" 
+                        style={{ 
+                          flex: '0 0 250px',
+                          borderRadius: 16, 
+                          overflow: 'hidden', 
+                          cursor: 'pointer', 
+                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                          scrollSnapAlign: 'start',
+                        }}
+                        onClick={() => navigate(`/movie/${movie.movieId}`)}
+                      >
+                        <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
+                          <img
+                            src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                            alt={movie.movieName}
+                            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                            loading="lazy"
+                          />
+                        </div>
+                        <div style={{ padding: 16 }}>
+                          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
+                          <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)' }}>
+                            Coming Soon
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Next Button */}
+                  {comingSoon.length > 4 && (
+                    <button
+                      onClick={() => scroll(comingSoonRef, 'right')}
+                      className="carousel-nav carousel-nav-next"
+                      style={{ position: 'absolute', right: -20, top: '50%', transform: 'translateY(-50%)', zIndex: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      aria-label="Next"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Xem Thêm Button */}
+                {comingSoon.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                    <button 
+                      onClick={() => navigate('/movies?tab=coming-soon')}
+                      className="glass-card interactive"
+                      style={{
+                        padding: '10px 24px',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        background: 'rgba(255,255,255,0.05)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      {t('home.seeMore', 'Xem thêm')}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </section>
 
       {/* ===== FOOTER ===== */}
       <footer style={{ borderTop: '1px solid var(--border-color)', backgroundColor: 'var(--bg-surface)', padding: 'clamp(32px, 6vw, 60px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px)' }}>
