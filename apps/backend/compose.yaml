@@ -1,0 +1,81 @@
+services:
+  apilayer:
+    image: apilayer
+    build:
+      context: .
+      dockerfile: ApiLayer/Dockerfile
+      target: development
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - .:/src
+      - /src/ApiLayer/bin
+      - /src/ApiLayer/obj
+      - /src/BusinessLayer/bin
+      - /src/BusinessLayer/obj
+      - /src/DataAccess/bin
+      - /src/DataAccess/obj
+      - /src/Shared/bin
+      - /src/Shared/obj
+    environment:
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      - ASPNETCORE_ENVIRONMENT=Docker
+    networks:
+      - cinema-network
+    depends_on:
+      - mssql
+      - redis
+      - ai-service
+
+  # ─────────────────────────────────────────
+  # Python AI Microservice (Recommendation)
+  # ─────────────────────────────────────────
+  ai-service:
+    build:
+      context: ../ai_service
+      dockerfile: Dockerfile
+    image: cinema-ai-service
+    container_name: cinema-ai-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../ai_service/.env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlvolume:/var/opt/mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=anhduc9A@5
+    networks:
+      - cinema-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - cinema-network
+
+networks:
+  cinema-network:
+    driver: bridge
+
+volumes:
+  sqlvolume:
