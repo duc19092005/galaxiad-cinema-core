@@ -1,0 +1,22 @@
+# AI Service
+ai_service/.env
+ai_service/__pycache__/
+ai_service/*.pyc
+
+# Backend build artifacts (handled by backend/.gitignore)
+backend/ApiLayer/bin/
+backend/ApiLayer/obj/
+backend/BusinessLayer/bin/
+backend/BusinessLayer/obj/
+backend/DataAccess/bin/
+backend/DataAccess/obj/
+backend/Shared/bin/
+backend/Shared/obj/
+
+# Frontend (handled by frontend/.gitignore)
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
