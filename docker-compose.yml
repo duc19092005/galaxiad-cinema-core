@@ -32,6 +32,28 @@ services:
       - ai
 
   # ─────────────────────────────────────────
+  # React Frontend (Vite)
+  # ─────────────────────────────────────────
+  frontend:
+    image: cinema-frontend
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: development
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - cinema-network
+    depends_on:
+      - api
+
+  # ─────────────────────────────────────────
   # Python AI Microservice (Recommendation)
   # ─────────────────────────────────────────
   ai:
