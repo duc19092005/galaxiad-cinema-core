@@ -1,8 +1,0 @@
-{
-    "scripts": {
-        "add:migration" : "dotnet ef migrations add --project DataAccess --startup-project ApiLayer" ,
-        "delete:databae" : "dotnet ef database drop --project DataAccess --startup-project ApiLayer" ,
-        "update:database" : "dotnet ef database update --project DataAccess --startup-project ApiLayer" ,
-        "delete:migration" : "dotnet ef migrations remove --project DataAccess --startup-project ApiLayer"
-    }
-}
