@@ -106,7 +106,8 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
       const payload: CreateDepartmentRequest = {
         cinemaId: selectedCinemaId,
         departmentName: newName.trim(),
-        departmentType: newType,
+        departmentType: 'Cashier',
+        cashierType: newType,
       };
       const res = await facilitiesApi.createDepartment(payload);
       if (res.isSuccess) {
@@ -315,19 +316,19 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 10,
-                    background: dept.departmentType === 'TicketPOS'
+                    background: dept.cashierType === 'TicketPOS'
                       ? 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
                       : 'linear-gradient(135deg, var(--warning), var(--danger))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {dept.departmentType === 'TicketPOS' ? <Ticket size={16} color="#fff" /> : <Coffee size={16} color="#fff" />}
+                    {dept.cashierType === 'TicketPOS' ? <Ticket size={16} color="#fff" /> : <Coffee size={16} color="#fff" />}
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                       {dept.departmentName}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      {dept.departmentType === 'TicketPOS' ? t('departmentManager.ticketPOS') : t('departmentManager.foodPOS')}
+                      {dept.cashierType === 'TicketPOS' ? t('departmentManager.ticketPOS') : t('departmentManager.foodPOS')}
                     </div>
                   </div>
                 </div>
