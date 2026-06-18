@@ -1,21 +1,23 @@
-# AI Service
-ai_service/.env
-ai_service/__pycache__/
-ai_service/*.pyc
+# AI Service secrets
+services/ai/.env
 
-# Backend build artifacts (handled by backend/.gitignore)
-backend/ApiLayer/bin/
-backend/ApiLayer/obj/
-backend/BusinessLayer/bin/
-backend/BusinessLayer/obj/
-backend/DataAccess/bin/
-backend/DataAccess/obj/
-backend/Shared/bin/
-backend/Shared/obj/
+# Backend build artifacts
+apps/backend/ApiLayer/bin/
+apps/backend/ApiLayer/obj/
+apps/backend/BusinessLayer/bin/
+apps/backend/BusinessLayer/obj/
+apps/backend/DataAccess/bin/
+apps/backend/DataAccess/obj/
+apps/backend/Shared/bin/
+apps/backend/Shared/obj/
 
-# Frontend (handled by frontend/.gitignore)
-frontend/node_modules/
-frontend/dist/
+# Frontend
+apps/frontend/node_modules/
+apps/frontend/dist/
+
+# Python cache
+services/ai/__pycache__/
+services/ai/*.pyc
 
 # OS
 .DS_Store
