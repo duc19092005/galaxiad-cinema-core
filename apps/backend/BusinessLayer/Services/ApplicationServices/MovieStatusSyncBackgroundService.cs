@@ -42,6 +42,7 @@ public class MovieStatusSyncBackgroundService : BackgroundService
     {
         using var scope = _serviceProvider.CreateScope();
         var unitOfWork = scope.ServiceProvider.GetRequiredService<IUnitOfWork>();
+        var aiMovieEmbeddingSyncService = scope.ServiceProvider.GetRequiredService<AiMovieEmbeddingSyncService>();
 
         // Lấy thời gian hiện tại chuẩn Việt Nam (UTC+7)
         TimeZoneInfo vietnamTimeZone;
@@ -139,6 +140,16 @@ public class MovieStatusSyncBackgroundService : BackgroundService
         {
             await unitOfWork.SaveChangesAsync(cancellationToken);
             _logger.LogInformation("Changes saved to database successfully.");
+
+            foreach (var movie in startingMovies)
+            {
+                await aiMovieEmbeddingSyncService.SyncMovieAsync(movie.MovieId, cancellationToken);
+            }
+
+            foreach (var movie in overDueMovies)
+            {
+                await aiMovieEmbeddingSyncService.DeleteMovieAsync(movie.MovieId, cancellationToken);
+            }
         }
     }
 }

@@ -1,8 +1,19 @@
-import numpy as np
-from typing import List, Tuple, Optional
-from loguru import logger
+import hashlib
+import time
+from typing import Dict, List, Tuple
+
 import google.generativeai as genai
-from config import GOOGLE_API_KEY, EMBEDDING_MODEL, EMBEDDING_DIM
+import numpy as np
+from loguru import logger
+from qdrant_client import QdrantClient, models as qdrant_models
+
+from config import (
+    EMBEDDING_DIM,
+    EMBEDDING_MODEL,
+    GOOGLE_API_KEY,
+    QDRANT_COLLECTION,
+    QDRANT_URL,
+)
 
 
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -10,116 +21,209 @@ genai.configure(api_key=GOOGLE_API_KEY)
 
 class MovieEmbedder:
     """
-    Manages movie embeddings using Google Gemini text-embedding-004.
-    Stores all embeddings in-memory as numpy arrays.
-    Uses L2 normalization + Euclidean distance for similarity search.
-
-    Why L2 norm + Euclidean == Cosine similarity:
-        When vectors are L2-normalized (unit norm), Euclidean distance
-        d(u,v) = sqrt(2 - 2*cos(u,v)), so min Euclidean = max cosine.
+    Manages movie embeddings using Gemini for vector generation and Qdrant for
+    persistent vector storage/search.
     """
 
     def __init__(self):
-        self._movie_ids: List[str] = []
-        self._embeddings: Optional[np.ndarray] = None  # shape: (N, EMBEDDING_DIM)
+        self.collection_name = QDRANT_COLLECTION
+        self.client = QdrantClient(url=QDRANT_URL)
+        self._initialized = False
 
-    def _embed_text(self, text: str) -> np.ndarray:
-        """Call Google Gemini Embedding API and return L2-normalized vector."""
+    def ensure_collection(self, retries: int = 1, delay_seconds: float = 0.0) -> None:
+        last_error: Exception | None = None
+
+        for attempt in range(1, retries + 1):
+            try:
+                self.client.get_collection(collection_name=self.collection_name)
+                self._initialized = True
+                return
+            except Exception as exc:
+                last_error = exc
+                try:
+                    self.client.create_collection(
+                        collection_name=self.collection_name,
+                        vectors_config=qdrant_models.VectorParams(
+                            size=EMBEDDING_DIM,
+                            distance=qdrant_models.Distance.COSINE,
+                        ),
+                    )
+                    self._initialized = True
+                    logger.info("Created Qdrant collection {}", self.collection_name)
+                    return
+                except Exception as create_exc:
+                    last_error = create_exc
+                    logger.warning(
+                        "Qdrant collection init attempt {}/{} failed: {}",
+                        attempt,
+                        retries,
+                        create_exc,
+                    )
+                    if attempt < retries and delay_seconds > 0:
+                        time.sleep(delay_seconds)
+
+        raise RuntimeError(f"Could not initialize Qdrant collection: {last_error}")
+
+    def _ensure_ready(self) -> None:
+        if not self._initialized:
+            self.ensure_collection()
+
+    def _embed_text(self, text: str) -> List[float]:
+        """Call Gemini Embedding API and return an L2-normalized vector."""
         result = genai.embed_content(
             model=EMBEDDING_MODEL,
             content=text,
-            task_type="SEMANTIC_SIMILARITY"
+            task_type="SEMANTIC_SIMILARITY",
         )
         vector = np.array(result["embedding"], dtype=np.float32)
-        # L2 normalize: vector / ||vector||_2
         norm = np.linalg.norm(vector)
         if norm > 0:
             vector = vector / norm
-        return vector
+        return vector.astype(float).tolist()
+
+    @staticmethod
+    def _content_hash(text: str) -> str:
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
     def embed_movies(self, movies: List[Tuple[str, str]]) -> int:
         """
-        Embed a list of movies and store their normalized vectors.
+        Embed and upsert movies into Qdrant.
         Args:
             movies: List of (movie_id, embedding_text) tuples
         Returns:
-            Number of successfully embedded movies
+            Number of successfully embedded/upserted movies
         """
-        new_ids = []
-        new_vectors = []
+        self._ensure_ready()
 
+        existing_hashes = self._load_existing_hashes()
+        points: List[qdrant_models.PointStruct] = []
         for movie_id, text in movies:
             try:
-                vector = self._embed_text(text)
-                new_ids.append(movie_id)
-                new_vectors.append(vector)
-                logger.info(f"Embedded movie {movie_id}")
-            except Exception as e:
-                logger.error(f"Failed to embed movie {movie_id}: {e}")
+                content_hash = self._content_hash(text)
+                if existing_hashes.get(movie_id) == content_hash:
+                    logger.info("Skipped unchanged movie {}", movie_id)
+                    continue
 
-        if not new_vectors:
+                points.append(
+                    qdrant_models.PointStruct(
+                        id=movie_id,
+                        vector=self._embed_text(text),
+                        payload={
+                            "movie_id": movie_id,
+                            "content_hash": content_hash,
+                        },
+                    )
+                )
+                logger.info("Embedded movie {}", movie_id)
+            except Exception as exc:
+                logger.error("Failed to embed movie {}: {}", movie_id, exc)
+
+        if not points:
             return 0
 
-        new_matrix = np.array(new_vectors, dtype=np.float32)  # (M, DIM)
+        self.client.upsert(
+            collection_name=self.collection_name,
+            wait=True,
+            points=points,
+        )
+        return len(points)
 
-        # Rebuild full index: replace existing if movie_id already present
-        existing_map = {mid: i for i, mid in enumerate(self._movie_ids)}
-        
-        if self._embeddings is None:
-            self._movie_ids = new_ids
-            self._embeddings = new_matrix
-        else:
-            for i, mid in enumerate(new_ids):
-                if mid in existing_map:
-                    # Update existing
-                    self._embeddings[existing_map[mid]] = new_matrix[i]
-                else:
-                    # Append new
-                    self._movie_ids.append(mid)
-                    self._embeddings = np.vstack([self._embeddings, new_matrix[i:i+1]])
+    def sync_movies(self, movies: List[Tuple[str, str]]) -> Tuple[int, int, int]:
+        """
+        Reconcile Qdrant with the active/coming-soon movie snapshot from SQL.
+        Returns:
+            (embedded_count, deleted_count, skipped_count)
+        """
+        self._ensure_ready()
 
-        return len(new_vectors)
+        existing_hashes = self._load_existing_hashes()
+        active_ids = {movie_id for movie_id, _ in movies}
+        to_embed: List[Tuple[str, str]] = []
+        skipped_count = 0
+
+        for movie_id, text in movies:
+            content_hash = self._content_hash(text)
+            if existing_hashes.get(movie_id) == content_hash:
+                skipped_count += 1
+                continue
+            to_embed.append((movie_id, text))
+
+        embedded_count = self.embed_movies(to_embed) if to_embed else 0
+
+        stale_ids = sorted(set(existing_hashes.keys()) - active_ids)
+        deleted_count = self.delete_movies(stale_ids) if stale_ids else 0
+
+        return embedded_count, deleted_count, skipped_count
+
+    def delete_movie(self, movie_id: str) -> bool:
+        return self.delete_movies([movie_id]) > 0
+
+    def delete_movies(self, movie_ids: List[str]) -> int:
+        self._ensure_ready()
+        if not movie_ids:
+            return 0
+
+        self.client.delete(
+            collection_name=self.collection_name,
+            wait=True,
+            points_selector=qdrant_models.PointIdsList(points=movie_ids),
+        )
+        logger.info("Deleted {} movie vectors from Qdrant", len(movie_ids))
+        return len(movie_ids)
 
     def search(self, user_text: str, top_k: int = 5) -> List[Tuple[str, float]]:
-        """
-        Embed user preference text and find top-k most similar movies.
-        Uses Euclidean distance on L2-normalized vectors.
-
-        Args:
-            user_text: User preference description
-            top_k: Number of results to return
-        Returns:
-            List of (movie_id, euclidean_distance) sorted ascending (closest first)
-        """
-        if self._embeddings is None or len(self._movie_ids) == 0:
+        self._ensure_ready()
+        if self.movie_count == 0:
             logger.warning("No movies embedded yet")
             return []
 
-        # Embed and normalize user query
-        user_vector = self._embed_text(user_text)  # already L2-normalized
+        query_vector = self._embed_text(user_text)
+        search_result = self.client.query_points(
+            collection_name=self.collection_name,
+            query=query_vector,
+            limit=top_k,
+            with_payload=True,
+        ).points
 
-        # Euclidean distance: sqrt(sum((a-b)^2))
-        # Since both vectors are L2-normalized:
-        # ||u - v||^2 = ||u||^2 + ||v||^2 - 2*(u·v) = 2 - 2*(u·v)
-        # We can compute efficiently via: diff = embeddings - user_vector, dist = norm(diff, axis=1)
-        diff = self._embeddings - user_vector  # (N, DIM)
-        distances = np.linalg.norm(diff, axis=1)  # (N,)
-
-        # Get top-k indices sorted by distance (ascending = most similar first)
-        k = min(top_k, len(self._movie_ids))
-        top_indices = np.argpartition(distances, k)[:k]
-        top_indices = top_indices[np.argsort(distances[top_indices])]
-
-        results = [
-            (self._movie_ids[i], float(distances[i]))
-            for i in top_indices
+        return [
+            (
+                str(point.payload.get("movie_id", point.id) if point.payload else point.id),
+                float(1.0 - point.score),
+            )
+            for point in search_result
         ]
-        return results
+
+    def _load_existing_hashes(self) -> Dict[str, str]:
+        hashes: Dict[str, str] = {}
+        next_offset = None
+
+        while True:
+            points, next_offset = self.client.scroll(
+                collection_name=self.collection_name,
+                limit=100,
+                offset=next_offset,
+                with_payload=True,
+                with_vectors=False,
+            )
+
+            for point in points:
+                payload = point.payload or {}
+                movie_id = str(payload.get("movie_id", point.id))
+                content_hash = payload.get("content_hash")
+                hashes[movie_id] = str(content_hash) if content_hash else ""
+
+            if next_offset is None:
+                return hashes
 
     @property
     def movie_count(self) -> int:
-        return len(self._movie_ids)
+        self._ensure_ready()
+        return int(
+            self.client.count(
+                collection_name=self.collection_name,
+                exact=True,
+            ).count
+        )
 
 
-# Global singleton instance
 embedder = MovieEmbedder()

@@ -28,11 +28,13 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     private readonly IScheduleJobsService _scheduleJobsService;
     private readonly AuditLogService _auditLogService;
     private readonly IBackgroundJobScheduler _jobScheduler;
+    private readonly AiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
 
 
     public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, IUnitOfWork unitOfWork,
         IImageStorageService imageStorageService, IScheduleJobsService scheduleJobService, AuditLogService auditLogService,
-        IBackgroundJobScheduler jobScheduler)
+        IBackgroundJobScheduler jobScheduler,
+        AiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
     {
         _userContextService = userContextService;
         _logger = logger;
@@ -41,6 +43,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         _scheduleJobsService = scheduleJobService;
         _auditLogService = auditLogService;
         _jobScheduler = jobScheduler;
+        _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
     }
 
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
@@ -168,6 +171,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             // Enqueue job registration to background AFTER transaction is committed
             // This prevents race conditions where the job runs before the DB has the record.
             _jobScheduler.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));
+            await _aiMovieEmbeddingSyncService.SyncMovieAsync(newMovieId);
 
             return new BaseResponse<string>()
             {
@@ -380,6 +384,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 // Enqueue job update to background AFTER transaction is committed
                 _jobScheduler.Enqueue<IScheduleJobsService>(s => s.UpdatedJobIntoBackground(SchedulesJobCategoryEnums.Movies, itemId, request.StartedDate, request.EndedDate));
+                await _aiMovieEmbeddingSyncService.SyncMovieAsync(itemId);
 
                 if (fileUploadStatus.Success && !string.IsNullOrEmpty(oldImageUrl))
                 {
@@ -519,6 +524,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 .FirstOrDefaultAsync());
 
         await _unitOfWork.SaveChangesAsync();
+        await _aiMovieEmbeddingSyncService.DeleteMovieAsync(itemId);
 
         return new BaseResponse<string>()
         {
@@ -545,6 +551,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findMovie.IsActive = true;
                 movieRepository.Update(findMovie);
                 await _unitOfWork.SaveChangesAsync();
+                await _aiMovieEmbeddingSyncService.SyncMovieAsync(movieId);
             }
             catch(Exception e)
             {
@@ -570,6 +577,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 findMovie.IsActive = false;
                 movieRepository.Update(findMovie);
                 await _unitOfWork.SaveChangesAsync();
+                await _aiMovieEmbeddingSyncService.DeleteMovieAsync(movieId);
             }
             catch(Exception e)
             {

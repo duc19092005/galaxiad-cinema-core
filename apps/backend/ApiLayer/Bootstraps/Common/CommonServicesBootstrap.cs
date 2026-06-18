@@ -54,6 +54,7 @@ public static class CommonServicesBootstrap
         services.AddSingleton<ISseNotificationService, SseNotificationService>();
         services.AddScoped<DeepSeekModerationService>();
         services.AddScoped<MovieCommentService>();
+        services.AddScoped<AiMovieEmbeddingSyncService>();
 
         // Register Shift Use Cases
         services.AddScoped<RegisterShiftUseCase>();

@@ -66,6 +66,7 @@ builder.Services.AddAdminBootstrap();
 
 // Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
 builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
+builder.Services.AddHostedService<AiMovieEmbeddingStartupService>();
 
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);

@@ -91,14 +91,9 @@ const HomePage: React.FC = () => {
 
     const checkSurveyAndLoad = async () => {
       try {
-        const status = await recommendationApi.getSurveyStatus();
-        if (!status.data.hasCompletedSurvey) {
-          // Show survey after 2 s for better UX
-          setTimeout(() => setShowSurvey(true), 2000);
-        } else {
-          setSurveyCompleted(true);
-          loadRecommendations();
-        }
+        await recommendationApi.getSurveyStatus();
+        setSurveyCompleted(true);
+        loadRecommendations();
       } catch {
         // Not authenticated or server error – do nothing
       }

@@ -14,6 +14,8 @@ class EmbedMoviesRequest(BaseModel):
 class EmbedMoviesResponse(BaseModel):
     success: bool
     embedded_count: int
+    deleted_count: int = 0
+    skipped_count: int = 0
     message: str
 
 
@@ -35,3 +37,4 @@ class HealthResponse(BaseModel):
     status: str
     embedded_movies_count: int
     model: str
+    vector_store: str = "qdrant"

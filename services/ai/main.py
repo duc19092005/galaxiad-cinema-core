@@ -21,6 +21,7 @@ async def lifespan(app: FastAPI):
     logger.info(f"Embedding model: {EMBEDDING_MODEL}")
     if not GOOGLE_API_KEY:
         logger.warning("GOOGLE_API_KEY not set! Embedding calls will fail.")
+    embedder.ensure_collection(retries=10, delay_seconds=2)
     logger.info("=" * 50)
     yield
     logger.info("Cinema AI Service shutting down...")
@@ -55,7 +56,7 @@ async def health_check():
 async def embed_movies(request: EmbedMoviesRequest):
     """
     Receive a list of movies from C# backend and embed them using Google Gemini.
-    Stores embeddings in-memory for fast similarity search.
+    Stores embeddings in Qdrant for persistent similarity search.
 
     Called by C# backend:
     - On startup (sync all active/coming-soon movies)
@@ -73,9 +74,43 @@ async def embed_movies(request: EmbedMoviesRequest):
     logger.info(f"Total movies in index: {embedder.movie_count}")
 
     return EmbedMoviesResponse(
-        success=embedded_count > 0,
+        success=embedded_count > 0 or len(request.movies) > 0,
         embedded_count=embedded_count,
+        skipped_count=max(0, len(request.movies) - embedded_count),
         message=f"Đã embedding {embedded_count}/{len(request.movies)} phim. Tổng: {embedder.movie_count}"
+    )
+
+
+@app.delete("/embed-movies/{movie_id}", response_model=EmbedMoviesResponse)
+async def delete_movie_embedding(movie_id: str):
+    """Delete a movie vector from Qdrant when the movie is no longer recommendable."""
+    deleted = embedder.delete_movie(movie_id)
+    return EmbedMoviesResponse(
+        success=True,
+        embedded_count=0,
+        deleted_count=1 if deleted else 0,
+        message=f"Deleted embedding for movie {movie_id}"
+    )
+
+
+@app.post("/sync-movies", response_model=EmbedMoviesResponse)
+async def sync_movies(request: EmbedMoviesRequest):
+    """
+    Reconcile Qdrant with the active/coming-soon movie snapshot from C# backend.
+    Only changed/new movies are re-embedded; stale vectors are deleted.
+    """
+    movies_tuples = [(m.movie_id, m.embedding_text) for m in request.movies]
+    embedded_count, deleted_count, skipped_count = embedder.sync_movies(movies_tuples)
+
+    return EmbedMoviesResponse(
+        success=True,
+        embedded_count=embedded_count,
+        deleted_count=deleted_count,
+        skipped_count=skipped_count,
+        message=(
+            f"Synced movies. embedded={embedded_count}, "
+            f"deleted={deleted_count}, skipped={skipped_count}, total={embedder.movie_count}"
+        )
     )
 
 
