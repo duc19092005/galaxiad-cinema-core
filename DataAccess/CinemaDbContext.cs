@@ -102,6 +102,8 @@ public class CinemaDbContext : DbContext
 
     public DbSet<UserNotificationEntity> UserNotificationEntity { get; set; }
 
+    public DbSet<UserGenreSurveyEntity> UserGenreSurveyEntity { get; set; }
+
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -199,6 +201,17 @@ public class CinemaDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.RelatedMovieId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<UserGenreSurveyEntity>(entity =>
+        {
+            entity.HasKey(x => x.SurveyId);
+            entity.HasIndex(x => x.UserId).IsUnique(); // one survey per user
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         
         // User Infos 

@@ -19,13 +19,40 @@ services:
       - /src/Shared/bin
       - /src/Shared/obj
     environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=1 
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_ENVIRONMENT=Docker
     networks:
       - cinema-network
     depends_on:
       - mssql
       - redis
+      - ai-service
+
+  # ─────────────────────────────────────────
+  # Python AI Microservice (Recommendation)
+  # ─────────────────────────────────────────
+  ai-service:
+    build:
+      context: ../ai_service
+      dockerfile: Dockerfile
+    image: cinema-ai-service
+    container_name: cinema-ai-service
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../ai_service/.env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - cinema-network
 
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest

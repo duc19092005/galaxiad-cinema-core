@@ -39,10 +39,12 @@ public class ReqAddMovieManagerMovieDto
     [StringLength(2048)]
     public string TrailerUrl { get; set; } = string.Empty;
 
-    [StringLength(200)]
+    [Required(ErrorMessage = "Director is required")]
+    [StringLength(200, MinimumLength = 1)]
     public string Director { get; set; } = string.Empty;
 
-    [StringLength(500)]
+    [Required(ErrorMessage = "Actors is required")]
+    [StringLength(500, MinimumLength = 1)]
     public string Actors { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Cinema Ids are required")]
@@ -84,4 +86,3 @@ public class ReqEditMovieManagerMovieDto
 
     public List<Guid>? CinemaIds { get; set; } = [];
 }
-

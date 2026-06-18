@@ -142,10 +142,10 @@ public class PublicController : ControllerBase
             MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
             MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
             IsCommingSoon = x.IsCommingSoon,
-            MovieCategoryInfos = "Tạm thời để null",
+            MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),
             ReleaseDate = x.ActiveAt,
-            Actor = "Tạm thời để null",
-            Director = "Tạm thời để null"
+            Actor = x.Actors,
+            Director = x.Director
         }).FirstOrDefaultAsync();
         return Ok(new BaseResponse<MovieDetailInfoRes>()
         {

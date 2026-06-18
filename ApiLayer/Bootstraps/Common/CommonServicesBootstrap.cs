@@ -62,6 +62,8 @@ public static class CommonServicesBootstrap
         services.AddScoped<ClockInUseCase>();
         services.AddScoped<ClockOutUseCase>();
         services.AddScoped<CalculatePayrollUseCase>();
+
+        services.AddHttpClient();
         
         return services;
     }
