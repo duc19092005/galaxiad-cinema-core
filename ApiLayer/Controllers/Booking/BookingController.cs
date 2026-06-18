@@ -1,7 +1,9 @@
 using System.Text.Json;
+using Application.Booking.UseCases;
 using BusinessLayer.Dtos;
 using BusinessLayer.Dtos.Booking;
 using BusinessLayer.Services.Booking;
+using BusinessLayer.Services.IdentityAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Localization;
@@ -169,17 +171,26 @@ public class BookingController : ControllerBase
     private readonly SseConnectionManager _sseManager;
     private readonly ILogger<BookingController> _logger;
     private readonly IConfiguration _configuration;
+    private readonly CreateBookingUseCase _createBookingUseCase;
+    private readonly ProcessVnPayCallbackUseCase _processVnPayCallbackUseCase;
+    private readonly IUserContextService _userContextService;
 
     public BookingController(
         BookingService bookingService,
         SseConnectionManager sseManager,
         ILogger<BookingController> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        CreateBookingUseCase createBookingUseCase,
+        ProcessVnPayCallbackUseCase processVnPayCallbackUseCase,
+        IUserContextService userContextService)
     {
         _bookingService = bookingService;
         _sseManager = sseManager;
         _logger = logger;
         _configuration = configuration;
+        _createBookingUseCase = createBookingUseCase;
+        _processVnPayCallbackUseCase = processVnPayCallbackUseCase;
+        _userContextService = userContextService;
     }
 
     /// <summary>
@@ -189,8 +200,31 @@ public class BookingController : ControllerBase
     public async Task<IActionResult> CreateBooking([FromBody] ReqCreateBookingDto request)
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
-        var result = await _bookingService.CreateBooking(request, ipAddress);
-        return Ok(result);
+        var userId = _userContextService.TryGetUserId();
+
+        var command = new CreateBookingCommand(
+            request.ScheduleId,
+            request.SeatSelections.Select(s => new SeatSelection(s.SeatId, s.UserSegmentId)).ToList(),
+            ipAddress,
+            request.CustomerName,
+            request.CustomerEmail,
+            request.CustomerAddress);
+
+        var result = await _createBookingUseCase.ExecuteAsync(command, userId);
+
+        return Ok(new BaseResponse<ResCreateBookingDto>
+        {
+            IsSuccess = true,
+            Data = new ResCreateBookingDto
+            {
+                OrderId = result.OrderId,
+                PaymentUrl = result.PaymentUrl,
+                TotalPrice = result.TotalPrice,
+                TotalQuantity = result.TotalQuantity,
+                OrderDate = result.OrderDate
+            },
+            Message = Messages.Booking.CreateBookingSuccess
+        });
     }
 
     /// <summary>
@@ -242,7 +276,7 @@ public class BookingController : ControllerBase
             _logger.LogInformation("VNPay callback received with {ParamCount} params: {Params}", 
                 vnpParams.Count, string.Join(", ", vnpParams.Select(p => $"{p.Key}={p.Value}")));
 
-            var (success, orderId) = await _bookingService.ProcessVnPayCallback(vnpParams);
+            var (success, orderId) = await _processVnPayCallbackUseCase.ExecuteAsync(vnpParams);
 
             // Gửi SSE event cho FE
             var paymentEvent = new PaymentStatusEvent

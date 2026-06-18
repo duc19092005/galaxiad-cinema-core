@@ -10,25 +10,19 @@ using ApiLayer.Hubs;
 using ApiLayer.Middlewares;
 using Shared.Exceptions;
 using DataAccess;
-using BusinessLayer.Constants;
+using DataAccess.Constants;
 using Hangfire;
-using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using BusinessLayer.Services.ApplicationServices;
-using BusinessLayer.Interfaces.IThirdPersonServices;
-using DataAccess.Services;
+using BusinessLayer.Services.ThirdPersonServices;
+using Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // --- SERVICES CONTAINER ---
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
-    });
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<UserIdentityCodeConstant>();
@@ -64,13 +58,15 @@ builder.Services.AddMovieFactories();
 builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
 
+// Clean Architecture (Domain/Application/Infrastructure) — module Booking
+builder.Services.AddCleanArchitecture();
+
 // Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
-builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
+builder.Services.AddHostedService<BusinessLayer.Services.ApplicationServices.MovieStatusSyncBackgroundService>();
 
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);
-builder.Services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
-builder.Services.AddScoped<IBackgroundJobScheduler, HangfireJobSchedulerService>();
+builder.Services.AddSingleton<cloudinaryHelper>();
 builder.Services.TheaterManagerValidate();
 
 // --- CẤU HÌNH CORS (ĐÃ SỬA LỖI) ---
@@ -93,10 +89,10 @@ builder.Services.AddCors(options =>
 
 // Authorization Policies
 builder.Services.AddAuthorization(options => {
-    options.AddPolicy("FacilitiesManager", policy => policy.RequireRole("FacilitiesManager", "Admin"));
+    options.AddPolicy("FacilitiesManager", policy => policy.RequireRole("FacilitiesManager"));
     options.AddPolicy("Admin" , policy => policy.RequireRole("Admin"));
-    options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager", "Admin"));
-    options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager", "Admin"));
+    options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager"));
+    options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager"));
 });
 
 // Swagger Config
@@ -114,32 +110,13 @@ builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseSqlServerStorage(
-        builder.Configuration.GetConnectionString("HangfireConnection"),
-        new SqlServerStorageOptions
-        {
-            PrepareSchemaIfNecessary = true
-        }));
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
 
 builder.Services.AddHangfireServer();
-
-// Register PendingOrderCancellationJob for DI
-builder.Services.AddScoped<PendingOrderCancellationJob>();
 
 builder.Services.AddSignalR();
 
 var app = builder.Build();
-
-// Migrations & Seed Jobs
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await EnsureAuditLogTableAsync(dbContext);
-
-    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<IScheduleJobsService>();
-    await scheduleJobsService.SyncSeededJobs();
-}
 
 app.UseCors("web");
 
@@ -163,47 +140,17 @@ app.UseAuthorization();
 
 app.UseHangfireDashboard();
 
-// Register recurring job for auto-canceling pending orders
-var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
-recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
-
 app.MapControllers();
 app.MapHub<SeatHub>("/ws/seat");
 
-app.Run();
-
-static async Task EnsureAuditLogTableAsync(CinemaDbContext dbContext)
+// Migrations & Seed Jobs
+using (var scope = app.Services.CreateScope())
 {
-    await dbContext.Database.ExecuteSqlRawAsync("""
-IF OBJECT_ID(N'[dbo].[AuditLogEntity]', N'U') IS NULL
-BEGIN
-    CREATE TABLE [dbo].[AuditLogEntity] (
-        [AuditLogId] uniqueidentifier NOT NULL,
-        [Action] varchar(50) NOT NULL,
-        [EntityType] varchar(80) NOT NULL,
-        [EntityId] uniqueidentifier NULL,
-        [EntityName] nvarchar(300) NOT NULL,
-        [Description] nvarchar(1000) NOT NULL,
-        [ActorUserId] uniqueidentifier NOT NULL,
-        [ActorName] nvarchar(100) NOT NULL,
-        [ActorPrimaryRole] varchar(50) NOT NULL,
-        [IsAdminAction] bit NOT NULL,
-        [CinemaId] uniqueidentifier NULL,
-        [CreatedAt] datetime2 NOT NULL,
-        CONSTRAINT [PK_AuditLogEntity] PRIMARY KEY ([AuditLogId])
-    );
-END;
+    var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
+    await dbContext.Database.MigrateAsync();
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_ActorUserId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
-    CREATE INDEX [IX_AuditLogEntity_ActorUserId] ON [dbo].[AuditLogEntity] ([ActorUserId]);
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_CinemaId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
-    CREATE INDEX [IX_AuditLogEntity_CinemaId] ON [dbo].[AuditLogEntity] ([CinemaId]);
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_CreatedAt' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
-    CREATE INDEX [IX_AuditLogEntity_CreatedAt] ON [dbo].[AuditLogEntity] ([CreatedAt]);
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = N'IX_AuditLogEntity_EntityType_EntityId' AND [object_id] = OBJECT_ID(N'[dbo].[AuditLogEntity]'))
-    CREATE INDEX [IX_AuditLogEntity_EntityType_EntityId] ON [dbo].[AuditLogEntity] ([EntityType], [EntityId]);
-""");
+    var scheduleJobsService = scope.ServiceProvider.GetRequiredService<BusinessLayer.Services.ApplicationServices.IScheduleJobsService>();
+    await scheduleJobsService.SyncSeededJobs();
 }
+
+app.Run();
