@@ -108,7 +108,8 @@ export interface Department {
     cinemaId: string;
     cinemaName: string;
     departmentName: string;
-    departmentType: CashierDepartmentType;
+    departmentType: string;
+    cashierType: CashierDepartmentType;
     sharedUserId: string | null;
     sharedUserEmail: string | null;
     isActive: boolean;
@@ -117,7 +118,8 @@ export interface Department {
 export interface CreateDepartmentRequest {
     cinemaId: string;
     departmentName: string;
-    departmentType: CashierDepartmentType;
+    departmentType: string;
+    cashierType: CashierDepartmentType;
 }
 
 export interface UpdateDepartmentRequest {

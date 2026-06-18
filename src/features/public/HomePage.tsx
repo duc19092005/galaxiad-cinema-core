@@ -16,6 +16,8 @@ import { useTranslation } from 'react-i18next';
 import Header from '../../components/Header';
 import BackToTop from '../../components/BackToTop';
 import QuickBookingBar from './components/QuickBookingBar';
+import SurveyModal from '../../components/SurveyModal';
+import { recommendationApi, type RecommendedMovie } from '../../api/recommendationApi';
 
 
 const IMG_BASE = 'https://lh3.googleusercontent.com/aida-public/';
@@ -60,6 +62,12 @@ const HomePage: React.FC = () => {
 
   const [trendingTab, setTrendingTab] = useState<'system' | 'local'>('system');
 
+  // ── Personalised Recommendation State ──
+  const [showSurvey, setShowSurvey] = useState(false);
+  const [recommendations, setRecommendations] = useState<RecommendedMovie[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [surveyCompleted, setSurveyCompleted] = useState(false);
+
   useEffect(() => {
     const handleCityChange = () => {
       setSelectedCity(localStorage.getItem('user_selected_city') || '');
@@ -75,6 +83,46 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     fetchTrendingMovies();
   }, [selectedCity, trendingTab]);
+
+  // ── Survey status check & recommendation loader ──
+  useEffect(() => {
+    const userInfo = localStorage.getItem('user_info');
+    if (!userInfo) return; // not logged in, skip
+
+    const checkSurveyAndLoad = async () => {
+      try {
+        const status = await recommendationApi.getSurveyStatus();
+        if (!status.data.hasCompletedSurvey) {
+          // Show survey after 2 s for better UX
+          setTimeout(() => setShowSurvey(true), 2000);
+        } else {
+          setSurveyCompleted(true);
+          loadRecommendations();
+        }
+      } catch {
+        // Not authenticated or server error – do nothing
+      }
+    };
+    checkSurveyAndLoad();
+  }, []);
+
+  const loadRecommendations = async () => {
+    setLoadingRecs(true);
+    try {
+      const res = await recommendationApi.getRecommendations();
+      setRecommendations(res.data || []);
+    } catch {
+      setRecommendations([]);
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
+
+  const handleSurveyComplete = () => {
+    setShowSurvey(false);
+    setSurveyCompleted(true);
+    loadRecommendations();
+  };
 
   const fetchMovies = async () => {
     setLoading(true); setError(null);
@@ -502,6 +550,108 @@ const HomePage: React.FC = () => {
             )}
           </div>
 
+          {/* ── Personalised Recommendation Section ── */}
+          {surveyCompleted && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 32px)', flexWrap: 'wrap', gap: 12 }}>
+                <div>
+                  <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+                    ✨ Dành Riêng Cho Bạn
+                  </span>
+                  <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+                    Gợi Ý Phim Cá Nhân Hóa
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowSurvey(true)}
+                  style={{
+                    fontSize: 12, color: 'var(--accent)',
+                    background: 'rgba(255,138,0,0.08)',
+                    border: '1px solid rgba(255,138,0,0.2)',
+                    borderRadius: 8, padding: '7px 16px',
+                    cursor: 'pointer', fontWeight: 600,
+                    transition: 'all 0.2s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,138,0,0.15)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,138,0,0.08)'; }}
+                >
+                  Cập nhật sở thích
+                </button>
+              </div>
+
+              {loadingRecs ? (
+                <div style={{ display: 'flex', gap: 20, overflowX: 'hidden', padding: '10px 4px' }}>
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <div key={i} style={{
+                      flex: '0 0 220px', height: 340, borderRadius: 16,
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                    }} />
+                  ))}
+                </div>
+              ) : recommendations.length === 0 ? (
+                <div className="glass-card" style={{ padding: '36px 24px', borderRadius: 16, textAlign: 'center' }}>
+                  <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
+                  <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>Chưa có gợi ý. AI đang xử lý sở thích của bạn...</p>
+                </div>
+              ) : (
+                <div
+                  className="hide-scrollbar"
+                  style={{
+                    display: 'flex', gap: 20,
+                    overflowX: 'auto',
+                    padding: '10px 4px',
+                    scrollSnapType: 'x mandatory',
+                    scrollBehavior: 'smooth',
+                  }}
+                >
+                  {recommendations.map(movie => (
+                    <div
+                      key={movie.movieId}
+                      className="glass-card interactive"
+                      style={{
+                        flex: '0 0 220px',
+                        borderRadius: 16, overflow: 'hidden',
+                        cursor: 'pointer', scrollSnapAlign: 'start',
+                        position: 'relative',
+                        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                      }}
+                      onClick={() => navigate(`/movie/${movie.movieId}`)}
+                    >
+                      {/* AI badge */}
+                      <div style={{
+                        position: 'absolute', top: 10, right: 10, zIndex: 2,
+                        background: 'linear-gradient(135deg, #ff8a00, #ff6b00)',
+                        borderRadius: 6, padding: '3px 8px',
+                        fontSize: 10, fontWeight: 800, color: 'black',
+                        boxShadow: '0 2px 8px rgba(255,138,0,0.4)',
+                      }}>
+                        ✨ AI Pick
+                      </div>
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '140%' }}>
+                        <img
+                          src={movie.moviePosterURL || PLACEHOLDER_POSTER}
+                          alt={movie.movieName}
+                          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                          loading="lazy"
+                          onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
+                        />
+                      </div>
+                      <div style={{ padding: 14 }}>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {movie.movieName}
+                        </h3>
+                        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {movie.movieGenres}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Coming Soon Section */}
           <div>
             {comingSoon.length > 0 && (
@@ -708,6 +858,14 @@ const HomePage: React.FC = () => {
       </footer>
       </div>
       <BackToTop />
+
+      {/* Survey Modal – rendered at root level for correct z-index */}
+      {showSurvey && (
+        <SurveyModal
+          onClose={() => setShowSurvey(false)}
+          onComplete={handleSurveyComplete}
+        />
+      )}
     </>
   );
 };

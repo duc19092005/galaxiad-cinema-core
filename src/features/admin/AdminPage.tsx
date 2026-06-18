@@ -1478,7 +1478,7 @@ const AdminPage: React.FC = () => {
                           </option>
                           {createUserDepartments.map((department) => (
                             <option key={department.departmentId} value={department.departmentId}>
-                              {department.departmentName} - {department.departmentType}
+                              {department.departmentName} - {department.cashierType}
                             </option>
                           ))}
                         </select>
