@@ -12,6 +12,9 @@ using Cinema.Application.UseCases.Staff;
 using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.UseCases.Comments;
+using Cinema.Application.UseCases.Comments.Recommendation;
+using Cinema.Application.Interfaces.Catalog;
+using Cinema.Application.UseCases.Customer.Catalog;
 
 namespace Cinema.Api.Bootstraps.Common;
 
@@ -68,7 +71,14 @@ public static class CommonServicesBootstrap
         services.AddScoped<GetTopRatedMoviesUseCase>();
         services.AddScoped<TrackMovieViewUseCase>();
 
+        // Recommendation & AI Sync Services
+        services.AddScoped<IRecommendationRepository, RecommendationRepository>();
         services.AddScoped<AiMovieEmbeddingSyncService>();
+        services.AddScoped<IAiMovieEmbeddingSyncService>(sp => sp.GetRequiredService<AiMovieEmbeddingSyncService>());
+        services.AddScoped<GetRecommendationsUseCase>();
+        services.AddScoped<GetSurveyStatusUseCase>();
+        services.AddScoped<SaveSurveyUseCase>();
+        services.AddScoped<SyncMoviesToAiServiceUseCase>();
 
         // Register Shift Use Cases
         services.AddScoped<RegisterShiftUseCase>();
@@ -77,6 +87,17 @@ public static class CommonServicesBootstrap
         services.AddScoped<ClockInUseCase>();
         services.AddScoped<ClockOutUseCase>();
         services.AddScoped<CalculatePayrollUseCase>();
+
+        // Public Catalog Services
+        services.AddScoped<IPublicCatalogRepository, PublicCatalogRepository>();
+        services.AddScoped<GetMovieFormatsUseCase>();
+        services.AddScoped<GetMovieRequiredAgeUseCase>();
+        services.AddScoped<GetMoviesUseCase>();
+        services.AddScoped<GetMovieDetailUseCase>();
+        services.AddScoped<GetScheduleDatesUseCase>();
+        services.AddScoped<GetScheduleDetailsUseCase>();
+        services.AddScoped<GetAuditoriumDetailsUseCase>();
+        services.AddScoped<GetAllUpcomingDatesUseCase>();
 
         services.AddHttpClient();
         

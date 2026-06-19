@@ -48,33 +48,37 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task<List<MovieBehaviorSignal>> GetViewedMovieSignalsAsync(Guid userId, int take)
     {
-        return await _dbContext.Set<MovieViewEntity>()
+        var raw = await _dbContext.Set<MovieViewEntity>()
             .Where(x => x.UserId == userId)
             .GroupBy(x => x.MovieId)
-            .Select(x => new MovieBehaviorSignal(x.Key, x.Count(), x.Max(v => v.ViewedAt)))
+            .Select(x => new { MovieId = x.Key, Count = x.Count(), LastAt = x.Max(v => v.ViewedAt) })
             .OrderByDescending(x => x.Count)
             .ThenByDescending(x => x.LastAt)
             .Take(take)
             .ToListAsync();
+
+        return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
     }
 
     public async Task<List<MovieBehaviorSignal>> GetBookedMovieSignalsAsync(Guid userId, int take)
     {
-        return await _dbContext.Set<OrderDetailsInfo>()
+        var raw = await _dbContext.Set<OrderDetailsInfo>()
             .Where(x => x.OrderInfoEntity.UserId == userId
                         && (x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked
                             || x.OrderInfoEntity.OrderStatus == OrderStatusEnum.Completed))
             .GroupBy(x => x.MovieScheduleInfoEntity.MovieId)
-            .Select(x => new MovieBehaviorSignal(x.Key, x.Count(), x.Max(d => d.OrderInfoEntity.OrderDate)))
+            .Select(x => new { MovieId = x.Key, Count = x.Count(), LastAt = x.Max(d => d.OrderInfoEntity.OrderDate) })
             .OrderByDescending(x => x.Count)
             .ThenByDescending(x => x.LastAt)
             .Take(take)
             .ToListAsync();
+
+        return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
     }
 
     public async Task<List<MovieBehaviorSignal>> GetPositiveRatingSignalsAsync(Guid userId, int take)
     {
-        return await _dbContext.Set<MovieCommentEntity>()
+        var raw = await _dbContext.Set<MovieCommentEntity>()
             .Where(x => x.UserId == userId
                         && x.ParentCommentId == null
                         && x.Rating.HasValue
@@ -82,11 +86,13 @@ public class RecommendationRepository : IRecommendationRepository
                         && x.Status != MovieCommentStatusEnum.Deleted
                         && x.Status != MovieCommentStatusEnum.Rejected)
             .GroupBy(x => x.MovieId)
-            .Select(x => new MovieBehaviorSignal(x.Key, x.Count(), x.Max(c => c.CreatedAt)))
+            .Select(x => new { MovieId = x.Key, Count = x.Count(), LastAt = x.Max(c => c.CreatedAt) })
             .OrderByDescending(x => x.Count)
             .ThenByDescending(x => x.LastAt)
             .Take(take)
             .ToListAsync();
+
+        return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
     }
 
     public async Task<List<string>> LoadMoviePreferenceSnippetsAsync(IEnumerable<Guid> movieIds)

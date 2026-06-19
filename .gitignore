@@ -8,14 +8,14 @@
 **/.*.env
 
 # Backend build artifacts
-apps/backend/ApiLayer/bin/
-apps/backend/ApiLayer/obj/
-apps/backend/BusinessLayer/bin/
-apps/backend/BusinessLayer/obj/
-apps/backend/DataAccess/bin/
-apps/backend/DataAccess/obj/
-apps/backend/Shared/bin/
-apps/backend/Shared/obj/
+apps/backend/Cinema.Api/bin/
+apps/backend/Cinema.Api/obj/
+apps/backend/Cinema.Application/bin/
+apps/backend/Cinema.Application/obj/
+apps/backend/Cinema.Domain/bin/
+apps/backend/Cinema.Domain/obj/
+apps/backend/Cinema.Infrastructure/bin/
+apps/backend/Cinema.Infrastructure/obj/
 
 # Frontend
 apps/frontend/node_modules/

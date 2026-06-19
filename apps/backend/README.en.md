@@ -109,12 +109,12 @@ High-quality development standards have been applied to ensure performance, secu
     *   **Google OAuth 2.0:** Secure identity verification.
 *   **API Documentation:** Swagger OpenAPI (divided into modular documents for simplified API testing).
 
-### 2. Pragmatic Clean Architecture
-The backend follows a streamlined implementation of Clean Architecture:
-*   **Domain & Business Layer:** Contains core business logic, entities, and service interfaces. It has zero dependencies on database engines or third-party SDKs, making it highly unit-testable.
-*   **DataAccess Layer (Infrastructure):** Houses EF Core DbContext, database migrations, repository implementations, and concrete wrappers for VNPay, Cloudinary, and Hangfire.
-*   **ApiLayer (Presentation):** Entry point of the application, managing request filters, JWT-based security middleware, and SignalR hubs.
-*   **Shared Layer:** Offers common primitives, custom business exceptions, and repository interfaces (`IUnitOfWork`).
+### 2. Clean Architecture (4-Layer)
+The backend is structured into 4 clean layers:
+*   **`Cinema.Domain`**: Pure business core containing Entities, Enums, Custom Exceptions, Repository/UnitOfWork Interfaces, Constants, and Utils. It has zero external dependencies.
+*   **`Cinema.Application`**: Application-specific logic containing Use Cases, DTOs, Application Interfaces, and Validators.
+*   **`Cinema.Infrastructure`**: DB Context, Migrations, Seed Data, Repositories implementations, and integration adapters (VNPay, Cloudinary, Redis, DeepSeek AI).
+*   **`Cinema.Api`**: API Presentation layer containing controllers, middlewares, bootstrapper DI configurations, SignalR hubs, and Program.cs.
 
 ### 3. Engineering Highlights
 *   **Unit of Work & Repository Pattern:** Ensures all operations inside a booking session (creating orders, locking seats, deducting customer points) execute inside a single database transaction. This prevents data inconsistency.

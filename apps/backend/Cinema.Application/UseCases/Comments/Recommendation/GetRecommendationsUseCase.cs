@@ -60,7 +60,7 @@ public class GetRecommendationsUseCase
         {
             await _aiMovieEmbeddingSyncService.EnsureMoviesSyncedAsync(cancellationToken);
 
-            var aiServiceUrl = _configuration["AiService:BaseUrl"] ?? "http://ai-service:8000";
+            var aiServiceUrl = _configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000";
             var client = _httpClientFactory.CreateClient();
 
             var reqBody = new AiRecommendRequest { UserText = profile.UserText, TopK = 12 };

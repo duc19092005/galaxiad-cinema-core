@@ -34,33 +34,26 @@ galaxiad-cinema-core/
 - [Movie Search Algorithm](docs/algorithms/movie-search.md)
 - [Movie Recommendation Algorithm](docs/algorithms/movie-recommendation.md)
 - [Role-Aware Chatbot Plan](docs/algorithms/role-aware-chatbot.md)
-- [Backend Controller Structure](apps/backend/ApiLayer/Controllers/README.md)
+- [Backend Controller Structure](apps/backend/Cinema.Api/Controllers/README.md)
 
 ## Backend Structure
 
 ```text
 apps/backend/
-├── ApiLayer/         # controllers, middleware, bootstrapping, hubs
-├── BusinessLayer/    # entities, DTOs, use cases, application services
-├── DataAccess/       # EF Core DbContext, repositories, persistence
-└── Shared/           # shared interfaces, enums, helpers
+├── Cinema.Api/          # controllers, middleware, bootstrapping, hubs
+├── Cinema.Application/  # DTOs, use cases, application services
+├── Cinema.Infrastructure/# EF Core DbContext, repositories, persistence, 3rd-party services
+└── Cinema.Domain/       # core business logic, entities, enums, interfaces
 ```
 
 Controller folders are grouped by audience and operational responsibility:
 
 ```text
-ApiLayer/Controllers/
+Cinema.Api/Controllers/
 ├── Admin/
 ├── Customer/
-│   ├── Booking/
-│   ├── Catalog/
-│   ├── Engagement/
-│   └── Vouchers/
 ├── Identity/
 ├── Management/
-│   ├── Facilities/
-│   ├── Movies/
-│   └── Theaters/
 └── Staff/
 ```
 
@@ -89,7 +82,7 @@ docker compose up --build
 
 ```bash
 cd apps/backend
-dotnet run --project ApiLayer
+dotnet run --project Cinema.Api
 ```
 
 ### Local Frontend

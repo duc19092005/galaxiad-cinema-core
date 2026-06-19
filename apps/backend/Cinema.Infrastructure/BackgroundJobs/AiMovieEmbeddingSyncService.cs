@@ -215,6 +215,6 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
 
     private string GetAiServiceUrl()
     {
-        return _configuration["AiService:BaseUrl"] ?? "http://ai-service:8000";
+        return _configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000";
     }
 }

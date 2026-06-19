@@ -6,21 +6,21 @@ services:
     image: cinema-api
     build:
       context: ./apps/backend
-      dockerfile: ApiLayer/Dockerfile
+      dockerfile: Cinema.Api/Dockerfile
       target: development
     ports:
       - "8080:8080"
       - "8081:8081"
     volumes:
       - ./apps/backend:/src
-      - /src/ApiLayer/bin
-      - /src/ApiLayer/obj
-      - /src/BusinessLayer/bin
-      - /src/BusinessLayer/obj
-      - /src/DataAccess/bin
-      - /src/DataAccess/obj
-      - /src/Shared/bin
-      - /src/Shared/obj
+      - /src/Cinema.Api/bin
+      - /src/Cinema.Api/obj
+      - /src/Cinema.Application/bin
+      - /src/Cinema.Application/obj
+      - /src/Cinema.Domain/bin
+      - /src/Cinema.Domain/obj
+      - /src/Cinema.Infrastructure/bin
+      - /src/Cinema.Infrastructure/obj
     environment:
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - ASPNETCORE_ENVIRONMENT=Docker
