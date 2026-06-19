@@ -1,0 +1,37 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Booking;
+using Cinema.Application.Interfaces.Booking;
+
+namespace Cinema.Application.UseCases.Booking;
+
+public class GetActiveMoviesUseCase
+{
+    private readonly IBookingRepository _repository;
+
+    public GetActiveMoviesUseCase(IBookingRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<BaseResponse<List<ResPublicSimpleMovieDto>>> ExecuteAsync()
+    {
+        var now = DateTime.UtcNow;
+        var movies = await _repository.GetActiveMoviesAsync(now);
+        var list = movies.Select(m => new ResPublicSimpleMovieDto
+        {
+            MovieId = m.MovieId,
+            MovieName = m.MovieName
+        }).ToList();
+
+        return new BaseResponse<List<ResPublicSimpleMovieDto>>
+        {
+            IsSuccess = true,
+            Data = list,
+            Message = "Lấy danh sách phim thành công"
+        };
+    }
+}

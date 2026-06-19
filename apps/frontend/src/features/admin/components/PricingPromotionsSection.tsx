@@ -11,20 +11,20 @@ import {
 import { showError, showSuccess } from '../../../utils/ToastUtils';
 
 const dayOptions = [
-  { value: 'Monday', label: 'Mon' },
-  { value: 'Tuesday', label: 'Tue' },
-  { value: 'Wednesday', label: 'Wed' },
-  { value: 'Thursday', label: 'Thu' },
-  { value: 'Friday', label: 'Fri' },
-  { value: 'Saturday', label: 'Sat' },
-  { value: 'Sunday', label: 'Sun' },
+  { value: 'Monday', label: 'T2' },
+  { value: 'Tuesday', label: 'T3' },
+  { value: 'Wednesday', label: 'T4' },
+  { value: 'Thursday', label: 'T5' },
+  { value: 'Friday', label: 'T6' },
+  { value: 'Saturday', label: 'T7' },
+  { value: 'Sunday', label: 'CN' },
 ];
 
 const promotionTypes: { value: PromotionTypeName; label: string; hint: string }[] = [
-  { value: 'FixedTicketPrice', label: 'Fixed price', hint: 'Set ticket to exact VND' },
-  { value: 'PercentDiscount', label: 'Percent off', hint: 'Subtract % from current price' },
-  { value: 'FixedDiscount', label: 'Fixed off', hint: 'Subtract VND amount' },
-  { value: 'Surcharge', label: 'Surcharge', hint: 'Add % to current price' },
+  { value: 'FixedTicketPrice', label: 'Đồng giá', hint: 'Thiết lập giá vé về một số tiền cố định (VND)' },
+  { value: 'PercentDiscount', label: 'Giảm phần trăm', hint: 'Trừ số phần trăm (%) từ giá vé hiện tại' },
+  { value: 'FixedDiscount', label: 'Giảm tiền cố định', hint: 'Trừ đi một số tiền cố định (VND)' },
+  { value: 'Surcharge', label: 'Phụ thu', hint: 'Cộng thêm phần trăm (%) vào giá vé hiện tại' },
 ];
 
 interface PromotionFormState {
@@ -188,7 +188,7 @@ export const PricingPromotionsSection: React.FC = () => {
       if (promotionRes.isSuccess) setPromotions(promotionRes.data || []);
       if (optionsRes.isSuccess) setOptions(optionsRes.data || emptyOptions);
     } catch (error) {
-      showError(getErrorMessage(error, 'Failed to load pricing promotion data.'));
+      showError(getErrorMessage(error, 'Không thể tải dữ liệu chiến dịch giá.'));
     } finally {
       setLoading(false);
     }
@@ -242,35 +242,35 @@ export const PricingPromotionsSection: React.FC = () => {
     try {
       const response = await pricingPromotionApi.toggle(promotion.pricingPromotionId);
       if (response.isSuccess) {
-        showSuccess(response.data?.isActive ? 'Promotion enabled.' : 'Promotion disabled.');
+        showSuccess(response.data?.isActive ? 'Đã kích hoạt chiến dịch giá.' : 'Đã tạm ngưng chiến dịch giá.');
         fetchData();
       }
     } catch (error) {
-      showError(getErrorMessage(error, 'Failed to toggle promotion.'));
+      showError(getErrorMessage(error, 'Không thể thay đổi trạng thái chiến dịch.'));
     }
   };
 
   const handleDelete = async (promotion: PricingPromotionDto) => {
-    if (!window.confirm(`Delete "${promotion.title}"? Booking snapshots stay unchanged, but future pricing will ignore it.`)) return;
+    if (!window.confirm(`Xóa chiến dịch "${promotion.title}"? Các vé đã đặt sẽ không bị ảnh hưởng, nhưng các suất chiếu tương lai sẽ không áp dụng quy tắc này nữa.`)) return;
     try {
       const response = await pricingPromotionApi.delete(promotion.pricingPromotionId);
       if (response.isSuccess) {
-        showSuccess('Pricing promotion deleted.');
+        showSuccess('Đã xóa chiến dịch giá.');
         fetchData();
       }
     } catch (error) {
-      showError(getErrorMessage(error, 'Failed to delete promotion.'));
+      showError(getErrorMessage(error, 'Không thể xóa chiến dịch.'));
     }
   };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!form.name.trim() || !form.title.trim()) {
-      showError('Name and title are required.');
+      showError('Tên nội bộ và tiêu đề công khai không được để trống.');
       return;
     }
     if (form.rules.some((rule) => rule.adjustmentValue < 0)) {
-      showError('Rule value cannot be negative.');
+      showError('Giá trị quy tắc không được là số âm.');
       return;
     }
 
@@ -282,30 +282,31 @@ export const PricingPromotionsSection: React.FC = () => {
         : await pricingPromotionApi.create(payload);
 
       if (response.isSuccess) {
-        showSuccess(editingPromotion ? 'Pricing promotion updated.' : 'Pricing promotion created.');
+        showSuccess(editingPromotion ? 'Đã cập nhật chiến dịch giá thành công.' : 'Đã tạo chiến dịch giá mới thành công.');
         setIsModalOpen(false);
         fetchData();
       }
     } catch (error) {
-      showError(getErrorMessage(error, 'Failed to save pricing promotion.'));
+      showError(getErrorMessage(error, 'Lưu chiến dịch giá thất bại.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="animate-in">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+    <>
+      <div className="animate-in">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Pricing Promotions</h2>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Quy tắc Định giá & Khuyến mãi</h2>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-            Automatic ticket pricing rules for happy hours, weekly deals, and surcharge windows.
+            Quy tắc tự động tính giá vé cho giờ vàng, ưu đãi hàng tuần và phụ thu theo điều kiện.
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="badge badge-accent">{activeCount} active</span>
+          <span className="badge badge-accent">{activeCount} đang hoạt động</span>
           <button className="btn btn-primary" onClick={openCreate} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Plus size={16} /> New Promotion
+            <Plus size={16} /> Thêm Khuyến mãi
           </button>
         </div>
       </div>
@@ -315,23 +316,23 @@ export const PricingPromotionsSection: React.FC = () => {
           <div className="state-center" style={{ minHeight: '30vh' }}>
             <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
             <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
-              Loading pricing promotions...
+              Đang tải danh sách quy tắc giá...
             </p>
           </div>
         ) : promotions.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 48, color: 'var(--text-muted)' }}>
-            No pricing promotions yet. Create one for happy-hour or weekly ticket pricing.
+            Chưa có chiến dịch giá nào. Hãy tạo một chương trình đồng giá giờ vàng hoặc ưu đãi hàng tuần.
           </div>
         ) : (
           <table>
             <thead>
               <tr>
-                <th>Campaign</th>
-                <th>Status</th>
-                <th>Date Range</th>
-                <th>Rules</th>
-                <th>Public Policy</th>
-                <th style={{ width: 180 }}>Actions</th>
+                <th>Chiến dịch</th>
+                <th>Trạng thái</th>
+                <th>Khoảng ngày</th>
+                <th>Quy tắc</th>
+                <th>Chính sách công khai</th>
+                <th style={{ width: 180 }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -351,26 +352,26 @@ export const PricingPromotionsSection: React.FC = () => {
                       className={`badge ${promotion.isActive ? 'badge-success' : 'badge-default'}`}
                       style={{ border: 'none', cursor: 'pointer' }}
                     >
-                      {promotion.isActive ? 'Active' : 'Inactive'}
+                      {promotion.isActive ? 'Hoạt động' : 'Tạm ngưng'}
                     </button>
                   </td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: 12 }}>
                     <div style={{ display: 'grid', gap: 2 }}>
-                      <span>From: {promotion.startDate ? new Date(promotion.startDate).toLocaleDateString('vi-VN') : 'Immediate'}</span>
-                      <span>To: {promotion.endDate ? new Date(promotion.endDate).toLocaleDateString('vi-VN') : 'Unlimited'}</span>
+                      <span>Từ: {promotion.startDate ? new Date(promotion.startDate).toLocaleDateString('vi-VN') : 'Ngay lập tức'}</span>
+                      <span>Đến: {promotion.endDate ? new Date(promotion.endDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}</span>
                     </div>
                   </td>
                   <td>
                     <div style={{ display: 'grid', gap: 6 }}>
-                      <span style={{ fontWeight: 800 }}>{promotion.rules.length} rule(s)</span>
+                      <span style={{ fontWeight: 800 }}>{promotion.rules.length} quy tắc</span>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                        {promotion.rules.slice(0, 2).map((rule) => `${getTypeLabel(rule.promotionTypeName)} ${formatVnd(rule.adjustmentValue)}`).join(' • ') || 'No active rule'}
+                        {promotion.rules.slice(0, 2).map((rule) => `${getTypeLabel(rule.promotionTypeName)} ${formatVnd(rule.adjustmentValue)}`).join(' • ') || 'Không có quy tắc hoạt động'}
                       </span>
                     </div>
                   </td>
                   <td>
                     <span className={`badge ${promotion.excludeHolidays ? 'badge-warning' : 'badge-success'}`}>
-                      {promotion.excludeHolidays ? 'Excludes holidays' : 'Includes holidays'}
+                      {promotion.excludeHolidays ? 'Loại trừ ngày lễ' : 'Áp dụng cả ngày lễ'}
                     </span>
                   </td>
                   <td>
@@ -399,70 +400,85 @@ export const PricingPromotionsSection: React.FC = () => {
           </table>
         )}
       </div>
+    </div>
 
       {isModalOpen && (
         <div
-          style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.74)', backdropFilter: 'blur(8px)', padding: 16 }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+            padding: 16,
+          }}
           onClick={() => setIsModalOpen(false)}
         >
           <div
-            style={{ width: '100%', maxWidth: 980, maxHeight: '92vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--bg-elevated, #18181b)', border: '1px solid var(--border-color, #27272a)', borderRadius: 'var(--radius-xl, 20px)', boxShadow: '0 24px 80px rgba(0,0,0,0.6)' }}
+            style={{
+              width: '100%', maxWidth: 680,
+              backgroundColor: 'var(--bg-elevated, #18181b)',
+              border: '1px solid var(--border-color, #27272a)',
+              borderRadius: 20, boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              overflow: 'hidden',
+            }}
             onClick={(event) => event.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 22px', borderBottom: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 24px', borderBottom: '1px solid var(--border-color, #27272a)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <BadgePercent size={20} style={{ color: 'var(--accent)' }} />
-                <h3 style={{ fontSize: 18, fontWeight: 850, margin: 0, color: 'var(--text-primary)' }}>
-                  {editingPromotion ? 'Edit Pricing Promotion' : 'Create Pricing Promotion'}
+                <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                  {editingPromotion ? 'Chỉnh sửa Chiến dịch Giá' : 'Tạo mới Chiến dịch Giá'}
                 </h3>
               </div>
-              <button onClick={() => setIsModalOpen(false)} style={{ width: 30, height: 30, borderRadius: 999, border: 'none', background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <X size={15} />
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >
+                <X size={14} />
               </button>
             </div>
 
-            <form id="pricing-promotion-form" onSubmit={handleSubmit} style={{ overflowY: 'auto', padding: 22, display: 'grid', gap: 18 }}>
+            <form id="pricing-promotion-form" onSubmit={handleSubmit} style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14, maxHeight: '78vh', overflowY: 'auto' }}>
               <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Internal Name *</span>
-                  <input className="input" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required placeholder="happy_hour_before_10" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Tên nội bộ *</span>
+                  <input className="input" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required placeholder="happy_hour_truoc_10" />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Slug</span>
-                  <input className="input" value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} placeholder="happy-hour-before-10" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Đường dẫn (Slug)</span>
+                  <input className="input" value={form.slug} onChange={(event) => setForm({ ...form, slug: event.target.value })} placeholder="happy-hour-truoc-10" />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Public Title *</span>
-                  <input className="input" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required placeholder="Happy Hour Ticket Deal" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Tiêu đề công khai *</span>
+                  <input className="input" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} required placeholder="Giờ vàng ưu đãi giá vé" />
                 </label>
               </section>
 
               <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 }}>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Start Date</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Ngày bắt đầu</span>
                   <input type="date" className="input" value={form.startDate} onChange={(event) => setForm({ ...form, startDate: event.target.value })} />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>End Date</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Ngày kết thúc</span>
                   <input type="date" className="input" value={form.endDate} onChange={(event) => setForm({ ...form, endDate: event.target.value })} />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Image URL</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Đường dẫn ảnh</span>
                   <input className="input" value={form.imageUrl} onChange={(event) => setForm({ ...form, imageUrl: event.target.value })} placeholder="https://..." />
                 </label>
               </section>
 
               <section style={{ display: 'grid', gap: 12 }}>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Short Description</span>
-                  <input className="input" value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} placeholder="Shown on promotion cards" />
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Mô tả ngắn</span>
+                  <input className="input" value={form.shortDescription} onChange={(event) => setForm({ ...form, shortDescription: event.target.value })} placeholder="Hiển thị trên thẻ thông tin khuyến mãi" />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Description</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Mô tả chi tiết</span>
                   <textarea className="input" rows={3} value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} style={{ resize: 'vertical' }} />
                 </label>
                 <label style={{ display: 'grid', gap: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Terms & Conditions</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Điều khoản áp dụng</span>
                   <textarea className="input" rows={3} value={form.termsAndConditions} onChange={(event) => setForm({ ...form, termsAndConditions: event.target.value })} style={{ resize: 'vertical' }} />
                 </label>
               </section>
@@ -470,33 +486,33 @@ export const PricingPromotionsSection: React.FC = () => {
               <section style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 700 }}>
                   <input type="checkbox" checked={form.isActive} onChange={(event) => setForm({ ...form, isActive: event.target.checked })} style={{ accentColor: '#ff8a00' }} />
-                  Active campaign
+                  Chiến dịch hoạt động
                 </label>
                 <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--text-secondary)', fontSize: 13, fontWeight: 700 }}>
                   <input type="checkbox" checked={form.excludeHolidays} onChange={(event) => setForm({ ...form, excludeHolidays: event.target.checked })} style={{ accentColor: '#ff8a00' }} />
-                  Exclude holidays
+                  Loại trừ ngày lễ
                 </label>
               </section>
 
               <section style={{ display: 'grid', gap: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <div>
-                    <h4 style={{ margin: 0, fontSize: 15, fontWeight: 850, color: 'var(--text-primary)' }}>Calculation Rules</h4>
-                    <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>Rules match Vietnam local schedule date/time.</p>
+                    <h4 style={{ margin: 0, fontSize: 15, fontWeight: 850, color: 'var(--text-primary)' }}>Quy tắc Tính toán</h4>
+                    <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>Các quy tắc áp dụng theo ngày giờ chiếu thực tế (Giờ Việt Nam).</p>
                   </div>
                   <button type="button" className="btn btn-secondary" onClick={addRule} style={{ display: 'flex', alignItems: 'center', gap: 6, height: 34 }}>
-                    <Plus size={14} /> Add Rule
+                    <Plus size={14} /> Thêm Quy tắc
                   </button>
                 </div>
 
                 {form.rules.map((rule, index) => (
                   <div key={index} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', background: 'rgba(255,255,255,0.025)', padding: 14, display: 'grid', gap: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
-                      <span style={{ fontSize: 12, fontWeight: 850, color: 'var(--accent)' }}>Rule #{index + 1}</span>
+                      <span style={{ fontSize: 12, fontWeight: 850, color: 'var(--accent)' }}>Quy tắc #{index + 1}</span>
                       <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                         <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--text-secondary)', fontSize: 12, fontWeight: 700 }}>
                           <input type="checkbox" checked={rule.isActive} onChange={(event) => updateRule(index, { isActive: event.target.checked })} style={{ accentColor: '#ff8a00' }} />
-                          Active
+                          Hoạt động
                         </label>
                         <button type="button" onClick={() => removeRule(index)} disabled={form.rules.length === 1} className="btn" style={{ padding: '4px 10px', height: 28, minHeight: 0, borderColor: 'rgba(239, 68, 68, 0.35)', color: 'var(--danger)', opacity: form.rules.length === 1 ? 0.4 : 1 }}>
                           <Trash2 size={12} />
@@ -506,67 +522,67 @@ export const PricingPromotionsSection: React.FC = () => {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 10 }}>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Format</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Định dạng</span>
                         <select className="input select" value={rule.movieFormatId ?? ''} onChange={(event) => updateRule(index, { movieFormatId: event.target.value || null })}>
-                          <option value="">All formats</option>
-                          {options.formats.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                          <option value="">Tất cả định dạng</option>
+                          {(options.formats || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                         </select>
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Cinema</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Chi nhánh rạp</span>
                         <select className="input select" value={rule.cinemaId ?? ''} onChange={(event) => updateRule(index, { cinemaId: event.target.value || null })}>
-                          <option value="">All cinemas</option>
-                          {options.cinemas.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                          <option value="">Tất cả rạp</option>
+                          {(options.cinemas || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                         </select>
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Auditorium</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Phòng chiếu</span>
                         <select className="input select" value={rule.auditoriumId ?? ''} onChange={(event) => updateRule(index, { auditoriumId: event.target.value || null })}>
-                          <option value="">All auditoriums</option>
-                          {options.auditoriums.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                          <option value="">Tất cả phòng</option>
+                          {(options.auditoriums || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                         </select>
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Customer Segment</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Phân khúc đối tượng</span>
                         <select className="input select" value={rule.requiredMembershipTierId ?? ''} onChange={(event) => updateRule(index, { requiredMembershipTierId: event.target.value || null })}>
-                          <option value="">All segments</option>
-                          {options.membershipTiers.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                          <option value="">Tất cả đối tượng</option>
+                          {(options.membershipTiers || []).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
                         </select>
                       </label>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))', gap: 10 }}>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Type</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Loại</span>
                         <select className="input select" value={rule.promotionType} onChange={(event) => updateRule(index, { promotionType: event.target.value as PromotionTypeName })}>
                           {promotionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
                         </select>
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Value</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Giá trị</span>
                         <input type="number" min={0} className="input" value={rule.adjustmentValue} onChange={(event) => updateRule(index, { adjustmentValue: Number(event.target.value) || 0 })} />
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Priority</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Độ ưu tiên</span>
                         <input type="number" className="input" value={rule.priority} onChange={(event) => updateRule(index, { priority: Number(event.target.value) || 0 })} />
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>From Time</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Từ giờ</span>
                         <input type="time" className="input" value={toTimeInput(rule.timeFrom)} onChange={(event) => updateRule(index, { timeFrom: event.target.value })} />
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>To Time</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Đến giờ</span>
                         <input type="time" className="input" value={toTimeInput(rule.timeTo)} onChange={(event) => updateRule(index, { timeTo: event.target.value })} />
                       </label>
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Rule Start</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Bắt đầu quy tắc</span>
                         <input type="date" className="input" value={typeof rule.startDate === 'string' ? toDateInput(rule.startDate) : ''} onChange={(event) => updateRule(index, { startDate: event.target.value })} />
                       </label>
                       <label style={{ display: 'grid', gap: 6 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Rule End</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Kết thúc quy tắc</span>
                         <input type="date" className="input" value={typeof rule.endDate === 'string' ? toDateInput(rule.endDate) : ''} onChange={(event) => updateRule(index, { endDate: event.target.value })} />
                       </label>
                     </div>
@@ -602,19 +618,18 @@ export const PricingPromotionsSection: React.FC = () => {
                   </div>
                 ))}
               </section>
-            </form>
-
-            <div style={{ padding: '14px 22px 20px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: 12 }}>
-              <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>
-                Cancel
-              </button>
-              <button form="pricing-promotion-form" type="submit" disabled={submitting} className="btn btn-primary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
-                {submitting ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Saving...</> : <><Check size={16} /> Save Promotion</>}
-              </button>
+                <div style={{ display: 'flex', gap: 12, marginTop: 8, paddingTop: 16, borderTop: '1px solid var(--border-color, #27272a)' }}>
+                  <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-secondary" style={{ flex: 1 }}>
+                    Hủy
+                  </button>
+                  <button type="submit" disabled={submitting} className="btn btn-primary" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6 }}>
+                    {submitting ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang lưu...</> : <><Check size={16} /> Lưu quy tắc</>}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+    </>
   );
 };

@@ -192,20 +192,30 @@ const BookingPage: React.FC = () => {
     const totalBeforePromotions = selectedSeats.reduce((sum, seat) => {
         const segmentId = seatSegmentMap[seat.seatId];
         const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-        return sum + (segment?.priceBeforePromotion || segment?.finalPrice || 0);
+        if (!segment) return sum;
+        const discountAmount = segment.appliedPromotions
+            .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
+            .reduce((s, p) => s + p.amountChanged, 0);
+        return sum + (segment.finalPrice - discountAmount);
     }, 0);
 
     const totalPromotionAdjustment = selectedSeats.reduce((sum, seat) => {
         const segmentId = seatSegmentMap[seat.seatId];
         const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-        return sum + (segment?.promotionAdjustmentAmount || 0);
+        if (!segment) return sum;
+        const discountAmount = segment.appliedPromotions
+            .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
+            .reduce((s, p) => s + p.amountChanged, 0);
+        return sum + discountAmount;
     }, 0);
 
     const selectedAppliedPromotions = Array.from(new Map(
         selectedSeats.flatMap((seat) => {
             const segmentId = seatSegmentMap[seat.seatId];
             return pricing?.segmentPrices.find(s => s.userSegmentId === segmentId)?.appliedPromotions || [];
-        }).map((promotion) => [promotion.ruleId, promotion])
+        })
+        .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
+        .map((promotion) => [promotion.ruleId, promotion])
     ).values());
 
     if (loading) {
@@ -397,11 +407,14 @@ const BookingPage: React.FC = () => {
                                                                 {(segment?.finalPrice || 0).toLocaleString('vi-VN')}đ
                                                             </span>
                                                         </div>
-                                                        {segment && segment.appliedPromotions.length > 0 && (
-                                                            <div className="text-[11px] text-emerald-300 leading-relaxed">
-                                                                {segment.appliedPromotions.map((promotion) => promotion.title).join(', ')}
-                                                            </div>
-                                                        )}
+                                                        {segment && segment.appliedPromotions.filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0).length > 0 && (
+                                                             <div className="text-[11px] text-emerald-300 leading-relaxed">
+                                                                 {segment.appliedPromotions
+                                                                     .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
+                                                                     .map((promotion) => promotion.title)
+                                                                     .join(', ')}
+                                                             </div>
+                                                         )}
                                                         <select
                                                             value={seatSegmentMap[seat.seatId] || ''}
                                                             onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
