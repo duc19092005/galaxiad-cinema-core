@@ -1,4 +1,5 @@
 using Cinema.Infrastructure.Services;
+using Cinema.Application.Interfaces;
 using Cinema.Application.UseCases.Admin;
 using Cinema.Application.UseCases.Admin.Audit;
 using Cinema.Application.UseCases.Admin.Dashboard;
@@ -18,8 +19,8 @@ public static class AdminBootstrap
 
         // Audit Use Case
         services.AddScoped<GetRecentAuditLogsUseCase>();
-        // Keep AuditLogService since it's also used by other services for WriteAsync
-        services.AddScoped<AuditLogService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<AuditLogService>(sp => (AuditLogService)sp.GetRequiredService<IAuditLogService>());
 
         // Transfer Use Cases
         services.AddScoped<GetUsersByRoleUseCase>();
