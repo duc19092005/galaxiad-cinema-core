@@ -29,7 +29,6 @@ const BookingPage: React.FC = () => {
     const [userName, setUserName] = useState<string>('Guest');
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
     const [isCashierMode, setIsCashierMode] = useState<boolean>(false);
-    const [userRole, setUserRole] = useState<string>('Guest');
     const [myVouchers, setMyVouchers] = useState<UserVoucherDto[]>([]);
     const [selectedVoucherId, setSelectedVoucherId] = useState<string>('');
     const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
@@ -47,21 +46,9 @@ const BookingPage: React.FC = () => {
             const isCashier = roles.includes('Cashier');
             setIsCashierMode(isCashier);
 
-            if (roles.includes('VIP')) {
-                setUserRole('VIP');
-            } else if (roles.includes('Student')) {
-                setUserRole('Student');
-            } else if (roles.includes('Customer') || roles.includes('User')) {
-                setUserRole('User');
-            } else if (isCashier) {
-                setUserRole('Cashier');
-            } else {
-                setUserRole('User');
-            }
             setIsLoggedIn(true);
         } else {
             setUserName('Guest');
-            setUserRole('Guest');
             setIsLoggedIn(false);
             setIsCashierMode(false);
         }
@@ -118,16 +105,7 @@ const BookingPage: React.FC = () => {
         }
     }, [isLoggedIn]);
 
-    const ROLE_DISCOUNTS: Record<string, number> = {
-        'Guest': 0,
-        'User': 5,
-        'Student': 10,
-        'VIP': 15
-    };
-    const roleDiscountPercent = ROLE_DISCOUNTS[userRole] || 0;
-
     const selectedVoucher = myVouchers.find(v => v.voucherId === selectedVoucherId);
-    const voucherDiscountPercent = selectedVoucher ? selectedVoucher.voucherDiscountPercent : 0;
 
     const fetchData = async () => {
         setLoading(true); setError(null);
@@ -210,6 +188,25 @@ const BookingPage: React.FC = () => {
         const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
         return sum + (segment?.finalPrice || 0);
     }, 0);
+
+    const totalBeforePromotions = selectedSeats.reduce((sum, seat) => {
+        const segmentId = seatSegmentMap[seat.seatId];
+        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
+        return sum + (segment?.priceBeforePromotion || segment?.finalPrice || 0);
+    }, 0);
+
+    const totalPromotionAdjustment = selectedSeats.reduce((sum, seat) => {
+        const segmentId = seatSegmentMap[seat.seatId];
+        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
+        return sum + (segment?.promotionAdjustmentAmount || 0);
+    }, 0);
+
+    const selectedAppliedPromotions = Array.from(new Map(
+        selectedSeats.flatMap((seat) => {
+            const segmentId = seatSegmentMap[seat.seatId];
+            return pricing?.segmentPrices.find(s => s.userSegmentId === segmentId)?.appliedPromotions || [];
+        }).map((promotion) => [promotion.ruleId, promotion])
+    ).values());
 
     if (loading) {
         return (
@@ -390,27 +387,35 @@ const BookingPage: React.FC = () => {
                                         {selectedSeats.length === 0 ? (
                                             <span className="text-zinc-500 italic text-sm">No seats selected yet</span>
                                         ) : (
-                                            selectedSeats.map(seat => (
-                                                <div key={seat.seatId} className="flex flex-col gap-2 p-3 bg-white/5 border border-white/10 rounded-xl w-full">
-                                                    <div className="flex justify-between items-center">
-                                                        <span className="font-bold text-[#ff8a00]">Seat {seat.seatName}</span>
-                                                        <span className="font-bold text-white">
-                                                            {(pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId])?.finalPrice || 0).toLocaleString('vi-VN')}đ
-                                                        </span>
+                                            selectedSeats.map(seat => {
+                                                const segment = pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId]);
+                                                return (
+                                                    <div key={seat.seatId} className="flex flex-col gap-2 p-3 bg-white/5 border border-white/10 rounded-xl w-full">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-bold text-[#ff8a00]">Seat {seat.seatName}</span>
+                                                            <span className="font-bold text-white">
+                                                                {(segment?.finalPrice || 0).toLocaleString('vi-VN')}đ
+                                                            </span>
+                                                        </div>
+                                                        {segment && segment.appliedPromotions.length > 0 && (
+                                                            <div className="text-[11px] text-emerald-300 leading-relaxed">
+                                                                {segment.appliedPromotions.map((promotion) => promotion.title).join(', ')}
+                                                            </div>
+                                                        )}
+                                                        <select
+                                                            value={seatSegmentMap[seat.seatId] || ''}
+                                                            onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
+                                                            className="w-full bg-zinc-900 text-zinc-300 text-xs p-2 rounded border border-white/5 outline-none cursor-pointer"
+                                                        >
+                                                            {pricing?.segmentPrices.map(segmentPrice => (
+                                                                <option key={segmentPrice.userSegmentId} value={segmentPrice.userSegmentId} className="bg-zinc-950 text-white">
+                                                                    {segmentPrice.segmentName}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     </div>
-                                                    <select
-                                                        value={seatSegmentMap[seat.seatId] || ''}
-                                                        onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
-                                                        className="w-full bg-zinc-900 text-zinc-300 text-xs p-2 rounded border border-white/5 outline-none cursor-pointer"
-                                                    >
-                                                        {pricing?.segmentPrices.map(segment => (
-                                                            <option key={segment.userSegmentId} value={segment.userSegmentId} className="bg-zinc-950 text-white">
-                                                                {segment.segmentName}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            ))
+                                                );
+                                            })
                                         )}
                                     </div>
                                 </div>
@@ -439,21 +444,25 @@ const BookingPage: React.FC = () => {
                              {/* Pricing Breakdown */}
                              <div className="mb-6 space-y-2 text-sm border-t border-white/5 pt-4">
                                  <div className="flex justify-between text-zinc-400">
-                                     <span>Subtotal</span>
-                                     <span>{totalPrice.toLocaleString('vi-VN')}đ</span>
+                                     <span>Before promotions</span>
+                                     <span>{totalBeforePromotions.toLocaleString('vi-VN')}đ</span>
                                  </div>
-                                 
-                                 {roleDiscountPercent > 0 && (
-                                     <div className="flex justify-between text-emerald-400 font-medium">
-                                         <span>Role Discount ({userRole} -{roleDiscountPercent}%)</span>
-                                         <span>-{(totalPrice * roleDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                 {selectedAppliedPromotions.map((promotion) => (
+                                     <div key={promotion.ruleId} className="flex justify-between gap-3 text-emerald-400 font-medium">
+                                         <span className="truncate">{promotion.title}</span>
+                                         <span>{promotion.amountChanged.toLocaleString('vi-VN')}đ</span>
+                                     </div>
+                                 ))}
+                                 {totalPromotionAdjustment !== 0 && (
+                                     <div className="flex justify-between text-[#ff8a00] font-medium">
+                                         <span>Automatic pricing adjustment</span>
+                                         <span>{totalPromotionAdjustment.toLocaleString('vi-VN')}đ</span>
                                      </div>
                                  )}
-
-                                 {voucherDiscountPercent > 0 && (
-                                     <div className="flex justify-between text-[#ff8a00] font-medium">
-                                         <span>Voucher Discount (-{voucherDiscountPercent}%)</span>
-                                         <span>-{(totalPrice * voucherDiscountPercent / 100).toLocaleString('vi-VN')}đ</span>
+                                 {selectedVoucher && (
+                                     <div className="flex justify-between gap-3 text-zinc-400">
+                                         <span className="truncate">Voucher selected</span>
+                                         <span>{selectedVoucher.voucherName}</span>
                                      </div>
                                  )}
                              </div>
@@ -464,9 +473,9 @@ const BookingPage: React.FC = () => {
                                      <span className="text-white font-semibold">Total Price</span>
                                      <div className="text-right">
                                          <span className="text-[#ff8a00] text-3xl font-extrabold">
-                                             {Math.max(0, totalPrice * (1 - (roleDiscountPercent + voucherDiscountPercent) / 100)).toLocaleString('vi-VN')}đ
+                                             {Math.max(0, totalPrice).toLocaleString('vi-VN')}đ
                                          </span>
-                                         <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Inclusives of all taxes</p>
+                                         <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Backend-calculated ticket price</p>
                                      </div>
                                  </div>
                              </div>

@@ -22,6 +22,7 @@ import {
   XCircle,
   UserPlus,
   X,
+  BadgePercent,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -37,6 +38,7 @@ import RoleUpdateModal from '../../components/RoleUpdateModal';
 import CinemaAssignModal from '../../components/CinemaAssignModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { VouchersSection } from './components/VouchersSection';
+import { PricingPromotionsSection } from './components/PricingPromotionsSection';
 import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
@@ -63,7 +65,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'permissions', 'rights', 'audit']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'permissions', 'rights', 'audit']);
 
 const isAccountActive = (status: AdminUserDto['accountStatus']) => {
   if (typeof status === 'number') return status === 1;
@@ -940,6 +942,7 @@ const AdminPage: React.FC = () => {
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
         { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
+        { id: 'pricing-promotions', label: t('Pricing Rules'), icon: <BadgePercent size={18} /> },
         { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
@@ -1120,6 +1123,9 @@ const AdminPage: React.FC = () => {
 
       case 'vouchers':
         return <VouchersSection />;
+
+      case 'pricing-promotions':
+        return <PricingPromotionsSection />;
 
       case 'cinemas':
         return (

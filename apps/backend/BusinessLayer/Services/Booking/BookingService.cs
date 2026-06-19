@@ -6,6 +6,7 @@ using BusinessLayer.Entities.MovieInfos;
 using BusinessLayer.Entities.UserInfos;
 using BusinessLayer.Entities.Vouchers;
 using BusinessLayer.Interfaces.IThirdPersonServices;
+using BusinessLayer.Services.PricingPromotions;
 using Shared.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,6 +26,7 @@ public class BookingService
     private readonly IVnPayService _vnPayService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<BookingService> _logger;
+    private readonly PricingPromotionService _pricingPromotionService;
 
     public BookingService(
         IUnitOfWork unitOfWork,
@@ -32,7 +34,8 @@ public class BookingService
         VnPayHelper vnPayHelper,
         IVnPayService vnPayService,
         IConfiguration configuration,
-        ILogger<BookingService> logger)
+        ILogger<BookingService> logger,
+        PricingPromotionService pricingPromotionService)
     {
         _unitOfWork = unitOfWork;
         _userContextService = userContextService;
@@ -40,6 +43,7 @@ public class BookingService
         _vnPayService = vnPayService;
         _configuration = configuration;
         _logger = logger;
+        _pricingPromotionService = pricingPromotionService;
     }
 
     // ==========================================
@@ -614,28 +618,44 @@ public class BookingService
             .Where(s => s.CinemaId == cinemaId && s.MovieFormatId == formatId)
             .ToListAsync();
 
+        var segmentPrices = new List<SegmentPriceDto>();
+        foreach (var seg in segments)
+        {
+            var surcharge = surcharges.FirstOrDefault(s => s.UserSegmentId == seg.UserSegmentId);
+            var priceBeforePromotion = basePrice;
+            if (surcharge != null)
+            {
+                priceBeforePromotion = basePrice * (1 + (surcharge.SurchangePercent / 100));
+            }
+
+            priceBeforePromotion = Math.Round(priceBeforePromotion, 0);
+            var promotionPrice = await _pricingPromotionService.CalculateAsync(schedule, priceBeforePromotion, seg.UserSegmentId);
+
+            segmentPrices.Add(new SegmentPriceDto
+            {
+                UserSegmentId = seg.UserSegmentId,
+                SegmentName = seg.UserSegmentName,
+                Description = seg.UserSegmentDescription,
+                BasePrice = basePrice,
+                PriceBeforePromotion = priceBeforePromotion,
+                PromotionAdjustmentAmount = promotionPrice.TotalAdjustmentAmount,
+                FinalPrice = Math.Round(promotionPrice.FinalPrice, 0),
+                AppliedPromotions = promotionPrice.AppliedPromotions.Select(MapAppliedPromotion).ToList()
+            });
+        }
+
         var pricing = new ResPublicPricingDto
         {
             ScheduleId = scheduleId,
             BasePrice = basePrice,
-            SegmentPrices = segments.Select(seg => 
-            {
-                var surcharge = surcharges.FirstOrDefault(s => s.UserSegmentId == seg.UserSegmentId);
-                var finalPrice = basePrice;
-                if (surcharge != null)
-                {
-                    finalPrice = basePrice * (1 + (surcharge.SurchangePercent / 100));
-                }
-
-                return new SegmentPriceDto
-                {
-                    UserSegmentId = seg.UserSegmentId,
-                    SegmentName = seg.UserSegmentName,
-                    Description = seg.UserSegmentDescription,
-                    FinalPrice = Math.Round(finalPrice, 0)
-                };
-            }).ToList()
+            SegmentPrices = segmentPrices
         };
+
+        pricing.AppliedPromotions = pricing.SegmentPrices
+            .SelectMany(x => x.AppliedPromotions)
+            .GroupBy(x => x.RuleId)
+            .Select(x => x.First())
+            .ToList();
 
         return new BaseResponse<ResPublicPricingDto>
         {
@@ -769,12 +789,17 @@ public class BookingService
             foreach (var sel in request.SeatSelections)
             {
                 var surcharge = surcharges.FirstOrDefault(s => s.UserSegmentId == sel.UserSegmentId);
-                var priceEach = basePrice;
+                var priceBeforePromotion = basePrice;
                 if (surcharge != null)
                 {
-                    priceEach = basePrice * (1 + (surcharge.SurchangePercent / 100));
+                    priceBeforePromotion = basePrice * (1 + (surcharge.SurchangePercent / 100));
                 }
-                priceEach = Math.Round(priceEach, 0);
+                priceBeforePromotion = Math.Round(priceBeforePromotion, 0);
+                var promotionPrice = await _pricingPromotionService.CalculateAsync(
+                    schedule,
+                    priceBeforePromotion,
+                    sel.UserSegmentId);
+                var priceEach = Math.Round(promotionPrice.FinalPrice, 0);
                 totalPrice += priceEach;
 
                 orderDetails.Add(new OrderDetailsInfo
@@ -783,7 +808,13 @@ public class BookingService
                     SeatId = sel.SeatId,
                     MovieScheduleId = request.ScheduleId,
                     UserSegmentId = sel.UserSegmentId,
-                    PriceEach = priceEach
+                    PriceEach = priceEach,
+                    BaseFormatPriceSnapshot = basePrice,
+                    PricingAdjustmentAmount = promotionPrice.TotalAdjustmentAmount,
+                    AppliedPromotionSnapshotJson = promotionPrice.SnapshotJson,
+                    PriceBeforeVoucher = priceEach,
+                    VoucherDiscountAmount = 0,
+                    FinalPrice = priceEach
                 });
             }
 
@@ -853,6 +884,14 @@ public class BookingService
 
             decimal finalPrice = totalPrice * (1 - (totalDiscountPercent / 100));
             finalPrice = Math.Round(finalPrice, 0);
+            var voucherDiscountAmount = totalPrice - finalPrice;
+
+            foreach (var detail in orderDetails)
+            {
+                var detailDiscount = Math.Round(detail.PriceBeforeVoucher * (totalDiscountPercent / 100), 0);
+                detail.VoucherDiscountAmount = detailDiscount;
+                detail.FinalPrice = Math.Max(0, detail.PriceBeforeVoucher - detailDiscount);
+            }
 
             string? finalCustomerName = null;
             string? finalCustomerEmail = null;
@@ -883,6 +922,20 @@ public class BookingService
                 OrderStatus = OrderStatusEnum.Pending,
                 PaymentMethod = PaymentMethodEnum.VNPAY,
                 TotalPrice = finalPrice,
+                SubtotalPrice = totalPrice,
+                PromotionDiscountAmount = orderDetails.Sum(x => x.PricingAdjustmentAmount < 0 ? Math.Abs(x.PricingAdjustmentAmount) : 0),
+                VoucherDiscountAmount = voucherDiscountAmount,
+                FinalAmount = finalPrice,
+                PricingSnapshotJson = System.Text.Json.JsonSerializer.Serialize(orderDetails.Select(x => new
+                {
+                    x.SeatId,
+                    x.UserSegmentId,
+                    x.BaseFormatPriceSnapshot,
+                    x.PricingAdjustmentAmount,
+                    x.PriceBeforeVoucher,
+                    x.VoucherDiscountAmount,
+                    x.FinalPrice
+                })),
                 OrderDate = DateTime.UtcNow,
                 TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
@@ -1208,6 +1261,22 @@ public class BookingService
             IsSuccess = true,
             Data = orders,
             Message = Messages.Booking.GetHistorySuccess
+        };
+    }
+
+    private static global::BusinessLayer.Dtos.Booking.AppliedPricingPromotionDto MapAppliedPromotion(
+        global::BusinessLayer.Dtos.PricingPromotions.AppliedPricingPromotionDto promotion)
+    {
+        return new global::BusinessLayer.Dtos.Booking.AppliedPricingPromotionDto
+        {
+            PromotionId = promotion.PromotionId,
+            RuleId = promotion.RuleId,
+            Title = promotion.Title,
+            PromotionTypeName = promotion.PromotionTypeName,
+            AdjustmentValue = promotion.AdjustmentValue,
+            AmountChanged = promotion.AmountChanged,
+            PriceBefore = promotion.PriceBefore,
+            PriceAfter = promotion.PriceAfter
         };
     }
 }

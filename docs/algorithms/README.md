@@ -8,6 +8,7 @@ This folder contains the product and technical algorithms that should not live i
 | --- | --- |
 | [Movie Search Algorithm](movie-search.md) | Explains normal movie search and when SQL is enough. |
 | [Movie Recommendation Algorithm](movie-recommendation.md) | Explains behavior-based recommendations, Qdrant, SQL queries, and fallback scoring. |
+| [Dynamic Pricing Promotions](pricing-promotions.md) | Explains automatic ticket pricing, weekday bitmask rules, timezone matching, and booking snapshots. |
 | [Role-Aware Chatbot Plan](role-aware-chatbot.md) | Explains the planned chatbot flow, role scopes, SQL/RAG routing, and safety rules. |
 
 ## Core Principle

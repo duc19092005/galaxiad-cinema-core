@@ -1,4 +1,5 @@
 using BusinessLayer.Services.Booking;
+using BusinessLayer.Services.PricingPromotions;
 using BusinessLayer.Services.Vouchers;
 using Shared.Utils;
 
@@ -10,6 +11,7 @@ public static class BookingServicesBootstrap
     {
         services.AddScoped<BookingService>();
         services.AddScoped<VoucherService>();
+        services.AddScoped<PricingPromotionService>();
         services.AddSingleton<SseConnectionManager>();
         services.AddSingleton<VnPayHelper>();
         return services;

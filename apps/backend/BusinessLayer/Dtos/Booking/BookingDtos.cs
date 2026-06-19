@@ -144,6 +144,7 @@ public class ResPublicPricingDto
     public Guid ScheduleId { get; set; }
     public decimal BasePrice { get; set; }
     public List<SegmentPriceDto> SegmentPrices { get; set; } = [];
+    public List<AppliedPricingPromotionDto> AppliedPromotions { get; set; } = [];
 }
 
 public class SegmentPriceDto
@@ -151,7 +152,23 @@ public class SegmentPriceDto
     public Guid UserSegmentId { get; set; }
     public string SegmentName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public decimal BasePrice { get; set; }
+    public decimal PriceBeforePromotion { get; set; }
+    public decimal PromotionAdjustmentAmount { get; set; }
     public decimal FinalPrice { get; set; }
+    public List<AppliedPricingPromotionDto> AppliedPromotions { get; set; } = [];
+}
+
+public class AppliedPricingPromotionDto
+{
+    public Guid PromotionId { get; set; }
+    public Guid RuleId { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string PromotionTypeName { get; set; } = string.Empty;
+    public decimal AdjustmentValue { get; set; }
+    public decimal AmountChanged { get; set; }
+    public decimal PriceBefore { get; set; }
+    public decimal PriceAfter { get; set; }
 }
 
 // ==========================================

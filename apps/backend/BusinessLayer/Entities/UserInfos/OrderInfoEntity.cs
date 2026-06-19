@@ -17,6 +17,21 @@ public class OrderInfoEntity
     
     [Column(TypeName = "decimal(18,2)")]
     public decimal TotalPrice { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal SubtotalPrice { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PromotionDiscountAmount { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal VoucherDiscountAmount { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal FinalAmount { get; set; }
+
+    [Column(TypeName = "nvarchar(max)")]
+    public string? PricingSnapshotJson { get; set; }
     
     public DateTime OrderDate { get; set; }
     

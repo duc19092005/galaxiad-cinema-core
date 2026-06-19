@@ -82,13 +82,68 @@ export interface PublicSegmentPrice {
     userSegmentId: string;
     segmentName: string;
     description: string;
+    basePrice: number;
+    priceBeforePromotion: number;
+    promotionAdjustmentAmount: number;
     finalPrice: number;
+    appliedPromotions: PublicAppliedPricingPromotion[];
+}
+
+export interface PublicAppliedPricingPromotion {
+    promotionId: string;
+    ruleId: string;
+    title: string;
+    promotionTypeName: string;
+    adjustmentValue: number;
+    amountChanged: number;
+    priceBefore: number;
+    priceAfter: number;
 }
 
 export interface PublicPricing {
     scheduleId: string;
     basePrice: number;
     segmentPrices: PublicSegmentPrice[];
+    appliedPromotions: PublicAppliedPricingPromotion[];
+}
+
+export interface PublicPromotionRule {
+    pricingPromotionRuleId: string;
+    movieFormatId: string | null;
+    movieFormatName: string | null;
+    cinemaId: string | null;
+    cinemaName: string | null;
+    auditoriumId: string | null;
+    auditoriumName: string | null;
+    requiredMembershipTierId: string | null;
+    requiredMembershipTierName: string | null;
+    promotionType: number | string;
+    promotionTypeName: string;
+    adjustmentValue: number;
+    startDate: string | null;
+    endDate: string | null;
+    timeFrom: string | null;
+    timeTo: string | null;
+    daysOfWeek: string[];
+    daysOfWeekText: string;
+    priority: number;
+    isActive: boolean;
+}
+
+export interface PublicPromotion {
+    pricingPromotionId: string;
+    name: string;
+    slug: string;
+    title: string;
+    shortDescription: string | null;
+    description: string | null;
+    termsAndConditions: string | null;
+    imageUrl: string | null;
+    isActive: boolean;
+    excludeHolidays: boolean;
+    startDate: string | null;
+    endDate: string | null;
+    rules: PublicPromotionRule[];
 }
 
 export interface PublicGenre {

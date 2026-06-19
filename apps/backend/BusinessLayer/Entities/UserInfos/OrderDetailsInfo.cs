@@ -17,6 +17,24 @@ public class OrderDetailsInfo
     [Column(TypeName = "decimal(18,2)")]
     public decimal PriceEach { get; set; }
 
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal BaseFormatPriceSnapshot { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PricingAdjustmentAmount { get; set; }
+
+    [Column(TypeName = "nvarchar(max)")]
+    public string? AppliedPromotionSnapshotJson { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PriceBeforeVoucher { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal VoucherDiscountAmount { get; set; }
+
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal FinalPrice { get; set; }
+
     [Column(TypeName = "nvarchar(100)")]
     public string? FullName { get; set; }
 

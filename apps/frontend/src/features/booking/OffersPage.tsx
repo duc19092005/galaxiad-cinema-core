@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Ticket, Sparkles, ShoppingBag, Wallet, Coins, Clock, ShieldAlert, Loader2 } from 'lucide-react';
 import { voucherApi, type VoucherDto, type UserVoucherDto } from '../../api/voucherApi';
 import { bookingApi } from '../../api/bookingApi';
+import { publicApi } from '../../api/publicApi';
 import Header from '../../components/Header';
 import { showSuccess, showError } from '../../utils/ToastUtils';
+import type { PublicPromotion } from '../../types/public.types';
 
 const getVoucherImage = (name: string) => {
   const norm = name.toUpperCase();
@@ -35,13 +37,13 @@ export const OffersPage: React.FC = () => {
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
   // Dynamic promotions state (Deals & Offers)
-  const [promotions, setPromotions] = useState<VoucherDto[]>([]);
+  const [promotions, setPromotions] = useState<PublicPromotion[]>([]);
   const [loadingPromotions, setLoadingPromotions] = useState(false);
 
   const fetchPublicPromotions = async () => {
     setLoadingPromotions(true);
     try {
-      const res = await voucherApi.getActiveVouchers();
+      const res = await publicApi.getPromotions();
       if (res.isSuccess) {
         setPromotions(res.data || []);
       }
@@ -281,7 +283,7 @@ export const OffersPage: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
                 {promotions.map((promo) => (
                   <div 
-                    key={promo.voucherId} 
+                    key={promo.pricingPromotionId} 
                     className="glass-card" 
                     style={{ 
                       borderRadius: 'var(--radius-xl)', 
@@ -295,7 +297,7 @@ export const OffersPage: React.FC = () => {
                   >
                     {/* Image & tag */}
                     <div style={{ height: '180px', position: 'relative', overflow: 'hidden' }}>
-                      <img src={getVoucherImage(promo.voucherName)} alt={promo.voucherName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      <img src={promo.imageUrl || getVoucherImage(promo.title)} alt={promo.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <span style={{
                         position: 'absolute',
                         top: '12px',
@@ -308,24 +310,37 @@ export const OffersPage: React.FC = () => {
                         color: 'black',
                         textTransform: 'uppercase'
                       }}>
-                        {promo.voucherDiscountPercent}% OFF
+                        AUTO APPLIED
                       </span>
                     </div>
 
                     {/* Content */}
                     <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Deal Code: {promo.voucherName}</span>
-                        <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 8px 0' }}>{promo.voucherName}</h3>
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          {promo.excludeHolidays ? 'Excludes holidays' : 'Available on holidays'}
+                        </span>
+                        <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 8px 0' }}>{promo.title}</h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 16px 0' }}>
-                          {promo.voucherDescription}
+                          {promo.shortDescription || promo.description || 'Automatic pricing offer available for eligible sessions.'}
                         </p>
                       </div>
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Point Cost:</span>
-                        <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--primary, #ff8a00)', letterSpacing: '0.05em' }}>{promo.voucherPointsCost} PTS</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                          {promo.startDate ? new Date(promo.startDate).toLocaleDateString('vi-VN') : 'Now'}
+                          {' - '}
+                          {promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : 'No end date'}
+                        </span>
+                        <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary, #ff8a00)', letterSpacing: '0.03em' }}>
+                          {promo.rules.length} rule{promo.rules.length === 1 ? '' : 's'}
+                        </span>
                       </div>
+                      {promo.termsAndConditions && (
+                        <p style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.45, margin: '12px 0 0' }}>
+                          {promo.termsAndConditions}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}

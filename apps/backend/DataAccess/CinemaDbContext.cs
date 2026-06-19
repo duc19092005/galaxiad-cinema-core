@@ -2,6 +2,7 @@ using BusinessLayer.Constants;
 using BusinessLayer.Entities.AuditLogs;
 using BusinessLayer.Entities.CinemaInfos;
 using BusinessLayer.Entities.MovieInfos;
+using BusinessLayer.Entities.Promotions;
 using BusinessLayer.Entities.ScheduleJob;
 using BusinessLayer.Entities.UserInfos;
 using BusinessLayer.Entities.Vouchers;
@@ -103,6 +104,12 @@ public class CinemaDbContext : DbContext
     public DbSet<UserNotificationEntity> UserNotificationEntity { get; set; }
 
     public DbSet<UserGenreSurveyEntity> UserGenreSurveyEntity { get; set; }
+
+    public DbSet<PricingPromotionEntity> PricingPromotionEntity { get; set; }
+
+    public DbSet<PricingPromotionRuleEntity> PricingPromotionRuleEntity { get; set; }
+
+    public DbSet<HolidayCalendarEntity> HolidayCalendarEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -212,6 +219,61 @@ public class CinemaDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(x => x.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PricingPromotionEntity>(entity =>
+        {
+            entity.HasKey(x => x.PricingPromotionId);
+            entity.HasIndex(x => x.Slug).IsUnique();
+            entity.HasIndex(x => new { x.IsActive, x.StartDate, x.EndDate });
+
+            entity.HasOne(x => x.CreatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.UpdatedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.UpdatedBy)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<PricingPromotionRuleEntity>(entity =>
+        {
+            entity.HasKey(x => x.PricingPromotionRuleId);
+            entity.HasIndex(x => new { x.IsActive, x.MovieFormatId, x.CinemaId, x.DaysOfWeekMask });
+            entity.HasIndex(x => new { x.TimeFrom, x.TimeTo });
+
+            entity.HasOne(x => x.PricingPromotionEntity)
+                .WithMany(x => x.Rules)
+                .HasForeignKey(x => x.PricingPromotionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.MovieFormatInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.MovieFormatId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.CinemaInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.CinemaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AuditoriumInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.AuditoriumId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.RequiredMembershipTierEntity)
+                .WithMany()
+                .HasForeignKey(x => x.RequiredMembershipTierId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<HolidayCalendarEntity>(entity =>
+        {
+            entity.HasKey(x => x.HolidayId);
+            entity.HasIndex(x => x.Date).IsUnique();
         });
         
         // User Infos 

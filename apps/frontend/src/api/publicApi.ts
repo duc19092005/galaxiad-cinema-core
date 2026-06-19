@@ -7,6 +7,7 @@ import type {
     PublicCinemaShowtimes,
     PublicSeatMap,
     PublicPricing,
+    PublicPromotion,
     PublicGenre,
     ActiveCinema,
     ActiveMovie,
@@ -100,6 +101,24 @@ export const publicApi = {
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
         const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`, {
             baseURL: `${API_BASE_URL}/api/v1/public`
+        });
+        return response.data;
+    },
+
+    /** 9.1 Get public automatic pricing promotions */
+    getPromotions: async (): Promise<ApiSuccessResponse<PublicPromotion[]>> => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion[]>>('/promotions', {
+            baseURL: `${API_BASE_URL}/api/v1`
+        });
+        return response.data;
+    },
+
+    /** 9.2 Get public automatic pricing promotion detail */
+    getPromotionBySlug: async (slug: string): Promise<ApiSuccessResponse<PublicPromotion>> => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion>>(`/promotions/${slug}`, {
+            baseURL: `${API_BASE_URL}/api/v1`
         });
         return response.data;
     },
