@@ -18,6 +18,8 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<Cinema.Application.Interfaces.Facilities.ITheaterManagerDataRepository, Cinema.Infrastructure.Repositories.TheaterManagerDataRepository>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IShiftManagerRepository, Cinema.Infrastructure.Repositories.ShiftManagerRepository>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IStaffShiftRepository, Cinema.Infrastructure.Repositories.StaffShiftRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IMovieScheduleRepository, Cinema.Infrastructure.Repositories.MovieScheduleRepository>();
+
 
         // ----------------------------------------------------------------
         // |              Use Cases - Facilities Manager                   |

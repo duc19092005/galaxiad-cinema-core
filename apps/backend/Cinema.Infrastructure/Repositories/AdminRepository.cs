@@ -584,16 +584,7 @@ public class AdminRepository : IAdminRepository
     public async Task<List<ResGetMovieInfosMovieManagerDto>> GetMovieInfosAsync(Guid? currentUserId, bool isAdmin, Guid? cinemaId)
     {
         var query = _dbContext.Set<MovieInfoEntity>().AsQueryable();
-        if (!isAdmin && currentUserId.HasValue)
-        {
-            query = query.Where(x => x.MovieManagerId == currentUserId.Value);
-        }
-
-        if (cinemaId.HasValue)
-        {
-            query = query.Where(x => x.MovieCinemaEntities.Any(mc => mc.CinemaId == cinemaId.Value));
-        }
-
+        // Cả Movie Manager và Admin đều được xem tất cả phim, không lọc theo manager hay rạp nữa
         return await query
             .Select(x => new ResGetMovieInfosMovieManagerDto
             {
@@ -636,11 +627,6 @@ public class AdminRepository : IAdminRepository
     public async Task<ResGetMovieInfosMovieManagerDto?> GetMovieInfoByIdAsync(Guid movieId, Guid? currentUserId, bool isAdmin)
     {
         var query = _dbContext.Set<MovieInfoEntity>().Where(x => x.MovieId == movieId);
-        if (!isAdmin && currentUserId.HasValue)
-        {
-            query = query.Where(x => x.MovieManagerId == currentUserId.Value);
-        }
-
         return await query
             .Select(m => new ResGetMovieInfosMovieManagerDto
             {

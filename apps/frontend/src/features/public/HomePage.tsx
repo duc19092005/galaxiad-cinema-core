@@ -46,6 +46,11 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const handleMovieClick = (movieId: string) => {
+    commentApi.trackMovieView(movieId).catch(() => undefined);
+    navigate(`/movie/${movieId}`);
+  };
+
   const [nowShowing, setNowShowing] = useState<PublicMovieListItem[]>([]);
   const [comingSoon, setComingSoon] = useState<PublicMovieListItem[]>([]);
   const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
@@ -358,7 +363,7 @@ const HomePage: React.FC = () => {
               {trendingMovies.map((item, i) => (
                 <div key={item.movieId} style={{ display: 'flex', flexDirection: 'column' }}>
                   <div
-                    onClick={() => navigate(`/movie/${item.movieId}`)}
+                    onClick={() => handleMovieClick(item.movieId)}
                     style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}
                   >
                     <img
@@ -387,7 +392,7 @@ const HomePage: React.FC = () => {
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
-                          navigate(`/movie/${item.movieId}`);
+                          handleMovieClick(item.movieId);
                         }}
                         className="btn-primary cta-glow"
                         style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer' }}
@@ -482,7 +487,7 @@ const HomePage: React.FC = () => {
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           scrollSnapAlign: 'start',
                         }}
-                        onClick={() => navigate(`/movie/${movie.movieId}`)}
+                        onClick={() => handleMovieClick(movie.movieId)}
                       >
                         <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
                           <img
@@ -490,6 +495,7 @@ const HomePage: React.FC = () => {
                             alt={movie.movieName}
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                             loading="lazy"
+                            onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
                           />
                         </div>
                         <div style={{ padding: 16 }}>
@@ -611,7 +617,7 @@ const HomePage: React.FC = () => {
                         position: 'relative',
                         transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                       }}
-                      onClick={() => navigate(`/movie/${movie.movieId}`)}
+                      onClick={() => handleMovieClick(movie.movieId)}
                     >
                       {/* AI badge */}
                       <div style={{
@@ -648,17 +654,22 @@ const HomePage: React.FC = () => {
           )}
 
           {/* Coming Soon Section */}
-          <div>
-            {comingSoon.length > 0 && (
+          <div style={{ marginTop: 'clamp(32px, 6vw, 64px)' }}>
+            <div style={{ marginBottom: 'clamp(16px, 3vw, 32px)' }}>
+              <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
+                {t('home.comingSoonBadge', 'SẮP CHIẾU')}
+              </span>
+              <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+                {t('home.comingSoon', 'Phim Sắp Chiếu')}
+              </h2>
+            </div>
+
+            {comingSoon.length === 0 ? (
+              <div className="glass-card" style={{ padding: '36px 24px', borderRadius: 16, textAlign: 'center' }}>
+                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>Hiện tại chưa có danh sách</p>
+              </div>
+            ) : (
               <div>
-                <div style={{ marginBottom: 'clamp(16px, 3vw, 32px)' }}>
-                  <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-                    {t('home.comingSoonBadge')}
-                  </span>
-                  <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
-                    {t('home.comingSoon')}
-                  </h2>
-                </div>
                 <div style={{ position: 'relative' }}>
                   {/* Prev Button */}
                   {comingSoon.length > 4 && (
@@ -696,7 +707,7 @@ const HomePage: React.FC = () => {
                           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
                           scrollSnapAlign: 'start',
                         }}
-                        onClick={() => navigate(`/movie/${movie.movieId}`)}
+                        onClick={() => handleMovieClick(movie.movieId)}
                       >
                         <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
                           <img
@@ -704,13 +715,21 @@ const HomePage: React.FC = () => {
                             alt={movie.movieName}
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                             loading="lazy"
+                            onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
                           />
                         </div>
                         <div style={{ padding: 16 }}>
                           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
-                          <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)' }}>
-                            Coming Soon
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
+                            <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', display: 'inline-block' }}>
+                              Coming Soon
+                            </span>
+                            {movie.startedDate && (
+                              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Khởi chiếu: {new Date(movie.startedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -730,27 +749,25 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Xem Thêm Button */}
-                {comingSoon.length > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-                    <button 
-                      onClick={() => navigate('/movies?tab=coming-soon')}
-                      className="glass-card interactive"
-                      style={{
-                        padding: '10px 24px',
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(255,255,255,0.05)',
-                        color: 'white',
-                        fontWeight: 700,
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      {t('home.seeMore', 'Xem thêm')}
-                    </button>
-                  </div>
-                )}
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
+                  <button 
+                    onClick={() => navigate('/movies?tab=coming-soon')}
+                    className="glass-card interactive"
+                    style={{
+                      padding: '10px 24px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(255,255,255,0.05)',
+                      color: 'white',
+                      fontWeight: 700,
+                      fontSize: 13,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    {t('home.seeMore', 'Xem thêm')}
+                  </button>
+                </div>
               </div>
             )}
           </div>

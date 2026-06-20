@@ -8,6 +8,8 @@ using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Comments;
+using System.Text.Json;
+using StackExchange.Redis;
 using Cinema.Domain.Enums;
 
 namespace Cinema.Infrastructure.Repositories;
@@ -15,10 +17,12 @@ namespace Cinema.Infrastructure.Repositories;
 public class RecommendationRepository : IRecommendationRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly IConnectionMultiplexer _redis;
 
-    public RecommendationRepository(CinemaDbContext dbContext)
+    public RecommendationRepository(CinemaDbContext dbContext, IConnectionMultiplexer redis)
     {
         _dbContext = dbContext;
+        _redis = redis;
     }
 
     public async Task<UserGenreSurveyEntity?> GetSurveyByUserIdAsync(Guid userId)
@@ -48,16 +52,56 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task<List<MovieBehaviorSignal>> GetViewedMovieSignalsAsync(Guid userId, int take)
     {
-        var raw = await _dbContext.Set<MovieViewEntity>()
+        // 1. Query database for historical view signals
+        var dbSignals = await _dbContext.Set<MovieViewEntity>()
             .Where(x => x.UserId == userId)
             .GroupBy(x => x.MovieId)
             .Select(x => new { MovieId = x.Key, Count = x.Count(), LastAt = x.Max(v => v.ViewedAt) })
+            .ToListAsync();
+
+        var dbSignalList = dbSignals.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
+
+        // 2. Query Redis for buffered view signals
+        var redisDb = _redis.GetDatabase();
+        var rawRedis = await redisDb.ListRangeAsync("cinema:movie_views_queue");
+        var redisViews = new List<RedisMovieViewDto>();
+
+        foreach (var item in rawRedis)
+        {
+            try
+            {
+                var dto = JsonSerializer.Deserialize<RedisMovieViewDto>(item.ToString());
+                if (dto != null && dto.UserId == userId)
+                {
+                    redisViews.Add(dto);
+                }
+            }
+            catch
+            {
+                // Ignore parse/deserialization errors on malformed payloads
+            }
+        }
+
+        var redisSignalList = redisViews
+            .GroupBy(x => x.MovieId)
+            .Select(g => new MovieBehaviorSignal(g.Key, g.Count(), g.Max(x => x.ViewedAt)))
+            .ToList();
+
+        // 3. Merge both signal lists in-memory
+        var combined = dbSignalList
+            .Concat(redisSignalList)
+            .GroupBy(x => x.MovieId)
+            .Select(g => new MovieBehaviorSignal(
+                g.Key,
+                g.Sum(x => x.Count),
+                g.Max(x => x.LastAt)
+            ))
             .OrderByDescending(x => x.Count)
             .ThenByDescending(x => x.LastAt)
             .Take(take)
-            .ToListAsync();
+            .ToList();
 
-        return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
+        return combined;
     }
 
     public async Task<List<MovieBehaviorSignal>> GetBookedMovieSignalsAsync(Guid userId, int take)
@@ -117,8 +161,9 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task<List<RecommendedMovieRes>> LoadRecommendedMoviesAsync(List<Guid> movieIds)
     {
+        var now = DateTime.UtcNow;
         return await _dbContext.Set<MovieInfoEntity>()
-            .Where(m => movieIds.Contains(m.MovieId) && !m.IsDeleted && (m.IsActive || m.IsCommingSoon))
+            .Where(m => movieIds.Contains(m.MovieId) && !m.IsDeleted && m.ActiveAt <= now && now <= m.EndedDate)
             .Select(m => new RecommendedMovieRes
             {
                 MovieId = m.MovieId,
@@ -144,9 +189,11 @@ public class RecommendationRepository : IRecommendationRepository
         }
 
         var excludedIds = excludedMovieIds.ToList();
+        var now = DateTime.UtcNow;
         var movies = await _dbContext.Set<MovieInfoEntity>()
             .Where(m => !m.IsDeleted
-                        && (m.IsActive || m.IsCommingSoon)
+                        && m.ActiveAt <= now
+                        && now <= m.EndedDate
                         && !excludedIds.Contains(m.MovieId))
             .Select(m => new RecommendedMovieRes
             {
@@ -206,10 +253,11 @@ public class RecommendationRepository : IRecommendationRepository
 
     public async Task<List<MovieInfoEntity>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken)
     {
+        var now = DateTime.UtcNow;
         return await _dbContext.Set<MovieInfoEntity>()
             .Include(m => m.MovieGenreMovieInfoEntity)
             .ThenInclude(g => g.MovieGenreInfoEntity)
-            .Where(m => !m.IsDeleted && (m.IsActive || m.IsCommingSoon))
+            .Where(m => !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && now <= m.EndedDate)
             .ToListAsync(cancellationToken);
     }
 

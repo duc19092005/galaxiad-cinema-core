@@ -10,6 +10,13 @@ namespace Cinema.Application.Interfaces.Comments;
 
 public record MovieBehaviorSignal(Guid MovieId, int Count, DateTime LastAt);
 
+public class RedisMovieViewDto
+{
+    public Guid MovieId { get; set; }
+    public Guid? UserId { get; set; }
+    public DateTime ViewedAt { get; set; }
+}
+
 public interface IRecommendationRepository
 {
     Task<UserGenreSurveyEntity?> GetSurveyByUserIdAsync(Guid userId);

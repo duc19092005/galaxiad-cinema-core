@@ -1,6 +1,10 @@
-using System.Net.Http.Headers;
+using System;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Interfaces.Comments;
@@ -23,70 +27,49 @@ public class DeepSeekModerationService : ICommentModerationService
 
     public async Task<CommentModerationResult> ModerateAsync(string content, CancellationToken cancellationToken = default)
     {
-        var apiKey = _configuration["DeepSeek:ApiKey"];
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            return new CommentModerationResult(false, "DeepSeek API key is not configured.");
-        }
+        var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
 
         try
         {
-            var baseUrl = _configuration["DeepSeek:BaseUrl"]?.TrimEnd('/') ?? "https://api.deepseek.com";
-            var model = _configuration["DeepSeek:Model"] ?? "deepseek-chat";
+            var payload = new ModerationRequest { Content = content };
+            var requestContent = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/chat/completions");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
-            var payload = new
-            {
-                model,
-                temperature = 0,
-                messages = new[]
-                {
-                    new
-                    {
-                        role = "system",
-                        content = "You moderate Vietnamese cinema comments. Return only JSON: {\"blocked\":true|false,\"reason\":\"short Vietnamese reason\"}. Block only severe insults, hate, threats, sexual harassment, or abusive profanity. Do not block normal negative movie opinions."
-                    },
-                    new
-                    {
-                        role = "user",
-                        content
-                    }
-                }
-            };
-
-            request.Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            using var response = await HttpClient.PostAsync($"{aiServiceUrl}/moderate", requestContent, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var responseText = await response.Content.ReadAsStringAsync(cancellationToken);
-            using var doc = JsonDocument.Parse(responseText);
-            var moderationText = doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString() ?? "{}";
+            var result = JsonSerializer.Deserialize<ModerationResponse>(responseText);
 
-            var jsonStart = moderationText.IndexOf('{');
-            var jsonEnd = moderationText.LastIndexOf('}');
-            if (jsonStart >= 0 && jsonEnd >= jsonStart)
+            if (result == null)
             {
-                moderationText = moderationText[jsonStart..(jsonEnd + 1)];
+                return new CommentModerationResult(false, "Bình luận không vi phạm.");
             }
 
-            using var moderationDoc = JsonDocument.Parse(moderationText);
-            var blocked = moderationDoc.RootElement.TryGetProperty("blocked", out var blockedProp) && blockedProp.GetBoolean();
-            var reason = moderationDoc.RootElement.TryGetProperty("reason", out var reasonProp)
-                ? reasonProp.GetString() ?? "Bình luận vi phạm tiêu chuẩn cộng đồng."
-                : "Bình luận vi phạm tiêu chuẩn cộng đồng.";
-
-            return new CommentModerationResult(blocked, reason);
+            return new CommentModerationResult(result.Blocked, result.Reason);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "DeepSeek moderation failed. Comment will remain visible to avoid blocking customer flow.");
+            _logger.LogError(ex, "Failed to call Python AI service moderation endpoint at {Url}. Comment will remain visible to avoid blocking customer flow.", aiServiceUrl);
             return new CommentModerationResult(false, "Moderation service unavailable.");
         }
+    }
+
+    private sealed class ModerationRequest
+    {
+        [JsonPropertyName("content")]
+        public string Content { get; init; } = string.Empty;
+    }
+
+    private sealed class ModerationResponse
+    {
+        [JsonPropertyName("blocked")]
+        public bool Blocked { get; init; }
+
+        [JsonPropertyName("reason")]
+        public string Reason { get; init; } = string.Empty;
     }
 }

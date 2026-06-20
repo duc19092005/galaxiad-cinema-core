@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
+import { recommendationApi } from '../../api/recommendationApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
 import Header from '../../components/Header';
 import MovieCommentsSection from './components/MovieCommentsSection';
@@ -91,18 +92,41 @@ const MovieDetailPage: React.FC = () => {
 
             // Fetch recommended movies with fallback
             try {
-                const trendingRes = await commentApi.getTrendingMovies({ take: 8 });
-                let list: PublicMovieListItem[] = (trendingRes?.data || []).map(item => ({
-                    movieId: item.movieId,
-                    movieName: item.movieName,
-                    moviePosterURL: item.movieImageUrl,
-                    movieBannerURL: item.movieBannerUrl,
-                    movieFormatInfos: '',
-                    movieDuration: item.movieDuration,
-                    movieRequiredAge: item.movieRequiredAgeSymbol,
-                    movieCategoryInfos: `Trending score ${item.trendingScore}`,
-                    isCommingSoon: false,
-                }));
+                let list: PublicMovieListItem[] = [];
+                try {
+                    const aiRecsRes = await recommendationApi.getRecommendations();
+                    if (aiRecsRes?.data && aiRecsRes.data.length > 0) {
+                        list = aiRecsRes.data.map((item: any) => ({
+                            movieId: item.movieId,
+                            movieName: item.movieName,
+                            moviePosterURL: item.moviePosterURL || item.movieImageUrl,
+                            movieBannerURL: item.movieBannerURL || item.movieBannerUrl,
+                            movieFormatInfos: item.movieFormatInfos || '',
+                            movieDuration: item.movieDuration,
+                            movieRequiredAge: item.movieRequiredAge || item.movieRequiredAgeSymbol,
+                            movieCategoryInfos: item.movieGenres || 'AI Pick',
+                            isCommingSoon: item.isCommingSoon || false,
+                        }));
+                    }
+                } catch (e) {
+                    console.log('Survey not completed or not logged in, using trending fallback');
+                }
+
+                if (list.length === 0) {
+                    const trendingRes = await commentApi.getTrendingMovies({ take: 8 });
+                    list = (trendingRes?.data || []).map(item => ({
+                        movieId: item.movieId,
+                        movieName: item.movieName,
+                        moviePosterURL: item.movieImageUrl,
+                        movieBannerURL: item.movieBannerUrl,
+                        movieFormatInfos: '',
+                        movieDuration: item.movieDuration,
+                        movieRequiredAge: item.movieRequiredAgeSymbol,
+                        movieCategoryInfos: `Trending score ${item.trendingScore}`,
+                        isCommingSoon: false,
+                    }));
+                }
+
                 if (list.length === 0) {
                     let recRes = await publicApi.getNowShowing({ pageSize: 10 });
                     list = recRes?.data || [];
@@ -111,6 +135,7 @@ const MovieDetailPage: React.FC = () => {
                         list = allRes?.data || [];
                     }
                 }
+
                 let filtered = list.filter(m => m.movieId !== movieId);
                 if (filtered.length === 0) {
                     filtered = MOCK_RECOMMENDATIONS;

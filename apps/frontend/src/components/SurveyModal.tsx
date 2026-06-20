@@ -1,7 +1,7 @@
 // src/components/SurveyModal.tsx
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, ChevronRight } from 'lucide-react';
-import { publicAxios } from '../api/axiosClient';
+import { publicApi } from '../api/publicApi';
 import { recommendationApi } from '../api/recommendationApi';
 
 interface SurveyModalProps {
@@ -48,13 +48,13 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
   const [fetchingGenres, setFetchingGenres] = useState(true);
 
   useEffect(() => {
-    publicAxios
-      .get('/MovieGenres')
+    publicApi
+      .getMovieGenres()
       .then(res => {
-        const raw: any[] = res.data?.data || [];
+        const raw: any[] = res.data || [];
         const mapped = raw.map((g: any) => ({
-          genreId: g.formatId ?? g.genreId ?? g.movieGenreId ?? String(Math.random()),
-          genreName: g.formatName ?? g.genreName ?? g.movieGenreName ?? 'Unknown',
+          genreId: g.genreId ?? String(Math.random()),
+          genreName: g.genreName ?? 'Unknown',
         }));
         setGenres(mapped.length > 0 ? mapped : FALLBACK_GENRES);
       })

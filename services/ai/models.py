@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Dict, Any, Optional
 
 
 class MovieItem(BaseModel):
@@ -38,3 +38,31 @@ class HealthResponse(BaseModel):
     embedded_movies_count: int
     model: str
     vector_store: str = "qdrant"
+
+
+class ClassifyIntentRequest(BaseModel):
+    message: str
+
+
+class ClassifyIntentResponse(BaseModel):
+    intent: str
+    parameters: Dict[str, str]
+
+
+class ChatLlmRequest(BaseModel):
+    system_prompt: str
+    user_prompt: str
+
+
+class ChatLlmResponse(BaseModel):
+    response: str
+
+
+class ModerationRequest(BaseModel):
+    content: str
+
+
+class ModerationResponse(BaseModel):
+    blocked: bool
+    reason: str
+

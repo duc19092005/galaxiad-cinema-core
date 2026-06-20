@@ -23,6 +23,9 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
     private readonly IConfiguration _configuration;
     private readonly ILogger<AiMovieEmbeddingSyncService> _logger;
 
+    private static DateTime _lastSyncTime = DateTime.MinValue;
+    private static readonly TimeSpan SyncInterval = TimeSpan.FromMinutes(10);
+
     public AiMovieEmbeddingSyncService(
         IRecommendationRepository repository,
         IHttpClientFactory httpClientFactory,
@@ -37,32 +40,22 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
 
     public async Task<AiMovieEmbeddingSyncResultDto> EnsureMoviesSyncedAsync(CancellationToken cancellationToken = default)
     {
-        try
+        if (DateTime.UtcNow - _lastSyncTime < SyncInterval)
         {
-            var client = CreateClient();
-            var response = await client.GetAsync($"{GetAiServiceUrl()}/health", cancellationToken);
-            if (response.IsSuccessStatusCode)
+            return new AiMovieEmbeddingSyncResultDto
             {
-                using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                using var health = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-                if (health.RootElement.TryGetProperty("embedded_movies_count", out var countElement)
-                    && countElement.GetInt32() > 0)
-                {
-                    return new AiMovieEmbeddingSyncResultDto
-                    {
-                        IsSuccess = true,
-                        MovieCount = countElement.GetInt32(),
-                        Message = "AI movie index already available"
-                    };
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Could not check AI movie embedding health. Trying full sync.");
+                IsSuccess = true,
+                MovieCount = 0,
+                Message = "Skipped sync (recently synced)"
+            };
         }
 
-        return await SyncAllActiveMoviesAsync(cancellationToken);
+        var result = await SyncAllActiveMoviesAsync(cancellationToken);
+        if (result.IsSuccess)
+        {
+            _lastSyncTime = DateTime.UtcNow;
+        }
+        return result;
     }
 
     public async Task<AiMovieEmbeddingSyncResultDto> SyncAllActiveMoviesAsync(CancellationToken cancellationToken = default)
@@ -91,7 +84,7 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
         {
             var movie = await _repository.GetMovieForEmbeddingAsync(movieId, cancellationToken);
 
-            if (movie == null || movie.IsDeleted || (!movie.IsActive && !movie.IsCommingSoon))
+            if (movie == null || movie.IsDeleted || (!movie.IsActive && !movie.IsCommingSoon) || DateTime.UtcNow > movie.EndedDate)
             {
                 return await DeleteMovieAsync(movieId, cancellationToken);
             }

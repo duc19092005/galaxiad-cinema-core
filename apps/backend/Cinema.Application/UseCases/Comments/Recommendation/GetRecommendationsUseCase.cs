@@ -47,7 +47,7 @@ public class GetRecommendationsUseCase
         var profile = await BuildUserBehaviorProfileAsync(userId, survey);
         if (string.IsNullOrWhiteSpace(profile.UserText))
         {
-            var fallback = await _repository.GetFallbackRecommendationsAsync(profile.InteractedMovieIds, 5);
+            var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
                 IsSuccess = true,
@@ -70,7 +70,7 @@ public class GetRecommendationsUseCase
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("AI service returned {StatusCode}", response.StatusCode);
-                var fallback = await _repository.GetFallbackRecommendationsAsync(profile.InteractedMovieIds, 5);
+                var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
                 return new BaseResponse<List<RecommendedMovieRes>>
                 {
                     IsSuccess = true,
@@ -85,7 +85,7 @@ public class GetRecommendationsUseCase
 
             if (aiResult == null || aiResult.Results.Count == 0)
             {
-                var fallback = await _repository.GetFallbackRecommendationsAsync(profile.InteractedMovieIds, 5);
+                var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
                 return new BaseResponse<List<RecommendedMovieRes>>
                 {
                     IsSuccess = true,
@@ -123,7 +123,10 @@ public class GetRecommendationsUseCase
                 var excludeIds = profile.InteractedMovieIds
                     .Concat(orderedMovies.Select(m => m.MovieId))
                     .ToHashSet();
-                var fallback = await _repository.GetFallbackRecommendationsAsync(excludeIds, 5 - orderedMovies.Count);
+                var fallback = await GetRecommendationsWithFallbackAsync(
+                    excludeIds, 
+                    5 - orderedMovies.Count, 
+                    orderedMovies.Select(m => m.MovieId).ToHashSet());
                 orderedMovies.AddRange(fallback);
             }
 
@@ -137,7 +140,7 @@ public class GetRecommendationsUseCase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calling AI service");
-            var fallback = await _repository.GetFallbackRecommendationsAsync(profile.InteractedMovieIds, 5);
+            var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
                 IsSuccess = true,
@@ -145,6 +148,23 @@ public class GetRecommendationsUseCase
                 Message = "Popular recommendations"
             };
         }
+    }
+
+    private async Task<List<RecommendedMovieRes>> GetRecommendationsWithFallbackAsync(
+        HashSet<Guid> interactedMovieIds, 
+        int take, 
+        HashSet<Guid>? alreadyRecommendedMovieIds = null)
+    {
+        var result = await _repository.GetFallbackRecommendationsAsync(interactedMovieIds, take);
+        if (result.Count < take)
+        {
+            var excludeIds = result.Select(m => m.MovieId)
+                .Concat(alreadyRecommendedMovieIds ?? [])
+                .ToHashSet();
+            var extra = await _repository.GetFallbackRecommendationsAsync(excludeIds, take - result.Count);
+            result.AddRange(extra);
+        }
+        return result;
     }
 
     private async Task<UserBehaviorProfile> BuildUserBehaviorProfileAsync(Guid userId, UserGenreSurveyEntity? survey)

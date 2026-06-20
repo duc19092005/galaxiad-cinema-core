@@ -66,8 +66,9 @@ public class BookingRepository : IBookingRepository
 
     private IQueryable<MovieInfoEntity> BuildNowShowingMoviesQuery(string? searchParam)
     {
+        var now = DateTime.UtcNow;
         var query = _dbContext.Set<MovieInfoEntity>()
-            .Where(x => !x.IsDeleted && x.IsActive && !x.IsCommingSoon);
+            .Where(x => !x.IsDeleted && x.IsActive && !x.IsCommingSoon && x.ActiveAt <= now && now <= x.EndedDate);
 
         if (!string.IsNullOrEmpty(searchParam))
         {

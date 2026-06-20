@@ -117,8 +117,9 @@ public class MovieCommentRepository : IMovieCommentRepository
 
     public async Task<List<ResTrendingMovieDto>> GetTrendingMoviesAsync(DateTime fromDate, Guid? cinemaId, string? city)
     {
+        var now = DateTime.UtcNow;
         var moviesQuery = _dbContext.Set<MovieInfoEntity>()
-            .Where(x => !x.IsDeleted && x.IsActive);
+            .Where(x => !x.IsDeleted && x.IsActive && now <= x.EndedDate);
 
         if (cinemaId.HasValue)
         {

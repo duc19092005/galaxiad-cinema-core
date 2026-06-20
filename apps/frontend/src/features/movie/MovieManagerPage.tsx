@@ -1252,13 +1252,13 @@ const MovieManagerPage: React.FC = () => {
             fetchMovies();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [activeCinemaId, user]);
+    }, [user]);
 
     const fetchMovies = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await movieApi.getMovieList(activeCinemaId || undefined);
+            const res = await movieApi.getMovieList();
             setMovies(res.data || []);
         } catch (err) {
             if (axios.isAxiosError(err) && err.response) {
@@ -1375,12 +1375,6 @@ const MovieManagerPage: React.FC = () => {
             <ManagementChrome
                 sidebarOpen={sidebarOpen}
                 onSidebarToggle={() => setSidebarOpen((open) => !open)}
-                cinemaSelector={isAdmin ? {
-                    cinemas,
-                    activeCinemaId,
-                    activeCinemaName,
-                    onChange: (id) => setActiveCinemaId(id),
-                } : undefined}
             />
 
             <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>

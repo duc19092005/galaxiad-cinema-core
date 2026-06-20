@@ -12,6 +12,7 @@ export interface PublicMovieListItem {
     movieCategoryInfos: string;
     releaseDate?: string;
     expectedReleaseDate?: string;
+    startedDate?: string;
 }
 
 export interface PaginatedResponse<T> {

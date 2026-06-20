@@ -72,6 +72,7 @@ public static class CommonServicesBootstrap
         services.AddScoped<GetTrendingMoviesUseCase>();
         services.AddScoped<GetTopRatedMoviesUseCase>();
         services.AddScoped<TrackMovieViewUseCase>();
+        services.AddScoped<IMovieViewBuffer, MovieViewBuffer>();
 
         // Recommendation & AI Sync Services
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();

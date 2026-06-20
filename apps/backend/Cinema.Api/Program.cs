@@ -6,6 +6,7 @@ using Cinema.Api.Bootstraps.IdentityAccess;
 using Cinema.Api.Bootstraps.MovieInfos;
 using Cinema.Api.Bootstraps.Booking;
 using Cinema.Api.Bootstraps.Validate;
+using Cinema.Api.Bootstraps.Chatbot;
 using Cinema.Api.Hubs;
 using Cinema.Api.Middlewares;
 using Cinema.Domain.Exceptions;
@@ -19,6 +20,24 @@ using Microsoft.OpenApi.Models;
 using Cinema.Infrastructure.BackgroundJobs;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Infrastructure.Services;
+
+var currentDir = Directory.GetCurrentDirectory();
+var envPath = Path.Combine(currentDir, ".env");
+if (!File.Exists(envPath))
+{
+    envPath = Path.Combine(currentDir, "apps", "backend", "Cinema.Api", ".env");
+}
+if (File.Exists(envPath))
+{
+    foreach (var line in File.ReadAllLines(envPath))
+    {
+        var parts = line.Split('=', 2);
+        if (parts.Length == 2)
+        {
+            Environment.SetEnvironmentVariable(parts[0].Trim(), parts[1].Trim());
+        }
+    }
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,10 +82,12 @@ builder.Services.AddFacilitiesFactories();
 builder.Services.AddMovieFactories();
 builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
+builder.Services.AddChatbotServices();
 
 // Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
 builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
 builder.Services.AddHostedService<AiMovieEmbeddingStartupService>();
+builder.Services.AddHostedService<MovieViewBufferSyncService>();
 
 // JWT & Cloudinary
 builder.Services.AddJwt(builder.Configuration);

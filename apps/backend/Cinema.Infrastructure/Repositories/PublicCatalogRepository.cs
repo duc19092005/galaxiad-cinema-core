@@ -44,16 +44,17 @@ public class PublicCatalogRepository : IPublicCatalogRepository
 
     public async Task<List<MovieInfoRes>> GetMoviesAsync(string? city, string? status, Guid? cinemaId)
     {
+        var now = DateTime.UtcNow;
         var query = _dbContext.Set<MovieInfoEntity>()
-            .Where(x => !x.IsDeleted);
+            .Where(x => !x.IsDeleted && now <= x.EndedDate);
 
         switch (status?.ToLower())
         {
             case "now-showing":
-                query = query.Where(x => x.IsActive && !x.IsCommingSoon);
+                query = query.Where(x => x.IsActive && !x.IsCommingSoon && x.ActiveAt <= now);
                 break;
             case "coming-soon":
-                query = query.Where(x => x.IsCommingSoon);
+                query = query.Where(x => x.IsCommingSoon || now < x.ActiveAt);
                 break;
             default:
                 query = query.Where(x => x.IsActive || x.IsCommingSoon);
@@ -139,6 +140,29 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             .Include(x => x.MovieFormatInfoEntity)
             .Where(x => !x.IsDeleted
                      && x.MovieId == movieId
+                     && x.StartTime >= startUtc
+                     && x.StartTime < endUtc
+                     && x.StartTime > nowUtc);
+
+        if (!string.IsNullOrEmpty(city))
+        {
+            query = query.Where(x => x.AuditoriumInfoEntities != null
+                                  && x.AuditoriumInfoEntities.CinemaInfoEntity != null
+                                  && x.AuditoriumInfoEntities.CinemaInfoEntity.CinemaCity.Contains(city));
+        }
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<List<MovieScheduleInfoEntity>> GetSchedulesByDateAsync(DateTime startUtc, DateTime endUtc, string? city)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var query = _dbContext.Set<MovieScheduleInfoEntity>()
+            .Include(x => x.MovieInfoEntity)
+            .Include(x => x.AuditoriumInfoEntities)
+                .ThenInclude(a => a!.CinemaInfoEntity)
+            .Include(x => x.MovieFormatInfoEntity)
+            .Where(x => !x.IsDeleted
                      && x.StartTime >= startUtc
                      && x.StartTime < endUtc
                      && x.StartTime > nowUtc);
