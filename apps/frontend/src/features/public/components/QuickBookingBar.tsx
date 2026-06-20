@@ -1,5 +1,5 @@
 // src/features/public/components/QuickBookingBar.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
