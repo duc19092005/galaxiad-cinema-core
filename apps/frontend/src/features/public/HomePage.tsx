@@ -60,6 +60,8 @@ const HomePage: React.FC = () => {
   
   // City select sync state
   const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+  // Cinema filter state (driven by QuickBookingBar selection)
+  const [selectedCinemaId, setSelectedCinemaId] = useState<string>('All');
 
   // Sliders refs
   const nowShowingRef = useRef<HTMLDivElement>(null);
@@ -76,6 +78,7 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     const handleCityChange = () => {
       setSelectedCity(localStorage.getItem('user_selected_city') || '');
+      setSelectedCinemaId('All'); // reset cinema filter when city changes
     };
     window.addEventListener('user_selected_city_changed', handleCityChange);
     return () => window.removeEventListener('user_selected_city_changed', handleCityChange);
@@ -83,7 +86,7 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     fetchMovies();
-  }, [selectedCity]);
+  }, [selectedCity, selectedCinemaId]);
 
   useEffect(() => {
     fetchTrendingMovies();
@@ -129,6 +132,7 @@ const HomePage: React.FC = () => {
     try {
       const response = await publicApi.getAllMovies({
         city: selectedCity || undefined,
+        cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined,
         pageSize: 40
       });
       const items = response.data || [];
@@ -266,7 +270,7 @@ const HomePage: React.FC = () => {
           paddingLeft: 'clamp(8px, 2vw, 20px)',
           paddingRight: 'clamp(8px, 2vw, 20px)',
         }}>
-          <QuickBookingBar selectedCity={selectedCity} />
+          <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => setSelectedCinemaId(cinemaId)} />
         </div>
       </section>
 

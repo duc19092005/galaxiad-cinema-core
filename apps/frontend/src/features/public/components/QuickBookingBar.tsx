@@ -9,6 +9,7 @@ import CustomSelectField from './CustomSelectField';
 
 interface QuickBookingBarProps {
   selectedCity: string;
+  onCinemaChange?: (cinemaId: string) => void;
 }
 
 // City center coordinates for distance calculation
@@ -17,7 +18,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   'Hà Nội': { lat: 21.0285, lng: 105.8542 },
 };
 
-const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity }) => {
+const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinemaChange }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -218,7 +219,10 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity }) => {
           value={selectedCinemaId}
           displayValue={loadingLocation ? t('home.loadingLocation', 'Locating...') : selectedCinemaLabel}
           options={cinemaOptions}
-          onChange={setSelectedCinemaId}
+          onChange={(val) => {
+            setSelectedCinemaId(val);
+            onCinemaChange?.(val);
+          }}
           onOpen={handleCinemaSelectOpen}
         />
 
