@@ -85,7 +85,40 @@ const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchMovies(selectedCity, selectedCinemaId);
+    let cancelled = false;
+    const doFetch = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await publicApi.getAllMovies({
+          city: selectedCity || undefined,
+          cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined,
+          pageSize: 40,
+        });
+        if (cancelled) return; // discard stale response
+        const items = response.data || [];
+        setNowShowing(items.filter(m => !m.isCommingSoon));
+        setComingSoon(items.filter(m => m.isCommingSoon));
+      } catch (err) {
+        if (cancelled) return;
+        if (axios.isAxiosError(err) && err.response) {
+          const data = err.response.data as ApiErrorResponse;
+          if (data.statusCode === 401) {
+            localStorage.removeItem('user_info');
+            Cookies.remove('X-Access-Token');
+            navigate('/login');
+            return;
+          }
+          setError(data.message || 'Cannot load movies list.');
+        } else {
+          setError('Cannot connect to server.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    doFetch();
+    return () => { cancelled = true; }; // cleanup: cancel stale fetch
   }, [selectedCity, selectedCinemaId]);
 
   useEffect(() => {
@@ -151,6 +184,7 @@ const HomePage: React.FC = () => {
       } else { setError('Cannot connect to server.'); }
     } finally { setLoading(false); }
   };
+
 
   const fetchTrendingMovies = async () => {
     setLoadingTrending(true);
@@ -272,7 +306,6 @@ const HomePage: React.FC = () => {
         }}>
           <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
             setSelectedCinemaId(cinemaId);
-            fetchMovies(selectedCity, cinemaId);
           }} />
         </div>
       </section>
