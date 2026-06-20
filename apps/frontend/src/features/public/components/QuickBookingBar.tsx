@@ -34,9 +34,16 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinem
   const [nearestCinemas, setNearestCinemas] = useState<NearestCinema[]>([]);
   const [loadingLocation, setLoadingLocation] = useState(false);
 
-  // Reset cinema selection when city changes
+  const onCinemaChangeRef = useRef(onCinemaChange);
+  useEffect(() => {
+    onCinemaChangeRef.current = onCinemaChange;
+  }, [onCinemaChange]);
+
+  // Reset cinema and movie selections when city changes
   useEffect(() => {
     setSelectedCinemaId('All');
+    setSelectedMovieId('All');
+    onCinemaChangeRef.current?.('All');
   }, [selectedCity]);
 
   // Auto-fetch nearest cinemas when selectedCity changes
@@ -101,21 +108,112 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinem
     );
   };
 
-  // Fetch available dates from API
+  // Fetch active cinemas once on mount
   useEffect(() => {
-    const fetchDates = async () => {
+    publicApi.getActiveCinemas()
+      .then((res) => {
+        if (res.isSuccess) {
+          setCinemas(res.data || []);
+        }
+      })
+      .catch((err) => {
+        console.error('Error fetching active cinemas:', err);
+      });
+  }, []);
+
+  // Fetch/update movies dynamically based on city & cinema selection
+  useEffect(() => {
+    let active = true;
+    const fetchMoviesForSelection = async () => {
       try {
-        const res = await publicApi.getUpcomingDates({
-          city: selectedCity || undefined
-        });
-        setAvailableDates(res.isSuccess ? (res.data || []) : []);
+        let fetchedMovies: ActiveMovie[] = [];
+        if (selectedCinemaId && selectedCinemaId !== 'All') {
+          const res = await publicApi.getAllMovies({ cinemaId: selectedCinemaId });
+          if (res.isSuccess && res.data) {
+            fetchedMovies = res.data.map(m => ({
+              movieId: m.movieId,
+              movieName: m.movieName
+            }));
+          }
+        } else {
+          if (selectedCity) {
+            const res = await publicApi.getAllMovies({ city: selectedCity });
+            if (res.isSuccess && res.data) {
+              fetchedMovies = res.data.map(m => ({
+                movieId: m.movieId,
+                movieName: m.movieName
+              }));
+            }
+          } else {
+            const res = await publicApi.getActiveMovies();
+            if (res.isSuccess && res.data) {
+              fetchedMovies = res.data;
+            }
+          }
+        }
+
+        if (active) {
+          setMovies(fetchedMovies);
+          if (selectedMovieId !== 'All' && !fetchedMovies.some(m => m.movieId === selectedMovieId)) {
+            setSelectedMovieId('All');
+          }
+        }
       } catch (err) {
-        console.error('Error fetching upcoming dates:', err);
-        setAvailableDates([]);
+        console.error('Error fetching movies for selection:', err);
       }
     };
-    fetchDates();
-  }, [selectedCity]);
+
+    fetchMoviesForSelection();
+    return () => {
+      active = false;
+    };
+  }, [selectedCity, selectedCinemaId]);
+
+  // Fetch available dates dynamically based on city, cinema & movie selection
+  useEffect(() => {
+    let active = true;
+    const fetchDatesForSelection = async () => {
+      try {
+        let dates: string[] = [];
+        const cityParam = selectedCity || undefined;
+        const cinemaParam = selectedCinemaId !== 'All' ? selectedCinemaId : undefined;
+
+        if (selectedMovieId === 'All') {
+          const res = await publicApi.getUpcomingDates({ city: cityParam, cinemaId: cinemaParam });
+          if (res.isSuccess && res.data) {
+            dates = res.data;
+          }
+        } else {
+          if (!cinemaParam) {
+            const res = await publicApi.getScheduleDates(selectedMovieId, cityParam);
+            if (res.isSuccess && res.data) {
+              dates = res.data;
+            }
+          } else {
+            const [movieDatesRes, cinemaDatesRes] = await Promise.all([
+              publicApi.getScheduleDates(selectedMovieId, cityParam),
+              publicApi.getUpcomingDates({ city: cityParam, cinemaId: cinemaParam })
+            ]);
+
+            const movieDates = movieDatesRes.isSuccess ? (movieDatesRes.data || []) : [];
+            const cinemaDates = cinemaDatesRes.isSuccess ? (cinemaDatesRes.data || []) : [];
+            dates = movieDates.filter(d => cinemaDates.includes(d));
+          }
+        }
+
+        if (active) {
+          setAvailableDates(dates);
+        }
+      } catch (err) {
+        console.error('Error fetching available dates:', err);
+      }
+    };
+
+    fetchDatesForSelection();
+    return () => {
+      active = false;
+    };
+  }, [selectedCity, selectedCinemaId, selectedMovieId]);
 
   // Generate date list from available dates
   useEffect(() => {
@@ -139,31 +237,16 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinem
       });
     }
 
-    // Only keep dates with schedules
     const filteredDates = dates.filter(d => availableDates.includes(d.value));
-    const finalDates = filteredDates;
+    setDateList(filteredDates);
 
-    setDateList(finalDates);
-    if (finalDates.length > 0) {
-      setSelectedDate(finalDates[0].value);
+    if (filteredDates.length > 0) {
+      if (!filteredDates.some(d => d.value === selectedDate)) {
+        setSelectedDate(filteredDates[0].value);
+      }
     } else {
       setSelectedDate('');
     }
-
-    // Fetch master data for booking bar
-    const fetchMasterData = async () => {
-      try {
-        const [cinemaRes, movieRes] = await Promise.all([
-          publicApi.getActiveCinemas(),
-          publicApi.getActiveMovies(),
-        ]);
-        if (cinemaRes.isSuccess) setCinemas(cinemaRes.data || []);
-        if (movieRes.isSuccess) setMovies(movieRes.data || []);
-      } catch (err) {
-        console.error('Error fetching master data for booking bar:', err);
-      }
-    };
-    fetchMasterData();
   }, [availableDates]);
 
   // 1. Date options
