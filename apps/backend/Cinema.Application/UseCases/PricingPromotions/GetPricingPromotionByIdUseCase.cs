@@ -1,25 +1,23 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class GetPricingPromotionByIdUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public GetPricingPromotionByIdUseCase(IUnitOfWork unitOfWork)
+    public GetPricingPromotionByIdUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<PricingPromotionDto> ExecuteAsync(Guid id)
     {
-        var promotion = await PricingPromotionHelper.QueryPromotions(_unitOfWork)
-            .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
+        var promotion = await _repository.GetPromotionByIdAsync(id);
 
         if (promotion == null)
         {

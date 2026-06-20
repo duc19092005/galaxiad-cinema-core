@@ -1,9 +1,8 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Domain.Entities.ScheduleJob;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.MappingEnums;
 
 namespace Cinema.Application.UseCases.Admin;
@@ -14,18 +13,16 @@ public interface IAdminReadScheduleBehavior
 }
 public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminRepository _adminRepository;
 
-    public AdminReadScheduleUseCase(IUnitOfWork unitOfWork)
+    public AdminReadScheduleUseCase(IAdminRepository adminRepository)
     {
-        _unitOfWork = unitOfWork;
+        _adminRepository = adminRepository;
     }
 
     public async Task<BaseResponse<List<ResponseScheduleJobGroupDto>>> ListScheduleJob()
     {
-        var rawData = await _unitOfWork.Repository<ScheduleJobLogger>().Query()
-            .OrderByDescending(x => x.StartedTime)
-            .ToListAsync();
+        var rawData = await _adminRepository.GetScheduleJobsAsync();
 
         // Group by TargetId
         var grouped = rawData

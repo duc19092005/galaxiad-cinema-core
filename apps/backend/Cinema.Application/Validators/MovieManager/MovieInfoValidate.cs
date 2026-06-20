@@ -1,37 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Cinema.Domain.Entities.MovieInfos;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Application.Validators.MovieManager;
 
 public static class MovieInfoValidate
 {
-    public static async Task<bool> IsExistMovieName(IQueryable<MovieInfoEntity> movies, string movieName , Guid? movieId)
+    public static Task<bool> IsExistMovieName(IEnumerable<MovieInfoEntity> movies, string movieName , Guid? movieId)
     {
         if (movieId != null)
         {
-            return await movies.AnyAsync(x =>
-                x.MovieName == movieName && x.MovieId != movieId && !x.IsDeleted);
+            return Task.FromResult(movies.Any(x =>
+                x.MovieName == movieName && x.MovieId != movieId && !x.IsDeleted));
         }
         else
         {
-            return await movies.AnyAsync(x =>
-                x.MovieName == movieName && !x.IsDeleted);
+            return Task.FromResult(movies.Any(x =>
+                x.MovieName == movieName && !x.IsDeleted));
         }
     }
     
-    public static async Task<bool> IsExistMovieDescription(IQueryable<MovieInfoEntity> movies, string movieDescriptions , Guid? movieId)
+    public static Task<bool> IsExistMovieDescription(IEnumerable<MovieInfoEntity> movies, string movieDescriptions , Guid? movieId)
     {
         if (movieId != null)
         {
-            return await movies.AnyAsync(x =>
+            return Task.FromResult(movies.Any(x =>
                 x.MovieDescription == movieDescriptions && x.MovieId != movieId
-                                                        && !x.IsDeleted);
+                                                        && !x.IsDeleted));
         }
         else
         {
-            return await movies.AnyAsync(x =>
+            return Task.FromResult(movies.Any(x =>
                 x.MovieDescription == movieDescriptions
-                && !x.IsDeleted);
+                && !x.IsDeleted));
         }
     }
 }

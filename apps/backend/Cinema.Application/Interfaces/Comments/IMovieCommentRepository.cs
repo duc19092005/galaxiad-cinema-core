@@ -20,4 +20,5 @@ public interface IMovieCommentRepository
     Task<List<ResTrendingMovieDto>> GetTopRatedMoviesAsync(Guid? cinemaId);
     Task<bool> MovieExistsAsync(Guid movieId);
     Task<MovieCommentEntity?> FindCommentAsync(Guid commentId);
+    Task CreateNotificationAsync(Guid userId, string title, string message, string type, Guid? relatedCommentId, Guid? relatedMovieId);
 }

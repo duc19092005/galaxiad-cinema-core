@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.Shifts;
+using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
-using Cinema.Application.Interfaces.Facilities;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Infrastructure.Repositories;
 
@@ -79,6 +83,44 @@ public class ShiftManagerRepository : IShiftManagerRepository
             .ToListAsync();
     }
 
+    public async Task<StaffShiftRegistrationEntity?> GetRegistrationByIdWithTemplateAsync(Guid registrationId)
+    {
+        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+            .Include(r => r.CinemaShiftTemplateEntity)
+            .Include(r => r.StaffProfileEntity)
+            .FirstOrDefaultAsync(r => r.ShiftRegistrationId == registrationId);
+    }
+
+    public async Task<int> CountApprovedRegistrationsAsync(Guid shiftTemplateId, DateTime date)
+    {
+        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+            .CountAsync(r => r.ShiftTemplateId == shiftTemplateId 
+                             && r.RegistrationDate == date.Date 
+                             && r.Status == "Approved");
+    }
+
+    public async Task<CinemaShiftTemplateEntity?> GetShiftTemplateByIdAsync(Guid shiftTemplateId)
+    {
+        return await _dbContext.Set<CinemaShiftTemplateEntity>()
+            .FirstOrDefaultAsync(t => t.ShiftTemplateId == shiftTemplateId && t.IsActive);
+    }
+
+    public async Task AddShiftRegistrationAsync(StaffShiftRegistrationEntity registration)
+    {
+        await _dbContext.Set<StaffShiftRegistrationEntity>().AddAsync(registration);
+    }
+
+    public async Task<List<StaffShiftRegistrationEntity>> GetActiveRegistrationsForStaffAndDateAsync(Guid staffId, DateTime date)
+    {
+        var registrationDateOnly = date.Date;
+        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+            .Include(r => r.CinemaShiftTemplateEntity)
+            .Where(r => r.StaffId == staffId 
+                     && r.RegistrationDate == registrationDateOnly 
+                     && (r.Status == "Approved" || r.Status == "Pending"))
+            .ToListAsync();
+    }
+
     public async Task<List<ResStaffProfileDto>> GetStaffProfilesAsync(Guid cinemaId)
     {
         return await _dbContext.Set<StaffProfileEntity>()
@@ -105,6 +147,13 @@ public class ShiftManagerRepository : IShiftManagerRepository
     {
         return await _dbContext.Set<StaffProfileEntity>()
             .FirstOrDefaultAsync(s => s.UserId == userId);
+    }
+
+    public async Task<StaffProfileEntity?> GetStaffProfileWithUserAsync(Guid userId)
+    {
+        return await _dbContext.Set<StaffProfileEntity>()
+            .Include(s => s.UserInfoEntity)
+            .FirstOrDefaultAsync(s => s.UserId == userId && s.WorkingStatus);
     }
 
     public async Task UpdateStaffProfileAsync(StaffProfileEntity staff, ReqUpdateStaffProfileDto dto)
@@ -175,6 +224,34 @@ public class ShiftManagerRepository : IShiftManagerRepository
                 }).ToList()
             })
             .ToListAsync();
+    }
+
+    public async Task<List<StaffWorkingLoggerEntity>> GetUncalculatedWorkingLogsAsync(Guid staffId, DateTime upToDate)
+    {
+        return await _dbContext.Set<StaffWorkingLoggerEntity>()
+            .Where(l => l.StaffId == staffId 
+                     && l.EndedShiftTime != null 
+                     && l.SalaryTotalLoggerId == null 
+                     && l.WorkingDate <= upToDate.Date)
+            .ToListAsync();
+    }
+
+    public async Task AddSalaryTotalLogAsync(StaffSalaryTotalLoggerEntity payroll)
+    {
+        await _dbContext.Set<StaffSalaryTotalLoggerEntity>().AddAsync(payroll);
+    }
+
+    public async Task<StaffSalaryTotalLoggerEntity?> GetSalaryTotalLogByIdAsync(Guid payrollId)
+    {
+        return await _dbContext.Set<StaffSalaryTotalLoggerEntity>()
+            .Include(p => p.StaffProfileEntity)
+            .FirstOrDefaultAsync(p => p.SalaryTotalLoggerId == payrollId);
+    }
+
+    public async Task<bool> UserHasRoleAsync(Guid userId, string roleName)
+    {
+        return await _dbContext.Set<UserRoleInfoEntity>()
+            .AnyAsync(ur => ur.UserId == userId && ur.RoleListInfoEntity.RoleName == roleName);
     }
 
     public async Task SaveChangesAsync()

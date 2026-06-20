@@ -7,30 +7,12 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Domain.Interfaces.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Cinema.Domain.Enums;
 
 
 namespace Cinema.Infrastructure.Repositories;
-
-public class BookingTransaction : IBookingTransaction
-{
-    private readonly IDbContextTransaction _transaction;
-
-    public BookingTransaction(IDbContextTransaction transaction)
-    {
-        _transaction = transaction;
-    }
-
-    public async Task CommitAsync() => await _transaction.CommitAsync();
-    public async Task RollbackAsync() => await _transaction.RollbackAsync();
-
-    public async ValueTask DisposeAsync()
-    {
-        await _transaction.DisposeAsync();
-    }
-}
 
 public class BookingRepository : IBookingRepository
 {
@@ -360,10 +342,10 @@ public class BookingRepository : IBookingRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<IBookingTransaction> BeginTransactionAsync()
+    public async Task<IUnitOfWorkTransaction> BeginTransactionAsync()
     {
         var transaction = await _dbContext.Database.BeginTransactionAsync();
-        return new BookingTransaction(transaction);
+        return new EfUnitOfWorkTransaction(transaction);
     }
 
     public async Task<OrderInfoEntity?> GetOrderWithDetailsAsync(Guid orderId)

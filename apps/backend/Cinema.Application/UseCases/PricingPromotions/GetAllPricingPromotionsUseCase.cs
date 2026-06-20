@@ -1,27 +1,23 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.PricingPromotions;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class GetAllPricingPromotionsUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public GetAllPricingPromotionsUseCase(IUnitOfWork unitOfWork)
+    public GetAllPricingPromotionsUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<List<PricingPromotionDto>> ExecuteAsync()
     {
-        var promotions = await PricingPromotionHelper.QueryPromotions(_unitOfWork)
-            .OrderByDescending(x => x.UpdatedAt)
-            .ToListAsync();
-
+        var promotions = await _repository.GetAllPromotionsAsync();
         return promotions.Select(PricingPromotionHelper.MapPromotion).ToList();
     }
 }

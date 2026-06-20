@@ -2,9 +2,8 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Utils;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 
@@ -12,20 +11,19 @@ namespace Cinema.Application.UseCases.Staff;
 
 public class RegisterFaceUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
 
-    public RegisterFaceUseCase(IUnitOfWork unitOfWork, IConfiguration configuration)
+    public RegisterFaceUseCase(IStaffRepository repository, IConfiguration configuration)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _configuration = configuration;
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, Guid operatorUserId, ReqRegisterFaceDto dto)
     {
         // 1. Kiểm tra xem người vận hành có quyền không (chính nhân viên, Admin hoặc Quản lý rạp của cùng chi nhánh)
-        var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
+        var staffProfile = await _repository.GetActiveStaffProfileAsync(staffId);
 
         if (staffProfile == null)
         {
@@ -35,13 +33,11 @@ public class RegisterFaceUseCase
         if (operatorUserId != staffId)
         {
             // Nếu người thao tác không phải chính nhân viên đó, kiểm tra xem có phải Admin/Quản lý rạp không
-            var isOperatorAdmin = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-                .AnyAsync(ur => ur.UserId == operatorUserId && ur.RoleListInfoEntity.RoleName == "Admin");
+            var isOperatorAdmin = await _repository.UserHasRoleAsync(operatorUserId, "Admin");
 
             if (!isOperatorAdmin)
             {
-                var isOperatorManager = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-                    .AnyAsync(ur => ur.UserId == operatorUserId && ur.RoleListInfoEntity.RoleName == "TheaterManager");
+                var isOperatorManager = await _repository.UserHasRoleAsync(operatorUserId, "TheaterManager");
 
                 if (!isOperatorManager)
                 {
@@ -49,8 +45,7 @@ public class RegisterFaceUseCase
                 }
 
                 // Kiểm tra xem Quản lý rạp có cùng chi nhánh với nhân viên không
-                var managerProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-                    .FirstOrDefaultAsync(s => s.UserId == operatorUserId && s.WorkingStatus);
+                var managerProfile = await _repository.GetActiveStaffProfileAsync(operatorUserId);
 
                 if (managerProfile == null || managerProfile.CinemaId != staffProfile.CinemaId)
                 {
@@ -80,7 +75,7 @@ public class RegisterFaceUseCase
 
         // 4. Lưu vào StaffProfileEntity
         staffProfile.FaceVector = encryptedVector;
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

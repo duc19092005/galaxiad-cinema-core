@@ -1,29 +1,28 @@
+using System;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
-using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class ClockOutUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
 
-    public ClockOutUseCase(IUnitOfWork unitOfWork, IConfiguration configuration)
+    public ClockOutUseCase(IStaffRepository repository, IConfiguration configuration)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _configuration = configuration;
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, ReqClockOutDto dto)
     {
         // 1. Tìm bản ghi điểm danh vào ca trực đang hoạt động của nhân viên này
-        var activeLog = await _unitOfWork.Repository<StaffWorkingLoggerEntity>().Query()
-            .FirstOrDefaultAsync(l => l.StaffId == staffId && l.EndedShiftTime == null);
+        var activeLog = await _repository.GetActiveWorkingLogAsync(staffId);
 
         if (activeLog == null)
         {
@@ -57,7 +56,7 @@ public class ClockOutUseCase
         activeLog.WorkingHour = Math.Round(workingHours, 2);
         activeLog.TotalReceived = Math.Round(activeLog.WorkingHour * activeLog.SalaryPerHour, 2);
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

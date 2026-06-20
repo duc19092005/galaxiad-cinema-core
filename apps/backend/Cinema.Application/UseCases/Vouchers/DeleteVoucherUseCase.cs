@@ -1,31 +1,28 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Cinema.Domain.Entities.Vouchers;
+using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class DeleteVoucherUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IVoucherRepository _repository;
 
-    public DeleteVoucherUseCase(IUnitOfWork unitOfWork)
+    public DeleteVoucherUseCase(IVoucherRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task ExecuteAsync(Guid voucherId)
     {
-        var voucher = await _unitOfWork.Repository<VoucherInfoEntity>().Query()
-            .FirstOrDefaultAsync(v => v.voucherId == voucherId);
+        var voucher = await _repository.GetByIdAsync(voucherId);
         if (voucher == null)
         {
             throw new AppException("Voucher not found", 404, "V03");
         }
 
-        _unitOfWork.Repository<VoucherInfoEntity>().Remove(voucher);
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.RemoveAsync(voucher);
+        await _repository.SaveChangesAsync();
     }
 }

@@ -3,28 +3,26 @@ using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class RegisterShiftUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStaffRepository _repository;
     private readonly IRedisLockService _redisLockService;
 
-    public RegisterShiftUseCase(IUnitOfWork unitOfWork, IRedisLockService redisLockService)
+    public RegisterShiftUseCase(IStaffRepository repository, IRedisLockService redisLockService)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _redisLockService = redisLockService;
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, ReqRegisterShiftDto dto)
     {
         // 1. Kiểm tra xem nhân viên có StaffProfile hợp lệ không
-        var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
+        var staffProfile = await _repository.GetActiveStaffProfileAsync(staffId);
 
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
@@ -42,8 +40,7 @@ public class RegisterShiftUseCase
             throw new AppException("Cannot register shifts in the past.", 400, "SHIFT_ERR");
         }
 
-        var template = await _unitOfWork.Repository<CinemaShiftTemplateEntity>().Query()
-            .FirstOrDefaultAsync(t => t.ShiftTemplateId == dto.ShiftTemplateId && t.IsActive);
+        var template = await _repository.GetShiftTemplateByIdAsync(dto.ShiftTemplateId);
 
         if (template == null)
         {
@@ -76,12 +73,7 @@ public class RegisterShiftUseCase
             try
             {
                 // 3. Kiểm tra xem nhân viên đã đăng ký ca trực bị trùng khung giờ cho ngày này chưa (Pending hoặc Approved)
-                var existingRegistrations = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                    .Include(r => r.CinemaShiftTemplateEntity)
-                    .Where(r => r.StaffId == staffId 
-                             && r.RegistrationDate == registrationDateOnly 
-                             && (r.Status == "Approved" || r.Status == "Pending"))
-                    .ToListAsync();
+                var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, registrationDateOnly);
 
                 bool isOverlapping = false;
                 var newStart = template.StartTime.TotalMinutes;
@@ -109,10 +101,7 @@ public class RegisterShiftUseCase
                 }
 
                 // 4. Đếm số lượng ca đã được duyệt (Approved) hoặc đang chờ duyệt (Pending) trong ngày này
-                var registeredCount = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                    .CountAsync(r => r.ShiftTemplateId == dto.ShiftTemplateId 
-                                     && r.RegistrationDate == registrationDateOnly 
-                                     && (r.Status == "Approved" || r.Status == "Pending"));
+                var registeredCount = await _repository.CountApprovedOrPendingRegistrationsAsync(dto.ShiftTemplateId, registrationDateOnly);
 
                 if (registeredCount >= template.MaxStaff)
                 {
@@ -133,7 +122,7 @@ public class RegisterShiftUseCase
                     Notes = dto.Notes
                 };
 
-                await _unitOfWork.Repository<StaffShiftRegistrationEntity>().AddAsync(newRegistration);
+                await _repository.AddShiftRegistrationAsync(newRegistration);
                 successDates.Add(registrationDateOnly.ToString("dd/MM/yyyy"));
             }
             finally
@@ -145,7 +134,7 @@ public class RegisterShiftUseCase
 
         if (successDates.Count > 0)
         {
-            await _unitOfWork.SaveChangesAsync();
+            await _repository.SaveChangesAsync();
         }
 
         var message = "";

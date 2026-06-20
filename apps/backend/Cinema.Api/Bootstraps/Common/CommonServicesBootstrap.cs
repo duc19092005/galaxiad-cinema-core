@@ -9,6 +9,7 @@ using Cinema.Domain.Localization;
 using StackExchange.Redis;
 using Microsoft.Extensions.Configuration;
 using Cinema.Application.UseCases.Staff;
+using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.UseCases.Comments;
@@ -47,6 +48,7 @@ public static class CommonServicesBootstrap
  
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+        services.AddScoped<IStaffRepository, StaffRepository>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {

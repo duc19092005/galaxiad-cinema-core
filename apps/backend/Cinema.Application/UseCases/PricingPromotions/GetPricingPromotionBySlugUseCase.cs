@@ -1,32 +1,22 @@
-using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Domain.Enums;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class GetPricingPromotionBySlugUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public GetPricingPromotionBySlugUseCase(IUnitOfWork unitOfWork)
+    public GetPricingPromotionBySlugUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<PricingPromotionDto> ExecuteAsync(string slug)
     {
-        var now = DateTime.UtcNow;
-        var promotion = await PricingPromotionHelper.QueryPromotions(_unitOfWork)
-            .FirstOrDefaultAsync(x => x.Slug == slug
-                                      && x.IsActive
-                                      && (!x.StartDate.HasValue || x.StartDate <= now)
-                                      && (!x.EndDate.HasValue || x.EndDate >= now)
-                                      && x.Rules.Any(r => r.IsActive && r.PromotionType != PromotionTypeEnum.Surcharge));
+        var promotion = await _repository.GetActivePromotionBySlugAsync(slug);
 
         if (promotion == null)
         {

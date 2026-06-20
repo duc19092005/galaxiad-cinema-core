@@ -1,63 +1,39 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager.Auditoriums.Responses;
 using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Application.Interfaces;
-using Cinema.Domain.Entities.CinemaInfos;
-using Microsoft.EntityFrameworkCore;
-using Cinema.Domain.Interfaces.Persistence;
-using Cinema.Domain.Localization;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.Auditoriums;
 
 public class ReadAuditorium : ITheaterManagerReadAuditorium
 {
-    private readonly IUnitOfWork _unitOfWork;
-    
-    private readonly IUserContextService userContextservice;
+    private readonly IMovieScheduleRepository _repository;
+    private readonly IUserContextService _userContextService;
 
-    public ReadAuditorium(IUnitOfWork unitOfWork , IUserContextService userContextservice)
+    public ReadAuditorium(IMovieScheduleRepository repository, IUserContextService userContextService)
     {
-        _unitOfWork = unitOfWork;
-        this.userContextservice = userContextservice;
+        _repository = repository;
+        _userContextService = userContextService;
     }
 
     public async Task<BaseResponse<TheaterManagerAuditoriumRes>> GetAuditoriumByCurrentManager()
     {
         Guid userId = GetUserId();
-        // Checking Cinemas
-        var isAdmin = userContextservice.IsInRole("Admin");
+        var isAdmin = _userContextService.IsInRole("Admin");
 
-        var getCinemaByUserIdQuery = _unitOfWork.Repository<CinemaInfoEntity>().Query().AsNoTracking()
-                .Include(x => x.AuditoriumInfoEntities)
-                .Include(x => x.TheaterManager)
-                .Include(x => x.FacilitiesManager)
-                .AsQueryable();
-
-        if (!isAdmin)
-        {
-            getCinemaByUserIdQuery = getCinemaByUserIdQuery.Where(x => x.TheaterManagerId == userId);
-        }
-
-        var getCinemaByUserId = await getCinemaByUserIdQuery.FirstOrDefaultAsync();
+        var getCinemaByUserId = await _repository.GetCinemaWithDetailsByManagerAsync(userId, isAdmin);
 
         if (getCinemaByUserId == null)
         {
             throw new NotFoundException("Không tìm thấy rạp chiếu phim quản lý bởi người dùng này.");
         }
 
-        var auditoriumLists =
-            _unitOfWork.Repository<AuditoriumInfoEntities>().Query().AsNoTracking()
-                .Where(x => x.CinemaId.Equals(getCinemaByUserId.CinemaId) && x.IsActive && !x.IsDeleted).Select(x 
-                    => 
-                    new TheaterManagerAuditoriumInfos
-                    {
-                        AuditoriumId = x.AuditoriumId,
-                        AuditoriumNumber = x.AuditoriumNumber ,
-                        TotalSeats = x.SeatsInfoEntity.Count ,
-                        AuditoriumSupportedFormats = 
-                            x.AuditoriumFormatInfosList.Select(y => y.MovieFormatInfoEntity.MovieFormatName)
-                    });
+        var auditoriumLists = await _repository.GetAuditoriumsByCinemaIdAsync(getCinemaByUserId.CinemaId);
 
         if (!auditoriumLists.Any())
         {
@@ -73,10 +49,9 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
             TheaterManagerName = getCinemaByUserId.TheaterManager != null 
                 ? getCinemaByUserId.TheaterManager.UserName : "Chưa có",
             FacilitiesManagerName = getCinemaByUserId.FacilitiesManager != null 
-                ? getCinemaByUserId.FacilitiesManager.UserName : "Chưa có"
+                ? getCinemaByUserId.FacilitiesManager.UserName : "Chưa có",
+            AuditoriumInfosList = auditoriumLists
         };
-        
-        // Config For base Response
 
         return new BaseResponse<TheaterManagerAuditoriumRes>
         {
@@ -88,7 +63,6 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
     
     private Guid GetUserId()
     {
-        return userContextservice.GetUserId();
+        return _userContextService.GetUserId();
     }
-
 }

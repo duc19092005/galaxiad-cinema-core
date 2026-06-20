@@ -1,27 +1,23 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.Vouchers;
-using Cinema.Domain.Entities.Vouchers;
+using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class GetVoucherByIdUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IVoucherRepository _repository;
 
-    public GetVoucherByIdUseCase(IUnitOfWork unitOfWork)
+    public GetVoucherByIdUseCase(IVoucherRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<VoucherDto> ExecuteAsync(Guid voucherId)
     {
-        var v = await _unitOfWork.Repository<VoucherInfoEntity>().Query()
-            .Include(v => v.RoleListInfoEntity)
-            .FirstOrDefaultAsync(v => v.voucherId == voucherId);
+        var v = await _repository.GetByIdAsync(voucherId);
         if (v == null)
         {
             throw new AppException("Voucher not found", 404, "V03");

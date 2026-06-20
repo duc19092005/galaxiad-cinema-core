@@ -44,8 +44,7 @@ public class ModerateMovieCommentUseCase
             comment.UpdatedAt = DateTime.UtcNow;
             _unitOfWork.Repository<MovieCommentEntity>().Update(comment);
 
-            await MovieCommentHelper.CreateNotificationAsync(
-                _unitOfWork,
+            await _commentRepository.CreateNotificationAsync(
                 comment.UserId,
                 "Binh luan da bi go",
                 moderation.Reason,
@@ -67,8 +66,7 @@ public class ModerateMovieCommentUseCase
         if (notifyParent)
         {
             var movieName = comment.MovieInfoEntity?.MovieName ?? "phim";
-            await MovieCommentHelper.CreateNotificationAsync(
-                _unitOfWork,
+            await _commentRepository.CreateNotificationAsync(
                 comment.ParentComment!.UserId,
                 "Co nguoi phan hoi binh luan cua ban",
                 $"{comment.UserInfoEntity.UserName} da phan hoi binh luan cua ban ve {movieName}.",

@@ -1,25 +1,28 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Cinema.Application.Dtos;
+using Cinema.Application.Interfaces.Facilities;
+using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
-using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
 public class ApproveShiftRegistrationUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IShiftManagerRepository _repository;
     private readonly IRedisLockService _redisLockService;
     private readonly ISseNotificationService _sseNotificationService;
 
     public ApproveShiftRegistrationUseCase(
-        IUnitOfWork unitOfWork, 
+        IShiftManagerRepository repository, 
         IRedisLockService redisLockService,
         ISseNotificationService sseNotificationService)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _redisLockService = redisLockService;
         _sseNotificationService = sseNotificationService;
     }
@@ -27,10 +30,7 @@ public class ApproveShiftRegistrationUseCase
     // 1. Phê duyệt ca trực
     public async Task<BaseResponse<bool>> ApproveAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
-        var registration = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-            .Include(r => r.CinemaShiftTemplateEntity)
-            .Include(r => r.StaffProfileEntity)
-            .FirstOrDefaultAsync(r => r.ShiftRegistrationId == registrationId);
+        var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
@@ -46,10 +46,7 @@ public class ApproveShiftRegistrationUseCase
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
         // Đếm lại xem hiện tại số lượng ca Approved đã đạt tối đa chưa
-        var approvedCount = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-            .CountAsync(r => r.ShiftTemplateId == registration.ShiftTemplateId 
-                             && r.RegistrationDate == registration.RegistrationDate 
-                             && r.Status == "Approved");
+        var approvedCount = await _repository.CountApprovedRegistrationsAsync(registration.ShiftTemplateId, registration.RegistrationDate);
 
         if (approvedCount >= registration.CinemaShiftTemplateEntity.MaxStaff)
         {
@@ -61,7 +58,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = notes;
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -81,9 +78,7 @@ public class ApproveShiftRegistrationUseCase
     // 2. Từ chối ca trực
     public async Task<BaseResponse<bool>> RejectAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
-        var registration = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-            .Include(r => r.CinemaShiftTemplateEntity)
-            .FirstOrDefaultAsync(r => r.ShiftRegistrationId == registrationId);
+        var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
@@ -103,7 +98,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = notes;
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -123,9 +118,7 @@ public class ApproveShiftRegistrationUseCase
     // 3. Hủy ca trực đã phê duyệt (Giải quyết khi nhân viên xin nghỉ đột xuất)
     public async Task<BaseResponse<bool>> CancelApprovedAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
-        var registration = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-            .Include(r => r.CinemaShiftTemplateEntity)
-            .FirstOrDefaultAsync(r => r.ShiftRegistrationId == registrationId);
+        var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
@@ -145,7 +138,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = string.IsNullOrEmpty(notes) ? "Quản lý hủy ca làm" : notes;
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -166,8 +159,7 @@ public class ApproveShiftRegistrationUseCase
     public async Task<BaseResponse<bool>> AssignDirectlyAsync(Guid staffId, Guid shiftTemplateId, DateTime date, Guid managerUserId)
     {
         // Kiểm tra nhân viên mục tiêu có StaffProfile hợp lệ không
-        var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .FirstOrDefaultAsync(s => s.UserId == staffId && s.WorkingStatus);
+        var staffProfile = await _repository.GetStaffProfileWithUserAsync(staffId);
 
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
@@ -175,8 +167,7 @@ public class ApproveShiftRegistrationUseCase
         }
 
         // Kiểm tra ca trực mẫu
-        var template = await _unitOfWork.Repository<CinemaShiftTemplateEntity>().Query()
-            .FirstOrDefaultAsync(t => t.ShiftTemplateId == shiftTemplateId && t.IsActive);
+        var template = await _repository.GetShiftTemplateByIdAsync(shiftTemplateId);
 
         if (template == null)
         {
@@ -206,12 +197,7 @@ public class ApproveShiftRegistrationUseCase
         try
         {
             // Kiểm tra xem nhân viên đã có ca trực nào trùng khung giờ ngày này chưa (dù là Pending hay Approved)
-            var existingRegistrations = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                .Include(r => r.CinemaShiftTemplateEntity)
-                .Where(r => r.StaffId == staffId 
-                         && r.RegistrationDate == registrationDateOnly 
-                         && (r.Status == "Approved" || r.Status == "Pending"))
-                .ToListAsync();
+            var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, registrationDateOnly);
 
             bool isOverlapping = false;
             var newStart = template.StartTime.TotalMinutes;
@@ -258,7 +244,7 @@ public class ApproveShiftRegistrationUseCase
                     existing.ApprovedAt = DateTime.UtcNow;
                     existing.Notes = "Quản lý gán trực tiếp";
                     
-                    await _unitOfWork.SaveChangesAsync();
+                    await _repository.SaveChangesAsync();
                     await _sseNotificationService.SendNotificationAsync(
                         staffId,
                         "Gán ca trực trực tiếp",
@@ -270,10 +256,7 @@ public class ApproveShiftRegistrationUseCase
             }
 
             // Đếm số ca Approved và Pending
-            var registeredCount = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-                .CountAsync(r => r.ShiftTemplateId == shiftTemplateId 
-                                 && r.RegistrationDate == registrationDateOnly 
-                                 && (r.Status == "Approved" || r.Status == "Pending"));
+            var registeredCount = await _repository.CountApprovedRegistrationsAsync(shiftTemplateId, registrationDateOnly);
 
             if (registeredCount >= template.MaxStaff)
             {
@@ -293,8 +276,8 @@ public class ApproveShiftRegistrationUseCase
                 Notes = "Quản lý gán trực tiếp"
             };
 
-            await _unitOfWork.Repository<StaffShiftRegistrationEntity>().AddAsync(directAssign);
-            await _unitOfWork.SaveChangesAsync();
+            await _repository.AddShiftRegistrationAsync(directAssign);
+            await _repository.SaveChangesAsync();
 
             await _sseNotificationService.SendNotificationAsync(
                 staffId,
@@ -320,14 +303,12 @@ public class ApproveShiftRegistrationUseCase
     private async Task VerifyManagerPermissionAsync(Guid managerUserId, Guid cinemaId)
     {
         // 1. Kiểm tra xem manager có vai trò Admin không
-        var isAdmin = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AnyAsync(ur => ur.UserId == managerUserId && ur.RoleListInfoEntity.RoleName == "Admin");
+        var isAdmin = await _repository.UserHasRoleAsync(managerUserId, "Admin");
 
         if (isAdmin) return; // Admin có toàn quyền trên mọi rạp
 
         // 2. Nếu không phải Admin, kiểm tra xem có phải TheaterManager của đúng Rạp này hay không
-        var isTheaterManager = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AnyAsync(ur => ur.UserId == managerUserId && ur.RoleListInfoEntity.RoleName == "TheaterManager");
+        var isTheaterManager = await _repository.UserHasRoleAsync(managerUserId, "TheaterManager");
 
         if (!isTheaterManager)
         {
@@ -335,8 +316,7 @@ public class ApproveShiftRegistrationUseCase
         }
 
         // Kiểm tra xem StaffProfile của Manager có thuộc đúng Rạp này hay không
-        var managerProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .FirstOrDefaultAsync(s => s.UserId == managerUserId && s.WorkingStatus);
+        var managerProfile = await _repository.GetStaffProfileAsync(managerUserId);
 
         if (managerProfile == null || managerProfile.CinemaId != cinemaId)
         {

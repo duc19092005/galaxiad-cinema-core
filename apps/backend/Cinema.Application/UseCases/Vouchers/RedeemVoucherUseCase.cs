@@ -1,40 +1,37 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.Vouchers;
+using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Entities.Vouchers;
-using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class RedeemVoucherUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IVoucherRepository _repository;
 
-    public RedeemVoucherUseCase(IUnitOfWork unitOfWork)
+    public RedeemVoucherUseCase(IVoucherRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<UserVoucherDto> ExecuteAsync(Guid userId, Guid voucherId)
     {
         // 1. Query data outside transaction
-        var voucher = await _unitOfWork.Repository<VoucherInfoEntity>().FindAsync(voucherId)
+        var voucher = await _repository.GetByIdAsync(voucherId)
             ?? throw new AppException("Voucher not found", 404, "V03");
 
         if (!voucher.IsValid(null))
             throw new AppException("Voucher has expired or is not yet active", 400, "V05");
 
-        var user = await _unitOfWork.Repository<UserInfoEntity>().FindAsync(userId)
+        var user = await _repository.FindUserByIdAsync(userId)
             ?? throw new AppException("User not found", 404, "V06");
 
         await ValidateUserRoleAsync(userId, voucher.roleId);
 
         // 2. Perform business logic and persist changes
-        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        await using var transaction = await _repository.BeginTransactionAsync();
         try
         {
             // rich domain validations and state updates
@@ -50,8 +47,8 @@ public class RedeemVoucherUseCase
                 PurchasedAt = DateTime.UtcNow
             };
 
-            await _unitOfWork.Repository<UserVoucherEntity>().AddAsync(userVoucher);
-            await _unitOfWork.SaveChangesAsync();
+            await _repository.AddUserVoucherAsync(userVoucher);
+            await _repository.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return MapToDto(userVoucher, voucher);
@@ -67,8 +64,7 @@ public class RedeemVoucherUseCase
     {
         if (requiredRoleId == Guid.Empty) return;
 
-        var hasRole = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AnyAsync(ur => ur.UserId == userId && ur.RoleId == requiredRoleId);
+        var hasRole = await _repository.UserHasRoleAsync(userId, requiredRoleId);
 
         if (!hasRole)
         {

@@ -260,6 +260,21 @@ public class MovieCommentRepository : IMovieCommentRepository
         return await _dbContext.Set<MovieCommentEntity>().FindAsync(commentId);
     }
 
+    public async Task CreateNotificationAsync(Guid userId, string title, string message, string type, Guid? relatedCommentId, Guid? relatedMovieId)
+    {
+        await _dbContext.Set<UserNotificationEntity>().AddAsync(new UserNotificationEntity
+        {
+            NotificationId = Guid.NewGuid(),
+            UserId = userId,
+            Title = title,
+            Message = message,
+            Type = type,
+            RelatedCommentId = relatedCommentId,
+            RelatedMovieId = relatedMovieId,
+            CreatedAt = DateTime.UtcNow
+        });
+    }
+
     private static ResMovieCommentDto MapCommentTree(MovieCommentEntity comment, List<MovieCommentEntity> allComments)
     {
         var dto = MapComment(comment);

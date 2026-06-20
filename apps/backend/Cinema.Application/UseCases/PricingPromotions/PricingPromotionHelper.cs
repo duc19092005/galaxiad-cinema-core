@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Entities.Promotions;
-using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
 
@@ -14,19 +13,6 @@ namespace Cinema.Application.UseCases.PricingPromotions;
 
 public static class PricingPromotionHelper
 {
-    public static IQueryable<PricingPromotionEntity> QueryPromotions(IUnitOfWork unitOfWork)
-    {
-        return unitOfWork.Repository<PricingPromotionEntity>().Query()
-            .Include(x => x.Rules)
-            .ThenInclude(x => x.MovieFormatInfoEntity)
-            .Include(x => x.Rules)
-            .ThenInclude(x => x.CinemaInfoEntity)
-            .Include(x => x.Rules)
-            .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-            .ThenInclude(x => x.RequiredMembershipTierEntity);
-    }
-
     public static PricingPromotionRuleEntity BuildRule(PricingPromotionRuleRequestDto dto)
     {
         return new PricingPromotionRuleEntity
@@ -118,13 +104,12 @@ public static class PricingPromotionHelper
         };
     }
 
-    public static async Task<string> BuildUniqueSlugAsync(IUnitOfWork unitOfWork, string? requestedSlug, string title, Guid? currentId = null)
+    public static async Task<string> BuildUniqueSlugAsync(IPricingPromotionRepository repository, string? requestedSlug, string title, Guid? currentId = null)
     {
         var baseSlug = Slugify(string.IsNullOrWhiteSpace(requestedSlug) ? title : requestedSlug);
         var slug = baseSlug;
         var suffix = 2;
-        while (await unitOfWork.Repository<PricingPromotionEntity>().Query()
-                   .AnyAsync(x => x.Slug == slug && (!currentId.HasValue || x.PricingPromotionId != currentId.Value)))
+        while (await repository.SlugExistsExceptAsync(slug, currentId))
         {
             slug = $"{baseSlug}-{suffix++}";
         }

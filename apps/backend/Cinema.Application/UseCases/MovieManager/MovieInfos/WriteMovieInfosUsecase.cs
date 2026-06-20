@@ -4,12 +4,10 @@ using Cinema.Application.Interfaces.IBehaviors;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.MovieManager.Requests;
 using Cinema.Application.Interfaces;
-using Cinema.Application.Validators.MovieManager;
 using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Entities.UserInfos;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Validators;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
@@ -22,6 +20,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     private readonly IUserContextService _userContextService;
     private readonly ILogger<WriteMovieInfosUseCase> _logger;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminRepository _adminRepository;
     private readonly IImageStorageService _imageStorageService;
     private readonly IScheduleJobsService _scheduleJobsService;
     private readonly IAuditLogService _auditLogService;
@@ -30,18 +29,20 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
 
     public WriteMovieInfosUseCase(IUserContextService userContextService, ILogger<WriteMovieInfosUseCase> logger, IUnitOfWork unitOfWork,
+        IAdminRepository adminRepository,
         IImageStorageService imageStorageService, IScheduleJobsService scheduleJobService, IAuditLogService auditLogService,
         IBackgroundJobScheduler jobScheduler,
-        IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService)
+        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
     {
         _userContextService = userContextService;
         _logger = logger;
         _unitOfWork = unitOfWork;
+        _adminRepository = adminRepository;
         _imageStorageService = imageStorageService;
         _scheduleJobsService = scheduleJobService;
         _auditLogService = auditLogService;
         _jobScheduler = jobScheduler;
-        this._aiMovieEmbeddingSyncService = _aiMovieEmbeddingSyncService;
+        _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
     }
 
     public async Task<BaseResponse<string>> AddItem(ReqAddMovieManagerMovieDto request)
@@ -54,16 +55,12 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             request.StartedDate = DateTimeHelper.NormalizeIncoming(request.StartedDate);
             request.EndedDate = DateTimeHelper.NormalizeIncoming(request.EndedDate);
             var getUserId = _userContextService.GetUserId();
-            var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
-            var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
-            var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
-            var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
 
             var isExitsMovieName =
-                await MovieInfoValidate.IsExistMovieName(movieRepository.Query(), request.MovieName, null);
+                await _adminRepository.IsMovieNameExistsAsync(request.MovieName, null);
 
             var isExitsMovieDescription =
-                await MovieInfoValidate.IsExistMovieDescription(movieRepository.Query(), request.MovieDescription, null);
+                await _adminRepository.IsMovieDescriptionExistsAsync(request.MovieDescription, null);
 
             var validationErrors = new List<string>();
 
@@ -151,10 +148,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 CinemaId = id
             });
 
-            await movieRepository.AddAsync(newMovieEntity);
-            await movieFormatRepository.AddRangeAsync(newMovieFormatMovieInfos);
-            await movieGenreRepository.AddRangeAsync(newMovieGenreMovieInfos);
-            await movieCinemaRepository.AddRangeAsync(newMovieCinemaInfos);
+            await _adminRepository.AddMovieAsync(newMovieEntity);
+            await _adminRepository.AddMovieFormatsAsync(newMovieFormatMovieInfos);
+            await _adminRepository.AddMovieGenresAsync(newMovieGenreMovieInfos);
+            await _adminRepository.AddMovieCinemasAsync(newMovieCinemaInfos);
+            
             await _auditLogService.WriteAsync(
                 "Create",
                 "Movie",
@@ -163,7 +161,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 $"Created movie {request.MovieName}.",
                 request.CinemaIds.FirstOrDefault());
             
-            await _unitOfWork.SaveChangesAsync();
+            await _adminRepository.SaveChangesAsync();
             await transactions.CommitAsync();
 
             // Enqueue job registration to background AFTER transaction is committed
@@ -214,13 +212,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
         {
             request.StartedDate = DateTimeHelper.NormalizeIncoming(request.StartedDate);
             request.EndedDate = DateTimeHelper.NormalizeIncoming(request.EndedDate);
-            var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
-            var orderDetailRepository = _unitOfWork.Repository<OrderDetailsInfo>();
-            var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
-            var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
-            var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
 
-            var findTheMovie = await movieRepository.Query().FirstOrDefaultAsync(x => x.MovieId == itemId);
+            var findTheMovie = await _adminRepository.GetMovieInfoEntityAsync(itemId);
             if (findTheMovie == null)
             {
                 throw new NotFoundException(Messages.Movie.NotFoundById(itemId));
@@ -230,9 +223,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 var getUserId = _userContextService.GetUserId();
                 var validationsErrors = new List<string>();
 
-                var hasSuccessfulBooking = await orderDetailRepository.Query()
-                    .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
-                                    (od.OrderInfoEntity.OrderStatus == Cinema.Domain.Enums.OrderStatusEnum.Booked));
+                var hasSuccessfulBooking = await _adminRepository.HasSuccessfulBookingAsync(itemId);
 
                 if (hasSuccessfulBooking)
                 {
@@ -241,7 +232,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 if (!string.IsNullOrEmpty(request.MovieName))
                 {
-                    if (await MovieInfoValidate.IsExistMovieName(movieRepository.Query(), request.MovieName, itemId))
+                    if (await _adminRepository.IsMovieNameExistsAsync(request.MovieName, itemId))
                     {
                         validationsErrors.Add(Messages.Movie.NameAlreadyExists);
                     }
@@ -257,7 +248,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 
                 if (!string.IsNullOrEmpty(request.MovieDescription))
                 {
-                    if (await MovieInfoValidate.IsExistMovieDescription(movieRepository.Query(), request.MovieDescription, itemId))
+                    if (await _adminRepository.IsMovieDescriptionExistsAsync(request.MovieDescription, itemId))
                     {
                         validationsErrors.Add(Messages.Movie.DescriptionAlreadyExists);
                     }
@@ -277,9 +268,6 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 {
                     throw new BadRequestException(validationsErrors, "S01");
                 }
-
-                // (Remove original position)
-                // BackgroundJob.Enqueue updated to move after commit
 
                 findTheMovie.MovieRequiredAgeId = request.MovieRequiredAgeId ?? findTheMovie.MovieRequiredAgeId;
                 findTheMovie.MovieDescription = request.MovieDescription ?? findTheMovie.MovieDescription;
@@ -328,13 +316,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 if (request.MovieFormatIds != null && request.MovieFormatIds.Any())
                 {
-                    // Truy Van trong dbo
-                    var findTheFormats = await movieFormatRepository.Query().Where(x => x.MovieId.Equals(itemId)).ToListAsync();
-                    movieFormatRepository.RemoveRange(findTheFormats);
+                    var findTheFormats = await _adminRepository.GetMovieFormatsByMovieIdAsync(itemId);
+                    _adminRepository.RemoveMovieFormats(findTheFormats);
 
-                    // Add Again in databases
-
-                    await movieFormatRepository.AddRangeAsync(request.MovieFormatIds.Distinct().Select(id => new movieFormatMovieInfoEntity()
+                    await _adminRepository.AddMovieFormatsAsync(request.MovieFormatIds.Distinct().Select(id => new movieFormatMovieInfoEntity()
                     {
                         MovieId = itemId,
                         FormatId = id
@@ -342,12 +327,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 }
                 if (request.MovieGenreIds != null && request.MovieGenreIds.Any())
                 {
-                    // Truy Van trong dbo
-                    var findTheGenres = await movieGenreRepository.Query().Where(x => x.MovieId.Equals(itemId)).ToListAsync();
-                    movieGenreRepository.RemoveRange(findTheGenres);
+                    var findTheGenres = await _adminRepository.GetMovieGenresByMovieIdAsync(itemId);
+                    _adminRepository.RemoveMovieGenres(findTheGenres);
 
-                    // Add Again in databases
-                    await movieGenreRepository.AddRangeAsync(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
+                    await _adminRepository.AddMovieGenresAsync(request.MovieGenreIds.Distinct().Select(id => new MovieGenreMovieInfoEntity()
                     {
                         MovieId = itemId,
                         MovieGenreId = id
@@ -356,10 +339,10 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
                 if (request.CinemaIds != null && request.CinemaIds.Any())
                 {
-                    var existingCinemas = await movieCinemaRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
-                    movieCinemaRepository.RemoveRange(existingCinemas);
+                    var existingCinemas = await _adminRepository.GetMovieCinemasByMovieIdAsync(itemId);
+                    _adminRepository.RemoveMovieCinemas(existingCinemas);
 
-                    await movieCinemaRepository.AddRangeAsync(request.CinemaIds.Distinct().Select(id => new MovieCinemaEntity()
+                    await _adminRepository.AddMovieCinemasAsync(request.CinemaIds.Distinct().Select(id => new MovieCinemaEntity()
                     {
                         MovieId = itemId,
                         CinemaId = id
@@ -372,12 +355,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                     itemId,
                     findTheMovie.MovieName,
                     $"Updated movie {findTheMovie.MovieName}.",
-                    request.CinemaIds?.FirstOrDefault() ?? await movieCinemaRepository.Query()
-                        .Where(x => x.MovieId == itemId)
+                    request.CinemaIds?.FirstOrDefault() ?? (await _adminRepository.GetMovieCinemasByMovieIdAsync(itemId))
                         .Select(x => (Guid?)x.CinemaId)
-                        .FirstOrDefaultAsync());
+                        .FirstOrDefault());
 
-                await _unitOfWork.SaveChangesAsync();
+                await _adminRepository.SaveChangesAsync();
                 await transactions.CommitAsync();
 
                 // Enqueue job update to background AFTER transaction is committed
@@ -447,15 +429,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     public async Task<BaseResponse<string>> DeleteItem(Guid itemId)
     {
         var getCurrentUserId = _userContextService.GetUserId();
-        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
-        var orderDetailRepository = _unitOfWork.Repository<OrderDetailsInfo>();
-        var scheduleRepository = _unitOfWork.Repository<MovieScheduleInfoEntity>();
-        var movieFormatRepository = _unitOfWork.Repository<movieFormatMovieInfoEntity>();
-        var movieGenreRepository = _unitOfWork.Repository<MovieGenreMovieInfoEntity>();
-        var movieCinemaRepository = _unitOfWork.Repository<MovieCinemaEntity>();
 
-        var movie = await movieRepository.Query()
-            .FirstOrDefaultAsync(x => x.MovieId == itemId);
+        var movie = await _adminRepository.GetMovieInfoEntityAsync(itemId);
             
         if (movie == null)
         {
@@ -467,21 +442,18 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             throw new BadRequestException("Phim này đã bị xóa.", "D01");
         }
 
-        var hasSuccessfulBooking = await orderDetailRepository.Query()
-            .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId &&
-                            (od.OrderInfoEntity.OrderStatus == Cinema.Domain.Enums.OrderStatusEnum.Booked));
+        var hasSuccessfulBooking = await _adminRepository.HasSuccessfulBookingAsync(itemId);
 
         if (hasSuccessfulBooking)
         {
             movie.IsDeleted = true;
             movie.DeletedByUserId = getCurrentUserId;
             movie.DeletedAt = DateTime.UtcNow;
-            movieRepository.Update(movie);
+            _adminRepository.UpdateMovie(movie);
         }
         else
         {
-            var hasAnyBooking = await orderDetailRepository.Query()
-                .AnyAsync(od => od.MovieScheduleInfoEntity.MovieId == itemId);
+            var hasAnyBooking = await _adminRepository.HasAnyBookingAsync(itemId);
 
             if (hasAnyBooking)
             {
@@ -489,24 +461,12 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
                 movie.IsDeleted = true;
                 movie.DeletedByUserId = getCurrentUserId;
                 movie.DeletedAt = DateTime.UtcNow;
-                movieRepository.Update(movie);
+                _adminRepository.UpdateMovie(movie);
             }
             else
             {
                 // Hard delete
-                var schedules = await scheduleRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
-                scheduleRepository.RemoveRange(schedules);
-
-                var movieFormats = await movieFormatRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
-                movieFormatRepository.RemoveRange(movieFormats);
-
-                var movieGenres = await movieGenreRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
-                movieGenreRepository.RemoveRange(movieGenres);
-
-                var movieCinemas = await movieCinemaRepository.Query().Where(x => x.MovieId == itemId).ToListAsync();
-                movieCinemaRepository.RemoveRange(movieCinemas);
-
-                movieRepository.Remove(movie);
+                await _adminRepository.HardDeleteMovieAsync(itemId);
             }
         }
         
@@ -516,12 +476,11 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             movie.MovieId,
             movie.MovieName,
             $"Deleted movie {movie.MovieName}.",
-            await movieCinemaRepository.Query()
-                .Where(x => x.MovieId == itemId)
+            (await _adminRepository.GetMovieCinemasByMovieIdAsync(itemId))
                 .Select(x => (Guid?)x.CinemaId)
-                .FirstOrDefaultAsync());
+                .FirstOrDefault());
 
-        await _unitOfWork.SaveChangesAsync();
+        await _adminRepository.SaveChangesAsync();
         await _aiMovieEmbeddingSyncService.DeleteMovieAsync(itemId);
 
         return new BaseResponse<string>()
@@ -534,8 +493,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
 
     public async Task UpdatedComingMovieStatusJobs(Guid movieId)
     {
-        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
-        var findMovie = await movieRepository.FindAsync(movieId);
+        var findMovie = await _adminRepository.GetMovieInfoEntityAsync(movieId);
         if (findMovie == null)
         {
             // Log the error
@@ -547,8 +505,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 findMovie.IsCommingSoon = false;
                 findMovie.IsActive = true;
-                movieRepository.Update(findMovie);
-                await _unitOfWork.SaveChangesAsync();
+                _adminRepository.UpdateMovie(findMovie);
+                await _adminRepository.SaveChangesAsync();
                 await _aiMovieEmbeddingSyncService.SyncMovieAsync(movieId);
             }
             catch(Exception e)
@@ -560,8 +518,7 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
     
     public async Task UpdatedOverDueStatus(Guid movieId)
     {
-        var movieRepository = _unitOfWork.Repository<MovieInfoEntity>();
-        var findMovie = await movieRepository.FindAsync(movieId);
+        var findMovie = await _adminRepository.GetMovieInfoEntityAsync(movieId);
         if (findMovie == null)
         {
             // Log the error
@@ -573,8 +530,8 @@ public class WriteMovieInfosUseCase : IWriteBehavior<ReqAddMovieManagerMovieDto,
             {
                 findMovie.IsCommingSoon = false;
                 findMovie.IsActive = false;
-                movieRepository.Update(findMovie);
-                await _unitOfWork.SaveChangesAsync();
+                _adminRepository.UpdateMovie(findMovie);
+                await _adminRepository.SaveChangesAsync();
                 await _aiMovieEmbeddingSyncService.DeleteMovieAsync(movieId);
             }
             catch(Exception e)

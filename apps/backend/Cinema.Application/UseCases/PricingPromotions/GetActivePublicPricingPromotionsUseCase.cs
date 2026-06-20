@@ -1,34 +1,23 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Domain.Enums;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.PricingPromotions;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class GetActivePublicPricingPromotionsUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public GetActivePublicPricingPromotionsUseCase(IUnitOfWork unitOfWork)
+    public GetActivePublicPricingPromotionsUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<List<PricingPromotionDto>> ExecuteAsync()
     {
-        var now = DateTime.UtcNow;
-        var promotions = await PricingPromotionHelper.QueryPromotions(_unitOfWork)
-            .Where(x => x.IsActive
-                        && (!x.StartDate.HasValue || x.StartDate <= now)
-                        && (!x.EndDate.HasValue || x.EndDate >= now)
-                        && x.Rules.Any(r => r.IsActive && r.PromotionType != PromotionTypeEnum.Surcharge))
-            .OrderByDescending(x => x.UpdatedAt)
-            .ToListAsync();
-
+        var promotions = await _repository.GetActivePublicPromotionsAsync();
         return promotions.Select(PricingPromotionHelper.MapPromotion).ToList();
     }
 }

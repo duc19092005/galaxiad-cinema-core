@@ -1,34 +1,30 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Cinema.Domain.Entities.Promotions;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class DeletePricingPromotionUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public DeletePricingPromotionUseCase(IUnitOfWork unitOfWork)
+    public DeletePricingPromotionUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task ExecuteAsync(Guid id)
     {
-        var promotion = await _unitOfWork.Repository<PricingPromotionEntity>().Query()
-            .Include(x => x.Rules)
-            .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
+        var promotion = await _repository.GetPromotionByIdAsync(id);
 
         if (promotion == null)
         {
             throw new NotFoundException("Pricing promotion not found.");
         }
 
-        _unitOfWork.Repository<PricingPromotionRuleEntity>().RemoveRange(promotion.Rules);
-        _unitOfWork.Repository<PricingPromotionEntity>().Remove(promotion);
-        await _unitOfWork.SaveChangesAsync();
+        _repository.RemovePromotionRulesRange(promotion.Rules);
+        _repository.RemovePromotion(promotion);
+        await _repository.SaveChangesAsync();
     }
 }

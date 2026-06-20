@@ -2,24 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class CalculatePricingPromotionUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
 
-    public CalculatePricingPromotionUseCase(IUnitOfWork unitOfWork)
+    public CalculatePricingPromotionUseCase(IPricingPromotionRepository repository)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
     }
 
     public async Task<PricingPromotionCalculationResult> ExecuteAsync(
@@ -40,20 +37,13 @@ public class CalculatePricingPromotionUseCase
         var showDayMask = DaysOfWeekMaskHelper.ToMask(vietnamStart.DayOfWeek);
         var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
 
-        var rules = await _unitOfWork.Repository<PricingPromotionRuleEntity>().Query()
-            .Include(x => x.PricingPromotionEntity)
-            .Where(x => x.IsActive
-                        && x.PricingPromotionEntity.IsActive
-                        && (!x.PricingPromotionEntity.StartDate.HasValue || x.PricingPromotionEntity.StartDate <= showDateUtc)
-                        && (!x.PricingPromotionEntity.EndDate.HasValue || x.PricingPromotionEntity.EndDate >= showDateUtc)
-                        && (!x.StartDate.HasValue || x.StartDate <= showDateUtc)
-                        && (!x.EndDate.HasValue || x.EndDate >= showDateUtc)
-                        && (!x.MovieFormatId.HasValue || x.MovieFormatId == schedule.MovieFormatId)
-                        && (!x.CinemaId.HasValue || x.CinemaId == cinemaId)
-                        && (!x.AuditoriumId.HasValue || x.AuditoriumId == schedule.AuditoriumId)
-                        && (!x.RequiredMembershipTierId.HasValue || x.RequiredMembershipTierId == userSegmentId)
-                        && (x.DaysOfWeekMask & showDayMask) != 0)
-            .ToListAsync();
+        var rules = await _repository.GetRulesForCalculationAsync(
+            showDateUtc,
+            showDayMask,
+            schedule.MovieFormatId,
+            cinemaId,
+            schedule.AuditoriumId,
+            userSegmentId);
 
         var matchingRules = new List<PricingPromotionRuleEntity>();
         foreach (var rule in rules)
@@ -64,7 +54,7 @@ public class CalculatePricingPromotionUseCase
             }
 
             if (rule.PricingPromotionEntity.ExcludeHolidays
-                && await IsHolidayAsync(showDateVn))
+                && await _repository.IsHolidayAsync(showDateVn))
             {
                 continue;
             }
@@ -112,13 +102,6 @@ public class CalculatePricingPromotionUseCase
         return from <= to
             ? showTime >= from && showTime <= to
             : showTime >= from || showTime <= to;
-    }
-
-    private async Task<bool> IsHolidayAsync(DateTime vietnamDate)
-    {
-        var date = vietnamDate.Date;
-        return await _unitOfWork.Repository<HolidayCalendarEntity>().Query()
-            .AnyAsync(x => x.IsActive && x.Date == date);
     }
 
     private static decimal ApplyRule(PricingPromotionRuleEntity rule, decimal currentPrice)

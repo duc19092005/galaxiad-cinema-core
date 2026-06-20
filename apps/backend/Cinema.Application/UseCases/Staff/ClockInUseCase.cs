@@ -1,27 +1,29 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Utils;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System.Text.Json;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class ClockInUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly IJwtService _jwtService;
 
-    public ClockInUseCase(IUnitOfWork unitOfWork, IConfiguration configuration, IJwtService jwtService)
+    public ClockInUseCase(IStaffRepository repository, IConfiguration configuration, IJwtService jwtService)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _configuration = configuration;
         _jwtService = jwtService;
     }
@@ -29,9 +31,7 @@ public class ClockInUseCase
     public async Task<BaseResponse<ResClockInDto>> ExecuteAsync(ReqClockInDto dto)
     {
         // 1. Kiểm tra tài khoản nhân viên
-        var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .Include(s => s.UserInfoEntity)
-            .FirstOrDefaultAsync(s => s.UserId == dto.StaffId && s.WorkingStatus);
+        var staffProfile = await _repository.GetActiveStaffProfileAsync(dto.StaffId);
 
         if (staffProfile == null)
         {
@@ -103,12 +103,7 @@ public class ClockInUseCase
         var todayDate = clockInTime.Date;
 
         // 4. Kiểm tra ca trực được duyệt (Approved) của nhân viên cho ngày hôm nay
-        var activeShiftReg = await _unitOfWork.Repository<StaffShiftRegistrationEntity>().Query()
-            .Include(r => r.CinemaShiftTemplateEntity)
-                .ThenInclude(t => t.RoleListInfoEntity)
-            .FirstOrDefaultAsync(r => r.StaffId == dto.StaffId 
-                                     && r.RegistrationDate == todayDate 
-                                     && r.Status == "Approved");
+        var activeShiftReg = await _repository.GetApprovedShiftRegistrationAsync(dto.StaffId, todayDate);
 
         if (activeShiftReg == null)
         {
@@ -139,8 +134,7 @@ public class ClockInUseCase
         }
 
         // 5. Kiểm tra xem đã điểm danh vào ca trực này trước đó chưa
-        var alreadyClockedIn = await _unitOfWork.Repository<StaffWorkingLoggerEntity>().Query()
-            .AnyAsync(l => l.StaffId == dto.StaffId && l.WorkingDate == todayDate && l.EndedShiftTime == null);
+        var alreadyClockedIn = await _repository.HasActiveWorkingLogAsync(dto.StaffId, todayDate);
 
         if (alreadyClockedIn)
         {
@@ -163,25 +157,13 @@ public class ClockInUseCase
             SalaryTotalLoggerId = null
         };
 
-        await _unitOfWork.Repository<StaffWorkingLoggerEntity>().AddAsync(workingLog);
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.AddWorkingLogAsync(workingLog);
+        await _repository.SaveChangesAsync();
 
         // 7. Sinh JWT mới mang danh tính riêng của nhân viên vừa vào ca
-        var userRoles = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .Where(ur => ur.UserId == dto.StaffId)
-            .Select(ur => ur.RoleListInfoEntity.RoleName)
-            .ToArrayAsync();
-
-        var roleIds = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .Where(ur => ur.UserId == dto.StaffId)
-            .Select(ur => ur.RoleId)
-            .ToListAsync();
-
-        var permissions = await _unitOfWork.Repository<PermissionForRoleEntity>().Query()
-            .Where(pr => roleIds.Contains(pr.RoleId))
-            .Select(pr => pr.PermissionEntity.PermissionInfo)
-            .Distinct()
-            .ToArrayAsync();
+        var userRoles = (await _repository.GetUserRoleNamesAsync(dto.StaffId)).ToArray();
+        var roleIds = await _repository.GetUserRoleIdsAsync(dto.StaffId);
+        var permissions = (await _repository.GetRolePermissionsAsync(roleIds)).ToArray();
 
         string? jwtKey = _configuration["JWT_Info:Key"];
         string? jwtIss = _configuration["JWT_Info:Iss"];

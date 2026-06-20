@@ -1,5 +1,7 @@
 using Cinema.Infrastructure.Services;
 using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.Admin;
+using Cinema.Infrastructure.Repositories;
 using Cinema.Application.UseCases.Admin;
 using Cinema.Application.UseCases.Admin.Audit;
 using Cinema.Application.UseCases.Admin.Dashboard;
@@ -11,6 +13,8 @@ public static class AdminBootstrap
 {
     public static IServiceCollection AddAdminBootstrap(this IServiceCollection services)
     {
+        services.AddScoped<IAdminRepository, AdminRepository>();
+
         // Schedule Jobs
         services.AddScoped<IAdminReadScheduleBehavior, AdminReadScheduleUseCase>();
 

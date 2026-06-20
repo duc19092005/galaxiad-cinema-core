@@ -1,21 +1,18 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Interfaces;
-using Cinema.Domain.Entities.AuditLogs;
-using Cinema.Domain.Entities.CinemaInfos;
-using Microsoft.EntityFrameworkCore;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.Admin;
 
 namespace Cinema.Application.UseCases.Admin.Audit;
 
 public class GetRecentAuditLogsUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminRepository _adminRepository;
     private readonly IUserContextService _userContextService;
 
-    public GetRecentAuditLogsUseCase(IUnitOfWork unitOfWork, IUserContextService userContextService)
+    public GetRecentAuditLogsUseCase(IAdminRepository adminRepository, IUserContextService userContextService)
     {
-        _unitOfWork = unitOfWork;
+        _adminRepository = adminRepository;
         _userContextService = userContextService;
     }
 
@@ -27,49 +24,31 @@ public class GetRecentAuditLogsUseCase
         var isTheaterManager = _userContextService.IsInRole("TheaterManager");
         var isMovieManager = _userContextService.IsInRole("MovieManager");
 
-        var query = _unitOfWork.Repository<AuditLogEntity>().Query().AsNoTracking();
+        List<Guid>? cinemaIds = null;
+        Guid? movieManagerUserId = null;
 
         if (!isAdmin)
         {
             if (isFacilitiesManager || isTheaterManager)
             {
-                var cinemaIds = _unitOfWork.Repository<CinemaInfoEntity>().Query()
-                    .Where(c =>
-                        (isFacilitiesManager && c.FacilitiesManagerId == userId) ||
-                        (isTheaterManager && c.TheaterManagerId == userId))
-                    .Select(c => c.CinemaId);
-
-                query = query.Where(log => log.CinemaId != null && cinemaIds.Contains(log.CinemaId.Value));
+                cinemaIds = await _adminRepository.GetManagerCinemaIdsAsync(userId, isFacilitiesManager, isTheaterManager);
             }
             else if (isMovieManager)
             {
-                query = query.Where(log => log.EntityType == "Movie" && log.ActorUserId == userId);
+                movieManagerUserId = userId;
             }
             else
             {
-                query = query.Where(log => false);
+                return new BaseResponse<List<AuditLogDto>>
+                {
+                    IsSuccess = true,
+                    Message = "Get audit logs successfully.",
+                    Data = new List<AuditLogDto>()
+                };
             }
         }
 
-        var logs = await query
-            .OrderByDescending(log => log.CreatedAt)
-            .Take(Math.Clamp(take, 1, 100))
-            .Select(log => new AuditLogDto
-            {
-                AuditLogId = log.AuditLogId,
-                Action = log.Action,
-                EntityType = log.EntityType,
-                EntityId = log.EntityId,
-                EntityName = log.EntityName,
-                Description = log.Description,
-                ActorUserId = log.ActorUserId,
-                ActorName = log.ActorName,
-                ActorPrimaryRole = log.ActorPrimaryRole,
-                IsAdminAction = log.IsAdminAction,
-                CinemaId = log.CinemaId,
-                CreatedAt = DateTime.SpecifyKind(log.CreatedAt, DateTimeKind.Utc)
-            })
-            .ToListAsync();
+        var logs = await _adminRepository.GetRecentAuditLogsAsync(take, cinemaIds, movieManagerUserId);
 
         return new BaseResponse<List<AuditLogDto>>
         {

@@ -1,23 +1,20 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Constants;
-using Cinema.Domain.Entities.CinemaInfos;
-using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Entities.UserInfos;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Exceptions;
+using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Admin.Transfers;
 
 public class GetUsersByRoleUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminRepository _adminRepository;
 
-    public GetUsersByRoleUseCase(IUnitOfWork unitOfWork)
+    public GetUsersByRoleUseCase(IAdminRepository adminRepository)
     {
-        _unitOfWork = unitOfWork;
+        _adminRepository = adminRepository;
     }
 
     public async Task<BaseResponse<List<AdminTransferUserDto>>> ExecuteAsync(TransferTypeEnum transferType)
@@ -30,16 +27,7 @@ public class GetUsersByRoleUseCase
             _ => throw new BadRequestException("Loại chuyển quyền không hợp lệ.", "B02")
         };
 
-        var users = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AsNoTracking()
-            .Where(ur => ur.RoleId == roleId)
-            .Select(ur => new AdminTransferUserDto
-            {
-                UserId = ur.UserId,
-                UserEmail = ur.UserInfoEntity.UserEmail,
-                UserName = ur.UserInfoEntity.UserName ?? string.Empty
-            })
-            .ToListAsync();
+        var users = await _adminRepository.GetUsersByRoleAsync(roleId);
 
         return new BaseResponse<List<AdminTransferUserDto>>
         {
@@ -52,11 +40,11 @@ public class GetUsersByRoleUseCase
 
 public class GetManagedItemsUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminRepository _adminRepository;
 
-    public GetManagedItemsUseCase(IUnitOfWork unitOfWork)
+    public GetManagedItemsUseCase(IAdminRepository adminRepository)
     {
-        _unitOfWork = unitOfWork;
+        _adminRepository = adminRepository;
     }
 
     public async Task<BaseResponse<List<ManagedItemDto>>> ExecuteAsync(string? userId, TransferTypeEnum transferType)
@@ -70,55 +58,17 @@ public class GetManagedItemsUseCase
 
         if (transferType == TransferTypeEnum.Facilities || transferType == TransferTypeEnum.Theater)
         {
-            var query = _unitOfWork.Repository<CinemaInfoEntity>().Query().AsNoTracking();
-
-            if (transferType == TransferTypeEnum.Facilities)
+            var results = await _adminRepository.GetManagedCinemasAsync(userGuid, filterUnmanaged, transferType == TransferTypeEnum.Facilities);
+            return new BaseResponse<List<ManagedItemDto>>
             {
-                if (filterUnmanaged) query = query.Where(c => c.FacilitiesManagerId == null);
-                else if (userGuid.HasValue) query = query.Where(c => c.FacilitiesManagerId == userGuid.Value);
-
-                var results = await query.Select(c => new ManagedItemDto
-                {
-                    ItemId = c.CinemaId,
-                    ItemName = c.CinemaName,
-                    Description = $"Vị trí: {c.CinemaLocation} (CSVC)",
-                    ManagerName = c.FacilitiesManager != null
-                        ? c.FacilitiesManager.UserName ?? "Chưa có quản lý CSVC" : "Chưa có quản lý CSVC"
-                }).ToListAsync();
-
-                return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = results, Message = "Lấy danh sách rạp (CSVC) thành công." };
-            }
-            else
-            {
-                if (filterUnmanaged) query = query.Where(c => c.TheaterManagerId == null);
-                else if (userGuid.HasValue) query = query.Where(c => c.TheaterManagerId == userGuid.Value);
-
-                var results = await query.Select(c => new ManagedItemDto
-                {
-                    ItemId = c.CinemaId,
-                    ItemName = c.CinemaName,
-                    Description = $"Vị trí: {c.CinemaLocation} (Vận hành)",
-                    ManagerName = c.TheaterManager != null
-                        ? c.TheaterManager.UserName ?? "Chưa có quản lý vận hành" : "Chưa có quản lý vận hành"
-                }).ToListAsync();
-
-                return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = results, Message = "Lấy danh sách rạp (Vận hành) thành công." };
-            }
+                IsSuccess = true,
+                Data = results,
+                Message = $"Lấy danh sách rạp ({(transferType == TransferTypeEnum.Facilities ? "CSVC" : "Vận hành")}) thành công."
+            };
         }
         else
         {
-            var query = _unitOfWork.Repository<MovieInfoEntity>().Query().AsNoTracking();
-            if (filterUnmanaged) query = query.Where(m => m.MovieManagerId == null);
-            else if (userGuid.HasValue) query = query.Where(m => m.MovieManagerId == userGuid.Value);
-
-            var movies = await query.Select(m => new ManagedItemDto
-            {
-                ItemId = m.MovieId,
-                ItemName = m.MovieName,
-                Description = $"Đạo diễn: {m.Director}",
-                ManagerName = m.MovieManager != null ? m.MovieManager.UserName ?? "Chưa có quản lý" : "Chưa có quản lý"
-            }).ToListAsync();
-
+            var movies = await _adminRepository.GetManagedMoviesAsync(userGuid, filterUnmanaged);
             return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = movies, Message = "Lấy danh sách phim thành công." };
         }
     }
@@ -126,11 +76,13 @@ public class GetManagedItemsUseCase
 
 public class TransferManagementUseCase
 {
+    private readonly IAdminRepository _adminRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<TransferManagementUseCase> _logger;
 
-    public TransferManagementUseCase(IUnitOfWork unitOfWork, ILogger<TransferManagementUseCase> logger)
+    public TransferManagementUseCase(IAdminRepository adminRepository, IUnitOfWork unitOfWork, ILogger<TransferManagementUseCase> logger)
     {
+        _adminRepository = adminRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -147,36 +99,24 @@ public class TransferManagementUseCase
 
             if (request.TransferType == TransferTypeEnum.Facilities)
             {
-                var query = _unitOfWork.Repository<CinemaInfoEntity>().Query();
-                if (request.ItemId.HasValue) query = query.Where(c => c.CinemaId == request.ItemId.Value);
-                else query = query.Where(c => c.FacilitiesManagerId == request.SourceUserId);
-
-                var cinemas = await query.ToListAsync();
+                var cinemas = await _adminRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, true);
                 foreach (var cinema in cinemas)
                     cinema.FacilitiesManagerId = request.TargetUserId;
             }
             else if (request.TransferType == TransferTypeEnum.Theater)
             {
-                var query = _unitOfWork.Repository<CinemaInfoEntity>().Query();
-                if (request.ItemId.HasValue) query = query.Where(c => c.CinemaId == request.ItemId.Value);
-                else query = query.Where(c => c.TheaterManagerId == request.SourceUserId);
-
-                var cinemas = await query.ToListAsync();
+                var cinemas = await _adminRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, false);
                 foreach (var cinema in cinemas)
                     cinema.TheaterManagerId = request.TargetUserId;
             }
             else
             {
-                var query = _unitOfWork.Repository<MovieInfoEntity>().Query();
-                if (request.ItemId.HasValue) query = query.Where(m => m.MovieId == request.ItemId.Value);
-                else query = query.Where(m => m.MovieManagerId == request.SourceUserId);
-
-                var movies = await query.ToListAsync();
+                var movies = await _adminRepository.GetMoviesByManagerOrIdAsync(request.SourceUserId, request.ItemId);
                 foreach (var movie in movies)
                     movie.MovieManagerId = request.TargetUserId;
             }
 
-            await _unitOfWork.SaveChangesAsync();
+            await _adminRepository.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new BaseResponse<string>

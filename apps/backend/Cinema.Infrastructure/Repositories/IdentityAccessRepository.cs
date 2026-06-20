@@ -3,31 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IIdentityAccess;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Infrastructure.Repositories;
-
-public class IdentityAccessTransaction : IIdentityAccessTransaction
-{
-    private readonly IDbContextTransaction _transaction;
-
-    public IdentityAccessTransaction(IDbContextTransaction transaction)
-    {
-        _transaction = transaction;
-    }
-
-    public async Task CommitAsync() => await _transaction.CommitAsync();
-    public async Task RollbackAsync() => await _transaction.RollbackAsync();
-
-    public async ValueTask DisposeAsync()
-    {
-        await _transaction.DisposeAsync();
-    }
-}
 
 public class IdentityAccessRepository : IIdentityAccessRepository
 {
@@ -139,9 +121,9 @@ public class IdentityAccessRepository : IIdentityAccessRepository
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<IIdentityAccessTransaction> BeginTransactionAsync()
+    public async Task<IUnitOfWorkTransaction> BeginTransactionAsync()
     {
         var transaction = await _dbContext.Database.BeginTransactionAsync();
-        return new IdentityAccessTransaction(transaction);
+        return new EfUnitOfWorkTransaction(transaction);
     }
 }

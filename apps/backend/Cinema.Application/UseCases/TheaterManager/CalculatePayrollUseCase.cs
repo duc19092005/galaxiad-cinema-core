@@ -1,30 +1,31 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
-using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
 public class CalculatePayrollUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IShiftManagerRepository _repository;
     private readonly ISseNotificationService _sseNotificationService;
 
-    public CalculatePayrollUseCase(IUnitOfWork unitOfWork, ISseNotificationService sseNotificationService)
+    public CalculatePayrollUseCase(IShiftManagerRepository repository, ISseNotificationService sseNotificationService)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _sseNotificationService = sseNotificationService;
     }
 
     // 1. Tính toán lương tích lũy và tạo bản ghi bảng lương (Pending)
     public async Task<BaseResponse<ResPayrollDto>> CalculateAsync(ReqCalculatePayrollDto dto, Guid managerUserId)
     {
-        var staffProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .Include(s => s.UserInfoEntity)
-            .FirstOrDefaultAsync(s => s.UserId == dto.StaffId && s.WorkingStatus);
+        var staffProfile = await _repository.GetStaffProfileWithUserAsync(dto.StaffId);
 
         if (staffProfile == null)
         {
@@ -38,12 +39,7 @@ public class CalculatePayrollUseCase
 
         // Lấy tất cả các ca làm việc đã hoàn thành (EndedShiftTime != null) của nhân viên này 
         // trước hoặc bằng ngày chỉ định và chưa được tính lương (SalaryTotalLoggerId == null)
-        var uncalculatedLogs = await _unitOfWork.Repository<StaffWorkingLoggerEntity>().Query()
-            .Where(l => l.StaffId == dto.StaffId 
-                     && l.EndedShiftTime != null 
-                     && l.SalaryTotalLoggerId == null 
-                     && l.WorkingDate <= upToDateOnly)
-            .ToListAsync();
+        var uncalculatedLogs = await _repository.GetUncalculatedWorkingLogsAsync(dto.StaffId, upToDateOnly);
 
         if (uncalculatedLogs.Count == 0)
         {
@@ -64,7 +60,7 @@ public class CalculatePayrollUseCase
             PaymentStatus = "Pending"
         };
 
-        await _unitOfWork.Repository<StaffSalaryTotalLoggerEntity>().AddAsync(payroll);
+        await _repository.AddSalaryTotalLogAsync(payroll);
 
         // Gắn liên kết bảng lương cho từng ca làm việc
         foreach (var log in uncalculatedLogs)
@@ -72,7 +68,7 @@ public class CalculatePayrollUseCase
             log.SalaryTotalLoggerId = payrollId;
         }
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         // Map sang DTO kết quả
         var result = new ResPayrollDto
@@ -108,9 +104,7 @@ public class CalculatePayrollUseCase
     // 2. Xác nhận đã chi trả lương
     public async Task<BaseResponse<bool>> PayAsync(Guid payrollId, Guid managerUserId)
     {
-        var payroll = await _unitOfWork.Repository<StaffSalaryTotalLoggerEntity>().Query()
-            .Include(p => p.StaffProfileEntity)
-            .FirstOrDefaultAsync(p => p.SalaryTotalLoggerId == payrollId);
+        var payroll = await _repository.GetSalaryTotalLogByIdAsync(payrollId);
 
         if (payroll == null)
         {
@@ -130,7 +124,7 @@ public class CalculatePayrollUseCase
         payroll.PaidByUserId = managerUserId;
         payroll.ReceivedDay = DateTime.UtcNow;
 
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             payroll.StaffId,
@@ -151,14 +145,12 @@ public class CalculatePayrollUseCase
     private async Task VerifyManagerPermissionAsync(Guid managerUserId, Guid cinemaId)
     {
         // 1. Kiểm tra vai trò Admin
-        var isAdmin = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AnyAsync(ur => ur.UserId == managerUserId && ur.RoleListInfoEntity.RoleName == "Admin");
+        var isAdmin = await _repository.UserHasRoleAsync(managerUserId, "Admin");
 
         if (isAdmin) return; // Admin có toàn quyền
 
         // 2. Kiểm tra vai trò TheaterManager
-        var isTheaterManager = await _unitOfWork.Repository<UserRoleInfoEntity>().Query()
-            .AnyAsync(ur => ur.UserId == managerUserId && ur.RoleListInfoEntity.RoleName == "TheaterManager");
+        var isTheaterManager = await _repository.UserHasRoleAsync(managerUserId, "TheaterManager");
 
         if (!isTheaterManager)
         {
@@ -166,8 +158,7 @@ public class CalculatePayrollUseCase
         }
 
         // Kiểm tra xem quản lý có thuộc đúng chi nhánh rạp của nhân viên không
-        var managerProfile = await _unitOfWork.Repository<StaffProfileEntity>().Query()
-            .FirstOrDefaultAsync(s => s.UserId == managerUserId && s.WorkingStatus);
+        var managerProfile = await _repository.GetStaffProfileAsync(managerUserId);
 
         if (managerProfile == null || managerProfile.CinemaId != cinemaId)
         {

@@ -1,4 +1,6 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.Vouchers;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Infrastructure.Booking;
 using Cinema.Application.UseCases.Booking;
 using Cinema.Application.UseCases.PricingPromotions;
@@ -14,6 +16,8 @@ public static class BookingServicesBootstrap
     {
         // Core Booking infrastructure
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IVoucherRepository, VoucherRepository>();
+        services.AddScoped<IPricingPromotionRepository, PricingPromotionRepository>();
         services.AddSingleton<SseConnectionManager>();
         services.AddSingleton<VnPayHelper>();
 

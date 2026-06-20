@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Application.Interfaces;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class CreatePricingPromotionUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly GetPricingPromotionByIdUseCase _getPricingPromotionByIdUseCase;
 
     public CreatePricingPromotionUseCase(
-        IUnitOfWork unitOfWork,
+        IPricingPromotionRepository repository,
         IUserContextService userContextService,
         GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _userContextService = userContextService;
         _getPricingPromotionByIdUseCase = getPricingPromotionByIdUseCase;
     }
@@ -28,7 +28,7 @@ public class CreatePricingPromotionUseCase
     public async Task<PricingPromotionDto> ExecuteAsync(PricingPromotionUpsertDto dto)
     {
         var userId = TryGetUserId();
-        var slug = await PricingPromotionHelper.BuildUniqueSlugAsync(_unitOfWork, dto.Slug, dto.Title);
+        var slug = await PricingPromotionHelper.BuildUniqueSlugAsync(_repository, dto.Slug, dto.Title);
         var promotion = new PricingPromotionEntity
         {
             PricingPromotionId = Guid.NewGuid(),
@@ -50,8 +50,8 @@ public class CreatePricingPromotionUseCase
             Rules = dto.Rules.Select(PricingPromotionHelper.BuildRule).ToList()
         };
 
-        await _unitOfWork.Repository<PricingPromotionEntity>().AddAsync(promotion);
-        await _unitOfWork.SaveChangesAsync();
+        await _repository.AddPromotionAsync(promotion);
+        await _repository.SaveChangesAsync();
         return await _getPricingPromotionByIdUseCase.ExecuteAsync(promotion.PricingPromotionId);
     }
 

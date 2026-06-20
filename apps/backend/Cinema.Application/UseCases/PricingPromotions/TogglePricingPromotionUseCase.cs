@@ -1,34 +1,31 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Domain.Entities.Promotions;
 using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Exceptions;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class TogglePricingPromotionUseCase
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly GetPricingPromotionByIdUseCase _getPricingPromotionByIdUseCase;
 
     public TogglePricingPromotionUseCase(
-        IUnitOfWork unitOfWork,
+        IPricingPromotionRepository repository,
         IUserContextService userContextService,
         GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase)
     {
-        _unitOfWork = unitOfWork;
+        _repository = repository;
         _userContextService = userContextService;
         _getPricingPromotionByIdUseCase = getPricingPromotionByIdUseCase;
     }
 
     public async Task<PricingPromotionDto> ExecuteAsync(Guid id)
     {
-        var promotion = await _unitOfWork.Repository<PricingPromotionEntity>().Query()
-            .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
+        var promotion = await _repository.GetPromotionByIdAsync(id);
 
         if (promotion == null)
         {
@@ -38,8 +35,8 @@ public class TogglePricingPromotionUseCase
         promotion.IsActive = !promotion.IsActive;
         promotion.UpdatedAt = DateTime.UtcNow;
         promotion.UpdatedBy = TryGetUserId();
-        _unitOfWork.Repository<PricingPromotionEntity>().Update(promotion);
-        await _unitOfWork.SaveChangesAsync();
+        _repository.UpdatePromotion(promotion);
+        await _repository.SaveChangesAsync();
         return await _getPricingPromotionByIdUseCase.ExecuteAsync(id);
     }
 
