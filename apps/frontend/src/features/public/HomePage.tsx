@@ -85,7 +85,7 @@ const HomePage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchMovies();
+    fetchMovies(selectedCity, selectedCinemaId);
   }, [selectedCity, selectedCinemaId]);
 
   useEffect(() => {
@@ -127,12 +127,12 @@ const HomePage: React.FC = () => {
     loadRecommendations();
   };
 
-  const fetchMovies = async () => {
+  const fetchMovies = async (city: string, cinemaId: string) => {
     setLoading(true); setError(null);
     try {
       const response = await publicApi.getAllMovies({
-        city: selectedCity || undefined,
-        cinemaId: selectedCinemaId !== 'All' ? selectedCinemaId : undefined,
+        city: city || undefined,
+        cinemaId: cinemaId !== 'All' ? cinemaId : undefined,
         pageSize: 40
       });
       const items = response.data || [];
@@ -270,7 +270,10 @@ const HomePage: React.FC = () => {
           paddingLeft: 'clamp(8px, 2vw, 20px)',
           paddingRight: 'clamp(8px, 2vw, 20px)',
         }}>
-          <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => setSelectedCinemaId(cinemaId)} />
+          <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
+            setSelectedCinemaId(cinemaId);
+            fetchMovies(selectedCity, cinemaId);
+          }} />
         </div>
       </section>
 
