@@ -161,6 +161,7 @@ Cinema.Api/
 
 ### 3. Điểm cộng về Kỹ thuật của Backend
 *   **Áp dụng Unit of Work & Repository Pattern:** Đảm bảo toàn bộ các thao tác thay đổi dữ liệu trong một phiên đặt vé (tạo order, cập nhật trạng thái ghế, trừ điểm) đều nằm trong một Database Transaction duy nhất. Tránh tuyệt đối tình trạng mất đồng bộ dữ liệu.
+*   **Thiết kế Use Cases đơn nhiệm (Single Responsibility Principle - SRP):** Mỗi lớp nghiệp vụ (Use Case) chỉ chịu trách nhiệm cho một hành động duy nhất (ví dụ: `CreateCinemaUseCase`, `UpdateCinemaUseCase`, `DeleteCinemaUseCase` được tách thành các lớp và tệp riêng biệt thay vì gộp chung). Mỗi Use Case chỉ có duy nhất một phương thức thực thi công khai (thường là `ExecuteAsync`), giúp tối ưu hóa khả năng kiểm thử (Unit Test), dễ dàng bảo trì và cô lập nghiệp vụ khi có thay đổi. Các tác vụ nền (Hangfire Jobs) cũng được mô-đun hóa thành các Use Case riêng lẻ.
 *   **Dependency Inversion cho Identity helpers:** `BCrypt` và `JWT` không được tham chiếu trực tiếp từ Application layer. Thay vào đó, Application định nghĩa interface `IPasswordHasher` và `IJwtService`; Infrastructure cung cấp implementation — giúp Application hoàn toàn độc lập với thư viện crypto bên thứ ba.
 *   **Không phụ thuộc trực tiếp vào DbContext ở tầng nghiệp vụ:** Tầng Business chỉ giao tiếp qua interface `IUnitOfWork`, giúp hệ thống linh hoạt và có thể thay đổi nhà cung cấp cơ sở dữ liệu dễ dàng trong tương lai.
 *   **Dockerized:** Đã sẵn sàng tệp Dockerfile và Docker Compose giúp triển khai hệ thống nhanh chóng chỉ với một dòng lệnh ở mọi môi trường.

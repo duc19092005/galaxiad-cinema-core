@@ -118,6 +118,7 @@ The backend is structured into 4 clean layers:
 
 ### 3. Engineering Highlights
 *   **Unit of Work & Repository Pattern:** Ensures all operations inside a booking session (creating orders, locking seats, deducting customer points) execute inside a single database transaction. This prevents data inconsistency.
+*   **Single Responsibility Principle (SRP) Use Cases:** Each business workflow is encapsulated into a dedicated Use Case class in a separate file, containing a single public execution entry point (`ExecuteAsync`). For example, operations like creating, updating, and deleting cinemas are split into `CreateCinemaUseCase`, `UpdateCinemaUseCase`, and `DeleteCinemaUseCase` instead of being grouped together. This maximizes testability, modularity, and isolation of business changes.
 *   **Database Engine Independence:** The Business Layer depends only on the `IUnitOfWork` interface, allowing database swaps in the future.
 *   **Dockerized:** Ships with Dockerfile and Docker Compose configurations for instant local deployment.
 
