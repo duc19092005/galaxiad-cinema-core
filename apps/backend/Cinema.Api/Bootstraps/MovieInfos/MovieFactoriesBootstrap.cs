@@ -1,6 +1,5 @@
 using Cinema.Application.Dtos.MovieManager.Requests;
 using Cinema.Application.Dtos.MovieManager.Responses;
-using Cinema.Application.Interfaces.IBehaviors;
 using Cinema.Application.UseCases.MovieManager.MovieInfos;
 
 namespace Cinema.Api.Bootstraps.MovieInfos;

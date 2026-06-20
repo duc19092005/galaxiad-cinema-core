@@ -12,15 +12,21 @@ namespace Cinema.Api.Controllers.Management.Facilities;
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class CinemaController : ControllerBase
 {
-    private readonly FacilitiesManagerWriteCinemaUseCase _writeUseCase;
-    private readonly FacilitiesManagerReadCinemaUseCase _readUseCase;
+    private readonly CreateCinemaUseCase _createUseCase;
+    private readonly UpdateCinemaUseCase _updateUseCase;
+    private readonly GetAllCinemasUseCase _getAllUseCase;
+    private readonly GetCinemaByIdUseCase _getByIdUseCase;
 
     public CinemaController(
-        FacilitiesManagerWriteCinemaUseCase writeUseCase,
-        FacilitiesManagerReadCinemaUseCase readUseCase)
+        CreateCinemaUseCase createUseCase,
+        UpdateCinemaUseCase updateUseCase,
+        GetAllCinemasUseCase getAllUseCase,
+        GetCinemaByIdUseCase getByIdUseCase)
     {
-        _writeUseCase = writeUseCase;
-        _readUseCase = readUseCase;
+        _createUseCase = createUseCase;
+        _updateUseCase = updateUseCase;
+        _getAllUseCase = getAllUseCase;
+        _getByIdUseCase = getByIdUseCase;
     }
 
     /// <summary>
@@ -30,7 +36,7 @@ public class CinemaController : ControllerBase
     [Authorize(Roles = "FacilitiesManager,TheaterManager,Admin")]
     public async Task<IActionResult> GetAll()
     {
-        var results = await _readUseCase.GetAll();
+        var results = await _getAllUseCase.ExecuteAsync();
         return Ok(results);
     }
 
@@ -39,7 +45,7 @@ public class CinemaController : ControllerBase
     [Description("API to create a cinema")]
     public async Task<IActionResult> AddCinema(AddCinemaReqDto addCinemaReqDto)
     {
-        var results = await _writeUseCase.AddItem(addCinemaReqDto);
+        var results = await _createUseCase.ExecuteAsync(addCinemaReqDto);
         return Ok(results);
     }
 
@@ -50,7 +56,7 @@ public class CinemaController : ControllerBase
     [Authorize(Roles = "FacilitiesManager,TheaterManager,Admin")]
     public async Task<IActionResult> GetCinemaById(Guid id)
     {
-        var results = await _readUseCase.GetById(id);
+        var results = await _getByIdUseCase.ExecuteAsync(id);
         return Ok(results);
     }
 
@@ -59,7 +65,7 @@ public class CinemaController : ControllerBase
     [Description("API to update a cinema")]
     public async Task<IActionResult> EditCinema(Guid cinemaId, EditCinemaReqDto editCinemaReqDto)
     {
-        var results = await _writeUseCase.UpdateItem(cinemaId, editCinemaReqDto);
+        var results = await _updateUseCase.ExecuteAsync(cinemaId, editCinemaReqDto);
         return Ok(results);
     }
 }

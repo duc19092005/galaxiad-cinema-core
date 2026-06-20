@@ -1,3 +1,5 @@
+using System;
+using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Constants;
@@ -7,72 +9,6 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Admin.Transfers;
-
-public class GetUsersByRoleUseCase
-{
-    private readonly IAdminRepository _adminRepository;
-
-    public GetUsersByRoleUseCase(IAdminRepository adminRepository)
-    {
-        _adminRepository = adminRepository;
-    }
-
-    public async Task<BaseResponse<List<AdminTransferUserDto>>> ExecuteAsync(TransferTypeEnum transferType)
-    {
-        Guid roleId = transferType switch
-        {
-            TransferTypeEnum.Facilities => userRoles.FacilitiesManager,
-            TransferTypeEnum.Theater => userRoles.TheaterManager,
-            TransferTypeEnum.Movie => userRoles.MovieManager,
-            _ => throw new BadRequestException("Loại chuyển quyền không hợp lệ.", "B02")
-        };
-
-        var users = await _adminRepository.GetUsersByRoleAsync(roleId);
-
-        return new BaseResponse<List<AdminTransferUserDto>>
-        {
-            IsSuccess = true,
-            Data = users,
-            Message = $"Lấy danh sách người dùng role {transferType} thành công."
-        };
-    }
-}
-
-public class GetManagedItemsUseCase
-{
-    private readonly IAdminRepository _adminRepository;
-
-    public GetManagedItemsUseCase(IAdminRepository adminRepository)
-    {
-        _adminRepository = adminRepository;
-    }
-
-    public async Task<BaseResponse<List<ManagedItemDto>>> ExecuteAsync(string? userId, TransferTypeEnum transferType)
-    {
-        bool filterUnmanaged = string.IsNullOrEmpty(userId) || userId.ToLower() == "unmanaged";
-        Guid? userGuid = null;
-        if (!filterUnmanaged && !string.IsNullOrEmpty(userId))
-        {
-            if (Guid.TryParse(userId, out var parsedGuid)) userGuid = parsedGuid;
-        }
-
-        if (transferType == TransferTypeEnum.Facilities || transferType == TransferTypeEnum.Theater)
-        {
-            var results = await _adminRepository.GetManagedCinemasAsync(userGuid, filterUnmanaged, transferType == TransferTypeEnum.Facilities);
-            return new BaseResponse<List<ManagedItemDto>>
-            {
-                IsSuccess = true,
-                Data = results,
-                Message = $"Lấy danh sách rạp ({(transferType == TransferTypeEnum.Facilities ? "CSVC" : "Vận hành")}) thành công."
-            };
-        }
-        else
-        {
-            var movies = await _adminRepository.GetManagedMoviesAsync(userGuid, filterUnmanaged);
-            return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = movies, Message = "Lấy danh sách phim thành công." };
-        }
-    }
-}
 
 public class TransferManagementUseCase
 {

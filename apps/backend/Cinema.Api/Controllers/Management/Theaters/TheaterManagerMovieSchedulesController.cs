@@ -12,14 +12,20 @@ namespace Cinema.Api.Controllers.Management.Theaters;
 [ApiExplorerSettings(GroupName = "v1-theater-manager")]
 public class TheaterManagerMovieSchedulesController : ControllerBase
 {
-    private readonly WriteMovieSchedulesUseCase _writeSchedulesUseCase;
+    private readonly CreateMovieScheduleUseCase _createScheduleUseCase;
+    private readonly UpdateMovieScheduleUseCase _updateScheduleUseCase;
+    private readonly DeleteMovieScheduleUseCase _deleteScheduleUseCase;
     private readonly ReadMovieSchedules _readSchedulesUseCase;
 
     public TheaterManagerMovieSchedulesController(
-        WriteMovieSchedulesUseCase writeSchedulesUseCase,
+        CreateMovieScheduleUseCase createScheduleUseCase,
+        UpdateMovieScheduleUseCase updateScheduleUseCase,
+        DeleteMovieScheduleUseCase deleteScheduleUseCase,
         ReadMovieSchedules readSchedulesUseCase)
     {
-        _writeSchedulesUseCase = writeSchedulesUseCase;
+        _createScheduleUseCase = createScheduleUseCase;
+        _updateScheduleUseCase = updateScheduleUseCase;
+        _deleteScheduleUseCase = deleteScheduleUseCase;
         _readSchedulesUseCase = readSchedulesUseCase;
     }
 
@@ -33,21 +39,21 @@ public class TheaterManagerMovieSchedulesController : ControllerBase
     [HttpPost()]
     public async Task<IActionResult> CreateSchedule(TheaterManagerAddMovieSchedulesRequest request)
     {
-        var result = await _writeSchedulesUseCase.AddItem(request);
+        var result = await _createScheduleUseCase.ExecuteAsync(request);
         return Ok(result);
     }
 
     [HttpPut("{auditoriumId}")]
     public async Task<IActionResult> UpdateSchedule(Guid auditoriumId, [FromBody] TheaterManagerEditMovieSchedulesRequest request)
     {
-        var result = await _writeSchedulesUseCase.UpdateItem(auditoriumId, request);
+        var result = await _updateScheduleUseCase.ExecuteAsync(auditoriumId, request);
         return Ok(result);
     }
 
     [HttpDelete("{scheduleId}")]
     public async Task<IActionResult> DeleteSchedule(Guid scheduleId)
     {
-        var result = await _writeSchedulesUseCase.DeleteItem(scheduleId);
+        var result = await _deleteScheduleUseCase.ExecuteAsync(scheduleId);
         return Ok(result);
     }
 }

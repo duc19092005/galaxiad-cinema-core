@@ -14,49 +14,58 @@ namespace Cinema.Api.Controllers.Management.Facilities;
 [ApiExplorerSettings(GroupName = "v1-facilities-manager")]
 public class AuditoriumController : ControllerBase
 {
-    private readonly FacilitiesManagerWriteAuditoriumUseCase _writeUseCase;
-    private readonly FacilitiesManagerReadAuditoriumUseCase _readUseCase;
+    private readonly CreateAuditoriumUseCase _createUseCase;
+    private readonly UpdateAuditoriumUseCase _updateUseCase;
+    private readonly GetAllAuditoriumsUseCase _getAllUseCase;
+    private readonly GetAuditoriumByIdUseCase _getByIdUseCase;
+    private readonly GetAuditoriumsByCinemaIdUseCase _getByCinemaIdUseCase;
 
     public AuditoriumController(
-        FacilitiesManagerWriteAuditoriumUseCase writeUseCase,
-        FacilitiesManagerReadAuditoriumUseCase readUseCase)
+        CreateAuditoriumUseCase createUseCase,
+        UpdateAuditoriumUseCase updateUseCase,
+        GetAllAuditoriumsUseCase getAllUseCase,
+        GetAuditoriumByIdUseCase getByIdUseCase,
+        GetAuditoriumsByCinemaIdUseCase getByCinemaIdUseCase)
     {
-        _writeUseCase = writeUseCase;
-        _readUseCase = readUseCase;
+        _createUseCase = createUseCase;
+        _updateUseCase = updateUseCase;
+        _getAllUseCase = getAllUseCase;
+        _getByIdUseCase = getByIdUseCase;
+        _getByCinemaIdUseCase = getByCinemaIdUseCase;
     }
 
     [HttpPost("")]
     public async Task<IActionResult> AddAuditorium(AddReqAuditoriumDto request)
     {
-        var results = await _writeUseCase.AddItem(request);
+        var results = await _createUseCase.ExecuteAsync(request);
         return Ok(results);
     }
 
     [HttpPut("{id}")]
     public async Task<IActionResult> EditAuditorium(Guid id, EditReqAuditoriumDto request)
     {
-        var results = await _writeUseCase.UpdateItem(id, request);
+        var results = await _updateUseCase.ExecuteAsync(id, request);
         return Ok(results);
     }
 
     [HttpGet("")]
     public async Task<IActionResult> GetAuditorium()
     {
-        var results = await _readUseCase.GetAll();
+        var results = await _getAllUseCase.ExecuteAsync();
         return Ok(results);
     }
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetAuditorium(Guid id)
     {
-        var results = await _readUseCase.GetById(id);
+        var results = await _getByIdUseCase.ExecuteAsync(id);
         return Ok(results);
     }
 
     [HttpGet("cinema/{id}")]
     public async Task<IActionResult> GetCinema(Guid id)
     {
-        var results = await _readUseCase.GetByCinemaId(id);
+        var results = await _getByCinemaIdUseCase.ExecuteAsync(id);
         return Ok(results);
     }
 }

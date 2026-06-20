@@ -42,18 +42,18 @@ public class ScheduleJobsService : IScheduleJobsService
         if (type == SchedulesJobCategoryEnums.Movies)
         {
             if (utcStart > toleranceTime)
-                sId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedComingMovieStatusJobs(targetId), utcStart);
+                sId = _backgroundJobClient.Schedule<SetMovieActiveUseCase>(u => u.ExecuteAsync(targetId), utcStart);
         
             if (utcEnd > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieInfosUseCase>(u => u.UpdatedOverDueStatus(targetId), utcEnd);
+                eId = _backgroundJobClient.Schedule<SetMovieInactiveUseCase>(u => u.ExecuteAsync(targetId), utcEnd);
         }
         else if (type == SchedulesJobCategoryEnums.Schedules)
         {
             if (utcStart > toleranceTime)
-                sId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleActiveStatus(targetId), utcStart);
+                sId = _backgroundJobClient.Schedule<SetScheduleActiveUseCase>(u => u.ExecuteAsync(targetId), utcStart);
 
             if (utcEnd > toleranceTime)
-                eId = _backgroundJobClient.Schedule<WriteMovieSchedulesUseCase>(u => u.SetScheduleInactiveStatus(targetId), utcEnd);
+                eId = _backgroundJobClient.Schedule<SetScheduleInactiveUseCase>(u => u.ExecuteAsync(targetId), utcEnd);
         }
         return (sId, eId);
     }

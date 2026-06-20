@@ -23,8 +23,11 @@ public static class FacilitiesServicesBootstrap
         // |              Use Cases - Facilities Manager                   |
         // ----------------------------------------------------------------
 
-        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.FacilitiesManagerReadCinemaUseCase>();
-        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.FacilitiesManagerWriteCinemaUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.CreateCinemaUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.UpdateCinemaUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.DeleteCinemaUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.GetAllCinemasUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.GetCinemaByIdUseCase>();
         services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.MovieFormat.FacilitiesManagerReadMovieFormatUseCase>();
         services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.GetDepartmentsUseCase>();
         services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.CreateDepartmentUseCase>();
@@ -32,14 +35,22 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Cinemas.DeleteDepartmentUseCase>();
 
         // Auditorium Use Cases
-        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.FacilitiesManagerReadAuditoriumUseCase>();
-        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.FacilitiesManagerWriteAuditoriumUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.CreateAuditoriumUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.UpdateAuditoriumUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.DeleteAuditoriumUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.GetAllAuditoriumsUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.GetAuditoriumByIdUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.FacilitiesManager.Auditoriums.GetAuditoriumsByCinemaIdUseCase>();
 
         // ----------------------------------------------------------------
         // |              Use Cases - Theater Manager                      |
         // ----------------------------------------------------------------
 
-        services.AddScoped<WriteMovieSchedulesUseCase>();
+        services.AddScoped<CreateMovieScheduleUseCase>();
+        services.AddScoped<UpdateMovieScheduleUseCase>();
+        services.AddScoped<DeleteMovieScheduleUseCase>();
+        services.AddScoped<SetScheduleActiveUseCase>();
+        services.AddScoped<SetScheduleInactiveUseCase>();
         services.AddScoped<ReadMovieSchedules>();
         services.AddScoped<GetMoviesWithFormatsUseCase>();
         services.AddScoped<GetMyAuditoriumsUseCase>();
