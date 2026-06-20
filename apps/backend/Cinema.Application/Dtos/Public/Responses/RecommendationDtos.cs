@@ -31,6 +31,11 @@ public class RecommendedMovieRes
     public int MovieDuration { get; set; }
     public bool IsCommingSoon { get; set; }
     public double SimilarityScore { get; set; }
+
+    /// <summary>
+    /// Độ phù hợp đã quy đổi về thang 0–100% (Min-Max normalize trên toàn danh sách gợi ý).
+    /// </summary>
+    public double MatchPercentage { get; set; }
 }
 
 public class AiEmbedMoviesRequest

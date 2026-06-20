@@ -48,6 +48,7 @@ public class GetRecommendationsUseCase
         if (string.IsNullOrWhiteSpace(profile.UserText))
         {
             var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
+            ApplyMatchPercentage(fallback, invertDistance: false);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
                 IsSuccess = true,
@@ -71,6 +72,7 @@ public class GetRecommendationsUseCase
             {
                 _logger.LogWarning("AI service returned {StatusCode}", response.StatusCode);
                 var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
+                ApplyMatchPercentage(fallback, invertDistance: false);
                 return new BaseResponse<List<RecommendedMovieRes>>
                 {
                     IsSuccess = true,
@@ -86,6 +88,7 @@ public class GetRecommendationsUseCase
             if (aiResult == null || aiResult.Results.Count == 0)
             {
                 var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
+                ApplyMatchPercentage(fallback, invertDistance: false);
                 return new BaseResponse<List<RecommendedMovieRes>>
                 {
                     IsSuccess = true,
@@ -130,6 +133,8 @@ public class GetRecommendationsUseCase
                 orderedMovies.AddRange(fallback);
             }
 
+            // AI distance: nhỏ hơn = khớp hơn → đảo chiều để tính % phù hợp
+            ApplyMatchPercentage(orderedMovies, invertDistance: true);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
                 IsSuccess = true,
@@ -141,6 +146,7 @@ public class GetRecommendationsUseCase
         {
             _logger.LogError(ex, "Error calling AI service");
             var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
+            ApplyMatchPercentage(fallback, invertDistance: false);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
                 IsSuccess = true,
@@ -165,6 +171,47 @@ public class GetRecommendationsUseCase
             result.AddRange(extra);
         }
         return result;
+    }
+
+    /// <summary>
+    /// Quy đổi SimilarityScore của toàn bộ danh sách về thang MatchPercentage (0–100%).
+    /// 
+    /// - invertDistance = false (Fallback): SimilarityScore cao hơn → % cao hơn.
+    ///   Dùng Min-Max normalization:
+    ///     MatchPercentage = (score - min) / (max - min) * 100
+    ///
+    /// - invertDistance = true (AI Embedding): SimilarityScore là khoảng cách Euclidean,
+    ///   giá trị nhỏ hơn nghĩa là khớp hơn, nên đảo chiều:
+    ///     MatchPercentage = (1 - score / maxScore) * 100
+    ///
+    /// Nếu tất cả điểm bằng nhau, gán 100% cho tất cả (tất cả đều phù hợp).
+    /// </summary>
+    private static void ApplyMatchPercentage(List<RecommendedMovieRes> movies, bool invertDistance)
+    {
+        if (movies.Count == 0) return;
+
+        var scores = movies.Select(m => m.SimilarityScore).ToList();
+        var minScore = scores.Min();
+        var maxScore = scores.Max();
+        var range = maxScore - minScore;
+
+        foreach (var movie in movies)
+        {
+            if (invertDistance)
+            {
+                // Khoảng cách AI: nhỏ hơn = tốt hơn → đảo chiều
+                movie.MatchPercentage = maxScore > 0
+                    ? Math.Round((1.0 - movie.SimilarityScore / maxScore) * 100, 1)
+                    : 100.0;
+            }
+            else
+            {
+                // Fallback score: lớn hơn = tốt hơn → Min-Max normalize
+                movie.MatchPercentage = range > 0
+                    ? Math.Round((movie.SimilarityScore - minScore) / range * 100, 1)
+                    : 100.0;
+            }
+        }
     }
 
     private async Task<UserBehaviorProfile> BuildUserBehaviorProfileAsync(Guid userId, UserGenreSurveyEntity? survey)

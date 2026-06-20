@@ -19,17 +19,45 @@ SQL Server is the source of truth. Qdrant stores persistent movie vectors only. 
 
 Hệ thống gợi ý phim hoạt động linh hoạt theo hai cơ chế tùy thuộc vào trạng thái cấu hình của hệ thống AI:
 
-1. **Khi có Embedding (Gemini API Key hợp lệ)**:
-   Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 768 chiều. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để so khớp khoảng cách và tìm các bộ phim tương ứng có nội dung tương đồng ngữ nghĩa nhất.
+### 1. Khi có Embedding (Gemini API Key hợp lệ)
+Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 768 chiều. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để tính khoảng cách Euclidean và tìm các bộ phim có nội dung tương đồng ngữ nghĩa nhất.
 
-2. **Khi không có Embedding (Cơ chế Dự phòng - Fallback)**:
-   Hệ thống chạy thuật toán thống kê hành vi trực tiếp bằng SQL Server cục bộ. Thuật toán này tự động loại bỏ các bộ phim người dùng đã từng tương tác (xem, đặt vé, rate tốt), sau đó tính toán điểm số độ hot của các phim còn lại theo công thức:
-   
-   ```text
-   SimilarityScore = (Số lượt đặt vé * 3) + (Số lượt xem/click * 1) + (Điểm đánh giá trung bình * 10) + (Số lượng đánh giá * 1)
-   ```
-   
-   Và đề xuất các phim có điểm cao nhất để đảm bảo gợi ý cá nhân hóa và bắt kịp xu hướng.
+Điểm `SimilarityScore` lúc này là **khoảng cách** (distance): nhỏ hơn = khớp hơn.  
+Để hiển thị `MatchPercentage` trực quan (% cao = phù hợp nhiều), backend **đảo ngược chiều**:
+
+```text
+# Chế độ AI Embedding — đảo chiều khoảng cách
+MatchPercentage = (1 - SimilarityScore / MaxScore) * 100%
+
+# Ví dụ: Phim A distance=0.05, Phim B distance=0.40, MaxScore=0.40
+MatchPercentage(A) = (1 - 0.05/0.40) * 100 = 87.5%
+MatchPercentage(B) = (1 - 0.40/0.40) * 100 = 0.0%
+```
+
+### 2. Khi không có Embedding (Cơ chế Dự phòng - Fallback)
+Hệ thống chạy thuật toán thống kê hành vi trực tiếp bằng SQL Server cục bộ. Thuật toán này tự động loại bỏ các bộ phim người dùng đã từng tương tác (xem, đặt vé, rate tốt), sau đó tính toán điểm số độ hot của các phim còn lại:
+
+```text
+# Công thức tính điểm thô (SimilarityScore)
+SimilarityScore = (bookingCount × 3) + (viewCount × 1) + (avgRating × 10) + (ratingCount × 1)
+```
+
+Sau đó, backend **chuẩn hóa Min-Max** toàn bộ danh sách về thang 0–100%:
+
+```text
+# Min-Max Normalization → MatchPercentage
+MatchPercentage = (SimilarityScore - MinScore) / (MaxScore - MinScore) * 100%
+
+# Ví dụ:
+# Phim A: score=150, Phim B: score=80, Phim C: score=60
+# MinScore=60, MaxScore=150, Range=90
+MatchPercentage(A) = (150 - 60) / 90 * 100 = 100.0%
+MatchPercentage(B) = (80  - 60) / 90 * 100 =  22.2%
+MatchPercentage(C) = (60  - 60) / 90 * 100 =   0.0%
+```
+
+> **Ghi chú:** Nếu tất cả phim trong danh sách có điểm bằng nhau (range = 0), toàn bộ sẽ được gán `MatchPercentage = 100%`.
+
 
 ## Endpoint
 
