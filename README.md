@@ -36,6 +36,18 @@ galaxiad-cinema-core/
 - [Role-Aware Chatbot Plan](docs/algorithms/role-aware-chatbot.md)
 - [Backend Controller Structure](apps/backend/Cinema.Api/Controllers/README.md)
 
+## Recommendation Algorithm (Thuật toán Gợi ý Phim)
+
+Hệ thống gợi ý phim hoạt động linh hoạt theo hai cơ chế tùy thuộc vào trạng thái cấu hình của hệ thống AI:
+
+* **Khi có Embedding (Gemini API Key hợp lệ)**: 
+  Hệ thống hiểu được ngữ nghĩa sở thích của bạn bằng cách phân tích văn bản mô tả (sở thích khảo sát, lịch sử xem, đặt vé, đánh giá) và chuyển thành vector 768 chiều. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để so khớp khoảng cách và tìm các bộ phim tương ứng có nội dung tương đồng ngữ nghĩa nhất.
+  
+* **Khi không có Embedding (Cơ chế Dự phòng - Fallback)**: 
+  Hệ thống chạy thuật toán thống kê hành vi hoàn toàn dưới database SQL cục bộ. Thuật toán này tự động lọc bỏ các phim bạn đã từng tương tác (xem, đặt vé, rate tốt), sau đó tính toán điểm số độ hot (`SimilarityScore`) của các phim còn lại theo công thức:
+  $$\text{SimilarityScore} = (\text{Số lượt đặt vé} \times 3) + (\text{Số lượt xem} \times 1) + (\text{Điểm đánh giá TB} \times 10) + (\text{Số đánh giá} \times 1)$$
+  Và đề xuất các phim có điểm cao nhất để đảm bảo gợi ý cá nhân hóa và bắt kịp xu hướng.
+
 ## Backend Structure
 
 ```text
