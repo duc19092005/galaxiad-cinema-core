@@ -15,6 +15,22 @@ flowchart LR
 
 SQL Server is the source of truth. Qdrant stores persistent movie vectors only. User profile vectors are generated per request and are not stored.
 
+## Hybrid Strategy (Cơ chế Lai - Embedding vs. Fallback)
+
+Hệ thống gợi ý phim hoạt động linh hoạt theo hai cơ chế tùy thuộc vào trạng thái cấu hình của hệ thống AI:
+
+1. **Khi có Embedding (Gemini API Key hợp lệ)**:
+   Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 768 chiều. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để so khớp khoảng cách và tìm các bộ phim tương ứng có nội dung tương đồng ngữ nghĩa nhất.
+
+2. **Khi không có Embedding (Cơ chế Dự phòng - Fallback)**:
+   Hệ thống chạy thuật toán thống kê hành vi trực tiếp bằng SQL Server cục bộ. Thuật toán này tự động loại bỏ các bộ phim người dùng đã từng tương tác (xem, đặt vé, rate tốt), sau đó tính toán điểm số độ hot của các phim còn lại theo công thức:
+   
+   ```text
+   SimilarityScore = (Số lượt đặt vé * 3) + (Số lượt xem/click * 1) + (Điểm đánh giá trung bình * 10) + (Số lượng đánh giá * 1)
+   ```
+   
+   Và đề xuất các phim có điểm cao nhất để đảm bảo gợi ý cá nhân hóa và bắt kịp xu hướng.
+
 ## Endpoint
 
 ```http
