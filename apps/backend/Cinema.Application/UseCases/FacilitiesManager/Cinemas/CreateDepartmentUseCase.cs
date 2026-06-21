@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Application.Constants;
 using Cinema.Application.Dtos;
@@ -43,16 +43,16 @@ public class CreateDepartmentUseCase
         // Validate cinema
         var cinema = await _departmentRepository.FindCinemaAsync(request.CinemaId);
         if (cinema == null)
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y ráº¡p phim.", 404, "DEPT_ERR");
+            throw new AppException(Messages.Cinema.NotFound, 404, "DEPT_ERR");
 
         // Check permission
         if (!isAdmin && cinema.FacilitiesManagerId != userId)
-            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n táº¡o phÃ²ng ban cho ráº¡p nÃ y.", 403, "DEPT_ERR");
+            throw new AppException("You do not have permission to create departments for this cinema.", 403, "DEPT_ERR");
 
         // Check unique name per cinema
         var exists = await _departmentRepository.DepartmentExistsAsync(request.CinemaId, request.DepartmentName);
         if (exists)
-            throw new AppException($"PhÃ²ng ban '{request.DepartmentName}' Ä‘Ã£ tá»“n táº¡i trong ráº¡p nÃ y.", 400, "DEPT_ERR");
+            throw new AppException($"Department '{request.DepartmentName}' already exists in this cinema.", 400, "DEPT_ERR");
 
         var departmentId = Guid.NewGuid();
         var sharedUserId = Guid.NewGuid();
@@ -113,14 +113,14 @@ public class CreateDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = departmentId,
-                Message = $"Táº¡o phÃ²ng ban '{request.DepartmentName}' thÃ nh cÃ´ng. TÃ i khoáº£n quáº§y: {email} / Máº­t kháº©u: {defaultPassword}"
+                Message = $"Created department '{request.DepartmentName}' successfully. Counter account: {email} / Password: {defaultPassword}"
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Lá»—i khi táº¡o phÃ²ng ban: {ex.Message}", 500, "S01");
+            throw new AppException($"Error creating department: {ex.Message}", 500, "S01");
         }
     }
 }

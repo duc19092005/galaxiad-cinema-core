@@ -101,6 +101,23 @@ export const publicAxios = axios.create({
   timeout: 10000,
 });
 
+const isProtectedPath = (pathname: string): boolean => {
+  const protectedPrefixes = [
+    '/role-selection',
+    '/cashier',
+    '/staff',
+    '/admin',
+    '/movie-manager',
+    '/theater-manager',
+    '/facilities-manager',
+    '/schedule',
+    '/account'
+  ];
+  return protectedPrefixes.some(prefix => 
+    pathname === prefix || pathname.startsWith(prefix + '/')
+  );
+};
+
 const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios, bookingAxios, shiftAxios, publicAxios];
 
 allInstances.forEach((instance) => {
@@ -108,8 +125,8 @@ allInstances.forEach((instance) => {
   instance.interceptors.request.use(
     (config) => {
       // Priority 1: Get from localStorage (set by i18n.on('languageChanged'))
-      // Priority 2: Default to 'vi' as requested in guidelines
-      const currentLanguage = localStorage.getItem('language') || 'vi';
+      // Priority 2: Default to 'en'
+      const currentLanguage = localStorage.getItem('language') || 'en';
 
       // Traditional header
       config.headers['Accept-Language'] = currentLanguage;
@@ -130,8 +147,9 @@ allInstances.forEach((instance) => {
         // Token expired or invalid — clear local storage and cookies
         localStorage.removeItem('user_info');
         Cookies.remove('X-Access-Token');
-        // Redirect to login if not already there
-        if (window.location.pathname !== '/login') {
+        // Redirect to login if on a protected page
+        const currentPath = window.location.pathname;
+        if (isProtectedPath(currentPath) && currentPath !== '/login') {
           window.location.href = '/login';
         }
       }

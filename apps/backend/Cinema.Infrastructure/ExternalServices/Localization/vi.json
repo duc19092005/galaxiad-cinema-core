@@ -133,7 +133,28 @@
         "Schedule Id is required": "Mã lịch chiếu là bắt buộc",
         "Seat Ids are required": "Mã ghế là bắt buộc",
         "At least one seat must be selected": "Phải chọn ít nhất một ghế",
-        "Invalid email format": "Định dạng email không hợp lệ"
+        "Invalid email format": "Định dạng email không hợp lệ",
+
+        "Get cinemas list for Facilities successfully.": "Lấy danh sách rạp (CSVC) thành công.",
+        "Get cinemas list for Operations successfully.": "Lấy danh sách rạp (Vận hành) thành công.",
+        "Get movies list successfully.": "Lấy danh sách phim thành công.",
+        "Ticket not found or order has not been paid successfully.": "Không tìm thấy vé hoặc đơn hàng chưa thanh toán thành công.",
+        "This movie has already been deleted.": "Bộ phim này đã bị xóa.",
+        "Cannot edit movie when there are active showtimes or bookings.": "Không thể sửa phim khi đã có khách hàng đặt vé thành công.",
+        "You do not have permission to create departments for this cinema.": "Bạn không có quyền tạo phòng ban cho rạp này.",
+        "Department not found.": "Không tìm thấy phòng ban.",
+        "You do not have permission to delete this department.": "Bạn không có quyền xoá phòng ban này.",
+        "You do not have permission to modify this department.": "Bạn không có quyền sửa phòng ban này.",
+        "Can only cancel shift registrations that are already approved.": "Chỉ có thể hủy những ca trực đã được phê duyệt thành công.",
+        "The assigned staff account is invalid, not linked to a branch, or inactive.": "Tài khoản nhân viên được gán không hợp lệ, chưa được gán rạp hoặc đã ngừng hoạt động.",
+        "Cannot determine user identity.": "Không xác định được danh tính người dùng.",
+        "Invalid transfer type.": "Loại chuyển quyền không hợp lệ.",
+        "Must provide ItemId or SourceUserId for authorization.": "Cần cung cấp ItemId hoặc SourceUserId để phân quyền.",
+        "Approved shift successfully.": "Phê duyệt ca trực thành công.",
+        "Rejected shift registration request successfully.": "Từ chối yêu cầu đăng ký ca trực thành công.",
+        "Cancelled approved shift successfully. Slot is now open for others.": "Hủy ca làm việc đã phê duyệt thành công. Vị trí ca làm hiện đã trống cho người khác đăng ký.",
+        "Assigned staff directly to shift successfully.": "Gán trực tiếp nhân viên vào ca trực thành công.",
+        "Assigned shift successfully.": "Gán ca trực thành công."
     },
     "regex": [
         { "pattern": "^Error : There's already a cinema named (.*)$", "replacement": "Lỗi: Đã có rạp chiếu phim có tên $1" },
@@ -145,6 +166,10 @@
         { "pattern": "^Movie ID (.*) does not exist or is inactive.$", "replacement": "Phim có mã $1 không tồn tại hoặc đã bị ẩn." },
         { "pattern": "^Format invalid or missing for movie '(.*)'.$", "replacement": "Định dạng phim '$1' không hợp lệ hoặc bị thiếu." },
         { "pattern": "^Movie '(.*)' is available from (.*) to (.*).$", "replacement": "Phim '$1' chỉ được chiếu từ $2 đến $3." },
-        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có." }
+        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có." },
+        { "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$", "replacement": "Yêu cầu này đã được xử lý từ trước (Trạng thái hiện tại: $1)." },
+        { "pattern": "^Department '(.*)' already exists in this cinema\\.$", "replacement": "Phòng ban '$1' đã tồn tại trong rạp này." },
+        { "pattern": "^Get users list with role '(.*)' successfully\\.$", "replacement": "Lấy danh sách người dùng vai trò $1 thành công." },
+        { "pattern": "^Transferred management right of '(.*)' successfully\\.$", "replacement": "Đã chuyển quyền quản lý $1 thành công." }
     ]
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -25,7 +25,7 @@ public class GetUsersByRoleUseCase
             TransferTypeEnum.Facilities => userRoles.FacilitiesManager,
             TransferTypeEnum.Theater => userRoles.TheaterManager,
             TransferTypeEnum.Movie => userRoles.MovieManager,
-            _ => throw new BadRequestException("Loáº¡i chuyá»ƒn quyá»n khÃ´ng há»£p lá»‡.", "B02")
+            _ => throw new BadRequestException("Invalid transfer type.", "B02")
         };
 
         var users = await _adminRepository.GetUsersByRoleAsync(roleId);
@@ -34,8 +34,7 @@ public class GetUsersByRoleUseCase
         {
             IsSuccess = true,
             Data = users,
-            Message = $"Láº¥y danh sÃ¡ch ngÆ°á»i dÃ¹ng role {transferType} thÃ nh cÃ´ng."
+            Message = $"Get users list with role '{transferType}' successfully."
         };
     }
 }
-

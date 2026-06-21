@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -32,30 +32,30 @@ public class ApproveShiftRegistrationUseCase
         _sseNotificationService = sseNotificationService;
     }
 
-    // 1. PhÃª duyá»‡t ca trá»±c
+    // 1. Approve shift registration
     public async Task<BaseResponse<bool>> ApproveAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftRegistrationNotFound, 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Pending")
         {
-            throw new AppException($"YÃªu cáº§u nÃ y Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ tá»« trÆ°á»›c (Tráº¡ng thÃ¡i hiá»‡n táº¡i: {registration.Status}).", 400, "SHIFT_ERR");
+            throw new AppException($"This request was already processed (Current status: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra quyá»n cá»§a ngÆ°á»i phÃª duyá»‡t (Pháº£i lÃ  Admin hoáº·c TheaterManager cá»§a cÃ¹ng Ráº¡p)
+        // Verify manager permissions
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
-        // Äáº¿m láº¡i xem hiá»‡n táº¡i sá»‘ lÆ°á»£ng ca Approved Ä‘Ã£ Ä‘áº¡t tá»‘i Ä‘a chÆ°a
+        // Count approved registrations
         var approvedCount = await _repository.CountApprovedRegistrationsAsync(registration.ShiftTemplateId, registration.RegistrationDate);
 
         if (approvedCount >= registration.CinemaShiftTemplateEntity.MaxStaff)
         {
-            throw new AppException("Ca lÃ m viá»‡c nÃ y Ä‘Ã£ Ä‘á»§ sá»‘ lÆ°á»£ng nhÃ¢n viÃªn Ä‘Æ°á»£c phÃª duyá»‡t.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftAlreadyFull, 400, "SHIFT_ERR");
         }
 
         registration.Status = "Approved";
@@ -67,8 +67,8 @@ public class ApproveShiftRegistrationUseCase
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Duyá»‡t ca trá»±c",
-            $"Ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} cá»§a báº¡n Ä‘Ã£ Ä‘Æ°á»£c phÃª duyá»‡t.",
+            "Shift Approved",
+            $"Your shift '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been approved.",
             "ShiftApproved"
         );
 
@@ -76,26 +76,26 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "PhÃª duyá»‡t ca trá»±c thÃ nh cÃ´ng."
+            Message = "Approved shift successfully."
         };
     }
 
-    // 2. Tá»« chá»‘i ca trá»±c
+    // 2. Reject shift registration
     public async Task<BaseResponse<bool>> RejectAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftRegistrationNotFound, 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Pending")
         {
-            throw new AppException($"YÃªu cáº§u nÃ y Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ tá»« trÆ°á»›c (Tráº¡ng thÃ¡i hiá»‡n táº¡i: {registration.Status}).", 400, "SHIFT_ERR");
+            throw new AppException($"This request was already processed (Current status: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra quyá»n
+        // Verify manager permissions
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
         registration.Status = "Rejected";
@@ -107,8 +107,8 @@ public class ApproveShiftRegistrationUseCase
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Tá»« chá»‘i ca trá»±c",
-            $"YÃªu cáº§u Ä‘Äƒng kÃ½ ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} cá»§a báº¡n Ä‘Ã£ bá»‹ tá»« chá»‘i. LÃ½ do: {notes ?? "KhÃ´ng cÃ³ lÃ½ do cá»¥ thá»ƒ"}.",
+            "Shift Rejected",
+            $"Your shift registration request for '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been rejected. Reason: {notes ?? "No reason provided"}.",
             "ShiftRejected"
         );
 
@@ -116,39 +116,39 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Tá»« chá»‘i yÃªu cáº§u Ä‘Äƒng kÃ½ ca trá»±c."
+            Message = "Rejected shift registration request successfully."
         };
     }
 
-    // 3. Há»§y ca trá»±c Ä‘Ã£ phÃª duyá»‡t (Giáº£i quyáº¿t khi nhÃ¢n viÃªn xin nghá»‰ Ä‘á»™t xuáº¥t)
+    // 3. Cancel approved shift registration
     public async Task<BaseResponse<bool>> CancelApprovedAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftRegistrationNotFound, 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Approved")
         {
-            throw new AppException("Chá»‰ cÃ³ thá»ƒ há»§y nhá»¯ng ca trá»±c Ä‘Ã£ Ä‘Æ°á»£c phÃª duyá»‡t thÃ nh cÃ´ng.", 400, "SHIFT_ERR");
+            throw new AppException("Can only cancel shift registrations that are already approved.", 400, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra quyá»n
+        // Verify manager permissions
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
         registration.Status = "Cancelled";
         registration.ApprovedByUserId = managerUserId;
         registration.ApprovedAt = DateTime.UtcNow;
-        registration.Notes = string.IsNullOrEmpty(notes) ? "Quáº£n lÃ½ há»§y ca lÃ m" : notes;
+        registration.Notes = string.IsNullOrEmpty(notes) ? "Manager cancelled shift" : notes;
 
         await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Há»§y ca trá»±c",
-            $"Lá»‹ch lÃ m viá»‡c ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} Ä‘Ã£ phÃª duyá»‡t cá»§a báº¡n Ä‘Ã£ bá»‹ há»§y bá»Ÿi quáº£n lÃ½. LÃ½ do: {notes ?? "KhÃ´ng cÃ³ lÃ½ do cá»¥ thá»ƒ"}.",
+            "Shift Cancelled",
+            $"Your approved shift '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been cancelled by manager. Reason: {notes ?? "No reason provided"}.",
             "ShiftCancelled"
         );
 
@@ -156,52 +156,52 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Há»§y ca lÃ m viá»‡c Ä‘Ã£ phÃª duyá»‡t thÃ nh cÃ´ng. Vá»‹ trÃ­ ca lÃ m hiá»‡n Ä‘Ã£ trá»‘ng cho ngÆ°á»i khÃ¡c Ä‘Äƒng kÃ½."
+            Message = "Cancelled approved shift successfully. Slot is now open for others."
         };
     }
 
-    // 4. GÃ¡n trá»±c tiáº¿p nhÃ¢n viÃªn vÃ o ca trá»±c (Admin/Manager gÃ¡n trá»±c tiáº¿p)
+    // 4. Assign staff directly to shift
     public async Task<BaseResponse<bool>> AssignDirectlyAsync(Guid staffId, Guid shiftTemplateId, DateTime date, Guid managerUserId)
     {
-        // Kiá»ƒm tra nhÃ¢n viÃªn má»¥c tiÃªu cÃ³ StaffProfile há»£p lá»‡ khÃ´ng
+        // Verify staff profile
         var staffProfile = await _repository.GetStaffProfileWithUserAsync(staffId);
 
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
-            throw new AppException("TÃ i khoáº£n nhÃ¢n viÃªn Ä‘Æ°á»£c gÃ¡n khÃ´ng há»£p lá»‡, chÆ°a Ä‘Æ°á»£c gÃ¡n ráº¡p hoáº·c Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng.", 400, "SHIFT_ERR");
+            throw new AppException("The assigned staff account is invalid, not linked to a branch, or inactive.", 400, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra ca trá»±c máº«u
+        // Verify shift template
         var template = await _repository.GetShiftTemplateByIdAsync(shiftTemplateId);
 
         if (template == null)
         {
-            throw new AppException("Ca trá»±c máº«u khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ ngá»«ng hoáº¡t Ä‘á»™ng.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftTemplateNotFound, 400, "SHIFT_ERR");
         }
 
-        // NhÃ¢n viÃªn chá»‰ Ä‘Æ°á»£c gÃ¡n vÃ o ca trá»±c cá»§a ráº¡p há» trá»±c thuá»™c
+        // Staff can only be assigned to shifts at their linked cinema
         if (template.CinemaId != staffProfile.CinemaId)
         {
-            throw new AppException("KhÃ´ng thá»ƒ gÃ¡n nhÃ¢n viÃªn vÃ o ca trá»±c á»Ÿ chi nhÃ¡nh ráº¡p khÃ¡c.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.CannotAssignToDifferentCinema, 400, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra quyá»n quáº£n lÃ½ ráº¡p cá»§a manager
+        // Verify manager permissions
         await VerifyManagerPermissionAsync(managerUserId, template.CinemaId);
 
         var registrationDateOnly = date.Date;
         var lockKey = $"lock:shift:{shiftTemplateId}:{registrationDateOnly:yyyyMMdd}";
         var lockValue = Guid.NewGuid().ToString("N");
 
-        // Sá»­ dá»¥ng lock Redis Ä‘á»ƒ Ä‘áº£m báº£o an toÃ n sá»‘ lÆ°á»£ng nhÃ¢n sá»± trá»±c ca
+        // Use Redis lock to secure max capacity constraint
         var isLocked = await _redisLockService.AcquireLockAsync(lockKey, lockValue, TimeSpan.FromSeconds(5));
         if (!isLocked)
         {
-            throw new AppException("Há»‡ thá»‘ng Ä‘ang báº­n xá»­ lÃ½ ca trá»±c nÃ y, vui lÃ²ng thá»­ láº¡i sau.", 409, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.SystemBusyProcessingShift, 409, "SHIFT_ERR");
         }
 
         try
         {
-            // Kiá»ƒm tra xem nhÃ¢n viÃªn Ä‘Ã£ cÃ³ ca trá»±c nÃ o trÃ¹ng khung giá» ngÃ y nÃ y chÆ°a (dÃ¹ lÃ  Pending hay Approved)
+            // Check for overlapping shifts on the same day
             var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, registrationDateOnly);
 
             bool isOverlapping = false;
@@ -213,7 +213,6 @@ public class ApproveShiftRegistrationUseCase
                 var extTemplate = reg.CinemaShiftTemplateEntity;
                 if (extTemplate == null) continue;
 
-                // Náº¿u lÃ  cÃ¹ng máº«u ca trá»±c nÃ y, chÃºng ta sáº½ xá»­ lÃ½ cáº­p nháº­t tráº¡ng thÃ¡i bÃªn dÆ°á»›i
                 if (extTemplate.ShiftTemplateId == shiftTemplateId) continue;
 
                 var extStart = extTemplate.StartTime.TotalMinutes;
@@ -228,47 +227,44 @@ public class ApproveShiftRegistrationUseCase
 
             if (isOverlapping)
             {
-                throw new AppException("NhÃ¢n viÃªn Ä‘Ã£ cÃ³ lá»‹ch lÃ m viá»‡c khÃ¡c trÃ¹ng khung giá» nÃ y.", 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.OverlappingShiftExists, 400, "SHIFT_ERR");
             }
 
-            // Kiá»ƒm tra xem nhÃ¢n viÃªn Ä‘Ã£ cÃ³ ca trá»±c nÃ o trÃ¹ng á»Ÿ template nÃ y ngÃ y nÃ y chÆ°a (dÃ¹ lÃ  Pending hay Approved)
             var existing = existingRegistrations.FirstOrDefault(r => r.ShiftTemplateId == shiftTemplateId);
 
             if (existing != null)
             {
                 if (existing.Status == "Approved")
                 {
-                    throw new AppException("NhÃ¢n viÃªn nÃ y Ä‘Ã£ Ä‘Æ°á»£c gÃ¡n vÃ o ca trá»±c tá»« trÆ°á»›c.", 400, "SHIFT_ERR");
+                    throw new AppException(Messages.Staff.AlreadyRegisteredForShift, 400, "SHIFT_ERR");
                 }
                 
-                // Náº¿u Ä‘ang á»Ÿ Pending hoáº·c Cancelled/Rejected, chÃºng ta chá»‰ cáº§n Ä‘Ã¨/update láº¡i thÃ nh Approved
                 if (existing.Status == "Pending" || existing.Status == "Rejected" || existing.Status == "Cancelled")
                 {
                     existing.Status = "Approved";
                     existing.ApprovedByUserId = managerUserId;
                     existing.ApprovedAt = DateTime.UtcNow;
-                    existing.Notes = "Quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p";
+                    existing.Notes = "Directly assigned by manager";
                     
                     await _unitOfWork.SaveChangesAsync();
                     await _sseNotificationService.SendNotificationAsync(
                         staffId,
-                        "GÃ¡n ca trá»±c trá»±c tiáº¿p",
-                        $"Báº¡n Ä‘Ã£ Ä‘Æ°á»£c quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p vÃ o ca lÃ m '{template.ShiftName}' ngÃ y {registrationDateOnly:dd/MM/yyyy}.",
+                        "Direct Shift Assignment",
+                        $"You have been directly assigned to the shift '{template.ShiftName}' on {registrationDateOnly:dd/MM/yyyy} by your manager.",
                         "ShiftAssigned"
                     );
-                    return new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "GÃ¡n ca trá»±c thÃ nh cÃ´ng." };
+                    return new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "Assigned shift successfully." };
                 }
             }
 
-            // Äáº¿m sá»‘ ca Approved vÃ  Pending
+            // Count approved registrations
             var registeredCount = await _repository.CountApprovedRegistrationsAsync(shiftTemplateId, registrationDateOnly);
 
             if (registeredCount >= template.MaxStaff)
             {
-                throw new AppException("Ca lÃ m viá»‡c nÃ y Ä‘Ã£ Ä‘á»§ sá»‘ lÆ°á»£ng tá»‘i Ä‘a, khÃ´ng thá»ƒ gÃ¡n thÃªm.", 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.ShiftAlreadyFull, 400, "SHIFT_ERR");
             }
 
-            // Táº¡o ca trá»±c Ä‘Ã£ duyá»‡t luÃ´n
             var directAssign = new StaffShiftRegistrationEntity
             {
                 ShiftRegistrationId = Guid.NewGuid(),
@@ -278,7 +274,7 @@ public class ApproveShiftRegistrationUseCase
                 Status = "Approved",
                 ApprovedByUserId = managerUserId,
                 ApprovedAt = DateTime.UtcNow,
-                Notes = "Quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p"
+                Notes = "Directly assigned by manager"
             };
 
             await _repository.AddShiftRegistrationAsync(directAssign);
@@ -286,8 +282,8 @@ public class ApproveShiftRegistrationUseCase
 
             await _sseNotificationService.SendNotificationAsync(
                 staffId,
-                "GÃ¡n ca trá»±c trá»±c tiáº¿p",
-                $"Báº¡n Ä‘Ã£ Ä‘Æ°á»£c quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p vÃ o ca lÃ m '{template.ShiftName}' ngÃ y {registrationDateOnly:dd/MM/yyyy}.",
+                "Direct Shift Assignment",
+                $"You have been directly assigned to the shift '{template.ShiftName}' on {registrationDateOnly:dd/MM/yyyy} by your manager.",
                 "ShiftAssigned"
             );
 
@@ -295,7 +291,7 @@ public class ApproveShiftRegistrationUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "GÃ¡n trá»±c tiáº¿p nhÃ¢n viÃªn vÃ o ca trá»±c thÃ nh cÃ´ng."
+                Message = "Assigned staff directly to shift successfully."
             };
         }
         finally
@@ -307,27 +303,23 @@ public class ApproveShiftRegistrationUseCase
     #region Private Helpers
     private async Task VerifyManagerPermissionAsync(Guid managerUserId, Guid cinemaId)
     {
-        // 1. Kiá»ƒm tra xem manager cÃ³ vai trÃ² Admin khÃ´ng
         var isAdmin = await _repository.UserHasRoleAsync(managerUserId, "Admin");
 
-        if (isAdmin) return; // Admin cÃ³ toÃ n quyá»n trÃªn má»i ráº¡p
+        if (isAdmin) return;
 
-        // 2. Náº¿u khÃ´ng pháº£i Admin, kiá»ƒm tra xem cÃ³ pháº£i TheaterManager cá»§a Ä‘Ãºng Ráº¡p nÃ y hay khÃ´ng
         var isTheaterManager = await _repository.UserHasRoleAsync(managerUserId, "TheaterManager");
 
         if (!isTheaterManager)
         {
-            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c quáº£n lÃ½ nÃ y.", 403, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.NoPermissionShiftManage, 403, "SHIFT_ERR");
         }
 
-        // Kiá»ƒm tra xem StaffProfile cá»§a Manager cÃ³ thuá»™c Ä‘Ãºng Ráº¡p nÃ y hay khÃ´ng
         var managerProfile = await _repository.GetStaffProfileAsync(managerUserId);
 
         if (managerProfile == null || managerProfile.CinemaId != cinemaId)
         {
-            throw new AppException("Báº¡n chá»‰ cÃ³ quyá»n quáº£n lÃ½ nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh.", 403, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.NoPermissionBranchStaffOnly, 403, "SHIFT_ERR");
         }
     }
     #endregion
 }
-

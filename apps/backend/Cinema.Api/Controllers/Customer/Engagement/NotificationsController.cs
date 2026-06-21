@@ -86,7 +86,7 @@ public class NotificationsController : ControllerBase
         var sid = User.FindFirstValue(ClaimTypes.Sid);
         if (string.IsNullOrEmpty(sid) || !Guid.TryParse(sid, out var userId))
         {
-            throw new UnauthorizedAccessException("Khong xac dinh duoc danh tinh nguoi dung.");
+            throw new UnauthorizedAccessException("Cannot determine user identity.");
         }
 
         return userId;

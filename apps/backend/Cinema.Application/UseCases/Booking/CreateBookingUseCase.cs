@@ -120,7 +120,7 @@ public class CreateBookingUseCase
             var validSegmentIds = new HashSet<Guid>(validSegments.Select(seg => seg.UserSegmentId));
             if (!segmentIds.All(id => validSegmentIds.Contains(id)))
             {
-                throw new BadRequestException("Loại khách hàng không hợp lệ.", "BK06");
+                throw new BadRequestException(Messages.Validation.InvalidCustomerType, "BK06");
             }
 
             // Check seats aren't already booked

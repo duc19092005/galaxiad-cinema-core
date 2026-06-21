@@ -43,7 +43,7 @@ public class DeleteMovieUseCase
 
         if (movie.IsDeleted)
         {
-            throw new BadRequestException("Phim này đã bị xóa.", "D01");
+            throw new BadRequestException("This movie has already been deleted.", "D01");
         }
 
         var hasSuccessfulBooking = await _adminRepository.HasSuccessfulBookingAsync(itemId);
@@ -89,7 +89,7 @@ public class DeleteMovieUseCase
 
         return new BaseResponse<string>()
         {
-            Message = "Xóa phim thành công",
+            Message = "Movie deleted successfully.",
             Data = null,
             IsSuccess = true
         };

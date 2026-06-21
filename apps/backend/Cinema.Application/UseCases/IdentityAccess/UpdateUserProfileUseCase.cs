@@ -50,7 +50,7 @@ public class UpdateUserProfileUseCase
 
                 if (age < 16 || age > 80)
                 {
-                    throw new BadRequestException("Tuổi phải từ 16 đến 80.", "V01");
+                    throw new BadRequestException(Messages.Validation.AgeMustBeBetween16And80, "V01");
                 }
                 profile.DateOfBirth = request.DateOfBirth.Value;
             }
@@ -75,7 +75,7 @@ public class UpdateUserProfileUseCase
             return new BaseResponse<string>
             {
                 IsSuccess = true,
-                Message = "Cập nhật thông tin cá nhân thành công."
+                Message = Messages.Validation.UpdateProfileSuccess
             };
         }
         catch (AppException)

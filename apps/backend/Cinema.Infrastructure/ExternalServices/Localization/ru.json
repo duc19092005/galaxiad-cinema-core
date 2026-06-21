@@ -133,7 +133,28 @@
         "Schedule Id is required": "ID расписания обязателен",
         "Seat Ids are required": "ID мест обязательны",
         "At least one seat must be selected": "Необходимо выбрать хотя бы одно место",
-        "Invalid email format": "Неверный формат email"
+        "Invalid email format": "Неверный формат email",
+
+        "Get cinemas list for Facilities successfully.": "Список кинотеатров (Оборудование) успешно получен.",
+        "Get cinemas list for Operations successfully.": "Список кинотеатров (Операции) успешно получен.",
+        "Get movies list successfully.": "Список фильмов успешно получен.",
+        "Ticket not found or order has not been paid successfully.": "Билет не найден или заказ еще не оплачен.",
+        "This movie has already been deleted.": "Этот фильм уже удален.",
+        "Cannot edit movie when there are active showtimes or bookings.": "Невозможно редактировать фильм, если есть активные бронирования или сеансы.",
+        "You do not have permission to create departments for this cinema.": "У вас нет прав на создание отделов для этого кинотеатра.",
+        "Department not found.": "Отдел не найден.",
+        "You do not have permission to delete this department.": "У вас нет прав на удаление этого отдела.",
+        "You do not have permission to modify this department.": "У вас нет прав на изменение этого отдела.",
+        "Can only cancel shift registrations that are already approved.": "Можно отменять только уже одобренные регистрации смен.",
+        "The assigned staff account is invalid, not linked to a branch, or inactive.": "Учетная запись сотрудника недействительна, не привязана к филиалу или неактивна.",
+        "Cannot determine user identity.": "Не удалось определить личность пользователя.",
+        "Invalid transfer type.": "Неверный тип перевода.",
+        "Must provide ItemId or SourceUserId for authorization.": "Необходимо предоставить ItemId или SourceUserId для авторизации.",
+        "Approved shift successfully.": "Смена успешно одобрена.",
+        "Rejected shift registration request successfully.": "Запрос на регистрацию смены отклонен.",
+        "Cancelled approved shift successfully. Slot is now open for others.": "Одобренная смена отменена. Слот теперь открыт для других.",
+        "Assigned staff directly to shift successfully.": "Сотрудник назначен на смену напрямую.",
+        "Assigned shift successfully.": "Смена успешно назначена."
     },
     "regex": [
         { "pattern": "^Error : There's already a cinema named (.*)$", "replacement": "Ошибка: Кинотеатр с названием $1 уже существует" },
@@ -145,6 +166,10 @@
         { "pattern": "^Movie ID (.*) does not exist or is inactive.$", "replacement": "Фильм $1 не существует или неактивен." },
         { "pattern": "^Format invalid or missing for movie '(.*)'.$", "replacement": "Формат фильма '$1' недействителен или отсутствует." },
         { "pattern": "^Movie '(.*)' is available from (.*) to (.*).$", "replacement": "Фильм '$1' доступен с $2 по $3." },
-        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Временной слот с $1 по $2 конфликтует с существующим расписанием." }
+        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Временной слот с $1 по $2 конфликтует с существующим расписанием." },
+        { "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$", "replacement": "Этот запрос уже обработан (Текущий статус: $1)." },
+        { "pattern": "^Department '(.*)' already exists in this cinema\\.$", "replacement": "Отдел '$1' уже существует в этом кинотеатре." },
+        { "pattern": "^Get users list with role '(.*)' successfully\\.$", "replacement": "Список пользователей с ролью '$1' успешно получен." },
+        { "pattern": "^Transferred management right of '(.*)' successfully\\.$", "replacement": "Право управления '$1' успешно передано." }
     ]
 }

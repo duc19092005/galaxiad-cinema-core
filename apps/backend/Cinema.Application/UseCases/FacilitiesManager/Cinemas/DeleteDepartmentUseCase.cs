@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.CinemaInfos;
@@ -35,17 +35,17 @@ public class DeleteDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y phÃ²ng ban.", 404, "DEPT_ERR");
+            throw new AppException("Department not found.", 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n xoÃ¡ phÃ²ng ban nÃ y.", 403, "DEPT_ERR");
+            throw new AppException("You do not have permission to delete this department.", 403, "DEPT_ERR");
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             department.IsActive = false;
 
-            // Äá»“ng bá»™ khÃ³a tÃ i khoáº£n dÃ¹ng chung
+            // Synchronize shared account lock
             if (department.SharedUserInfoEntity != null)
             {
                 department.SharedUserInfoEntity.AccountStatus = AccountStatusEnum.Banned;
@@ -66,15 +66,14 @@ public class DeleteDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "ÄÃ£ vÃ´ hiá»‡u hoÃ¡ phÃ²ng ban."
+                Message = "Deactivated department successfully."
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Lá»—i khi xoÃ¡ phÃ²ng ban: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException($"Error deleting department: {ex.Message}", 500, "DEPT_ERR");
         }
     }
 }
-

@@ -93,23 +93,26 @@ const MovieDetailPage: React.FC = () => {
             // Fetch recommended movies with fallback
             try {
                 let list: PublicMovieListItem[] = [];
-                try {
-                    const aiRecsRes = await recommendationApi.getRecommendations();
-                    if (aiRecsRes?.data && aiRecsRes.data.length > 0) {
-                        list = aiRecsRes.data.map((item: any) => ({
-                            movieId: item.movieId,
-                            movieName: item.movieName,
-                            moviePosterURL: item.moviePosterURL || item.movieImageUrl,
-                            movieBannerURL: item.movieBannerURL || item.movieBannerUrl,
-                            movieFormatInfos: item.movieFormatInfos || '',
-                            movieDuration: item.movieDuration,
-                            movieRequiredAge: item.movieRequiredAge || item.movieRequiredAgeSymbol,
-                            movieCategoryInfos: item.movieGenres || 'AI Pick',
-                            isCommingSoon: item.isCommingSoon || false,
-                        }));
+                const storedUser = localStorage.getItem('user_info');
+                if (storedUser) {
+                    try {
+                        const aiRecsRes = await recommendationApi.getRecommendations();
+                        if (aiRecsRes?.data && aiRecsRes.data.length > 0) {
+                            list = aiRecsRes.data.map((item: any) => ({
+                                movieId: item.movieId,
+                                movieName: item.movieName,
+                                moviePosterURL: item.moviePosterURL || item.movieImageUrl,
+                                movieBannerURL: item.movieBannerURL || item.movieBannerUrl,
+                                movieFormatInfos: item.movieFormatInfos || '',
+                                movieDuration: item.movieDuration,
+                                movieRequiredAge: item.movieRequiredAge || item.movieRequiredAgeSymbol,
+                                movieCategoryInfos: item.movieGenres || 'AI Pick',
+                                isCommingSoon: item.isCommingSoon || false,
+                            }));
+                        }
+                    } catch (e) {
+                        console.log('Survey not completed, using trending fallback');
                     }
-                } catch (e) {
-                    console.log('Survey not completed or not logged in, using trending fallback');
                 }
 
                 if (list.length === 0) {

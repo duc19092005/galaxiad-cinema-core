@@ -57,7 +57,7 @@ public class StaffShiftController : ControllerBase
     {
         var sid = User.FindFirstValue(ClaimTypes.Sid);
         if (string.IsNullOrEmpty(sid) || !Guid.TryParse(sid, out var userId))
-            throw new UnauthorizedAccessException("Không xác định được danh tính người dùng.");
+            throw new UnauthorizedAccessException("Cannot determine user identity.");
         return userId;
     }
 

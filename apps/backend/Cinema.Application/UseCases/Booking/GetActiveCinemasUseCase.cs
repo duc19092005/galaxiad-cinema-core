@@ -1,10 +1,12 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
+
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -31,7 +33,7 @@ public class GetActiveCinemasUseCase
         {
             IsSuccess = true,
             Data = list,
-            Message = "Láº¥y danh sÃ¡ch ráº¡p thÃ nh cÃ´ng"
+            Message = Messages.Catalog.GetCinemasSuccess
         };
     }
 }

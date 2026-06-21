@@ -12,8 +12,8 @@ interface LanguageOption {
 }
 
 const LANGUAGES: LanguageOption[] = [
-  { code: 'vi', label: 'VI', flag: '🇻🇳', name: 'Tiếng Việt' },
   { code: 'en', label: 'EN', flag: '🇬🇧', name: 'English' },
+  { code: 'vi', label: 'VI', flag: '🇻🇳', name: 'Tiếng Việt' },
   { code: 'ru', label: 'RU', flag: '🇷🇺', name: 'Русский' },
 ];
 

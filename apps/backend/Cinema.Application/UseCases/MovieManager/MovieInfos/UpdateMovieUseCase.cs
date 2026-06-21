@@ -71,7 +71,7 @@ public class UpdateMovieUseCase
 
                 if (hasSuccessfulBooking)
                 {
-                    throw new BadRequestException("Không thể sửa phim khi đã có khách hàng đặt vé thành công.", "E03");
+                    throw new BadRequestException("Cannot edit movie when there are active showtimes or bookings.", "E03");
                 }
 
                 if (!string.IsNullOrEmpty(request.MovieName))

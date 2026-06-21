@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,6 +6,8 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Domain.Utils;
+
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -87,7 +89,7 @@ public class GetAdvancedSearchSchedulesUseCase
         {
             IsSuccess = true,
             Data = result,
-            Message = "Lá»c danh sÃ¡ch phim vÃ  lá»‹ch chiáº¿u thÃ nh cÃ´ng"
+            Message = Messages.Catalog.FilterSchedulesSuccess
         };
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
@@ -36,12 +36,12 @@ public class UpdateDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("KhÃ´ng tÃ¬m tháº¥y phÃ²ng ban.", 404, "DEPT_ERR");
+            throw new AppException("Department not found.", 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n sá»­a phÃ²ng ban nÃ y.", 403, "DEPT_ERR");
+            throw new AppException("You do not have permission to modify this department.", 403, "DEPT_ERR");
 
-        // 1. Kiá»ƒm tra tÃ­nh duy nháº¥t cá»§a tÃªn náº¿u Ä‘á»•i tÃªn hoáº·c kÃ­ch hoáº¡t láº¡i phÃ²ng ban
+        // 1. Check uniqueness of the name if renaming or reactivating the department
         bool nameChanging = request.DepartmentName != null && request.DepartmentName != department.DepartmentName;
         bool activating = request.IsActive == true && !department.IsActive;
 
@@ -50,7 +50,7 @@ public class UpdateDepartmentUseCase
             string targetName = request.DepartmentName ?? department.DepartmentName;
             var exists = await _departmentRepository.DepartmentExistsExcludeAsync(department.CinemaId, targetName, departmentId);
             if (exists)
-                throw new AppException($"PhÃ²ng ban '{targetName}' Ä‘Ã£ tá»“n táº¡i trong ráº¡p nÃ y.", 400, "DEPT_ERR");
+                throw new AppException($"Department '{targetName}' already exists in this cinema.", 400, "DEPT_ERR");
         }
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -87,14 +87,14 @@ public class UpdateDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Cáº­p nháº­t phÃ²ng ban thÃ nh cÃ´ng."
+                Message = "Department updated successfully."
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Lá»—i khi cáº­p nháº­t phÃ²ng ban: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException($"Error updating department: {ex.Message}", 500, "DEPT_ERR");
         }
     }
 }

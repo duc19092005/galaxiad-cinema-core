@@ -38,7 +38,8 @@ public class LocalizationMiddleware
             if (httpContext.Response.ContentType?.Contains("application/json") == true && !httpContext.Response.HasStarted)
             {
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
+                using var reader = new StreamReader(memoryStream, Encoding.UTF8);
+                var responseBody = await reader.ReadToEndAsync();
 
                 if (!string.IsNullOrEmpty(responseBody))
                 {
@@ -49,8 +50,10 @@ public class LocalizationMiddleware
 
                         httpContext.Response.Body = originalBodyStream;
                         
-                        // Let the framework handle Content-Length or chunking
-                        await httpContext.Response.WriteAsync(translatedBody, Encoding.UTF8);
+                        // Fix content-length mismatch which causes browser protocol/parsing errors
+                        httpContext.Response.ContentLength = bytes.Length;
+                        
+                        await originalBodyStream.WriteAsync(bytes, 0, bytes.Length);
                         return;
                     }
                     catch

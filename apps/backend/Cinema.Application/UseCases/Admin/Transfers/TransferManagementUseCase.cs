@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
@@ -31,7 +31,7 @@ public class TransferManagementUseCase
         {
             if (!request.ItemId.HasValue && !request.SourceUserId.HasValue)
             {
-                throw new BadRequestException("Cáº§n cung cáº¥p ItemId hoáº·c SourceUserId Ä‘á»ƒ phÃ¢n quyá»n.", "MGT01");
+                throw new BadRequestException("Must provide ItemId or SourceUserId for authorization.", "MGT01");
             }
 
             if (request.TransferType == TransferTypeEnum.Facilities)
@@ -60,15 +60,14 @@ public class TransferManagementUseCase
             {
                 IsSuccess = true,
                 Data = null,
-                Message = $"ÄÃ£ chuyá»ƒn quyá»n quáº£n lÃ½ {request.TransferType} thÃ nh cÃ´ng."
+                Message = $"Transferred management right of '{request.TransferType}' successfully."
             };
         }
         catch (Exception e)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(e, "Lá»—i khi chuyá»ƒn quyá»n quáº£n lÃ½.");
+            _logger.LogError(e, "Error transferring management authority.");
             throw CustomSystemException.SystemExceptionCaller();
         }
     }
 }
-
