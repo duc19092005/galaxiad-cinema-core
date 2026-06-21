@@ -15,12 +15,15 @@ using Cinema.Domain.Enums;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Booking;
 
 public class CreateBookingUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IBookingOrderRepository _orderRepository;
+    private readonly IBookingPricingRepository _pricingRepository;
     private readonly IUserContextService _userContextService;
     private readonly IVnPayService _vnPayService;
     private readonly IConfiguration _configuration;
@@ -28,14 +31,18 @@ public class CreateBookingUseCase
     private readonly CalculatePricingPromotionUseCase _calculatePricingPromotionUseCase;
 
     public CreateBookingUseCase(
-        IBookingRepository repository,
+        IBookingOrderRepository orderRepository,
+        IBookingPricingRepository pricingRepository,
         IUserContextService userContextService,
         IVnPayService vnPayService,
         IConfiguration configuration,
         ILogger<CreateBookingUseCase> logger,
-        CalculatePricingPromotionUseCase calculatePricingPromotionUseCase)
+        CalculatePricingPromotionUseCase calculatePricingPromotionUseCase,
+        IUnitOfWork unitOfWork)
     {
-        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _orderRepository = orderRepository;
+        _pricingRepository = pricingRepository;
         _userContextService = userContextService;
         _vnPayService = vnPayService;
         _configuration = configuration;
@@ -45,7 +52,7 @@ public class CreateBookingUseCase
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
     {
-        await using var transaction = await _repository.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var userId = _userContextService.TryGetUserId();
@@ -61,10 +68,10 @@ public class CreateBookingUseCase
                 // Fallback: Tìm kiếm nhân viên đang có ca làm hoạt động tại rạp của quầy này
                 if (!orderStaffId.HasValue && userId.HasValue)
                 {
-                    var dept = await _repository.GetDepartmentBySharedUserIdAsync(userId.Value);
+                    var dept = await _orderRepository.GetDepartmentBySharedUserIdAsync(userId.Value);
                     if (dept != null)
                     {
-                        var activeLog = await _repository.GetActiveStaffLoggerAsync(dept.CinemaId);
+                        var activeLog = await _orderRepository.GetActiveStaffLoggerAsync(dept.CinemaId);
                         if (activeLog != null)
                         {
                             orderStaffId = activeLog.StaffId;
@@ -74,7 +81,7 @@ public class CreateBookingUseCase
 
                 if (!string.IsNullOrEmpty(request.CustomerEmail))
                 {
-                    var customer = await _repository.FindUserByEmailAsync(request.CustomerEmail);
+                    var customer = await _orderRepository.FindUserByEmailAsync(request.CustomerEmail);
                     if (customer != null)
                     {
                         orderUserId = customer.UserId;
@@ -87,7 +94,7 @@ public class CreateBookingUseCase
             }
 
             // Validate schedule
-            var schedule = await _repository.GetScheduleByIdAsync(request.ScheduleId);
+            var schedule = await _orderRepository.GetScheduleByIdAsync(request.ScheduleId);
             if (schedule == null || schedule.MovieInfoEntity == null || !schedule.MovieInfoEntity.IsActive)
             {
                 throw new BadRequestException(Messages.Booking.ScheduleNotFoundOrInactive, "BK01");
@@ -102,14 +109,14 @@ public class CreateBookingUseCase
             var segmentIds = request.SeatSelections.Select(s => s.UserSegmentId).Distinct().ToList();
 
             // Validate seats belong to the auditorium
-            var validSeats = await _repository.GetValidSeatsAsync(schedule.AuditoriumId, seatIds);
+            var validSeats = await _orderRepository.GetValidSeatsAsync(schedule.AuditoriumId, seatIds);
             if (validSeats.Count != seatIds.Count)
             {
                 throw new BadRequestException(Messages.Booking.InvalidSeats, "BK03");
             }
 
             // Validate all segment IDs exist
-            var validSegments = await _repository.GetSegmentsAsync(true);
+            var validSegments = await _pricingRepository.GetSegmentsAsync(true);
             var validSegmentIds = new HashSet<Guid>(validSegments.Select(seg => seg.UserSegmentId));
             if (!segmentIds.All(id => validSegmentIds.Contains(id)))
             {
@@ -117,7 +124,7 @@ public class CreateBookingUseCase
             }
 
             // Check seats aren't already booked
-            var alreadyBooked = await _repository.GetAlreadyBookedSeatsAsync(request.ScheduleId, seatIds);
+            var alreadyBooked = await _orderRepository.GetAlreadyBookedSeatsAsync(request.ScheduleId, seatIds);
             if (alreadyBooked.Any())
             {
                 throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
@@ -128,7 +135,7 @@ public class CreateBookingUseCase
             var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
             var formatId = schedule.MovieFormatId;
 
-            var surcharges = await _repository.GetCinemaSurchargesAsync(cinemaId ?? Guid.Empty, formatId);
+            var surcharges = await _pricingRepository.GetCinemaSurchargesAsync(cinemaId ?? Guid.Empty, formatId);
 
             decimal totalPrice = 0;
             var orderDetails = new List<OrderDetailsInfo>();
@@ -170,7 +177,7 @@ public class CreateBookingUseCase
             decimal roleDiscountPercent = 0;
             if (orderUserId.HasValue)
             {
-                var customerProfile = await _repository.GetCustomerProfileAsync(orderUserId.Value);
+                var customerProfile = await _orderRepository.GetCustomerProfileAsync(orderUserId.Value);
                 if (customerProfile != null && customerProfile.UserSegmentsInfoEntity != null)
                 {
                     var segmentName = customerProfile.UserSegmentsInfoEntity.UserSegmentName;
@@ -202,7 +209,7 @@ public class CreateBookingUseCase
                     throw new BadRequestException("Guests cannot apply vouchers.", "BK07");
                 }
 
-                var userVoucher = await _repository.GetUserVoucherAsync(request.VoucherId.Value, orderUserId.Value);
+                var userVoucher = await _orderRepository.GetUserVoucherAsync(request.VoucherId.Value, orderUserId.Value);
                 if (userVoucher == null)
                 {
                     throw new BadRequestException("Voucher is invalid or has already been used.", "BK08");
@@ -238,7 +245,7 @@ public class CreateBookingUseCase
 
             if (orderUserId.HasValue)
             {
-                var user = await _repository.FindUserByIdAsync(orderUserId.Value);
+                var user = await _orderRepository.FindUserByIdAsync(orderUserId.Value);
                 finalCustomerName = user?.UserName;
                 finalCustomerEmail = user?.UserEmail;
             }
@@ -282,9 +289,9 @@ public class CreateBookingUseCase
                 VoucherId = request.VoucherId
             };
 
-            await _repository.AddOrderAsync(order);
-            await _repository.AddOrderDetailsRangeAsync(orderDetails);
-            await _repository.SaveChangesAsync();
+            await _orderRepository.AddOrderAsync(order);
+            await _orderRepository.AddOrderDetailsRangeAsync(orderDetails);
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             var paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);

@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetGenresUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingCatalogRepository _repository;
 
-    public GetGenresUseCase(IBookingRepository repository)
+    public GetGenresUseCase(IBookingCatalogRepository repository)
     {
         _repository = repository;
     }

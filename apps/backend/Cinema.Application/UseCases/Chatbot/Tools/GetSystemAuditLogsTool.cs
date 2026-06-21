@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Chatbot.Tools;
 
 public class GetSystemAuditLogsTool : IChatTool
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminAuditLogRepository _adminRepository;
 
-    public GetSystemAuditLogsTool(IAdminRepository adminRepository)
+    public GetSystemAuditLogsTool(IAdminAuditLogRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

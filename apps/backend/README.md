@@ -144,12 +144,10 @@ Cinema.Application/
 └── Validators/         # Input validators
 
 Cinema.Infrastructure/
-├── BackgroundJobs/     # Hangfire jobs, MovieStatusSync, AiEmbedding services
-├── Identity/           # BCryptPasswordHasher, JwtService, UserContextService
-├── Persistence/        # CinemaDbContext, Migrations, SeedData
-├── Repositories/       # EF Core Repository implementations
-├── Services/           # VNPay, Cloudinary, Redis, DeepSeek AI, SSE, AuditLog
-└── Utils/              # Infrastructure-level helpers
+|-- BackgroundJobs/     # Runtime jobs grouped by feature: Bookings, Movies, Recommendations, Tracking
+|-- ExternalServices/   # VNPay, Cloudinary, Redis, DeepSeek AI, SSE, AuditLog, Hangfire integrations
+|-- Identity/           # BCryptPasswordHasher, JwtService, UserContextService
+`-- Persistence/        # CinemaDbContext, Migrations, SeedData, RelationshipKeys, EF repositories
 
 Cinema.Api/
 ├── Bootstraps/         # DI composition root (by module)

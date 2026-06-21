@@ -5,16 +5,20 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class RegisterShiftUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffRepository _repository;
     private readonly IRedisLockService _redisLockService;
 
-    public RegisterShiftUseCase(IStaffRepository repository, IRedisLockService redisLockService)
+    public RegisterShiftUseCase(IStaffRepository repository, IRedisLockService redisLockService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _redisLockService = redisLockService;
     }
@@ -134,7 +138,7 @@ public class RegisterShiftUseCase
 
         if (successDates.Count > 0)
         {
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
         }
 
         var message = "";

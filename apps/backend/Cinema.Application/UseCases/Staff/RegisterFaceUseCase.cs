@@ -6,16 +6,20 @@ using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Utils;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class RegisterFaceUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
 
-    public RegisterFaceUseCase(IStaffRepository repository, IConfiguration configuration)
+    public RegisterFaceUseCase(IStaffRepository repository, IConfiguration configuration,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
     }
@@ -75,7 +79,7 @@ public class RegisterFaceUseCase
 
         // 4. Lưu vào StaffProfileEntity
         staffProfile.FaceVector = encryptedVector;
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

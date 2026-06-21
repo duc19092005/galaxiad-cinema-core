@@ -13,9 +13,9 @@ public interface IAdminReadScheduleBehavior
 }
 public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminScheduleJobRepository _adminRepository;
 
-    public AdminReadScheduleUseCase(IAdminRepository adminRepository)
+    public AdminReadScheduleUseCase(IAdminScheduleJobRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

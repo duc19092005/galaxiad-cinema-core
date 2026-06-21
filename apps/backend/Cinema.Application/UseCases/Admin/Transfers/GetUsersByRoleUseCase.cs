@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Admin.Transfers;
 
 public class GetUsersByRoleUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminTransferRepository _adminRepository;
 
-    public GetUsersByRoleUseCase(IAdminRepository adminRepository)
+    public GetUsersByRoleUseCase(IAdminTransferRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

@@ -13,11 +13,13 @@ using Cinema.Domain.Enums;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 
 public class UpdateMovieScheduleUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMovieScheduleRepository _repository;
     private readonly ILogger<UpdateMovieScheduleUseCase> _logger;
     private readonly IUserContextService _userContextService;
@@ -31,8 +33,10 @@ public class UpdateMovieScheduleUseCase
         IUserContextService userContextService,
         TheaterManagerValidate theaterManagerValidate,
         IAuditLogService auditLogService,
-        IBackgroundJobScheduler jobScheduler)
+        IBackgroundJobScheduler jobScheduler,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _logger = logger;
         _userContextService = userContextService;
@@ -71,7 +75,7 @@ public class UpdateMovieScheduleUseCase
             throw new BadRequestException(Messages.Schedule.ScheduleListCannotBeEmpty, "E01");
         }
 
-        await using var transactions = await _repository.BeginTransactionAsync();
+        await using var transactions = await _unitOfWork.BeginTransactionAsync();
 
         try
         {
@@ -204,7 +208,7 @@ public class UpdateMovieScheduleUseCase
                 $"Updated {request.Slots.Count} movie schedule(s).",
                 cinemaId);
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             foreach (var slot in request.Slots)

@@ -13,10 +13,10 @@ namespace Cinema.Application.UseCases.Chatbot.Tools;
 
 public class GetMyBookingsTool : IChatTool
 {
-    private readonly IBookingRepository _repo;
+    private readonly IUserBookingRepository _repo;
     private readonly IUserContextService _userContextService;
 
-    public GetMyBookingsTool(IBookingRepository repo, IUserContextService userContextService)
+    public GetMyBookingsTool(IUserBookingRepository repo, IUserContextService userContextService)
     {
         _repo = repo;
         _userContextService = userContextService;

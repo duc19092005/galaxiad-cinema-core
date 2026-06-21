@@ -7,11 +7,13 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class UpdatePricingPromotionUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IPricingPromotionRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly GetPricingPromotionByIdUseCase _getPricingPromotionByIdUseCase;
@@ -19,8 +21,10 @@ public class UpdatePricingPromotionUseCase
     public UpdatePricingPromotionUseCase(
         IPricingPromotionRepository repository,
         IUserContextService userContextService,
-        GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase)
+        GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _getPricingPromotionByIdUseCase = getPricingPromotionByIdUseCase;
@@ -53,7 +57,7 @@ public class UpdatePricingPromotionUseCase
         promotion.Rules = dto.Rules.Select(PricingPromotionHelper.BuildRule).ToList();
 
         _repository.UpdatePromotion(promotion);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return await _getPricingPromotionByIdUseCase.ExecuteAsync(id);
     }
 

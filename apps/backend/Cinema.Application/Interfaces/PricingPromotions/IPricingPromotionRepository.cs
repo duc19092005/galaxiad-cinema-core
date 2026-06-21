@@ -20,7 +20,6 @@ public interface IPricingPromotionRepository
     void UpdatePromotion(PricingPromotionEntity promotion);
     void RemovePromotionRulesRange(IEnumerable<PricingPromotionRuleEntity> rules);
     void RemovePromotion(PricingPromotionEntity promotion);
-    Task SaveChangesAsync();
     
     // Options
     Task<List<MovieFormatInfoEntity>> GetMovieFormatsAsync();

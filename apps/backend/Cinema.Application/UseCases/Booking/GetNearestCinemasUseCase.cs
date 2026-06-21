@@ -10,9 +10,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetNearestCinemasUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingCatalogRepository _repository;
 
-    public GetNearestCinemasUseCase(IBookingRepository repository)
+    public GetNearestCinemasUseCase(IBookingCatalogRepository repository)
     {
         _repository = repository;
     }

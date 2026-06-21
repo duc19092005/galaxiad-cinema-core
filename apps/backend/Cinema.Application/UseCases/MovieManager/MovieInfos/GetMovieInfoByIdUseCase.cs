@@ -8,11 +8,11 @@ namespace Cinema.Application.UseCases.MovieManager.MovieInfos;
 
 public class GetMovieInfoByIdUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly IUserContextService _userContextService;
 
     public GetMovieInfoByIdUseCase(
-        IAdminRepository adminRepository, 
+        IAdminMovieManagementRepository adminRepository, 
         IUserContextService userContextService)
     {
         _adminRepository = adminRepository;

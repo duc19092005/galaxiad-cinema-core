@@ -11,11 +11,13 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
 
 public class UpdateCinemaUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICinemaRepository _repository;
     private readonly ILogger<UpdateCinemaUseCase> _logger;
     private readonly IUserContextService _userContext;
@@ -25,8 +27,10 @@ public class UpdateCinemaUseCase
         ICinemaRepository repository,
         ILogger<UpdateCinemaUseCase> logger,
         IUserContextService userContext,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _logger = logger;
         _userContext = userContext;
@@ -104,7 +108,7 @@ public class UpdateCinemaUseCase
                 $"Updated cinema {findCinema.CinemaName}.",
                 findCinema.CinemaId);
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

@@ -19,7 +19,7 @@ public class CreateMovieUseCase
     private readonly IUserContextService _userContextService;
     private readonly ILogger<CreateMovieUseCase> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly IImageStorageService _imageStorageService;
     private readonly IAuditLogService _auditLogService;
     private readonly IBackgroundJobScheduler _jobScheduler;
@@ -29,7 +29,7 @@ public class CreateMovieUseCase
         IUserContextService userContextService, 
         ILogger<CreateMovieUseCase> logger, 
         IUnitOfWork unitOfWork,
-        IAdminRepository adminRepository,
+        IAdminMovieManagementRepository adminRepository,
         IImageStorageService imageStorageService, 
         IAuditLogService auditLogService,
         IBackgroundJobScheduler jobScheduler,
@@ -161,7 +161,7 @@ public class CreateMovieUseCase
                 $"Created movie {request.MovieName}.",
                 request.CinemaIds.FirstOrDefault());
             
-            await _adminRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
 
             // Enqueue job registration to background AFTER transaction is committed

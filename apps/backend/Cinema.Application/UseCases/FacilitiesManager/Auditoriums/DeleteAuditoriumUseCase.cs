@@ -5,11 +5,13 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Auditoriums;
 
 public class DeleteAuditoriumUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditoriumRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly IAuditLogService _auditLogService;
@@ -17,8 +19,10 @@ public class DeleteAuditoriumUseCase
     public DeleteAuditoriumUseCase(
         IAuditoriumRepository repository,
         IUserContextService userContextService,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _auditLogService = auditLogService;
@@ -67,7 +71,7 @@ public class DeleteAuditoriumUseCase
                 $"Soft deleted auditorium {findAuditorium.AuditoriumNumber} with {schedules.Count} schedules.",
                 findAuditorium.CinemaId);
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

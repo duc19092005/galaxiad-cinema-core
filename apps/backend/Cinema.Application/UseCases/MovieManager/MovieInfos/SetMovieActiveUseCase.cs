@@ -1,20 +1,24 @@
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Microsoft.Extensions.Logging;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.MovieManager.MovieInfos;
 
 public class SetMovieActiveUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly ILogger<SetMovieActiveUseCase> _logger;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
 
     public SetMovieActiveUseCase(
-        IAdminRepository adminRepository,
+        IAdminMovieManagementRepository adminRepository,
         ILogger<SetMovieActiveUseCase> logger,
-        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
+        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _adminRepository = adminRepository;
         _logger = logger;
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
@@ -34,7 +38,7 @@ public class SetMovieActiveUseCase
                 findMovie.IsCommingSoon = false;
                 findMovie.IsActive = true;
                 _adminRepository.UpdateMovie(findMovie);
-                await _adminRepository.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 await _aiMovieEmbeddingSyncService.SyncMovieAsync(movieId);
             }
             catch (Exception e)

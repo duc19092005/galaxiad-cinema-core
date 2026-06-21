@@ -2,15 +2,19 @@ using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class CancelPendingRegistrationUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffShiftRepository _repository;
 
-    public CancelPendingRegistrationUseCase(IStaffShiftRepository repository)
+    public CancelPendingRegistrationUseCase(IStaffShiftRepository repository,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -28,7 +32,7 @@ public class CancelPendingRegistrationUseCase
         }
 
         await _repository.RemoveRegistrationAsync(registration);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "Hủy yêu cầu đăng ký ca làm thành công." };
     }

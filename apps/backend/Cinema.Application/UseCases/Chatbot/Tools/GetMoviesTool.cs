@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Chatbot.Tools;
 
 public class GetMoviesTool : IChatTool
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminMovieManagementRepository _adminRepository;
 
-    public GetMoviesTool(IAdminRepository adminRepository)
+    public GetMoviesTool(IAdminMovieManagementRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

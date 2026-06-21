@@ -7,11 +7,13 @@ using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
 
 public class ChangePasswordUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IIdentityAccessRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly ILogger<ChangePasswordUseCase> _logger;
@@ -21,8 +23,10 @@ public class ChangePasswordUseCase
         IIdentityAccessRepository repository,
         IUserContextService userContextService,
         ILogger<ChangePasswordUseCase> logger,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _logger = logger;
@@ -53,7 +57,7 @@ public class ChangePasswordUseCase
 
             var newPassword = _passwordHasher.Hash(request.NewPassword!);
             findUser.Password = newPassword;
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

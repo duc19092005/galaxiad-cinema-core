@@ -8,11 +8,11 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetUserBookingHistoryUseCase
 {
-    private readonly IBookingRepository _repo;
+    private readonly IUserBookingRepository _repo;
     private readonly IUserContextService _userContextService;
 
     public GetUserBookingHistoryUseCase(
-        IBookingRepository repo,
+        IUserBookingRepository repo,
         IUserContextService userContextService)
     {
         _repo = repo;

@@ -12,13 +12,13 @@ namespace Cinema.Application.UseCases.Admin.Transfers;
 
 public class TransferManagementUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminAccessScopeRepository _scopeRepository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<TransferManagementUseCase> _logger;
 
-    public TransferManagementUseCase(IAdminRepository adminRepository, IUnitOfWork unitOfWork, ILogger<TransferManagementUseCase> logger)
+    public TransferManagementUseCase(IAdminAccessScopeRepository scopeRepository, IUnitOfWork unitOfWork, ILogger<TransferManagementUseCase> logger)
     {
-        _adminRepository = adminRepository;
+        _scopeRepository = scopeRepository;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -35,24 +35,24 @@ public class TransferManagementUseCase
 
             if (request.TransferType == TransferTypeEnum.Facilities)
             {
-                var cinemas = await _adminRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, true);
+                var cinemas = await _scopeRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, true);
                 foreach (var cinema in cinemas)
                     cinema.FacilitiesManagerId = request.TargetUserId;
             }
             else if (request.TransferType == TransferTypeEnum.Theater)
             {
-                var cinemas = await _adminRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, false);
+                var cinemas = await _scopeRepository.GetCinemasByManagerOrIdAsync(request.SourceUserId, request.ItemId, false);
                 foreach (var cinema in cinemas)
                     cinema.TheaterManagerId = request.TargetUserId;
             }
             else
             {
-                var movies = await _adminRepository.GetMoviesByManagerOrIdAsync(request.SourceUserId, request.ItemId);
+                var movies = await _scopeRepository.GetMoviesByManagerOrIdAsync(request.SourceUserId, request.ItemId);
                 foreach (var movie in movies)
                     movie.MovieManagerId = request.TargetUserId;
             }
 
-            await _adminRepository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new BaseResponse<string>

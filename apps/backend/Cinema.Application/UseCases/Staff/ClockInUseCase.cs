@@ -12,17 +12,21 @@ using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class ClockInUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly IJwtService _jwtService;
 
-    public ClockInUseCase(IStaffRepository repository, IConfiguration configuration, IJwtService jwtService)
+    public ClockInUseCase(IStaffRepository repository, IConfiguration configuration, IJwtService jwtService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
         _jwtService = jwtService;
@@ -158,7 +162,7 @@ public class ClockInUseCase
         };
 
         await _repository.AddWorkingLogAsync(workingLog);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         // 7. Sinh JWT mới mang danh tính riêng của nhân viên vừa vào ca
         var userRoles = (await _repository.GetUserRoleNamesAsync(dto.StaffId)).ToArray();

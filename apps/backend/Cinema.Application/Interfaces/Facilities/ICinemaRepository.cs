@@ -21,5 +21,4 @@ public interface ICinemaRepository
     Task<List<MovieScheduleInfoEntity>> GetActiveSchedulesByAuditoriumIdAsync(Guid auditoriumId);
     Task CancelPendingOrdersForScheduleAsync(Guid scheduleId);
     Task AddCinemaAsync(CinemaInfoEntity cinema);
-    Task SaveChangesAsync();
 }

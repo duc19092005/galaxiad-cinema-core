@@ -10,9 +10,9 @@ namespace Cinema.Application.UseCases.Chatbot.Tools;
 
 public class GetCinemaStatisticsTool : IChatTool
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminDashboardRepository _adminRepository;
 
-    public GetCinemaStatisticsTool(IAdminRepository adminRepository)
+    public GetCinemaStatisticsTool(IAdminDashboardRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

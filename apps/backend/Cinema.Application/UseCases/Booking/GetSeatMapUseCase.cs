@@ -12,9 +12,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetSeatMapUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly ISeatMapRepository _repository;
 
-    public GetSeatMapUseCase(IBookingRepository repository)
+    public GetSeatMapUseCase(ISeatMapRepository repository)
     {
         _repository = repository;
     }

@@ -8,16 +8,20 @@ using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
 public class CalculatePayrollUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IShiftManagerRepository _repository;
     private readonly ISseNotificationService _sseNotificationService;
 
-    public CalculatePayrollUseCase(IShiftManagerRepository repository, ISseNotificationService sseNotificationService)
+    public CalculatePayrollUseCase(IShiftManagerRepository repository, ISseNotificationService sseNotificationService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _sseNotificationService = sseNotificationService;
     }
@@ -68,7 +72,7 @@ public class CalculatePayrollUseCase
             log.SalaryTotalLoggerId = payrollId;
         }
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         // Map sang DTO kết quả
         var result = new ResPayrollDto
@@ -124,7 +128,7 @@ public class CalculatePayrollUseCase
         payroll.PaidByUserId = managerUserId;
         payroll.ReceivedDay = DateTime.UtcNow;
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             payroll.StaffId,

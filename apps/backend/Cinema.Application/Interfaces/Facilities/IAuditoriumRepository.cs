@@ -25,5 +25,4 @@ public interface IAuditoriumRepository
     Task<bool> HasAnyBookingForAuditoriumSeatsAsync(Guid auditoriumId);
     Task<List<MovieScheduleInfoEntity>> GetActiveSchedulesByAuditoriumIdAsync(Guid auditoriumId);
     Task CancelPendingOrdersForScheduleAsync(Guid scheduleId);
-    Task SaveChangesAsync();
 }

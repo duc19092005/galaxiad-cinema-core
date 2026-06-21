@@ -4,6 +4,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -12,6 +13,7 @@ namespace Cinema.Application.UseCases.TheaterManager;
 /// </summary>
 public class CreateShiftTemplateUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IShiftManagerRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly ILogger<CreateShiftTemplateUseCase> _logger;
@@ -19,8 +21,10 @@ public class CreateShiftTemplateUseCase
     public CreateShiftTemplateUseCase(
         IShiftManagerRepository repository,
         IUserContextService userContextService,
-        ILogger<CreateShiftTemplateUseCase> logger)
+        ILogger<CreateShiftTemplateUseCase> logger,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _logger = logger;
@@ -57,7 +61,7 @@ public class CreateShiftTemplateUseCase
         };
 
         await _repository.AddShiftTemplateAsync(newTemplate);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<CinemaShiftTemplateEntity>
         {
@@ -170,13 +174,16 @@ public class GetStaffProfilesUseCase
 /// </summary>
 public class UpdateStaffProfileUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IShiftManagerRepository _repository;
     private readonly IUserContextService _userContextService;
 
     public UpdateStaffProfileUseCase(
         IShiftManagerRepository repository,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
     }
@@ -206,7 +213,7 @@ public class UpdateStaffProfileUseCase
         }
 
         await _repository.UpdateStaffProfileAsync(staff, dto);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

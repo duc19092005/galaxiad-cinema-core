@@ -13,7 +13,12 @@ public static class AdminBootstrap
 {
     public static IServiceCollection AddAdminBootstrap(this IServiceCollection services)
     {
-        services.AddScoped<IAdminRepository, AdminRepository>();
+        services.AddScoped<IAdminScheduleJobRepository, AdminScheduleJobRepository>();
+        services.AddScoped<IAdminAccessScopeRepository, AdminAccessScopeRepository>();
+        services.AddScoped<IAdminAuditLogRepository, AdminAuditLogRepository>();
+        services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
+        services.AddScoped<IAdminTransferRepository, AdminTransferRepository>();
+        services.AddScoped<IAdminMovieManagementRepository, AdminMovieManagementRepository>();
 
         // Schedule Jobs
         services.AddScoped<IAdminReadScheduleBehavior, AdminReadScheduleUseCase>();

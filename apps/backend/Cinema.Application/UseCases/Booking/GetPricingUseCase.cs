@@ -14,12 +14,12 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetPricingUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingPricingRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly CalculatePricingPromotionUseCase _calculatePricingPromotionUseCase;
 
     public GetPricingUseCase(
-        IBookingRepository repository,
+        IBookingPricingRepository repository,
         IUserContextService userContextService,
         CalculatePricingPromotionUseCase calculatePricingPromotionUseCase)
     {

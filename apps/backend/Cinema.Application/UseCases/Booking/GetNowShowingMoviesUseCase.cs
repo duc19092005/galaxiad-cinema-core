@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetNowShowingMoviesUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingCatalogRepository _repository;
 
-    public GetNowShowingMoviesUseCase(IBookingRepository repository)
+    public GetNowShowingMoviesUseCase(IBookingCatalogRepository repository)
     {
         _repository = repository;
     }

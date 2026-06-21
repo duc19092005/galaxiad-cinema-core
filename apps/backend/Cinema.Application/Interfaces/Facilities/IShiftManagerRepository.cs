@@ -13,7 +13,6 @@ public interface IShiftManagerRepository
     Task<bool> IsManagerOfCinemaAsync(Guid cinemaId, Guid userId);
     Task AddShiftTemplateAsync(CinemaShiftTemplateEntity template);
     Task<List<ResShiftTemplateDto>> GetShiftTemplatesAsync(Guid cinemaId);
-    Task SaveChangesAsync();
 
     // Shift Registrations
     Task<List<ResStaffShiftRegistrationDto>> GetShiftRegistrationsAsync(Guid cinemaId, string? status);

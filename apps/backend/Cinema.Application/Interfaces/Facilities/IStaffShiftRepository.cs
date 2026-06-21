@@ -16,5 +16,4 @@ public interface IStaffShiftRepository
     Task<List<StaffShiftRegistrationEntity>> GetPendingRegistrationsByIdsAsync(List<Guid> ids, Guid staffId);
     Task<List<StaffWorkingLoggerEntity>> GetMyWorkingHistoryAsync(Guid staffId);
     Task<List<ResPayrollDto>> GetMyPayrollAsync(Guid staffId);
-    Task SaveChangesAsync();
 }

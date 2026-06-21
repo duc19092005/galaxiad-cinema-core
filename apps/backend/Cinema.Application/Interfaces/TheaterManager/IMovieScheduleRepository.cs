@@ -5,7 +5,6 @@ using Cinema.Application.Dtos.TheaterManager.Auditoriums.Responses;
 using Cinema.Application.Dtos.TheaterManager.MovieSchedules.Responses;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.Interfaces.TheaterManager;
 
@@ -42,6 +41,4 @@ public interface IMovieScheduleRepository
     void RemoveSchedules(IEnumerable<MovieScheduleInfoEntity> schedules);
     void UpdateSchedule(MovieScheduleInfoEntity schedule);
     Task AddSchedulesAsync(IEnumerable<MovieScheduleInfoEntity> schedules);
-    Task SaveChangesAsync();
-    Task<IUnitOfWorkTransaction> BeginTransactionAsync();
 }

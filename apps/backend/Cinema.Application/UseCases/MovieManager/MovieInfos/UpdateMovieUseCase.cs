@@ -19,7 +19,7 @@ public class UpdateMovieUseCase
     private readonly IUserContextService _userContextService;
     private readonly ILogger<UpdateMovieUseCase> _logger;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly IImageStorageService _imageStorageService;
     private readonly IAuditLogService _auditLogService;
     private readonly IBackgroundJobScheduler _jobScheduler;
@@ -29,7 +29,7 @@ public class UpdateMovieUseCase
         IUserContextService userContextService, 
         ILogger<UpdateMovieUseCase> logger, 
         IUnitOfWork unitOfWork,
-        IAdminRepository adminRepository,
+        IAdminMovieManagementRepository adminRepository,
         IImageStorageService imageStorageService, 
         IAuditLogService auditLogService,
         IBackgroundJobScheduler jobScheduler,
@@ -203,7 +203,7 @@ public class UpdateMovieUseCase
                         .Select(x => (Guid?)x.CinemaId)
                         .FirstOrDefault());
 
-                await _adminRepository.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 await transactions.CommitAsync();
 
                 // Enqueue job update to background AFTER transaction is committed

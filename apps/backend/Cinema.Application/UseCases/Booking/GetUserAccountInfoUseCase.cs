@@ -11,12 +11,12 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetUserAccountInfoUseCase
 {
-    private readonly IBookingRepository _repo;
+    private readonly IUserBookingRepository _repo;
     private readonly IUserContextService _userContextService;
     private readonly IConfiguration _configuration;
 
     public GetUserAccountInfoUseCase(
-        IBookingRepository repo,
+        IUserBookingRepository repo,
         IUserContextService userContextService,
         IConfiguration configuration)
     {

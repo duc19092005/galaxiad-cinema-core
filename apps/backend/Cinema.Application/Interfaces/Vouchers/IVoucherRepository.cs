@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Entities.UserInfos;
-using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.Interfaces.Vouchers;
 
@@ -22,6 +21,4 @@ public interface IVoucherRepository
     Task<UserInfoEntity?> FindUserByIdAsync(Guid userId);
     Task<bool> UserHasRoleAsync(Guid userId, Guid roleId);
     Task AddUserVoucherAsync(UserVoucherEntity userVoucher);
-    Task SaveChangesAsync();
-    Task<IUnitOfWorkTransaction> BeginTransactionAsync();
 }

@@ -3,16 +3,20 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class UpdateVoucherUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IVoucherRepository _repository;
     private readonly GetVoucherByIdUseCase _getVoucherByIdUseCase;
 
-    public UpdateVoucherUseCase(IVoucherRepository repository, GetVoucherByIdUseCase getVoucherByIdUseCase)
+    public UpdateVoucherUseCase(IVoucherRepository repository, GetVoucherByIdUseCase getVoucherByIdUseCase,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _getVoucherByIdUseCase = getVoucherByIdUseCase;
     }
@@ -56,7 +60,7 @@ public class UpdateVoucherUseCase
         voucher.VoucherQuantity = dto.VoucherQuantity;
         voucher.RemainingQuantity = newRemaining;
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return await _getVoucherByIdUseCase.ExecuteAsync(voucher.voucherId);
     }
 }

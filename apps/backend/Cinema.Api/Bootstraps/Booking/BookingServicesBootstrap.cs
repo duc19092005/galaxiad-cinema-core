@@ -15,7 +15,13 @@ public static class BookingServicesBootstrap
     public static IServiceCollection AddBookingServices(this IServiceCollection services)
     {
         // Core Booking infrastructure
-        services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IBookingCatalogRepository, BookingCatalogRepository>();
+        services.AddScoped<IBookingShowtimeRepository, BookingShowtimeRepository>();
+        services.AddScoped<ISeatMapRepository, SeatMapRepository>();
+        services.AddScoped<IBookingPricingRepository, BookingPricingRepository>();
+        services.AddScoped<IBookingOrderRepository, BookingOrderRepository>();
+        services.AddScoped<IUserBookingRepository, UserBookingRepository>();
+        services.AddScoped<IPaymentCallbackRepository, PaymentCallbackRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IPricingPromotionRepository, PricingPromotionRepository>();
         services.AddSingleton<SseConnectionManager>();

@@ -7,11 +7,13 @@ using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
 
 public class UpdateUserProfileUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IIdentityAccessRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly ILogger<UpdateUserProfileUseCase> _logger;
@@ -19,8 +21,10 @@ public class UpdateUserProfileUseCase
     public UpdateUserProfileUseCase(
         IIdentityAccessRepository repository,
         IUserContextService userContextService,
-        ILogger<UpdateUserProfileUseCase> logger)
+        ILogger<UpdateUserProfileUseCase> logger,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _logger = logger;
@@ -66,7 +70,7 @@ public class UpdateUserProfileUseCase
                 profile.IdentityCode = request.IdentityCode;
             }
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

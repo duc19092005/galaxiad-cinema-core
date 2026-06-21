@@ -7,12 +7,17 @@ namespace Cinema.Application.UseCases.Admin.Audit;
 
 public class GetRecentAuditLogsUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminAuditLogRepository _auditLogRepository;
+    private readonly IAdminAccessScopeRepository _scopeRepository;
     private readonly IUserContextService _userContextService;
 
-    public GetRecentAuditLogsUseCase(IAdminRepository adminRepository, IUserContextService userContextService)
+    public GetRecentAuditLogsUseCase(
+        IAdminAuditLogRepository auditLogRepository,
+        IAdminAccessScopeRepository scopeRepository,
+        IUserContextService userContextService)
     {
-        _adminRepository = adminRepository;
+        _auditLogRepository = auditLogRepository;
+        _scopeRepository = scopeRepository;
         _userContextService = userContextService;
     }
 
@@ -31,7 +36,7 @@ public class GetRecentAuditLogsUseCase
         {
             if (isFacilitiesManager || isTheaterManager)
             {
-                cinemaIds = await _adminRepository.GetManagerCinemaIdsAsync(userId, isFacilitiesManager, isTheaterManager);
+                cinemaIds = await _scopeRepository.GetManagerCinemaIdsAsync(userId, isFacilitiesManager, isTheaterManager);
             }
             else if (isMovieManager)
             {
@@ -48,7 +53,7 @@ public class GetRecentAuditLogsUseCase
             }
         }
 
-        var logs = await _adminRepository.GetRecentAuditLogsAsync(take, cinemaIds, movieManagerUserId);
+        var logs = await _auditLogRepository.GetRecentAuditLogsAsync(take, cinemaIds, movieManagerUserId);
 
         return new BaseResponse<List<AuditLogDto>>
         {

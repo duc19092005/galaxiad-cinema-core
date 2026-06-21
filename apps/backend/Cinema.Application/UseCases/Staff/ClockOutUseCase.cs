@@ -5,16 +5,20 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
 public class ClockOutUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
 
-    public ClockOutUseCase(IStaffRepository repository, IConfiguration configuration)
+    public ClockOutUseCase(IStaffRepository repository, IConfiguration configuration,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
     }
@@ -56,7 +60,7 @@ public class ClockOutUseCase
         activeLog.WorkingHour = Math.Round(workingHours, 2);
         activeLog.TotalReceived = Math.Round(activeLog.WorkingHour * activeLog.SalaryPerHour, 2);
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

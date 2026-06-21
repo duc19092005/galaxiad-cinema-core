@@ -31,5 +31,4 @@ public interface IStaffRepository
     Task<bool> UserHasRoleAsync(Guid userId, string roleName);
 
     // Save & Transactions
-    Task SaveChangesAsync();
 }

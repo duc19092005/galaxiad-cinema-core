@@ -11,9 +11,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetAdvancedSearchSchedulesUseCase
 {
-    private readonly IBookingRepository _repository;
+    private readonly IBookingShowtimeRepository _repository;
 
-    public GetAdvancedSearchSchedulesUseCase(IBookingRepository repository)
+    public GetAdvancedSearchSchedulesUseCase(IBookingShowtimeRepository repository)
     {
         _repository = repository;
     }

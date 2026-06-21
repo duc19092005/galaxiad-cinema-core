@@ -10,9 +10,9 @@ namespace Cinema.Application.UseCases.Admin.Transfers;
 
 public class GetManagedItemsUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminTransferRepository _adminRepository;
 
-    public GetManagedItemsUseCase(IAdminRepository adminRepository)
+    public GetManagedItemsUseCase(IAdminTransferRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

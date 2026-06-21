@@ -15,11 +15,13 @@ using Cinema.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
 
 public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegisterDto, string>
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IIdentityAccessRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<IdentityAccessRegularRegisterUseCase> _logger;
@@ -29,8 +31,10 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
         IIdentityAccessRepository repository,
         IConfiguration configuration,
         ILogger<IdentityAccessRegularRegisterUseCase> logger,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
@@ -39,7 +43,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
     
     public async Task<BaseResponse<string>> Add(ReqRegularRegisterDto dto)
     {
-        await using var transaction = await _repository.BeginTransactionAsync();        
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             var validationErrors = new List<string>();
@@ -104,7 +108,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 UserSegmentId = user_segments_constant.MemberStandard
             });
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return new BaseResponse<string>

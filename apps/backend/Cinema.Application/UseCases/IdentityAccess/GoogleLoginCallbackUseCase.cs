@@ -18,11 +18,13 @@ using Cinema.Domain.Enums;
 using Cinema.Domain.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
 
 public class GoogleLoginCallbackUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IIdentityAccessRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleLoginCallbackUseCase> _logger;
@@ -37,8 +39,10 @@ public class GoogleLoginCallbackUseCase
         IConfiguration configuration,
         ILogger<GoogleLoginCallbackUseCase> logger,
         IHttpClientFactory httpClientFactory,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
@@ -48,7 +52,7 @@ public class GoogleLoginCallbackUseCase
 
     public async Task<BaseResponse<ResGoogleLoginDto>> ExecuteAsync(string code, string state)
     {
-        await using var transaction = await _repository.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             string platform = "web";
@@ -119,7 +123,7 @@ public class GoogleLoginCallbackUseCase
                     }
                 }
 
-                await _repository.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 isNewAccount = false;
             }
             else
@@ -172,7 +176,7 @@ public class GoogleLoginCallbackUseCase
                     UserSegmentId = user_segments_constant.MemberStandard
                 });
 
-                await _repository.SaveChangesAsync();
+                await _unitOfWork.SaveChangesAsync();
                 roles = ["Customer"];
             }
 

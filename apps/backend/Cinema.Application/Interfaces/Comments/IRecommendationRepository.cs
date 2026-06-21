@@ -31,5 +31,4 @@ public interface IRecommendationRepository
     Task<List<RecommendedMovieRes>> GetFallbackRecommendationsAsync(HashSet<Guid> excludedMovieIds, int take);
     Task<List<MovieInfoEntity>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken);
     Task<MovieInfoEntity?> GetMovieForEmbeddingAsync(Guid movieId, CancellationToken cancellationToken);
-    Task SaveChangesAsync();
 }

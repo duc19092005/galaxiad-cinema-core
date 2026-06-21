@@ -6,11 +6,13 @@ using Cinema.Domain.Entities.Promotions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Utils;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
 public class CreatePricingPromotionUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IPricingPromotionRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly GetPricingPromotionByIdUseCase _getPricingPromotionByIdUseCase;
@@ -18,8 +20,10 @@ public class CreatePricingPromotionUseCase
     public CreatePricingPromotionUseCase(
         IPricingPromotionRepository repository,
         IUserContextService userContextService,
-        GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase)
+        GetPricingPromotionByIdUseCase getPricingPromotionByIdUseCase,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         _getPricingPromotionByIdUseCase = getPricingPromotionByIdUseCase;
@@ -51,7 +55,7 @@ public class CreatePricingPromotionUseCase
         };
 
         await _repository.AddPromotionAsync(promotion);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         return await _getPricingPromotionByIdUseCase.ExecuteAsync(promotion.PricingPromotionId);
     }
 

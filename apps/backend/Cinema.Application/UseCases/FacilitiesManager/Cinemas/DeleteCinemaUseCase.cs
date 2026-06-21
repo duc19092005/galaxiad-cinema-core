@@ -7,11 +7,13 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
 
 public class DeleteCinemaUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ICinemaRepository _repository;
     private readonly ILogger<DeleteCinemaUseCase> _logger;
     private readonly IUserContextService _userContext;
@@ -21,8 +23,10 @@ public class DeleteCinemaUseCase
         ICinemaRepository repository,
         ILogger<DeleteCinemaUseCase> logger,
         IUserContextService userContext,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _logger = logger;
         _userContext = userContext;
@@ -73,7 +77,7 @@ public class DeleteCinemaUseCase
                 $"Soft deleted cinema {findCinema.CinemaName} with {auditoriums.Count} auditoriums.",
                 itemId);
 
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

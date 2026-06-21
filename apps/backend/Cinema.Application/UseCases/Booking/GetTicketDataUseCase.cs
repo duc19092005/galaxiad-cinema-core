@@ -7,9 +7,9 @@ namespace Cinema.Application.UseCases.Booking;
 
 public class GetTicketDataUseCase
 {
-    private readonly IBookingRepository _repo;
+    private readonly IBookingOrderRepository _repo;
 
-    public GetTicketDataUseCase(IBookingRepository repo)
+    public GetTicketDataUseCase(IBookingOrderRepository repo)
     {
         _repo = repo;
     }

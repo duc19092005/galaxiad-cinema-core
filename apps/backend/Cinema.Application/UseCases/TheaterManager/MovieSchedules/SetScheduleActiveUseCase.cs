@@ -1,17 +1,21 @@
 using Cinema.Application.Interfaces.TheaterManager;
 using Microsoft.Extensions.Logging;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 
 public class SetScheduleActiveUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IMovieScheduleRepository _repository;
     private readonly ILogger<SetScheduleActiveUseCase> _logger;
 
     public SetScheduleActiveUseCase(
         IMovieScheduleRepository repository,
-        ILogger<SetScheduleActiveUseCase> logger)
+        ILogger<SetScheduleActiveUseCase> logger,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _logger = logger;
     }
@@ -29,7 +33,7 @@ public class SetScheduleActiveUseCase
         {
             findSchedule.IsActive = true;
             _repository.UpdateSchedule(findSchedule);
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             _logger.LogInformation("Schedule {ScheduleId} activated (IsActive=true)", scheduleId);
             return true;
         }

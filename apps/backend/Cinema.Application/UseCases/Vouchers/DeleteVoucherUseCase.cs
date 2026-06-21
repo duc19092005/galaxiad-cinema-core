@@ -2,15 +2,19 @@ using System;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class DeleteVoucherUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IVoucherRepository _repository;
 
-    public DeleteVoucherUseCase(IVoucherRepository repository)
+    public DeleteVoucherUseCase(IVoucherRepository repository,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -23,6 +27,6 @@ public class DeleteVoucherUseCase
         }
 
         await _repository.RemoveAsync(voucher);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
     }
 }

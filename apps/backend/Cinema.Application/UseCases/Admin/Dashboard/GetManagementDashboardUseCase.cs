@@ -7,12 +7,17 @@ namespace Cinema.Application.UseCases.Admin.Dashboard;
 
 public class GetManagementDashboardUseCase
 {
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminDashboardRepository _dashboardRepository;
+    private readonly IAdminAccessScopeRepository _scopeRepository;
     private readonly IUserContextService _userContextService;
 
-    public GetManagementDashboardUseCase(IAdminRepository adminRepository, IUserContextService userContextService)
+    public GetManagementDashboardUseCase(
+        IAdminDashboardRepository dashboardRepository,
+        IAdminAccessScopeRepository scopeRepository,
+        IUserContextService userContextService)
     {
-        _adminRepository = adminRepository;
+        _dashboardRepository = dashboardRepository;
+        _scopeRepository = scopeRepository;
         _userContextService = userContextService;
     }
 
@@ -27,7 +32,7 @@ public class GetManagementDashboardUseCase
         List<Guid>? allowedCinemaIds = null;
         if (!isAdmin && (isFacilitiesManager || isTheaterManager))
         {
-            allowedCinemaIds = await _adminRepository.GetManagerCinemaIdsAsync(userId, isFacilitiesManager, isTheaterManager);
+            allowedCinemaIds = await _scopeRepository.GetManagerCinemaIdsAsync(userId, isFacilitiesManager, isTheaterManager);
         }
 
         List<Guid>? movieIds = null;
@@ -35,7 +40,7 @@ public class GetManagementDashboardUseCase
         if (!isAdmin && isMovieManager)
         {
             movieManagerUserId = userId;
-            var managedMovies = await _adminRepository.GetMoviesByManagerOrIdAsync(userId, null);
+            var managedMovies = await _scopeRepository.GetMoviesByManagerOrIdAsync(userId, null);
             movieIds = managedMovies.Select(m => m.MovieId).ToList();
         }
 
@@ -47,24 +52,24 @@ public class GetManagementDashboardUseCase
         var lastSevenDaysStart = TimeZoneInfo.ConvertTimeToUtc(vietnamToday.AddDays(-6), vietnamTimeZone);
 
         var activeUsers = isAdmin && !cinemaId.HasValue
-            ? await _adminRepository.GetActiveUsersCountAsync()
+            ? await _dashboardRepository.GetActiveUsersCountAsync()
             : 0;
 
-        var totalCinemas = await _adminRepository.GetCinemasCountAsync(cinemaId.HasValue ? new List<Guid> { cinemaId.Value } : allowedCinemaIds);
+        var totalCinemas = await _dashboardRepository.GetCinemasCountAsync(cinemaId.HasValue ? new List<Guid> { cinemaId.Value } : allowedCinemaIds);
 
-        var activeMovies = await _adminRepository.GetActiveMoviesCountAsync(movieIds, cinemaId);
+        var activeMovies = await _dashboardRepository.GetActiveMoviesCountAsync(movieIds, cinemaId);
 
-        var activeSchedules = await _adminRepository.GetActiveSchedulesCountAsync(allowedCinemaIds, movieIds, cinemaId);
+        var activeSchedules = await _dashboardRepository.GetActiveSchedulesCountAsync(allowedCinemaIds, movieIds, cinemaId);
 
-        var totalBookings = await _adminRepository.GetPaidOrdersCountAsync(allowedCinemaIds, movieIds, cinemaId);
+        var totalBookings = await _dashboardRepository.GetPaidOrdersCountAsync(allowedCinemaIds, movieIds, cinemaId);
 
-        var monthRevenue = await _adminRepository.GetRevenueAsync(monthStart, tomorrow, allowedCinemaIds, movieIds, cinemaId);
+        var monthRevenue = await _dashboardRepository.GetRevenueAsync(monthStart, tomorrow, allowedCinemaIds, movieIds, cinemaId);
 
-        var (ticketsSoldToday, revenueToday) = await _adminRepository.GetTodayStatsAsync(today, tomorrow, allowedCinemaIds, movieIds, cinemaId);
+        var (ticketsSoldToday, revenueToday) = await _dashboardRepository.GetTodayStatsAsync(today, tomorrow, allowedCinemaIds, movieIds, cinemaId);
 
-        var totalTicketsSold = await _adminRepository.GetTotalTicketsSoldAsync(allowedCinemaIds, movieIds, cinemaId);
+        var totalTicketsSold = await _dashboardRepository.GetTotalTicketsSoldAsync(allowedCinemaIds, movieIds, cinemaId);
 
-        var recentRevenueRows = await _adminRepository.GetDailyRevenueStatsAsync(lastSevenDaysStart, tomorrow, allowedCinemaIds, movieIds, cinemaId);
+        var recentRevenueRows = await _dashboardRepository.GetDailyRevenueStatsAsync(lastSevenDaysStart, tomorrow, allowedCinemaIds, movieIds, cinemaId);
 
         var revenueByDayLookup = recentRevenueRows
             .GroupBy(row => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(row.OrderDate, DateTimeKind.Utc), vietnamTimeZone).Date)
@@ -84,7 +89,7 @@ public class GetManagementDashboardUseCase
                 };
             }).ToList();
 
-        var orderDatesForHourlyStats = await _adminRepository.GetOrderDatesForHourlyStatsAsync(allowedCinemaIds, movieIds, cinemaId);
+        var orderDatesForHourlyStats = await _dashboardRepository.GetOrderDatesForHourlyStatsAsync(allowedCinemaIds, movieIds, cinemaId);
         var ticketsByHour = orderDatesForHourlyStats
             .GroupBy(orderDate => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(orderDate, DateTimeKind.Utc), vietnamTimeZone).Hour)
             .Select(g => new HourlyTicketStatDto { Hour = g.Key, HourLabel = $"{g.Key:00}:00", TicketsSold = g.Count() })
@@ -92,19 +97,19 @@ public class GetManagementDashboardUseCase
 
         var busiestHour = ticketsByHour.OrderByDescending(x => x.TicketsSold).FirstOrDefault();
 
-        var ticketsByMovie = await _adminRepository.GetMovieTicketStatsAsync(allowedCinemaIds, movieIds, cinemaId);
+        var ticketsByMovie = await _dashboardRepository.GetMovieTicketStatsAsync(allowedCinemaIds, movieIds, cinemaId);
 
-        var hotMovies = await _adminRepository.GetHotMoviesAsync(allowedCinemaIds, movieIds, cinemaId);
+        var hotMovies = await _dashboardRepository.GetHotMoviesAsync(allowedCinemaIds, movieIds, cinemaId);
 
-        var recentTransactions = await _adminRepository.GetRecentTransactionsAsync(8, allowedCinemaIds, movieIds, cinemaId);
+        var recentTransactions = await _dashboardRepository.GetRecentTransactionsAsync(8, allowedCinemaIds, movieIds, cinemaId);
 
-        var recentMovies = await _adminRepository.GetRecentMoviesAsync(8, cinemaId, movieManagerUserId);
+        var recentMovies = await _dashboardRepository.GetRecentMoviesAsync(8, cinemaId, movieManagerUserId);
 
-        var recentCinemas = await _adminRepository.GetRecentCinemasAsync(8, cinemaId, allowedCinemaIds);
+        var recentCinemas = await _dashboardRepository.GetRecentCinemasAsync(8, cinemaId, allowedCinemaIds);
 
-        var recentAuditoriums = await _adminRepository.GetRecentAuditoriumsAsync(8, cinemaId, allowedCinemaIds);
+        var recentAuditoriums = await _dashboardRepository.GetRecentAuditoriumsAsync(8, cinemaId, allowedCinemaIds);
 
-        var recentActivities = await _adminRepository.GetRecentAuditLogsForDashboardAsync(10, cinemaId, allowedCinemaIds, movieManagerUserId);
+        var recentActivities = await _dashboardRepository.GetRecentAuditLogsForDashboardAsync(10, cinemaId, allowedCinemaIds, movieManagerUserId);
 
         return new BaseResponse<ManagementDashboardDto>
         {

@@ -16,6 +16,8 @@ using Cinema.Application.UseCases.Comments;
 using Cinema.Application.UseCases.Comments.Recommendation;
 using Cinema.Application.Interfaces.Catalog;
 using Cinema.Application.UseCases.Customer.Catalog;
+using Cinema.Application.Interfaces.Booking;
+using Cinema.Infrastructure.Persistence.Validation;
 
 namespace Cinema.Api.Bootstraps.Common;
 
@@ -48,6 +50,7 @@ public static class CommonServicesBootstrap
  
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped(typeof(IRepository<>), typeof(EfRepository<>));
+        services.AddScoped<IBookingBusinessRuleService, BookingBusinessRuleService>();
         services.AddScoped<IStaffRepository, StaffRepository>();
 
         services.AddSingleton<IConnectionMultiplexer>(sp =>

@@ -4,15 +4,19 @@ using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
 public class RedeemVoucherUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IVoucherRepository _repository;
 
-    public RedeemVoucherUseCase(IVoucherRepository repository)
+    public RedeemVoucherUseCase(IVoucherRepository repository,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -31,7 +35,7 @@ public class RedeemVoucherUseCase
         await ValidateUserRoleAsync(userId, voucher.roleId);
 
         // 2. Perform business logic and persist changes
-        await using var transaction = await _repository.BeginTransactionAsync();
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             // rich domain validations and state updates
@@ -48,7 +52,7 @@ public class RedeemVoucherUseCase
             };
 
             await _repository.AddUserVoucherAsync(userVoucher);
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return MapToDto(userVoucher, voucher);

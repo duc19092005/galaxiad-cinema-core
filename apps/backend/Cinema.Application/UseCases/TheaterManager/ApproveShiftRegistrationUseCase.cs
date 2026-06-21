@@ -8,11 +8,13 @@ using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
 public class ApproveShiftRegistrationUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IShiftManagerRepository _repository;
     private readonly IRedisLockService _redisLockService;
     private readonly ISseNotificationService _sseNotificationService;
@@ -20,8 +22,10 @@ public class ApproveShiftRegistrationUseCase
     public ApproveShiftRegistrationUseCase(
         IShiftManagerRepository repository, 
         IRedisLockService redisLockService,
-        ISseNotificationService sseNotificationService)
+        ISseNotificationService sseNotificationService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _redisLockService = redisLockService;
         _sseNotificationService = sseNotificationService;
@@ -58,7 +62,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = notes;
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -98,7 +102,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = notes;
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -138,7 +142,7 @@ public class ApproveShiftRegistrationUseCase
         registration.ApprovedAt = DateTime.UtcNow;
         registration.Notes = string.IsNullOrEmpty(notes) ? "Quản lý hủy ca làm" : notes;
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
@@ -244,7 +248,7 @@ public class ApproveShiftRegistrationUseCase
                     existing.ApprovedAt = DateTime.UtcNow;
                     existing.Notes = "Quản lý gán trực tiếp";
                     
-                    await _repository.SaveChangesAsync();
+                    await _unitOfWork.SaveChangesAsync();
                     await _sseNotificationService.SendNotificationAsync(
                         staffId,
                         "Gán ca trực trực tiếp",
@@ -277,7 +281,7 @@ public class ApproveShiftRegistrationUseCase
             };
 
             await _repository.AddShiftRegistrationAsync(directAssign);
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             await _sseNotificationService.SendNotificationAsync(
                 staffId,

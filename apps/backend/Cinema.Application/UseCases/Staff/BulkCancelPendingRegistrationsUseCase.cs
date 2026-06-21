@@ -1,5 +1,6 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -8,10 +9,13 @@ namespace Cinema.Application.UseCases.Staff;
 /// </summary>
 public class BulkCancelPendingRegistrationsUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffShiftRepository _repository;
 
-    public BulkCancelPendingRegistrationsUseCase(IStaffShiftRepository repository)
+    public BulkCancelPendingRegistrationsUseCase(IStaffShiftRepository repository,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -35,7 +39,7 @@ public class BulkCancelPendingRegistrationsUseCase
         }
 
         await _repository.RemoveRegistrationsAsync(registrations);
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<bool>
         {

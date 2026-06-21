@@ -4,22 +4,26 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.MovieManager.MovieInfos;
 
 public class DeleteMovieUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserContextService _userContextService;
-    private readonly IAdminRepository _adminRepository;
+    private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
 
     public DeleteMovieUseCase(
         IUserContextService userContextService,
-        IAdminRepository adminRepository,
+        IAdminMovieManagementRepository adminRepository,
         IAuditLogService auditLogService,
-        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
+        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _userContextService = userContextService;
         _adminRepository = adminRepository;
         _auditLogService = auditLogService;
@@ -80,7 +84,7 @@ public class DeleteMovieUseCase
                 .Select(x => (Guid?)x.CinemaId)
                 .FirstOrDefault());
 
-        await _adminRepository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
         await _aiMovieEmbeddingSyncService.DeleteMovieAsync(itemId);
 
         return new BaseResponse<string>()

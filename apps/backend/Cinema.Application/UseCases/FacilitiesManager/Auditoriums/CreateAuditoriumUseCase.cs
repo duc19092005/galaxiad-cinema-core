@@ -11,11 +11,13 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Auditoriums;
 
 public class CreateAuditoriumUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuditoriumRepository _repository;
     private readonly ILogger<CreateAuditoriumUseCase> _logger;
     private readonly IUserContextService _userContextService;
@@ -25,8 +27,10 @@ public class CreateAuditoriumUseCase
         IAuditoriumRepository repository,
         ILogger<CreateAuditoriumUseCase> logger,
         IUserContextService userContextService,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
         _logger = logger;
         _userContextService = userContextService;
@@ -83,7 +87,7 @@ public class CreateAuditoriumUseCase
                 $"Created auditorium {request.AuditoriumNumber}.",
                 request.CinemaId);
             
-            await _repository.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
 
             return new BaseResponse<string>
             {

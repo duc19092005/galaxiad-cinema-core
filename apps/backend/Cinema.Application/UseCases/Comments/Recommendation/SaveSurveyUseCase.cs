@@ -6,15 +6,19 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Comments;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Comments.Recommendation;
 
 public class SaveSurveyUseCase
 {
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IRecommendationRepository _repository;
 
-    public SaveSurveyUseCase(IRecommendationRepository repository)
+    public SaveSurveyUseCase(IRecommendationRepository repository,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repository = repository;
     }
 
@@ -43,7 +47,7 @@ public class SaveSurveyUseCase
             await _repository.AddSurveyAsync(survey);
         }
 
-        await _repository.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return new BaseResponse<object>
         {

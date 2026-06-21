@@ -3,20 +3,24 @@ using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Booking;
 
 public class ProcessVnPayCallbackUseCase
 {
-    private readonly IBookingRepository _repo;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPaymentCallbackRepository _repo;
     private readonly IVnPayService _vnPayService;
     private readonly ILogger<ProcessVnPayCallbackUseCase> _logger;
 
     public ProcessVnPayCallbackUseCase(
-        IBookingRepository repo,
+        IPaymentCallbackRepository repo,
         IVnPayService vnPayService,
-        ILogger<ProcessVnPayCallbackUseCase> logger)
+        ILogger<ProcessVnPayCallbackUseCase> logger,
+        IUnitOfWork unitOfWork)
     {
+        _unitOfWork = unitOfWork;
         _repo = repo;
         _vnPayService = vnPayService;
         _logger = logger;
@@ -111,7 +115,7 @@ public class ProcessVnPayCallbackUseCase
             order.OrderStatus = OrderStatusEnum.Canceled;
         }
 
-        await _repo.SaveChangesAsync();
+        await _unitOfWork.SaveChangesAsync();
 
         return (isSuccess, orderId);
     }
