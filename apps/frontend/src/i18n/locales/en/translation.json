@@ -227,6 +227,7 @@
     "theaterManagerDashboard": "Theater Manager Dashboard",
     "movieManagerDashboard": "Movie Manager Dashboard",
     "guest": "Guest",
+    "myProfile": "My Profile",
     "selectTheme": "Select Theme",
     "themeDemoDesc": "Demo - Choose your favorite color tone",
     "lightMode": "Light Mode",
@@ -445,6 +446,7 @@
     "trendingNow": "Trending Now",
     "nowShowing": "Now Showing",
     "comingSoon": "Coming Soon",
+    "seeMore": "See More",
     "viewAll": "View All",
     "bookNow": "Book Now",
     "minutes": "min",
@@ -462,6 +464,8 @@
     "helpTitle": "Help",
     "nowShowingBadge": "Now Showing",
     "comingSoonBadge": "Coming Soon",
+    "noComingSoon": "No list available at the moment",
+    "releaseDate": "Release Date",
     "footerBrand": "CINEMA PRO",
     "footerQuickLinks": "Quick Links",
     "footerContact": "Contact",
@@ -477,7 +481,29 @@
     "footerLegal": "Legal / Policies",
     "aboutUs": "About Us",
     "cookiePolicy": "Cookie Policy",
-    "safetyRules": "Safety Rules"
+    "safetyRules": "Safety Rules",
+    "allCities": "All Cities"
+  },
+  "allmovies": {
+    "title": "All Movies",
+    "showingIn": "Showing in",
+    "browseAll": "Browse all blockbuster movies"
+  },
+  "help": {
+    "title": "Help Center",
+    "subtitle": "Find answers, get support, and explore our cinema guides",
+    "stillNeedHelp": "Still need help?",
+    "stillNeedHelpDesc": "Our support team is available 24/7 to assist you.",
+    "contactSupport": "Contact Support"
+  },
+  "pagination": {
+    "prev": "Prev",
+    "next": "Next"
+  },
+  "proximity": {
+    "all": "All",
+    "hcmc": "Hồ Chí Minh",
+    "hanoi": "Hà Nội"
   },
   "services": {
     "title": "Our Services",
@@ -950,6 +976,25 @@
     "contactEmail": "support@cinemapro.com",
     "contactPhone": "1900 XXXX",
     "contactAddress": "123 Nguyen Hue, Q.1, TP.HCM"
+  },
+  "staffPortal": {
+    "dashboardTitle": "Staff Dashboard",
+    "personalPortal": "Cashier personal portal",
+    "trackWork": "Track working hours, estimated pay, and registered shifts.",
+    "todayHours": "Today Hours",
+    "todayMoney": "Today Pay",
+    "approved": "Approved",
+    "pending": "Pending",
+    "totalPayroll": "Total Recorded Pay",
+    "schedule": "Schedule",
+    "refresh": "Refresh",
+    "loadError": "Could not load staff data.",
+    "shiftTimeNow": "It's time for your shift",
+    "shiftCountdown": "{{minutes}} minutes until your shift",
+    "loginPos": "Log in to shared POS to start shift",
+    "noUpcomingShift": "No approved upcoming shifts. Go to Schedule tab to register for new shifts.",
+    "recentRegistrations": "Recent Registrations",
+    "reason": "Reason"
   },
   "safetyRules": {
     "title": "Safety Rules",

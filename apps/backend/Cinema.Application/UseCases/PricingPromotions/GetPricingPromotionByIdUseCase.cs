@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
@@ -27,3 +27,4 @@ public class GetPricingPromotionByIdUseCase
         return PricingPromotionHelper.MapPromotion(promotion);
     }
 }
+

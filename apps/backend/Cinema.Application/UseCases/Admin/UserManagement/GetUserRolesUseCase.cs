@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Admin;
@@ -19,3 +19,4 @@ public class GetUserRolesUseCase
         return await _adminUserRepository.GetUserRolesAsync(userId);
     }
 }
+

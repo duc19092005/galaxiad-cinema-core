@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.Transfers;
 
@@ -30,7 +31,7 @@ public class TransferManagementUseCase
         {
             if (!request.ItemId.HasValue && !request.SourceUserId.HasValue)
             {
-                throw new BadRequestException("Cần cung cấp ItemId hoặc SourceUserId để phân quyền.", "MGT01");
+                throw new BadRequestException("Cáº§n cung cáº¥p ItemId hoáº·c SourceUserId Ä‘á»ƒ phÃ¢n quyá»n.", "MGT01");
             }
 
             if (request.TransferType == TransferTypeEnum.Facilities)
@@ -59,14 +60,15 @@ public class TransferManagementUseCase
             {
                 IsSuccess = true,
                 Data = null,
-                Message = $"Đã chuyển quyền quản lý {request.TransferType} thành công."
+                Message = $"ÄÃ£ chuyá»ƒn quyá»n quáº£n lÃ½ {request.TransferType} thÃ nh cÃ´ng."
             };
         }
         catch (Exception e)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(e, "Lỗi khi chuyển quyền quản lý.");
+            _logger.LogError(e, "Lá»—i khi chuyá»ƒn quyá»n quáº£n lÃ½.");
             throw CustomSystemException.SystemExceptionCaller();
         }
     }
 }
+

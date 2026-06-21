@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -24,7 +25,7 @@ public class GetAvailableShiftsUseCase
             return new BaseResponse<List<ResShiftTemplateDto>>
             {
                 IsSuccess = false,
-                Message = "Tài khoản của bạn không được gán vào chi nhánh rạp cụ thể."
+                Message = Messages.Staff.AccountNotLinkedToCinema
             };
         }
 

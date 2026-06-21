@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -33,7 +33,7 @@ public class GetDepartmentsUseCase
                 return new BaseResponse<List<ResDepartmentDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn không có quyền quản lý rạp này."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ráº¡p nÃ y."
                 };
             }
         }
@@ -47,3 +47,4 @@ public class GetDepartmentsUseCase
         };
     }
 }
+

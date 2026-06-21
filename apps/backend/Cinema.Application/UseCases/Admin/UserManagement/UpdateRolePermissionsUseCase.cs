@@ -10,6 +10,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -40,7 +41,7 @@ public class UpdateRolePermissionsUseCase
             var role = await _adminUserRepository.FindRoleByIdAsync(roleId);
             if (role == null)
             {
-                return new BaseResponse<string> { IsSuccess = false, Message = "Role not found." };
+                return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.RoleNotFound };
             }
 
             await _adminUserRepository.DeletePermissionForRoleAsync(roleId);
@@ -50,13 +51,13 @@ public class UpdateRolePermissionsUseCase
                 roleId != userRoles.Admin &&
                 roleId != userRoles.TheaterManager)
             {
-                throw new BadRequestException("ApproveShift can only be assigned to Admin or TheaterManager.", "PERMISSION_ERR");
+                throw new BadRequestException(Messages.Admin.PermissionNotAllowed, "PERMISSION_ERR");
             }
 
             var validPermissionCount = await _adminUserRepository.CountPermissionsAsync(nextPermissionIds);
             if (validPermissionCount != nextPermissionIds.Count)
             {
-                throw new BadRequestException("One or more permissions are invalid.", "PERMISSION_ERR");
+                throw new BadRequestException(Messages.Admin.PermissionsInvalid, "PERMISSION_ERR");
             }
 
             var newMappings = nextPermissionIds.Select(pid => new PermissionForRoleEntity
@@ -83,7 +84,7 @@ public class UpdateRolePermissionsUseCase
             return new BaseResponse<string>
             {
                 IsSuccess = true,
-                Message = $"Permissions updated for role {role.RoleName}."
+                Message = string.Format(Messages.Admin.PermissionsUpdated, role.RoleName)
             };
         }
         catch (AppException)
@@ -99,3 +100,4 @@ public class UpdateRolePermissionsUseCase
         }
     }
 }
+

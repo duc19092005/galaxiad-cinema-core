@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Comments;
@@ -27,3 +27,4 @@ public class GetMovieCommentsUseCase
         };
     }
 }
+

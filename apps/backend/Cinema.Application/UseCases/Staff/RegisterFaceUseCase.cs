@@ -7,6 +7,7 @@ using Cinema.Application.Interfaces.Staff;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -34,7 +35,7 @@ public class RegisterFaceUseCase
 
         if (staffProfile == null)
         {
-            throw new AppException("Tài khoản nhân viên không tồn tại hoặc đã ngừng hoạt động.", 404, "FACE_ERR");
+            throw new AppException(Messages.Staff.StaffProfileNotFound, 404, "FACE_ERR");
         }
 
         if (operatorUserId != staffId)
@@ -48,7 +49,7 @@ public class RegisterFaceUseCase
 
                 if (!isOperatorManager)
                 {
-                    throw new AppException("Bạn không có quyền đăng ký khuôn mặt cho nhân viên này.", 403, "FACE_ERR");
+                    throw new AppException(Messages.Staff.NoPermissionFaceRegister, 403, "FACE_ERR");
                 }
 
                 // Kiểm tra xem Quản lý rạp có cùng chi nhánh với nhân viên không
@@ -56,14 +57,14 @@ public class RegisterFaceUseCase
 
                 if (managerProfile == null || managerProfile.CinemaId != staffProfile.CinemaId)
                 {
-                    throw new AppException("Bạn chỉ được phép đăng ký khuôn mặt cho nhân viên thuộc chi nhánh rạp của mình.", 403, "FACE_ERR");
+                    throw new AppException(Messages.Staff.NoPermissionBranchFaceOnly, 403, "FACE_ERR");
                 }
             }
         }
 
         if (dto.FaceVector == null || dto.FaceVector.Length != 128)
         {
-            throw new AppException("Dữ liệu Face Vector không hợp lệ (yêu cầu mảng 128 số thực).", 400, "FACE_ERR");
+            throw new AppException(Messages.Staff.FaceVectorInvalid, 400, "FACE_ERR");
         }
 
         // 2. Chuyển mảng float[] thành chuỗi JSON
@@ -75,7 +76,7 @@ public class RegisterFaceUseCase
 
         if (string.IsNullOrEmpty(aesKey) || string.IsNullOrEmpty(aesIv))
         {
-            throw new AppException("Lỗi hệ thống: Chưa cấu hình khóa bảo mật AES-256.", 500, "FACE_ERR");
+            throw new AppException(Messages.Staff.MissingAESConfig, 500, "FACE_ERR");
         }
 
         var encryptedVector = _encryptionService.Encrypt(vectorJson, aesKey, aesIv);
@@ -88,7 +89,7 @@ public class RegisterFaceUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Đăng ký nhận diện khuôn mặt thành công."
+            Message = Messages.Staff.RegisterFaceSuccess
         };
     }
 }

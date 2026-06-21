@@ -1,6 +1,7 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -23,19 +24,19 @@ public class BulkCancelPendingRegistrationsUseCase
     {
         if (ids == null || ids.Count == 0)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Danh sách ID ca trực cần hủy không hợp lệ." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.RegistrationListInvalid };
         }
 
         var registrations = await _repository.GetPendingRegistrationsByIdsAsync(ids, staffId);
         if (registrations.Count == 0)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy yêu cầu đăng ký ca làm nào trong danh sách." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.NoRegistrationsFound };
         }
 
         var nonPending = registrations.Where(r => r.Status != "Pending").ToList();
         if (nonPending.Count > 0)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Chỉ có thể hủy những ca làm đang ở trạng thái Chờ duyệt." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.CannotCancelNonPending };
         }
 
         await _repository.RemoveRegistrationsAsync(registrations);
@@ -45,7 +46,7 @@ public class BulkCancelPendingRegistrationsUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = $"Đã hủy thành công {registrations.Count} yêu cầu đăng ký ca làm."
+            Message = string.Format(Messages.Staff.CancelBulkShiftSuccess, registrations.Count)
         };
     }
 }

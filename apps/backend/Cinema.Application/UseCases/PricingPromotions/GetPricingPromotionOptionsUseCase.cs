@@ -1,4 +1,4 @@
-using System.Linq;
+﻿using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
@@ -30,3 +30,4 @@ public class GetPricingPromotionOptionsUseCase
         };
     }
 }
+

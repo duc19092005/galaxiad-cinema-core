@@ -6,6 +6,7 @@ using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -30,7 +31,7 @@ public class ClockOutUseCase
 
         if (activeLog == null)
         {
-            throw new AppException("Không tìm thấy ca làm việc đang hoạt động của bạn để điểm danh ra (Clock-out).", 400, "CLOCK_OUT_ERR");
+            throw new AppException(Messages.Staff.NoActiveShiftToClockOut, 400, "CLOCK_OUT_ERR");
         }
 
         // 2. Xác định thời gian Clock-Out
@@ -48,7 +49,7 @@ public class ClockOutUseCase
 
         if (clockOutTime <= activeLog.StartedShiftTime)
         {
-            throw new AppException("Thời gian điểm danh ra phải sau thời gian điểm danh vào ca trực.", 400, "CLOCK_OUT_ERR");
+            throw new AppException(Messages.Staff.ClockOutNotAllowed, 400, "CLOCK_OUT_ERR");
         }
 
         // 3. Tính toán số giờ làm việc thực tế
@@ -66,7 +67,7 @@ public class ClockOutUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = $"Điểm danh ra ca trực thành công! Số giờ làm việc: {activeLog.WorkingHour} giờ. Lương nhận được: {activeLog.TotalReceived:N0} VNĐ."
+            Message = string.Format(Messages.Staff.ClockOutSuccess, activeLog.WorkingHour, activeLog.TotalReceived)
         };
     }
 }

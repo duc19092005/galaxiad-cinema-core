@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
@@ -32,3 +33,4 @@ public class DeletePricingPromotionUseCase
         await _unitOfWork.SaveChangesAsync();
     }
 }
+

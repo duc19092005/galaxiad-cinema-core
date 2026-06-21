@@ -34,7 +34,7 @@ const PublicCitySelector: React.FC<PublicCitySelectorProps> = ({ selectedCity, o
       >
         <MapPin size={15} style={{ color: selectedCity ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.7)' }} />
         <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {selectedCity || t('All Cities', 'Tất cả thành phố')}
+          {selectedCity || t('All Cities', 'All Cities')}
         </span>
         <ChevronDown 
           size={12} 
@@ -64,7 +64,7 @@ const PublicCitySelector: React.FC<PublicCitySelectorProps> = ({ selectedCity, o
                 : 'text-zinc-300 hover:bg-white/5 hover:text-white'
             }`}
           >
-            <span>{t('All Cities', 'Tất cả thành phố')}</span>
+            <span>{t('All Cities', 'All Cities')}</span>
             {selectedCity === '' && <Check size={14} className="text-[#ffb77f] flex-shrink-0" />}
           </button>
 

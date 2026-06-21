@@ -1,4 +1,4 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Dtos.TheaterManager;
@@ -36,7 +36,7 @@ public class GetMoviesWithFormatsUseCase
                 return new BaseResponse<List<TheaterManagerMovieOptionDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn không có quyền quản lý rạp này."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ráº¡p nÃ y."
                 };
             }
         }
@@ -47,7 +47,8 @@ public class GetMoviesWithFormatsUseCase
         {
             IsSuccess = true,
             Data = movies,
-            Message = "Lấy dữ liệu chọn phim thành công"
+            Message = "Láº¥y dá»¯ liá»‡u chá»n phim thÃ nh cÃ´ng"
         };
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.CinemaInfos;
@@ -8,6 +8,7 @@ using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
 
@@ -34,17 +35,17 @@ public class DeleteDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("Không tìm thấy phòng ban.", 404, "DEPT_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y phÃ²ng ban.", 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("Bạn không có quyền xoá phòng ban này.", 403, "DEPT_ERR");
+            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n xoÃ¡ phÃ²ng ban nÃ y.", 403, "DEPT_ERR");
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
             department.IsActive = false;
 
-            // Đồng bộ khóa tài khoản dùng chung
+            // Äá»“ng bá»™ khÃ³a tÃ i khoáº£n dÃ¹ng chung
             if (department.SharedUserInfoEntity != null)
             {
                 department.SharedUserInfoEntity.AccountStatus = AccountStatusEnum.Banned;
@@ -65,14 +66,15 @@ public class DeleteDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Đã vô hiệu hoá phòng ban."
+                Message = "ÄÃ£ vÃ´ hiá»‡u hoÃ¡ phÃ²ng ban."
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Lỗi khi xoá phòng ban: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException($"Lá»—i khi xoÃ¡ phÃ²ng ban: {ex.Message}", 500, "DEPT_ERR");
         }
     }
 }
+

@@ -1,6 +1,7 @@
-using Cinema.Application.Interfaces.TheaterManager;
+﻿using Cinema.Application.Interfaces.TheaterManager;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 
@@ -44,3 +45,4 @@ public class SetScheduleInactiveUseCase
         }
     }
 }
+

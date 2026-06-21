@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Comments;
@@ -8,6 +8,7 @@ using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Comments;
 
@@ -81,3 +82,4 @@ public class CreateMovieReplyUseCase
         };
     }
 }
+

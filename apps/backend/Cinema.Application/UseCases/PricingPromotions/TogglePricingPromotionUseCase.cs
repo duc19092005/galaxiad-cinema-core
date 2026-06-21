@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 
@@ -56,3 +57,4 @@ public class TogglePricingPromotionUseCase
         }
     }
 }
+

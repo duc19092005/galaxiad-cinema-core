@@ -30,14 +30,14 @@ const GENRE_EMOJIS: Record<string, string> = {
 };
 
 const FALLBACK_GENRES = [
-  { genreId: 'action', genreName: 'Hành Động' },
-  { genreId: 'romance', genreName: 'Tình Cảm' },
-  { genreId: 'horror', genreName: 'Kinh Dị' },
-  { genreId: 'comedy', genreName: 'Hài Hước' },
-  { genreId: 'scifi', genreName: 'Khoa Học Viễn Tưởng' },
-  { genreId: 'animation', genreName: 'Hoạt Hình' },
-  { genreId: 'drama', genreName: 'Tâm Lý' },
-  { genreId: 'adventure', genreName: 'Phiêu Lưu' },
+  { genreId: 'action', genreName: 'Action' },
+  { genreId: 'romance', genreName: 'Romance' },
+  { genreId: 'horror', genreName: 'Horror' },
+  { genreId: 'comedy', genreName: 'Comedy' },
+  { genreId: 'scifi', genreName: 'Sci-Fi' },
+  { genreId: 'animation', genreName: 'Animation' },
+  { genreId: 'drama', genreName: 'Drama' },
+  { genreId: 'adventure', genreName: 'Adventure' },
 ];
 
 const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {

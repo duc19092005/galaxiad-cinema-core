@@ -445,6 +445,7 @@
     "trendingNow": "Đang Thịnh Hành",
     "nowShowing": "Đang Chiếu",
     "comingSoon": "Sắp Chiếu",
+    "seeMore": "Xem Thêm",
     "viewAll": "Xem Tất Cả",
     "bookNow": "Đặt Vé Ngay",
     "minutes": "phút",
@@ -461,7 +462,9 @@
     "servicesTitle": "Dịch Vụ",
     "helpTitle": "Trợ Giúp",
     "nowShowingBadge": "Đang chiếu",
-    "comingSoonBadge": "Sắp chiếu",
+    "comingSoonBadge": "SẮP CHIẾU",
+    "noComingSoon": "Hiện tại chưa có danh sách",
+    "releaseDate": "Khởi chiếu",
     "footerBrand": "CINEMA PRO",
     "footerQuickLinks": "Liên kết nhanh",
     "footerContact": "Liên hệ",
@@ -477,7 +480,29 @@
     "footerLegal": "Pháp Lý / Chính Sách",
     "aboutUs": "Về Chúng Tôi",
     "cookiePolicy": "Chính Sách Cookie",
-    "safetyRules": "Nội Quy An Toàn"
+    "safetyRules": "Nội Quy An Toàn",
+    "allCities": "Tất Cả Thành Phố"
+  },
+  "allmovies": {
+    "title": "Tất Cả Phim",
+    "showingIn": "Đang chiếu tại",
+    "browseAll": "Khám phá tất cả bộ phim bom tấn"
+  },
+  "help": {
+    "title": "Trung Tâm Trợ Giúp",
+    "subtitle": "Tìm câu trả lời, nhận hỗ trợ và khám phá hướng dẫn rạp phim",
+    "stillNeedHelp": "Cần giúp đỡ?",
+    "stillNeedHelpDesc": "Đội hỗ trợ của chúng tôi luôn sẵn sàng 24/7.",
+    "contactSupport": "Liên Hệ Hỗ Trợ"
+  },
+  "pagination": {
+    "prev": "Trước",
+    "next": "Sau"
+  },
+  "proximity": {
+    "all": "Tất Cả",
+    "hcmc": "Hồ Chí Minh",
+    "hanoi": "Hà Nội"
   },
   "services": {
     "title": "Dịch Vụ Của Chúng Tôi",
@@ -949,6 +974,25 @@
     "contactEmail": "support@cinemapro.com",
     "contactPhone": "1900 XXXX",
     "contactAddress": "123 Nguyễn Huệ, Quận 1, TP.HCM"
+  },
+  "staffPortal": {
+    "dashboardTitle": "Dashboard Nhân Viên",
+    "personalPortal": "Cổng thông tin nhân viên",
+    "trackWork": "Theo dõi giờ làm, lương ước tính và lịch đã đăng ký.",
+    "todayHours": "Giờ làm hôm nay",
+    "todayMoney": "Tiền hôm nay",
+    "approved": "Ca đã duyệt",
+    "pending": "Đang chờ duyệt",
+    "totalPayroll": "Tổng lương ghi nhận",
+    "schedule": "Lịch làm",
+    "refresh": "Làm mới",
+    "loadError": "Không tải được dữ liệu nhân viên.",
+    "shiftTimeNow": "Đến giờ vào ca",
+    "shiftCountdown": "Còn {{minutes}} phút nữa tới lịch làm",
+    "loginPos": "Đăng nhập POS chung để làm ca",
+    "noUpcomingShift": "Chưa có ca đã duyệt sắp tới. Vào tab Lịch làm để đăng ký ca mới.",
+    "recentRegistrations": "Lịch đăng ký gần đây",
+    "reason": "Lý do"
   },
   "safetyRules": {
     "title": "Nội Quy An Toàn",

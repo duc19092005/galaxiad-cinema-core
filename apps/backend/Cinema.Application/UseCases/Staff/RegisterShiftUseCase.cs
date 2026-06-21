@@ -6,6 +6,7 @@ using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -30,31 +31,31 @@ public class RegisterShiftUseCase
 
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
-            throw new AppException("Tài khoản của bạn không được gán vào chi nhánh rạp cụ thể hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.AccountNotLinkedToCinema, 400, "SHIFT_ERR");
         }
 
         if (dto.StartDate.Date > dto.EndDate.Date)
         {
-            throw new AppException("Ngày bắt đầu không thể sau ngày kết thúc.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.StartDateAfterEndDate, 400, "SHIFT_ERR");
         }
 
         // 2. Kiểm tra ca trực mẫu có tồn tại không
         if (dto.StartDate.Date < DateTime.UtcNow.Date || dto.EndDate.Date < DateTime.UtcNow.Date)
         {
-            throw new AppException("Cannot register shifts in the past.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
         }
 
         var template = await _repository.GetShiftTemplateByIdAsync(dto.ShiftTemplateId);
 
         if (template == null)
         {
-            throw new AppException("Ca trực mẫu không tồn tại hoặc đã bị ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.ShiftTemplateNotFound, 400, "SHIFT_ERR");
         }
 
         // Nhân viên chỉ được đăng ký ca trực ở rạp mình trực thuộc
         if (template.CinemaId != staffProfile.CinemaId)
         {
-            throw new AppException("Bạn chỉ được phép đăng ký ca trực tại rạp mình đang làm việc.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
         }
 
         var successDates = new List<string>();
@@ -144,15 +145,15 @@ public class RegisterShiftUseCase
         var message = "";
         if (failedDates.Count == 0)
         {
-            message = $"Đăng ký ca trực thành công cho {successDates.Count} ngày đã chọn, đang chờ Quản lý phê duyệt.";
+            message = string.Format(Messages.Staff.RegisterShiftSuccess, successDates.Count);
         }
         else if (successDates.Count == 0)
         {
-            throw new AppException($"Đăng ký ca trực thất bại cho tất cả các ngày đã chọn. Chi tiết: {string.Join(", ", failedDates)}", 400, "SHIFT_ERR");
+            throw new AppException(string.Format(Messages.Staff.RegisterShiftAllFailed, string.Join(", ", failedDates)), 400, "SHIFT_ERR");
         }
         else
         {
-            message = $"Đăng ký thành công các ngày: {string.Join(", ", successDates)}. Thất bại các ngày: {string.Join(", ", failedDates)}.";
+            message = string.Format(Messages.Staff.RegisterShiftPartialSuccess, string.Join(", ", successDates), string.Join(", ", failedDates));
         }
 
         return new BaseResponse<bool>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -48,11 +48,12 @@ public class GetMyBookingsTool : IChatTool
             StartTime = DateTimeHelper.ToVietnamTime(o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault()),
             Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList(),
             MovieAiringStatus = o.OrderDetailsInfo.Select(od =>
-                nowUtc < od.MovieScheduleInfoEntity.StartTime ? "Sắp chiếu (Upcoming)" :
-                (nowUtc >= od.MovieScheduleInfoEntity.StartTime && nowUtc <= od.MovieScheduleInfoEntity.EndedTime) ? "Đang chiếu (Airing)" : "Đã kết thúc (Finished)"
+                nowUtc < od.MovieScheduleInfoEntity.StartTime ? "Sáº¯p chiáº¿u (Upcoming)" :
+                (nowUtc >= od.MovieScheduleInfoEntity.StartTime && nowUtc <= od.MovieScheduleInfoEntity.EndedTime) ? "Äang chiáº¿u (Airing)" : "ÄÃ£ káº¿t thÃºc (Finished)"
             ).FirstOrDefault() ?? ""
         }).ToList();
 
         return JsonSerializer.Serialize(result);
     }
 }
+

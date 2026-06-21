@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -117,3 +117,4 @@ public class CalculatePricingPromotionUseCase
         return Math.Max(0, Math.Round(next, 0));
     }
 }
+

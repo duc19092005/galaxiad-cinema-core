@@ -13,6 +13,7 @@ using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -42,12 +43,12 @@ public class ClockInUseCase
 
         if (staffProfile == null)
         {
-            throw new AppException("Không tìm thấy nhân viên hoặc tài khoản nhân viên đã bị khóa.", 404, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.StaffProfileNotFound, 404, "CLOCK_IN_ERR");
         }
 
         if (string.IsNullOrEmpty(staffProfile.FaceVector))
         {
-            throw new AppException("Nhân viên chưa đăng ký nhận diện khuôn mặt. Vui lòng liên hệ Admin/Quản lý.", 400, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.FaceNotRegistered, 400, "CLOCK_IN_ERR");
         }
 
         // 2. So khớp khuôn mặt Euclidean Distance
@@ -55,7 +56,7 @@ public class ClockInUseCase
         var aesIv = _configuration["AES_256:IV"];
         if (string.IsNullOrEmpty(aesKey) || string.IsNullOrEmpty(aesIv))
         {
-            throw new AppException("Lỗi cấu hình hệ thống: Thiếu khóa AES-256.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.MissingAESConfig, 500, "CLOCK_IN_ERR");
         }
 
         // Giải mã Face Vector mẫu
@@ -66,18 +67,18 @@ public class ClockInUseCase
         }
         catch (Exception)
         {
-            throw new AppException("Lỗi hệ thống khi giải mã khuôn mặt nhân viên.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.FaceVectorEncryptionError, 500, "CLOCK_IN_ERR");
         }
 
         var sampleVector = JsonSerializer.Deserialize<float[]>(decryptedVectorJson);
         if (sampleVector == null || sampleVector.Length != 128)
         {
-            throw new AppException("Lỗi hệ thống: Dữ liệu khuôn mặt mẫu không hợp lệ.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.FaceVectorSampleInvalid, 500, "CLOCK_IN_ERR");
         }
 
         if (dto.FaceVector == null || dto.FaceVector.Length != 128)
         {
-            throw new AppException("Dữ liệu Face Vector gửi lên không hợp lệ.", 400, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.FaceVectorInvalid, 400, "CLOCK_IN_ERR");
         }
 
         // Tính khoảng cách Euclidean
@@ -91,7 +92,7 @@ public class ClockInUseCase
 
         if (distance > 0.6)
         {
-            throw new AppException($"Xác thực khuôn mặt thất bại (Độ lệch: {distance:F4} > 0.6).", 400, "CLOCK_IN_ERR");
+            throw new AppException(string.Format(Messages.Staff.FaceMismatch, distance), 400, "CLOCK_IN_ERR");
         }
 
         // 3. Xác định thời gian Clock-In
@@ -114,7 +115,7 @@ public class ClockInUseCase
 
         if (activeShiftReg == null)
         {
-            throw new AppException("Bạn không có lịch trực nào được phê duyệt cho ngày hôm nay.", 400, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.NoApprovedShiftToday, 400, "CLOCK_IN_ERR");
         }
 
         // Kiểm tra khung thời gian ca làm việc có khớp với giờ điểm danh không (Cho phép điểm danh sớm tối đa 30 phút và trong suốt ca trực)
@@ -137,7 +138,7 @@ public class ClockInUseCase
 
         if (!isWithinShift)
         {
-            throw new AppException($"Thời gian điểm danh không hợp lệ. Ca làm của bạn bắt đầu lúc {shiftStart:hh\\:mm} và kết thúc lúc {shiftEnd:hh\\:mm}.", 400, "CLOCK_IN_ERR");
+            throw new AppException(string.Format(Messages.Staff.ClockInShiftTimeWindow, shiftStart, shiftEnd), 400, "CLOCK_IN_ERR");
         }
 
         // 5. Kiểm tra xem đã điểm danh vào ca trực này trước đó chưa
@@ -145,7 +146,7 @@ public class ClockInUseCase
 
         if (alreadyClockedIn)
         {
-            throw new AppException("Bạn đã điểm danh vào ca làm việc này rồi và chưa điểm danh ra.", 400, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.AlreadyClockedIn, 400, "CLOCK_IN_ERR");
         }
 
         // 6. Ghi nhận nhật ký bắt đầu ca làm việc
@@ -178,7 +179,7 @@ public class ClockInUseCase
 
         if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIss) || string.IsNullOrEmpty(jwtAud))
         {
-            throw new AppException("Lỗi cấu hình hệ thống: Thiếu thông tin JWT.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.MissingJWTConfig, 500, "CLOCK_IN_ERR");
         }
 
         var userEmail = staffProfile.UserInfoEntity.UserEmail;
@@ -188,7 +189,7 @@ public class ClockInUseCase
 
         if (string.IsNullOrEmpty(token))
         {
-            throw new AppException("Lỗi hệ thống: Không thể tạo Access Token.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.CannotGenerateToken, 500, "CLOCK_IN_ERR");
         }
 
         return new BaseResponse<ResClockInDto>
@@ -199,7 +200,7 @@ public class ClockInUseCase
                 AccessToken = token,
                 StaffName = username
             },
-            Message = $"Điểm danh vào ca thành công! Chào mừng {username} vào ca làm việc."
+            Message = string.Format(Messages.Staff.ClockInSuccess, username)
         };
     }
 }

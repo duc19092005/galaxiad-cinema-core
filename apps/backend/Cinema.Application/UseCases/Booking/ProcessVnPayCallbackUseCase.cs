@@ -1,9 +1,10 @@
-using Cinema.Application.Interfaces.Booking;
+﻿using Cinema.Application.Interfaces.Booking;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -120,3 +121,4 @@ public class ProcessVnPayCallbackUseCase
         return (isSuccess, orderId);
     }
 }
+

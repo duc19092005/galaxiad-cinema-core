@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -21,3 +21,4 @@ public class GetRolesPermissionsUseCase
         return await _adminUserRepository.GetRolesPermissionsAsync();
     }
 }
+

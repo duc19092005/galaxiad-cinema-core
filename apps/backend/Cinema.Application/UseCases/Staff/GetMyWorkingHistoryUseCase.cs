@@ -1,4 +1,4 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Facilities;
 
@@ -22,3 +22,4 @@ public class GetMyWorkingHistoryUseCase
         return new BaseResponse<List<StaffWorkingLoggerEntity>> { IsSuccess = true, Data = history };
     }
 }
+

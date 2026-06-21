@@ -1,7 +1,8 @@
-using Cinema.Application.Interfaces.Admin;
+﻿using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.MovieManager.MovieInfos;
 
@@ -48,3 +49,4 @@ public class SetMovieActiveUseCase
         }
     }
 }
+

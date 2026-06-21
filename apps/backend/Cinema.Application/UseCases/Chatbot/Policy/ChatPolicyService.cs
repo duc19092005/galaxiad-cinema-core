@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Chatbot;
@@ -55,3 +55,4 @@ public class ChatPolicyService : IChatPolicyService
         }
     }
 }
+

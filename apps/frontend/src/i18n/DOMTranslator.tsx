@@ -111,7 +111,7 @@ function isKnownTranslatable(text: string): boolean {
 }
 
 export const DOMTranslator: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [lang, setLang] = useState(localStorage.getItem('language') || 'vi');
+    const [lang, setLang] = useState(localStorage.getItem('language') || 'en');
     const observerRef = useRef<MutationObserver | null>(null);
     const isTranslatingRef = useRef(false);
 

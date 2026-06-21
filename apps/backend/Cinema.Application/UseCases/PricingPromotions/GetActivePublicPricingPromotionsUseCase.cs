@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
@@ -21,3 +21,4 @@ public class GetActivePublicPricingPromotionsUseCase
         return promotions.Select(PricingPromotionHelper.MapPromotion).ToList();
     }
 }
+

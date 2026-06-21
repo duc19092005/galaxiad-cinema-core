@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,7 +31,8 @@ public class GetActiveMoviesUseCase
         {
             IsSuccess = true,
             Data = list,
-            Message = "Lấy danh sách phim thành công"
+            Message = "Láº¥y danh sÃ¡ch phim thÃ nh cÃ´ng"
         };
     }
 }
+

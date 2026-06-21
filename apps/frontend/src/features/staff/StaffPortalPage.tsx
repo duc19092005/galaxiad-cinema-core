@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import { Banknote, CalendarDays, Clock3, LayoutDashboard, LogIn, RefreshCw, TimerReset } from 'lucide-react';
 import AppSidebar from '../../components/AppSidebar';
@@ -25,6 +26,7 @@ const minutesUntil = (date: Date) => Math.round((date.getTime() - Date.now()) / 
 
 const StaffPortalPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [registrations, setRegistrations] = useState<ShiftRegistrationDto[]>([]);
@@ -44,7 +46,7 @@ const StaffPortalPage: React.FC = () => {
       setHistory(historyRes.data || []);
       setPayrolls(payrollRes.data || []);
     } catch {
-      showError('Không tải được dữ liệu nhân viên.');
+      showError(t('staffPortal.loadError', 'Không tải được dữ liệu nhân viên.'));
     } finally {
       setLoading(false);
     }
@@ -96,7 +98,7 @@ const StaffPortalPage: React.FC = () => {
       label: 'Personal',
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
-        { id: 'schedule', label: 'Lịch làm', icon: <CalendarDays size={16} /> },
+        { id: 'schedule', label: t('staffPortal.schedule'), icon: <CalendarDays size={16} /> },
       ],
     },
   ];
@@ -122,10 +124,9 @@ const StaffPortalPage: React.FC = () => {
             <section style={{ display: 'grid', gap: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <div>
-                <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase' }}>Cashier personal portal</p>
-                <h1 style={{ margin: 0, fontSize: 26, fontWeight: 850 }}>Dashboard nhân viên</h1>
+                <h1 style={{ margin: 0, fontSize: 26, fontWeight: 850 }}>{t('staffPortal.dashboardTitle')}</h1>
                 <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-                  Theo dõi giờ làm, lương ước tính và lịch đã đăng ký.
+                  {t('staffPortal.trackWork')}
                 </p>
               </div>
               <button className="btn btn-secondary" onClick={loadDashboard} disabled={loading}>
@@ -135,11 +136,11 @@ const StaffPortalPage: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-              <Metric icon={<TimerReset size={18} />} label="Giờ làm hôm nay" value={`${dashboard.todayHours.toLocaleString('vi-VN')}h`} />
-              <Metric icon={<Banknote size={18} />} label="Tiền hôm nay" value={formatMoney(dashboard.todayMoney)} />
-              <Metric icon={<CalendarDays size={18} />} label="Ca đã duyệt" value={String(dashboard.approved)} />
-              <Metric icon={<Clock3 size={18} />} label="Đang chờ duyệt" value={String(dashboard.pending)} />
-              <Metric icon={<Banknote size={18} />} label="Tổng lương ghi nhận" value={formatMoney(dashboard.totalPayroll)} />
+              <Metric icon={<TimerReset size={18} />} label={t('staffPortal.todayHours')} value={`${dashboard.todayHours.toLocaleString('vi-VN')}h`} />
+              <Metric icon={<Banknote size={18} />} label={t('staffPortal.todayMoney')} value={formatMoney(dashboard.todayMoney)} />
+              <Metric icon={<CalendarDays size={18} />} label={t('staffPortal.approved')} value={String(dashboard.approved)} />
+              <Metric icon={<Clock3 size={18} />} label={t('staffPortal.pending')} value={String(dashboard.pending)} />
+              <Metric icon={<Banknote size={18} />} label={t('staffPortal.totalPayroll')} value={formatMoney(dashboard.totalPayroll)} />
             </div>
 
             <div style={{
@@ -154,8 +155,8 @@ const StaffPortalPage: React.FC = () => {
                 <>
                   <span className={minutesUntil(dashboard.upcoming.startsAt) <= 30 ? 'badge badge-warning' : 'badge badge-accent'} style={{ width: 'fit-content' }}>
                     {minutesUntil(dashboard.upcoming.startsAt) <= 0
-                      ? 'Đến giờ vào ca'
-                      : `Còn ${minutesUntil(dashboard.upcoming.startsAt)} phút nữa tới lịch làm`}
+                    ? t('staffPortal.shiftTimeNow')
+                      : t('staffPortal.shiftCountdown', { minutes: minutesUntil(dashboard.upcoming.startsAt) })}
                   </span>
                   <div>
                     <h2 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{dashboard.upcoming.item.shiftName}</h2>
@@ -165,25 +166,25 @@ const StaffPortalPage: React.FC = () => {
                   </div>
                   <button className="btn btn-primary" onClick={handleGoToPosLogin} style={{ width: 'fit-content' }}>
                     <LogIn size={16} />
-                    Đăng nhập POS chung để làm ca
+                    {t('staffPortal.loginPos')}
                   </button>
                 </>
               ) : (
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
-                  Chưa có ca đã duyệt sắp tới. Vào tab Lịch làm để đăng ký ca mới.
+                  {t('staffPortal.noUpcomingShift')}
                 </p>
               )}
             </div>
 
             <div style={{ display: 'grid', gap: 10 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850 }}>Lịch đăng ký gần đây</h2>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 850 }}>{t('staffPortal.recentRegistrations')}</h2>
               {registrations.slice(0, 6).map((item) => (
                 <div key={item.shiftRegistrationId} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: 14, border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface)' }}>
                   <div>
                     <strong>{item.shiftName}</strong>
                     <p style={{ margin: '4px 0 0', color: 'var(--text-muted)', fontSize: 12 }}>{new Date(item.registrationDate).toLocaleDateString('vi-VN')} | {item.startTime} - {item.endTime}</p>
                     {item.status === 'Rejected' && item.notes && (
-                      <p style={{ margin: '6px 0 0', color: 'var(--danger)', fontSize: 12 }}>Lý do: {item.notes}</p>
+                      <p style={{ margin: '6px 0 0', color: 'var(--danger)', fontSize: 12 }}>{t('staffPortal.reason')}: {item.notes}</p>
                     )}
                   </div>
                   <span className={item.status === 'Approved' ? 'badge badge-success' : item.status === 'Pending' ? 'badge badge-warning' : 'badge badge-danger'} style={{ alignSelf: 'center' }}>

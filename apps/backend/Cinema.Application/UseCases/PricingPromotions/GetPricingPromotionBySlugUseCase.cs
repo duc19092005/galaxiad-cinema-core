@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Exceptions;
@@ -26,3 +26,4 @@ public class GetPricingPromotionBySlugUseCase
         return PricingPromotionHelper.MapPromotion(promotion);
     }
 }
+

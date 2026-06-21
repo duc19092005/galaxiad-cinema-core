@@ -255,7 +255,7 @@ export const PricingPromotionsSection: React.FC = () => {
     try {
       const response = await pricingPromotionApi.delete(promotion.pricingPromotionId);
       if (response.isSuccess) {
-        showSuccess('Đã xóa chiến dịch giá.');
+        showSuccess('Pricing campaign deleted.');
         fetchData();
       }
     } catch (error) {

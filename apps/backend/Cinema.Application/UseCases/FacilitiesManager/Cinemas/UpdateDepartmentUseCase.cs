@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
@@ -9,6 +9,7 @@ using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
 
@@ -35,12 +36,12 @@ public class UpdateDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("Không tìm thấy phòng ban.", 404, "DEPT_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y phÃ²ng ban.", 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("Bạn không có quyền sửa phòng ban này.", 403, "DEPT_ERR");
+            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n sá»­a phÃ²ng ban nÃ y.", 403, "DEPT_ERR");
 
-        // 1. Kiểm tra tính duy nhất của tên nếu đổi tên hoặc kích hoạt lại phòng ban
+        // 1. Kiá»ƒm tra tÃ­nh duy nháº¥t cá»§a tÃªn náº¿u Ä‘á»•i tÃªn hoáº·c kÃ­ch hoáº¡t láº¡i phÃ²ng ban
         bool nameChanging = request.DepartmentName != null && request.DepartmentName != department.DepartmentName;
         bool activating = request.IsActive == true && !department.IsActive;
 
@@ -49,7 +50,7 @@ public class UpdateDepartmentUseCase
             string targetName = request.DepartmentName ?? department.DepartmentName;
             var exists = await _departmentRepository.DepartmentExistsExcludeAsync(department.CinemaId, targetName, departmentId);
             if (exists)
-                throw new AppException($"Phòng ban '{targetName}' đã tồn tại trong rạp này.", 400, "DEPT_ERR");
+                throw new AppException($"PhÃ²ng ban '{targetName}' Ä‘Ã£ tá»“n táº¡i trong ráº¡p nÃ y.", 400, "DEPT_ERR");
         }
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -62,7 +63,7 @@ public class UpdateDepartmentUseCase
             {
                 department.IsActive = request.IsActive.Value;
                 
-                // Đồng bộ hóa trạng thái tài khoản dùng chung
+                // Äá»“ng bá»™ hÃ³a tráº¡ng thÃ¡i tÃ i khoáº£n dÃ¹ng chung
                 if (department.SharedUserInfoEntity != null)
                 {
                     department.SharedUserInfoEntity.AccountStatus = request.IsActive.Value 
@@ -86,14 +87,15 @@ public class UpdateDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Cập nhật phòng ban thành công."
+                Message = "Cáº­p nháº­t phÃ²ng ban thÃ nh cÃ´ng."
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Lỗi khi cập nhật phòng ban: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException($"Lá»—i khi cáº­p nháº­t phÃ²ng ban: {ex.Message}", 500, "DEPT_ERR");
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -56,7 +56,7 @@ public class GetShowtimesTool : IChatTool
                 var datesList = upcomingDates.Select(d => DateTimeHelper.ToVietnamTime(d).ToString("yyyy-MM-dd")).Distinct().Take(7).ToList();
                 return JsonSerializer.Serialize(new
                 {
-                    Message = "Không có suất chiếu nào trong ngày được yêu cầu. Dưới đây là các ngày sắp có suất chiếu:",
+                    Message = "KhÃ´ng cÃ³ suáº¥t chiáº¿u nÃ o trong ngÃ y Ä‘Æ°á»£c yÃªu cáº§u. DÆ°á»›i Ä‘Ã¢y lÃ  cÃ¡c ngÃ y sáº¯p cÃ³ suáº¥t chiáº¿u:",
                     AvailableDates = datesList
                 });
             }
@@ -100,3 +100,4 @@ public class GetShowtimesTool : IChatTool
         return JsonSerializer.Serialize(result);
     }
 }
+

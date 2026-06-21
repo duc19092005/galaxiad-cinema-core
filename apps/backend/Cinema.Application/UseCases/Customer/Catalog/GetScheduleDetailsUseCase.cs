@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -52,7 +52,8 @@ public class GetScheduleDetailsUseCase
         {
             Data = getScheduleDetails,
             IsSuccess = true,
-            Message = "Thành công"
+            Message = "ThÃ nh cÃ´ng"
         };
     }
 }
+

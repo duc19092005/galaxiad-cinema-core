@@ -22,12 +22,12 @@ const GoogleCallback: React.FC = () => {
 
       if (error) {
         const errorMessages: Record<string, string> = {
-          access_denied: 'Bạn đã từ chối quyền truy cập Google.',
-          invalid_scope: 'Phạm vi truy cập không hợp lệ.',
-          server_error: 'Máy chủ Google gặp sự cố.',
-          temporarily_unavailable: 'Dịch vụ Google tạm thời không khả dụng.',
+          access_denied: 'You denied Google access permission.',
+          invalid_scope: 'Invalid access scope.',
+          server_error: 'Google server encountered an error.',
+          temporarily_unavailable: 'Google service is temporarily unavailable.',
         };
-        navigate('/login', { replace: true, state: { googleError: errorMessages[error] || `Đăng nhập thất bại (${error}).` } });
+        navigate('/login', { replace: true, state: { googleError: errorMessages[error] || `Login failed (${error}).` } });
         return;
       }
 
@@ -54,17 +54,17 @@ const GoogleCallback: React.FC = () => {
               } else { navigate('/role-selection', { replace: true }); }
             } else { navigate('/home', { replace: true }); }
           } else {
-            navigate('/login', { replace: true, state: { googleError: response.data?.message || 'Xác thực thất bại.' } });
+            navigate('/login', { replace: true, state: { googleError: response.data?.message || 'Authentication failed.' } });
           }
         } catch (err: any) {
-          let errorMessage = 'Không thể kết nối đến máy chủ xác thực.';
+          let errorMessage = 'Could not connect to authentication server.';
           if (err.response?.data?.message) errorMessage = err.response.data.message;
-          else if (err.response?.status === 400) errorMessage = 'Yêu cầu xác thực không hợp lệ.';
-          else if (err.response?.status === 500) errorMessage = 'Máy chủ gặp sự cố.';
+          else if (err.response?.status === 400) errorMessage = 'Invalid authentication request.';
+          else if (err.response?.status === 500) errorMessage = 'Server encountered an error.';
           navigate('/login', { replace: true, state: { googleError: errorMessage } });
         }
       } else {
-        navigate('/login', { replace: true, state: { googleError: 'Phiên đăng nhập Google không hợp lệ.' } });
+        navigate('/login', { replace: true, state: { googleError: 'Invalid Google login session.' } });
       }
     };
     processGoogleLogin();

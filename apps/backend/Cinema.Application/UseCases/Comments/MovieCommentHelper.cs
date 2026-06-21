@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cinema.Application.Dtos.Comments;
@@ -37,3 +37,4 @@ public static class MovieCommentHelper
         return dto;
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
@@ -26,3 +26,4 @@ public class GetMovieDetailUseCase
         };
     }
 }
+

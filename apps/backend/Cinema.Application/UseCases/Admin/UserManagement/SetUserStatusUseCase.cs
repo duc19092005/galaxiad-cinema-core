@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.UserInfos;
@@ -6,6 +6,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -57,3 +58,4 @@ public class SetUserStatusUseCase
         };
     }
 }
+

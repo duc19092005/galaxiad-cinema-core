@@ -31,7 +31,7 @@ const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSide
   }, []);
 
   const selectedCinema = cinemaSelector?.cinemas.find(c => c.cinemaId === cinemaSelector.activeCinemaId);
-  const currentLabel = selectedCinema ? selectedCinema.cinemaName : 'Chọn Rạp';
+  const currentLabel = selectedCinema ? selectedCinema.cinemaName : 'Select Theater';
 
   return (
     <>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -33,13 +33,14 @@ public class GetManagedItemsUseCase
             {
                 IsSuccess = true,
                 Data = results,
-                Message = $"Lấy danh sách rạp ({(transferType == TransferTypeEnum.Facilities ? "CSVC" : "Vận hành")}) thành công."
+                Message = $"Láº¥y danh sÃ¡ch ráº¡p ({(transferType == TransferTypeEnum.Facilities ? "CSVC" : "Váº­n hÃ nh")}) thÃ nh cÃ´ng."
             };
         }
         else
         {
             var movies = await _adminRepository.GetManagedMoviesAsync(userGuid, filterUnmanaged);
-            return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = movies, Message = "Lấy danh sách phim thành công." };
+            return new BaseResponse<List<ManagedItemDto>> { IsSuccess = true, Data = movies, Message = "Láº¥y danh sÃ¡ch phim thÃ nh cÃ´ng." };
         }
     }
 }
+

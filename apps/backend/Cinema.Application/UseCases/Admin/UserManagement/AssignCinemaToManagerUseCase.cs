@@ -7,6 +7,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -29,7 +30,7 @@ public class AssignCinemaToManagerUseCase
     public async Task<BaseResponse<string>> ExecuteAsync(Guid cinemaId, Guid managerId)
     {
         var cinema = await _adminUserRepository.FindActiveCinemaAsync(cinemaId);
-        if (cinema == null) return new BaseResponse<string> { IsSuccess = false, Message = "Cinema not found." };
+        if (cinema == null) return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.CinemaNotFound };
 
         var userRoleNames = await _adminUserRepository.GetUserRolesAsync(managerId);
 
@@ -38,7 +39,7 @@ public class AssignCinemaToManagerUseCase
 
         if (!isManager && !isStaff)
         {
-            return new BaseResponse<string> { IsSuccess = false, Message = "User must be a staff member or manager." };
+            return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.UserMustBeStaff };
         }
 
         if (isManager)
@@ -86,6 +87,7 @@ public class AssignCinemaToManagerUseCase
             
         await _unitOfWork.SaveChangesAsync();
 
-        return new BaseResponse<string> { IsSuccess = true, Message = "Assigned cinema successfully." };
+        return new BaseResponse<string> { IsSuccess = true, Message = Messages.Admin.AssignedCinemaSuccess };
     }
 }
+

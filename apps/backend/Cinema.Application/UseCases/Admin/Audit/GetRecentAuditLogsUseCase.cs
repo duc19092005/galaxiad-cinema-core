@@ -1,4 +1,4 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Admin;
@@ -63,3 +63,4 @@ public class GetRecentAuditLogsUseCase
         };
     }
 }
+

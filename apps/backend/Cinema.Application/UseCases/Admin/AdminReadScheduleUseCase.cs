@@ -4,6 +4,7 @@ using Cinema.Domain.Entities.ScheduleJob;
 using Cinema.Domain.Enums;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.MappingEnums;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin;
 
@@ -53,7 +54,7 @@ public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
         { 
             Data = grouped, 
             IsSuccess = true, 
-            Message = "Lấy danh sách schedule jobs thành công" 
+            Message = Messages.Admin.GetScheduleJobsSuccess 
         };
     }
 

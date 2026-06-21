@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -7,6 +7,7 @@ using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Comments.Recommendation;
 
@@ -57,3 +58,4 @@ public class SaveSurveyUseCase
         };
     }
 }
+

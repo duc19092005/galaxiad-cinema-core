@@ -1,10 +1,11 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Comments;
 
@@ -87,3 +88,4 @@ public class ModerateMovieCommentUseCase
         }
     }
 }
+

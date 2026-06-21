@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
@@ -24,7 +24,7 @@ public class GetAuditoriumDetailsUseCase
             return new BaseResponse<GetAuditoriumInfosRes>
             {
                 IsSuccess = false,
-                Message = "Không tìm thấy thông tin phòng chiếu cho suất chiếu này."
+                Message = "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng chiáº¿u cho suáº¥t chiáº¿u nÃ y."
             };
         }
 
@@ -32,7 +32,8 @@ public class GetAuditoriumDetailsUseCase
         {
             Data = details,
             IsSuccess = true,
-            Message = "Thành công"
+            Message = "ThÃ nh cÃ´ng"
         };
     }
 }
+

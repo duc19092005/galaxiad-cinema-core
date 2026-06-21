@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -87,7 +87,8 @@ public class GetAdvancedSearchSchedulesUseCase
         {
             IsSuccess = true,
             Data = result,
-            Message = "Lọc danh sách phim và lịch chiếu thành công"
+            Message = "Lá»c danh sÃ¡ch phim vÃ  lá»‹ch chiáº¿u thÃ nh cÃ´ng"
         };
     }
 }
+

@@ -1,4 +1,4 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Dtos.TheaterManager;
@@ -35,8 +35,8 @@ public class GetMyAuditoriumsUseCase
             {
                 IsSuccess = false,
                 Message = cinemaId.HasValue
-                    ? "Rạp phim theo Id không tìm thấy hoặc bạn không có quyền quản lý."
-                    : "Tài khoản của bạn chưa được chỉ định quản lý rạp phim nào."
+                    ? "Ráº¡p phim theo Id khÃ´ng tÃ¬m tháº¥y hoáº·c báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½."
+                    : "TÃ i khoáº£n cá»§a báº¡n chÆ°a Ä‘Æ°á»£c chá»‰ Ä‘á»‹nh quáº£n lÃ½ ráº¡p phim nÃ o."
             };
         }
 
@@ -44,7 +44,8 @@ public class GetMyAuditoriumsUseCase
         {
             IsSuccess = true,
             Data = result,
-            Message = "Lấy dữ liệu phòng chiếu thành công."
+            Message = "Láº¥y dá»¯ liá»‡u phÃ²ng chiáº¿u thÃ nh cÃ´ng."
         };
     }
 }
+

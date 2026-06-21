@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -44,7 +44,7 @@ public class GetNearestCinemasUseCase
         {
             IsSuccess = true,
             Data = list,
-            Message = "Lấy danh sách rạp gần nhất thành công."
+            Message = "Láº¥y danh sÃ¡ch ráº¡p gáº§n nháº¥t thÃ nh cÃ´ng."
         };
     }
 
@@ -66,3 +66,4 @@ public class GetNearestCinemasUseCase
         return Math.PI * angle / 180.0;
     }
 }
+

@@ -7,7 +7,7 @@ namespace Cinema.Domain.Localization;
 ///
 /// USAGE EXAMPLE:
 ///   throw new DomainException(Messages.Auth.UserNotFound, "UN01");
-///   return new BaseResponse&lt;string&gt;() { Message = Messages.Cinema.AddCompleted };
+///   return new BaseResponse<string>() { Message = Messages.Cinema.AddCompleted };
 ///
 /// DYNAMIC MESSAGES (with parameters):
 ///   throw new DomainException(Messages.Cinema.AlreadyExistsName("CGV"), "C01");
@@ -175,6 +175,7 @@ public static class Messages
 
         public const string SchedulesIsNotFoundOrMovieIsInactivated =
             "Schedules is not found or it's has been deleted or Movie is Inactivated";
+
         // Dynamic errors
         public static string MovieAvailability(string movieName, string from, string to) =>
             $"Movie '{movieName}' is available from {from} to {to}.";
@@ -196,6 +197,7 @@ public static class Messages
         public const string CreateBookingSuccess = "Booking created successfully";
         public const string PaymentSuccess = "Payment completed successfully";
         public const string GetHistorySuccess = "Get booking history successfully";
+        public const string GetCinemasListSuccess = "Get cinemas list successfully";
 
         // Errors
         public const string ScheduleNotFound = "Schedule not found";
@@ -210,6 +212,171 @@ public static class Messages
     public static class RequiredAge
     {
         public const string GetRequiredAgeCompleted = "Get Required Age Completed";
+    }
+
+    // =============================================================
+    //  STAFF / SHIFTS
+    // =============================================================
+    public static class Staff
+    {
+        public const string AccountNotLinkedToCinema = "Your account is not linked to any specific cinema branch or has been deactivated.";
+        public const string StaffProfileNotFound = "Staff profile not found or account has been locked.";
+        public const string ShiftTemplateNotFound = "Shift template not found or has been deactivated.";
+        public const string CannotRegisterPastShifts = "Cannot register shifts in the past.";
+        public const string StartDateAfterEndDate = "Start date cannot be after end date.";
+        public const string CinemaMismatch = "Can only register shifts at the cinema you work for.";
+        public const string FaceNotRegistered = "Staff has not registered facial recognition. Please contact Admin/Manager.";
+        public const string FaceVectorInvalid = "Face vector data is invalid (requires array of 128 floats).";
+        public const string FaceVectorEncryptionError = "System error while decrypting staff face data.";
+        public const string FaceVectorSampleInvalid = "System error: Stored face template data is invalid.";
+        public const string FaceMismatch = "Facial verification failed (Distance: {0} > 0.6).";
+        public const string NoApprovedShiftToday = "No approved shift schedules for today.";
+        public const string AlreadyClockedIn = "Already clocked in for this shift and have not clocked out.";
+        public const string MissingAESConfig = "System configuration error: Missing AES-256 key.";
+        public const string MissingJWTConfig = "System configuration error: Missing JWT configuration.";
+        public const string CannotGenerateToken = "System error: Unable to generate Access Token.";
+        public const string ClockOutNotAllowed = "Clock-out time must be after clock-in time.";
+        public const string NoActiveShiftToClockOut = "No active shift found to clock-out.";
+        public const string AlreadyRegisteredForShift = "Staff has already been assigned to this shift.";
+        public const string OverlappingShiftExists = "Staff has another shift overlapping this time slot.";
+        public const string ShiftRegistrationNotFound = "Shift registration request not found.";
+        public const string CannotCancelNonPending = "Can only cancel shifts that are in Pending status.";
+        public const string RegistrationListInvalid = "Shift registration ID list is invalid.";
+        public const string NoRegistrationsFound = "No registration requests found in the list.";
+        public const string ShiftAlreadyFull = "This shift has reached maximum staff capacity.";
+        public const string CannotAssignToDifferentCinema = "Cannot assign staff to a shift at a different cinema.";
+        public const string SystemBusyProcessingShift = "System is busy processing this shift, try again later.";
+        public const string NoPermissionShiftManage = "No permission to perform this management action.";
+        public const string NoPermissionBranchStaffOnly = "Can only manage staff in your cinema branch.";
+        public const string NoPermissionFaceRegister = "No permission to register face for this staff.";
+        public const string NoPermissionBranchFaceOnly = "Can only register face for staff in your cinema branch.";
+        public const string ClockInShiftTimeWindow = "Clock-in time is outside your shift window. Shift is {0} - {1}.";
+        public const string ClockInSuccess = "Clock-in successful! Welcome {0} to your shift.";
+        public const string ClockOutSuccess = "Clock-out successful! Hours: {0}h, Salary: {1:N0} VND.";
+        public const string RegisterShiftSuccess = "Registered for {0} day(s), pending Manager approval.";
+        public const string RegisterShiftPartialSuccess = "Registered: {0}. Failed: {1}.";
+        public const string RegisterShiftAllFailed = "Registration failed for all selected days: {0}";
+        public const string CancelShiftSuccess = "Cancelled shift request successfully.";
+        public const string CancelBulkShiftSuccess = "Cancelled {0} shift requests successfully.";
+        public const string RegisterFaceSuccess = "Facial recognition registered successfully.";
+        public const string PayrollNotFound = "Payroll record not found.";
+        public const string PayrollAlreadyPaid = "This payroll has already been paid.";
+        public const string PayrollNoPermission = "No permission to manage payroll.";
+        public const string PayrollBranchOnly = "Can only manage payroll at your cinema branch.";
+    }
+
+    // =============================================================
+    //  COMMENTS / REVIEWS
+    // =============================================================
+    public static class Comment
+    {
+        public const string ShowtimeNotFinished = "You can comment after the showtime has ended.";
+        public const string NoPaidTicket = "You need a paid ticket for this movie to comment.";
+        public const string AlreadyReviewed = "You have already reviewed this movie.";
+        public const string UnderModeration = "Your comment is pending moderation.";
+        public const string ReplyUnderModeration = "Your reply is pending moderation.";
+        public const string CommentDeleted = "Comment deleted successfully.";
+        public const string GetListSuccess = "Get comments successfully.";
+        public const string GetNotificationsSuccess = "Get notifications successfully.";
+        public const string GetTopRatedSuccess = "Get top rated movies successfully.";
+        public const string GetTrendingSuccess = "Get trending movies successfully.";
+        public const string MarkReadSuccess = "Notification marked as read.";
+        public const string CreateError = "Error saving comment.";
+    }
+
+    // =============================================================
+    //  VOUCHER
+    // =============================================================
+    public static class Voucher
+    {
+        public const string NameAlreadyExists = "Voucher name already exists";
+        public const string RoleDoesNotExist = "Role does not exist";
+        public const string NotFound = "Voucher not found";
+        public const string ExpiredOrNotActive = "Voucher has expired or is not yet active";
+        public const string UserNotFound = "User not found";
+        public const string NotEligible = "User is not eligible for this voucher (role mismatch)";
+        public const string GuestsCannotApply = "Guests cannot apply vouchers.";
+        public const string InvalidOrUsed = "Voucher is invalid or has already been used.";
+        public const string ExpiredOrInactive = "Voucher has expired or is not active yet.";
+    }
+
+    // =============================================================
+    //  CATALOG
+    // =============================================================
+    public static class Catalog
+    {
+        public const string Success = "Success";
+        public const string GetMoviesSuccess = "Get movies list successfully";
+        public const string GetCinemasSuccess = "Get cinemas list successfully";
+        public const string GetNearestCinemasSuccess = "Get nearest cinemas successfully.";
+        public const string GetDatesSuccess = "Get dates successfully";
+        public const string GetScheduleDatesSuccess = "Get schedule dates successfully";
+        public const string GetScheduleDetailsSuccess = "Get schedule details successfully";
+        public const string GetMovieDetailSuccess = "Get movie detail successfully";
+        public const string GetAuditoriumDetailSuccess = "Get auditorium detail successfully";
+        public const string AuditoriumNotFound = "Auditorium info not found for this schedule.";
+        public const string GetSearchResultsSuccess = "Search results retrieved";
+        public const string FilterSchedulesSuccess = "Filter movies and schedules successfully";
+    }
+
+    // =============================================================
+    //  ADMIN - USER MANAGEMENT
+    // =============================================================
+    public static class Admin
+    {
+        public const string UserNotFound = "User not found.";
+        public const string CinemaNotFound = "Cinema not found.";
+        public const string UserMustBeStaff = "User must be a staff member or manager.";
+        public const string AssignedCinemaSuccess = "Assigned cinema successfully.";
+        public const string PortraitRequired = "Portrait image is required.";
+        public const string PortraitUpdated = "Portrait image updated successfully.";
+        public const string UserAccountCreated = "User account created successfully.";
+        public const string GetAllUsersSuccess = "Get all users successfully.";
+        public const string RoleNotFound = "Role not found.";
+        public const string StaffRolesUpdated = "Staff roles updated successfully.";
+        public const string GetScheduleJobsSuccess = "Get schedule jobs list successfully";
+        public const string GetAuditLogsSuccess = "Get audit logs successfully.";
+        public const string GetDashboardSuccess = "Get management dashboard successfully.";
+        public const string GetManagedItemsSuccess = "Get managed items list successfully.";
+        public const string PermissionNotAllowed = "ApproveShift can only be assigned to Admin or TheaterManager.";
+        public const string PermissionsUpdated = "Permissions updated for role {0}.";
+        public const string PermissionsInvalid = "One or more permissions are invalid.";
+    }
+
+    // =============================================================
+    //  VALIDATION
+    // =============================================================
+    public static class Validation
+    {
+        public const string AgeMustBeBetween16And80 = "Age must be between 16 and 80.";
+        public const string UpdateProfileSuccess = "Update personal information successfully.";
+        public const string UserMustBeAtLeastYearsOld = "User must be at least {0} years old.";
+        public const string StaffMustBeAtLeastYearsOld = "Staff must be at least {0} years old.";
+        public const string InvalidUserType = "Invalid user type.";
+        public const string InvalidCustomerType = "Invalid customer type.";
+        public const string GuestBookingRequiresInfo = "Guest booking requires Customer Name and Email.";
+    }
+
+    // =============================================================
+    //  PLATFORM
+    // =============================================================
+    public static class Platform
+    {
+        public const string GoogleLoginUrlGenerated = "Google login URL generated successfully";
+        public const string InvalidPlatform = "Invalid platform. Use 'web' or 'mobile'";
+        public const string BannerUploadFailed = "Failed to upload banner image";
+    }
+
+    // =============================================================
+    //  RECOMMENDATION
+    // =============================================================
+    public static class Recommendation
+    {
+        public const string PopularRecommendations = "Popular recommendations";
+        public const string BehaviorBased = "Behavior-based recommendations";
+        public const string SurveyNotCompleted = "Survey not completed";
+        public const string SurveyCompleted = "Survey completed";
+        public const string SavedPreferences = "Saved recommendation preferences";
     }
 
     // =============================================================

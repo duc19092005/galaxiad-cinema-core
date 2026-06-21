@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cinema.Application.Interfaces.Chatbot;
@@ -19,3 +19,4 @@ public class ChatToolRegistry : IChatToolRegistry
         return _tools.TryGetValue(intent, out var tool) ? tool : null;
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces;
@@ -24,3 +24,4 @@ public class TrackMovieViewUseCase
         await _movieViewBuffer.QueueMovieViewAsync(movieId, userId, DateTime.UtcNow);
     }
 }
+

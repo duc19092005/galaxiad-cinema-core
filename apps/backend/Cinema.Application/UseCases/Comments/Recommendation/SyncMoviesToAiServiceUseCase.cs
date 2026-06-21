@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces.IThirdPersonServices;
@@ -26,3 +26,4 @@ public class SyncMoviesToAiServiceUseCase
         };
     }
 }
+

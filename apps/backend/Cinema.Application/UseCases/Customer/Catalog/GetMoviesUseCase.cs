@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -23,7 +23,8 @@ public class GetMoviesUseCase
         {
             Data = movies,
             IsSuccess = true,
-            Message = "Thành công"
+            Message = "ThÃ nh cÃ´ng"
         };
     }
 }
+

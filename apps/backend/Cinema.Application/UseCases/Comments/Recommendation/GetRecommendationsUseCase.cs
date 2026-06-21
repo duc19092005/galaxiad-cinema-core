@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -133,7 +133,7 @@ public class GetRecommendationsUseCase
                 orderedMovies.AddRange(fallback);
             }
 
-            // AI distance: nhỏ hơn = khớp hơn → đảo chiều để tính % phù hợp
+            // AI distance: nhá» hÆ¡n = khá»›p hÆ¡n â†’ Ä‘áº£o chiá»u Ä‘á»ƒ tÃ­nh % phÃ¹ há»£p
             ApplyMatchPercentage(orderedMovies, invertDistance: true);
             return new BaseResponse<List<RecommendedMovieRes>>
             {
@@ -174,17 +174,17 @@ public class GetRecommendationsUseCase
     }
 
     /// <summary>
-    /// Quy đổi SimilarityScore của toàn bộ danh sách về thang MatchPercentage (0–100%).
+    /// Quy Ä‘á»•i SimilarityScore cá»§a toÃ n bá»™ danh sÃ¡ch vá» thang MatchPercentage (0â€“100%).
     /// 
-    /// - invertDistance = false (Fallback): SimilarityScore cao hơn → % cao hơn.
-    ///   Dùng Min-Max normalization:
+    /// - invertDistance = false (Fallback): SimilarityScore cao hÆ¡n â†’ % cao hÆ¡n.
+    ///   DÃ¹ng Min-Max normalization:
     ///     MatchPercentage = (score - min) / (max - min) * 100
     ///
-    /// - invertDistance = true (AI Embedding): SimilarityScore là khoảng cách Euclidean,
-    ///   giá trị nhỏ hơn nghĩa là khớp hơn, nên đảo chiều:
+    /// - invertDistance = true (AI Embedding): SimilarityScore lÃ  khoáº£ng cÃ¡ch Euclidean,
+    ///   giÃ¡ trá»‹ nhá» hÆ¡n nghÄ©a lÃ  khá»›p hÆ¡n, nÃªn Ä‘áº£o chiá»u:
     ///     MatchPercentage = (1 - score / maxScore) * 100
     ///
-    /// Nếu tất cả điểm bằng nhau, gán 100% cho tất cả (tất cả đều phù hợp).
+    /// Náº¿u táº¥t cáº£ Ä‘iá»ƒm báº±ng nhau, gÃ¡n 100% cho táº¥t cáº£ (táº¥t cáº£ Ä‘á»u phÃ¹ há»£p).
     /// </summary>
     private static void ApplyMatchPercentage(List<RecommendedMovieRes> movies, bool invertDistance)
     {
@@ -199,14 +199,14 @@ public class GetRecommendationsUseCase
         {
             if (invertDistance)
             {
-                // Khoảng cách AI: nhỏ hơn = tốt hơn → đảo chiều
+                // Khoáº£ng cÃ¡ch AI: nhá» hÆ¡n = tá»‘t hÆ¡n â†’ Ä‘áº£o chiá»u
                 movie.MatchPercentage = maxScore > 0
                     ? Math.Round((1.0 - movie.SimilarityScore / maxScore) * 100, 1)
                     : 100.0;
             }
             else
             {
-                // Fallback score: lớn hơn = tốt hơn → Min-Max normalize
+                // Fallback score: lá»›n hÆ¡n = tá»‘t hÆ¡n â†’ Min-Max normalize
                 movie.MatchPercentage = range > 0
                     ? Math.Round((movie.SimilarityScore - minScore) / range * 100, 1)
                     : 100.0;
@@ -291,3 +291,4 @@ public class GetRecommendationsUseCase
         }
     }
 }
+

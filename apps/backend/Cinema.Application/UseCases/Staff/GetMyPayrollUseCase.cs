@@ -1,4 +1,4 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Facilities;
 
@@ -22,3 +22,4 @@ public class GetMyPayrollUseCase
         return new BaseResponse<List<ResPayrollDto>> { IsSuccess = true, Data = list };
     }
 }
+

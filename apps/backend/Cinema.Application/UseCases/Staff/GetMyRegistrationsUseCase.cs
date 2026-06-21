@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -22,3 +22,4 @@ public class GetMyRegistrationsUseCase
         return new BaseResponse<List<ResStaffShiftRegistrationDto>> { IsSuccess = true, Data = list };
     }
 }
+

@@ -117,10 +117,10 @@ const AllMoviesPage: React.FC = () => {
           color: 'white',
           marginBottom: 12
         }}>
-          {t('allmovies.title', 'Danh Sách Phim')}
+          {t('allmovies.title', 'All Movies')}
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 14, maxWidth: 600, margin: '0 auto', padding: '0 16px' }}>
-          {selectedCity ? `${t('allmovies.showingIn', 'Đang chiếu tại')} ${selectedCity}` : t('allmovies.browseAll', 'Khám phá tất cả bộ phim bom tấn đỉnh cao')}
+          {selectedCity ? `${t('allmovies.showingIn', 'Showing in')} ${selectedCity}` : t('allmovies.browseAll', 'Browse all blockbuster movies')}
         </p>
 
         {/* Tab Controls */}
@@ -153,7 +153,7 @@ const AllMoviesPage: React.FC = () => {
             }}
           >
             <Film size={16} />
-            <span>{t('home.nowShowing', 'Phim Đang Chiếu')}</span>
+            <span>{t('home.nowShowing', 'Now Showing')}</span>
           </button>
 
           <button
@@ -178,7 +178,7 @@ const AllMoviesPage: React.FC = () => {
             }}
           >
             <Calendar size={16} />
-            <span>{t('home.comingSoon', 'Phim Sắp Chiếu')}</span>
+            <span>{t('home.comingSoon', 'Coming Soon')}</span>
           </button>
         </div>
       </section>
@@ -199,10 +199,10 @@ const AllMoviesPage: React.FC = () => {
           <div className="glass-card" style={{ padding: '64px 24px', borderRadius: 16, textAlign: 'center', color: 'var(--text-secondary)' }}>
             <Film size={40} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
             <p style={{ fontSize: 16, fontWeight: 600, color: 'white', margin: 0 }}>
-              {activeTab === 'now-showing' ? 'Không có phim đang chiếu.' : 'Không có phim sắp chiếu.'}
+              {activeTab === 'now-showing' ? 'No movies currently showing.' : 'No upcoming movies.'}
             </p>
             <p style={{ fontSize: 13, marginTop: 8, color: 'var(--text-secondary)' }}>
-              Hãy thử chọn thành phố hoặc rạp khác để xem lịch chiếu.
+              Try selecting a different city or theater to view showtimes.
             </p>
           </div>
         ) : (
@@ -282,7 +282,7 @@ const AllMoviesPage: React.FC = () => {
                   }}
                 >
                   <ChevronLeft size={16} />
-                  <span>{t('pagination.prev', 'Trước')}</span>
+                  <span>{t('pagination.prev', 'Prev')}</span>
                 </button>
 
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (

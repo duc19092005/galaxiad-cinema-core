@@ -355,7 +355,7 @@ const HomePage: React.FC = () => {
                 transition: 'all 0.2s',
               }}
             >
-              {selectedCity ? `Tại ${selectedCity}` : 'Tại Địa Phương'}
+              {selectedCity ? `In ${selectedCity}` : 'Local'}
             </button>
           </div>
         </div>
@@ -422,7 +422,7 @@ const HomePage: React.FC = () => {
                     <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
                       <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8, lineHeight: 1.25 }}>{item.movieName}</h3>
                       <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, minHeight: 42, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {item.movieDescription || 'Bộ phim đang được khán giả quan tâm trong tháng này.'}
+                        {item.movieDescription || 'This movie is generating buzz this month.'}
                       </p>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
                         <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.paidTicketCount} vé</span>
@@ -486,7 +486,7 @@ const HomePage: React.FC = () => {
               </div>
             ) : nowShowing.length === 0 ? (
               <div className="glass-card" style={{ padding: 48, borderRadius: 16, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                Không có phim đang chiếu tại rạp này.
+                No movies currently showing at this theater.
               </div>
             ) : (
               <div>
@@ -565,7 +565,7 @@ const HomePage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Xem Thêm Button */}
+                {/* See More Button */}
                 {nowShowing.length > 0 && (
                   <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
                     <button 
@@ -583,7 +583,7 @@ const HomePage: React.FC = () => {
                         transition: 'all 0.2s',
                       }}
                     >
-                      {t('home.seeMore', 'Xem thêm')}
+                      {t('home.seeMore', 'See More')}
                     </button>
                   </div>
                 )}
@@ -697,16 +697,16 @@ const HomePage: React.FC = () => {
           <div style={{ marginTop: 'clamp(32px, 6vw, 64px)' }}>
             <div style={{ marginBottom: 'clamp(16px, 3vw, 32px)' }}>
               <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-                {t('home.comingSoonBadge', 'SẮP CHIẾU')}
+                {t('home.comingSoonBadge', 'Coming Soon')}
               </span>
               <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
-                {t('home.comingSoon', 'Phim Sắp Chiếu')}
+                {t('home.comingSoon', 'Coming Soon')}
               </h2>
             </div>
 
             {comingSoon.length === 0 ? (
               <div className="glass-card" style={{ padding: '36px 24px', borderRadius: 16, textAlign: 'center' }}>
-                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>Hiện tại chưa có danh sách</p>
+                <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>{t('home.noComingSoon', 'No list available at the moment')}</p>
               </div>
             ) : (
               <div>
@@ -766,7 +766,7 @@ const HomePage: React.FC = () => {
                             </span>
                             {movie.startedDate && (
                               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                Khởi chiếu: {new Date(movie.startedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                {t('home.releaseDate', 'Release Date')}: {new Date(movie.startedDate).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                               </span>
                             )}
                           </div>
@@ -788,7 +788,7 @@ const HomePage: React.FC = () => {
                   )}
                 </div>
 
-                {/* Xem Thêm Button */}
+                {/* See More Button */}
                 <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
                   <button 
                     onClick={() => navigate('/movies?tab=coming-soon')}
@@ -805,7 +805,7 @@ const HomePage: React.FC = () => {
                       transition: 'all 0.2s',
                     }}
                   >
-                    {t('home.seeMore', 'Xem thêm')}
+                    {t('home.seeMore', 'See More')}
                   </button>
                 </div>
               </div>
@@ -832,30 +832,30 @@ const HomePage: React.FC = () => {
             </p>
           </div>
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Liên Kết Nhanh</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Quick Links</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <FooterLink label="Chính Sách Bảo Mật" path="/privacy-policy" />
-              <FooterLink label="Điều Khoản Sử Dụng" path="/terms-of-service" />
-              <FooterLink label="Liên Hệ Ngay" path="/contact-us" />
+              <FooterLink label="Privacy Policy" path="/privacy-policy" />
+              <FooterLink label="Terms of Service" path="/terms-of-service" />
+              <FooterLink label="Contact Us" path="/contact-us" />
             </div>
           </div>
           <div>
             <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Company</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <FooterLink label="Tuyển Dụng" path="/careers" />
-              <FooterLink label="Phản Hồi" path="/contact-us" />
+              <FooterLink label="Careers" path="/careers" />
+              <FooterLink label="Feedback" path="/contact-us" />
               <FooterLink label="About Us" path="/about-us" />
             </div>
           </div>
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Pháp Lý</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Legal</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <FooterLink label="Cookie Policy" path="/cookie-policy" />
               <FooterLink label="Safety Rules" path="/safety-rules" />
             </div>
           </div>
           <div>
-            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Liên Hệ</h4>
+            <h4 style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 16, color: 'var(--accent)' }}>Contact</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, fontSize: 13, color: 'var(--text-secondary)' }}>
               <span>support@cinemapro.com</span>
               <span>1800-123-456</span>
@@ -884,8 +884,8 @@ const HomePage: React.FC = () => {
               ?
             </div>
             <div>
-              <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t('help.stillNeedHelp', 'Cần giúp đỡ?')}</p>
-              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t('help.stillNeedHelpDesc', 'Đội hỗ trợ của chúng tôi luôn sẵn sàng 24/7.')}</p>
+              <p style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>{t('help.stillNeedHelp', 'Still need help?')}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '2px 0 0' }}>{t('help.stillNeedHelpDesc', 'Our support team is available 24/7 to assist you.')}</p>
             </div>
           </div>
           <button
@@ -900,7 +900,7 @@ const HomePage: React.FC = () => {
             }}
           >
             <span>?</span>
-            {t('help.contactSupport', 'Trợ giúp')}
+            {t('help.contactSupport', 'Contact Support')}
           </button>
         </div>
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +9,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -31,30 +32,30 @@ public class ApproveShiftRegistrationUseCase
         _sseNotificationService = sseNotificationService;
     }
 
-    // 1. Phê duyệt ca trực
+    // 1. PhÃª duyá»‡t ca trá»±c
     public async Task<BaseResponse<bool>> ApproveAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("Không tìm thấy yêu cầu đăng ký ca làm.", 404, "SHIFT_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Pending")
         {
-            throw new AppException($"Yêu cầu này đã được xử lý từ trước (Trạng thái hiện tại: {registration.Status}).", 400, "SHIFT_ERR");
+            throw new AppException($"YÃªu cáº§u nÃ y Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ tá»« trÆ°á»›c (Tráº¡ng thÃ¡i hiá»‡n táº¡i: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
-        // Kiểm tra quyền của người phê duyệt (Phải là Admin hoặc TheaterManager của cùng Rạp)
+        // Kiá»ƒm tra quyá»n cá»§a ngÆ°á»i phÃª duyá»‡t (Pháº£i lÃ  Admin hoáº·c TheaterManager cá»§a cÃ¹ng Ráº¡p)
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
-        // Đếm lại xem hiện tại số lượng ca Approved đã đạt tối đa chưa
+        // Äáº¿m láº¡i xem hiá»‡n táº¡i sá»‘ lÆ°á»£ng ca Approved Ä‘Ã£ Ä‘áº¡t tá»‘i Ä‘a chÆ°a
         var approvedCount = await _repository.CountApprovedRegistrationsAsync(registration.ShiftTemplateId, registration.RegistrationDate);
 
         if (approvedCount >= registration.CinemaShiftTemplateEntity.MaxStaff)
         {
-            throw new AppException("Ca làm việc này đã đủ số lượng nhân viên được phê duyệt.", 400, "SHIFT_ERR");
+            throw new AppException("Ca lÃ m viá»‡c nÃ y Ä‘Ã£ Ä‘á»§ sá»‘ lÆ°á»£ng nhÃ¢n viÃªn Ä‘Æ°á»£c phÃª duyá»‡t.", 400, "SHIFT_ERR");
         }
 
         registration.Status = "Approved";
@@ -66,8 +67,8 @@ public class ApproveShiftRegistrationUseCase
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Duyệt ca trực",
-            $"Ca trực '{registration.CinemaShiftTemplateEntity.ShiftName}' ngày {registration.RegistrationDate:dd/MM/yyyy} của bạn đã được phê duyệt.",
+            "Duyá»‡t ca trá»±c",
+            $"Ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} cá»§a báº¡n Ä‘Ã£ Ä‘Æ°á»£c phÃª duyá»‡t.",
             "ShiftApproved"
         );
 
@@ -75,26 +76,26 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Phê duyệt ca trực thành công."
+            Message = "PhÃª duyá»‡t ca trá»±c thÃ nh cÃ´ng."
         };
     }
 
-    // 2. Từ chối ca trực
+    // 2. Tá»« chá»‘i ca trá»±c
     public async Task<BaseResponse<bool>> RejectAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("Không tìm thấy yêu cầu đăng ký ca làm.", 404, "SHIFT_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Pending")
         {
-            throw new AppException($"Yêu cầu này đã được xử lý từ trước (Trạng thái hiện tại: {registration.Status}).", 400, "SHIFT_ERR");
+            throw new AppException($"YÃªu cáº§u nÃ y Ä‘Ã£ Ä‘Æ°á»£c xá»­ lÃ½ tá»« trÆ°á»›c (Tráº¡ng thÃ¡i hiá»‡n táº¡i: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
-        // Kiểm tra quyền
+        // Kiá»ƒm tra quyá»n
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
         registration.Status = "Rejected";
@@ -106,8 +107,8 @@ public class ApproveShiftRegistrationUseCase
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Từ chối ca trực",
-            $"Yêu cầu đăng ký ca trực '{registration.CinemaShiftTemplateEntity.ShiftName}' ngày {registration.RegistrationDate:dd/MM/yyyy} của bạn đã bị từ chối. Lý do: {notes ?? "Không có lý do cụ thể"}.",
+            "Tá»« chá»‘i ca trá»±c",
+            $"YÃªu cáº§u Ä‘Äƒng kÃ½ ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} cá»§a báº¡n Ä‘Ã£ bá»‹ tá»« chá»‘i. LÃ½ do: {notes ?? "KhÃ´ng cÃ³ lÃ½ do cá»¥ thá»ƒ"}.",
             "ShiftRejected"
         );
 
@@ -115,39 +116,39 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Từ chối yêu cầu đăng ký ca trực."
+            Message = "Tá»« chá»‘i yÃªu cáº§u Ä‘Äƒng kÃ½ ca trá»±c."
         };
     }
 
-    // 3. Hủy ca trực đã phê duyệt (Giải quyết khi nhân viên xin nghỉ đột xuất)
+    // 3. Há»§y ca trá»±c Ä‘Ã£ phÃª duyá»‡t (Giáº£i quyáº¿t khi nhÃ¢n viÃªn xin nghá»‰ Ä‘á»™t xuáº¥t)
     public async Task<BaseResponse<bool>> CancelApprovedAsync(Guid registrationId, Guid managerUserId, string? notes)
     {
         var registration = await _repository.GetRegistrationByIdWithTemplateAsync(registrationId);
 
         if (registration == null)
         {
-            throw new AppException("Không tìm thấy yêu cầu đăng ký ca làm.", 404, "SHIFT_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y yÃªu cáº§u Ä‘Äƒng kÃ½ ca lÃ m.", 404, "SHIFT_ERR");
         }
 
         if (registration.Status != "Approved")
         {
-            throw new AppException("Chỉ có thể hủy những ca trực đã được phê duyệt thành công.", 400, "SHIFT_ERR");
+            throw new AppException("Chá»‰ cÃ³ thá»ƒ há»§y nhá»¯ng ca trá»±c Ä‘Ã£ Ä‘Æ°á»£c phÃª duyá»‡t thÃ nh cÃ´ng.", 400, "SHIFT_ERR");
         }
 
-        // Kiểm tra quyền
+        // Kiá»ƒm tra quyá»n
         await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
 
         registration.Status = "Cancelled";
         registration.ApprovedByUserId = managerUserId;
         registration.ApprovedAt = DateTime.UtcNow;
-        registration.Notes = string.IsNullOrEmpty(notes) ? "Quản lý hủy ca làm" : notes;
+        registration.Notes = string.IsNullOrEmpty(notes) ? "Quáº£n lÃ½ há»§y ca lÃ m" : notes;
 
         await _unitOfWork.SaveChangesAsync();
 
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
-            "Hủy ca trực",
-            $"Lịch làm việc ca trực '{registration.CinemaShiftTemplateEntity.ShiftName}' ngày {registration.RegistrationDate:dd/MM/yyyy} đã phê duyệt của bạn đã bị hủy bởi quản lý. Lý do: {notes ?? "Không có lý do cụ thể"}.",
+            "Há»§y ca trá»±c",
+            $"Lá»‹ch lÃ m viá»‡c ca trá»±c '{registration.CinemaShiftTemplateEntity.ShiftName}' ngÃ y {registration.RegistrationDate:dd/MM/yyyy} Ä‘Ã£ phÃª duyá»‡t cá»§a báº¡n Ä‘Ã£ bá»‹ há»§y bá»Ÿi quáº£n lÃ½. LÃ½ do: {notes ?? "KhÃ´ng cÃ³ lÃ½ do cá»¥ thá»ƒ"}.",
             "ShiftCancelled"
         );
 
@@ -155,52 +156,52 @@ public class ApproveShiftRegistrationUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Hủy ca làm việc đã phê duyệt thành công. Vị trí ca làm hiện đã trống cho người khác đăng ký."
+            Message = "Há»§y ca lÃ m viá»‡c Ä‘Ã£ phÃª duyá»‡t thÃ nh cÃ´ng. Vá»‹ trÃ­ ca lÃ m hiá»‡n Ä‘Ã£ trá»‘ng cho ngÆ°á»i khÃ¡c Ä‘Äƒng kÃ½."
         };
     }
 
-    // 4. Gán trực tiếp nhân viên vào ca trực (Admin/Manager gán trực tiếp)
+    // 4. GÃ¡n trá»±c tiáº¿p nhÃ¢n viÃªn vÃ o ca trá»±c (Admin/Manager gÃ¡n trá»±c tiáº¿p)
     public async Task<BaseResponse<bool>> AssignDirectlyAsync(Guid staffId, Guid shiftTemplateId, DateTime date, Guid managerUserId)
     {
-        // Kiểm tra nhân viên mục tiêu có StaffProfile hợp lệ không
+        // Kiá»ƒm tra nhÃ¢n viÃªn má»¥c tiÃªu cÃ³ StaffProfile há»£p lá»‡ khÃ´ng
         var staffProfile = await _repository.GetStaffProfileWithUserAsync(staffId);
 
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
-            throw new AppException("Tài khoản nhân viên được gán không hợp lệ, chưa được gán rạp hoặc đã ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException("TÃ i khoáº£n nhÃ¢n viÃªn Ä‘Æ°á»£c gÃ¡n khÃ´ng há»£p lá»‡, chÆ°a Ä‘Æ°á»£c gÃ¡n ráº¡p hoáº·c Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng.", 400, "SHIFT_ERR");
         }
 
-        // Kiểm tra ca trực mẫu
+        // Kiá»ƒm tra ca trá»±c máº«u
         var template = await _repository.GetShiftTemplateByIdAsync(shiftTemplateId);
 
         if (template == null)
         {
-            throw new AppException("Ca trực mẫu không tồn tại hoặc đã bị ngừng hoạt động.", 400, "SHIFT_ERR");
+            throw new AppException("Ca trá»±c máº«u khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ bá»‹ ngá»«ng hoáº¡t Ä‘á»™ng.", 400, "SHIFT_ERR");
         }
 
-        // Nhân viên chỉ được gán vào ca trực của rạp họ trực thuộc
+        // NhÃ¢n viÃªn chá»‰ Ä‘Æ°á»£c gÃ¡n vÃ o ca trá»±c cá»§a ráº¡p há» trá»±c thuá»™c
         if (template.CinemaId != staffProfile.CinemaId)
         {
-            throw new AppException("Không thể gán nhân viên vào ca trực ở chi nhánh rạp khác.", 400, "SHIFT_ERR");
+            throw new AppException("KhÃ´ng thá»ƒ gÃ¡n nhÃ¢n viÃªn vÃ o ca trá»±c á»Ÿ chi nhÃ¡nh ráº¡p khÃ¡c.", 400, "SHIFT_ERR");
         }
 
-        // Kiểm tra quyền quản lý rạp của manager
+        // Kiá»ƒm tra quyá»n quáº£n lÃ½ ráº¡p cá»§a manager
         await VerifyManagerPermissionAsync(managerUserId, template.CinemaId);
 
         var registrationDateOnly = date.Date;
         var lockKey = $"lock:shift:{shiftTemplateId}:{registrationDateOnly:yyyyMMdd}";
         var lockValue = Guid.NewGuid().ToString("N");
 
-        // Sử dụng lock Redis để đảm bảo an toàn số lượng nhân sự trực ca
+        // Sá»­ dá»¥ng lock Redis Ä‘á»ƒ Ä‘áº£m báº£o an toÃ n sá»‘ lÆ°á»£ng nhÃ¢n sá»± trá»±c ca
         var isLocked = await _redisLockService.AcquireLockAsync(lockKey, lockValue, TimeSpan.FromSeconds(5));
         if (!isLocked)
         {
-            throw new AppException("Hệ thống đang bận xử lý ca trực này, vui lòng thử lại sau.", 409, "SHIFT_ERR");
+            throw new AppException("Há»‡ thá»‘ng Ä‘ang báº­n xá»­ lÃ½ ca trá»±c nÃ y, vui lÃ²ng thá»­ láº¡i sau.", 409, "SHIFT_ERR");
         }
 
         try
         {
-            // Kiểm tra xem nhân viên đã có ca trực nào trùng khung giờ ngày này chưa (dù là Pending hay Approved)
+            // Kiá»ƒm tra xem nhÃ¢n viÃªn Ä‘Ã£ cÃ³ ca trá»±c nÃ o trÃ¹ng khung giá» ngÃ y nÃ y chÆ°a (dÃ¹ lÃ  Pending hay Approved)
             var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, registrationDateOnly);
 
             bool isOverlapping = false;
@@ -212,7 +213,7 @@ public class ApproveShiftRegistrationUseCase
                 var extTemplate = reg.CinemaShiftTemplateEntity;
                 if (extTemplate == null) continue;
 
-                // Nếu là cùng mẫu ca trực này, chúng ta sẽ xử lý cập nhật trạng thái bên dưới
+                // Náº¿u lÃ  cÃ¹ng máº«u ca trá»±c nÃ y, chÃºng ta sáº½ xá»­ lÃ½ cáº­p nháº­t tráº¡ng thÃ¡i bÃªn dÆ°á»›i
                 if (extTemplate.ShiftTemplateId == shiftTemplateId) continue;
 
                 var extStart = extTemplate.StartTime.TotalMinutes;
@@ -227,47 +228,47 @@ public class ApproveShiftRegistrationUseCase
 
             if (isOverlapping)
             {
-                throw new AppException("Nhân viên đã có lịch làm việc khác trùng khung giờ này.", 400, "SHIFT_ERR");
+                throw new AppException("NhÃ¢n viÃªn Ä‘Ã£ cÃ³ lá»‹ch lÃ m viá»‡c khÃ¡c trÃ¹ng khung giá» nÃ y.", 400, "SHIFT_ERR");
             }
 
-            // Kiểm tra xem nhân viên đã có ca trực nào trùng ở template này ngày này chưa (dù là Pending hay Approved)
+            // Kiá»ƒm tra xem nhÃ¢n viÃªn Ä‘Ã£ cÃ³ ca trá»±c nÃ o trÃ¹ng á»Ÿ template nÃ y ngÃ y nÃ y chÆ°a (dÃ¹ lÃ  Pending hay Approved)
             var existing = existingRegistrations.FirstOrDefault(r => r.ShiftTemplateId == shiftTemplateId);
 
             if (existing != null)
             {
                 if (existing.Status == "Approved")
                 {
-                    throw new AppException("Nhân viên này đã được gán vào ca trực từ trước.", 400, "SHIFT_ERR");
+                    throw new AppException("NhÃ¢n viÃªn nÃ y Ä‘Ã£ Ä‘Æ°á»£c gÃ¡n vÃ o ca trá»±c tá»« trÆ°á»›c.", 400, "SHIFT_ERR");
                 }
                 
-                // Nếu đang ở Pending hoặc Cancelled/Rejected, chúng ta chỉ cần đè/update lại thành Approved
+                // Náº¿u Ä‘ang á»Ÿ Pending hoáº·c Cancelled/Rejected, chÃºng ta chá»‰ cáº§n Ä‘Ã¨/update láº¡i thÃ nh Approved
                 if (existing.Status == "Pending" || existing.Status == "Rejected" || existing.Status == "Cancelled")
                 {
                     existing.Status = "Approved";
                     existing.ApprovedByUserId = managerUserId;
                     existing.ApprovedAt = DateTime.UtcNow;
-                    existing.Notes = "Quản lý gán trực tiếp";
+                    existing.Notes = "Quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p";
                     
                     await _unitOfWork.SaveChangesAsync();
                     await _sseNotificationService.SendNotificationAsync(
                         staffId,
-                        "Gán ca trực trực tiếp",
-                        $"Bạn đã được quản lý gán trực tiếp vào ca làm '{template.ShiftName}' ngày {registrationDateOnly:dd/MM/yyyy}.",
+                        "GÃ¡n ca trá»±c trá»±c tiáº¿p",
+                        $"Báº¡n Ä‘Ã£ Ä‘Æ°á»£c quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p vÃ o ca lÃ m '{template.ShiftName}' ngÃ y {registrationDateOnly:dd/MM/yyyy}.",
                         "ShiftAssigned"
                     );
-                    return new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "Gán ca trực thành công." };
+                    return new BaseResponse<bool> { IsSuccess = true, Data = true, Message = "GÃ¡n ca trá»±c thÃ nh cÃ´ng." };
                 }
             }
 
-            // Đếm số ca Approved và Pending
+            // Äáº¿m sá»‘ ca Approved vÃ  Pending
             var registeredCount = await _repository.CountApprovedRegistrationsAsync(shiftTemplateId, registrationDateOnly);
 
             if (registeredCount >= template.MaxStaff)
             {
-                throw new AppException("Ca làm việc này đã đủ số lượng tối đa, không thể gán thêm.", 400, "SHIFT_ERR");
+                throw new AppException("Ca lÃ m viá»‡c nÃ y Ä‘Ã£ Ä‘á»§ sá»‘ lÆ°á»£ng tá»‘i Ä‘a, khÃ´ng thá»ƒ gÃ¡n thÃªm.", 400, "SHIFT_ERR");
             }
 
-            // Tạo ca trực đã duyệt luôn
+            // Táº¡o ca trá»±c Ä‘Ã£ duyá»‡t luÃ´n
             var directAssign = new StaffShiftRegistrationEntity
             {
                 ShiftRegistrationId = Guid.NewGuid(),
@@ -277,7 +278,7 @@ public class ApproveShiftRegistrationUseCase
                 Status = "Approved",
                 ApprovedByUserId = managerUserId,
                 ApprovedAt = DateTime.UtcNow,
-                Notes = "Quản lý gán trực tiếp"
+                Notes = "Quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p"
             };
 
             await _repository.AddShiftRegistrationAsync(directAssign);
@@ -285,8 +286,8 @@ public class ApproveShiftRegistrationUseCase
 
             await _sseNotificationService.SendNotificationAsync(
                 staffId,
-                "Gán ca trực trực tiếp",
-                $"Bạn đã được quản lý gán trực tiếp vào ca làm '{template.ShiftName}' ngày {registrationDateOnly:dd/MM/yyyy}.",
+                "GÃ¡n ca trá»±c trá»±c tiáº¿p",
+                $"Báº¡n Ä‘Ã£ Ä‘Æ°á»£c quáº£n lÃ½ gÃ¡n trá»±c tiáº¿p vÃ o ca lÃ m '{template.ShiftName}' ngÃ y {registrationDateOnly:dd/MM/yyyy}.",
                 "ShiftAssigned"
             );
 
@@ -294,7 +295,7 @@ public class ApproveShiftRegistrationUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Gán trực tiếp nhân viên vào ca trực thành công."
+                Message = "GÃ¡n trá»±c tiáº¿p nhÃ¢n viÃªn vÃ o ca trá»±c thÃ nh cÃ´ng."
             };
         }
         finally
@@ -306,26 +307,27 @@ public class ApproveShiftRegistrationUseCase
     #region Private Helpers
     private async Task VerifyManagerPermissionAsync(Guid managerUserId, Guid cinemaId)
     {
-        // 1. Kiểm tra xem manager có vai trò Admin không
+        // 1. Kiá»ƒm tra xem manager cÃ³ vai trÃ² Admin khÃ´ng
         var isAdmin = await _repository.UserHasRoleAsync(managerUserId, "Admin");
 
-        if (isAdmin) return; // Admin có toàn quyền trên mọi rạp
+        if (isAdmin) return; // Admin cÃ³ toÃ n quyá»n trÃªn má»i ráº¡p
 
-        // 2. Nếu không phải Admin, kiểm tra xem có phải TheaterManager của đúng Rạp này hay không
+        // 2. Náº¿u khÃ´ng pháº£i Admin, kiá»ƒm tra xem cÃ³ pháº£i TheaterManager cá»§a Ä‘Ãºng Ráº¡p nÃ y hay khÃ´ng
         var isTheaterManager = await _repository.UserHasRoleAsync(managerUserId, "TheaterManager");
 
         if (!isTheaterManager)
         {
-            throw new AppException("Bạn không có quyền thực hiện thao tác quản lý này.", 403, "SHIFT_ERR");
+            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c quáº£n lÃ½ nÃ y.", 403, "SHIFT_ERR");
         }
 
-        // Kiểm tra xem StaffProfile của Manager có thuộc đúng Rạp này hay không
+        // Kiá»ƒm tra xem StaffProfile cá»§a Manager cÃ³ thuá»™c Ä‘Ãºng Ráº¡p nÃ y hay khÃ´ng
         var managerProfile = await _repository.GetStaffProfileAsync(managerUserId);
 
         if (managerProfile == null || managerProfile.CinemaId != cinemaId)
         {
-            throw new AppException("Bạn chỉ có quyền quản lý nhân sự thuộc chi nhánh rạp của mình.", 403, "SHIFT_ERR");
+            throw new AppException("Báº¡n chá»‰ cÃ³ quyá»n quáº£n lÃ½ nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh.", 403, "SHIFT_ERR");
         }
     }
     #endregion
 }
+

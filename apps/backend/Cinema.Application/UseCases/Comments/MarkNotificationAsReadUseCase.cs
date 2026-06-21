@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.UserInfos;
@@ -6,6 +6,7 @@ using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Comments;
 
@@ -46,3 +47,4 @@ public class MarkNotificationAsReadUseCase
         };
     }
 }
+

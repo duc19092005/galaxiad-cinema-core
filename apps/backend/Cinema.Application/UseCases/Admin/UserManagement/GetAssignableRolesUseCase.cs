@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Admin.Responses;
@@ -20,3 +20,4 @@ public class GetAssignableRolesUseCase
         return await _adminUserRepository.GetAssignableRolesAsync(AdminUserManagementHelper.StaffRoleIds);
     }
 }
+

@@ -1,10 +1,11 @@
-using Cinema.Application.Dtos;
+﻿using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -43,7 +44,7 @@ public class CreateShiftTemplateUseCase
                 return new BaseResponse<CinemaShiftTemplateEntity>
                 {
                     IsSuccess = false,
-                    Message = "Bạn không có quyền quản lý ca trực cho rạp này."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ca trá»±c cho ráº¡p nÃ y."
                 };
             }
         }
@@ -67,7 +68,7 @@ public class CreateShiftTemplateUseCase
         {
             IsSuccess = true,
             Data = newTemplate,
-            Message = "Tạo ca trực mẫu thành công."
+            Message = "Táº¡o ca trá»±c máº«u thÃ nh cÃ´ng."
         };
     }
 }
@@ -120,7 +121,7 @@ public class GetShiftRegistrationsUseCase
                 return new BaseResponse<List<ResStaffShiftRegistrationDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn không có quyền xem thông tin nhân sự tại chi nhánh rạp này."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n xem thÃ´ng tin nhÃ¢n sá»± táº¡i chi nhÃ¡nh ráº¡p nÃ y."
                 };
             }
         }
@@ -159,7 +160,7 @@ public class GetStaffProfilesUseCase
                 return new BaseResponse<List<ResStaffProfileDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn không có quyền quản lý nhân sự tại chi nhánh rạp này."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ nhÃ¢n sá»± táº¡i chi nhÃ¡nh ráº¡p nÃ y."
                 };
             }
         }
@@ -196,7 +197,7 @@ public class UpdateStaffProfileUseCase
         var staff = await _repository.GetStaffProfileAsync(staffUserId);
         if (staff == null)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy nhân viên." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = "KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn." };
         }
 
         if (!isAdmin)
@@ -207,7 +208,7 @@ public class UpdateStaffProfileUseCase
                 return new BaseResponse<bool>
                 {
                     IsSuccess = false,
-                    Message = "Bạn chỉ có quyền cập nhật nhân sự thuộc chi nhánh rạp của mình."
+                    Message = "Báº¡n chá»‰ cÃ³ quyá»n cáº­p nháº­t nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
                 };
             }
         }
@@ -219,7 +220,7 @@ public class UpdateStaffProfileUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Cập nhật thông tin nhân viên thành công."
+            Message = "Cáº­p nháº­t thÃ´ng tin nhÃ¢n viÃªn thÃ nh cÃ´ng."
         };
     }
 }
@@ -248,7 +249,7 @@ public class GetStaffPayrollUseCase
         var staffProfile = await _repository.GetStaffProfileAsync(staffId);
         if (staffProfile == null)
         {
-            return new BaseResponse<List<ResPayrollDto>> { IsSuccess = false, Message = "Không tìm thấy nhân viên." };
+            return new BaseResponse<List<ResPayrollDto>> { IsSuccess = false, Message = "KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn." };
         }
 
         if (!isAdmin)
@@ -259,7 +260,7 @@ public class GetStaffPayrollUseCase
                 return new BaseResponse<List<ResPayrollDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn chỉ có quyền xem thông tin tiền lương của nhân sự thuộc chi nhánh rạp của mình."
+                    Message = "Báº¡n chá»‰ cÃ³ quyá»n xem thÃ´ng tin tiá»n lÆ°Æ¡ng cá»§a nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
                 };
             }
         }
@@ -298,7 +299,7 @@ public class GetCinemaPayrollUseCase
                 return new BaseResponse<List<ResPayrollDto>>
                 {
                     IsSuccess = false,
-                    Message = "Bạn chỉ có quyền xem thông tin tiền lương của nhân sự thuộc chi nhánh rạp của mình."
+                    Message = "Báº¡n chá»‰ cÃ³ quyá»n xem thÃ´ng tin tiá»n lÆ°Æ¡ng cá»§a nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
                 };
             }
         }
@@ -307,3 +308,4 @@ public class GetCinemaPayrollUseCase
         return new BaseResponse<List<ResPayrollDto>> { IsSuccess = true, Data = list };
     }
 }
+

@@ -19,7 +19,7 @@ i18n
                 translation: ruTranslations
             }
         },
-        lng: localStorage.getItem('language') || 'vi', // Load language
+        lng: localStorage.getItem('language') || 'en',
         fallbackLng: 'en',
         interpolation: {
             escapeValue: false // React already does escaping

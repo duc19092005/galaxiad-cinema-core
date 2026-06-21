@@ -357,7 +357,7 @@ const Header: React.FC<HeaderProps> = ({
                             className="sidebar-nav-item w-full text-left px-4 py-2 hover:bg-zinc-800 text-zinc-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-semibold"
                           >
                             <User size={16} className="flex-shrink-0" />
-                            {t('Vào trang cá nhân', 'Vào trang cá nhân')}
+                            {t('header.myProfile', 'My profile')}
                           </button>
                         )}
 
@@ -518,7 +518,7 @@ const Header: React.FC<HeaderProps> = ({
               ) : (
                 <MobileNavItem
                   icon={<User size={18} />}
-                  label={t('Vào trang cá nhân', 'Vào trang cá nhân')}
+                  label={t('header.myProfile', 'My profile')}
                   onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
                   active={location.pathname === '/account'}
                 />

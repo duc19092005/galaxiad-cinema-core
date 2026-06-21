@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,6 +9,7 @@ using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -26,31 +27,31 @@ public class CalculatePayrollUseCase
         _sseNotificationService = sseNotificationService;
     }
 
-    // 1. Tính toán lương tích lũy và tạo bản ghi bảng lương (Pending)
+    // 1. TÃ­nh toÃ¡n lÆ°Æ¡ng tÃ­ch lÅ©y vÃ  táº¡o báº£n ghi báº£ng lÆ°Æ¡ng (Pending)
     public async Task<BaseResponse<ResPayrollDto>> CalculateAsync(ReqCalculatePayrollDto dto, Guid managerUserId)
     {
         var staffProfile = await _repository.GetStaffProfileWithUserAsync(dto.StaffId);
 
         if (staffProfile == null)
         {
-            throw new AppException("Tài khoản nhân viên không tồn tại hoặc đã ngừng hoạt động.", 404, "PAYROLL_ERR");
+            throw new AppException("TÃ i khoáº£n nhÃ¢n viÃªn khÃ´ng tá»“n táº¡i hoáº·c Ä‘Ã£ ngá»«ng hoáº¡t Ä‘á»™ng.", 404, "PAYROLL_ERR");
         }
 
-        // Kiểm tra quyền của quản lý đối với chi nhánh rạp của nhân viên
+        // Kiá»ƒm tra quyá»n cá»§a quáº£n lÃ½ Ä‘á»‘i vá»›i chi nhÃ¡nh ráº¡p cá»§a nhÃ¢n viÃªn
         await VerifyManagerPermissionAsync(managerUserId, staffProfile.CinemaId);
 
         var upToDateOnly = dto.UpToDate.Date;
 
-        // Lấy tất cả các ca làm việc đã hoàn thành (EndedShiftTime != null) của nhân viên này 
-        // trước hoặc bằng ngày chỉ định và chưa được tính lương (SalaryTotalLoggerId == null)
+        // Láº¥y táº¥t cáº£ cÃ¡c ca lÃ m viá»‡c Ä‘Ã£ hoÃ n thÃ nh (EndedShiftTime != null) cá»§a nhÃ¢n viÃªn nÃ y 
+        // trÆ°á»›c hoáº·c báº±ng ngÃ y chá»‰ Ä‘á»‹nh vÃ  chÆ°a Ä‘Æ°á»£c tÃ­nh lÆ°Æ¡ng (SalaryTotalLoggerId == null)
         var uncalculatedLogs = await _repository.GetUncalculatedWorkingLogsAsync(dto.StaffId, upToDateOnly);
 
         if (uncalculatedLogs.Count == 0)
         {
-            throw new AppException($"Không có ca làm việc nào chưa tính lương của nhân viên này trước ngày {upToDateOnly:dd/MM/yyyy}.", 400, "PAYROLL_ERR");
+            throw new AppException($"KhÃ´ng cÃ³ ca lÃ m viá»‡c nÃ o chÆ°a tÃ­nh lÆ°Æ¡ng cá»§a nhÃ¢n viÃªn nÃ y trÆ°á»›c ngÃ y {upToDateOnly:dd/MM/yyyy}.", 400, "PAYROLL_ERR");
         }
 
-        // Tính tổng lương
+        // TÃ­nh tá»•ng lÆ°Æ¡ng
         decimal totalReceived = uncalculatedLogs.Sum(l => l.TotalReceived);
 
         var payrollId = Guid.NewGuid();
@@ -58,7 +59,7 @@ public class CalculatePayrollUseCase
         {
             SalaryTotalLoggerId = payrollId,
             TotalReceived = totalReceived,
-            ReceivedDay = DateTime.UtcNow, // Mặc định thời điểm tạo, sẽ cập nhật khi thực trả
+            ReceivedDay = DateTime.UtcNow, // Máº·c Ä‘á»‹nh thá»i Ä‘iá»ƒm táº¡o, sáº½ cáº­p nháº­t khi thá»±c tráº£
             StaffId = dto.StaffId,
             PaidByUserId = null,
             PaymentStatus = "Pending"
@@ -66,7 +67,7 @@ public class CalculatePayrollUseCase
 
         await _repository.AddSalaryTotalLogAsync(payroll);
 
-        // Gắn liên kết bảng lương cho từng ca làm việc
+        // Gáº¯n liÃªn káº¿t báº£ng lÆ°Æ¡ng cho tá»«ng ca lÃ m viá»‡c
         foreach (var log in uncalculatedLogs)
         {
             log.SalaryTotalLoggerId = payrollId;
@@ -74,7 +75,7 @@ public class CalculatePayrollUseCase
 
         await _unitOfWork.SaveChangesAsync();
 
-        // Map sang DTO kết quả
+        // Map sang DTO káº¿t quáº£
         var result = new ResPayrollDto
         {
             SalaryTotalLoggerId = payroll.SalaryTotalLoggerId,
@@ -101,29 +102,29 @@ public class CalculatePayrollUseCase
         {
             IsSuccess = true,
             Data = result,
-            Message = $"Tính lương thành công! Tổng số ca làm: {uncalculatedLogs.Count}, tổng số tiền: {totalReceived:N0} VNĐ."
+            Message = $"TÃ­nh lÆ°Æ¡ng thÃ nh cÃ´ng! Tá»•ng sá»‘ ca lÃ m: {uncalculatedLogs.Count}, tá»•ng sá»‘ tiá»n: {totalReceived:N0} VNÄ."
         };
     }
 
-    // 2. Xác nhận đã chi trả lương
+    // 2. XÃ¡c nháº­n Ä‘Ã£ chi tráº£ lÆ°Æ¡ng
     public async Task<BaseResponse<bool>> PayAsync(Guid payrollId, Guid managerUserId)
     {
         var payroll = await _repository.GetSalaryTotalLogByIdAsync(payrollId);
 
         if (payroll == null)
         {
-            throw new AppException("Không tìm thấy bản ghi bảng lương.", 404, "PAYROLL_ERR");
+            throw new AppException("KhÃ´ng tÃ¬m tháº¥y báº£n ghi báº£ng lÆ°Æ¡ng.", 404, "PAYROLL_ERR");
         }
 
         if (payroll.PaymentStatus == "Paid")
         {
-            throw new AppException("Bảng lương này đã được thanh toán từ trước.", 400, "PAYROLL_ERR");
+            throw new AppException("Báº£ng lÆ°Æ¡ng nÃ y Ä‘Ã£ Ä‘Æ°á»£c thanh toÃ¡n tá»« trÆ°á»›c.", 400, "PAYROLL_ERR");
         }
 
-        // Kiểm tra quyền của quản lý rạp
+        // Kiá»ƒm tra quyá»n cá»§a quáº£n lÃ½ ráº¡p
         await VerifyManagerPermissionAsync(managerUserId, payroll.StaffProfileEntity.CinemaId);
 
-        // Cập nhật trạng thái thanh toán
+        // Cáº­p nháº­t tráº¡ng thÃ¡i thanh toÃ¡n
         payroll.PaymentStatus = "Paid";
         payroll.PaidByUserId = managerUserId;
         payroll.ReceivedDay = DateTime.UtcNow;
@@ -132,8 +133,8 @@ public class CalculatePayrollUseCase
 
         await _sseNotificationService.SendNotificationAsync(
             payroll.StaffId,
-            "Thanh toán lương",
-            $"Bảng lương trị giá {payroll.TotalReceived:N0} VNĐ của bạn đã được xác nhận thanh toán.",
+            "Thanh toÃ¡n lÆ°Æ¡ng",
+            $"Báº£ng lÆ°Æ¡ng trá»‹ giÃ¡ {payroll.TotalReceived:N0} VNÄ cá»§a báº¡n Ä‘Ã£ Ä‘Æ°á»£c xÃ¡c nháº­n thanh toÃ¡n.",
             "PayrollProcessed"
         );
 
@@ -141,33 +142,34 @@ public class CalculatePayrollUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = $"Xác nhận thanh toán thành công số tiền {payroll.TotalReceived:N0} VNĐ."
+            Message = $"XÃ¡c nháº­n thanh toÃ¡n thÃ nh cÃ´ng sá»‘ tiá»n {payroll.TotalReceived:N0} VNÄ."
         };
     }
 
     #region Private Helpers
     private async Task VerifyManagerPermissionAsync(Guid managerUserId, Guid cinemaId)
     {
-        // 1. Kiểm tra vai trò Admin
+        // 1. Kiá»ƒm tra vai trÃ² Admin
         var isAdmin = await _repository.UserHasRoleAsync(managerUserId, "Admin");
 
-        if (isAdmin) return; // Admin có toàn quyền
+        if (isAdmin) return; // Admin cÃ³ toÃ n quyá»n
 
-        // 2. Kiểm tra vai trò TheaterManager
+        // 2. Kiá»ƒm tra vai trÃ² TheaterManager
         var isTheaterManager = await _repository.UserHasRoleAsync(managerUserId, "TheaterManager");
 
         if (!isTheaterManager)
         {
-            throw new AppException("Bạn không có quyền thực hiện thao tác quản lý tiền lương này.", 403, "PAYROLL_ERR");
+            throw new AppException("Báº¡n khÃ´ng cÃ³ quyá»n thá»±c hiá»‡n thao tÃ¡c quáº£n lÃ½ tiá»n lÆ°Æ¡ng nÃ y.", 403, "PAYROLL_ERR");
         }
 
-        // Kiểm tra xem quản lý có thuộc đúng chi nhánh rạp của nhân viên không
+        // Kiá»ƒm tra xem quáº£n lÃ½ cÃ³ thuá»™c Ä‘Ãºng chi nhÃ¡nh ráº¡p cá»§a nhÃ¢n viÃªn khÃ´ng
         var managerProfile = await _repository.GetStaffProfileAsync(managerUserId);
 
         if (managerProfile == null || managerProfile.CinemaId != cinemaId)
         {
-            throw new AppException("Bạn chỉ được phép quản lý tiền lương tại chi nhánh rạp của mình.", 403, "PAYROLL_ERR");
+            throw new AppException("Báº¡n chá»‰ Ä‘Æ°á»£c phÃ©p quáº£n lÃ½ tiá»n lÆ°Æ¡ng táº¡i chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh.", 403, "PAYROLL_ERR");
         }
     }
     #endregion
 }
+
