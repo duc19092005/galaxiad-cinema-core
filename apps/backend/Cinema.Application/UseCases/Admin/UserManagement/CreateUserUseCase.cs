@@ -11,8 +11,8 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IIdentityAccess;
-using Cinema.Application.Validators.IdentityAccess;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Policies;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
@@ -74,7 +74,7 @@ public class CreateUserUseCase
             if (await _adminUserRepository.EmailExistsAsync(dto.UserEmail))
                 validationErrors.Add(Messages.Auth.EmailAlreadyExists);
 
-            var ageMessage = RegisterValidate.CheckValidateAge(
+            var ageMessage = RegistrationAgePolicy.GetValidationMessage(
                 dto.DateOfBirth,
                 normalizedRoleIds.Count > 0 ? RegisterUserTypeEnum.Staff : RegisterUserTypeEnum.Customer);
             if (ageMessage != null)

@@ -8,11 +8,11 @@ using Cinema.Application.Dtos.IdentityAccess.Requests;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Localization;
 using Cinema.Application.Interfaces.IIdentityAccess;
-using Cinema.Application.Validators.IdentityAccess;
 using Cinema.Application.Constants;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Policies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
@@ -56,7 +56,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 validationErrors.Add(Messages.Auth.EmailAlreadyExists);
             }
 
-            var ageMessage = RegisterValidate.CheckValidateAge(dto.DateOfBirth, RegisterUserTypeEnum.Customer);
+            var ageMessage = RegistrationAgePolicy.GetValidationMessage(dto.DateOfBirth, RegisterUserTypeEnum.Customer);
             if (ageMessage != null)
             {
                 validationErrors.Add(ageMessage);
