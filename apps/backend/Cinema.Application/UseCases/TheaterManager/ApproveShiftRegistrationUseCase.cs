@@ -7,7 +7,7 @@ using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.TheaterManager;

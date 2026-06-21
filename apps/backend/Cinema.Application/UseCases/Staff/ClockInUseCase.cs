@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Cinema.Application.Abstractions.Security;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using Cinema.Application.Dtos;
@@ -10,8 +11,7 @@ using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Interfaces.IIdentityAccess;
-using Cinema.Domain.Exceptions;
-using Cinema.Domain.Utils;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;
@@ -22,14 +22,17 @@ public class ClockInUseCase
     private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly IJwtService _jwtService;
+    private readonly IEncryptionService _encryptionService;
 
     public ClockInUseCase(IStaffRepository repository, IConfiguration configuration, IJwtService jwtService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
         _jwtService = jwtService;
+        _encryptionService = encryptionService;
     }
 
     public async Task<BaseResponse<ResClockInDto>> ExecuteAsync(ReqClockInDto dto)
@@ -59,7 +62,7 @@ public class ClockInUseCase
         string decryptedVectorJson;
         try
         {
-            decryptedVectorJson = AES256Helper.Decrypt(staffProfile.FaceVector, aesKey, aesIv);
+            decryptedVectorJson = _encryptionService.Decrypt(staffProfile.FaceVector, aesKey, aesIv);
         }
         catch (Exception)
         {

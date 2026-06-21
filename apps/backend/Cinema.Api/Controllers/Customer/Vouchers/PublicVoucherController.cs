@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.UseCases.Vouchers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Api.Controllers.Customer.Vouchers;
 

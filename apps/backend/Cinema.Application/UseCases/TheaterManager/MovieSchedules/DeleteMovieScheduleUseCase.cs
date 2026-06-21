@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.TheaterManager;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Interfaces.Persistence;
 

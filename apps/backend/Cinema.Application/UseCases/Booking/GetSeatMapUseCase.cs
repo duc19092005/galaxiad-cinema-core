@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;

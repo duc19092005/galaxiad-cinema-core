@@ -3,6 +3,7 @@
 using System.Net;
 using System.Text.Json;
 using Cinema.Api.Middlewares;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Exceptions;
 
 namespace Cinema.Api.Middlewares
@@ -55,6 +56,13 @@ namespace Cinema.Api.Middlewares
                 errorCode = appEx.ErrorCode;
                 message = exception.Message;
                 errors = appEx.Errors ?? new List<string> { exception.Message };
+            }
+            else if (exception is DomainException domainEx)
+            {
+                statusCode = (int)HttpStatusCode.BadRequest;
+                errorCode = domainEx.ErrorCode;
+                message = exception.Message;
+                errors = new List<string> { exception.Message };
             }
             else
             {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 using Cinema.Application.Dtos;

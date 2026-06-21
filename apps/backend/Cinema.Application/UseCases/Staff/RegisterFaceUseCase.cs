@@ -1,9 +1,9 @@
+using Cinema.Application.Abstractions.Security;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.UserInfos;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Staff;
-using Cinema.Domain.Utils;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using Cinema.Domain.Interfaces.Persistence;
@@ -15,13 +15,16 @@ public class RegisterFaceUseCase
     private readonly IUnitOfWork _unitOfWork;
     private readonly IStaffRepository _repository;
     private readonly IConfiguration _configuration;
+    private readonly IEncryptionService _encryptionService;
 
     public RegisterFaceUseCase(IStaffRepository repository, IConfiguration configuration,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
+        _encryptionService = encryptionService;
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, Guid operatorUserId, ReqRegisterFaceDto dto)
@@ -75,7 +78,7 @@ public class RegisterFaceUseCase
             throw new AppException("Lỗi hệ thống: Chưa cấu hình khóa bảo mật AES-256.", 500, "FACE_ERR");
         }
 
-        var encryptedVector = AES256Helper.Encrypt(vectorJson, aesKey, aesIv);
+        var encryptedVector = _encryptionService.Encrypt(vectorJson, aesKey, aesIv);
 
         // 4. Lưu vào StaffProfileEntity
         staffProfile.FaceVector = encryptedVector;

@@ -5,7 +5,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Responses;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Microsoft.Extensions.Logging;
 

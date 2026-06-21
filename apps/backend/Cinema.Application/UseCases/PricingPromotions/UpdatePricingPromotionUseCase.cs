@@ -5,7 +5,7 @@ using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.PricingPromotions;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;
 

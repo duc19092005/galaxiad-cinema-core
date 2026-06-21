@@ -1,6 +1,6 @@
 using Cinema.Domain.Localization;
 
-namespace Cinema.Domain.Exceptions;
+namespace Cinema.Application.Exceptions;
 
 public static class CustomSystemException
 {

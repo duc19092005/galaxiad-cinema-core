@@ -9,7 +9,7 @@ using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Utils;
 

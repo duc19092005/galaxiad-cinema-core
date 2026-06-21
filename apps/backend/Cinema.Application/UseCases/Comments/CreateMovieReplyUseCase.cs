@@ -6,7 +6,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Comments;

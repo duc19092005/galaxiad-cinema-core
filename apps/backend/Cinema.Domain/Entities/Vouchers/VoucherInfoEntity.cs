@@ -2,6 +2,7 @@
 
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Exceptions;
 
 namespace Cinema.Domain.Entities.Vouchers;
 
@@ -33,7 +34,7 @@ public class VoucherInfoEntity
     public void Redeem()
     {
         if (RemainingQuantity <= 0)
-            throw new Cinema.Domain.Exceptions.AppException("Voucher is out of stock", 400, "V04");
+            throw new DomainException("Voucher is out of stock", "V04");
         RemainingQuantity -= 1;
     }
 

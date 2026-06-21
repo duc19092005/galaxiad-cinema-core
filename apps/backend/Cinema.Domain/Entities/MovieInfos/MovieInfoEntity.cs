@@ -5,7 +5,6 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 using System.Reflection.Metadata.Ecma335;
-using Cinema.Domain.Exceptions;
 
 namespace Cinema.Domain.Entities.MovieInfos;
 

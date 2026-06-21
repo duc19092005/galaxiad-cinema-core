@@ -6,11 +6,11 @@ namespace Cinema.Domain.Localization;
 /// use Messages.Auth.UserNotFound to avoid typos and ensure translation support.
 ///
 /// USAGE EXAMPLE:
-///   throw new AppException(Messages.Auth.UserNotFound, 404, "UN01");
+///   throw new DomainException(Messages.Auth.UserNotFound, "UN01");
 ///   return new BaseResponse&lt;string&gt;() { Message = Messages.Cinema.AddCompleted };
 ///
 /// DYNAMIC MESSAGES (with parameters):
-///   throw new AppException(Messages.Cinema.AlreadyExistsName("CGV"), 400, "C01");
+///   throw new DomainException(Messages.Cinema.AlreadyExistsName("CGV"), "C01");
 ///   → English: "Error : There's already a cinema named CGV"
 ///   → Vietnamese (auto): "Lỗi: Đã có rạp chiếu phim có tên CGV"
 /// </summary>

@@ -5,7 +5,7 @@ using System.Net;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Infrastructure.Services;
 

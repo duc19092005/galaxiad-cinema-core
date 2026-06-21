@@ -12,7 +12,7 @@ using Cinema.Application.UseCases.PricingPromotions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;

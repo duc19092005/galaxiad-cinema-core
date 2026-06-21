@@ -1,5 +1,5 @@
 using System.Text;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 

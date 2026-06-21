@@ -4,7 +4,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Constants;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Interfaces.Persistence;
 

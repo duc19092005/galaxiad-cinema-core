@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Constants;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;
 
 namespace Cinema.Application.UseCases.Admin.Transfers;

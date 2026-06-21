@@ -9,7 +9,7 @@ using Cinema.Api.Bootstraps.Validate;
 using Cinema.Api.Bootstraps.Chatbot;
 using Cinema.Api.Hubs;
 using Cinema.Api.Middlewares;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Infrastructure;
 using Cinema.Application.Constants;
 using Hangfire;
@@ -20,6 +20,7 @@ using Microsoft.OpenApi.Models;
 using Cinema.Infrastructure.BackgroundJobs;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Infrastructure.Services;
+using Cinema.Application.Abstractions.Security;
 
 var currentDir = Directory.GetCurrentDirectory();
 var envPath = Path.Combine(currentDir, ".env");
@@ -50,6 +51,7 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSingleton<IEncryptionService, AesEncryptionService>();
 builder.Services.AddSingleton<UserIdentityCodeConstant>();
 builder.Services.AddHttpContextAccessor();
 

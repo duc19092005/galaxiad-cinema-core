@@ -1,5 +1,5 @@
 
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Entities.CinemaInfos;
 using Microsoft.AspNetCore.Http;

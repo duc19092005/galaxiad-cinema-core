@@ -1,5 +1,5 @@
 using Cinema.Application.Interfaces.IIdentityAccess;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Infrastructure.Identity;

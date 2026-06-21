@@ -1,9 +1,8 @@
-
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Abstractions.Security;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Utils;
 
 namespace Cinema.Application.Validators.IdentityAccess;
 
@@ -28,9 +27,14 @@ public static class RegisterValidate
         }
     }
 
-    public static bool CheckExistIdentityCode(string aes256Key, string aes256Iv, IQueryable<UserInfoEntity> users, string inputIdentityCode)
+    public static bool CheckExistIdentityCode(
+        IEncryptionService encryptionService,
+        string aes256Key,
+        string aes256Iv,
+        IQueryable<UserInfoEntity> users,
+        string inputIdentityCode)
     {
-        var encryptedInput = AES256Helper.Encrypt(inputIdentityCode, aes256Key, aes256Iv);
+        var encryptedInput = encryptionService.Encrypt(inputIdentityCode, aes256Key, aes256Iv);
         
         return users.Any(x => x.IdentityCode == encryptedInput);
     }

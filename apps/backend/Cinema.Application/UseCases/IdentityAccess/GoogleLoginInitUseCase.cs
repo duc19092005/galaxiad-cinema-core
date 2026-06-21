@@ -8,7 +8,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.IdentityAccess;

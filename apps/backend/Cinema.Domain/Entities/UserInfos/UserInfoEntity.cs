@@ -5,6 +5,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Exceptions;
 // ReSharper disable All
 
 namespace Cinema.Domain.Entities.UserInfos
@@ -62,7 +63,7 @@ namespace Cinema.Domain.Entities.UserInfos
         public void DeductPoints(long points)
         {
             if (RewardPoints < points)
-                throw new Cinema.Domain.Exceptions.AppException("Insufficient reward points", 400, "V07");
+                throw new DomainException("Insufficient reward points", "V07");
             RewardPoints -= points;
         }
 

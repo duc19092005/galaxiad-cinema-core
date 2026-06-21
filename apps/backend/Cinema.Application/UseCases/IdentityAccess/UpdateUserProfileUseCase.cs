@@ -5,7 +5,7 @@ using Cinema.Application.Dtos.IdentityAccess.Requests;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Interfaces.Persistence;
 

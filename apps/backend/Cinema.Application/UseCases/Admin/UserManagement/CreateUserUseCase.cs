@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Cinema.Application.Abstractions.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Dtos;
@@ -12,10 +13,9 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Application.Validators.IdentityAccess;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
-using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -27,6 +27,7 @@ public class CreateUserUseCase
     private readonly IAuditLogService _auditLogService;
     private readonly IConfiguration _configuration;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IEncryptionService _encryptionService;
 
     public CreateUserUseCase(
         IUnitOfWork unitOfWork,
@@ -34,7 +35,8 @@ public class CreateUserUseCase
         ILogger<CreateUserUseCase> logger,
         IAuditLogService auditLogService,
         IConfiguration configuration,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _adminUserRepository = adminUserRepository;
@@ -42,6 +44,7 @@ public class CreateUserUseCase
         _auditLogService = auditLogService;
         _configuration = configuration;
         _passwordHasher = passwordHasher;
+        _encryptionService = encryptionService;
     }
 
     public async Task<BaseResponse<AdminCreateUserResponseDto>> ExecuteAsync(AdminCreateUserRequestDto dto)
@@ -51,7 +54,7 @@ public class CreateUserUseCase
         {
             var normalizedRoleIds = AdminUserManagementHelper.NormalizeStaffRoleIds(dto.RoleIds);
             var staffCinemaId = await AdminUserManagementHelper.ValidateStaffAssignmentAsync(_unitOfWork, _adminUserRepository, normalizedRoleIds, dto.CinemaId, dto.DepartmentId);
-            var encryptedFaceVector = AdminUserManagementHelper.EncryptFaceVector(dto.FaceVector, _configuration, _logger);
+            var encryptedFaceVector = AdminUserManagementHelper.EncryptFaceVector(dto.FaceVector, _configuration, _logger, _encryptionService);
             var validationErrors = new List<string>();
             var userRepository = _unitOfWork.Repository<UserInfoEntity>();
 
@@ -85,7 +88,7 @@ public class CreateUserUseCase
                 throw CustomSystemException.SystemExceptionCaller();
             }
 
-            var encryptedIdentityCode = AES256Helper.Encrypt(dto.IdentityCode, aesKey, aesIv);
+            var encryptedIdentityCode = _encryptionService.Encrypt(dto.IdentityCode, aesKey, aesIv);
             if (await _adminUserRepository.IdentityCodeExistsAsync(encryptedIdentityCode))
                 validationErrors.Add(Messages.Auth.IdentityCodeAlreadyExists);
 

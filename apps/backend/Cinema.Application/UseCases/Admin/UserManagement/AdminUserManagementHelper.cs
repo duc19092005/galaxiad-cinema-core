@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Cinema.Application.Abstractions.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Constants;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
-using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -36,7 +36,11 @@ public static class AdminUserManagementHelper
         return nextRoleIds;
     }
 
-    public static string? EncryptFaceVector(float[]? faceVector, IConfiguration configuration, ILogger logger)
+    public static string? EncryptFaceVector(
+        float[]? faceVector,
+        IConfiguration configuration,
+        ILogger logger,
+        IEncryptionService encryptionService)
     {
         if (faceVector == null || faceVector.Length == 0)
         {
@@ -56,7 +60,7 @@ public static class AdminUserManagementHelper
             throw CustomSystemException.SystemExceptionCaller();
         }
 
-        return AES256Helper.Encrypt(JsonSerializer.Serialize(faceVector), aesKey, aesIv);
+        return encryptionService.Encrypt(JsonSerializer.Serialize(faceVector), aesKey, aesIv);
     }
 
     public static async Task<CinemaInfoEntity> ResolveTargetCinemaAsync(IAdminUserRepository adminUserRepository, Guid? cinemaId)

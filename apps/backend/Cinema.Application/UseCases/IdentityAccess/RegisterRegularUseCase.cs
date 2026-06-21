@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Abstractions.Security;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Dtos.IdentityAccess.Requests;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Localization;
@@ -14,7 +15,6 @@ using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
@@ -26,19 +26,22 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
     private readonly IConfiguration _configuration;
     private readonly ILogger<IdentityAccessRegularRegisterUseCase> _logger;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IEncryptionService _encryptionService;
 
     public IdentityAccessRegularRegisterUseCase(
         IIdentityAccessRepository repository,
         IConfiguration configuration,
         ILogger<IdentityAccessRegularRegisterUseCase> logger,
         IPasswordHasher passwordHasher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
         _passwordHasher = passwordHasher;
+        _encryptionService = encryptionService;
     }
     
     public async Task<BaseResponse<string>> Add(ReqRegularRegisterDto dto)
@@ -68,7 +71,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 throw CustomSystemException.SystemExceptionCaller();
             }
 
-            var encryptedIdentityCode = AES256Helper.Encrypt(dto.IdentityCode, getAESKey, getAESIV);
+            var encryptedIdentityCode = _encryptionService.Encrypt(dto.IdentityCode, getAESKey, getAESIV);
 
             if (await _repository.IdentityCodeExistsAsync(encryptedIdentityCode))
             {

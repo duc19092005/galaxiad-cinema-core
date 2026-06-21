@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using Cinema.Application.Abstractions.Security;
 using Cinema.Application.Constants;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.IdentityAccess.Responses;
@@ -15,9 +16,8 @@ using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
-using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.IdentityAccess;
@@ -30,6 +30,7 @@ public class GoogleLoginCallbackUseCase
     private readonly ILogger<GoogleLoginCallbackUseCase> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IJwtService _jwtService;
+    private readonly IEncryptionService _encryptionService;
 
     private const string GoogleTokenEndpoint = "https://oauth2.googleapis.com/token";
     private const string GoogleUserInfoEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo";
@@ -40,7 +41,8 @@ public class GoogleLoginCallbackUseCase
         ILogger<GoogleLoginCallbackUseCase> logger,
         IHttpClientFactory httpClientFactory,
         IJwtService jwtService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IEncryptionService encryptionService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
@@ -48,6 +50,7 @@ public class GoogleLoginCallbackUseCase
         _logger = logger;
         _httpClientFactory = httpClientFactory;
         _jwtService = jwtService;
+        _encryptionService = encryptionService;
     }
 
     public async Task<BaseResponse<ResGoogleLoginDto>> ExecuteAsync(string code, string state)
@@ -119,7 +122,7 @@ public class GoogleLoginCallbackUseCase
                     var aesIv = _configuration["AES_256:IV"];
                     if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
                     {
-                        existingUser.RefreshToken = AES256Helper.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
+                        existingUser.RefreshToken = _encryptionService.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
                     }
                 }
 
@@ -139,14 +142,14 @@ public class GoogleLoginCallbackUseCase
                     var aesIv = _configuration["AES_256:IV"];
                     if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
                     {
-                        encryptedRefreshToken = AES256Helper.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
+                        encryptedRefreshToken = _encryptionService.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
                     }
                 }
 
                 var rawIdentity = "GOOGLE_" + googleUserInfo.Id;
                 var cryptoKey = _configuration["AES_256:Key"] ?? "";
                 var cryptoIv = _configuration["AES_256:IV"] ?? "";
-                var encryptedIdentity = AES256Helper.Encrypt(rawIdentity, cryptoKey, cryptoIv);
+                var encryptedIdentity = _encryptionService.Encrypt(rawIdentity, cryptoKey, cryptoIv);
 
                 await _repository.AddUserAsync(new UserInfoEntity
                 {

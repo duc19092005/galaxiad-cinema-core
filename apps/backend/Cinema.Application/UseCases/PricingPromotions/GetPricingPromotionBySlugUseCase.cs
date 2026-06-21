@@ -1,7 +1,7 @@
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Application.UseCases.PricingPromotions;
 

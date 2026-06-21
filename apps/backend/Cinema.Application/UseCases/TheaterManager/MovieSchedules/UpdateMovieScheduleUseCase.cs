@@ -10,7 +10,7 @@ using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;

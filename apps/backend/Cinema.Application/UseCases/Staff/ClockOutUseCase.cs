@@ -4,7 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Staff;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.Staff;

@@ -1,7 +1,7 @@
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Domain.Enums;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Application.UseCases.Booking;
 

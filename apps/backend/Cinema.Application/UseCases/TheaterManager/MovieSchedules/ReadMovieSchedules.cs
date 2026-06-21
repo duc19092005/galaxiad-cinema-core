@@ -5,7 +5,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager.MovieSchedules.Responses;
 using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Application.Interfaces;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;

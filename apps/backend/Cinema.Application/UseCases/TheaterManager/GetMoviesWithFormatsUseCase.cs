@@ -3,7 +3,7 @@ using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Dtos.TheaterManager;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 

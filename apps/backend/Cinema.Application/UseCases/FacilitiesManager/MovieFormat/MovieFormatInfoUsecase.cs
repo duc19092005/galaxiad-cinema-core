@@ -1,4 +1,4 @@
-using Cinema.Domain.Exceptions;
+using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.MovieInfos.MovieFormats.Responses;
