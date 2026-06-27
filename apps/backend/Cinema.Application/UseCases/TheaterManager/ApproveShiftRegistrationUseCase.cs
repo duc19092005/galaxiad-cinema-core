@@ -47,13 +47,42 @@ public class ApproveShiftRegistrationUseCase
             throw new AppException($"This request was already processed (Current status: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
+        Guid cinemaId;
+        string shiftName;
+        int maxStaff;
+
+        if (registration.ShiftScheduleId.HasValue && registration.CinemaShiftScheduleEntity != null)
+        {
+            cinemaId = registration.CinemaShiftScheduleEntity.CinemaId;
+            shiftName = registration.CinemaShiftScheduleEntity.ShiftName;
+            maxStaff = registration.CinemaShiftScheduleEntity.MaxStaff;
+        }
+        else if (registration.CinemaShiftTemplateEntity != null)
+        {
+            cinemaId = registration.CinemaShiftTemplateEntity.CinemaId;
+            shiftName = registration.CinemaShiftTemplateEntity.ShiftName;
+            maxStaff = registration.CinemaShiftTemplateEntity.MaxStaff;
+        }
+        else
+        {
+            throw new AppException("Invalid shift registration definition.", 400, "SHIFT_ERR");
+        }
+
         // Verify manager permissions
-        await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
+        await VerifyManagerPermissionAsync(managerUserId, cinemaId);
 
         // Count approved registrations
-        var approvedCount = await _repository.CountApprovedRegistrationsAsync(registration.ShiftTemplateId, registration.RegistrationDate);
+        int approvedCount;
+        if (registration.ShiftScheduleId.HasValue)
+        {
+            approvedCount = await _repository.CountApprovedRegistrationsForScheduleAsync(registration.ShiftScheduleId.Value);
+        }
+        else
+        {
+            approvedCount = await _repository.CountApprovedRegistrationsAsync(registration.ShiftTemplateId!.Value, registration.RegistrationDate);
+        }
 
-        if (approvedCount >= registration.CinemaShiftTemplateEntity.MaxStaff)
+        if (approvedCount >= maxStaff)
         {
             throw new AppException(Messages.Staff.ShiftAlreadyFull, 400, "SHIFT_ERR");
         }
@@ -68,7 +97,7 @@ public class ApproveShiftRegistrationUseCase
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
             "Shift Approved",
-            $"Your shift '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been approved.",
+            $"Your shift '{shiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been approved.",
             "ShiftApproved"
         );
 
@@ -95,8 +124,26 @@ public class ApproveShiftRegistrationUseCase
             throw new AppException($"This request was already processed (Current status: {registration.Status}).", 400, "SHIFT_ERR");
         }
 
+        Guid cinemaId;
+        string shiftName;
+
+        if (registration.ShiftScheduleId.HasValue && registration.CinemaShiftScheduleEntity != null)
+        {
+            cinemaId = registration.CinemaShiftScheduleEntity.CinemaId;
+            shiftName = registration.CinemaShiftScheduleEntity.ShiftName;
+        }
+        else if (registration.CinemaShiftTemplateEntity != null)
+        {
+            cinemaId = registration.CinemaShiftTemplateEntity.CinemaId;
+            shiftName = registration.CinemaShiftTemplateEntity.ShiftName;
+        }
+        else
+        {
+            throw new AppException("Invalid shift registration definition.", 400, "SHIFT_ERR");
+        }
+
         // Verify manager permissions
-        await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
+        await VerifyManagerPermissionAsync(managerUserId, cinemaId);
 
         registration.Status = "Rejected";
         registration.ApprovedByUserId = managerUserId;
@@ -108,7 +155,7 @@ public class ApproveShiftRegistrationUseCase
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
             "Shift Rejected",
-            $"Your shift registration request for '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been rejected. Reason: {notes ?? "No reason provided"}.",
+            $"Your shift registration request for '{shiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been rejected. Reason: {notes ?? "No reason provided"}.",
             "ShiftRejected"
         );
 
@@ -135,8 +182,26 @@ public class ApproveShiftRegistrationUseCase
             throw new AppException("Can only cancel shift registrations that are already approved.", 400, "SHIFT_ERR");
         }
 
+        Guid cinemaId;
+        string shiftName;
+
+        if (registration.ShiftScheduleId.HasValue && registration.CinemaShiftScheduleEntity != null)
+        {
+            cinemaId = registration.CinemaShiftScheduleEntity.CinemaId;
+            shiftName = registration.CinemaShiftScheduleEntity.ShiftName;
+        }
+        else if (registration.CinemaShiftTemplateEntity != null)
+        {
+            cinemaId = registration.CinemaShiftTemplateEntity.CinemaId;
+            shiftName = registration.CinemaShiftTemplateEntity.ShiftName;
+        }
+        else
+        {
+            throw new AppException("Invalid shift registration definition.", 400, "SHIFT_ERR");
+        }
+
         // Verify manager permissions
-        await VerifyManagerPermissionAsync(managerUserId, registration.CinemaShiftTemplateEntity.CinemaId);
+        await VerifyManagerPermissionAsync(managerUserId, cinemaId);
 
         registration.Status = "Cancelled";
         registration.ApprovedByUserId = managerUserId;
@@ -148,7 +213,7 @@ public class ApproveShiftRegistrationUseCase
         await _sseNotificationService.SendNotificationAsync(
             registration.StaffId,
             "Shift Cancelled",
-            $"Your approved shift '{registration.CinemaShiftTemplateEntity.ShiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been cancelled by manager. Reason: {notes ?? "No reason provided"}.",
+            $"Your approved shift '{shiftName}' on {registration.RegistrationDate:dd/MM/yyyy} has been cancelled by manager. Reason: {notes ?? "No reason provided"}.",
             "ShiftCancelled"
         );
 

@@ -1187,7 +1187,6 @@ const MoviesListTab: React.FC<MoviesListTabProps> = ({
 const MovieManagerPage: React.FC = () => {
     const navigate = useNavigate();
     const { t } = useTranslation();
-    const { activeCinemaId, activeCinemaName, setActiveCinemaId } = useCinema();
     const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
     const [movies, setMovies] = useState<Movie[]>([]);

@@ -14,7 +14,10 @@ public class StaffShiftRegistrationEntity
     public Guid StaffId { get; set; }
 
     [ForeignKey("CinemaShiftTemplateEntity")]
-    public Guid ShiftTemplateId { get; set; }
+    public Guid? ShiftTemplateId { get; set; }
+
+    [ForeignKey("CinemaShiftScheduleEntity")]
+    public Guid? ShiftScheduleId { get; set; }
 
     public DateTime RegistrationDate { get; set; }
 
@@ -29,6 +32,7 @@ public class StaffShiftRegistrationEntity
     public string? Notes { get; set; }
 
     public StaffProfileEntity StaffProfileEntity { get; set; } = null!;
-    public CinemaShiftTemplateEntity CinemaShiftTemplateEntity { get; set; } = null!;
+    public CinemaShiftTemplateEntity? CinemaShiftTemplateEntity { get; set; }
+    public CinemaShiftScheduleEntity? CinemaShiftScheduleEntity { get; set; }
     public UserInfoEntity? ApprovedByUser { get; set; }
 }

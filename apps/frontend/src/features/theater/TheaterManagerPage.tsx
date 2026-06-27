@@ -89,9 +89,9 @@ const TheaterManagerPage: React.FC = () => {
   const sidebarSections: SidebarSection[] = [
     {
       items: [
-        { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
-        { id: 'employees', label: t('Employees'), icon: <Users size={18} /> },
-        { id: 'schedule', label: t('Schedule'), icon: <Calendar size={18} /> },
+        { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={18} /> },
+        { id: 'employees', label: t('Employees', 'Nhân sự'), icon: <Users size={18} /> },
+        { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} /> },
       ],
     },
   ];

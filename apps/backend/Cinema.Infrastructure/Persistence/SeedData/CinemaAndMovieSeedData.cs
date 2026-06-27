@@ -234,6 +234,78 @@ public static class CinemaAndMovieSeedData
 
         modelBuilder.Entity<MovieScheduleInfoEntity>().HasData(schedules);
 
+        // 5.5 Seed Departments
+        var departments = new List<DepartmentEntity>
+        {
+            // Galaxy Cinema Nguyễn Du
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-111111111111"),
+                CinemaId = cinemaHCMId,
+                DepartmentName = "Quầy vé",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-222222222222"),
+                CinemaId = cinemaHCMId,
+                DepartmentName = "Quầy bắp nước",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.FoodPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+
+            // Lotte Cinema West Lake
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-111111111111"),
+                CinemaId = cinemaHNId,
+                DepartmentName = "Quầy vé",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-222222222222"),
+                CinemaId = cinemaHNId,
+                DepartmentName = "Quầy bắp nước",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.FoodPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+
+            // BHD Star Bitexco
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
+                CinemaId = cinemaBHDId,
+                DepartmentName = "Quầy vé",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
+                CinemaId = cinemaBHDId,
+                DepartmentName = "Quầy bắp nước",
+                DepartmentType = DepartmentType.Cashier,
+                CashierType = CashierType.FoodPOS,
+                SharedUserId = null,
+                IsActive = true
+            }
+        };
+
+        modelBuilder.Entity<DepartmentEntity>().HasData(departments);
+
         // 6. Seed Cinema Shift Templates (Mẫu ca trực)
         var shiftTemplates = new List<CinemaShiftTemplateEntity>
         {
@@ -242,6 +314,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-111111111111"),
                 CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-111111111111"),
                 ShiftName = "Ca Part-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(12, 0, 0),
@@ -253,6 +326,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-222222222222"),
                 CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-111111111111"),
                 ShiftName = "Ca Part-time Chiều",
                 StartTime = new TimeSpan(12, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -264,6 +338,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-333333333333"),
                 CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-111111111111"),
                 ShiftName = "Ca Part-time Tối",
                 StartTime = new TimeSpan(18, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),
@@ -275,6 +350,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-444444444444"),
                 CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-222222222222"),
                 ShiftName = "Ca Full-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -286,6 +362,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-555555555555"),
                 CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-222222222222"),
                 ShiftName = "Ca Full-time Chiều",
                 StartTime = new TimeSpan(14, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),
@@ -299,6 +376,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-111111111111"),
                 CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-111111111111"),
                 ShiftName = "Ca Part-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(12, 0, 0),
@@ -310,6 +388,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-222222222222"),
                 CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-111111111111"),
                 ShiftName = "Ca Part-time Chiều",
                 StartTime = new TimeSpan(12, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -321,6 +400,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-333333333333"),
                 CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-111111111111"),
                 ShiftName = "Ca Part-time Tối",
                 StartTime = new TimeSpan(18, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),
@@ -332,6 +412,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-444444444444"),
                 CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-222222222222"),
                 ShiftName = "Ca Full-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -343,6 +424,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-555555555555"),
                 CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-222222222222"),
                 ShiftName = "Ca Full-time Chiều",
                 StartTime = new TimeSpan(14, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),
@@ -356,6 +438,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-111111111111"),
                 CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                 ShiftName = "Ca Part-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(12, 0, 0),
@@ -367,6 +450,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-222222222222"),
                 CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                 ShiftName = "Ca Part-time Chiều",
                 StartTime = new TimeSpan(12, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -378,6 +462,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-333333333333"),
                 CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                 ShiftName = "Ca Part-time Tối",
                 StartTime = new TimeSpan(18, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),
@@ -389,6 +474,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-444444444444"),
                 CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                 ShiftName = "Ca Full-time Sáng",
                 StartTime = new TimeSpan(8, 0, 0),
                 EndTime = new TimeSpan(16, 0, 0),
@@ -400,6 +486,7 @@ public static class CinemaAndMovieSeedData
             {
                 ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-555555555555"),
                 CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                 ShiftName = "Ca Full-time Chiều",
                 StartTime = new TimeSpan(14, 0, 0),
                 EndTime = new TimeSpan(22, 0, 0),

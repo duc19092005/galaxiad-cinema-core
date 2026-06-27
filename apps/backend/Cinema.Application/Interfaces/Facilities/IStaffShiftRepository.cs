@@ -9,6 +9,9 @@ public interface IStaffShiftRepository
     Task<StaffProfileEntity?> GetStaffProfileByUserIdAsync(Guid userId);
     Task<List<CinemaShiftTemplateEntity>> GetActiveShiftTemplatesForCinemaAsync(Guid cinemaId);
     Task<int> CountApprovedOrPendingRegistrationsAsync(Guid shiftTemplateId, DateTime date);
+    Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId);
+    Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date);
+    Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId);
     Task<List<ResStaffShiftRegistrationDto>> GetMyRegistrationsAsync(Guid staffId);
     Task<StaffShiftRegistrationEntity?> GetRegistrationByIdAndStaffAsync(Guid registrationId, Guid staffId);
     Task RemoveRegistrationAsync(StaffShiftRegistrationEntity registration);

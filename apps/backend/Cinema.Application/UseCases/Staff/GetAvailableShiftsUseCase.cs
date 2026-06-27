@@ -29,25 +29,37 @@ public class GetAvailableShiftsUseCase
             };
         }
 
+        if (!staffProfile.DepartmentId.HasValue)
+        {
+            return new BaseResponse<List<ResShiftTemplateDto>>
+            {
+                IsSuccess = true,
+                Data = new List<ResShiftTemplateDto>(),
+                Message = "Tài khoản của bạn chưa được gán phòng ban nào."
+            };
+        }
+
         var registrationDateOnly = date.Date;
-        var templates = await _repository.GetActiveShiftTemplatesForCinemaAsync(staffProfile.CinemaId);
+        var schedules = await _repository.GetActiveShiftSchedulesForCinemaAndDepartmentAsync(
+            staffProfile.CinemaId, staffProfile.DepartmentId.Value, registrationDateOnly);
 
         var resultList = new List<ResShiftTemplateDto>();
-        foreach (var t in templates)
+        foreach (var s in schedules)
         {
-            var count = await _repository.CountApprovedOrPendingRegistrationsAsync(t.ShiftTemplateId, registrationDateOnly);
+            var count = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(s.ShiftScheduleId);
             resultList.Add(new ResShiftTemplateDto
             {
-                ShiftTemplateId = t.ShiftTemplateId,
-                CinemaId = t.CinemaId,
-                CinemaName = t.CinemaInfoEntity?.CinemaName ?? "",
-                ShiftName = t.ShiftName,
-                StartTime = t.StartTime,
-                EndTime = t.EndTime,
-                MaxStaff = t.MaxStaff,
+                ShiftTemplateId = Guid.Empty,
+                ShiftScheduleId = s.ShiftScheduleId,
+                CinemaId = s.CinemaId,
+                CinemaName = s.CinemaInfoEntity?.CinemaName ?? "",
+                ShiftName = s.ShiftName,
+                StartTime = s.StartTime,
+                EndTime = s.EndTime,
+                MaxStaff = s.MaxStaff,
                 RegisteredCount = count,
-                RoleId = t.RoleId,
-                RoleName = t.RoleListInfoEntity?.RoleName ?? ""
+                RoleId = s.RoleId,
+                RoleName = s.RoleListInfoEntity?.RoleName ?? ""
             });
         }
 

@@ -18,12 +18,21 @@ public interface IShiftManagerRepository
     Task<List<ResStaffShiftRegistrationDto>> GetShiftRegistrationsAsync(Guid cinemaId, string? status);
     Task<StaffShiftRegistrationEntity?> GetRegistrationByIdWithTemplateAsync(Guid registrationId);
     Task<int> CountApprovedRegistrationsAsync(Guid shiftTemplateId, DateTime date);
+    Task<int> CountApprovedRegistrationsForScheduleAsync(Guid shiftScheduleId);
+    Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId);
     Task<CinemaShiftTemplateEntity?> GetShiftTemplateByIdAsync(Guid shiftTemplateId);
     Task AddShiftRegistrationAsync(StaffShiftRegistrationEntity registration);
     Task<List<StaffShiftRegistrationEntity>> GetActiveRegistrationsForStaffAndDateAsync(Guid staffId, DateTime date);
 
+    // Shift Schedules
+    Task AddShiftScheduleAsync(CinemaShiftScheduleEntity schedule);
+    Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId);
+    Task<List<CinemaShiftScheduleEntity>> GetShiftSchedulesAsync(Guid cinemaId, Guid? departmentId, DateTime startDate, DateTime endDate);
+    Task<List<CinemaShiftScheduleEntity>> GetPendingDeletionRequestsAsync();
+
     // Staff Profiles
     Task<List<ResStaffProfileDto>> GetStaffProfilesAsync(Guid cinemaId);
+    Task<List<Guid>> GetStaffUserIdsInDepartmentAsync(Guid cinemaId, Guid departmentId);
     Task<StaffProfileEntity?> GetStaffProfileAsync(Guid userId);
     Task<StaffProfileEntity?> GetStaffProfileWithUserAsync(Guid userId);
     Task UpdateStaffProfileAsync(StaffProfileEntity profile, ReqUpdateStaffProfileDto dto);

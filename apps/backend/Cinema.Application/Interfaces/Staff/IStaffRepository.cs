@@ -17,6 +17,9 @@ public interface IStaffRepository
     Task<CinemaShiftTemplateEntity?> GetShiftTemplateByIdAsync(Guid shiftTemplateId);
     Task<List<StaffShiftRegistrationEntity>> GetActiveRegistrationsForStaffAndDateAsync(Guid staffId, DateTime date);
     Task<int> CountApprovedOrPendingRegistrationsAsync(Guid shiftTemplateId, DateTime date);
+    Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId);
+    Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date);
+    Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId);
     Task AddShiftRegistrationAsync(StaffShiftRegistrationEntity registration);
     
     // Working Logs

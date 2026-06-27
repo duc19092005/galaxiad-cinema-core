@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Cinema.Application.UseCases.Staff;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.UseCases.TheaterManager;
+using Cinema.Application.UseCases.TheaterManager.ShiftSchedules;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.UseCases.Comments;
 using Cinema.Application.UseCases.Comments.Recommendation;
@@ -18,6 +19,8 @@ using Cinema.Application.Interfaces.Catalog;
 using Cinema.Application.UseCases.Customer.Catalog;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Infrastructure.Persistence.Validation;
+using Cinema.Application.UseCases.Admin;
+using Cinema.Application.UseCases.Admin.ShiftSchedules;
 
 namespace Cinema.Api.Bootstraps.Common;
 
@@ -93,6 +96,12 @@ public static class CommonServicesBootstrap
         services.AddScoped<ClockInUseCase>();
         services.AddScoped<ClockOutUseCase>();
         services.AddScoped<CalculatePayrollUseCase>();
+        services.AddScoped<CreateShiftScheduleUseCase>();
+        services.AddScoped<GetShiftSchedulesUseCase>();
+        services.AddScoped<DeleteShiftScheduleUseCase>();
+        services.AddScoped<GetPendingDeletionRequestsUseCase>();
+        services.AddScoped<ApproveDeletionRequestUseCase>();
+        services.AddScoped<RejectDeletionRequestUseCase>();
 
         // Public Catalog Services
         services.AddScoped<IPublicCatalogRepository, PublicCatalogRepository>();

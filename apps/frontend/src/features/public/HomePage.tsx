@@ -160,31 +160,6 @@ const HomePage: React.FC = () => {
     loadRecommendations();
   };
 
-  const fetchMovies = async (city: string, cinemaId: string) => {
-    setLoading(true); setError(null);
-    try {
-      const response = await publicApi.getAllMovies({
-        city: city || undefined,
-        cinemaId: cinemaId !== 'All' ? cinemaId : undefined,
-        pageSize: 40
-      });
-      const items = response.data || [];
-      setNowShowing(items.filter(m => !m.isCommingSoon));
-      setComingSoon(items.filter(m => m.isCommingSoon));
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response) {
-        const data = err.response.data as ApiErrorResponse;
-        if (data.statusCode === 401) {
-          localStorage.removeItem('user_info');
-          Cookies.remove('X-Access-Token');
-          navigate('/login');
-          return;
-        }
-        setError(data.message || 'Cannot load movies list.');
-      } else { setError('Cannot connect to server.'); }
-    } finally { setLoading(false); }
-  };
-
 
   const fetchTrendingMovies = async () => {
     setLoadingTrending(true);

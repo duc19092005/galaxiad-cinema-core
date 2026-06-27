@@ -54,6 +54,7 @@ public class CinemaDbContext : DbContext
     // Shift Management
     
     public DbSet<CinemaShiftTemplateEntity> CinemaShiftTemplateEntity { get; set; }
+    public DbSet<CinemaShiftScheduleEntity> CinemaShiftScheduleEntity { get; set; }
     
     public DbSet<StaffShiftRegistrationEntity> StaffShiftRegistrationEntity { get; set; }
     
@@ -325,17 +326,58 @@ public class CinemaDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(t => t.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.DepartmentEntity)
+                .WithMany()
+                .HasForeignKey(t => t.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Shift Schedules
+        
+        modelBuilder.Entity<CinemaShiftScheduleEntity>(entity =>
+        {
+            entity.HasOne(t => t.CinemaInfoEntity)
+                .WithMany()
+                .HasForeignKey(t => t.CinemaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.DepartmentEntity)
+                .WithMany()
+                .HasForeignKey(t => t.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(t => t.RoleListInfoEntity)
+                .WithMany()
+                .HasForeignKey(t => t.RoleId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
         
-        // Shift Registration (Staff <-> Template)
+        // Shift Registration (Staff <-> Template/Schedule)
         
         modelBuilder.Entity<StaffShiftRegistrationEntity>(entity =>
         {
-            entity.HasIndex(e => new { e.StaffId, e.ShiftTemplateId, e.RegistrationDate }).IsUnique();
+            entity.HasIndex(e => new { e.StaffId, e.ShiftTemplateId, e.RegistrationDate })
+                .IsUnique()
+                .HasFilter("[ShiftTemplateId] IS NOT NULL");
+
+            entity.HasIndex(e => new { e.StaffId, e.ShiftScheduleId })
+                .IsUnique()
+                .HasFilter("[ShiftScheduleId] IS NOT NULL");
             
             entity.HasOne(r => r.ApprovedByUser)
                 .WithMany()
                 .HasForeignKey(r => r.ApprovedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.CinemaShiftTemplateEntity)
+                .WithMany(t => t.StaffShiftRegistrationEntities)
+                .HasForeignKey(r => r.ShiftTemplateId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.CinemaShiftScheduleEntity)
+                .WithMany(s => s.StaffShiftRegistrationEntities)
+                .HasForeignKey(r => r.ShiftScheduleId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
         

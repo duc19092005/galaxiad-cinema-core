@@ -4,6 +4,7 @@ using Cinema.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cinema.Infrastructure.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260627072402_AddShiftSchedulesAndDepartments")]
+    partial class AddShiftSchedulesAndDepartments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -494,7 +497,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("a1111111-1111-1111-1111-111111111111"),
                             CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-111111111111"),
                             EndTime = new TimeSpan(0, 12, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -506,7 +508,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("a1111111-1111-1111-1111-222222222222"),
                             CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-111111111111"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -518,7 +519,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("a1111111-1111-1111-1111-333333333333"),
                             CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-111111111111"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -530,7 +530,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("a1111111-1111-1111-1111-444444444444"),
                             CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-222222222222"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -542,7 +541,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("a1111111-1111-1111-1111-555555555555"),
                             CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-222222222222"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -554,7 +552,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("b2222222-2222-2222-2222-111111111111"),
                             CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-111111111111"),
                             EndTime = new TimeSpan(0, 12, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -566,7 +563,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("b2222222-2222-2222-2222-222222222222"),
                             CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-111111111111"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -578,7 +574,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("b2222222-2222-2222-2222-333333333333"),
                             CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-111111111111"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -590,7 +585,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("b2222222-2222-2222-2222-444444444444"),
                             CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-222222222222"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -602,7 +596,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("b2222222-2222-2222-2222-555555555555"),
                             CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-222222222222"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -614,7 +607,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("c3333333-3333-3333-3333-111111111111"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             EndTime = new TimeSpan(0, 12, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -626,7 +618,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("c3333333-3333-3333-3333-222222222222"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -638,7 +629,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("c3333333-3333-3333-3333-333333333333"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -650,7 +640,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("c3333333-3333-3333-3333-444444444444"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                             EndTime = new TimeSpan(0, 16, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -662,7 +651,6 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             ShiftTemplateId = new Guid("c3333333-3333-3333-3333-555555555555"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                             EndTime = new TimeSpan(0, 22, 0, 0, 0),
                             IsActive = true,
                             MaxStaff = 5,
@@ -1460,62 +1448,6 @@ namespace Cinema.Infrastructure.Migrations
                         .HasFilter("[SharedUserId] IS NOT NULL");
 
                     b.ToTable("DepartmentEntity", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-111111111111"),
-                            CashierType = 0,
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentName = "Quầy vé",
-                            DepartmentType = 0,
-                            IsActive = true
-                        },
-                        new
-                        {
-                            DepartmentId = new Guid("d1111111-1111-1111-1111-222222222222"),
-                            CashierType = 1,
-                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            DepartmentName = "Quầy bắp nước",
-                            DepartmentType = 0,
-                            IsActive = true
-                        },
-                        new
-                        {
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-111111111111"),
-                            CashierType = 0,
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentName = "Quầy vé",
-                            DepartmentType = 0,
-                            IsActive = true
-                        },
-                        new
-                        {
-                            DepartmentId = new Guid("d2222222-2222-2222-2222-222222222222"),
-                            CashierType = 1,
-                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            DepartmentName = "Quầy bắp nước",
-                            DepartmentType = 0,
-                            IsActive = true
-                        },
-                        new
-                        {
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
-                            CashierType = 0,
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentName = "Quầy vé",
-                            DepartmentType = 0,
-                            IsActive = true
-                        },
-                        new
-                        {
-                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
-                            CashierType = 1,
-                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
-                            DepartmentName = "Quầy bắp nước",
-                            DepartmentType = 0,
-                            IsActive = true
-                        });
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.CinemaInfos.SeatsInfoEntity", b =>

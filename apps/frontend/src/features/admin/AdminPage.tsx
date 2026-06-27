@@ -42,6 +42,7 @@ import { PricingPromotionsSection } from './components/PricingPromotionsSection'
 import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
+import AdminShiftApprovalSection from './components/AdminShiftApprovalSection';
 import { useCinema } from '../../contexts/CinemaContext';
 
 // ============================================
@@ -65,7 +66,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'permissions', 'rights', 'audit']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'permissions', 'rights', 'audit', 'shifts']);
 
 const isAccountActive = (status: AdminUserDto['accountStatus']) => {
   if (typeof status === 'number') return status === 1;
@@ -946,6 +947,7 @@ const AdminPage: React.FC = () => {
         { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
+        { id: 'shifts', label: t('Yêu cầu hủy ca'), icon: <Calendar size={18} /> },
       ],
     },
   ];
@@ -1152,6 +1154,9 @@ const AdminPage: React.FC = () => {
             onRefresh={fetchAuditLogs}
           />
         );
+ 
+      case 'shifts':
+        return <AdminShiftApprovalSection />;
 
       default:
         return <ManagementDashboard role="admin" />;

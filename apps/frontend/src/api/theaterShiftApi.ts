@@ -11,6 +11,9 @@ import type {
   ShiftTemplateDto,
   StaffProfileDto,
   UpdateStaffProfileRequest,
+  CreateShiftScheduleRequest,
+  ShiftScheduleDto,
+  DeleteShiftScheduleRequest,
 } from '../types/shift.types';
 
 type ServerResponse<T> = {
@@ -107,5 +110,25 @@ export const theaterShiftApi = {
   getCinemaPayroll: async (cinemaId: string): Promise<ApiSuccessResponse<PayrollDto[]>> => {
     const response = await shiftAxios.get<ServerResponse<PayrollDto[]>>(`/TheaterManager/Shifts/payroll/cinema/${cinemaId}`);
     return normalizeSuccessResponse<PayrollDto[]>(response);
+  },
+
+  /** POST /api/v1/TheaterManager/Shifts/schedules */
+  createShiftSchedule: async (data: CreateShiftScheduleRequest): Promise<ApiSuccessResponse<boolean>> => {
+    const response = await shiftAxios.post<ServerResponse<boolean>>('/TheaterManager/Shifts/schedules', data);
+    return normalizeSuccessResponse<boolean>(response);
+  },
+
+  /** GET /api/v1/TheaterManager/Shifts/schedules */
+  getShiftSchedules: async (cinemaId: string, departmentId?: string, startDate?: string, endDate?: string): Promise<ApiSuccessResponse<ShiftScheduleDto[]>> => {
+    const response = await shiftAxios.get<ServerResponse<ShiftScheduleDto[]>>('/TheaterManager/Shifts/schedules', {
+      params: { cinemaId, departmentId, startDate, endDate },
+    });
+    return normalizeSuccessResponse<ShiftScheduleDto[]>(response);
+  },
+
+  /** DELETE /api/v1/TheaterManager/Shifts/schedules/{id} */
+  deleteShiftSchedule: async (id: string, data: DeleteShiftScheduleRequest): Promise<ApiSuccessResponse<boolean>> => {
+    const response = await shiftAxios.delete<ServerResponse<boolean>>(`/TheaterManager/Shifts/schedules/${id}`, { data });
+    return normalizeSuccessResponse<boolean>(response);
   },
 };

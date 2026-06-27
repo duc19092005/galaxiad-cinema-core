@@ -41,6 +41,7 @@ public class StaffShiftRepository : IStaffShiftRepository
     {
         return await _dbContext.Set<StaffShiftRegistrationEntity>()
             .Include(r => r.CinemaShiftTemplateEntity)
+            .Include(r => r.CinemaShiftScheduleEntity)
             .Where(r => r.StaffId == staffId)
             .OrderByDescending(r => r.RegistrationDate)
             .Select(r => new ResStaffShiftRegistrationDto
@@ -49,10 +50,10 @@ public class StaffShiftRepository : IStaffShiftRepository
                 StaffId = r.StaffId,
                 StaffName = r.StaffProfileEntity != null && r.StaffProfileEntity.UserInfoEntity != null
                     ? r.StaffProfileEntity.UserInfoEntity.UserName : "",
-                ShiftTemplateId = r.ShiftTemplateId,
-                ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : "",
-                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : default,
-                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : default,
+                ShiftTemplateId = r.ShiftTemplateId ?? Guid.Empty,
+                ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.ShiftName : ""),
+                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.StartTime : default),
+                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.EndTime : default),
                 RegistrationDate = r.RegistrationDate,
                 Status = r.Status,
                 ApprovedAt = r.ApprovedAt,
@@ -123,5 +124,35 @@ public class StaffShiftRepository : IStaffShiftRepository
                 }).ToList()
             })
             .ToListAsync();
+    }
+
+    public async Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId)
+    {
+        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+            .CountAsync(r => r.ShiftScheduleId == shiftScheduleId 
+                             && (r.Status == "Approved" || r.Status == "Pending"));
+    }
+
+    public async Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
+    {
+        var dateOnly = date.Date;
+        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+            .Include(s => s.RoleListInfoEntity)
+            .Include(s => s.DepartmentEntity)
+            .Include(s => s.StaffShiftRegistrationEntities)
+            .Where(s => s.CinemaId == cinemaId 
+                     && s.DepartmentId == departmentId 
+                     && s.Date == dateOnly 
+                     && s.IsActive 
+                     && s.DeletionStatus == "Active")
+            .ToListAsync();
+    }
+
+    public async Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId)
+    {
+        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+            .Include(s => s.RoleListInfoEntity)
+            .Include(s => s.DepartmentEntity)
+            .FirstOrDefaultAsync(s => s.ShiftScheduleId == shiftScheduleId && s.IsActive);
     }
 }

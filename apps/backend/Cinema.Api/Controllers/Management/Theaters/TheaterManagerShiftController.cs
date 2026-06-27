@@ -1,5 +1,6 @@
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.UseCases.TheaterManager;
+using Cinema.Application.UseCases.TheaterManager.ShiftSchedules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -23,7 +24,10 @@ public class TheaterManagerShiftController : ControllerBase
     private readonly UpdateStaffProfileUseCase _updateStaffProfileUseCase;
     private readonly GetStaffPayrollUseCase _getStaffPayrollUseCase;
     private readonly GetCinemaPayrollUseCase _getCinemaPayrollUseCase;
-
+    private readonly CreateShiftScheduleUseCase _createShiftScheduleUseCase;
+    private readonly GetShiftSchedulesUseCase _getShiftSchedulesUseCase;
+    private readonly DeleteShiftScheduleUseCase _deleteShiftScheduleUseCase;
+ 
     public TheaterManagerShiftController(
         ApproveShiftRegistrationUseCase approveShiftRegistrationUseCase,
         CalculatePayrollUseCase calculatePayrollUseCase,
@@ -33,7 +37,10 @@ public class TheaterManagerShiftController : ControllerBase
         GetStaffProfilesUseCase getStaffProfilesUseCase,
         UpdateStaffProfileUseCase updateStaffProfileUseCase,
         GetStaffPayrollUseCase getStaffPayrollUseCase,
-        GetCinemaPayrollUseCase getCinemaPayrollUseCase)
+        GetCinemaPayrollUseCase getCinemaPayrollUseCase,
+        CreateShiftScheduleUseCase createShiftScheduleUseCase,
+        GetShiftSchedulesUseCase getShiftSchedulesUseCase,
+        DeleteShiftScheduleUseCase deleteShiftScheduleUseCase)
     {
         _approveShiftRegistrationUseCase = approveShiftRegistrationUseCase;
         _calculatePayrollUseCase = calculatePayrollUseCase;
@@ -44,6 +51,9 @@ public class TheaterManagerShiftController : ControllerBase
         _updateStaffProfileUseCase = updateStaffProfileUseCase;
         _getStaffPayrollUseCase = getStaffPayrollUseCase;
         _getCinemaPayrollUseCase = getCinemaPayrollUseCase;
+        _createShiftScheduleUseCase = createShiftScheduleUseCase;
+        _getShiftSchedulesUseCase = getShiftSchedulesUseCase;
+        _deleteShiftScheduleUseCase = deleteShiftScheduleUseCase;
     }
 
     private Guid GetCurrentUserId()
@@ -167,5 +177,33 @@ public class TheaterManagerShiftController : ControllerBase
     {
         var result = await _getCinemaPayrollUseCase.ExecuteAsync(cinemaId);
         return result.IsSuccess ? Ok(result) : Forbid();
+    }
+
+    // 14. Tạo lịch làm việc cho phòng ban
+    [HttpPost("schedules")]
+    public async Task<IActionResult> CreateShiftSchedule([FromBody] ReqCreateShiftScheduleDto dto)
+    {
+        var result = await _createShiftScheduleUseCase.ExecuteAsync(dto);
+        return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    // 15. Lấy lịch làm việc của rạp/phòng ban
+    [HttpGet("schedules")]
+    public async Task<IActionResult> GetShiftSchedules(
+        [FromQuery] Guid cinemaId, 
+        [FromQuery] Guid? departmentId, 
+        [FromQuery] DateTime startDate, 
+        [FromQuery] DateTime endDate)
+    {
+        var result = await _getShiftSchedulesUseCase.ExecuteAsync(cinemaId, departmentId, startDate, endDate);
+        return Ok(result);
+    }
+
+    // 16. Xóa lịch làm việc (yêu cầu phê duyệt nếu có nhân viên đăng ký)
+    [HttpDelete("schedules/{id}")]
+    public async Task<IActionResult> DeleteShiftSchedule(Guid id, [FromBody] ReqDeleteShiftScheduleDto dto)
+    {
+        var result = await _deleteShiftScheduleUseCase.ExecuteAsync(id, dto);
+        return Ok(result);
     }
 }

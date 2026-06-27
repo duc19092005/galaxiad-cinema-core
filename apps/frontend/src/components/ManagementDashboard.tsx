@@ -130,7 +130,7 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
 
   const shortcuts = [
     { label: t('Manage Movies'), icon: <Film size={18} />, path: '/movie-manager', color: '#ff8a00' },
-    { label: t('Schedule'), icon: <Calendar size={18} />, path: '/schedule', color: '#22c55e' },
+    { label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} />, path: '/schedule', color: '#22c55e' },
     { label: t('Theaters'), icon: <Building2 size={18} />, path: '/theater-manager', color: '#3b82f6' },
     { label: t('Facilities'), icon: <Activity size={18} />, path: '/facilities-manager', color: '#a855f7' },
   ].filter(item => {

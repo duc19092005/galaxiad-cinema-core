@@ -36,6 +36,8 @@ public class StaffRepository : IStaffRepository
         return await _dbContext.Set<StaffShiftRegistrationEntity>()
             .Include(r => r.CinemaShiftTemplateEntity)
                 .ThenInclude(t => t.RoleListInfoEntity)
+            .Include(r => r.CinemaShiftScheduleEntity)
+                .ThenInclude(s => s.RoleListInfoEntity)
             .FirstOrDefaultAsync(r => r.StaffId == staffId 
                                      && r.RegistrationDate == dateOnly 
                                      && r.Status == "Approved");
@@ -119,5 +121,35 @@ public class StaffRepository : IStaffRepository
     {
         return await _dbContext.Set<UserRoleInfoEntity>()
             .AnyAsync(ur => ur.UserId == userId && ur.RoleListInfoEntity.RoleName == roleName);
+    }
+
+    public async Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId)
+    {
+        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+            .CountAsync(r => r.ShiftScheduleId == shiftScheduleId 
+                             && (r.Status == "Approved" || r.Status == "Pending"));
+    }
+
+    public async Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
+    {
+        var dateOnly = date.Date;
+        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+            .Include(s => s.RoleListInfoEntity)
+            .Include(s => s.DepartmentEntity)
+            .Include(s => s.StaffShiftRegistrationEntities)
+            .Where(s => s.CinemaId == cinemaId 
+                     && s.DepartmentId == departmentId 
+                     && s.Date == dateOnly 
+                     && s.IsActive 
+                     && s.DeletionStatus == "Active")
+            .ToListAsync();
+    }
+
+    public async Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId)
+    {
+        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+            .Include(s => s.RoleListInfoEntity)
+            .Include(s => s.DepartmentEntity)
+            .FirstOrDefaultAsync(s => s.ShiftScheduleId == shiftScheduleId && s.IsActive);
     }
 }

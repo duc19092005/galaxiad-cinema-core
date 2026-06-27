@@ -4,8 +4,8 @@ namespace Cinema.Application.Dtos.Shifts;
 
 public class ReqRegisterShiftDto
 {
-    [Required]
-    public Guid ShiftTemplateId { get; set; }
+    public Guid? ShiftTemplateId { get; set; }
+    public Guid? ShiftScheduleId { get; set; }
 
     [Required]
     public DateTime StartDate { get; set; }
@@ -19,6 +19,7 @@ public class ReqRegisterShiftDto
 public class ResShiftTemplateDto
 {
     public Guid ShiftTemplateId { get; set; }
+    public Guid? ShiftScheduleId { get; set; }
     public Guid CinemaId { get; set; }
     public string CinemaName { get; set; } = string.Empty;
     public string ShiftName { get; set; } = string.Empty;
@@ -164,4 +165,90 @@ public class ResStaffWorkingLogDto
     public DateTime? EndedShiftTime { get; set; }
     public DateTime WorkingDate { get; set; }
     public decimal TotalReceived { get; set; }
+}
+
+public class ReqCreateShiftScheduleDto
+{
+    [Required]
+    public Guid CinemaId { get; set; }
+
+    [Required]
+    public Guid DepartmentId { get; set; }
+
+    [Required]
+    public DateTime Date { get; set; }
+
+    [Required]
+    public List<ReqShiftScheduleItemDto> Shifts { get; set; } = [];
+
+    public bool RepeatWeekly { get; set; }
+    public int? RepeatWeeksCount { get; set; }
+}
+
+public class ReqShiftScheduleItemDto
+{
+    [Required]
+    public string ShiftName { get; set; } = string.Empty;
+
+    [Required]
+    public TimeSpan StartTime { get; set; }
+
+    [Required]
+    public TimeSpan EndTime { get; set; }
+
+    public int MaxStaff { get; set; } = 2;
+
+    [Required]
+    public Guid RoleId { get; set; }
+}
+
+public class ResShiftScheduleDto
+{
+    public Guid ShiftScheduleId { get; set; }
+    public Guid CinemaId { get; set; }
+    public Guid DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string ShiftName { get; set; } = string.Empty;
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public int MaxStaff { get; set; }
+    public int RegisteredCount { get; set; }
+    public Guid RoleId { get; set; }
+    public string RoleName { get; set; } = string.Empty;
+    public string DeletionStatus { get; set; } = string.Empty;
+    public string? DeletionReason { get; set; }
+    public List<ResScheduleStaffRegistrationDto> RegisteredStaff { get; set; } = [];
+}
+
+public class ResScheduleStaffRegistrationDto
+{
+    public Guid ShiftRegistrationId { get; set; }
+    public Guid StaffId { get; set; }
+    public string StaffName { get; set; } = string.Empty;
+    public string Status { get; set; } = string.Empty;
+}
+
+public class ReqDeleteShiftScheduleDto
+{
+    [Required]
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class ResPendingDeletionRequestDto
+{
+    public Guid ShiftScheduleId { get; set; }
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
+    public Guid DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string ShiftName { get; set; } = string.Empty;
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public string DeletionReason { get; set; } = string.Empty;
+    public Guid DeletionRequestedByUserId { get; set; }
+    public string DeletionRequestedByUserName { get; set; } = string.Empty;
+    public DateTime DeletionRequestedAt { get; set; }
+    public int RegisteredStaffCount { get; set; }
 }

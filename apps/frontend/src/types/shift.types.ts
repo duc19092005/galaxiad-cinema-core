@@ -3,6 +3,7 @@ export type PayrollStatus = 'Pending' | 'Paid' | string;
 
 export interface ShiftTemplateDto {
   shiftTemplateId: string;
+  shiftScheduleId?: string;
   cinemaId: string;
   cinemaName: string;
   shiftName: string;
@@ -15,7 +16,8 @@ export interface ShiftTemplateDto {
 }
 
 export interface RegisterShiftRequest {
-  shiftTemplateId: string;
+  shiftTemplateId?: string;
+  shiftScheduleId?: string;
   startDate: string;
   endDate: string;
   notes?: string;
@@ -134,4 +136,67 @@ export interface CashierShiftSession {
   staffName: string;
   accessToken: string;
   clockedInAt: string;
+}
+
+export interface CreateShiftScheduleRequest {
+  cinemaId: string;
+  departmentId: string;
+  date: string;
+  shifts: ShiftScheduleItemRequest[];
+  repeatWeekly: boolean;
+  repeatWeeksCount?: number;
+}
+
+export interface ShiftScheduleItemRequest {
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  maxStaff: number;
+  roleId: string;
+}
+
+export interface ShiftScheduleDto {
+  shiftScheduleId: string;
+  cinemaId: string;
+  departmentId: string;
+  departmentName: string;
+  date: string;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  maxStaff: number;
+  registeredCount: number;
+  roleId: string;
+  roleName: string;
+  deletionStatus: string;
+  deletionReason?: string | null;
+  registeredStaff: ScheduleStaffRegistrationDto[];
+}
+
+export interface ScheduleStaffRegistrationDto {
+  shiftRegistrationId: string;
+  staffId: string;
+  staffName: string;
+  status: string;
+}
+
+export interface DeleteShiftScheduleRequest {
+  reason: string;
+}
+
+export interface PendingDeletionRequestDto {
+  shiftScheduleId: string;
+  cinemaId: string;
+  cinemaName: string;
+  departmentId: string;
+  departmentName: string;
+  date: string;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  deletionReason: string;
+  deletionRequestedByUserId: string;
+  deletionRequestedByUserName: string;
+  deletionRequestedAt: string;
+  registeredStaffCount: number;
 }
