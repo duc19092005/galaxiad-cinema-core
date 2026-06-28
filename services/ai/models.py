@@ -50,8 +50,10 @@ class ClassifyIntentResponse(BaseModel):
 
 
 class ChatLlmRequest(BaseModel):
-    system_prompt: str
     user_prompt: str
+    tool_context: Optional[str] = ""
+    user_role: Optional[str] = ""
+    user_id: Optional[str] = ""
 
 
 class ChatLlmResponse(BaseModel):

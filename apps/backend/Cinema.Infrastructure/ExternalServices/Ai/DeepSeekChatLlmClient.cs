@@ -22,7 +22,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         _logger = logger;
     }
 
-    public async Task<string> SendPromptAsync(string systemPrompt, string userPrompt)
+    public async Task<string> SendChatRequestAsync(string userPrompt, string toolContext, string userRole, string userId)
     {
         var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
 
@@ -30,8 +30,10 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         {
             var payload = new ChatRequest
             {
-                SystemPrompt = systemPrompt,
-                UserPrompt = userPrompt
+                UserPrompt = userPrompt,
+                ToolContext = toolContext,
+                UserRole = userRole,
+                UserId = userId
             };
 
             var content = new StringContent(
@@ -57,11 +59,17 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 
     private sealed class ChatRequest
     {
-        [JsonPropertyName("system_prompt")]
-        public string SystemPrompt { get; init; } = string.Empty;
-
         [JsonPropertyName("user_prompt")]
         public string UserPrompt { get; init; } = string.Empty;
+
+        [JsonPropertyName("tool_context")]
+        public string ToolContext { get; init; } = string.Empty;
+
+        [JsonPropertyName("user_role")]
+        public string UserRole { get; init; } = string.Empty;
+
+        [JsonPropertyName("user_id")]
+        public string UserId { get; init; } = string.Empty;
     }
 
     private sealed class ChatResponse
