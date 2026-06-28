@@ -30,6 +30,7 @@ public class CreateBookingUseCase
     private readonly ILogger<CreateBookingUseCase> _logger;
     private readonly CalculatePricingPromotionUseCase _calculatePricingPromotionUseCase;
     private readonly IMovieCacheService _cacheService;
+    private readonly IBackgroundJobScheduler _jobScheduler;
 
     public CreateBookingUseCase(
         IBookingOrderRepository orderRepository,
@@ -40,7 +41,8 @@ public class CreateBookingUseCase
         ILogger<CreateBookingUseCase> logger,
         CalculatePricingPromotionUseCase calculatePricingPromotionUseCase,
         IUnitOfWork unitOfWork,
-        IMovieCacheService cacheService)
+        IMovieCacheService cacheService,
+        IBackgroundJobScheduler jobScheduler)
     {
         _unitOfWork = unitOfWork;
         _orderRepository = orderRepository;
@@ -51,6 +53,7 @@ public class CreateBookingUseCase
         _logger = logger;
         _calculatePricingPromotionUseCase = calculatePricingPromotionUseCase;
         _cacheService = cacheService;
+        _jobScheduler = jobScheduler;
     }
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
@@ -308,6 +311,11 @@ public class CreateBookingUseCase
             await _orderRepository.AddOrderDetailsRangeAsync(orderDetails);
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            _jobScheduler.Schedule<IPendingOrderCancellationJob>(
+                job => job.ExecuteForOrderAsync(orderId),
+                TimeSpan.FromMinutes(10)
+            );
 
             if (orderUserId.HasValue)
             {

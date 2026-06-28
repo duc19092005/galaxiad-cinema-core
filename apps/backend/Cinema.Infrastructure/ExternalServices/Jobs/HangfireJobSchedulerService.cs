@@ -18,4 +18,9 @@ public class HangfireJobSchedulerService : IBackgroundJobScheduler
     {
         return _backgroundJobClient.Enqueue<T>(methodCall);
     }
+
+    public string Schedule<T>(Expression<Action<T>> methodCall, TimeSpan delay)
+    {
+        return _backgroundJobClient.Schedule<T>(methodCall, delay);
+    }
 }

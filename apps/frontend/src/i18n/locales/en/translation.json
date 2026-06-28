@@ -355,17 +355,7 @@
     "dobInvalidDate": "Invalid date.",
     "ageLimit": "Age must be between 16 and 80."
   },
-  "booking": {
-    "bookingDate": "Booking Date",
-    "showtime": "Showtime",
-    "seats": "Seats",
-    "amount": "Amount Paid",
-    "selectSeats": "Select Seats",
-    "continuePayment": "Continue to Payment",
-    "contactInfo": "Contact Information",
-    "fullName": "Full Name",
-    "phone": "Phone"
-  },
+
   "toast": {
     "passwordChanged": "Password changed successfully!",
     "noChanges": "No changes detected",
@@ -445,6 +435,8 @@
     "cinema": "Cinema",
     "allCinemas": "All Cinemas",
     "searchNow": "Search Now",
+    "searchPlaceholder": "Search...",
+    "noResults": "No results found",
     "weeklyLeaders": "Weekly Leaders",
     "topTrending": "Top Trending",
     "trendingNow": "Trending Now",
@@ -1072,6 +1064,19 @@
     "go_to_movies": "Browse Movies"
   },
   "booking": {
+    "bookingDate": "Booking Date",
+    "showtime": "Showtime",
+    "seats": "Seats",
+    "amount": "Amount Paid",
+    "selectSeats": "Select Seats",
+    "continuePayment": "Continue to Payment",
+    "contactInfo": "Contact Information",
+    "fullName": "Full Name",
+    "phone": "Phone",
+    "available": "Available",
+    "selected": "Selected",
+    "locked": "Locked (by others)",
+    "occupied": "Occupied",
     "payment_failed": "Payment Failed",
     "processing_error_title": "Processing Error",
     "processing_error_msg": "An error occurred while processing your payment. If money was deducted, please contact our support team for assistance.",

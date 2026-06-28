@@ -354,17 +354,7 @@
     "dobInvalidDate": "Ngày tháng không hợp lệ.",
     "ageLimit": "Độ tuổi yêu cầu từ 16 đến 80."
   },
-  "booking": {
-    "bookingDate": "Ngày đặt",
-    "showtime": "Suất chiếu",
-    "seats": "Ghế",
-    "amount": "Tổng tiền",
-    "selectSeats": "Chọn ghế",
-    "continuePayment": "Tiếp tục thanh toán",
-    "contactInfo": "Thông tin liên hệ",
-    "fullName": "Họ tên",
-    "phone": "Số điện thoại"
-  },
+
   "toast": {
     "passwordChanged": "Đổi mật khẩu thành công!",
     "noChanges": "Không có thay đổi nào",
@@ -444,6 +434,8 @@
     "cinema": "Rạp",
     "allCinemas": "Tất Cả Rạp",
     "searchNow": "Tìm Kiếm Ngay",
+    "searchPlaceholder": "Tìm kiếm...",
+    "noResults": "Không tìm thấy kết quả",
     "weeklyLeaders": "XU HƯỚNG TUẦN",
     "topTrending": "Thịnh Hành",
     "trendingNow": "Đang Thịnh Hành",
@@ -1070,6 +1062,19 @@
     "go_to_movies": "Vào xem phim"
   },
   "booking": {
+    "bookingDate": "Ngày đặt",
+    "showtime": "Suất chiếu",
+    "seats": "Ghế",
+    "amount": "Tổng tiền",
+    "selectSeats": "Chọn ghế",
+    "continuePayment": "Tiếp tục thanh toán",
+    "contactInfo": "Thông tin liên hệ",
+    "fullName": "Họ tên",
+    "phone": "Số điện thoại",
+    "available": "Có sẵn",
+    "selected": "Đang chọn",
+    "locked": "Đang giữ (bởi người khác)",
+    "occupied": "Đã mua",
     "payment_failed": "Thanh Toán Thất Bại",
     "processing_error_title": "Lỗi Xử Lý",
     "processing_error_msg": "Đã xảy ra lỗi trong quá trình xử lý thanh toán của bạn. Nếu tiền đã được trừ, vui lòng liên hệ đội hỗ trợ của chúng tôi để được trợ giúp.",

@@ -1,6 +1,7 @@
 // src/features/public/components/CustomSelectField.tsx
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CustomSelectFieldProps {
   step: string;
@@ -23,10 +24,14 @@ const CustomSelectField: React.FC<CustomSelectFieldProps> = ({
   borderLeft,
   onOpen,
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Use click event for outside detection (reliable with React click)
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -37,14 +42,44 @@ const CustomSelectField: React.FC<CustomSelectFieldProps> = ({
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Debounce search term update by 300ms
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  // Focus input and reset search when dropdown opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    } else {
+      setSearchTerm('');
+      setDebouncedSearchTerm('');
+    }
+  }, [isOpen]);
+
   const handleToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent document click listener from closing immediately
+    e.stopPropagation();
     const nextOpen = !isOpen;
     setIsOpen(nextOpen);
     if (nextOpen && onOpen) {
       onOpen();
     }
   };
+
+  // Filter options based on debounced search term
+  const filteredOptions = options.filter((opt) => {
+    const term = debouncedSearchTerm.toLowerCase().trim();
+    if (!term) return true;
+    return opt.label.toLowerCase().includes(term);
+  });
 
   return (
     <div
@@ -85,32 +120,87 @@ const CustomSelectField: React.FC<CustomSelectFieldProps> = ({
             borderRadius: 12,
             boxShadow: '0 10px 25px -5px rgba(0,0,0,0.5)',
             zIndex: 50,
-            maxHeight: 250,
-            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
           }}
-          className="scrollbar-thin"
+          onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the container
         >
-          {options.map((opt) => (
-            <div
-              key={opt.value}
-              onClick={(e) => {
-                e.stopPropagation();
-                onChange(opt.value);
-                setIsOpen(false);
-              }}
+          {/* Search Box */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 12px',
+              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              backgroundColor: 'rgba(0,0,0,0.2)',
+            }}
+          >
+            <Search size={14} className="text-zinc-500" />
+            <input
+              ref={inputRef}
+              type="text"
+              placeholder={t('home.searchPlaceholder', 'Search...')}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               style={{
-                padding: '10px 16px',
+                flex: 1,
+                background: 'none',
+                border: 'none',
+                color: 'white',
                 fontSize: 13,
-                color: opt.value === value ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.8)',
-                backgroundColor: opt.value === value ? 'rgba(255,138,0,0.1)' : 'transparent',
-                fontWeight: opt.value === value ? 600 : 400,
-                transition: 'background-color 0.15s, color 0.15s',
+                outline: 'none',
+                padding: 0,
               }}
-              className="hover:bg-white/5 hover:text-white"
-            >
-              {opt.label}
-            </div>
-          ))}
+            />
+          </div>
+
+          {/* Options List */}
+          <div
+            style={{
+              maxHeight: 200,
+              overflowY: 'auto',
+            }}
+            className="scrollbar-thin"
+          >
+            {filteredOptions.length > 0 ? (
+              filteredOptions.map((opt) => (
+                <div
+                  key={opt.value}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: 13,
+                    color: opt.value === value ? 'var(--accent, #ff8a00)' : 'rgba(255,255,255,0.8)',
+                    backgroundColor: opt.value === value ? 'rgba(255,138,0,0.1)' : 'transparent',
+                    fontWeight: opt.value === value ? 600 : 400,
+                    transition: 'background-color 0.15s, color 0.15s',
+                    cursor: 'pointer',
+                  }}
+                  className="hover:bg-white/5 hover:text-white"
+                >
+                  {opt.label}
+                </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  padding: '12px 16px',
+                  fontSize: 13,
+                  color: 'rgba(255,255,255,0.4)',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                }}
+              >
+                {t('home.noResults', 'No results found')}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

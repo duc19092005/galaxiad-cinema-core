@@ -525,24 +525,24 @@ const MovieDetailPage: React.FC = () => {
                         <div className="space-y-4">
                             <h5 className="text-white font-bold text-sm uppercase tracking-wider">Quick Links</h5>
                             <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Privacy Policy</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Terms of Service</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Contact Us</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/privacy-policy')}>Privacy Policy</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/terms-of-service')}>Terms of Service</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/contact-us')}>Contact Us</a></li>
                             </ul>
                         </div>
                         <div className="space-y-4">
                             <h5 className="text-white font-bold text-sm uppercase tracking-wider">Company</h5>
                             <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Careers</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Feedback</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">About Us</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/careers')}>Careers</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/contact-us')}>Feedback</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/about-us')}>About Us</a></li>
                             </ul>
                         </div>
                         <div className="hidden md:block space-y-4">
                             <h5 className="text-white font-bold text-sm uppercase tracking-wider">Legal</h5>
                             <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Cookie Policy</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline" href="#">Safety Rules</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/cookie-policy')}>Cookie Policy</a></li>
+                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/safety-rules')}>Safety Rules</a></li>
                             </ul>
                         </div>
                     </div>

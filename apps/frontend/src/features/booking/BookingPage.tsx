@@ -71,6 +71,9 @@ const BookingPage: React.FC = () => {
             const startConnection = async () => {
                 try {
                     // Register handlers BEFORE start
+                    connection.on("OnInitialLockedSeats", (initialLockedSeats: Record<string, string>) => {
+                        setLockedSeats(initialLockedSeats);
+                    });
                     connection.on("OnSeatSelected", (seatId: string, userName: string) => {
                         setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
                     });
@@ -366,19 +369,19 @@ const BookingPage: React.FC = () => {
                         <div className="flex flex-wrap justify-center gap-8 px-6 py-4 rounded-full glass-card">
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-zinc-800 border border-zinc-700/50"></div>
-                                <span className="text-xs text-[#ddc1ae]">Available</span>
+                                <span className="text-xs text-[#ddc1ae]">{t('booking.available', 'Available')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-[#ff8a00] shadow-[0_0_8px_rgba(255,138,0,0.5)] border border-[#ff8a00]"></div>
-                                <span className="text-xs text-[#ddc1ae]">Selected</span>
+                                <span className="text-xs text-[#ddc1ae]">{t('booking.selected', 'Selected')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-red-500/20 border border-red-500/40"></div>
-                                <span className="text-xs text-[#ddc1ae]">Locked (by others)</span>
+                                <span className="text-xs text-[#ddc1ae]">{t('booking.locked', 'Locked (by others)')}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-zinc-900/50 border border-zinc-800/40 opacity-40"></div>
-                                <span className="text-xs text-[#ddc1ae]">Occupied</span>
+                                <span className="text-xs text-[#ddc1ae]">{t('booking.occupied', 'Occupied')}</span>
                             </div>
                         </div>
                     </div>
@@ -611,14 +614,19 @@ const BookingPage: React.FC = () => {
                         CINEMA
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 32, color: 'var(--text-secondary, #a1a1aa)', fontSize: 14 }}>
-                        {['Privacy Policy', 'Terms of Service', 'Contact Us', 'Careers'].map(link => (
-                            <a key={link} href="#"
-                                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
+                        {[
+                            { label: 'Privacy Policy', path: '/privacy-policy' },
+                            { label: 'Terms of Service', path: '/terms-of-service' },
+                            { label: 'Contact Us', path: '/contact-us' },
+                            { label: 'Careers', path: '/careers' }
+                        ].map(item => (
+                            <button key={item.label} onClick={() => navigate(item.path)}
+                                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
                                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary, #fafafa)'; }}
                                 onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary, #a1a1aa)'; }}
                             >
-                                {link}
-                            </a>
+                                {item.label}
+                            </button>
                         ))}
                     </div>
                     <div style={{ color: 'var(--text-secondary, #a1a1aa)', fontSize: 12, letterSpacing: '-0.01em', opacity: 0.5 }}>

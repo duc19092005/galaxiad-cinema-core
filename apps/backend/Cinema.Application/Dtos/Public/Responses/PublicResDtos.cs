@@ -49,6 +49,8 @@ public class GetAuditoriumInfosRes
 
     public string AuditoriumId {get;set;} = string.Empty;
 
+    public DateTime StartTime { get; set; }
+
     public List<GetSeatsRes> SeatMap {get;set;} = [];
 }
 

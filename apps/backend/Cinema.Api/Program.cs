@@ -149,6 +149,8 @@ builder.Services.AddHangfireServer();
 
 // Register PendingOrderCancellationJob for DI
 builder.Services.AddScoped<PendingOrderCancellationJob>();
+builder.Services.AddScoped<Cinema.Application.Interfaces.Booking.IPendingOrderCancellationJob, PendingOrderCancellationJob>();
+builder.Services.AddScoped<Cinema.Application.Interfaces.Booking.ISeatLockerNotificationService, Cinema.Api.Hubs.SeatLockerNotificationService>();
 
 builder.Services.AddSignalR();
 

@@ -187,6 +187,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 MovieVisualFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : "",
                 AuditoriumName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.AuditoriumNumber : "",
                 AuditoriumId = x.AuditoriumId.ToString(),
+                StartTime = x.StartTime,
                 SeatMap = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.SeatsInfoEntity.Select(s => new GetSeatsRes
                 {
                     SeatId = s.SeatId,

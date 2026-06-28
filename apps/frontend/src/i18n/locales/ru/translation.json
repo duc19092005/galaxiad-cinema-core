@@ -444,17 +444,7 @@
     "dobInvalidDate": "Неверная дата.",
     "ageLimit": "Возраст должен быть от 16 до 80 лет."
   },
-  "booking": {
-    "bookingDate": "Дата бронирования",
-    "showtime": "Время сеанса",
-    "seats": "Места",
-    "amount": "Сумма",
-    "selectSeats": "Выбрать места",
-    "continuePayment": "Продолжить оплату",
-    "contactInfo": "Контактная информация",
-    "fullName": "Полное имя",
-    "phone": "Телефон"
-  },
+
   "toast": {
     "passwordChanged": "Пароль успешно изменён!",
     "noChanges": "Изменений не обнаружено",
@@ -683,6 +673,8 @@
     "cinema": "Кинотеатр",
     "allCinemas": "Все кинотеатры",
     "searchNow": "Найти",
+    "searchPlaceholder": "Поиск...",
+    "noResults": "Результатов не найдено",
     "weeklyLeaders": "Лидеры недели",
     "topTrending": "Популярное",
     "trendingNow": "В тренде",
@@ -1141,6 +1133,19 @@
     "go_to_movies": "Смотреть фильмы"
   },
   "booking": {
+    "bookingDate": "Дата бронирования",
+    "showtime": "Время сеанса",
+    "seats": "Места",
+    "amount": "Сумма",
+    "selectSeats": "Выбрать места",
+    "continuePayment": "Продолжить оплату",
+    "contactInfo": "Контактная информация",
+    "fullName": "Полное имя",
+    "phone": "Телефон",
+    "available": "Доступно",
+    "selected": "Выбрано",
+    "locked": "Заблокировано (другими)",
+    "occupied": "Занято",
     "payment_failed": "Оплата не удалась",
     "processing_error_title": "Ошибка обработки",
     "processing_error_msg": "Произошла ошибка при обработке вашего платежа. Если средства были списаны, пожалуйста, обратитесь в нашу службу поддержки.",
