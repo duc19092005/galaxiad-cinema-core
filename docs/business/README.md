@@ -1,25 +1,108 @@
-# Galaxiad Cinema Core - Business Logic Reference Directory
+# Galaxiad Cinema - Business Rules Reference
 
-This document details all core business rules, validation constraints, and operational logic implemented across the Galaxiad Cinema backend and frontend systems.
+This document explains the main business rules used by Galaxiad Cinema in simple operational language. It is written for managers, operators, product owners, and stakeholders who need to understand how the system should behave without reading the source code.
 
 ---
 
-## Core Business Logic & Rules (STT)
+## Core Business Rules
 
-| STT | Component / Area | Rule Title | Business Logic & Verification Constraint |
+| No. | Business Area | Rule | Plain Business Explanation |
 | :---: | :--- | :--- | :--- |
-| **1** | **Identity & Access** | IAM Roles | Users are categorized into standard hierarchy levels: `Customer`, `Staff`, `Manager`, and `Admin`. |
-| **2** | **Identity & Access** | Staff Classification | Staff profiles are classified into `FullTime` and `PartTime` employment categories. |
-| **3** | **Identity & Access** | Data Encryption | Customer `IdentityCode` values are encrypted using AES-256 with strong key/IV variables before DB storage. |
-| **4** | **Shift Operations** | Operating Hours | The cinema operational window is strictly capped between **06:00 AM and 02:00 AM the next day** (Vietnam local timezone, UTC+7). |
-| **5** | **Shift Operations** | Timezone Normalization | Inputs (UTC+7) are combined with dates and converted to UTC on write, then converted back to UTC+7 when returning API responses. |
-| **6** | **Shift Operations** | Shift Durations | Shift templates are validated strictly: `FullTime` = exactly 8.0 hours; `PartTime` = exactly 4.0 hours. |
-| **7** | **Shift Registration** | Staff Registration Rules | `PartTime` staff register for $\le 4$h shifts. `FullTime` staff registering for short shifts ($< 8$h) must supply validation notes. |
-| **8** | **Seat Reservation** | Live Seat Locking | Seat selection locks seats dynamically. Unpaid reservations expire after a timeout (10-15 mins) and seats are freed. |
-| **9** | **Seat Booking** | Payment Callback | VNPay payment callbacks set status to `Booked`. Unpaid/failed bookings release seat locks. Ticket downloads require `Booked` status. |
-| **10** | **Pricing Promotions** | Pricing Overrides | `FixedTicketPrice` rules override base ticket prices (e.g. Student tickets), with the highest priority rule taking precedence. |
-| **11** | **Pricing Promotions** | Pricing Adjustments | Other active pricing rules (Percent/Fixed discounts and surcharges) are applied sequentially in descending order of priority. |
-| **12** | **Pricing Promotions** | Surcharges | Ticket prices calculate surcharges based on VIP seat segments, holidays/weekends, and movie formats (3D/IMAX). |
-| **13** | **Vouchers & Loyalty** | Voucher Redemption | Vouchers are redeemed using accumulated loyalty points. Vouchers can restrict eligibility by user role/segment. |
-| **14** | **Comments & Security** | Owner Authorization (IDOR) | Users can only modify or delete comments they own (`comment.UserId == currentUserId`), enforced via JWT claim context. |
-| **15** | **Caching & Eviction** | Active Eviction | Lists, movie details, and user profiles are cached (Cache-Aside). Caches are evicted on movie, schedule, review, or booking mutations. |
+| **1** | Accounts & Access | Role-based access | Each user has a role such as customer, staff, manager, or administrator. Users can only see and perform actions that match their role. |
+| **2** | Staff Management | Staff work type | Staff members are classified as full-time or part-time. This affects which work shifts they can register for. |
+| **3** | Customer Privacy | Identity protection | Sensitive customer identity information must be protected before it is stored. |
+| **4** | Cinema Operations | Operating hours | A cinema can schedule work shifts only within the official operating window, from 6:00 AM to 2:00 AM the next day. |
+| **5** | Cinema Operations | Local time consistency | Business times shown to staff and customers must follow Vietnam local time. |
+| **6** | Shift Planning | Standard shift duration | Full-time shifts must last exactly 8 hours. Part-time shifts must last exactly 4 hours. |
+| **7** | Shift Registration | Staff shift eligibility | Part-time staff can only register for shorter shifts. Full-time staff who register for a shorter shift must provide a reason. |
+| **8** | Seat Reservation | Temporary seat holding | When a customer selects seats, those seats are held temporarily during checkout. If payment is not completed in time, the seats become available again. |
+| **9** | Ticket Purchase | Paid ticket confirmation | A ticket is only considered valid after successful payment. Ticket download is only available for paid bookings. |
+| **10** | Ticket Pricing | Special ticket prices | Some customer groups, such as students, may receive special fixed ticket prices when eligible. |
+| **11** | Ticket Pricing | Discounts and surcharges | Discounts and surcharges can be applied based on business campaigns, movie format, seat type, holidays, or weekends. |
+| **12** | Ticket Pricing | Premium experiences | Premium seat types or special movie formats may increase the final ticket price. |
+| **13** | Vouchers & Loyalty | Voucher redemption | Customers can redeem vouchers using loyalty points. Some vouchers may only be available to specific customer groups. |
+| **14** | Reviews & Comments | Customer ownership | Customers can only edit or delete their own comments and reviews. |
+| **15** | System Performance | Fresh business data | Customer-facing lists, movie details, booking history, and profiles should stay up to date after important business changes. |
+| **16** | Facility Management | Complete seat layout | An auditorium seat map must be complete. A row or column cannot have unexpected empty gaps in the middle of the layout. |
+| **17** | Facility Management | Unique seats | Every seat in an auditorium must have a unique position and a unique seat label. |
+| **18** | Ticket Purchase | Ticket quantity limit | A customer can buy from 1 to 10 tickets in a single order. Orders outside this range are not allowed. |
+| **19** | Ticket Purchase | Avoid single-seat gaps | Customers should not be allowed to choose seats in a way that leaves one lonely empty seat between occupied seats. |
+| **20** | Customer Experience | Language support | Customer-facing messages should be clear and available in supported languages when requested. |
+
+---
+
+## Seat Layout Rules
+
+When a facilities manager creates or updates an auditorium, the seat map must look like a complete seating plan.
+
+In business terms:
+
+- The auditorium must have seats.
+- Seat rows and columns must be continuous.
+- There should not be missing seat positions inside the normal seating area.
+- Two seats cannot share the same position.
+- Two seats cannot have the same seat label, such as two seats both named `A1`.
+
+Why this matters:
+
+A complete and consistent seat map helps customers choose seats easily, helps staff manage auditoriums correctly, and prevents confusing booking situations.
+
+Example:
+
+If a room is designed as 10 seats per row, then a row should not skip from `A1` to `A3` while `A2` is missing. The seat map must be filled consistently.
+
+---
+
+## Ticket Booking Rules
+
+Customers can select and pay for a maximum of 10 tickets in one order.
+
+In business terms:
+
+- A customer must select at least one seat.
+- A customer cannot select more than 10 seats in one order.
+- The same seat cannot be selected twice.
+- Seats that are already paid for or temporarily held by another customer cannot be selected.
+
+Why this matters:
+
+This keeps checkout manageable, reduces misuse, and keeps seat availability fair for other customers.
+
+---
+
+## Avoiding Lonely Single Seats
+
+The booking system should reduce cases where one empty seat is left alone between occupied seats.
+
+In business terms:
+
+- Customers are encouraged to choose seats that keep useful pairs or groups available.
+- If a customer's selection would leave only one isolated empty seat in a row, the system should ask them to choose an adjacent seat or another row.
+
+Example:
+
+Suppose a row has seats `A1` to `A10`.
+
+- If several middle seats are already taken, the system may still allow a customer to buy a single seat at the edge.
+- But if choosing a seat would leave one empty seat trapped between occupied seats, the system should reject that selection.
+
+Why this matters:
+
+Single leftover seats are harder to sell, especially because many customers come in pairs or groups. This rule helps protect future sales and improves seat availability for later customers.
+
+---
+
+## Language And Message Rules
+
+The system should show clear, professional messages to users.
+
+In business terms:
+
+- Default messages should be in English.
+- If the frontend requests Vietnamese, messages should appear in proper Vietnamese with accents.
+- If the frontend requests Russian, messages should appear in proper Cyrillic Russian.
+- Error messages and success messages should follow the same language rule.
+
+Why this matters:
+
+Consistent language makes the product easier to use and avoids confusing mixed-language or broken-text messages.
