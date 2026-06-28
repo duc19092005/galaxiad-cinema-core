@@ -39,7 +39,10 @@ public class BookingBusinessRuleService : IBookingBusinessRuleService
     public async Task<bool> HasBookedBookingForCinemaAsync(Guid cinemaId)
     {
         return await _dbContext.Set<OrderDetailsInfo>()
-            .AnyAsync(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities.CinemaId == cinemaId
+            .AnyAsync(od => od.MovieScheduleInfoEntity != null 
+                            && od.MovieScheduleInfoEntity.AuditoriumInfoEntities != null 
+                            && od.MovieScheduleInfoEntity.AuditoriumInfoEntities.CinemaId == cinemaId
+                            && od.OrderInfoEntity != null
                             && od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked
                             && !od.MovieScheduleInfoEntity.IsDeleted);
     }

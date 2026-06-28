@@ -13,6 +13,7 @@ export interface ShiftTemplateDto {
   registeredCount?: number;
   roleId: string;
   roleName: string;
+  shiftType?: number;
 }
 
 export interface RegisterShiftRequest {
@@ -91,6 +92,7 @@ export interface StaffProfileDto {
   departmentName?: string | null;
   isCinemaManager: boolean;
   hasFaceRegistered: boolean;
+  employeeType?: number;
 }
 
 export interface CreateShiftTemplateRequest {
@@ -100,6 +102,7 @@ export interface CreateShiftTemplateRequest {
   endTime: string;
   maxStaff: number;
   roleId: string;
+  shiftType: number;
 }
 
 export interface AssignShiftRequest {
@@ -116,6 +119,7 @@ export interface UpdateStaffProfileRequest {
   workingStatus: boolean;
   cinemaId: string;
   isCinemaManager: boolean;
+  employeeType?: number;
 }
 
 export interface CalculatePayrollRequest {
@@ -153,6 +157,7 @@ export interface ShiftScheduleItemRequest {
   endTime: string;
   maxStaff: number;
   roleId: string;
+  shiftType: number;
 }
 
 export interface ShiftScheduleDto {
@@ -171,6 +176,7 @@ export interface ShiftScheduleDto {
   deletionStatus: string;
   deletionReason?: string | null;
   registeredStaff: ScheduleStaffRegistrationDto[];
+  shiftType: number;
 }
 
 export interface ScheduleStaffRegistrationDto {

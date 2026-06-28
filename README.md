@@ -34,6 +34,8 @@ galaxiad-cinema-core/
 - [Movie Search Algorithm](docs/algorithms/movie-search.md)
 - [Movie Recommendation Algorithm](docs/algorithms/movie-recommendation.md)
 - [Role-Aware Chatbot Plan](docs/algorithms/role-aware-chatbot.md)
+- [Redis Cache Strategy (Tiếng Việt)](docs/algorithms/redis-cache-strategy.md)
+- [Shift Scheduling Rules (Tiếng Việt)](docs/algorithms/shift-schedule-rules.md)
 - [Backend Controller Structure](apps/backend/Cinema.Api/Controllers/README.md)
 
 ## Backend Structure

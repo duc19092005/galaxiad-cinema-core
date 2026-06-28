@@ -25,6 +25,7 @@ public class CreateMovieScheduleUseCase
     private readonly IUserContextService _userContextService;
     private readonly IAuditLogService _auditLogService;
     private readonly IBackgroundJobScheduler _jobScheduler;
+    private readonly IMovieCacheService _cacheService;
 
     public CreateMovieScheduleUseCase(
         IMovieScheduleRepository repository,
@@ -32,7 +33,8 @@ public class CreateMovieScheduleUseCase
         IUserContextService userContextService,
         IAuditLogService auditLogService,
         IBackgroundJobScheduler jobScheduler,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
@@ -40,6 +42,7 @@ public class CreateMovieScheduleUseCase
         _userContextService = userContextService;
         _auditLogService = auditLogService;
         _jobScheduler = jobScheduler;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<string>> ExecuteAsync(TheaterManagerAddMovieSchedulesRequest request)
@@ -178,6 +181,15 @@ public class CreateMovieScheduleUseCase
                 cinemaId);
             await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            try
+            {
+                await _cacheService.ClearMovieCatalogCacheAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clear movie catalog cache on Redis");
+            }
 
             foreach (var slot in proposedSlots)
             {

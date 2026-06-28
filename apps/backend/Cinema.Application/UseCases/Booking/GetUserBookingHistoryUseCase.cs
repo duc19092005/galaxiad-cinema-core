@@ -1,8 +1,13 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Localization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -10,20 +15,30 @@ public class GetUserBookingHistoryUseCase
 {
     private readonly IUserBookingRepository _repo;
     private readonly IUserContextService _userContextService;
+    private readonly IMovieCacheService _cacheService;
 
     public GetUserBookingHistoryUseCase(
         IUserBookingRepository repo,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IMovieCacheService cacheService)
     {
         _repo = repo;
         _userContextService = userContextService;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<List<ResUserBookingHistoryDto>>> ExecuteAsync()
     {
         var userId = _userContextService.GetUserId();
-        var nowUtc = DateTime.UtcNow;
+        var cacheKey = $"user:bookings:{userId}";
 
+        var cached = await _cacheService.GetAsync<BaseResponse<List<ResUserBookingHistoryDto>>>(cacheKey);
+        if (cached != null)
+        {
+            return cached;
+        }
+
+        var nowUtc = DateTime.UtcNow;
         var orders = await _repo.GetUserBookingHistoryAsync(userId);
 
         var dtos = orders.Select(o => new ResUserBookingHistoryDto
@@ -45,11 +60,14 @@ public class GetUserBookingHistoryUseCase
             ).FirstOrDefault() ?? ""
         }).ToList();
 
-        return new BaseResponse<List<ResUserBookingHistoryDto>>
+        var response = new BaseResponse<List<ResUserBookingHistoryDto>>
         {
             IsSuccess = true,
             Data = dtos,
             Message = Messages.Booking.GetHistorySuccess
         };
+
+        await _cacheService.SetAsync(cacheKey, response, TimeSpan.FromMinutes(30));
+        return response;
     }
 }

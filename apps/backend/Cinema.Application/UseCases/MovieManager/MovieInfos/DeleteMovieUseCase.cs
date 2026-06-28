@@ -15,19 +15,22 @@ public class DeleteMovieUseCase
     private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
+    private readonly IMovieCacheService _cacheService;
 
     public DeleteMovieUseCase(
         IUserContextService userContextService,
         IAdminMovieManagementRepository adminRepository,
         IAuditLogService auditLogService,
         IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _userContextService = userContextService;
         _adminRepository = adminRepository;
         _auditLogService = auditLogService;
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<string>> ExecuteAsync(Guid itemId)
@@ -85,6 +88,16 @@ public class DeleteMovieUseCase
                 .FirstOrDefault());
 
         await _unitOfWork.SaveChangesAsync();
+
+        try
+        {
+            await _cacheService.ClearMovieCatalogCacheAsync();
+            await _cacheService.ClearMovieDetailCacheAsync(itemId);
+        }
+        catch
+        {
+        }
+
         await _aiMovieEmbeddingSyncService.DeleteMovieAsync(itemId);
 
         return new BaseResponse<string>()

@@ -26,9 +26,9 @@ public class VnpayService : IVnPayService
     {
         try
         {
-            string tmnCode = _configuration["VNPay:TmnCode"];
-            string secureHash = _configuration["VNPay:HashSecret"];
-            string returnUrl = _configuration["VNPay:ReturnUrl"];
+            string? tmnCode = _configuration["VNPay:TmnCode"];
+            string? secureHash = _configuration["VNPay:HashSecret"];
+            string? returnUrl = _configuration["VNPay:ReturnUrl"];
 
             if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(returnUrl) || string.IsNullOrEmpty(secureHash))
             {
@@ -98,7 +98,7 @@ public class VnpayService : IVnPayService
         if (!vnpParams.TryGetValue("vnp_SecureHash", out var secureHash))
             return false;
 
-        string secureHashSecret = _configuration["VNPay:HashSecret"];
+        string? secureHashSecret = _configuration["VNPay:HashSecret"];
         if (string.IsNullOrEmpty(secureHashSecret))
             return false;
 

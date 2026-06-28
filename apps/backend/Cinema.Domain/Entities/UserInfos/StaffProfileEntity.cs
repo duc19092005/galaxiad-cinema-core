@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.CinemaInfos;
+using Cinema.Domain.Enums;
 // ReSharper disable All
 
 namespace Cinema.Domain.Entities.UserInfos;
@@ -11,6 +12,9 @@ public class StaffProfileEntity
     public Guid UserId { get; set; }
 
     public bool WorkingStatus { get; set; } = true;
+
+    [Required]
+    public EmployeeWorkType EmployeeType { get; set; } = EmployeeWorkType.PartTime;
 
     [ForeignKey("CinemaInfoEntity")]
     public Guid CinemaId { get; set; }

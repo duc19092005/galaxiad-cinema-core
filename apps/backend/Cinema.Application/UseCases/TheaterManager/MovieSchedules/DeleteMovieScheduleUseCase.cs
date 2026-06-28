@@ -6,6 +6,7 @@ using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces.IThirdPersonServices;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 
@@ -15,17 +16,20 @@ public class DeleteMovieScheduleUseCase
     private readonly IMovieScheduleRepository _repository;
     private readonly IUserContextService _userContextService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IMovieCacheService _cacheService;
 
     public DeleteMovieScheduleUseCase(
         IMovieScheduleRepository repository,
         IUserContextService userContextService,
         IAuditLogService _auditLogService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
         this._auditLogService = _auditLogService;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<string>> ExecuteAsync(Guid itemId)
@@ -63,6 +67,14 @@ public class DeleteMovieScheduleUseCase
             $"Deleted schedule for movie {schedule.MovieInfoEntity!.MovieName}.",
             schedule.AuditoriumInfoEntities!.CinemaId);
         await _unitOfWork.SaveChangesAsync();
+
+        try
+        {
+            await _cacheService.ClearMovieCatalogCacheAsync();
+        }
+        catch
+        {
+        }
 
         return new BaseResponse<string>()
         {

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Enums;
 // ReSharper disable All
 
 namespace Cinema.Domain.Entities.CinemaInfos;
@@ -9,6 +10,9 @@ public class CinemaShiftTemplateEntity
 {
     [Key]
     public Guid ShiftTemplateId { get; set; }
+
+    [Required]
+    public ShiftType ShiftType { get; set; } = ShiftType.FullTime;
 
     [ForeignKey("CinemaInfoEntity")]
     public Guid CinemaId { get; set; }

@@ -39,7 +39,6 @@ import ManagementDashboard from '../../components/ManagementDashboard';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
-import { useCinema } from '../../contexts/CinemaContext';
 import { formatVietnamDate, toVietnamDateTimeLocalValue, vietnamDateTimeLocalToOffsetString } from '../../utils/dateTimeUtils';
 
 // =============================================

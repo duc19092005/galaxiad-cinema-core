@@ -24,6 +24,7 @@ public class CreateMovieUseCase
     private readonly IAuditLogService _auditLogService;
     private readonly IBackgroundJobScheduler _jobScheduler;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
+    private readonly IMovieCacheService _cacheService;
 
     public CreateMovieUseCase(
         IUserContextService userContextService, 
@@ -33,7 +34,8 @@ public class CreateMovieUseCase
         IImageStorageService imageStorageService, 
         IAuditLogService auditLogService,
         IBackgroundJobScheduler jobScheduler,
-        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
+        IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService,
+        IMovieCacheService cacheService)
     {
         _userContextService = userContextService;
         _logger = logger;
@@ -43,6 +45,7 @@ public class CreateMovieUseCase
         _auditLogService = auditLogService;
         _jobScheduler = jobScheduler;
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<string>> ExecuteAsync(ReqAddMovieManagerMovieDto request)
@@ -163,6 +166,15 @@ public class CreateMovieUseCase
             
             await _unitOfWork.SaveChangesAsync();
             await transactions.CommitAsync();
+
+            try
+            {
+                await _cacheService.ClearMovieCatalogCacheAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clear movie catalog cache on Redis");
+            }
 
             // Enqueue job registration to background AFTER transaction is committed
             _jobScheduler.Enqueue<IScheduleJobsService>(s => s.AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, newMovieId, request.StartedDate, request.EndedDate));

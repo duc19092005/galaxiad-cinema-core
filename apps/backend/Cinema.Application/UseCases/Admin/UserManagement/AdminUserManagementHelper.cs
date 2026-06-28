@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -13,6 +13,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -123,7 +124,8 @@ public static class AdminUserManagementHelper
         List<Guid> roleIds,
         Guid? cinemaId,
         Guid? departmentId,
-        string? encryptedFaceVector)
+        string? encryptedFaceVector,
+        EmployeeWorkType? employeeType = null)
     {
         var staffProfile = await adminUserRepository.FindStaffProfileAsync(userId);
         var targetCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
@@ -134,6 +136,10 @@ public static class AdminUserManagementHelper
             staffProfile.CinemaId = targetCinema.CinemaId;
             staffProfile.DepartmentId = departmentId;
             staffProfile.IsCinemaManager = roleIds.Contains(userRoles.TheaterManager);
+            if (employeeType.HasValue)
+            {
+                staffProfile.EmployeeType = employeeType.Value;
+            }
             if (!string.IsNullOrWhiteSpace(encryptedFaceVector))
             {
                 staffProfile.FaceVector = encryptedFaceVector;
@@ -149,7 +155,8 @@ public static class AdminUserManagementHelper
             CinemaId = targetCinema.CinemaId,
             DepartmentId = departmentId,
             IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
-            FaceVector = encryptedFaceVector
+            FaceVector = encryptedFaceVector,
+            EmployeeType = employeeType ?? EmployeeWorkType.PartTime
         });
     }
 
@@ -160,7 +167,8 @@ public static class AdminUserManagementHelper
         List<Guid> roleIds,
         Guid? cinemaId,
         Guid? departmentId,
-        string? encryptedFaceVector)
+        string? encryptedFaceVector,
+        EmployeeWorkType? employeeType = null)
     {
         await adminUserRepository.DeleteStaffRolesAsync(userId, StaffRoleIds);
 
@@ -172,7 +180,7 @@ public static class AdminUserManagementHelper
                 RoleId = roleId
             }).ToList();
             await unitOfWork.Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
-            await EnsureStaffProfileAsync(unitOfWork, adminUserRepository, userId, roleIds, cinemaId, departmentId, encryptedFaceVector);
+            await EnsureStaffProfileAsync(unitOfWork, adminUserRepository, userId, roleIds, cinemaId, departmentId, encryptedFaceVector, employeeType);
         }
         else
         {

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.Dtos.Shifts;
 
@@ -29,6 +30,7 @@ public class ResShiftTemplateDto
     public int RegisteredCount { get; set; }
     public Guid RoleId { get; set; }
     public string RoleName { get; set; } = string.Empty;
+    public ShiftType ShiftType { get; set; }
 }
 
 public class ResStaffShiftRegistrationDto
@@ -110,6 +112,9 @@ public class ReqCreateShiftTemplateDto
 
     [Required]
     public Guid RoleId { get; set; }
+
+    [Required]
+    public ShiftType ShiftType { get; set; }
 }
 
 public class ReqUpdateStaffProfileDto
@@ -117,6 +122,7 @@ public class ReqUpdateStaffProfileDto
     public bool WorkingStatus { get; set; }
     public Guid CinemaId { get; set; }
     public bool IsCinemaManager { get; set; }
+    public EmployeeWorkType? EmployeeType { get; set; }
 }
 
 public class ResStaffProfileDto
@@ -132,6 +138,7 @@ public class ResStaffProfileDto
     public string? DepartmentName { get; set; }
     public bool IsCinemaManager { get; set; }
     public bool HasFaceRegistered { get; set; }
+    public EmployeeWorkType EmployeeType { get; set; }
 }
 
 public class ReqCalculatePayrollDto
@@ -200,6 +207,9 @@ public class ReqShiftScheduleItemDto
 
     [Required]
     public Guid RoleId { get; set; }
+
+    [Required]
+    public ShiftType ShiftType { get; set; }
 }
 
 public class ResShiftScheduleDto
@@ -219,6 +229,7 @@ public class ResShiftScheduleDto
     public string DeletionStatus { get; set; } = string.Empty;
     public string? DeletionReason { get; set; }
     public List<ResScheduleStaffRegistrationDto> RegisteredStaff { get; set; } = [];
+    public ShiftType ShiftType { get; set; }
 }
 
 public class ResScheduleStaffRegistrationDto

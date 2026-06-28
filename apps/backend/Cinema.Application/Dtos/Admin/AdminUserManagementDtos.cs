@@ -29,6 +29,7 @@ public class AdminCreateUserRequestDto
     public Guid? CinemaId { get; set; }
     public Guid? DepartmentId { get; set; }
     public float[]? FaceVector { get; set; }
+    public EmployeeWorkType? EmployeeType { get; set; }
 }
 
 public class AdminCreateUserResponseDto

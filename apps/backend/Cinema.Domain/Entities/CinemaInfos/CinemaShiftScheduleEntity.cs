@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Domain.Entities.CinemaInfos;
 
@@ -10,6 +11,9 @@ public class CinemaShiftScheduleEntity
 {
     [Key]
     public Guid ShiftScheduleId { get; set; }
+
+    [Required]
+    public ShiftType ShiftType { get; set; } = ShiftType.FullTime;
 
     [ForeignKey("CinemaInfoEntity")]
     public Guid CinemaId { get; set; }

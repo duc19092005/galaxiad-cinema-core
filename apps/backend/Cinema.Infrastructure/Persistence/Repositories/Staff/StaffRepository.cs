@@ -34,10 +34,10 @@ public class StaffRepository : IStaffRepository
     {
         var dateOnly = date.Date;
         return await _dbContext.Set<StaffShiftRegistrationEntity>()
-            .Include(r => r.CinemaShiftTemplateEntity)
-                .ThenInclude(t => t.RoleListInfoEntity)
-            .Include(r => r.CinemaShiftScheduleEntity)
-                .ThenInclude(s => s.RoleListInfoEntity)
+            .Include(r => r.CinemaShiftTemplateEntity!)
+                .ThenInclude(t => t.RoleListInfoEntity!)
+            .Include(r => r.CinemaShiftScheduleEntity!)
+                .ThenInclude(s => s.RoleListInfoEntity!)
             .FirstOrDefaultAsync(r => r.StaffId == staffId 
                                      && r.RegistrationDate == dateOnly 
                                      && r.Status == "Approved");

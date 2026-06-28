@@ -75,14 +75,16 @@ public class StaffShiftRepository : IStaffShiftRepository
             .ToListAsync();
     }
 
-    public async Task RemoveRegistrationAsync(StaffShiftRegistrationEntity registration)
+    public Task RemoveRegistrationAsync(StaffShiftRegistrationEntity registration)
     {
         _dbContext.Set<StaffShiftRegistrationEntity>().Remove(registration);
+        return Task.CompletedTask;
     }
 
-    public async Task RemoveRegistrationsAsync(List<StaffShiftRegistrationEntity> registrations)
+    public Task RemoveRegistrationsAsync(List<StaffShiftRegistrationEntity> registrations)
     {
         _dbContext.Set<StaffShiftRegistrationEntity>().RemoveRange(registrations);
+        return Task.CompletedTask;
     }
 
     public async Task<List<StaffWorkingLoggerEntity>> GetMyWorkingHistoryAsync(Guid staffId)

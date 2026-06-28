@@ -109,7 +109,7 @@ public class CreateUserUseCase
                 UserName = dto.UserName
             });
 
-            await AdminUserManagementHelper.ReplaceStaffRolesAsync(_unitOfWork, _adminUserRepository, userId, normalizedRoleIds, staffCinemaId, dto.DepartmentId, encryptedFaceVector);
+            await AdminUserManagementHelper.ReplaceStaffRolesAsync(_unitOfWork, _adminUserRepository, userId, normalizedRoleIds, staffCinemaId, dto.DepartmentId, encryptedFaceVector, dto.EmployeeType);
 
             await _auditLogService.WriteAsync(
                 "Create",

@@ -18,10 +18,10 @@ public class SeatMapRepository : ISeatMapRepository
     public async Task<MovieScheduleInfoEntity?> GetScheduleForSeatMapAsync(Guid scheduleId)
     {
         return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Include(s => s.MovieInfoEntity)
-            .Include(s => s.MovieFormatInfoEntity)
-            .Include(s => s.AuditoriumInfoEntities)
-                .ThenInclude(a => a.SeatsInfoEntity)
+            .Include(s => s.MovieInfoEntity!)
+            .Include(s => s.MovieFormatInfoEntity!)
+            .Include(s => s.AuditoriumInfoEntities!)
+                .ThenInclude(a => a.SeatsInfoEntity!)
             .Where(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted)
             .AsNoTracking()
             .FirstOrDefaultAsync();
@@ -31,6 +31,7 @@ public class SeatMapRepository : ISeatMapRepository
     {
         return await _dbContext.Set<OrderDetailsInfo>()
             .Where(od => od.MovieScheduleId == scheduleId
+                         && od.OrderInfoEntity != null
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
             .Select(od => od.SeatId)

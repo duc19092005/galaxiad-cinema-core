@@ -64,6 +64,7 @@ public static class CommonServicesBootstrap
         });
 
         services.AddScoped<IRedisLockService, RedisLockService>();
+        services.AddScoped<IMovieCacheService, MovieCacheService>();
         services.AddSingleton<ISseNotificationService, SseNotificationService>();
         services.AddScoped<ICommentModerationService, DeepSeekModerationService>();
         services.AddScoped<IMovieCommentRepository, MovieCommentRepository>();

@@ -1,4 +1,4 @@
-﻿using Cinema.Application.Dtos;
+using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
@@ -6,6 +6,8 @@ using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Enums;
+using Cinema.Application.Exceptions;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -31,6 +33,31 @@ public class CreateShiftTemplateUseCase
         _logger = logger;
     }
 
+    private double GetDurationHours(TimeSpan startTime, TimeSpan endTime)
+    {
+        var duration = endTime - startTime;
+        if (duration.Ticks <= 0)
+        {
+            duration = duration.Add(TimeSpan.FromDays(1)); // crosses midnight
+        }
+        return duration.TotalHours;
+    }
+
+    private TimeSpan NormalizeTimeSpanToUtc(TimeSpan localTime)
+    {
+        var utcTime = localTime.Subtract(TimeSpan.FromHours(7));
+        if (utcTime.Ticks < 0)
+        {
+            utcTime = utcTime.Add(TimeSpan.FromDays(1));
+        }
+        return utcTime;
+    }
+
+    private bool IsValidTheaterHour(TimeSpan time)
+    {
+        return time >= TimeSpan.FromHours(6) || time <= TimeSpan.FromHours(2);
+    }
+
     public async Task<BaseResponse<CinemaShiftTemplateEntity>> ExecuteAsync(ReqCreateShiftTemplateDto dto)
     {
         var managerId = _userContextService.GetUserId();
@@ -44,20 +71,41 @@ public class CreateShiftTemplateUseCase
                 return new BaseResponse<CinemaShiftTemplateEntity>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ca trá»±c cho ráº¡p nÃ y."
+                    Message = "Báº¡n khÃ´ng cÃ³ quyá» n quáº£n lÃ½ ca trá»±c cho ráº¡p nÃ y."
                 };
             }
         }
+
+        // Validate theater operating hours (6:00 AM - 2:00 AM next day)
+        if (!IsValidTheaterHour(dto.StartTime) || !IsValidTheaterHour(dto.EndTime))
+        {
+            throw new AppException("Giờ làm việc của rạp chỉ hoạt động từ 6 giờ sáng (06:00) đến 2 giờ đêm (02:00).", 400, "SHIFT_ERR");
+        }
+
+        // Validate shift duration
+        var duration = GetDurationHours(dto.StartTime, dto.EndTime);
+        if (dto.ShiftType == ShiftType.FullTime && Math.Abs(duration - 8.0) > 0.001)
+        {
+            throw new AppException("Ca làm việc Full-time phải dài đúng 8 tiếng.", 400, "SHIFT_ERR");
+        }
+        if (dto.ShiftType == ShiftType.PartTime && Math.Abs(duration - 4.0) > 0.001)
+        {
+            throw new AppException("Ca làm việc Part-time phải dài đúng 4 tiếng.", 400, "SHIFT_ERR");
+        }
+
+        var utcStartTime = NormalizeTimeSpanToUtc(dto.StartTime);
+        var utcEndTime = NormalizeTimeSpanToUtc(dto.EndTime);
 
         var newTemplate = new CinemaShiftTemplateEntity
         {
             ShiftTemplateId = Guid.NewGuid(),
             CinemaId = dto.CinemaId,
             ShiftName = dto.ShiftName,
-            StartTime = dto.StartTime,
-            EndTime = dto.EndTime,
+            StartTime = utcStartTime,
+            EndTime = utcEndTime,
             MaxStaff = dto.MaxStaff,
             RoleId = dto.RoleId,
+            ShiftType = dto.ShiftType,
             IsActive = true
         };
 

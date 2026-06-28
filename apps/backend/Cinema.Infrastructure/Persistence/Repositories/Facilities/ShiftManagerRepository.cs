@@ -7,6 +7,8 @@ using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Utils;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Infrastructure.Repositories;
 
@@ -33,22 +35,37 @@ public class ShiftManagerRepository : IShiftManagerRepository
 
     public async Task<List<ResShiftTemplateDto>> GetShiftTemplatesAsync(Guid cinemaId)
     {
-        return await _dbContext.Set<CinemaShiftTemplateEntity>()
+        var templates = await _dbContext.Set<CinemaShiftTemplateEntity>()
             .Include(t => t.RoleListInfoEntity)
             .Where(t => t.CinemaId == cinemaId && t.IsActive)
-            .Select(t => new ResShiftTemplateDto
+            .ToListAsync();
+
+        return templates.Select(t => {
+            var dummyDate = DateTime.Today;
+            var utcStart = dummyDate + t.StartTime;
+            var utcEnd = dummyDate + t.EndTime;
+            if (t.EndTime <= t.StartTime)
+            {
+                utcEnd = utcEnd.AddDays(1);
+            }
+
+            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
+            var localEnd = DateTimeHelper.ToVietnamTime(utcEnd);
+
+            return new ResShiftTemplateDto
             {
                 ShiftTemplateId = t.ShiftTemplateId,
                 CinemaId = t.CinemaId,
                 CinemaName = t.CinemaInfoEntity != null ? t.CinemaInfoEntity.CinemaName : "",
                 ShiftName = t.ShiftName,
-                StartTime = t.StartTime,
-                EndTime = t.EndTime,
+                StartTime = localStart.TimeOfDay,
+                EndTime = localEnd.TimeOfDay,
                 MaxStaff = t.MaxStaff,
                 RoleId = t.RoleId,
-                RoleName = t.RoleListInfoEntity != null ? t.RoleListInfoEntity.RoleName : ""
-            })
-            .ToListAsync();
+                RoleName = t.RoleListInfoEntity != null ? t.RoleListInfoEntity.RoleName : "",
+                ShiftType = t.ShiftType
+            };
+        }).ToList();
     }
 
     public async Task<List<ResStaffShiftRegistrationDto>> GetShiftRegistrationsAsync(Guid cinemaId, string? status)
@@ -65,9 +82,37 @@ public class ShiftManagerRepository : IShiftManagerRepository
             query = query.Where(r => r.Status == status);
         }
 
-        return await query
+        var list = await query
             .OrderByDescending(r => r.RegistrationDate)
-            .Select(r => new ResStaffShiftRegistrationDto
+            .ToListAsync();
+
+        return list.Select(r => {
+            var date = r.RegistrationDate.Date;
+            TimeSpan startTime = default;
+            TimeSpan endTime = default;
+
+            if (r.CinemaShiftTemplateEntity != null)
+            {
+                startTime = r.CinemaShiftTemplateEntity.StartTime;
+                endTime = r.CinemaShiftTemplateEntity.EndTime;
+            }
+            else if (r.CinemaShiftScheduleEntity != null)
+            {
+                startTime = r.CinemaShiftScheduleEntity.StartTime;
+                endTime = r.CinemaShiftScheduleEntity.EndTime;
+            }
+
+            var utcStart = date + startTime;
+            var utcEnd = date + endTime;
+            if (endTime <= startTime)
+            {
+                utcEnd = utcEnd.AddDays(1);
+            }
+
+            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
+            var localEnd = DateTimeHelper.ToVietnamTime(utcEnd);
+
+            return new ResStaffShiftRegistrationDto
             {
                 ShiftRegistrationId = r.ShiftRegistrationId,
                 StaffId = r.StaffId,
@@ -75,14 +120,14 @@ public class ShiftManagerRepository : IShiftManagerRepository
                     ? r.StaffProfileEntity.UserInfoEntity.UserName : "",
                 ShiftTemplateId = r.ShiftTemplateId ?? Guid.Empty,
                 ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.ShiftName : ""),
-                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.StartTime : default),
-                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.EndTime : default),
-                RegistrationDate = r.RegistrationDate,
+                StartTime = localStart.TimeOfDay,
+                EndTime = localEnd.TimeOfDay,
+                RegistrationDate = localStart.Date,
                 Status = r.Status,
-                ApprovedAt = r.ApprovedAt,
+                ApprovedAt = r.ApprovedAt.HasValue ? DateTimeHelper.ToVietnamTime(r.ApprovedAt.Value) : null,
                 Notes = r.Notes
-            })
-            .ToListAsync();
+            };
+        }).ToList();
     }
 
     public async Task<StaffShiftRegistrationEntity?> GetRegistrationByIdWithTemplateAsync(Guid registrationId)
@@ -141,7 +186,8 @@ public class ShiftManagerRepository : IShiftManagerRepository
                 DepartmentId = s.DepartmentId,
                 DepartmentName = s.DepartmentEntity != null ? s.DepartmentEntity.DepartmentName : null,
                 IsCinemaManager = s.IsCinemaManager,
-                HasFaceRegistered = !string.IsNullOrEmpty(s.FaceVector)
+                HasFaceRegistered = !string.IsNullOrEmpty(s.FaceVector),
+                EmployeeType = s.EmployeeType
             })
             .ToListAsync();
     }
@@ -167,11 +213,16 @@ public class ShiftManagerRepository : IShiftManagerRepository
             .FirstOrDefaultAsync(s => s.UserId == userId && s.WorkingStatus);
     }
 
-    public async Task UpdateStaffProfileAsync(StaffProfileEntity staff, ReqUpdateStaffProfileDto dto)
+    public Task UpdateStaffProfileAsync(StaffProfileEntity staff, ReqUpdateStaffProfileDto dto)
     {
         staff.WorkingStatus = dto.WorkingStatus;
         staff.CinemaId = dto.CinemaId;
         staff.IsCinemaManager = dto.IsCinemaManager;
+        if (dto.EmployeeType.HasValue)
+        {
+            staff.EmployeeType = dto.EmployeeType.Value;
+        }
+        return Task.CompletedTask;
     }
 
     public async Task<List<ResPayrollDto>> GetStaffPayrollAsync(Guid staffId)

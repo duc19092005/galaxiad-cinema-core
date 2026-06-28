@@ -17,14 +17,14 @@ public class UserBookingRepository : IUserBookingRepository
     {
         return await _dbContext.Set<OrderInfoEntity>()
             .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.MovieScheduleInfoEntity)
-                    .ThenInclude(s => s.MovieInfoEntity)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.MovieInfoEntity!)
             .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.MovieScheduleInfoEntity)
-                    .ThenInclude(s => s.AuditoriumInfoEntities)
-                        .ThenInclude(a => a.CinemaInfoEntity)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.AuditoriumInfoEntities!)
+                        .ThenInclude(a => a.CinemaInfoEntity!)
             .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.SeatsInfoEntity)
+                .ThenInclude(d => d.SeatsInfoEntity!)
             .Where(o => o.UserId == userId)
             .OrderByDescending(o => o.OrderDate)
             .AsNoTracking()
@@ -34,8 +34,8 @@ public class UserBookingRepository : IUserBookingRepository
     public async Task<UserInfoEntity?> GetUserAccountInfoAsync(Guid userId)
     {
         return await _dbContext.Set<UserInfoEntity>()
-            .Include(u => u.CustomerProfileEntity)
-                .ThenInclude(cp => cp.UserSegmentsInfoEntity)
+            .Include(u => u.CustomerProfileEntity!)
+                .ThenInclude(cp => cp.UserSegmentsInfoEntity!)
             .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 }

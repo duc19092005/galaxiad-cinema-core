@@ -83,6 +83,13 @@ const StaffPortrait: React.FC<{ src?: string | null; name: string }> = ({ src, n
   </div>
 );
 
+const addHoursToTime = (timeStr: string, hours: number): string => {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const newH = (h + hours) % 24;
+  return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
 interface EmployeesShiftWorkspaceProps {
   cinemaId: string | null;
 }
@@ -137,22 +144,30 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
   const [newSchedEnd, setNewSchedEnd] = useState('16:00');
   const [newSchedMaxStaff, setNewSchedMaxStaff] = useState(2);
   const [newSchedRoleId, setNewSchedRoleId] = useState('');
+  const [newSchedShiftType, setNewSchedShiftType] = useState<1 | 2 | 3>(1);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatWeeksCount, setRepeatWeeksCount] = useState(4);
+
+  useEffect(() => {
+    if (newSchedShiftType === 1) {
+      setNewSchedEnd(addHoursToTime(newSchedStart, 8));
+    } else if (newSchedShiftType === 2) {
+      setNewSchedEnd(addHoursToTime(newSchedStart, 4));
+    }
+  }, [newSchedStart, newSchedShiftType]);
 
   const pendingRegistrations = registrations.filter((item) => item.status === 'Pending');
   const pendingPayrolls = payrolls.filter((item) => item.paymentStatus === 'Pending');
   const activeStaff = staff.filter((item) => item.workingStatus);
   const faceReadyCount = staff.filter((item) => item.hasFaceRegistered).length;
 
-  const defaultStaffId = useMemo(() => staff[0]?.userId || '', [staff]);
-  const defaultTemplateId = useMemo(() => templates[0]?.shiftTemplateId || '', [templates]);
+  // Removed unused defaultStaffId and defaultTemplateId
 
   const uniqueRoles = useMemo(() => {
     const map = new Map<string, string>();
     templates.forEach(t => {
-      const rid = t.roleId ?? t.RoleId;
-      const rname = t.roleName ?? t.RoleName;
+      const rid = t.roleId ?? (t as any).RoleId;
+      const rname = t.roleName ?? (t as any).RoleName;
       if (rid && rname) map.set(rid, rname);
     });
     const list = Array.from(map.entries()).map(([roleId, roleName]) => ({ roleId, roleName }));
@@ -220,14 +235,15 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         facilitiesApi.getDepartments(cinemaId),
       ]);
 
-      const rawStaff = staffRes.data ?? staffRes.Data ?? (Array.isArray(staffRes) ? staffRes : []);
-      const rawTemplates = templatesRes.data ?? templatesRes.Data ?? (Array.isArray(templatesRes) ? templatesRes : []);
-      const rawRegistrations = registrationsRes.data ?? registrationsRes.Data ?? (Array.isArray(registrationsRes) ? registrationsRes : []);
-      const rawPayrolls = payrollRes.data ?? payrollRes.Data ?? (Array.isArray(payrollRes) ? payrollRes : []);
-      const rawDepts = deptRes.data ?? deptRes.Data ?? (Array.isArray(deptRes) ? deptRes : []);
+      const rawStaff = staffRes.data ?? (staffRes as any).Data ?? (Array.isArray(staffRes) ? staffRes : []);
+      const rawTemplates = templatesRes.data ?? (templatesRes as any).Data ?? (Array.isArray(templatesRes) ? templatesRes : []);
+      const rawRegistrations = registrationsRes.data ?? (registrationsRes as any).Data ?? (Array.isArray(registrationsRes) ? registrationsRes : []);
+      const rawPayrolls = payrollRes.data ?? (payrollRes as any).Data ?? (Array.isArray(payrollRes) ? payrollRes : []);
+      const rawDepts = deptRes.data ?? (deptRes as any).Data ?? (Array.isArray(deptRes) ? deptRes : []);
 
-      // Normalize all properties to standard camelCase
+      // Normalize all properties and keep DTO shape using spread operator
       const normalizedStaff = rawStaff.map((s: any) => ({
+        ...s,
         userId: s.userId ?? s.UserId,
         username: s.username ?? s.Username,
         userName: s.userName ?? s.UserName,
@@ -241,6 +257,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       }));
 
       const normalizedTemplates = rawTemplates.map((t: any) => ({
+        ...t,
         shiftTemplateId: t.shiftTemplateId ?? t.ShiftTemplateId,
         shiftScheduleId: t.shiftScheduleId ?? t.ShiftScheduleId,
         cinemaId: t.cinemaId ?? t.CinemaId,
@@ -255,6 +272,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       }));
 
       const normalizedRegistrations = rawRegistrations.map((r: any) => ({
+        ...r,
         shiftRegistrationId: r.shiftRegistrationId ?? r.ShiftRegistrationId,
         staffId: r.staffId ?? r.StaffId,
         staffName: r.staffName ?? r.StaffName,
@@ -269,6 +287,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       }));
 
       const normalizedPayrolls = rawPayrolls.map((p: any) => ({
+        ...p,
         payrollId: p.payrollId ?? p.PayrollId,
         staffId: p.staffId ?? p.StaffId,
         staffName: p.staffName ?? p.StaffName,
@@ -282,6 +301,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       }));
 
       const normalizedDepts = rawDepts.map((d: any) => ({
+        ...d,
         departmentId: d.departmentId ?? d.DepartmentId,
         departmentName: d.departmentName ?? d.DepartmentName,
         cinemaId: d.cinemaId ?? d.CinemaId,
@@ -327,8 +347,9 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         `${scheduleStartDate}T00:00:00Z`,
         `${scheduleEndDate}T23:59:59Z`
       );
-      const rawScheds = res.data ?? res.Data ?? (Array.isArray(res) ? res : []);
+      const rawScheds = res.data ?? (res as any).Data ?? (Array.isArray(res) ? res : []);
       const normalizedScheds = rawScheds.map((s: any) => ({
+        ...s,
         shiftScheduleId: s.shiftScheduleId ?? s.ShiftScheduleId,
         shiftTemplateId: s.shiftTemplateId ?? s.ShiftTemplateId,
         cinemaId: s.cinemaId ?? s.CinemaId,
@@ -344,6 +365,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         deletionStatus: s.deletionStatus ?? s.DeletionStatus,
         deletionReason: s.deletionReason ?? s.DeletionReason,
         registeredStaff: (s.registeredStaff ?? s.RegisteredStaff ?? []).map((r: any) => ({
+          ...r,
           shiftRegistrationId: r.shiftRegistrationId ?? r.ShiftRegistrationId,
           staffId: r.staffId ?? r.StaffId,
           staffName: r.staffName ?? r.StaffName,
@@ -374,8 +396,8 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
   }, [departments, selectedDeptId]);
 
   useEffect(() => {
-    const firstStaffId = staff[0]?.userId ?? staff[0]?.UserId;
-    const firstTemplateId = templates[0]?.shiftTemplateId ?? templates[0]?.ShiftTemplateId;
+    const firstStaffId = staff[0]?.userId;
+    const firstTemplateId = templates[0]?.shiftTemplateId;
 
     if (!assignStaffId && firstStaffId) setAssignStaffId(firstStaffId);
     if (!payrollStaffId && firstStaffId) setPayrollStaffId(firstStaffId);
@@ -396,7 +418,14 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     if (target) {
       setNewSchedName(target.shiftName);
       setNewSchedStart(target.startTime.slice(0, 5));
-      setNewSchedEnd(target.endTime.slice(0, 5));
+      if (target.shiftType) {
+        setNewSchedShiftType(target.shiftType as 1 | 2 | 3);
+      }
+      if (target.shiftType === 3) {
+        setNewSchedEnd(target.endTime.slice(0, 5));
+      } else {
+        setNewSchedEnd(addHoursToTime(target.startTime.slice(0, 5), target.shiftType === 1 ? 8 : 4));
+      }
       setNewSchedMaxStaff(target.maxStaff);
       setNewSchedRoleId(target.roleId);
     }
@@ -521,6 +550,18 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       return;
     }
 
+    const isValidTheaterHour = (timeStr: string): boolean => {
+      if (!timeStr) return false;
+      const [h, m] = timeStr.split(':').map(Number);
+      const hourVal = h + m / 60;
+      return hourVal >= 6 || hourVal <= 2;
+    };
+
+    if (!isValidTheaterHour(newSchedStart) || !isValidTheaterHour(newSchedEnd)) {
+      showError('Giờ làm việc của rạp chỉ hoạt động từ 6 giờ sáng (06:00) đến 2 giờ đêm hôm sau (02:00).');
+      return;
+    }
+
     setActionLoading('create-schedule');
     try {
       await theaterShiftApi.createShiftSchedule({
@@ -534,6 +575,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             endTime: `${newSchedEnd}:00`,
             maxStaff: newSchedMaxStaff,
             roleId: newSchedRoleId,
+            shiftType: newSchedShiftType,
           }
         ],
         repeatWeekly,
@@ -1037,6 +1079,19 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div style={{ gridColumn: 'span 2' }}>
+                <Field label="Loại ca làm">
+                  <select 
+                    className="input select" 
+                    value={newSchedShiftType} 
+                    onChange={(e) => setNewSchedShiftType(Number(e.target.value) as 1 | 2 | 3)}
+                  >
+                    <option value={1}>Full-time (8 tiếng - Cố định)</option>
+                    <option value={2}>Part-time (4 tiếng - Cố định)</option>
+                    <option value={3}>Ca xoay (Linh hoạt)</option>
+                  </select>
+                </Field>
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
                 <Field label="Tên ca làm">
                   <input className="input" type="text" value={newSchedName} onChange={(e) => setNewSchedName(e.target.value)} placeholder="Ví dụ: Ca sáng full time" />
                 </Field>
@@ -1044,8 +1099,15 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
               <Field label="Giờ bắt đầu">
                 <input className="input" type="time" value={newSchedStart} onChange={(e) => setNewSchedStart(e.target.value)} />
               </Field>
-              <Field label="Giờ kết thúc">
-                <input className="input" type="time" value={newSchedEnd} onChange={(e) => setNewSchedEnd(e.target.value)} />
+              <Field label="Giờ kết thúc (Khóa nếu ca cố định)">
+                <input 
+                  className="input" 
+                  type="time" 
+                  value={newSchedEnd} 
+                  onChange={(e) => setNewSchedEnd(e.target.value)} 
+                  disabled={newSchedShiftType !== 3}
+                  style={newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
+                />
               </Field>
               <Field label="Số nhân viên tối đa">
                 <input className="input" type="number" min={1} value={newSchedMaxStaff} onChange={(e) => setNewSchedMaxStaff(Number(e.target.value))} />

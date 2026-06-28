@@ -29,6 +29,7 @@ public class CreateBookingUseCase
     private readonly IConfiguration _configuration;
     private readonly ILogger<CreateBookingUseCase> _logger;
     private readonly CalculatePricingPromotionUseCase _calculatePricingPromotionUseCase;
+    private readonly IMovieCacheService _cacheService;
 
     public CreateBookingUseCase(
         IBookingOrderRepository orderRepository,
@@ -38,7 +39,8 @@ public class CreateBookingUseCase
         IConfiguration configuration,
         ILogger<CreateBookingUseCase> logger,
         CalculatePricingPromotionUseCase calculatePricingPromotionUseCase,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _orderRepository = orderRepository;
@@ -48,6 +50,7 @@ public class CreateBookingUseCase
         _configuration = configuration;
         _logger = logger;
         _calculatePricingPromotionUseCase = calculatePricingPromotionUseCase;
+        _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
@@ -293,6 +296,18 @@ public class CreateBookingUseCase
             await _orderRepository.AddOrderDetailsRangeAsync(orderDetails);
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
+
+            if (orderUserId.HasValue)
+            {
+                try
+                {
+                    await _cacheService.ClearUserCacheAsync(orderUserId.Value);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to clear user cache on Redis");
+                }
+            }
 
             var paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);
 

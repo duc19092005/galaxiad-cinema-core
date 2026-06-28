@@ -7,6 +7,8 @@ using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Enums;
+using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -22,6 +24,37 @@ public class RegisterShiftUseCase
         _unitOfWork = unitOfWork;
         _repository = repository;
         _redisLockService = redisLockService;
+    }
+
+    private void ValidateRegistrationEligibility(EmployeeWorkType employeeType, ShiftType shiftType, TimeSpan startTime, TimeSpan endTime, string? notes)
+    {
+        var duration = (endTime - startTime).TotalHours;
+        if (duration <= 0)
+        {
+            duration += 24.0;
+        }
+
+        if (employeeType == EmployeeWorkType.PartTime)
+        {
+            if (shiftType == ShiftType.FullTime)
+            {
+                throw new AppException("Nhân viên Part-time chỉ được đăng ký ca làm Part-time hoặc ca xoay dưới 4 tiếng.", 400, "SHIFT_ERR");
+            }
+            if (shiftType == ShiftType.Rotating && duration > 4.0)
+            {
+                throw new AppException("Nhân viên Part-time không được đăng ký ca làm việc dài hơn 4 tiếng.", 400, "SHIFT_ERR");
+            }
+        }
+        else if (employeeType == EmployeeWorkType.FullTime)
+        {
+            if (shiftType == ShiftType.PartTime || (shiftType == ShiftType.Rotating && duration < 8.0))
+            {
+                if (string.IsNullOrWhiteSpace(notes))
+                {
+                    throw new AppException("Nhân viên Full-time đăng ký ca ngắn (dưới 8 tiếng) bắt buộc phải nhập lý do.", 400, "SHIFT_ERR");
+                }
+            }
+        }
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, ReqRegisterShiftDto dto)
@@ -46,6 +79,8 @@ public class RegisterShiftUseCase
             {
                 throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
             }
+
+            ValidateRegistrationEligibility(staffProfile.EmployeeType, schedule.ShiftType, schedule.StartTime, schedule.EndTime, dto.Notes);
 
             if (schedule.DepartmentId != staffProfile.DepartmentId)
             {
@@ -144,13 +179,15 @@ public class RegisterShiftUseCase
         }
         else if (dto.ShiftTemplateId.HasValue)
         {
-            // Old template registration logic
-            if (dto.StartDate.Date > dto.EndDate.Date)
+            var normalizedStartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate).Date;
+            var normalizedEndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate).Date;
+
+            if (normalizedStartDate > normalizedEndDate)
             {
                 throw new AppException(Messages.Staff.StartDateAfterEndDate, 400, "SHIFT_ERR");
             }
 
-            if (dto.StartDate.Date < DateTime.UtcNow.Date || dto.EndDate.Date < DateTime.UtcNow.Date)
+            if (normalizedStartDate < DateTime.UtcNow.Date || normalizedEndDate < DateTime.UtcNow.Date)
             {
                 throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
             }
@@ -167,10 +204,12 @@ public class RegisterShiftUseCase
                 throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
             }
 
+            ValidateRegistrationEligibility(staffProfile.EmployeeType, template.ShiftType, template.StartTime, template.EndTime, dto.Notes);
+
             var successDates = new List<string>();
             var failedDates = new List<string>();
 
-            for (var date = dto.StartDate.Date; date <= dto.EndDate.Date; date = date.AddDays(1))
+            for (var date = normalizedStartDate; date <= normalizedEndDate; date = date.AddDays(1))
             {
                 var registrationDateOnly = date;
                 var lockKey = $"lock:shift:{dto.ShiftTemplateId}:{registrationDateOnly:yyyyMMdd}";

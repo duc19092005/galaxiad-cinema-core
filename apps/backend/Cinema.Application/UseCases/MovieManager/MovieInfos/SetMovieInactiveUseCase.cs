@@ -1,4 +1,4 @@
-﻿using Cinema.Application.Interfaces.Admin;
+using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Interfaces.Persistence;
@@ -12,17 +12,20 @@ public class SetMovieInactiveUseCase
     private readonly IAdminMovieManagementRepository _adminRepository;
     private readonly ILogger<SetMovieInactiveUseCase> _logger;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
+    private readonly IMovieCacheService _cacheService;
 
     public SetMovieInactiveUseCase(
         IAdminMovieManagementRepository adminRepository,
         ILogger<SetMovieInactiveUseCase> logger,
         IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _adminRepository = adminRepository;
         _logger = logger;
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
+        _cacheService = cacheService;
     }
 
     public async Task ExecuteAsync(Guid movieId)
@@ -40,6 +43,17 @@ public class SetMovieInactiveUseCase
                 findMovie.IsActive = false;
                 _adminRepository.UpdateMovie(findMovie);
                 await _unitOfWork.SaveChangesAsync();
+
+                try
+                {
+                    await _cacheService.ClearMovieCatalogCacheAsync();
+                    await _cacheService.ClearMovieDetailCacheAsync(movieId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to clear movie cache on Redis");
+                }
+
                 await _aiMovieEmbeddingSyncService.DeleteMovieAsync(movieId);
             }
             catch (Exception e)

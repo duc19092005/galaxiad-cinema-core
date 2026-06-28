@@ -9,6 +9,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Dtos;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Infrastructure.Repositories;
 
@@ -73,7 +74,7 @@ public class AdminUserRepository : IAdminUserRepository
     {
         return await _dbContext.Set<RoleListInfoEntity>()
             .AsNoTracking()
-            .Where(x => staffRoleIds.Contains(x.RoleId))
+            .Where(x => x.RoleType == RoleCategory.Staff || x.RoleType == RoleCategory.Manager)
             .Select(x => new ResponseRolesDto
             {
                 RoleId = x.RoleId,

@@ -1,4 +1,4 @@
-﻿using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.Booking;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
@@ -14,17 +14,20 @@ public class ProcessVnPayCallbackUseCase
     private readonly IPaymentCallbackRepository _repo;
     private readonly IVnPayService _vnPayService;
     private readonly ILogger<ProcessVnPayCallbackUseCase> _logger;
+    private readonly IMovieCacheService _cacheService;
 
     public ProcessVnPayCallbackUseCase(
         IPaymentCallbackRepository repo,
         IVnPayService vnPayService,
         ILogger<ProcessVnPayCallbackUseCase> logger,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _repo = repo;
         _vnPayService = vnPayService;
         _logger = logger;
+        _cacheService = cacheService;
     }
 
     public async Task<(bool success, Guid orderId)> ExecuteAsync(IDictionary<string, string> vnpParams)
@@ -117,6 +120,18 @@ public class ProcessVnPayCallbackUseCase
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        if (order.UserId.HasValue)
+        {
+            try
+            {
+                await _cacheService.ClearUserCacheAsync(order.UserId.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to clear user cache on Redis");
+            }
+        }
 
         return (isSuccess, orderId);
     }

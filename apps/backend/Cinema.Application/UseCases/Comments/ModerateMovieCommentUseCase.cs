@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Application.Interfaces.Comments;
@@ -15,17 +15,20 @@ public class ModerateMovieCommentUseCase
     private readonly IMovieCommentRepository _commentRepository;
     private readonly ICommentModerationService _moderationService;
     private readonly ISseNotificationService _sseNotificationService;
+    private readonly IMovieCacheService _cacheService;
 
     public ModerateMovieCommentUseCase(
         IUnitOfWork unitOfWork,
         IMovieCommentRepository commentRepository,
         ICommentModerationService moderationService,
-        ISseNotificationService sseNotificationService)
+        ISseNotificationService sseNotificationService,
+        IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _commentRepository = commentRepository;
         _moderationService = moderationService;
         _sseNotificationService = sseNotificationService;
+        _cacheService = cacheService;
     }
 
 
@@ -77,6 +80,14 @@ public class ModerateMovieCommentUseCase
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        try
+        {
+            await _cacheService.ClearMovieDetailCacheAsync(comment.MovieId);
+        }
+        catch
+        {
+        }
 
         if (notifyParent)
         {
