@@ -10,7 +10,6 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 
-
 namespace Cinema.Application.UseCases.Chatbot;
 
 public class ChatbotOrchestrator
@@ -48,11 +47,11 @@ public class ChatbotOrchestrator
 
         try
         {
-            // 1. PhÃ¢n loáº¡i Ã½ Ä‘á»‹nh (Intent Classification)
+            // 1. Phân loại ý định (Intent Classification)
             var classification = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
             var intent = classification.Intent;
 
-            // 2. Kiá»ƒm tra quyá»n truy cáº­p (Policy Enforcement)
+            // 2. Kiểm tra quyền truy cập (Policy Enforcement)
             var isAuthorized = await _policyService.IsAuthorizedAsync(intent);
             if (!isAuthorized)
             {
@@ -68,7 +67,7 @@ public class ChatbotOrchestrator
                 };
             }
 
-            // 3. Thá»±c thi Tool náº¿u cÃ³ Ä‘á»ƒ láº¥y Context
+            // 3. Thực thi Tool nếu có để lấy Context
             string toolContext = string.Empty;
             var tool = _toolRegistry.GetTool(intent);
             if (tool != null)
@@ -83,8 +82,8 @@ public class ChatbotOrchestrator
                 }
             }
 
-            // 4. Láº¥y thÃ´ng tin ngá»¯ cáº£nh ngÆ°á»i dÃ¹ng hiá»‡n táº¡i
-            string userRoles = "Guest (ChÆ°a Ä‘Äƒng nháº­p)";
+            // 4. Lấy thông tin ngữ cảnh người dùng hiện tại
+            string userRoles = "Guest (Chưa đăng nhập)";
             string userId = "N/A";
             try
             {
@@ -107,26 +106,26 @@ public class ChatbotOrchestrator
                 // Guest user
             }
 
-            // 5. XÃ¢y dá»±ng Prompt vÃ  sinh cÃ¢u tráº£ lá»i báº±ng LLM
+            // 5. Xây dựng Prompt và sinh câu trả lời bằng LLM
             var systemPrompt = $$"""
-Báº¡n lÃ  CinemaPro AI, trá»£ lÃ½ áº£o thÃ´ng minh cá»§a há»‡ thá»‘ng ráº¡p chiáº¿u phim Galaxiad Cinema.
-Nhiá»‡m vá»¥ cá»§a báº¡n lÃ  tráº£ lá»i cÃ¡c cÃ¢u há»i cá»§a khÃ¡ch hÃ ng hoáº·c nhÃ¢n viÃªn má»™t cÃ¡ch lá»‹ch sá»±, há»¯u Ã­ch vÃ  chÃ­nh xÃ¡c báº±ng tiáº¿ng Viá»‡t.
+Bạn là CinemaPro AI, trợ lý ảo thông minh của hệ thống rạp chiếu phim Galaxiad Cinema.
+Nhiệm vụ của bạn là trả lời các câu hỏi của khách hàng hoặc nhân viên một cách lịch sự, hữu ích và chính xác bằng tiếng Việt.
 
-Há»† THá»NG ÄÃƒ TRÃCH XUáº¤T THÃ”NG TIN PHÃ™ Há»¢P Cá»¦A Há»† THá»NG Äá»‚ CUNG Cáº¤P CHO Báº N (Xem pháº§n [Context] bÃªn dÆ°á»›i).
-Báº N CHá»ˆ ÄÆ¯á»¢C PHÃ‰P TRáº¢ Lá»œI Dá»°A TRÃŠN THÃ”NG TIN TRONG PHáº¦N [Context]. KhÃ´ng tá»± Ã½ bá»‹a Ä‘áº·t hoáº·c giáº£ Ä‘á»‹nh thÃ´ng tin khÃ´ng cÃ³.
-Náº¿u thÃ´ng tin trong [Context] trá»‘ng, khÃ´ng Ä‘á»§ Ä‘á»ƒ tráº£ lá»i hoáº·c khÃ´ng chá»©a cÃ¢u tráº£ lá»i, hÃ£y lá»‹ch sá»± thÃ´ng bÃ¡o cho ngÆ°á»i dÃ¹ng ráº±ng báº¡n khÃ´ng tÃ¬m tháº¥y dá»¯ liá»‡u phÃ¹ há»£p liÃªn quan Ä‘áº¿n cÃ¢u há»i cá»§a há», hoáº·c hÆ°á»›ng dáº«n há» Ä‘áº·t cÃ¢u há»i rÃµ rÃ ng hÆ¡n.
+HỆ THỐNG ĐÃ TRÍCH XUẤT THÔNG TIN PHÙ HỢP CỦA HỆ THỐNG ĐỂ CUNG CẤP CHO BẠN (Xem phần [Context] bên dưới).
+BẠN CHỈ ĐƯỢC PHÉP TRẢ LỜI DỰA TRÊN THÔNG TIN TRONG PHẦN [Context]. Không tự ý bịa đặt hoặc giả định thông tin không có.
+Nếu thông tin trong [Context] trống, không đủ để trả lời hoặc không chứa câu trả lời, hãy lịch sự thông báo cho người dùng rằng bạn không tìm thấy dữ liệu phù hợp liên quan đến câu hỏi của họ, hoặc hướng dẫn họ đặt câu hỏi rõ ràng hơn.
 
-Quy Ä‘á»‹nh an toÃ n:
-1. Tuyá»‡t Ä‘á»‘i khÃ´ng tiáº¿t lá»™ thÃ´ng tin cÃ¡ nhÃ¢n cá»§a ngÆ°á»i dÃ¹ng khÃ¡c.
-2. KhÃ´ng tiáº¿t lá»™ máº­t kháº©u, token báº£o máº­t, hoáº·c thÃ´ng tin thanh toÃ¡n.
-3. KhÃ´ng tráº£ lá»i cÃ¡c cÃ¢u há»i ngoÃ i pháº¡m vi cá»§a há»‡ thá»‘ng ráº¡p chiáº¿u phim Galaxiad Cinema.
+Quy định an toàn:
+1. Tuyệt đối không tiết lộ thông tin cá nhân của người dùng khác.
+2. Không tiết lộ mật khẩu, token bảo mật, hoặc thông tin thanh toán.
+3. Không trả lời các câu hỏi ngoài phạm vi của hệ thống rạp chiếu phim Galaxiad Cinema.
 
-ThÃ´ng tin Ä‘á»‹nh danh ngÆ°á»i dÃ¹ng gá»­i cÃ¢u há»i:
-- Vai trÃ²: {{userRoles}}
-- Id tÃ i khoáº£n: {{userId}}
+Thông tin định danh người dùng gửi câu hỏi:
+- Vai trò: {{userRoles}}
+- Id tài khoản: {{userId}}
 
 [Context]:
-{{(string.IsNullOrWhiteSpace(toolContext) ? "KhÃ´ng cÃ³ dá»¯ liá»‡u ngá»¯ cáº£nh há»— trá»£." : toolContext)}}
+{{(string.IsNullOrWhiteSpace(toolContext) ? "Không có dữ liệu ngữ cảnh hỗ trợ." : toolContext)}}
 """;
 
             var assistantResponse = await _llmClient.SendPromptAsync(systemPrompt, requestDto.Message);
@@ -284,4 +283,3 @@ ThÃ´ng tin Ä‘á»‹nh danh ngÆ°á»i dÃ¹ng gá»­i cÃ¢u há»i:
         return result;
     }
 }
-
