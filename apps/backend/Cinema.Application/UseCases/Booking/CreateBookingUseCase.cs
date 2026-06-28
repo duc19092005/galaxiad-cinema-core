@@ -133,6 +133,18 @@ public class CreateBookingUseCase
                 throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
             }
 
+            var auditoriumSeats = await _orderRepository.GetAuditoriumSeatsAsync(schedule.AuditoriumId);
+            var occupiedSeatIds = await _orderRepository.GetOccupiedSeatIdsAsync(request.ScheduleId);
+            var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(
+                auditoriumSeats,
+                seatIds,
+                occupiedSeatIds);
+
+            if (seatSelectionErrors.Count > 0)
+            {
+                throw new BadRequestException(seatSelectionErrors, "BK10");
+            }
+
             // Calculate price per seat based on segment surcharge
             var basePrice = schedule.MovieFormatInfoEntity?.MovieFormatPrice ?? 0;
             var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
@@ -209,18 +221,18 @@ public class CreateBookingUseCase
             {
                 if (!orderUserId.HasValue)
                 {
-                    throw new BadRequestException("Guests cannot apply vouchers.", "BK07");
+                    throw new BadRequestException(Messages.Voucher.GuestsCannotApply, "BK07");
                 }
 
                 var userVoucher = await _orderRepository.GetUserVoucherAsync(request.VoucherId.Value, orderUserId.Value);
                 if (userVoucher == null)
                 {
-                    throw new BadRequestException("Voucher is invalid or has already been used.", "BK08");
+                    throw new BadRequestException(Messages.Voucher.InvalidOrUsed, "BK08");
                 }
 
                 if (!userVoucher.VoucherInfoEntity.IsValid(null))
                 {
-                    throw new BadRequestException("Voucher has expired or is not active yet.", "BK09");
+                    throw new BadRequestException(Messages.Voucher.ExpiredOrInactive, "BK09");
                 }
 
                 voucherDiscountPercent = userVoucher.VoucherInfoEntity.voucherDiscountPercent;
@@ -256,7 +268,7 @@ public class CreateBookingUseCase
             {
                 if (string.IsNullOrEmpty(request.CustomerName) || string.IsNullOrEmpty(request.CustomerEmail))
                 {
-                    throw new BadRequestException("Guest booking requires Customer Name and Email.", "BK05");
+                    throw new BadRequestException(Messages.Validation.GuestBookingRequiresInfo, "BK05");
                 }
                 finalCustomerName = request.CustomerName;
                 finalCustomerEmail = request.CustomerEmail;

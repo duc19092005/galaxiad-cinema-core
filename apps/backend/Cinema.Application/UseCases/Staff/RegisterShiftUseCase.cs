@@ -1,13 +1,12 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
-using Cinema.Domain.Entities.CinemaInfos;
-using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces.Staff;
-using Cinema.Application.Exceptions;
+using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
-using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Staff;
@@ -18,7 +17,9 @@ public class RegisterShiftUseCase
     private readonly IStaffRepository _repository;
     private readonly IRedisLockService _redisLockService;
 
-    public RegisterShiftUseCase(IStaffRepository repository, IRedisLockService redisLockService,
+    public RegisterShiftUseCase(
+        IStaffRepository repository,
+        IRedisLockService redisLockService,
         IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -26,7 +27,12 @@ public class RegisterShiftUseCase
         _redisLockService = redisLockService;
     }
 
-    private void ValidateRegistrationEligibility(EmployeeWorkType employeeType, ShiftType shiftType, TimeSpan startTime, TimeSpan endTime, string? notes)
+    private static void ValidateRegistrationEligibility(
+        EmployeeWorkType employeeType,
+        ShiftType shiftType,
+        TimeSpan startTime,
+        TimeSpan endTime,
+        string? notes)
     {
         var duration = (endTime - startTime).TotalHours;
         if (duration <= 0)
@@ -38,21 +44,20 @@ public class RegisterShiftUseCase
         {
             if (shiftType == ShiftType.FullTime)
             {
-                throw new AppException("Nhân viên Part-time chỉ được đăng ký ca làm Part-time hoặc ca xoay dưới 4 tiếng.", 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.PartTimeCanOnlyRegisterShortShifts, 400, "SHIFT_ERR");
             }
+
             if (shiftType == ShiftType.Rotating && duration > 4.0)
             {
-                throw new AppException("Nhân viên Part-time không được đăng ký ca làm việc dài hơn 4 tiếng.", 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.PartTimeCannotRegisterLongShift, 400, "SHIFT_ERR");
             }
         }
         else if (employeeType == EmployeeWorkType.FullTime)
         {
-            if (shiftType == ShiftType.PartTime || (shiftType == ShiftType.Rotating && duration < 8.0))
+            if ((shiftType == ShiftType.PartTime || (shiftType == ShiftType.Rotating && duration < 8.0)) &&
+                string.IsNullOrWhiteSpace(notes))
             {
-                if (string.IsNullOrWhiteSpace(notes))
-                {
-                    throw new AppException("Nhân viên Full-time đăng ký ca ngắn (dưới 8 tiếng) bắt buộc phải nhập lý do.", 400, "SHIFT_ERR");
-                }
+                throw new AppException(Messages.Staff.FullTimeShortShiftReasonRequired, 400, "SHIFT_ERR");
             }
         }
     }
@@ -60,102 +65,171 @@ public class RegisterShiftUseCase
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid staffId, ReqRegisterShiftDto dto)
     {
         var staffProfile = await _repository.GetActiveStaffProfileAsync(staffId);
-
         if (staffProfile == null || staffProfile.CinemaId == Guid.Empty)
         {
             throw new AppException(Messages.Staff.AccountNotLinkedToCinema, 400, "SHIFT_ERR");
         }
 
-        // Check if we are registering for a schedule or a template
         if (dto.ShiftScheduleId.HasValue)
         {
-            var schedule = await _repository.GetShiftScheduleByIdAsync(dto.ShiftScheduleId.Value);
-            if (schedule == null || !schedule.IsActive || schedule.DeletionStatus != "Active")
+            return await RegisterForScheduleAsync(staffId, dto, staffProfile);
+        }
+
+        if (dto.ShiftTemplateId.HasValue)
+        {
+            return await RegisterForTemplateAsync(staffId, dto, staffProfile);
+        }
+
+        throw new AppException(Messages.Staff.SelectShiftToRegister, 400, "SHIFT_ERR");
+    }
+
+    private async Task<BaseResponse<bool>> RegisterForScheduleAsync(
+        Guid staffId,
+        ReqRegisterShiftDto dto,
+        StaffProfileEntity staffProfile)
+    {
+        var schedule = await _repository.GetShiftScheduleByIdAsync(dto.ShiftScheduleId!.Value);
+        if (schedule == null || !schedule.IsActive || schedule.DeletionStatus != "Active")
+        {
+            throw new AppException(Messages.Staff.WorkScheduleNotFound, 400, "SHIFT_ERR");
+        }
+
+        if (schedule.CinemaId != staffProfile.CinemaId)
+        {
+            throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
+        }
+
+        ValidateRegistrationEligibility(staffProfile.EmployeeType, schedule.ShiftType, schedule.StartTime, schedule.EndTime, dto.Notes);
+
+        if (schedule.DepartmentId != staffProfile.DepartmentId)
+        {
+            throw new AppException(Messages.Staff.StaffCanOnlyRegisterOwnDepartment, 400, "SHIFT_ERR");
+        }
+
+        if (schedule.Date.Date < DateTime.UtcNow.Date)
+        {
+            throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
+        }
+
+        var lockKey = $"lock:shift-schedule:{schedule.ShiftScheduleId}";
+        var lockValue = Guid.NewGuid().ToString("N");
+        var isLocked = await _redisLockService.AcquireLockAsync(lockKey, lockValue, TimeSpan.FromSeconds(5));
+        if (!isLocked)
+        {
+            throw new AppException(Messages.Staff.SystemBusyRegisterShift, 400, "SHIFT_ERR");
+        }
+
+        try
+        {
+            if (await HasOverlappingRegistrationAsync(staffId, schedule.Date, schedule.StartTime, schedule.EndTime))
             {
-                throw new AppException("Lịch làm việc này không tồn tại hoặc đã bị hủy.", 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.ShiftOverlapsExistingRegistration, 400, "SHIFT_ERR");
             }
 
-            if (schedule.CinemaId != staffProfile.CinemaId)
+            var registeredCount = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(schedule.ShiftScheduleId);
+            if (registeredCount >= schedule.MaxStaff)
             {
-                throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
+                throw new AppException(Messages.Staff.ShiftFull, 400, "SHIFT_ERR");
             }
 
-            ValidateRegistrationEligibility(staffProfile.EmployeeType, schedule.ShiftType, schedule.StartTime, schedule.EndTime, dto.Notes);
-
-            if (schedule.DepartmentId != staffProfile.DepartmentId)
+            var newRegistration = new StaffShiftRegistrationEntity
             {
-                throw new AppException("Bạn chỉ được đăng ký ca làm việc thuộc phòng ban của mình.", 400, "SHIFT_ERR");
-            }
+                ShiftRegistrationId = Guid.NewGuid(),
+                StaffId = staffId,
+                ShiftTemplateId = null,
+                ShiftScheduleId = schedule.ShiftScheduleId,
+                RegistrationDate = schedule.Date,
+                Status = "Pending",
+                ApprovedByUserId = null,
+                ApprovedAt = null,
+                Notes = dto.Notes
+            };
 
-            if (schedule.Date.Date < DateTime.UtcNow.Date)
+            await _repository.AddShiftRegistrationAsync(newRegistration);
+            await _unitOfWork.SaveChangesAsync();
+
+            return new BaseResponse<bool>
             {
-                throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
-            }
+                IsSuccess = true,
+                Data = true,
+                Message = string.Format(Messages.Staff.RegisterShiftSuccess, 1)
+            };
+        }
+        finally
+        {
+            await _redisLockService.ReleaseLockAsync(lockKey, lockValue);
+        }
+    }
 
-            var lockKey = $"lock:shift-schedule:{schedule.ShiftScheduleId}";
+    private async Task<BaseResponse<bool>> RegisterForTemplateAsync(
+        Guid staffId,
+        ReqRegisterShiftDto dto,
+        StaffProfileEntity staffProfile)
+    {
+        var normalizedStartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate).Date;
+        var normalizedEndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate).Date;
+
+        if (normalizedStartDate > normalizedEndDate)
+        {
+            throw new AppException(Messages.Staff.StartDateAfterEndDate, 400, "SHIFT_ERR");
+        }
+
+        if (normalizedStartDate < DateTime.UtcNow.Date || normalizedEndDate < DateTime.UtcNow.Date)
+        {
+            throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
+        }
+
+        var template = await _repository.GetShiftTemplateByIdAsync(dto.ShiftTemplateId!.Value);
+        if (template == null)
+        {
+            throw new AppException(Messages.Staff.ShiftTemplateNotFound, 400, "SHIFT_ERR");
+        }
+
+        if (template.CinemaId != staffProfile.CinemaId)
+        {
+            throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
+        }
+
+        ValidateRegistrationEligibility(staffProfile.EmployeeType, template.ShiftType, template.StartTime, template.EndTime, dto.Notes);
+
+        var successDates = new List<string>();
+        var failedDates = new List<string>();
+
+        for (var date = normalizedStartDate; date <= normalizedEndDate; date = date.AddDays(1))
+        {
+            var registrationDateOnly = date;
+            var lockKey = $"lock:shift:{dto.ShiftTemplateId}:{registrationDateOnly:yyyyMMdd}";
             var lockValue = Guid.NewGuid().ToString("N");
 
             var isLocked = await _redisLockService.AcquireLockAsync(lockKey, lockValue, TimeSpan.FromSeconds(5));
             if (!isLocked)
             {
-                throw new AppException("Hệ thống hiện tại đang bận, vui lòng đăng ký lại.", 400, "SHIFT_ERR");
+                failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (system busy)");
+                continue;
             }
 
             try
             {
-                // Check overlaps
-                var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, schedule.Date);
-                bool isOverlapping = false;
-                var newStart = schedule.StartTime.TotalMinutes;
-                var newEnd = schedule.EndTime <= schedule.StartTime ? schedule.EndTime.TotalMinutes + 1440 : schedule.EndTime.TotalMinutes;
-
-                foreach (var reg in existingRegistrations)
+                if (await HasOverlappingRegistrationAsync(staffId, registrationDateOnly, template.StartTime, template.EndTime))
                 {
-                    TimeSpan extStartSpan;
-                    TimeSpan extEndSpan;
-
-                    if (reg.CinemaShiftScheduleEntity != null)
-                    {
-                        extStartSpan = reg.CinemaShiftScheduleEntity.StartTime;
-                        extEndSpan = reg.CinemaShiftScheduleEntity.EndTime;
-                    }
-                    else if (reg.CinemaShiftTemplateEntity != null)
-                    {
-                        extStartSpan = reg.CinemaShiftTemplateEntity.StartTime;
-                        extEndSpan = reg.CinemaShiftTemplateEntity.EndTime;
-                    }
-                    else continue;
-
-                    var extStart = extStartSpan.TotalMinutes;
-                    var extEnd = extEndSpan <= extStartSpan ? extEndSpan.TotalMinutes + 1440 : extEndSpan.TotalMinutes;
-
-                    if (newStart < extEnd && extStart < newEnd)
-                    {
-                        isOverlapping = true;
-                        break;
-                    }
+                    failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (overlapping shift)");
+                    continue;
                 }
 
-                if (isOverlapping)
+                var registeredCount = await _repository.CountApprovedOrPendingRegistrationsAsync(dto.ShiftTemplateId.Value, registrationDateOnly);
+                if (registeredCount >= template.MaxStaff)
                 {
-                    throw new AppException("Ca làm này trùng khung giờ với ca làm khác mà bạn đã đăng ký.", 400, "SHIFT_ERR");
+                    failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (shift full)");
+                    continue;
                 }
 
-                // Check slot limits
-                var registeredCount = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(schedule.ShiftScheduleId);
-                if (registeredCount >= schedule.MaxStaff)
-                {
-                    throw new AppException("Ca làm việc này đã đầy nhân viên.", 400, "SHIFT_ERR");
-                }
-
-                // Create registration
                 var newRegistration = new StaffShiftRegistrationEntity
                 {
                     ShiftRegistrationId = Guid.NewGuid(),
                     StaffId = staffId,
-                    ShiftTemplateId = null,
-                    ShiftScheduleId = schedule.ShiftScheduleId,
-                    RegistrationDate = schedule.Date,
+                    ShiftTemplateId = dto.ShiftTemplateId,
+                    ShiftScheduleId = null,
+                    RegistrationDate = registrationDateOnly,
                     Status = "Pending",
                     ApprovedByUserId = null,
                     ApprovedAt = null,
@@ -163,165 +237,77 @@ public class RegisterShiftUseCase
                 };
 
                 await _repository.AddShiftRegistrationAsync(newRegistration);
-                await _unitOfWork.SaveChangesAsync();
-
-                return new BaseResponse<bool>
-                {
-                    IsSuccess = true,
-                    Data = true,
-                    Message = "Đăng ký ca làm việc thành công, đang chờ quản lý duyệt."
-                };
+                successDates.Add(registrationDateOnly.ToString("dd/MM/yyyy"));
             }
             finally
             {
                 await _redisLockService.ReleaseLockAsync(lockKey, lockValue);
             }
         }
-        else if (dto.ShiftTemplateId.HasValue)
+
+        if (successDates.Count > 0)
         {
-            var normalizedStartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate).Date;
-            var normalizedEndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate).Date;
+            await _unitOfWork.SaveChangesAsync();
+        }
 
-            if (normalizedStartDate > normalizedEndDate)
+        if (failedDates.Count == 0)
+        {
+            return new BaseResponse<bool>
             {
-                throw new AppException(Messages.Staff.StartDateAfterEndDate, 400, "SHIFT_ERR");
+                IsSuccess = true,
+                Data = true,
+                Message = string.Format(Messages.Staff.RegisterShiftSuccess, successDates.Count)
+            };
+        }
+
+        if (successDates.Count == 0)
+        {
+            throw new AppException(string.Format(Messages.Staff.RegisterShiftAllFailed, string.Join(", ", failedDates)), 400, "SHIFT_ERR");
+        }
+
+        return new BaseResponse<bool>
+        {
+            IsSuccess = true,
+            Data = true,
+            Message = string.Format(Messages.Staff.RegisterShiftPartialSuccess, string.Join(", ", successDates), string.Join(", ", failedDates))
+        };
+    }
+
+    private async Task<bool> HasOverlappingRegistrationAsync(Guid staffId, DateTime date, TimeSpan newStartSpan, TimeSpan newEndSpan)
+    {
+        var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, date);
+        var newStart = newStartSpan.TotalMinutes;
+        var newEnd = newEndSpan <= newStartSpan ? newEndSpan.TotalMinutes + 1440 : newEndSpan.TotalMinutes;
+
+        foreach (var registration in existingRegistrations)
+        {
+            TimeSpan existingStartSpan;
+            TimeSpan existingEndSpan;
+
+            if (registration.CinemaShiftScheduleEntity != null)
+            {
+                existingStartSpan = registration.CinemaShiftScheduleEntity.StartTime;
+                existingEndSpan = registration.CinemaShiftScheduleEntity.EndTime;
             }
-
-            if (normalizedStartDate < DateTime.UtcNow.Date || normalizedEndDate < DateTime.UtcNow.Date)
+            else if (registration.CinemaShiftTemplateEntity != null)
             {
-                throw new AppException(Messages.Staff.CannotRegisterPastShifts, 400, "SHIFT_ERR");
-            }
-
-            var template = await _repository.GetShiftTemplateByIdAsync(dto.ShiftTemplateId.Value);
-
-            if (template == null)
-            {
-                throw new AppException(Messages.Staff.ShiftTemplateNotFound, 400, "SHIFT_ERR");
-            }
-
-            if (template.CinemaId != staffProfile.CinemaId)
-            {
-                throw new AppException(Messages.Staff.CinemaMismatch, 400, "SHIFT_ERR");
-            }
-
-            ValidateRegistrationEligibility(staffProfile.EmployeeType, template.ShiftType, template.StartTime, template.EndTime, dto.Notes);
-
-            var successDates = new List<string>();
-            var failedDates = new List<string>();
-
-            for (var date = normalizedStartDate; date <= normalizedEndDate; date = date.AddDays(1))
-            {
-                var registrationDateOnly = date;
-                var lockKey = $"lock:shift:{dto.ShiftTemplateId}:{registrationDateOnly:yyyyMMdd}";
-                var lockValue = Guid.NewGuid().ToString("N");
-
-                var isLocked = await _redisLockService.AcquireLockAsync(lockKey, lockValue, TimeSpan.FromSeconds(5));
-                if (!isLocked)
-                {
-                    failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (Hệ thống bận)");
-                    continue;
-                }
-
-                try
-                {
-                    var existingRegistrations = await _repository.GetActiveRegistrationsForStaffAndDateAsync(staffId, registrationDateOnly);
-
-                    bool isOverlapping = false;
-                    var newStart = template.StartTime.TotalMinutes;
-                    var newEnd = template.EndTime <= template.StartTime ? template.EndTime.TotalMinutes + 1440 : template.EndTime.TotalMinutes;
-
-                    foreach (var reg in existingRegistrations)
-                    {
-                        TimeSpan extStartSpan;
-                        TimeSpan extEndSpan;
-
-                        if (reg.CinemaShiftScheduleEntity != null)
-                        {
-                            extStartSpan = reg.CinemaShiftScheduleEntity.StartTime;
-                            extEndSpan = reg.CinemaShiftScheduleEntity.EndTime;
-                        }
-                        else if (reg.CinemaShiftTemplateEntity != null)
-                        {
-                            extStartSpan = reg.CinemaShiftTemplateEntity.StartTime;
-                            extEndSpan = reg.CinemaShiftTemplateEntity.EndTime;
-                        }
-                        else continue;
-
-                        var extStart = extStartSpan.TotalMinutes;
-                        var extEnd = extEndSpan <= extStartSpan ? extEndSpan.TotalMinutes + 1440 : extEndSpan.TotalMinutes;
-
-                        if (newStart < extEnd && extStart < newEnd)
-                        {
-                            isOverlapping = true;
-                            break;
-                        }
-                    }
-
-                    if (isOverlapping)
-                    {
-                        failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (Trùng khung giờ ca làm khác)");
-                        continue;
-                    }
-
-                    var registeredCount = await _repository.CountApprovedOrPendingRegistrationsAsync(dto.ShiftTemplateId.Value, registrationDateOnly);
-
-                    if (registeredCount >= template.MaxStaff)
-                    {
-                        failedDates.Add($"{registrationDateOnly:dd/MM/yyyy} (Ca đã đầy)");
-                        continue;
-                    }
-
-                    var newRegistration = new StaffShiftRegistrationEntity
-                    {
-                        ShiftRegistrationId = Guid.NewGuid(),
-                        StaffId = staffId,
-                        ShiftTemplateId = dto.ShiftTemplateId,
-                        ShiftScheduleId = null,
-                        RegistrationDate = registrationDateOnly,
-                        Status = "Pending",
-                        ApprovedByUserId = null,
-                        ApprovedAt = null,
-                        Notes = dto.Notes
-                    };
-
-                    await _repository.AddShiftRegistrationAsync(newRegistration);
-                    successDates.Add(registrationDateOnly.ToString("dd/MM/yyyy"));
-                }
-                finally
-                {
-                    await _redisLockService.ReleaseLockAsync(lockKey, lockValue);
-                }
-            }
-
-            if (successDates.Count > 0)
-            {
-                await _unitOfWork.SaveChangesAsync();
-            }
-
-            var message = "";
-            if (failedDates.Count == 0)
-            {
-                message = string.Format(Messages.Staff.RegisterShiftSuccess, successDates.Count);
-            }
-            else if (successDates.Count == 0)
-            {
-                throw new AppException(string.Format(Messages.Staff.RegisterShiftAllFailed, string.Join(", ", failedDates)), 400, "SHIFT_ERR");
+                existingStartSpan = registration.CinemaShiftTemplateEntity.StartTime;
+                existingEndSpan = registration.CinemaShiftTemplateEntity.EndTime;
             }
             else
             {
-                message = string.Format(Messages.Staff.RegisterShiftPartialSuccess, string.Join(", ", successDates), string.Join(", ", failedDates));
+                continue;
             }
 
-            return new BaseResponse<bool>
+            var existingStart = existingStartSpan.TotalMinutes;
+            var existingEnd = existingEndSpan <= existingStartSpan ? existingEndSpan.TotalMinutes + 1440 : existingEndSpan.TotalMinutes;
+
+            if (newStart < existingEnd && existingStart < newEnd)
             {
-                IsSuccess = successDates.Count > 0,
-                Data = successDates.Count > 0,
-                Message = message
-            };
+                return true;
+            }
         }
-        else
-        {
-            throw new AppException("Vui lòng chọn ca làm hoặc lịch làm để đăng ký.", 400, "SHIFT_ERR");
-        }
+
+        return false;
     }
 }

@@ -3,6 +3,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Exceptions;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Domain.Entities.Vouchers;
 
@@ -34,7 +35,7 @@ public class VoucherInfoEntity
     public void Redeem()
     {
         if (RemainingQuantity <= 0)
-            throw new DomainException("Voucher is out of stock", "V04");
+            throw new DomainException(Messages.Voucher.OutOfStock, "V04");
         RemainingQuantity -= 1;
     }
 

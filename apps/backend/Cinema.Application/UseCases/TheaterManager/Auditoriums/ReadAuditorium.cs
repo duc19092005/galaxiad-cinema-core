@@ -1,11 +1,8 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager.Auditoriums.Responses;
-using Cinema.Application.Interfaces.TheaterManager;
-using Cinema.Application.Interfaces;
 using Cinema.Application.Exceptions;
+using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.Auditoriums;
@@ -23,46 +20,37 @@ public class ReadAuditorium : ITheaterManagerReadAuditorium
 
     public async Task<BaseResponse<TheaterManagerAuditoriumRes>> GetAuditoriumByCurrentManager()
     {
-        Guid userId = GetUserId();
+        var userId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
+        var cinema = await _repository.GetCinemaWithDetailsByManagerAsync(userId, isAdmin);
 
-        var getCinemaByUserId = await _repository.GetCinemaWithDetailsByManagerAsync(userId, isAdmin);
-
-        if (getCinemaByUserId == null)
+        if (cinema == null)
         {
-            throw new NotFoundException("Không tìm thấy rạp chiếu phim quản lý bởi người dùng này.");
+            throw new NotFoundException(Messages.Cinema.NotFound);
         }
 
-        var auditoriumLists = await _repository.GetAuditoriumsByCinemaIdAsync(getCinemaByUserId.CinemaId);
-
-        if (!auditoriumLists.Any())
+        var auditoriums = await _repository.GetAuditoriumsByCinemaIdAsync(cinema.CinemaId);
+        if (!auditoriums.Any())
         {
-            throw new NotFoundException("Không tìm thấy phòng chiếu nào cho rạp này.");
+            throw new NotFoundException(Messages.Auditorium.NotFound);
         }
 
-        TheaterManagerAuditoriumRes res = new TheaterManagerAuditoriumRes()
+        var response = new TheaterManagerAuditoriumRes
         {
-            CinemaName = getCinemaByUserId.CinemaName,
-            CinemaHotLineNumber = getCinemaByUserId.CinemaHotLineNumber,
-            CinemaLocation = getCinemaByUserId.CinemaLocation,
-            TotalAuditoriums = getCinemaByUserId.AuditoriumInfoEntities.Count,
-            TheaterManagerName = getCinemaByUserId.TheaterManager != null 
-                ? getCinemaByUserId.TheaterManager.UserName : "Chưa có",
-            FacilitiesManagerName = getCinemaByUserId.FacilitiesManager != null 
-                ? getCinemaByUserId.FacilitiesManager.UserName : "Chưa có",
-            AuditoriumInfosList = auditoriumLists
+            CinemaName = cinema.CinemaName,
+            CinemaHotLineNumber = cinema.CinemaHotLineNumber,
+            CinemaLocation = cinema.CinemaLocation,
+            TotalAuditoriums = cinema.AuditoriumInfoEntities.Count,
+            TheaterManagerName = cinema.TheaterManager?.UserName ?? "Not assigned",
+            FacilitiesManagerName = cinema.FacilitiesManager?.UserName ?? "Not assigned",
+            AuditoriumInfosList = auditoriums
         };
 
         return new BaseResponse<TheaterManagerAuditoriumRes>
         {
             Message = Messages.Auditorium.GetCompleted,
-            Data = res,
+            Data = response,
             IsSuccess = true
         };
-    }
-    
-    private Guid GetUserId()
-    {
-        return _userContextService.GetUserId();
     }
 }

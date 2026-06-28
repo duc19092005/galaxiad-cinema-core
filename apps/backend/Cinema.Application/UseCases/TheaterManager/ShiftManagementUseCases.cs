@@ -1,13 +1,13 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
-using Cinema.Domain.Entities.CinemaInfos;
-using Cinema.Application.Interfaces.Facilities;
+using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces;
-using Microsoft.Extensions.Logging;
+using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Entities.CinemaInfos;
+using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
-using Cinema.Domain.Enums;
-using Cinema.Application.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -33,17 +33,17 @@ public class CreateShiftTemplateUseCase
         _logger = logger;
     }
 
-    private double GetDurationHours(TimeSpan startTime, TimeSpan endTime)
+    private static double GetDurationHours(TimeSpan startTime, TimeSpan endTime)
     {
         var duration = endTime - startTime;
         if (duration.Ticks <= 0)
         {
-            duration = duration.Add(TimeSpan.FromDays(1)); // crosses midnight
+            duration = duration.Add(TimeSpan.FromDays(1));
         }
         return duration.TotalHours;
     }
 
-    private TimeSpan NormalizeTimeSpanToUtc(TimeSpan localTime)
+    private static TimeSpan NormalizeTimeSpanToUtc(TimeSpan localTime)
     {
         var utcTime = localTime.Subtract(TimeSpan.FromHours(7));
         if (utcTime.Ticks < 0)
@@ -53,7 +53,7 @@ public class CreateShiftTemplateUseCase
         return utcTime;
     }
 
-    private bool IsValidTheaterHour(TimeSpan time)
+    private static bool IsValidTheaterHour(TimeSpan time)
     {
         return time >= TimeSpan.FromHours(6) || time <= TimeSpan.FromHours(2);
     }
@@ -71,38 +71,33 @@ public class CreateShiftTemplateUseCase
                 return new BaseResponse<CinemaShiftTemplateEntity>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá» n quáº£n lÃ½ ca trá»±c cho ráº¡p nÃ y."
+                    Message = Messages.Staff.NoPermissionManageWorkSchedule
                 };
             }
         }
 
-        // Validate theater operating hours (6:00 AM - 2:00 AM next day)
         if (!IsValidTheaterHour(dto.StartTime) || !IsValidTheaterHour(dto.EndTime))
         {
-            throw new AppException("Giờ làm việc của rạp chỉ hoạt động từ 6 giờ sáng (06:00) đến 2 giờ đêm (02:00).", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.CinemaOperatingHours, 400, "SHIFT_ERR");
         }
 
-        // Validate shift duration
         var duration = GetDurationHours(dto.StartTime, dto.EndTime);
         if (dto.ShiftType == ShiftType.FullTime && Math.Abs(duration - 8.0) > 0.001)
         {
-            throw new AppException("Ca làm việc Full-time phải dài đúng 8 tiếng.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.FullTimeShiftMustBeEightHours, 400, "SHIFT_ERR");
         }
         if (dto.ShiftType == ShiftType.PartTime && Math.Abs(duration - 4.0) > 0.001)
         {
-            throw new AppException("Ca làm việc Part-time phải dài đúng 4 tiếng.", 400, "SHIFT_ERR");
+            throw new AppException(Messages.Staff.PartTimeShiftMustBeFourHours, 400, "SHIFT_ERR");
         }
-
-        var utcStartTime = NormalizeTimeSpanToUtc(dto.StartTime);
-        var utcEndTime = NormalizeTimeSpanToUtc(dto.EndTime);
 
         var newTemplate = new CinemaShiftTemplateEntity
         {
             ShiftTemplateId = Guid.NewGuid(),
             CinemaId = dto.CinemaId,
             ShiftName = dto.ShiftName,
-            StartTime = utcStartTime,
-            EndTime = utcEndTime,
+            StartTime = NormalizeTimeSpanToUtc(dto.StartTime),
+            EndTime = NormalizeTimeSpanToUtc(dto.EndTime),
             MaxStaff = dto.MaxStaff,
             RoleId = dto.RoleId,
             ShiftType = dto.ShiftType,
@@ -112,11 +107,13 @@ public class CreateShiftTemplateUseCase
         await _repository.AddShiftTemplateAsync(newTemplate);
         await _unitOfWork.SaveChangesAsync();
 
+        _logger.LogInformation("Created shift template {ShiftTemplateId} for cinema {CinemaId}.", newTemplate.ShiftTemplateId, dto.CinemaId);
+
         return new BaseResponse<CinemaShiftTemplateEntity>
         {
             IsSuccess = true,
             Data = newTemplate,
-            Message = "Táº¡o ca trá»±c máº«u thÃ nh cÃ´ng."
+            Message = Messages.Staff.ShiftTemplateCreated
         };
     }
 }
@@ -169,7 +166,7 @@ public class GetShiftRegistrationsUseCase
                 return new BaseResponse<List<ResStaffShiftRegistrationDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n xem thÃ´ng tin nhÃ¢n sá»± táº¡i chi nhÃ¡nh ráº¡p nÃ y."
+                    Message = Messages.Staff.NoPermissionViewBranchStaff
                 };
             }
         }
@@ -208,7 +205,7 @@ public class GetStaffProfilesUseCase
                 return new BaseResponse<List<ResStaffProfileDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ nhÃ¢n sá»± táº¡i chi nhÃ¡nh ráº¡p nÃ y."
+                    Message = Messages.Staff.NoPermissionManageBranchStaff
                 };
             }
         }
@@ -219,7 +216,7 @@ public class GetStaffProfilesUseCase
 }
 
 /// <summary>
-/// Updates a staff profile (working status, cinema assignment, manager flag).
+/// Updates a staff profile.
 /// </summary>
 public class UpdateStaffProfileUseCase
 {
@@ -245,7 +242,7 @@ public class UpdateStaffProfileUseCase
         var staff = await _repository.GetStaffProfileAsync(staffUserId);
         if (staff == null)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.StaffNotFound };
         }
 
         if (!isAdmin)
@@ -256,7 +253,7 @@ public class UpdateStaffProfileUseCase
                 return new BaseResponse<bool>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n chá»‰ cÃ³ quyá»n cáº­p nháº­t nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
+                    Message = Messages.Staff.NoPermissionUpdateBranchStaff
                 };
             }
         }
@@ -268,7 +265,7 @@ public class UpdateStaffProfileUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Cáº­p nháº­t thÃ´ng tin nhÃ¢n viÃªn thÃ nh cÃ´ng."
+            Message = Messages.Staff.StaffProfileUpdated
         };
     }
 }
@@ -297,7 +294,7 @@ public class GetStaffPayrollUseCase
         var staffProfile = await _repository.GetStaffProfileAsync(staffId);
         if (staffProfile == null)
         {
-            return new BaseResponse<List<ResPayrollDto>> { IsSuccess = false, Message = "KhÃ´ng tÃ¬m tháº¥y nhÃ¢n viÃªn." };
+            return new BaseResponse<List<ResPayrollDto>> { IsSuccess = false, Message = Messages.Staff.StaffNotFound };
         }
 
         if (!isAdmin)
@@ -308,7 +305,7 @@ public class GetStaffPayrollUseCase
                 return new BaseResponse<List<ResPayrollDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n chá»‰ cÃ³ quyá»n xem thÃ´ng tin tiá»n lÆ°Æ¡ng cá»§a nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
+                    Message = Messages.Staff.NoPermissionViewBranchPayroll
                 };
             }
         }
@@ -347,7 +344,7 @@ public class GetCinemaPayrollUseCase
                 return new BaseResponse<List<ResPayrollDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n chá»‰ cÃ³ quyá»n xem thÃ´ng tin tiá»n lÆ°Æ¡ng cá»§a nhÃ¢n sá»± thuá»™c chi nhÃ¡nh ráº¡p cá»§a mÃ¬nh."
+                    Message = Messages.Staff.NoPermissionViewBranchPayroll
                 };
             }
         }
@@ -356,4 +353,3 @@ public class GetCinemaPayrollUseCase
         return new BaseResponse<List<ResPayrollDto>> { IsSuccess = true, Data = list };
     }
 }
-

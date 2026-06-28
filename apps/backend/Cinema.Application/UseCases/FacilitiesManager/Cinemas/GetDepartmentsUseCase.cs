@@ -5,6 +5,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
 
@@ -33,7 +34,7 @@ public class GetDepartmentsUseCase
                 return new BaseResponse<List<ResDepartmentDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ráº¡p nÃ y."
+                    Message = Messages.Department.NoPermissionManageCinema
                 };
             }
         }
@@ -43,7 +44,8 @@ public class GetDepartmentsUseCase
         return new BaseResponse<List<ResDepartmentDto>>
         {
             IsSuccess = true,
-            Data = departments
+            Data = departments,
+            Message = Messages.Department.GetListSuccess
         };
     }
 }

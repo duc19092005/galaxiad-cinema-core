@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Text;
 using Microsoft.AspNetCore.Http;
 
 namespace Cinema.Domain.Localization;
@@ -35,7 +36,8 @@ public class LocalizationService : ILocalizationService
     private static readonly Dictionary<string, string> RuToEnTranslations = new(StringComparer.OrdinalIgnoreCase);
 
     // Regex-based translations: (Pattern, Replacement) - EN patterns, localized replacement
-    private static readonly List<(Regex Pattern, string Replacement)> RegexTranslations = new();
+    private static readonly List<(Regex Pattern, string Replacement)> ViRegexTranslations = new();
+    private static readonly List<(Regex Pattern, string Replacement)> RuRegexTranslations = new();
 
     // Cross: VI -> RU
     private static readonly Dictionary<string, string> ViToRuTranslations = new(StringComparer.OrdinalIgnoreCase);
@@ -60,8 +62,8 @@ public class LocalizationService : ILocalizationService
         try
         {
             // Load exact translations: each file is { "exact": { "enKey": "translatedValue" }, "regex": [...] }
-            LoadLanguageFile(Path.Combine(baseDir, "vi.json"), EnToViTranslations);
-            LoadLanguageFile(Path.Combine(baseDir, "ru.json"), EnToRuTranslations);
+            LoadLanguageFile(Path.Combine(baseDir, "vi.json"), EnToViTranslations, ViRegexTranslations);
+            LoadLanguageFile(Path.Combine(baseDir, "ru.json"), EnToRuTranslations, RuRegexTranslations);
 
             // Build reverse maps: translatedText -> English key
             foreach (var kvp in EnToViTranslations)
@@ -110,11 +112,14 @@ public class LocalizationService : ILocalizationService
         return null;
     }
 
-    private static void LoadLanguageFile(string filePath, Dictionary<string, string> targetDict)
+    private static void LoadLanguageFile(
+        string filePath,
+        Dictionary<string, string> targetDict,
+        List<(Regex Pattern, string Replacement)> regexTranslations)
     {
         if (!File.Exists(filePath)) return;
 
-        var json = File.ReadAllText(filePath);
+        var json = File.ReadAllText(filePath, Encoding.UTF8);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
 
@@ -140,7 +145,7 @@ public class LocalizationService : ILocalizationService
                 {
                     try
                     {
-                        RegexTranslations.Add((new Regex(pattern, RegexOptions.IgnoreCase), replacement));
+                        regexTranslations.Add((new Regex(pattern, RegexOptions.IgnoreCase), replacement));
                     }
                     catch (Exception ex)
                     {
@@ -188,7 +193,7 @@ public class LocalizationService : ILocalizationService
                 return key;
 
             // Regex (EN patterns since messages are EN keys)
-            foreach (var (pattern, replacement) in RegexTranslations)
+            foreach (var (pattern, replacement) in ViRegexTranslations)
             {
                 if (pattern.IsMatch(key))
                     return pattern.Replace(key, replacement);
@@ -214,7 +219,7 @@ public class LocalizationService : ILocalizationService
                 return key;
 
             // Regex
-            foreach (var (pattern, replacement) in RegexTranslations)
+            foreach (var (pattern, replacement) in RuRegexTranslations)
             {
                 if (pattern.IsMatch(key))
                     return pattern.Replace(key, replacement);
@@ -241,12 +246,6 @@ public class LocalizationService : ILocalizationService
             return key;
 
         // Regex
-        foreach (var (pattern, replacement) in RegexTranslations)
-        {
-            if (pattern.IsMatch(key))
-                return pattern.Replace(key, replacement);
-        }
-
         return key;
     }
 

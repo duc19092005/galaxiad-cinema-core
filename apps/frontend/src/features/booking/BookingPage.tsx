@@ -133,7 +133,7 @@ const BookingPage: React.FC = () => {
                 catch (err) { console.error("Error unselecting seat", err); }
             }
         } else {
-            if (selectedSeats.length >= 8) { showError(t('toast.maxSeats')); return; }
+            if (selectedSeats.length >= 10) { showError(t('toast.maxSeats', 'You can select up to 10 tickets per order.')); return; }
             setSelectedSeats(prev => [...prev, seat]);
             if (pricing && pricing.segmentPrices.length > 0) {
                 setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));

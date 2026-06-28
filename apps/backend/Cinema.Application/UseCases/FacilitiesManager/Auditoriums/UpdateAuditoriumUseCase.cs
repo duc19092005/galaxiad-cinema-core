@@ -54,6 +54,12 @@ public class UpdateAuditoriumUseCase
 
             if (request.AddReqSeatsAuditoriumDto != null && request.AddReqSeatsAuditoriumDto.Count > 0)
             {
+                var seatLayoutErrors = SeatLayoutPolicy.ValidateFullRectangularGrid(request.AddReqSeatsAuditoriumDto);
+                if (seatLayoutErrors.Count > 0)
+                {
+                    throw new BadRequestException(seatLayoutErrors, "D04");
+                }
+
                 var hasAnyBookings = await _repository.HasAnyBookingForAuditoriumSeatsAsync(itemId);
                 if (hasAnyBookings)
                 {

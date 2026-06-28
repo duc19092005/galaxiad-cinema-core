@@ -33,6 +33,15 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Content Include="ExternalServices\Localization\vi.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+      <Content Include="ExternalServices\Localization\ru.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
       <Content Include="..\.dockerignore">
         <Link>.dockerignore</Link>
       </Content>

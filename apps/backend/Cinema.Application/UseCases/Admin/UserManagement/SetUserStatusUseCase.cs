@@ -34,7 +34,7 @@ public class SetUserStatusUseCase
             return new BaseResponse<string>
             {
                 IsSuccess = false,
-                Message = "User not found."
+                Message = Messages.Admin.UserNotFound
             };
         }
 
@@ -54,7 +54,7 @@ public class SetUserStatusUseCase
         {
             IsSuccess = true,
             Data = null,
-            Message = $"User status updated to {status} successfully."
+            Message = Messages.Admin.UserStatusUpdated(status.ToString())
         };
     }
 }

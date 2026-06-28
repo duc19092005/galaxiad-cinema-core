@@ -47,6 +47,12 @@ public class CreateAuditoriumUseCase
                 throw new AppException(Messages.Auditorium.AlreadyExists, 400, "D01");
             }
 
+            var seatLayoutErrors = SeatLayoutPolicy.ValidateFullRectangularGrid(request.AddReqSeatsAuditoriumDto);
+            if (seatLayoutErrors.Count > 0)
+            {
+                throw new BadRequestException(seatLayoutErrors, "D04");
+            }
+
             Guid generateAuditoriumId = Guid.NewGuid();
 
             var newAuditoriumInfo = new AuditoriumInfoEntities

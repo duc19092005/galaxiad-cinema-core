@@ -64,6 +64,25 @@ public class BookingOrderRepository : IBookingOrderRepository
             .ToListAsync();
     }
 
+    public async Task<List<SeatsInfoEntity>> GetAuditoriumSeatsAsync(Guid auditoriumId)
+    {
+        return await _dbContext.Set<SeatsInfoEntity>()
+            .Where(s => s.AuditoriumId == auditoriumId)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
+    public async Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
+    {
+        return await _dbContext.Set<OrderDetailsInfo>()
+            .Where(od => od.MovieScheduleId == scheduleId
+                         && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
+                             || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
+            .Select(od => od.SeatId)
+            .Distinct()
+            .ToListAsync();
+    }
+
     public async Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid userId)
     {
         return await _dbContext.Set<CustomerProfileEntity>()

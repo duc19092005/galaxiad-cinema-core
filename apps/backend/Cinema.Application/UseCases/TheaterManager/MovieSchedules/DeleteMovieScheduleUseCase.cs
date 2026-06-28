@@ -1,12 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
-using Cinema.Application.Interfaces;
-using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Application.Exceptions;
-using Cinema.Domain.Localization;
-using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Interfaces.TheaterManager;
+using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 
@@ -21,22 +19,22 @@ public class DeleteMovieScheduleUseCase
     public DeleteMovieScheduleUseCase(
         IMovieScheduleRepository repository,
         IUserContextService userContextService,
-        IAuditLogService _auditLogService,
+        IAuditLogService auditLogService,
         IUnitOfWork unitOfWork,
         IMovieCacheService cacheService)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
         _userContextService = userContextService;
-        this._auditLogService = _auditLogService;
+        _auditLogService = auditLogService;
         _cacheService = cacheService;
     }
 
     public async Task<BaseResponse<string>> ExecuteAsync(Guid itemId)
     {
-        var getCurrentUserId = _userContextService.GetUserId();
+        var currentUserId = _userContextService.GetUserId();
         var schedule = await _repository.GetScheduleByIdWithAuditoriumAsync(itemId);
-            
+
         if (schedule == null)
         {
             throw new NotFoundException(Messages.Schedule.SchedulesIsNotFoundOrMovieIsInactivated);
@@ -44,20 +42,19 @@ public class DeleteMovieScheduleUseCase
 
         if (schedule.IsDeleted)
         {
-            throw new BadRequestException("Lịch chiếu này đã bị xóa.", "D01");
+            throw new BadRequestException(Messages.Schedule.ScheduleAlreadyDeleted, "D01");
         }
 
         var hasSuccessfulBooking = await _repository.HasSuccessfulBookingForScheduleAsync(itemId);
-
         if (hasSuccessfulBooking)
         {
-            throw new BadRequestException("Không thể xóa lịch chiếu đã có người đặt vé thành công.", "D03");
+            throw new BadRequestException(Messages.Schedule.CannotDeleteBookedShowtime, "D03");
         }
 
         schedule.IsDeleted = true;
-        schedule.DeletedByUserId = getCurrentUserId;
+        schedule.DeletedByUserId = currentUserId;
         schedule.DeletedAt = DateTime.UtcNow;
-        
+
         _repository.UpdateSchedule(schedule);
         await _auditLogService.WriteAsync(
             "Delete",
@@ -76,9 +73,9 @@ public class DeleteMovieScheduleUseCase
         {
         }
 
-        return new BaseResponse<string>()
+        return new BaseResponse<string>
         {
-            Message = "Xóa lịch chiếu thành công.",
+            Message = Messages.Schedule.MovieScheduleDeleted,
             Data = null,
             IsSuccess = true
         };

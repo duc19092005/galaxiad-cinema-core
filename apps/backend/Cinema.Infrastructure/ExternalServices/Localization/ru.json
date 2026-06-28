@@ -2,35 +2,42 @@
     "$comment": "Russian translations for Galaxiad Cinema.",
     "exact": {
         "Login SuccessFully": "Вход выполнен успешно",
+        "Login successfully": "Вход выполнен успешно",
         "Register Successfully": "Регистрация прошла успешно",
+        "Registration completed successfully": "Регистрация выполнена успешно",
         "Validate Successfully": "Валидация прошла успешно",
+        "Validation completed successfully": "Валидация выполнена успешно",
         "Change Password Completed": "Пароль успешно изменён",
+        "Password changed successfully": "Пароль успешно изменён",
         "Logged out successfully": "Выход выполнен успешно",
         "Token Has Expired": "Срок действия токена истёк",
         "Get user information successfully": "Информация о пользователе получена успешно",
+        "User information retrieved successfully": "Информация о пользователе успешно получена",
         "Get Movie Genres Successfully": "Жанры фильмов получены успешно",
         "Get booking history successfully": "История бронирований получена успешно",
-
         "Add Cinema Completed": "Кинотеатр успешно добавлен",
         "Update Cinema Completed": "Кинотеатр успешно обновлён",
         "Delete Cinema Completed": "Кинотеатр успешно удалён",
         "Get Cinema List SuccessFully": "Список кинотеатров получен успешно",
         "Cinema Infos": "Информация о кинотеатре",
-
         "Add Auditorium completed": "Зал успешно добавлен",
+        "Auditorium created successfully.": "Зал успешно создан.",
         "Update Auditorium completed": "Зал успешно обновлён",
+        "Auditorium updated successfully.": "Зал успешно обновлён.",
         "Delete Auditorium completed": "Зал успешно удалён",
+        "Auditorium deleted successfully.": "Зал успешно удалён.",
         "Get auditorium completed": "Информация о зале получена успешно",
-
+        "Auditorium retrieved successfully.": "Информация о зале успешно получена.",
         "Add Movie Completed": "Фильм успешно добавлен",
         "Edit Movie Completed": "Фильм успешно обновлён",
         "Get Movies Info Success": "Информация о фильмах получена успешно",
         "Get Movie Info Successfully": "Информация о фильме получена успешно",
-
         "Movie Format Datas": "Данные форматов фильмов",
-
         "Create Movie Schedule Completed": "Расписание сеансов создано успешно",
-
+        "Movie schedule updated successfully.": "Расписание сеанса успешно обновлено.",
+        "Movie schedule deleted successfully.": "Расписание сеанса успешно удалено.",
+        "Movie schedule list retrieved successfully.": "Список расписаний сеансов успешно получен.",
+        "No new schedules to add.": "Нет новых сеансов для добавления.",
         "There's an error with the system": "Произошла системная ошибка",
         "There's a error with System": "Произошла системная ошибка",
         "System Error": "Системная ошибка",
@@ -38,49 +45,66 @@
         "Method not supported": "Метод не поддерживается",
         "Multiple errors occurred": "Произошло несколько ошибок",
         "Missing One or more Fields": "Отсутствуют одно или несколько полей",
-
         "User Not Found or you're account is banned from the system": "Пользователь не найден или аккаунт заблокирован",
+        "User not found or the account has been banned.": "Пользователь не найден или аккаунт заблокирован.",
         "Username or password is wrong": "Неверное имя пользователя или пароль",
+        "Username or password is incorrect.": "Неверное имя пользователя или пароль.",
         "User Role Not Found": "Роль пользователя не найдена",
+        "User role not found.": "Роль пользователя не найдена.",
         "Unauthorize": "Нет доступа",
+        "Unauthorized": "Не авторизовано.",
         "You Don't Have Right To Access This Resources": "У вас нет прав для доступа к этому ресурсу",
+        "You do not have permission to access this resource.": "У вас нет прав для доступа к этому ресурсу.",
         "Invalid User Type": "Неверный тип пользователя",
+        "Invalid user type.": "Неверный тип пользователя.",
         "Cannot Find User Information": "Не удалось найти информацию о пользователе",
+        "User information not found.": "Информация о пользователе не найдена.",
         "Old Password is Not Match !": "Старый пароль не совпадает!",
+        "The old password is incorrect.": "Старый пароль неверен.",
         "New Password is the same of old password !": "Новый пароль совпадает со старым!",
-
+        "The new password must be different from the old password.": "Новый пароль должен отличаться от старого.",
         "Email Already Exits": "Email уже существует",
+        "Email already exists.": "Email уже существует.",
         "Identity Code is already Exits": "Идентификационный код уже существует",
-
+        "Identity code already exists.": "Идентификационный код уже существует.",
         "Google authentication failed": "Ошибка аутентификации Google",
         "Account with this email already exists. Please login using your original method.": "Аккаунт с таким email уже существует. Пожалуйста, войдите другим способом.",
         "Failed to exchange Google authorization code": "Не удалось обменять код авторизации Google",
         "Failed to get user information from Google": "Не удалось получить информацию от Google",
-
         "Sorry, We can not find the cinema": "Извините, кинотеатр не найден",
         "Cannot edit this cinema because it has active Booked bookings. Please wait until all bookings are completed.": "Нельзя редактировать кинотеатр с активными бронированиями.",
-
         "Error : Auditorium already exists": "Ошибка: Зал уже существует",
+        "Auditorium already exists.": "Зал уже существует.",
         "Duplicate Auditorium Number": "Номер зала дублируется",
+        "Auditorium number already exists.": "Номер зала уже существует.",
         "Error : Can not find auditorium": "Ошибка: Зал не найден",
         "Auditorium Not Found": "Зал не найден",
+        "Auditorium not found.": "Зал не найден.",
         "Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.": "Нельзя редактировать зал с активными бронированиями.",
         "Cannot edit seat layout because seats have been used in orders.": "Нельзя изменить схему мест, так как места были использованы в заказах.",
-
+        "The auditorium must have at least one seat.": "В зале должно быть хотя бы одно место.",
+        "Seat row and column indexes must be non-negative.": "Индексы ряда и колонки места не могут быть отрицательными.",
+        "Seat layout contains duplicate row and column coordinates.": "В схеме мест есть повторяющиеся координаты ряда и колонки.",
+        "Seat layout contains duplicate seat numbers.": "В схеме мест есть повторяющиеся номера мест.",
+        "The auditorium seat layout must be a full rectangular grid.": "Схема мест зала должна быть полной прямоугольной сеткой.",
         "Movie Name is already in use": "Название фильма уже используется",
         "Movie Descriptions is already in use": "Описание фильма уже используется",
         "Movie Name already exists": "Название фильма уже существует",
         "Movie Description already exists": "Описание фильма уже существует",
         "Error uploading image to Cloudinary": "Ошибка загрузки изображения в Cloudinary",
         "Movie Duration Is Invalid Must be Higher than 0 and Lower than 500": "Длительность фильма должна быть от 1 до 500 минут",
-
         "Error Auditorium Not Found": "Ошибка: Зал не найден",
         "Cannot schedule show times for a past date or time.": "Нельзя назначить сеанс на прошедшую дату или время.",
         "Overlapping schedules detected within the request.": "Обнаружено пересечение расписаний.",
         "The showtime list must not be left blank.": "Список сеансов не может быть пустым",
+        "Cannot edit showtimes that already have paid bookings.": "Нельзя редактировать сеансы, по которым уже есть оплаченные бронирования.",
+        "Cannot delete a showtime that already has paid bookings.": "Нельзя удалить сеанс, по которому уже есть оплаченные бронирования.",
+        "This showtime has already been deleted.": "Этот сеанс уже удалён.",
+        "There must be at least 15 minutes between showtimes for auditorium cleanup.": "Между сеансами должно быть не менее 15 минут для уборки зала.",
+        "This showtime conflicts with another showtime, including the 15-minute cleanup buffer.": "Этот сеанс конфликтует с другим сеансом, включая 15-минутный буфер уборки.",
+        "You do not have permission to view this cinema.": "У вас нет прав для просмотра этого кинотеатра.",
         "Schedules is not found or it's been deleted or Movie is Inactive": "Расписание не найдено, удалено или фильм неактивен",
         "Schedules is not found or it's has been deleted or Movie is Inactivated": "Расписание не найдено, удалено или фильм неактивен",
-
         "Get Required Age Completed": "Список возрастных ограничений получен успешно",
         "Get cities list successfully": "Список городов получен успешно",
         "Get showtimes successfully": "Расписание сеансов получено успешно",
@@ -89,17 +113,54 @@
         "Booking created successfully": "Бронирование создано успешно",
         "Payment completed successfully": "Оплата прошла успешно",
         "Payment success": "Оплата прошла успешно",
+        "Ticket information retrieved successfully.": "Информация о билете успешно получена.",
         "Schedule not found": "Расписание не найдено",
         "Schedule not found or movie is inactive": "Расписание не найдено или фильм неактивен",
         "This showtime has already started": "Этот сеанс уже начался",
         "One or more selected seats are invalid": "Одно или несколько выбранных мест недействительны",
         "One or more selected seats are already booked": "Одно или несколько мест уже забронированы",
+        "At least one seat must be selected.": "Необходимо выбрать хотя бы одно место.",
+        "You can select up to 10 tickets per order.": "Можно выбрать не более 10 билетов в одном заказе.",
+        "Duplicate selected seats are not allowed.": "Повторный выбор одного и того же места не допускается.",
+        "Your seat selection leaves an isolated empty seat. Please choose an adjacent seat or select another row.": "Ваш выбор оставляет одиночное пустое место. Пожалуйста, выберите соседнее место или другой ряд.",
         "Payment failed": "Оплата не удалась",
         "Order not found": "Заказ не найден",
-
         "Hashing password failed": "Ошибка хеширования пароля",
         "Validate password failed": "Ошибка валидации пароля",
-
+        "Voucher is out of stock.": "Ваучер закончился.",
+        "Insufficient reward points.": "Недостаточно бонусных баллов.",
+        "You do not have permission to manage this cinema.": "У вас нет прав на управление этим кинотеатром.",
+        "You do not have permission to manage work schedules for this cinema.": "У вас нет прав на управление рабочими расписаниями этого кинотеатра.",
+        "You do not have permission to perform this action.": "У вас нет прав на выполнение этого действия.",
+        "You do not have permission to view staff information in this cinema branch.": "У вас нет прав на просмотр информации о персонале этого филиала.",
+        "You do not have permission to manage staff in this cinema branch.": "У вас нет прав на управление персоналом этого филиала.",
+        "You can only update staff in your cinema branch.": "Вы можете обновлять данные только сотрудников своего филиала.",
+        "You can only view payroll information for staff in your cinema branch.": "Вы можете просматривать зарплатную информацию только сотрудников своего филиала.",
+        "Work schedule not found.": "Рабочее расписание не найдено.",
+        "Shift deletion request not found.": "Запрос на удаление смены не найден.",
+        "This shift already has staff registrations. A deletion request has been sent to Admin for approval.": "На эту смену уже есть регистрации сотрудников. Запрос на удаление отправлен администратору на подтверждение.",
+        "Work schedule deleted successfully.": "Рабочее расписание успешно удалено.",
+        "Staff member not found.": "Сотрудник не найден.",
+        "Cinema working hours are from 06:00 to 02:00.": "Рабочее время кинотеатра: с 06:00 до 02:00.",
+        "A full-time shift must be exactly 8 hours long.": "Полная смена должна длиться ровно 8 часов.",
+        "A part-time shift must be exactly 4 hours long.": "Частичная смена должна длиться ровно 4 часа.",
+        "Shift template created successfully.": "Шаблон смены успешно создан.",
+        "Staff profile updated successfully.": "Профиль сотрудника успешно обновлён.",
+        "Part-time staff can only register part-time or rotating shifts under 4 hours.": "Сотрудники part-time могут регистрироваться только на part-time или ротационные смены до 4 часов.",
+        "Part-time staff cannot register shifts longer than 4 hours.": "Сотрудники part-time не могут регистрироваться на смены длиннее 4 часов.",
+        "Full-time staff must provide a reason when registering a short shift under 8 hours.": "Сотрудник full-time должен указать причину при регистрации на короткую смену менее 8 часов.",
+        "Staff can only register shifts in their own department.": "Сотрудники могут регистрироваться только на смены своего отдела.",
+        "The system is busy. Please try registering again.": "Система занята. Пожалуйста, попробуйте зарегистрироваться снова.",
+        "This shift overlaps with another shift you already registered.": "Эта смена пересекается с другой сменой, на которую вы уже зарегистрированы.",
+        "This shift is already full.": "Эта смена уже заполнена.",
+        "Please select a shift or work schedule to register.": "Пожалуйста, выберите смену или рабочее расписание для регистрации.",
+        "Notification not found.": "Уведомление не найдено.",
+        "Comment not found.": "Комментарий не найден.",
+        "Parent comment not found.": "Родительский комментарий не найден.",
+        "Failed to save comment.": "Не удалось сохранить комментарий.",
+        "Failed to save reply.": "Не удалось сохранить ответ.",
+        "Shift deletion request approved and related staff have been notified.": "Запрос на удаление смены одобрен, связанные сотрудники уведомлены.",
+        "Shift deletion request rejected and the manager has been notified.": "Запрос на удаление смены отклонён, менеджер уведомлён.",
         "Cinema Location is Required": "Местоположение кинотеатра обязательно",
         "Cinema Location cannot exceed 50 characters": "Местоположение не должно превышать 50 символов",
         "Cinema Name is Required": "Название кинотеатра обязательно",
@@ -108,7 +169,6 @@
         "Cinema cinemaHotlineNumber cannot exceed 50 characters": "Номер горячей линии не должен превышать 50 символов",
         "Cinema Description is Required": "Описание кинотеатра обязательно",
         "Release Date is Required": "Дата релиза обязательна",
-
         "Error Auditorium Number cannot be empty": "Ошибка: Номер зала не может быть пустым",
         "Auditorium Number must be between 3 and 10 characters": "Номер зала должен содержать от 3 до 10 символов",
         "Error Movie Format cannot be empty": "Ошибка: Формат фильма не может быть пустым",
@@ -118,7 +178,6 @@
         "Seat Number must be between 3 and 10 characters": "Номер места должен содержать от 3 до 10 символов",
         "coordX must be >= 0": "coordX должен быть >= 0",
         "coordY must be >= 0": "coordY должен быть >= 0",
-
         "Movie Required Age is required": "Возрастное ограничение фильма обязательно",
         "Movie Name is required": "Название фильма обязательно",
         "Movie Name length must be between 1 and 50 characters": "Название фильма должно содержать от 1 до 50 символов",
@@ -126,15 +185,12 @@
         "Movie Descriptions length must be between 1 and 200 characters": "Описание фильма должно содержать от 1 до 200 символов",
         "Movie Image is required": "Изображение фильма обязательно",
         "Movie Ended Date is required": "Дата окончания показа фильма обязательна",
-
         "Auditorium Id is required": "ID зала обязателен",
         "TheaterManager is required": "Менеджер кинотеатра обязателен",
-
         "Schedule Id is required": "ID расписания обязателен",
         "Seat Ids are required": "ID мест обязательны",
         "At least one seat must be selected": "Необходимо выбрать хотя бы одно место",
         "Invalid email format": "Неверный формат email",
-
         "Get cinemas list for Facilities successfully.": "Список кинотеатров (Оборудование) успешно получен.",
         "Get cinemas list for Operations successfully.": "Список кинотеатров (Операции) успешно получен.",
         "Get movies list successfully.": "Список фильмов успешно получен.",
@@ -157,19 +213,106 @@
         "Assigned shift successfully.": "Смена успешно назначена."
     },
     "regex": [
-        { "pattern": "^Error : There's already a cinema named (.*)$", "replacement": "Ошибка: Кинотеатр с названием $1 уже существует" },
-        { "pattern": "^Error : There's already a cinema Description (.*)$", "replacement": "Ошибка: Кинотеатр с описанием $1 уже существует" },
-        { "pattern": "^Error : There's already a cinema Location (.*)$", "replacement": "Ошибка: Кинотеатр в локации $1 уже существует" },
-        { "pattern": "^Error : There's already a cinema hotline Number (.*)$", "replacement": "Ошибка: Кинотеатр с номером $1 уже существует" },
-        { "pattern": "^Error : There is no cinema with Id : (.*)$", "replacement": "Ошибка: Кинотеатр с Id: $1 не найден" },
-        { "pattern": "^Movie with Id : (.*) does not exist$", "replacement": "Фильм с Id: $1 не существует" },
-        { "pattern": "^Movie ID (.*) does not exist or is inactive.$", "replacement": "Фильм $1 не существует или неактивен." },
-        { "pattern": "^Format invalid or missing for movie '(.*)'.$", "replacement": "Формат фильма '$1' недействителен или отсутствует." },
-        { "pattern": "^Movie '(.*)' is available from (.*) to (.*).$", "replacement": "Фильм '$1' доступен с $2 по $3." },
-        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Временной слот с $1 по $2 конфликтует с существующим расписанием." },
-        { "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$", "replacement": "Этот запрос уже обработан (Текущий статус: $1)." },
-        { "pattern": "^Department '(.*)' already exists in this cinema\\.$", "replacement": "Отдел '$1' уже существует в этом кинотеатре." },
-        { "pattern": "^Get users list with role '(.*)' successfully\\.$", "replacement": "Список пользователей с ролью '$1' успешно получен." },
-        { "pattern": "^Transferred management right of '(.*)' successfully\\.$", "replacement": "Право управления '$1' успешно передано." }
-    ]
+        {
+            "pattern": "^Error : There's already a cinema named (.*)$",
+            "replacement": "Ошибка: Кинотеатр с названием $1 уже существует"
+        },
+        {
+            "pattern": "^Error : There's already a cinema Description (.*)$",
+            "replacement": "Ошибка: Кинотеатр с описанием $1 уже существует"
+        },
+        {
+            "pattern": "^Error : There's already a cinema Location (.*)$",
+            "replacement": "Ошибка: Кинотеатр в локации $1 уже существует"
+        },
+        {
+            "pattern": "^Error : There's already a cinema hotline Number (.*)$",
+            "replacement": "Ошибка: Кинотеатр с номером $1 уже существует"
+        },
+        {
+            "pattern": "^Error : There is no cinema with Id : (.*)$",
+            "replacement": "Ошибка: Кинотеатр с Id: $1 не найден"
+        },
+        {
+            "pattern": "^Movie with Id : (.*) does not exist$",
+            "replacement": "Фильм с Id: $1 не существует"
+        },
+        {
+            "pattern": "^Movie ID (.*) does not exist or is inactive.$",
+            "replacement": "Фильм $1 не существует или неактивен."
+        },
+        {
+            "pattern": "^Format invalid or missing for movie '(.*)'.$",
+            "replacement": "Формат фильма '$1' недействителен или отсутствует."
+        },
+        {
+            "pattern": "^Movie '(.*)' is available from (.*) to (.*).$",
+            "replacement": "Фильм '$1' доступен с $2 по $3."
+        },
+        {
+            "pattern": "^Movie '(.*)' is not authorized for this cinema.$",
+            "replacement": "Фильм '$1' не разрешён к показу в этом кинотеатре."
+        },
+        {
+            "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$",
+            "replacement": "Временной слот с $1 по $2 конфликтует с существующим расписанием."
+        },
+        {
+            "pattern": "^Work schedule created successfully \\((.*) shift\\(s\\)\\).$",
+            "replacement": "Рабочее расписание успешно создано ($1 смен)."
+        },
+        {
+            "pattern": "^Payroll calculated successfully. Total shifts: (.*), total amount: (.*) VND.$",
+            "replacement": "Зарплата успешно рассчитана. Всего смен: $1, сумма: $2 VND."
+        },
+        {
+            "pattern": "^Payroll payment confirmed successfully for (.*) VND.$",
+            "replacement": "Выплата зарплаты успешно подтверждена на сумму $1 VND."
+        },
+        {
+            "pattern": "^There are no uncalculated shifts for this staff member before (.*).$",
+            "replacement": "У этого сотрудника нет нерассчитанных смен до $1."
+        },
+        {
+            "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$",
+            "replacement": "Этот запрос уже обработан (Текущий статус: $1)."
+        },
+        {
+            "pattern": "^Department '(.*)' already exists in this cinema\\.$",
+            "replacement": "Отдел '$1' уже существует в этом кинотеатре."
+        },
+        {
+            "pattern": "^Get users list with role '(.*)' successfully\\.$",
+            "replacement": "Список пользователей с ролью '$1' успешно получен."
+        },
+        {
+            "pattern": "^Transferred management right of '(.*)' successfully\\.$",
+            "replacement": "Право управления '$1' успешно передано."
+        },
+        {
+            "pattern": "^User status updated to (.*) successfully\\.$",
+            "replacement": "?????? ???????????? ??????? ??????? ?? $1."
+        }
+    ],
+    "messages": {
+        "Ticket information retrieved successfully.": "?????????? ? ?????? ??????? ????????.",
+        "Portrait image is required.": "?????????? ??????????? ???????????.",
+        "Portrait image updated successfully.": "?????????? ??????????? ??????? ?????????.",
+        "Staff roles updated successfully.": "???? ??????????? ??????? ?????????.",
+        "Cinema not found or you do not have permission to manage it.": "????????? ?? ?????? ??? ? ??? ??? ???? ?? ?????????? ??.",
+        "Your account is not assigned to manage any cinema.": "???? ??????? ?????? ?? ????????? ??? ?????????? ?????-???? ???????????.",
+        "Auditorium selection data retrieved successfully.": "?????? ??? ?????? ???? ??????? ????????.",
+        "Movie selection data retrieved successfully.": "?????? ??? ?????? ?????? ??????? ????????.",
+        "You do not have permission to manage this cinema.": "? ??? ??? ???? ?? ?????????? ???? ???????????.",
+        "Department list retrieved successfully.": "?????? ??????? ??????? ???????.",
+        "Message must not be empty.": "????????? ?? ?????? ???? ??????.",
+        "No showtimes are available for the requested date. Upcoming showtime dates are listed below.": "?? ????????? ???? ??? ????????? ???????. ???? ??????? ????????? ???? ???????.",
+        "Ticket not found or order has not been paid successfully.": "????? ?? ?????? ??? ????? ??? ?? ??? ??????? ???????.",
+        "Get dates successfully": "?????? ??? ??????? ???????.",
+        "Get schedule dates successfully": "???? ??????? ??????? ????????.",
+        "Get schedule details successfully": "?????? ?????????? ??????? ????????.",
+        "Get movies list successfully": "?????? ??????? ??????? ???????.",
+        "Get auditorium detail successfully": "?????? ???? ??????? ????????.",
+        "Auditorium info not found for this schedule.": "?????????? ? ???? ??? ????? ?????? ?? ???????."
+    }
 }

@@ -35,28 +35,28 @@ public static class Messages
     public static class Auth
     {
         // Success
-        public const string LoginSuccess = "Login SuccessFully";
-        public const string RegisterSuccess = "Register Successfully";
-        public const string ValidateSuccess = "Validate Successfully";
-        public const string ChangePasswordCompleted = "Change Password Completed";
+        public const string LoginSuccess = "Login successfully";
+        public const string RegisterSuccess = "Registration completed successfully";
+        public const string ValidateSuccess = "Validation completed successfully";
+        public const string ChangePasswordCompleted = "Password changed successfully";
         public const string LogoutSuccess = "Logged out successfully";
-        public const string GetInfoSuccess = "Get user information successfully";
+        public const string GetInfoSuccess = "User information retrieved successfully";
 
         // Errors
-        public const string UserNotFound = "User Not Found or you're account is banned from the system";
-        public const string WrongCredentials = "Username or password is wrong";
-        public const string RoleNotFound = "User Role Not Found";
-        public const string Unauthorized = "Unauthorize";
-        public const string Forbidden = "You Don't Have Right To Access This Resources";
-        public const string InvalidUserType = "Invalid User Type";
-        public const string UserInfoNotFound = "Cannot Find User Information";
-        public const string OldPasswordNotMatch = "Old Password is Not Match !";
-        public const string NewPasswordSameAsOld = "New Password is the same of old password !";
+        public const string UserNotFound = "User not found or the account has been banned.";
+        public const string WrongCredentials = "Username or password is incorrect.";
+        public const string RoleNotFound = "User role not found.";
+        public const string Unauthorized = "Unauthorized";
+        public const string Forbidden = "You do not have permission to access this resource.";
+        public const string InvalidUserType = "Invalid user type.";
+        public const string UserInfoNotFound = "User information not found.";
+        public const string OldPasswordNotMatch = "The old password is incorrect.";
+        public const string NewPasswordSameAsOld = "The new password must be different from the old password.";
         public const string TokenExpired = "Token Has Expired";
 
         // Registration Errors
-        public const string EmailAlreadyExists = "Email Already Exits";
-        public const string IdentityCodeAlreadyExists = "Identity Code is already Exits";
+        public const string EmailAlreadyExists = "Email already exists.";
+        public const string IdentityCodeAlreadyExists = "Identity code already exists.";
         
         // Google OAuth Errors
         public const string GoogleAuthFailed = "Google authentication failed";
@@ -104,18 +104,26 @@ public static class Messages
     public static class Auditorium
     {
         // Success
-        public const string AddCompleted = "Add Auditorium completed";
-        public const string UpdateCompleted = "Update Auditorium completed";
-        public const string DeleteCompleted = "Delete Auditorium completed";
-        public const string GetCompleted = "Get auditorium completed";
+        public const string AddCompleted = "Auditorium created successfully.";
+        public const string UpdateCompleted = "Auditorium updated successfully.";
+        public const string DeleteCompleted = "Auditorium deleted successfully.";
+        public const string GetCompleted = "Auditorium retrieved successfully.";
         
         // Errors
-        public const string AlreadyExists = "Error : Auditorium already exists";
-        public const string DuplicateNumber = "Duplicate Auditorium Number";
-        public const string NotFound = "Auditorium Not Found";
-        public const string CannotFind = "Error : Can not find auditorium";
+        public const string AlreadyExists = "Auditorium already exists.";
+        public const string DuplicateNumber = "Auditorium number already exists.";
+        public const string NotFound = "Auditorium not found.";
+        public const string CannotFind = "Auditorium not found.";
         public const string CannotEditActiveBookings = "Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.";
         public const string CannotEditHasOrderHistory = "Cannot edit seat layout because seats have been used in orders.";
+        public const string SeatLayoutMustHaveSeats = "The auditorium must have at least one seat.";
+        public const string SeatLayoutIndexesMustBeNonNegative = "Seat row and column indexes must be non-negative.";
+        public const string SeatLayoutDuplicateCoordinates = "Seat layout contains duplicate row and column coordinates.";
+        public const string SeatLayoutDuplicateSeatNumbers = "Seat layout contains duplicate seat numbers.";
+        public const string SeatLayoutMustBeFullRectangle = "The auditorium seat layout must be a full rectangular grid.";
+        public const string NotFoundOrNoPermission = "Cinema not found or you do not have permission to manage it.";
+        public const string NoManagedCinemaAssigned = "Your account is not assigned to manage any cinema.";
+        public const string GetSelectionDataSuccess = "Auditorium selection data retrieved successfully.";
     }
 
     // =============================================================
@@ -129,6 +137,7 @@ public static class Messages
         public const string GetListSuccess = "Get Movies Info Success";
         public const string GetInfoSuccess = "Get Movie Info Successfully";
         public const string GetGenresSuccess = "Get Movie Genres Successfully";
+        public const string GetSelectionDataSuccess = "Movie selection data retrieved successfully.";
 
         // Errors
         public const string NameAlreadyInUse = "Movie Name is already in use";
@@ -166,12 +175,22 @@ public static class Messages
     {
         // Success
         public const string CreateCompleted = "Create Movie Schedule Completed";
+        public const string MovieScheduleUpdated = "Movie schedule updated successfully.";
+        public const string MovieScheduleDeleted = "Movie schedule deleted successfully.";
+        public const string MovieScheduleListRetrieved = "Movie schedule list retrieved successfully.";
+        public const string NoNewSchedulesToAdd = "No new schedules to add.";
 
         // Errors
         public const string AuditoriumNotFound = "Error Auditorium Not Found";
         public const string PastDateNotAllowed = "Cannot schedule show times for a past date or time.";
         public const string OverlappingSchedules = "Overlapping schedules detected within the request.";
         public const string ScheduleListCannotBeEmpty = "The showtime list must not be left blank.";
+        public const string CannotEditBookedShowtimes = "Cannot edit showtimes that already have paid bookings.";
+        public const string CannotDeleteBookedShowtime = "Cannot delete a showtime that already has paid bookings.";
+        public const string ScheduleAlreadyDeleted = "This showtime has already been deleted.";
+        public const string CleaningGapRequired = "There must be at least 15 minutes between showtimes for auditorium cleanup.";
+        public const string ShowtimeConflictWithCleanup = "This showtime conflicts with another showtime, including the 15-minute cleanup buffer.";
+        public const string NoPermissionCinemaView = "You do not have permission to view this cinema.";
 
         public const string SchedulesIsNotFoundOrMovieIsInactivated =
             "Schedules is not found or it's has been deleted or Movie is Inactivated";
@@ -182,6 +201,9 @@ public static class Messages
 
         public static string TimeSlotConflict(string startTime, string endTime) =>
             $"Time slot from {startTime} to {endTime} conflicts with an existing schedule.";
+
+        public static string MovieNotAuthorizedForCinema(string movieName) =>
+            $"Movie '{movieName}' is not authorized for this cinema.";
     }
 
     // =============================================================
@@ -198,6 +220,7 @@ public static class Messages
         public const string PaymentSuccess = "Payment completed successfully";
         public const string GetHistorySuccess = "Get booking history successfully";
         public const string GetCinemasListSuccess = "Get cinemas list successfully";
+        public const string GetTicketSuccess = "Ticket information retrieved successfully.";
 
         // Errors
         public const string ScheduleNotFound = "Schedule not found";
@@ -205,8 +228,13 @@ public static class Messages
         public const string ShowtimeAlreadyStarted = "This showtime has already started";
         public const string InvalidSeats = "One or more selected seats are invalid";
         public const string SeatsAlreadyBooked = "One or more selected seats are already booked";
+        public const string AtLeastOneSeatMustBeSelected = "At least one seat must be selected.";
+        public const string MaxTenTicketsPerOrder = "You can select up to 10 tickets per order.";
+        public const string DuplicateSelectedSeats = "Duplicate selected seats are not allowed.";
+        public const string SelectionLeavesIsolatedSeat = "Your seat selection leaves an isolated empty seat. Please choose an adjacent seat or select another row.";
         public const string PaymentFailed = "Payment failed";
         public const string OrderNotFound = "Order not found";
+        public const string TicketNotFoundOrNotPaid = "Ticket not found or order has not been paid successfully.";
     }
 
     public static class RequiredAge
@@ -219,6 +247,31 @@ public static class Messages
     // =============================================================
     public static class Staff
     {
+        public const string NoPermissionManageCinema = "You do not have permission to manage this cinema.";
+        public const string NoPermissionManageWorkSchedule = "You do not have permission to manage work schedules for this cinema.";
+        public const string NoPermissionPerformAction = "You do not have permission to perform this action.";
+        public const string NoPermissionViewBranchStaff = "You do not have permission to view staff information in this cinema branch.";
+        public const string NoPermissionManageBranchStaff = "You do not have permission to manage staff in this cinema branch.";
+        public const string NoPermissionUpdateBranchStaff = "You can only update staff in your cinema branch.";
+        public const string NoPermissionViewBranchPayroll = "You can only view payroll information for staff in your cinema branch.";
+        public const string WorkScheduleNotFound = "Work schedule not found.";
+        public const string ShiftDeletionRequestNotFound = "Shift deletion request not found.";
+        public const string ShiftDeletionApprovalRequested = "This shift already has staff registrations. A deletion request has been sent to Admin for approval.";
+        public const string ShiftScheduleDeleted = "Work schedule deleted successfully.";
+        public const string StaffNotFound = "Staff member not found.";
+        public const string CinemaOperatingHours = "Cinema working hours are from 06:00 to 02:00.";
+        public const string FullTimeShiftMustBeEightHours = "A full-time shift must be exactly 8 hours long.";
+        public const string PartTimeShiftMustBeFourHours = "A part-time shift must be exactly 4 hours long.";
+        public const string ShiftTemplateCreated = "Shift template created successfully.";
+        public const string StaffProfileUpdated = "Staff profile updated successfully.";
+        public const string PartTimeCanOnlyRegisterShortShifts = "Part-time staff can only register part-time or rotating shifts under 4 hours.";
+        public const string PartTimeCannotRegisterLongShift = "Part-time staff cannot register shifts longer than 4 hours.";
+        public const string FullTimeShortShiftReasonRequired = "Full-time staff must provide a reason when registering a short shift under 8 hours.";
+        public const string StaffCanOnlyRegisterOwnDepartment = "Staff can only register shifts in their own department.";
+        public const string SystemBusyRegisterShift = "The system is busy. Please try registering again.";
+        public const string ShiftOverlapsExistingRegistration = "This shift overlaps with another shift you already registered.";
+        public const string ShiftFull = "This shift is already full.";
+        public const string SelectShiftToRegister = "Please select a shift or work schedule to register.";
         public const string AccountNotLinkedToCinema = "Your account is not linked to any specific cinema branch or has been deactivated.";
         public const string StaffProfileNotFound = "Staff profile not found or account has been locked.";
         public const string ShiftTemplateNotFound = "Shift template not found or has been deactivated.";
@@ -263,6 +316,10 @@ public static class Messages
         public const string PayrollAlreadyPaid = "This payroll has already been paid.";
         public const string PayrollNoPermission = "No permission to manage payroll.";
         public const string PayrollBranchOnly = "Can only manage payroll at your cinema branch.";
+        public static string ShiftSchedulesCreated(int count) => $"Work schedule created successfully ({count} shift(s)).";
+        public static string PayrollCalculated(int shiftCount, decimal totalAmount) => $"Payroll calculated successfully. Total shifts: {shiftCount}, total amount: {totalAmount:N0} VND.";
+        public static string PayrollPaid(decimal totalAmount) => $"Payroll payment confirmed successfully for {totalAmount:N0} VND.";
+        public static string NoUncalculatedShiftsBefore(DateTime date) => $"There are no uncalculated shifts for this staff member before {date:dd/MM/yyyy}.";
     }
 
     // =============================================================
@@ -270,6 +327,11 @@ public static class Messages
     // =============================================================
     public static class Comment
     {
+        public const string NotificationNotFound = "Notification not found.";
+        public const string CommentNotFound = "Comment not found.";
+        public const string ParentCommentNotFound = "Parent comment not found.";
+        public const string CommentSaveFailed = "Failed to save comment.";
+        public const string ReplySaveFailed = "Failed to save reply.";
         public const string ShowtimeNotFinished = "You can comment after the showtime has ended.";
         public const string NoPaidTicket = "You need a paid ticket for this movie to comment.";
         public const string AlreadyReviewed = "You have already reviewed this movie.";
@@ -298,6 +360,8 @@ public static class Messages
         public const string GuestsCannotApply = "Guests cannot apply vouchers.";
         public const string InvalidOrUsed = "Voucher is invalid or has already been used.";
         public const string ExpiredOrInactive = "Voucher has expired or is not active yet.";
+        public const string OutOfStock = "Voucher is out of stock.";
+        public const string InsufficientRewardPoints = "Insufficient reward points.";
     }
 
     // =============================================================
@@ -317,6 +381,18 @@ public static class Messages
         public const string AuditoriumNotFound = "Auditorium info not found for this schedule.";
         public const string GetSearchResultsSuccess = "Search results retrieved";
         public const string FilterSchedulesSuccess = "Filter movies and schedules successfully";
+    }
+
+    public static class Department
+    {
+        public const string NoPermissionManageCinema = "You do not have permission to manage this cinema.";
+        public const string GetListSuccess = "Department list retrieved successfully.";
+    }
+
+    public static class Chatbot
+    {
+        public const string MessageRequired = "Message must not be empty.";
+        public const string NoShowtimesForDate = "No showtimes are available for the requested date. Upcoming showtime dates are listed below.";
     }
 
     // =============================================================
@@ -341,6 +417,9 @@ public static class Messages
         public const string PermissionNotAllowed = "ApproveShift can only be assigned to Admin or TheaterManager.";
         public const string PermissionsUpdated = "Permissions updated for role {0}.";
         public const string PermissionsInvalid = "One or more permissions are invalid.";
+        public const string ShiftDeletionApproved = "Shift deletion request approved and related staff have been notified.";
+        public const string ShiftDeletionRejected = "Shift deletion request rejected and the manager has been notified.";
+        public static string UserStatusUpdated(string status) => $"User status updated to {status} successfully.";
     }
 
     // =============================================================

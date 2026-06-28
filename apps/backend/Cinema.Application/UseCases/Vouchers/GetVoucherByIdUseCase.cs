@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Application.Exceptions;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
@@ -20,7 +21,7 @@ public class GetVoucherByIdUseCase
         var v = await _repository.GetByIdAsync(voucherId);
         if (v == null)
         {
-            throw new AppException("Voucher not found", 404, "V03");
+            throw new AppException(Messages.Voucher.NotFound, 404, "V03");
         }
 
         return new VoucherDto

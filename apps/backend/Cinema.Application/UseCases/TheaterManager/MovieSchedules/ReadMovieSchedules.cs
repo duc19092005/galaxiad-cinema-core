@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager.MovieSchedules.Responses;
-using Cinema.Application.Interfaces.TheaterManager;
-using Cinema.Application.Interfaces;
 using Cinema.Application.Exceptions;
+using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.MovieSchedules;
@@ -23,28 +20,27 @@ public class ReadMovieSchedules : ITheaterManagerReadSchedules
 
     public async Task<BaseResponse<List<TheaterManagerMovieScheduleResDto>>> GetSchedulesByAuditoriumId(Guid auditoriumId)
     {
-        var getCurrentUserId = _userContextService.GetUserId();
+        var currentUserId = _userContextService.GetUserId();
         var isAdmin = _userContextService.IsInRole("Admin");
-        
-        // Ensure auditorium belongs to a cinema this manager manages
-        var validAuditorium = await _repository.GetAuditoriumWithCinemaAsync(auditoriumId);
+        var auditorium = await _repository.GetAuditoriumWithCinemaAsync(auditoriumId);
 
-        if (validAuditorium == null)
+        if (auditorium == null)
         {
             throw new NotFoundException(Messages.Schedule.AuditoriumNotFound);
         }
 
-        if (!isAdmin && validAuditorium.CinemaInfoEntity.TheaterManagerId != getCurrentUserId && 
-            validAuditorium.CinemaInfoEntity.FacilitiesManagerId != getCurrentUserId)
+        if (!isAdmin &&
+            auditorium.CinemaInfoEntity.TheaterManagerId != currentUserId &&
+            auditorium.CinemaInfoEntity.FacilitiesManagerId != currentUserId)
         {
-            throw new BadRequestException("Bạn không có quyền xem thông tin của rạp này.", "E01");
+            throw new BadRequestException(Messages.Schedule.NoPermissionCinemaView, "E01");
         }
 
         var schedules = await _repository.GetSchedulesByAuditoriumIdAsync(auditoriumId);
 
-        return new BaseResponse<List<TheaterManagerMovieScheduleResDto>>()
+        return new BaseResponse<List<TheaterManagerMovieScheduleResDto>>
         {
-            Message = "Lấy danh sách lịch chiếu thành công.",
+            Message = Messages.Schedule.MovieScheduleListRetrieved,
             Data = schedules,
             IsSuccess = true
         };

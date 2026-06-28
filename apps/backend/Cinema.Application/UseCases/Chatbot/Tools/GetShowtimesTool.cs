@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.Interfaces.Catalog;
 using Cinema.Domain.Constants;
+using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Chatbot.Tools;
@@ -56,7 +57,7 @@ public class GetShowtimesTool : IChatTool
                 var datesList = upcomingDates.Select(d => DateTimeHelper.ToVietnamTime(d).ToString("yyyy-MM-dd")).Distinct().Take(7).ToList();
                 return JsonSerializer.Serialize(new
                 {
-                    Message = "KhÃ´ng cÃ³ suáº¥t chiáº¿u nÃ o trong ngÃ y Ä‘Æ°á»£c yÃªu cáº§u. DÆ°á»›i Ä‘Ã¢y lÃ  cÃ¡c ngÃ y sáº¯p cÃ³ suáº¥t chiáº¿u:",
+                    Message = Messages.Chatbot.NoShowtimesForDate,
                     AvailableDates = datesList
                 });
             }

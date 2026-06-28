@@ -1,7 +1,8 @@
-﻿using Cinema.Application.Dtos;
-using Cinema.Application.Interfaces.Facilities;
-using Cinema.Application.Interfaces;
+using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager;
+using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Localization;
 using Microsoft.Extensions.Logging;
 
 namespace Cinema.Application.UseCases.TheaterManager;
@@ -28,15 +29,15 @@ public class GetMyAuditoriumsUseCase
         var isAdmin = _userContextService.IsInRole("Admin");
 
         var result = await _repository.GetMyAuditoriumsAsync(cinemaId, userId, isAdmin);
-
         if (result == null)
         {
+            _logger.LogInformation("Auditorium selection data was not available for user {UserId}.", userId);
             return new BaseResponse<TheaterManagerAuditoriumSelectionDto>
             {
                 IsSuccess = false,
                 Message = cinemaId.HasValue
-                    ? "Ráº¡p phim theo Id khÃ´ng tÃ¬m tháº¥y hoáº·c báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½."
-                    : "TÃ i khoáº£n cá»§a báº¡n chÆ°a Ä‘Æ°á»£c chá»‰ Ä‘á»‹nh quáº£n lÃ½ ráº¡p phim nÃ o."
+                    ? Messages.Auditorium.NotFoundOrNoPermission
+                    : Messages.Auditorium.NoManagedCinemaAssigned
             };
         }
 
@@ -44,8 +45,7 @@ public class GetMyAuditoriumsUseCase
         {
             IsSuccess = true,
             Data = result,
-            Message = "Láº¥y dá»¯ liá»‡u phÃ²ng chiáº¿u thÃ nh cÃ´ng."
+            Message = Messages.Auditorium.GetSelectionDataSuccess
         };
     }
 }
-

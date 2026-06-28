@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.Interfaces.Catalog;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Customer.Catalog;
 
@@ -23,7 +24,7 @@ public class GetMoviesUseCase
         {
             Data = movies,
             IsSuccess = true,
-            Message = "ThÃ nh cÃ´ng"
+            Message = Messages.Catalog.GetMoviesSuccess
         };
     }
 }

@@ -2,6 +2,7 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -20,7 +21,7 @@ public class GetTicketDataUseCase
 
         if (order == null || order.OrderStatus != OrderStatusEnum.Booked)
         {
-            throw new NotFoundException("Ticket not found or order has not been paid successfully.");
+            throw new NotFoundException(Messages.Booking.TicketNotFoundOrNotPaid);
         }
 
         return new ResTicketPdfDto

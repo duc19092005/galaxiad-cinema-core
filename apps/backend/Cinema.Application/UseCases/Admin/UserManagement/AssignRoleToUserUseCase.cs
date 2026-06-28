@@ -34,7 +34,7 @@ public class AssignRoleToUserUseCase
             var user = await _adminUserRepository.FindUserByIdAsync(userId);
             if (user == null)
             {
-                return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
+                return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.UserNotFound };
             }
 
             var normalizedRoleIds = AdminUserManagementHelper.NormalizeStaffRoleIds(roleIds);
@@ -50,7 +50,7 @@ public class AssignRoleToUserUseCase
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return new BaseResponse<string> { IsSuccess = true, Message = "Staff roles updated successfully." };
+            return new BaseResponse<string> { IsSuccess = true, Message = Messages.Admin.StaffRolesUpdated };
         }
         catch (Exception)
         {

@@ -13,6 +13,8 @@ public interface IBookingOrderRepository
     Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId);
     Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds);
     Task<List<Guid>> GetAlreadyBookedSeatsAsync(Guid scheduleId, List<Guid> seatIds);
+    Task<List<SeatsInfoEntity>> GetAuditoriumSeatsAsync(Guid auditoriumId);
+    Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId);
     Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid userId);
     Task<UserVoucherEntity?> GetUserVoucherAsync(Guid voucherId, Guid userId);
     Task<UserInfoEntity?> FindUserByIdAsync(Guid userId);

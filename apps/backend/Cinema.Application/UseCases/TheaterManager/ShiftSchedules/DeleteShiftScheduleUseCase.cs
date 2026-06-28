@@ -1,16 +1,12 @@
-using System;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.TheaterManager.ShiftSchedules;
 
-/// <summary>
-/// Deletes a scheduled shift. If staff have registered, requests admin approval.
-/// </summary>
 public class DeleteShiftScheduleUseCase
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -35,7 +31,7 @@ public class DeleteShiftScheduleUseCase
         var schedule = await _repository.GetShiftScheduleByIdAsync(shiftScheduleId);
         if (schedule == null)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy lịch làm việc." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.WorkScheduleNotFound };
         }
 
         if (!isAdmin)
@@ -43,7 +39,7 @@ public class DeleteShiftScheduleUseCase
             var isManager = await _repository.IsManagerOfCinemaAsync(schedule.CinemaId, managerUserId);
             if (!isManager)
             {
-                return new BaseResponse<bool> { IsSuccess = false, Message = "Bạn không có quyền quản lý lịch làm việc cho rạp này." };
+                return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.NoPermissionManageWorkSchedule };
             }
         }
 
@@ -62,20 +58,18 @@ public class DeleteShiftScheduleUseCase
             {
                 IsSuccess = true,
                 Data = false,
-                Message = "Ca làm này đã có nhân viên đăng ký. Yêu cầu hủy ca đã được gửi lên Admin phê duyệt."
+                Message = Messages.Staff.ShiftDeletionApprovalRequested
             };
         }
-        else
-        {
-            schedule.IsActive = false;
-            await _unitOfWork.SaveChangesAsync();
 
-            return new BaseResponse<bool>
-            {
-                IsSuccess = true,
-                Data = true,
-                Message = "Đã xóa ca làm việc thành công."
-            };
-        }
+        schedule.IsActive = false;
+        await _unitOfWork.SaveChangesAsync();
+
+        return new BaseResponse<bool>
+        {
+            IsSuccess = true,
+            Data = true,
+            Message = Messages.Staff.ShiftScheduleDeleted
+        };
     }
 }

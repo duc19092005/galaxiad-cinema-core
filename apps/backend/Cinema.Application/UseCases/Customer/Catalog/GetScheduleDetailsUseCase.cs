@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.Interfaces.Catalog;
+using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Customer.Catalog;
@@ -52,7 +53,7 @@ public class GetScheduleDetailsUseCase
         {
             Data = getScheduleDetails,
             IsSuccess = true,
-            Message = "ThÃ nh cÃ´ng"
+            Message = Messages.Catalog.GetScheduleDetailsSuccess
         };
     }
 }

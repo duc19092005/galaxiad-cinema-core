@@ -32,7 +32,7 @@ public class MarkNotificationAsReadUseCase
         var notification = await _commentRepository.GetNotificationByIdAndUserAsync(notificationId, userId);
         if (notification == null)
         {
-            throw new NotFoundException("Khong tim thay thong bao.");
+            throw new NotFoundException(Messages.Comment.NotificationNotFound);
         }
 
         notification.IsRead = true;
@@ -42,7 +42,7 @@ public class MarkNotificationAsReadUseCase
         return new BaseResponse<bool>
         {
             IsSuccess = true,
-            Message = "Da doc thong bao.",
+            Message = Messages.Comment.MarkReadSuccess,
             Data = true
         };
     }

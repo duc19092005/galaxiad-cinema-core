@@ -1,17 +1,13 @@
 using System.Text.Json;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
-using Cinema.Application.UseCases.Booking;
 using Cinema.Application.Infrastructure.Booking;
+using Cinema.Application.UseCases.Booking;
+using Cinema.Domain.Localization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Cinema.Domain.Localization;
 
 namespace Cinema.Api.Controllers.Customer.Booking;
-
-// ==========================================
-// BOOKING ENDPOINTS (cần đăng nhập)
-// ==========================================
 
 [ApiController]
 [Route("api/v1/booking")]
@@ -48,9 +44,6 @@ public class BookingController : ControllerBase
         _configuration = configuration;
     }
 
-    /// <summary>
-    /// Tạo đơn đặt vé và nhận VNPay URL để thanh toán
-    /// </summary>
     [HttpPost("create")]
     public async Task<IActionResult> CreateBooking([FromBody] ReqCreateBookingDto request)
     {
@@ -59,9 +52,6 @@ public class BookingController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Lấy thông tin vé (JSON) - Không cần đăng nhập, dùng orderId
-    /// </summary>
     [HttpGet("ticket/{orderId}")]
     public async Task<IActionResult> GetTicketData(Guid orderId)
     {
@@ -70,13 +60,10 @@ public class BookingController : ControllerBase
         {
             IsSuccess = true,
             Data = ticket,
-            Message = "Lấy thông tin vé thành công."
+            Message = Messages.Booking.GetTicketSuccess
         });
     }
 
-    /// <summary>
-    /// Tải vé dưới dạng file text - Không cần đăng nhập, dùng orderId
-    /// </summary>
     [HttpGet("ticket/{orderId}/download")]
     public async Task<IActionResult> DownloadTicket(Guid orderId)
     {
@@ -85,10 +72,6 @@ public class BookingController : ControllerBase
         return File(fileBytes, "text/plain", $"ticket_{orderId}.txt");
     }
 
-    /// <summary>
-    /// VNPay gọi callback sau khi thanh toán xong.
-    /// Luôn redirect về FE bất kể kết quả xử lý.
-    /// </summary>
     [HttpGet("vnpay-callback")]
     public async Task<IActionResult> VnPayCallback()
     {
@@ -110,7 +93,6 @@ public class BookingController : ControllerBase
 
             var (success, orderId) = await _processVnPayCallbackUseCase.ExecuteAsync(vnpParams);
 
-            // Gửi SSE event cho FE
             var paymentEvent = new PaymentStatusEvent
             {
                 OrderId = orderId,
@@ -121,7 +103,6 @@ public class BookingController : ControllerBase
 
             _sseManager.NotifyPaymentResult(orderId, paymentEvent);
 
-            // Redirect user về FE
             var frontendUrl = success
                 ? $"{frontendBaseUrl}/booking/success?orderId={orderId}"
                 : $"{frontendBaseUrl}/booking/failed?orderId={orderId}";
@@ -135,17 +116,12 @@ public class BookingController : ControllerBase
         {
             _logger.LogError(ex, "Error processing VNPay callback. Redirecting to FE failed page.");
 
-            // Luôn redirect về FE dù có lỗi, không bao giờ để user thấy trang lỗi backend
             var orderId = Request.Query.TryGetValue("vnp_TxnRef", out var txnRef) ? txnRef.ToString() : "";
             var failedUrl = $"{frontendBaseUrl}/booking/failed?orderId={orderId}&error=processing_error";
             return Redirect(failedUrl);
         }
     }
 
-    /// <summary>
-    /// SSE endpoint - FE subscribe để nhận kết quả thanh toán realtime
-    /// Hỗ trợ cả Web và Mobile (SSE qua HTTP)
-    /// </summary>
     [Authorize]
     [HttpGet("payment-status/{orderId}")]
     public async Task PaymentStatusSse(Guid orderId, CancellationToken cancellationToken)
@@ -159,14 +135,13 @@ public class BookingController : ControllerBase
 
         try
         {
-            // Gửi heartbeat để giữ connection
             _ = Task.Run(async () =>
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     try
                     {
-                        await Response.WriteAsync($": heartbeat\n\n", cancellationToken);
+                        await Response.WriteAsync(": heartbeat\n\n", cancellationToken);
                         await Response.Body.FlushAsync(cancellationToken);
                         await Task.Delay(15000, cancellationToken);
                     }
@@ -177,13 +152,10 @@ public class BookingController : ControllerBase
                 }
             }, cancellationToken);
 
-            // Chờ kết quả thanh toán (timeout 15 phút)
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromMinutes(15));
 
             var result = await tcs.Task.WaitAsync(cts.Token);
-
-            // Gửi kết quả qua SSE
             var eventData = JsonSerializer.Serialize(result);
             await Response.WriteAsync($"event: payment-result\ndata: {eventData}\n\n", cancellationToken);
             await Response.Body.FlushAsync(cancellationToken);
@@ -198,9 +170,6 @@ public class BookingController : ControllerBase
         }
     }
 
-    /// <summary>
-    /// Lấy thông tin tài khoản người dùng đang đăng nhập
-    /// </summary>
     [Authorize]
     [HttpGet("account-info")]
     public async Task<IActionResult> GetAccountInfo()
@@ -209,9 +178,6 @@ public class BookingController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>
-    /// Lấy lịch sử đặt vé của người dùng đang đăng nhập
-    /// </summary>
     [Authorize]
     [HttpGet("history")]
     public async Task<IActionResult> GetBookingHistory()

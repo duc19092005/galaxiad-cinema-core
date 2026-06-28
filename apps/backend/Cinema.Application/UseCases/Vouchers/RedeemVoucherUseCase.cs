@@ -5,6 +5,7 @@ using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
@@ -24,13 +25,13 @@ public class RedeemVoucherUseCase
     {
         // 1. Query data outside transaction
         var voucher = await _repository.GetByIdAsync(voucherId)
-            ?? throw new AppException("Voucher not found", 404, "V03");
+            ?? throw new AppException(Messages.Voucher.NotFound, 404, "V03");
 
         if (!voucher.IsValid(null))
-            throw new AppException("Voucher has expired or is not yet active", 400, "V05");
+            throw new AppException(Messages.Voucher.ExpiredOrNotActive, 400, "V05");
 
         var user = await _repository.FindUserByIdAsync(userId)
-            ?? throw new AppException("User not found", 404, "V06");
+            ?? throw new AppException(Messages.Admin.UserNotFound, 404, "V06");
 
         await ValidateUserRoleAsync(userId, voucher.roleId);
 
@@ -72,7 +73,7 @@ public class RedeemVoucherUseCase
 
         if (!hasRole)
         {
-            throw new AppException("User is not eligible for this voucher (role mismatch)", 400, "V08");
+            throw new AppException(Messages.Voucher.NotEligible, 400, "V08");
         }
     }
 

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.Interfaces.Catalog;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Customer.Catalog;
 
@@ -24,7 +25,7 @@ public class GetAuditoriumDetailsUseCase
             return new BaseResponse<GetAuditoriumInfosRes>
             {
                 IsSuccess = false,
-                Message = "KhÃ´ng tÃ¬m tháº¥y thÃ´ng tin phÃ²ng chiáº¿u cho suáº¥t chiáº¿u nÃ y."
+                Message = Messages.Catalog.AuditoriumNotFound
             };
         }
 
@@ -32,7 +33,7 @@ public class GetAuditoriumDetailsUseCase
         {
             Data = details,
             IsSuccess = true,
-            Message = "ThÃ nh cÃ´ng"
+            Message = Messages.Catalog.GetAuditoriumDetailSuccess
         };
     }
 }

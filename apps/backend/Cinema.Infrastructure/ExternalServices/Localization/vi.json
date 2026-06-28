@@ -2,35 +2,42 @@
     "$comment": "Vietnamese translations for Galaxiad Cinema.",
     "exact": {
         "Login SuccessFully": "Đăng nhập thành công",
+        "Login successfully": "Đăng nhập thành công",
         "Register Successfully": "Đăng ký thành công",
+        "Registration completed successfully": "Đăng ký thành công",
         "Validate Successfully": "Xác thực thành công",
+        "Validation completed successfully": "Xác thực thành công",
         "Change Password Completed": "Đổi mật khẩu thành công",
+        "Password changed successfully": "Đổi mật khẩu thành công",
         "Logged out successfully": "Đăng xuất thành công",
         "Token Has Expired": "Token đã hết hạn",
         "Get user information successfully": "Lấy thông tin người dùng thành công",
+        "User information retrieved successfully": "Lấy thông tin người dùng thành công",
         "Get Movie Genres Successfully": "Lấy thể loại phim thành công",
         "Get booking history successfully": "Lấy lịch sử đặt vé thành công",
-
         "Add Cinema Completed": "Thêm rạp chiếu phim thành công",
         "Update Cinema Completed": "Cập nhật rạp chiếu phim thành công",
         "Delete Cinema Completed": "Xóa rạp chiếu phim thành công",
         "Get Cinema List SuccessFully": "Lấy danh sách rạp chiếu phim thành công",
         "Cinema Infos": "Thông tin rạp chiếu phim",
-
         "Add Auditorium completed": "Thêm phòng chiếu thành công",
+        "Auditorium created successfully.": "Thêm phòng chiếu thành công.",
         "Update Auditorium completed": "Cập nhật phòng chiếu thành công",
+        "Auditorium updated successfully.": "Cập nhật phòng chiếu thành công.",
         "Delete Auditorium completed": "Xóa phòng chiếu thành công",
+        "Auditorium deleted successfully.": "Xóa phòng chiếu thành công.",
         "Get auditorium completed": "Lấy thông tin phòng chiếu thành công",
-
+        "Auditorium retrieved successfully.": "Lấy thông tin phòng chiếu thành công.",
         "Add Movie Completed": "Thêm phim thành công",
         "Edit Movie Completed": "Chỉnh sửa phim thành công",
         "Get Movies Info Success": "Lấy thông tin phim thành công",
         "Get Movie Info Successfully": "Lấy thông tin phim thành công",
-
         "Movie Format Datas": "Dữ liệu định dạng phim",
-
         "Create Movie Schedule Completed": "Tạo lịch chiếu phim thành công",
-
+        "Movie schedule updated successfully.": "Cập nhật lịch chiếu thành công.",
+        "Movie schedule deleted successfully.": "Xóa lịch chiếu thành công.",
+        "Movie schedule list retrieved successfully.": "Lấy danh sách lịch chiếu thành công.",
+        "No new schedules to add.": "Không có lịch chiếu mới để thêm.",
         "There's an error with the system": "Đã có lỗi hệ thống xảy ra",
         "There's a error with System": "Đã có lỗi hệ thống xảy ra",
         "System Error": "Lỗi hệ thống",
@@ -38,49 +45,66 @@
         "Method not supported": "Phương thức không được hỗ trợ",
         "Multiple errors occurred": "Đã xảy ra nhiều lỗi",
         "Missing One or more Fields": "Thiếu một hoặc nhiều trường dữ liệu",
-
         "User Not Found or you're account is banned from the system": "Không tìm thấy người dùng hoặc tài khoản đã bị chăn",
+        "User not found or the account has been banned.": "Không tìm thấy người dùng hoặc tài khoản đã bị khóa.",
         "Username or password is wrong": "Tên đăng nhập hoặc mật khẩu không đúng",
+        "Username or password is incorrect.": "Tên đăng nhập hoặc mật khẩu không đúng.",
         "User Role Not Found": "Không tìm thấy vai trò người dùng",
+        "User role not found.": "Không tìm thấy vai trò người dùng.",
         "Unauthorize": "Không có quyền truy cập",
+        "Unauthorized": "Không có quyền truy cập.",
         "You Don't Have Right To Access This Resources": "Bạn không có quyền truy cập tài nguyên này",
+        "You do not have permission to access this resource.": "Bạn không có quyền truy cập tài nguyên này.",
         "Invalid User Type": "Loại người dùng không hợp lệ",
+        "Invalid user type.": "Loại người dùng không hợp lệ.",
         "Cannot Find User Information": "Không tìm thấy thông tin người dùng",
+        "User information not found.": "Không tìm thấy thông tin người dùng.",
         "Old Password is Not Match !": "Mật khẩu cũ không khớp!",
+        "The old password is incorrect.": "Mật khẩu cũ không đúng.",
         "New Password is the same of old password !": "Mật khẩu mới giống với mật khẩu cũ!",
-
+        "The new password must be different from the old password.": "Mật khẩu mới phải khác mật khẩu cũ.",
         "Email Already Exits": "Email đã tồn tại",
+        "Email already exists.": "Email đã tồn tại.",
         "Identity Code is already Exits": "Mã chứng minh nhân dân đã tồn tại",
-
+        "Identity code already exists.": "Mã định danh đã tồn tại.",
         "Google authentication failed": "Xác thực Google thất bại",
         "Account with this email already exists. Please login using your original method.": "Tài khoản với email này đã tồn tại. Vui lòng đăng nhập bằng phương thức ban đầu.",
         "Failed to exchange Google authorization code": "Trao đổi mã ủy quyền Google thất bại",
         "Failed to get user information from Google": "Lấy thông tin người dùng từ Google thất bại",
-
         "Sorry, We can not find the cinema": "Xin lỗi, chúng tôi không tìm thấy rạp chiếu phim",
         "Cannot edit this cinema because it has active Booked bookings. Please wait until all bookings are completed.": "Không thể chỉnh sửa rạp chiếu phim này vì đang có đặt vé đang hoạt động. Vui lòng đợi cho đến khi tất cả các đặt vé hoàn tất.",
-
         "Error : Auditorium already exists": "Lỗi: Phòng chiếu đã tồn tại",
+        "Auditorium already exists.": "Phòng chiếu đã tồn tại.",
         "Duplicate Auditorium Number": "Số phòng chiếu bị trùng",
+        "Auditorium number already exists.": "Số phòng chiếu đã tồn tại.",
         "Error : Can not find auditorium": "Lỗi: Không tìm thấy phòng chiếu",
         "Auditorium Not Found": "Không tìm thấy phòng chiếu",
+        "Auditorium not found.": "Không tìm thấy phòng chiếu.",
         "Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.": "Không thể chỉnh sửa phòng chiếu này vì đang có đặt vé đang hoạt động.",
         "Cannot edit seat layout because seats have been used in orders.": "Không thể thay đổi sơ đồ ghế vì ghế đã được sử dụng trong đơn hàng.",
-
+        "The auditorium must have at least one seat.": "Phòng chiếu phải có ít nhất một ghế.",
+        "Seat row and column indexes must be non-negative.": "Chỉ số hàng và cột của ghế không được âm.",
+        "Seat layout contains duplicate row and column coordinates.": "Sơ đồ ghế có tọa độ hàng và cột bị trùng.",
+        "Seat layout contains duplicate seat numbers.": "Sơ đồ ghế có số ghế bị trùng.",
+        "The auditorium seat layout must be a full rectangular grid.": "Sơ đồ ghế của phòng chiếu phải là một ma trận hình chữ nhật đầy đủ.",
         "Movie Name is already in use": "Tên phim đã được sử dụng",
         "Movie Descriptions is already in use": "Mô tả phim đã được sử dụng",
         "Movie Name already exists": "Tên phim đã tồn tại",
         "Movie Description already exists": "Mô tả phim đã tồn tại",
         "Error uploading image to Cloudinary": "Lỗi tải ảnh lên Cloudinary",
         "Movie Duration Is Invalid Must be Higher than 0 and Lower than 500": "Thời lượng phim không hợp lệ, phải lớn hơn 0 và nhỏ hơn 500",
-
         "Error Auditorium Not Found": "Lỗi: Không tìm thấy phòng chiếu",
         "Cannot schedule show times for a past date or time.": "Không thể lên lịch chiếu cho ngày hoặc giờ đã qua.",
         "Overlapping schedules detected within the request.": "Phát hiện lịch chiếu bị trùng lặp trong yêu cầu.",
         "The showtime list must not be left blank.": "Danh sách lịch chiếu không được để trống",
+        "Cannot edit showtimes that already have paid bookings.": "Không thể sửa suất chiếu đã có đơn đặt vé thanh toán thành công.",
+        "Cannot delete a showtime that already has paid bookings.": "Không thể xóa suất chiếu đã có đơn đặt vé thanh toán thành công.",
+        "This showtime has already been deleted.": "Suất chiếu này đã bị xóa.",
+        "There must be at least 15 minutes between showtimes for auditorium cleanup.": "Phải có ít nhất 15 phút giữa các suất chiếu để dọn dẹp phòng chiếu.",
+        "This showtime conflicts with another showtime, including the 15-minute cleanup buffer.": "Suất chiếu này bị trùng với suất chiếu khác, bao gồm cả 15 phút dọn dẹp.",
+        "You do not have permission to view this cinema.": "Bạn không có quyền xem thông tin rạp này.",
         "Schedules is not found or it's been deleted or Movie is Inactive": "Không tìm thấy lịch chiếu hoặc lịch chiếu đã bị xóa hoặc phim không hoạt động.",
         "Schedules is not found or it's has been deleted or Movie is Inactivated": "Không tìm thấy lịch chiếu hoặc lịch chiếu đã bị xóa hoặc phim không hoạt động",
-
         "Get Required Age Completed": "Lấy danh sách độ tuổi thành công",
         "Get cities list successfully": "Lấy danh sách thành phố thành công",
         "Get showtimes successfully": "Lấy lịch chiếu thành công",
@@ -89,17 +113,54 @@
         "Booking created successfully": "Đặt vé thành công",
         "Payment completed successfully": "Thanh toán thành công",
         "Payment success": "Thanh toán thành công",
+        "Ticket information retrieved successfully.": "Lấy thông tin vé thành công.",
         "Schedule not found": "Không tìm thấy lịch chiếu",
         "Schedule not found or movie is inactive": "Không tìm thấy lịch chiếu hoặc phim không hoạt động",
         "This showtime has already started": "Suất chiếu này đã bắt đầu",
         "One or more selected seats are invalid": "Một hoặc nhiều ghế đã chọn không hợp lệ",
         "One or more selected seats are already booked": "Một hoặc nhiều ghế đã chọn đã được đặt",
+        "At least one seat must be selected.": "Phải chọn ít nhất một ghế.",
+        "You can select up to 10 tickets per order.": "Bạn chỉ được chọn tối đa 10 vé cho mỗi đơn hàng.",
+        "Duplicate selected seats are not allowed.": "Không được chọn trùng ghế.",
+        "Your seat selection leaves an isolated empty seat. Please choose an adjacent seat or select another row.": "Lựa chọn ghế của bạn để lại một ghế trống lẻ. Vui lòng chọn ghế liền kề hoặc chọn hàng khác.",
         "Payment failed": "Thanh toán thất bại",
         "Order not found": "Không tìm thấy đơn hàng",
-
         "Hashing password failed": "Mã hóa mật khẩu thất bại",
         "Validate password failed": "Xác thực mật khẩu thất bại",
-
+        "Voucher is out of stock.": "Voucher đã hết số lượng.",
+        "Insufficient reward points.": "Không đủ điểm thưởng.",
+        "You do not have permission to manage this cinema.": "Bạn không có quyền quản lý rạp này.",
+        "You do not have permission to manage work schedules for this cinema.": "Bạn không có quyền quản lý lịch làm việc cho rạp này.",
+        "You do not have permission to perform this action.": "Bạn không có quyền thực hiện thao tác này.",
+        "You do not have permission to view staff information in this cinema branch.": "Bạn không có quyền xem thông tin nhân sự tại chi nhánh rạp này.",
+        "You do not have permission to manage staff in this cinema branch.": "Bạn không có quyền quản lý nhân sự tại chi nhánh rạp này.",
+        "You can only update staff in your cinema branch.": "Bạn chỉ có thể cập nhật nhân sự thuộc chi nhánh rạp của mình.",
+        "You can only view payroll information for staff in your cinema branch.": "Bạn chỉ có thể xem thông tin lương của nhân sự thuộc chi nhánh rạp của mình.",
+        "Work schedule not found.": "Không tìm thấy lịch làm việc.",
+        "Shift deletion request not found.": "Không tìm thấy yêu cầu hủy ca.",
+        "This shift already has staff registrations. A deletion request has been sent to Admin for approval.": "Ca làm này đã có nhân viên đăng ký. Yêu cầu hủy ca đã được gửi lên Admin phê duyệt.",
+        "Work schedule deleted successfully.": "Xóa lịch làm việc thành công.",
+        "Staff member not found.": "Không tìm thấy nhân viên.",
+        "Cinema working hours are from 06:00 to 02:00.": "Giờ làm việc của rạp là từ 06:00 đến 02:00.",
+        "A full-time shift must be exactly 8 hours long.": "Ca Full-time phải dài đúng 8 tiếng.",
+        "A part-time shift must be exactly 4 hours long.": "Ca Part-time phải dài đúng 4 tiếng.",
+        "Shift template created successfully.": "Tạo mẫu ca trực thành công.",
+        "Staff profile updated successfully.": "Cập nhật hồ sơ nhân viên thành công.",
+        "Part-time staff can only register part-time or rotating shifts under 4 hours.": "Nhân viên Part-time chỉ được đăng ký ca Part-time hoặc ca xoay dưới 4 tiếng.",
+        "Part-time staff cannot register shifts longer than 4 hours.": "Nhân viên Part-time không được đăng ký ca dài hơn 4 tiếng.",
+        "Full-time staff must provide a reason when registering a short shift under 8 hours.": "Nhân viên Full-time phải nhập lý do khi đăng ký ca ngắn dưới 8 tiếng.",
+        "Staff can only register shifts in their own department.": "Nhân viên chỉ được đăng ký ca thuộc phòng ban của mình.",
+        "The system is busy. Please try registering again.": "Hệ thống đang bận. Vui lòng đăng ký lại.",
+        "This shift overlaps with another shift you already registered.": "Ca này trùng thời gian với ca khác bạn đã đăng ký.",
+        "This shift is already full.": "Ca làm này đã đủ nhân viên.",
+        "Please select a shift or work schedule to register.": "Vui lòng chọn ca làm hoặc lịch làm việc để đăng ký.",
+        "Notification not found.": "Không tìm thấy thông báo.",
+        "Comment not found.": "Không tìm thấy bình luận.",
+        "Parent comment not found.": "Không tìm thấy bình luận cha.",
+        "Failed to save comment.": "Lưu bình luận thất bại.",
+        "Failed to save reply.": "Lưu phản hồi thất bại.",
+        "Shift deletion request approved and related staff have been notified.": "Đã phê duyệt yêu cầu hủy ca và thông báo cho các nhân viên liên quan.",
+        "Shift deletion request rejected and the manager has been notified.": "Đã từ chối yêu cầu hủy ca và thông báo cho quản lý.",
         "Cinema Location is Required": "Vị trí rạp chiếu phim là bắt buộc",
         "Cinema Location cannot exceed 50 characters": "Vị trí rạp chiếu phim không được vượt quá 50 ký tự",
         "Cinema Name is Required": "Tên rạp chiếu phim là bắt buộc",
@@ -108,7 +169,6 @@
         "Cinema cinemaHotlineNumber cannot exceed 50 characters": "Số hotline rạp không được vượt quá 50 ký tự",
         "Cinema Description is Required": "Mô tả rạp chiếu phim là bắt buộc",
         "Release Date is Required": "Ngày phát hành là bắt buộc",
-
         "Error Auditorium Number cannot be empty": "Lỗi: Số phòng chiếu không được để trống",
         "Auditorium Number must be between 3 and 10 characters": "Số phòng chiếu phải từ 3 đến 10 ký tự",
         "Error Movie Format cannot be empty": "Lỗi: Định dạng phim không được để trống",
@@ -118,7 +178,6 @@
         "Seat Number must be between 3 and 10 characters": "Số ghế phải từ 3 đến 10 ký tự",
         "coordX must be >= 0": "Tọa độ X phải >= 0",
         "coordY must be >= 0": "Tọa độ Y phải >= 0",
-
         "Movie Required Age is required": "Nhóm tuổi yêu cầu của phim là bắt buộc",
         "Movie Name is required": "Tên phim là bắt buộc",
         "Movie Name length must be between 1 and 50 characters": "Tên phim phải từ 1 đến 50 ký tự",
@@ -126,15 +185,12 @@
         "Movie Descriptions length must be between 1 and 200 characters": "Mô tả phim phải từ 1 đến 200 ký tự",
         "Movie Image is required": "Hình ảnh phim là bắt buộc",
         "Movie Ended Date is required": "Ngày kết thúc phim là bắt buộc",
-
         "Auditorium Id is required": "Mã phòng chiếu là bắt buộc",
         "TheaterManager is required": "Quản lý rạp là bắt buộc",
-
         "Schedule Id is required": "Mã lịch chiếu là bắt buộc",
         "Seat Ids are required": "Mã ghế là bắt buộc",
         "At least one seat must be selected": "Phải chọn ít nhất một ghế",
         "Invalid email format": "Định dạng email không hợp lệ",
-
         "Get cinemas list for Facilities successfully.": "Lấy danh sách rạp (CSVC) thành công.",
         "Get cinemas list for Operations successfully.": "Lấy danh sách rạp (Vận hành) thành công.",
         "Get movies list successfully.": "Lấy danh sách phim thành công.",
@@ -157,19 +213,106 @@
         "Assigned shift successfully.": "Gán ca trực thành công."
     },
     "regex": [
-        { "pattern": "^Error : There's already a cinema named (.*)$", "replacement": "Lỗi: Đã có rạp chiếu phim có tên $1" },
-        { "pattern": "^Error : There's already a cinema Description (.*)$", "replacement": "Lỗi: Đã có rạp chiếu phim có mô tả $1" },
-        { "pattern": "^Error : There's already a cinema Location (.*)$", "replacement": "Lỗi: Đã có rạp chiếu phim ở vị trí $1" },
-        { "pattern": "^Error : There's already a cinema hotline Number (.*)$", "replacement": "Lỗi: Đã có rạp chiếu phim có số hotline $1" },
-        { "pattern": "^Error : There is no cinema with Id : (.*)$", "replacement": "Lỗi: Không tìm thấy rạp chiếu phim với Id: $1" },
-        { "pattern": "^Movie with Id : (.*) does not exist$", "replacement": "Không tìm thấy phim với mã: $1" },
-        { "pattern": "^Movie ID (.*) does not exist or is inactive.$", "replacement": "Phim có mã $1 không tồn tại hoặc đã bị ẩn." },
-        { "pattern": "^Format invalid or missing for movie '(.*)'.$", "replacement": "Định dạng phim '$1' không hợp lệ hoặc bị thiếu." },
-        { "pattern": "^Movie '(.*)' is available from (.*) to (.*).$", "replacement": "Phim '$1' chỉ được chiếu từ $2 đến $3." },
-        { "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$", "replacement": "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có." },
-        { "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$", "replacement": "Yêu cầu này đã được xử lý từ trước (Trạng thái hiện tại: $1)." },
-        { "pattern": "^Department '(.*)' already exists in this cinema\\.$", "replacement": "Phòng ban '$1' đã tồn tại trong rạp này." },
-        { "pattern": "^Get users list with role '(.*)' successfully\\.$", "replacement": "Lấy danh sách người dùng vai trò $1 thành công." },
-        { "pattern": "^Transferred management right of '(.*)' successfully\\.$", "replacement": "Đã chuyển quyền quản lý $1 thành công." }
-    ]
+        {
+            "pattern": "^Error : There's already a cinema named (.*)$",
+            "replacement": "Lỗi: Đã có rạp chiếu phim có tên $1"
+        },
+        {
+            "pattern": "^Error : There's already a cinema Description (.*)$",
+            "replacement": "Lỗi: Đã có rạp chiếu phim có mô tả $1"
+        },
+        {
+            "pattern": "^Error : There's already a cinema Location (.*)$",
+            "replacement": "Lỗi: Đã có rạp chiếu phim ở vị trí $1"
+        },
+        {
+            "pattern": "^Error : There's already a cinema hotline Number (.*)$",
+            "replacement": "Lỗi: Đã có rạp chiếu phim có số hotline $1"
+        },
+        {
+            "pattern": "^Error : There is no cinema with Id : (.*)$",
+            "replacement": "Lỗi: Không tìm thấy rạp chiếu phim với Id: $1"
+        },
+        {
+            "pattern": "^Movie with Id : (.*) does not exist$",
+            "replacement": "Không tìm thấy phim với mã: $1"
+        },
+        {
+            "pattern": "^Movie ID (.*) does not exist or is inactive.$",
+            "replacement": "Phim có mã $1 không tồn tại hoặc đã bị ẩn."
+        },
+        {
+            "pattern": "^Format invalid or missing for movie '(.*)'.$",
+            "replacement": "Định dạng phim '$1' không hợp lệ hoặc bị thiếu."
+        },
+        {
+            "pattern": "^Movie '(.*)' is available from (.*) to (.*).$",
+            "replacement": "Phim '$1' chỉ được chiếu từ $2 đến $3."
+        },
+        {
+            "pattern": "^Movie '(.*)' is not authorized for this cinema.$",
+            "replacement": "Phim '$1' chưa được ủy quyền chiếu tại rạp này."
+        },
+        {
+            "pattern": "^Time slot from (.*) to (.*) conflicts with an existing schedule.$",
+            "replacement": "Ca chiếu từ $1 đến $2 bị trùng với lịch chiếu đã có."
+        },
+        {
+            "pattern": "^Work schedule created successfully \\((.*) shift\\(s\\)\\).$",
+            "replacement": "Tạo lịch làm việc thành công ($1 ca)."
+        },
+        {
+            "pattern": "^Payroll calculated successfully. Total shifts: (.*), total amount: (.*) VND.$",
+            "replacement": "Tính lương thành công. Tổng số ca: $1, tổng số tiền: $2 VND."
+        },
+        {
+            "pattern": "^Payroll payment confirmed successfully for (.*) VND.$",
+            "replacement": "Xác nhận thanh toán lương thành công với số tiền $1 VND."
+        },
+        {
+            "pattern": "^There are no uncalculated shifts for this staff member before (.*).$",
+            "replacement": "Không có ca làm việc nào chưa tính lương của nhân viên này trước ngày $1."
+        },
+        {
+            "pattern": "^This request was already processed \\(Current status: (.*)\\)\\.$",
+            "replacement": "Yêu cầu này đã được xử lý từ trước (Trạng thái hiện tại: $1)."
+        },
+        {
+            "pattern": "^Department '(.*)' already exists in this cinema\\.$",
+            "replacement": "Phòng ban '$1' đã tồn tại trong rạp này."
+        },
+        {
+            "pattern": "^Get users list with role '(.*)' successfully\\.$",
+            "replacement": "Lấy danh sách người dùng vai trò $1 thành công."
+        },
+        {
+            "pattern": "^Transferred management right of '(.*)' successfully\\.$",
+            "replacement": "Đã chuyển quyền quản lý $1 thành công."
+        },
+        {
+            "pattern": "^User status updated to (.*) successfully\\.$",
+            "replacement": "C?p nh?t tr?ng th?i ng??i d?ng th?nh $1 th?nh c?ng."
+        }
+    ],
+    "messages": {
+        "Ticket information retrieved successfully.": "L?y th?ng tin v? th?nh c?ng.",
+        "Portrait image is required.": "?nh ch?n dung l? b?t bu?c.",
+        "Portrait image updated successfully.": "C?p nh?t ?nh ch?n dung th?nh c?ng.",
+        "Staff roles updated successfully.": "C?p nh?t vai tr? nh?n vi?n th?nh c?ng.",
+        "Cinema not found or you do not have permission to manage it.": "Kh?ng t?m th?y r?p phim ho?c b?n kh?ng c? quy?n qu?n l? r?p n?y.",
+        "Your account is not assigned to manage any cinema.": "T?i kho?n c?a b?n ch?a ???c ph?n c?ng qu?n l? r?p phim n?o.",
+        "Auditorium selection data retrieved successfully.": "L?y d? li?u ch?n ph?ng chi?u th?nh c?ng.",
+        "Movie selection data retrieved successfully.": "L?y d? li?u ch?n phim th?nh c?ng.",
+        "You do not have permission to manage this cinema.": "B?n kh?ng c? quy?n qu?n l? r?p n?y.",
+        "Department list retrieved successfully.": "L?y danh s?ch ph?ng ban th?nh c?ng.",
+        "Message must not be empty.": "Tin nh?n kh?ng ???c ?? tr?ng.",
+        "No showtimes are available for the requested date. Upcoming showtime dates are listed below.": "Kh?ng c? su?t chi?u n?o trong ng?y ???c y?u c?u. D??i ??y l? c?c ng?y s?p c? su?t chi?u.",
+        "Ticket not found or order has not been paid successfully.": "Kh?ng t?m th?y v? ho?c ??n h?ng ch?a ???c thanh to?n th?nh c?ng.",
+        "Get dates successfully": "L?y danh s?ch ng?y th?nh c?ng.",
+        "Get schedule dates successfully": "L?y danh s?ch ng?y chi?u th?nh c?ng.",
+        "Get schedule details successfully": "L?y chi ti?t l?ch chi?u th?nh c?ng.",
+        "Get movies list successfully": "L?y danh s?ch phim th?nh c?ng.",
+        "Get auditorium detail successfully": "L?y chi ti?t ph?ng chi?u th?nh c?ng.",
+        "Auditorium info not found for this schedule.": "Kh?ng t?m th?y th?ng tin ph?ng chi?u cho su?t chi?u n?y."
+    }
 }

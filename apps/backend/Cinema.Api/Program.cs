@@ -167,8 +167,8 @@ using (var scope = app.Services.CreateScope())
 
 app.UseCors("web");
 
-app.UseErrorMiddleware();
 app.UseLocalizationMiddleware();
+app.UseErrorMiddleware();
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>

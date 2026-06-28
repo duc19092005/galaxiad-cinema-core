@@ -1,16 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.ShiftSchedules;
 
-/// <summary>
-/// Retrieves all pending shift deletion requests for Admin.
-/// </summary>
 public class GetPendingDeletionRequestsUseCase
 {
     private readonly IShiftManagerRepository _repository;
@@ -26,29 +21,27 @@ public class GetPendingDeletionRequestsUseCase
 
     public async Task<BaseResponse<List<ResPendingDeletionRequestDto>>> ExecuteAsync()
     {
-        var isAdmin = _userContextService.IsInRole("Admin");
-        if (!isAdmin)
+        if (!_userContextService.IsInRole("Admin"))
         {
             return new BaseResponse<List<ResPendingDeletionRequestDto>>
             {
                 IsSuccess = false,
-                Message = "Bạn không có quyền thực hiện chức năng này."
+                Message = Messages.Staff.NoPermissionPerformAction
             };
         }
 
         var list = await _repository.GetPendingDeletionRequestsAsync();
-
         var dtos = new List<ResPendingDeletionRequestDto>();
 
-        foreach (var s in list)
+        foreach (var schedule in list)
         {
-            var count = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(s.ShiftScheduleId);
+            var count = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(schedule.ShiftScheduleId);
+            var requesterName = "Manager";
 
-            string requesterName = "Manager";
-            if (s.DeletionRequestedByUserId.HasValue)
+            if (schedule.DeletionRequestedByUserId.HasValue)
             {
-                var requester = await _repository.GetStaffProfileWithUserAsync(s.DeletionRequestedByUserId.Value);
-                if (requester != null && requester.UserInfoEntity != null)
+                var requester = await _repository.GetStaffProfileWithUserAsync(schedule.DeletionRequestedByUserId.Value);
+                if (requester?.UserInfoEntity != null)
                 {
                     requesterName = requester.UserInfoEntity.UserName;
                 }
@@ -56,19 +49,19 @@ public class GetPendingDeletionRequestsUseCase
 
             dtos.Add(new ResPendingDeletionRequestDto
             {
-                ShiftScheduleId = s.ShiftScheduleId,
-                CinemaId = s.CinemaId,
-                CinemaName = s.CinemaInfoEntity != null ? s.CinemaInfoEntity.CinemaName : "",
-                DepartmentId = s.DepartmentId,
-                DepartmentName = s.DepartmentEntity != null ? s.DepartmentEntity.DepartmentName : "",
-                Date = s.Date,
-                ShiftName = s.ShiftName,
-                StartTime = s.StartTime,
-                EndTime = s.EndTime,
-                DeletionReason = s.DeletionReason ?? "",
-                DeletionRequestedByUserId = s.DeletionRequestedByUserId ?? Guid.Empty,
+                ShiftScheduleId = schedule.ShiftScheduleId,
+                CinemaId = schedule.CinemaId,
+                CinemaName = schedule.CinemaInfoEntity?.CinemaName ?? string.Empty,
+                DepartmentId = schedule.DepartmentId,
+                DepartmentName = schedule.DepartmentEntity?.DepartmentName ?? string.Empty,
+                Date = schedule.Date,
+                ShiftName = schedule.ShiftName,
+                StartTime = schedule.StartTime,
+                EndTime = schedule.EndTime,
+                DeletionReason = schedule.DeletionReason ?? string.Empty,
+                DeletionRequestedByUserId = schedule.DeletionRequestedByUserId ?? Guid.Empty,
                 DeletionRequestedByUserName = requesterName,
-                DeletionRequestedAt = s.DeletionRequestedAt ?? DateTime.UtcNow,
+                DeletionRequestedAt = schedule.DeletionRequestedAt ?? DateTime.UtcNow,
                 RegisteredStaffCount = count
             });
         }

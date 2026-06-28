@@ -41,16 +41,16 @@ public class CreateMovieCommentUseCase
         {
             if (await _commentRepository.HasFuturePaidTicketAsync(userId, movieId))
             {
-                throw new BadRequestException("Ban co the binh luan sau khi suat chieu ket thuc.", "CommentShowtimeNotFinished");
+                throw new BadRequestException(Messages.Comment.ShowtimeNotFinished, "CommentShowtimeNotFinished");
             }
 
-            throw new BadRequestException("Ban can mua ve phim nay de binh luan.", "CommentNoPaidTicket");
+            throw new BadRequestException(Messages.Comment.NoPaidTicket, "CommentNoPaidTicket");
         }
 
         var alreadyReviewed = await _commentRepository.HasAlreadyReviewedAsync(userId, movieId);
         if (alreadyReviewed)
         {
-            throw new BadRequestException("Ban da danh gia phim nay roi.", "CommentAlreadyReviewed");
+            throw new BadRequestException(Messages.Comment.AlreadyReviewed, "CommentAlreadyReviewed");
         }
 
         var comment = new MovieCommentEntity
@@ -71,13 +71,13 @@ public class CreateMovieCommentUseCase
         var saved = await _commentRepository.GetCommentWithUserAndMovieAsync(comment.CommentId);
         if (saved == null)
         {
-            throw new NotFoundException("Loi khi luu binh luan.");
+            throw new NotFoundException(Messages.Comment.CommentSaveFailed);
         }
 
         return new BaseResponse<ResMovieCommentDto>
         {
             IsSuccess = true,
-            Message = "Binh luan dang duoc kiem duyet.",
+            Message = Messages.Comment.UnderModeration,
             Data = MovieCommentHelper.MapComment(saved)
         };
     }

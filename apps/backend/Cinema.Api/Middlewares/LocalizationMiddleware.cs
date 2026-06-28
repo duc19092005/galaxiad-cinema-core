@@ -95,8 +95,7 @@ public class LocalizationMiddleware
     private static readonly HashSet<string> TranslatableFields = new(StringComparer.OrdinalIgnoreCase)
     {
         "message",
-        "errors",
-        "errorCode"
+        "errors"
     };
 
     private static void TranslateJsonElement(JsonElement element, Utf8JsonWriter writer,

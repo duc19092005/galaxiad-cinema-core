@@ -8,6 +8,7 @@ using Cinema.Application.Dtos.Chatbot;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
+using Cinema.Domain.Localization;
 
 
 namespace Cinema.Application.UseCases.Chatbot;
@@ -41,7 +42,7 @@ public class ChatbotOrchestrator
             return new BaseResponse<ChatbotResponseDto>
             {
                 IsSuccess = false,
-                Message = "Tin nháº¯n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng."
+                Message = Messages.Chatbot.MessageRequired
             };
         }
 

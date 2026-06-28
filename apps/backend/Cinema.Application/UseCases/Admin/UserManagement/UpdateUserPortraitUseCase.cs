@@ -34,13 +34,13 @@ public class UpdateUserPortraitUseCase
     {
         if (portrait == null || portrait.Length == 0)
         {
-            return new BaseResponse<string> { IsSuccess = false, Message = "Portrait image is required." };
+            return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.PortraitRequired };
         }
 
         var user = await _adminUserRepository.FindUserByIdAsync(userId);
         if (user == null)
         {
-            return new BaseResponse<string> { IsSuccess = false, Message = "User not found." };
+            return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.UserNotFound };
         }
 
         var oldPortraitUrl = user.PortraitImageUrl;
@@ -71,7 +71,7 @@ public class UpdateUserPortraitUseCase
         {
             IsSuccess = true,
             Data = uploadResult.Result,
-            Message = "Portrait image updated successfully."
+            Message = Messages.Admin.PortraitUpdated
         };
     }
 }

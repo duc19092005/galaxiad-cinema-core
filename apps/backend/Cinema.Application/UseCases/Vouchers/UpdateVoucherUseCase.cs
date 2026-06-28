@@ -4,6 +4,7 @@ using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Vouchers;
 
@@ -26,19 +27,19 @@ public class UpdateVoucherUseCase
         var voucher = await _repository.GetByIdAsync(voucherId);
         if (voucher == null)
         {
-            throw new AppException("Voucher not found", 404, "V03");
+            throw new AppException(Messages.Voucher.NotFound, 404, "V03");
         }
 
         var roleExists = await _repository.RoleExistsAsync(dto.RoleId);
         if (!roleExists)
         {
-            throw new AppException("Role does not exist", 400, "V02");
+            throw new AppException(Messages.Voucher.RoleDoesNotExist, 400, "V02");
         }
 
         var nameExists = await _repository.ExistsNameExceptAsync(dto.VoucherName, voucherId);
         if (nameExists)
         {
-            throw new AppException("Voucher name already exists", 400, "V01");
+            throw new AppException(Messages.Voucher.NameAlreadyExists, 400, "V01");
         }
 
         // Adjust remaining quantity

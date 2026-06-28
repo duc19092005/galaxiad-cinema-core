@@ -37,7 +37,7 @@ public class DeleteOwnCommentUseCase
         var comment = await _commentRepository.FindCommentAsync(commentId);
         if (comment == null)
         {
-            throw new NotFoundException("Khong tim thay binh luan.");
+            throw new NotFoundException(Messages.Comment.CommentNotFound);
         }
 
         if (comment.UserId != userId && !_userContextService.IsInRole("Admin"))
@@ -61,7 +61,7 @@ public class DeleteOwnCommentUseCase
         return new BaseResponse<bool>
         {
             IsSuccess = true,
-            Message = "Da xoa binh luan.",
+            Message = Messages.Comment.CommentDeleted,
             Data = true
         };
     }

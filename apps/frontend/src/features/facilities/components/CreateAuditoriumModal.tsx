@@ -785,9 +785,41 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     setAisleDragStart(null);
   };
 
+  const validateFullVisibleSeatGrid = (): string | null => {
+    if (visibleSeats.length !== roomCols * roomRows) {
+      return 'Seat layout must fill every cell in the room grid before saving.';
+    }
+
+    const coordinates = new Set(visibleSeats.map(seat => `${seat.rowIndex}:${seat.colIndex}`));
+    if (coordinates.size !== visibleSeats.length) {
+      return 'Seat layout contains duplicate seat positions.';
+    }
+
+    const seatNumbers = new Set(visibleSeats.map(seat => seat.seatNumber.trim().toLowerCase()));
+    if (seatNumbers.size !== visibleSeats.length) {
+      return 'Seat layout contains duplicate seat numbers.';
+    }
+
+    for (let row = 0; row < roomRows; row++) {
+      for (let col = 0; col < roomCols; col++) {
+        if (!coordinates.has(`${row}:${col}`)) {
+          return 'Seat layout must fill every cell in the room grid before saving.';
+        }
+      }
+    }
+
+    return null;
+  };
+
   const handleSubmit = async () => {
     if (!selectedFormat || !auditoriumNumber.trim() || visibleSeats.length === 0) {
       setCreateError('Please fill in all information: select movie format, enter room name and add at least one seat.');
+      return;
+    }
+
+    const layoutError = validateFullVisibleSeatGrid();
+    if (layoutError) {
+      setCreateError(layoutError);
       return;
     }
 

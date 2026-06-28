@@ -1,9 +1,9 @@
-﻿using Cinema.Application.Dtos;
-using Cinema.Application.Interfaces.Facilities;
-using Cinema.Application.Interfaces;
+using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.TheaterManager;
+using Cinema.Application.Interfaces;
+using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Localization;
 using Microsoft.Extensions.Logging;
-using Cinema.Application.Exceptions;
 
 namespace Cinema.Application.UseCases.TheaterManager;
 
@@ -33,10 +33,11 @@ public class GetMoviesWithFormatsUseCase
             var isManager = await _repository.IsManagerOfCinemaAsync(cinemaId, userId);
             if (!isManager)
             {
+                _logger.LogInformation("User {UserId} cannot access movie selection data for cinema {CinemaId}.", userId, cinemaId);
                 return new BaseResponse<List<TheaterManagerMovieOptionDto>>
                 {
                     IsSuccess = false,
-                    Message = "Báº¡n khÃ´ng cÃ³ quyá»n quáº£n lÃ½ ráº¡p nÃ y."
+                    Message = Messages.Staff.NoPermissionManageCinema
                 };
             }
         }
@@ -47,8 +48,7 @@ public class GetMoviesWithFormatsUseCase
         {
             IsSuccess = true,
             Data = movies,
-            Message = "Láº¥y dá»¯ liá»‡u chá»n phim thÃ nh cÃ´ng"
+            Message = Messages.Movie.GetSelectionDataSuccess
         };
     }
 }
-

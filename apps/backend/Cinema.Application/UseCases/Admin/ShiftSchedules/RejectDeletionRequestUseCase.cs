@@ -1,17 +1,13 @@
-using System;
-using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.ShiftSchedules;
 
-/// <summary>
-/// Rejects a shift deletion request, keeping the shift active.
-/// </summary>
 public class RejectDeletionRequestUseCase
 {
     private readonly IUnitOfWork _unitOfWork;
@@ -33,16 +29,15 @@ public class RejectDeletionRequestUseCase
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid shiftScheduleId)
     {
-        var isAdmin = _userContextService.IsInRole("Admin");
-        if (!isAdmin)
+        if (!_userContextService.IsInRole("Admin"))
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Bạn không có quyền thực hiện chức năng này." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.NoPermissionPerformAction };
         }
 
         var schedule = await _repository.GetShiftScheduleByIdAsync(shiftScheduleId);
         if (schedule == null)
         {
-            return new BaseResponse<bool> { IsSuccess = false, Message = "Không tìm thấy yêu cầu hủy ca." };
+            return new BaseResponse<bool> { IsSuccess = false, Message = Messages.Staff.ShiftDeletionRequestNotFound };
         }
 
         schedule.DeletionStatus = "Active";
@@ -53,9 +48,9 @@ public class RejectDeletionRequestUseCase
 
         if (requesterId.HasValue)
         {
-            var title = "Yêu cầu hủy ca bị từ chối";
-            var message = $"Yêu cầu hủy ca '{schedule.ShiftName}' ngày {schedule.Date:dd/MM/yyyy} tại rạp của bạn đã bị từ chối bởi Admin.";
-            var type = "DeletionRequestRejected";
+            const string title = "Shift deletion request rejected";
+            var message = $"Your deletion request for shift '{schedule.ShiftName}' on {schedule.Date:dd/MM/yyyy} was rejected by Admin.";
+            const string type = "DeletionRequestRejected";
 
             var notification = new UserNotificationEntity
             {
@@ -67,8 +62,8 @@ public class RejectDeletionRequestUseCase
                 IsRead = false,
                 CreatedAt = DateTime.UtcNow
             };
-            await _unitOfWork.Repository<UserNotificationEntity>().AddAsync(notification);
 
+            await _unitOfWork.Repository<UserNotificationEntity>().AddAsync(notification);
             await _sseNotificationService.SendNotificationAsync(requesterId.Value, title, message, type);
         }
 
@@ -78,7 +73,7 @@ public class RejectDeletionRequestUseCase
         {
             IsSuccess = true,
             Data = true,
-            Message = "Đã từ chối yêu cầu hủy ca làm việc và gửi thông báo tới quản lý."
+            Message = Messages.Admin.ShiftDeletionRejected
         };
     }
 }
