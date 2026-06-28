@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import {
   BadgePercent, Check, Edit2, Loader2, Plus, Trash2, X,
   ChevronDown, ChevronUp, ChevronRight, ChevronLeft,
-  ToggleLeft, ToggleRight, Eye, Film, MapPin, Calendar
+  ToggleLeft, ToggleRight, Eye, Film, MapPin, Calendar, Ban
 } from 'lucide-react';
 import {
   pricingPromotionApi,
@@ -638,11 +638,17 @@ const Step3: React.FC<{
         <span className={`badge ${form.isActive ? 'badge-success' : 'badge-default'}`} style={{ marginLeft: 'auto' }}>{form.isActive ? 'Sẽ kích hoạt' : 'Tắt'}</span>
       </div>
       {form.shortDescription && <p style={{ margin: '0 0 10px', fontSize: 13, color: '#e4e4e7' }}>{form.shortDescription}</p>}
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 11, color: '#a1a1aa' }}>
-          📅 {form.startDate ? new Date(form.startDate).toLocaleDateString('vi-VN') : 'Ngay lập tức'} → {form.endDate ? new Date(form.endDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
+        <span style={{ fontSize: 13, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Calendar size={14} style={{ color: '#ff8a00' }} />
+          {form.startDate ? new Date(form.startDate).toLocaleDateString('vi-VN') : 'Ngay lập tức'} → {form.endDate ? new Date(form.endDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}
         </span>
-        {form.excludeHolidays && <span style={{ fontSize: 11, color: '#a1a1aa' }}>🚫 Loại trừ ngày lễ</span>}
+        {form.excludeHolidays && (
+          <span style={{ fontSize: 13, color: '#e4e4e7', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Ban size={14} style={{ color: '#f87171' }} />
+            Loại trừ ngày lễ
+          </span>
+        )}
       </div>
     </div>
 
