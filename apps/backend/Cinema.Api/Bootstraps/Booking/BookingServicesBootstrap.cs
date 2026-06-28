@@ -31,6 +31,7 @@ public static class BookingServicesBootstrap
         services.AddScoped<GetNowShowingMoviesUseCase>();
         services.AddScoped<GetComingSoonMoviesUseCase>();
         services.AddScoped<GetMovieDetailUseCase>();
+        services.AddScoped<GetSimilarMoviesUseCase>();
         services.AddScoped<GetActiveCinemasUseCase>();
         services.AddScoped<GetNearestCinemasUseCase>();
         services.AddScoped<GetActiveMoviesUseCase>();

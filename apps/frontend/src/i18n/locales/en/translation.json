@@ -674,7 +674,8 @@
     "movie": "Movie",
     "goHome": "Go Home",
     "movieNotFound": "Movie not found",
-    "loadError": "Failed to load movie details. Please try again later."
+    "loadError": "Failed to load movie details. Please try again later.",
+    "noSimilarMovies": "No similar movies found."
   },
   "movieComment": {
     "loadError": "Could not load comments at this time.",

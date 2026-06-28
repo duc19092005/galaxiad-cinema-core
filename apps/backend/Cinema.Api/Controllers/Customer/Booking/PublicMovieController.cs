@@ -28,6 +28,7 @@ public class PublicMovieController : ControllerBase
     private readonly GetCinemaShowtimesUseCase _getCinemaShowtimesUseCase;
     private readonly GetSeatMapUseCase _getSeatMapUseCase;
     private readonly GetPricingUseCase _getPricingUseCase;
+    private readonly GetSimilarMoviesUseCase _getSimilarMoviesUseCase;
 
     public PublicMovieController(
         GetNowShowingMoviesUseCase getNowShowingMoviesUseCase,
@@ -41,7 +42,8 @@ public class PublicMovieController : ControllerBase
         GetMovieDetailUseCase getMovieDetailUseCase,
         GetCinemaShowtimesUseCase getCinemaShowtimesUseCase,
         GetSeatMapUseCase getSeatMapUseCase,
-        GetPricingUseCase getPricingUseCase)
+        GetPricingUseCase getPricingUseCase,
+        GetSimilarMoviesUseCase getSimilarMoviesUseCase)
     {
         _getNowShowingMoviesUseCase = getNowShowingMoviesUseCase;
         _getComingSoonMoviesUseCase = getComingSoonMoviesUseCase;
@@ -55,6 +57,7 @@ public class PublicMovieController : ControllerBase
         _getCinemaShowtimesUseCase = getCinemaShowtimesUseCase;
         _getSeatMapUseCase = getSeatMapUseCase;
         _getPricingUseCase = getPricingUseCase;
+        _getSimilarMoviesUseCase = getSimilarMoviesUseCase;
     }
 
     /// <summary>
@@ -150,6 +153,16 @@ public class PublicMovieController : ControllerBase
     public async Task<IActionResult> GetMovieDetail(Guid movieId)
     {
         var result = await _getMovieDetailUseCase.ExecuteAsync(movieId);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Lấy danh sách phim tương tự (More Like This) dựa trên embedding hoặc thể loại
+    /// </summary>
+    [HttpGet("{movieId}/similar")]
+    public async Task<IActionResult> GetSimilarMovies(Guid movieId)
+    {
+        var result = await _getSimilarMoviesUseCase.ExecuteAsync(movieId, HttpContext.RequestAborted);
         return Ok(result);
     }
 

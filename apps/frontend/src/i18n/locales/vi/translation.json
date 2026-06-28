@@ -673,7 +673,8 @@
     "movie": "Phim",
     "goHome": "Về trang chủ",
     "movieNotFound": "Không tìm thấy phim",
-    "loadError": "Không thể tải thông tin phim. Vui lòng thử lại sau."
+    "loadError": "Không thể tải thông tin phim. Vui lòng thử lại sau.",
+    "noSimilarMovies": "Không tìm thấy phim tương tự nào."
   },
   "movieComment": {
     "loadError": "Không thể tải bình luận lúc này.",

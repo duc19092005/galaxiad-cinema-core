@@ -148,5 +148,14 @@ export const publicApi = {
             params: { latitude, longitude }
         });
         return response.data;
+    },
+
+    /** 13. Get Similar Movies (More Like This) */
+    getSimilarMovies: async (movieId: string): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
+        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+        const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>(`/movies/${movieId}/similar`, {
+            baseURL: `${API_BASE_URL}/api/v1/public`
+        });
+        return response.data;
     }
 };

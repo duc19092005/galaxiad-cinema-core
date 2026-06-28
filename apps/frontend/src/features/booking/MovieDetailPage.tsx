@@ -5,53 +5,11 @@ import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
-import { recommendationApi } from '../../api/recommendationApi';
 import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
 import Header from '../../components/Header';
 import MovieCommentsSection from './components/MovieCommentsSection';
 
-const MOCK_RECOMMENDATIONS: PublicMovieListItem[] = [
-    {
-        movieId: 'oppenheimer',
-        movieName: 'Oppenheimer',
-        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1O_H_0KoOy2puSsPLnT6dUR7E8WqrbId3se4-WfnHEqdA-czsRjYXqryLnBEOYtegrFXfzGSq-019JrlUhPp-kD1aKDfAlIILHsTQ8f0c3U8PpC0CmwfaheX2-wSCcW-w5l5-75wlI8eE1zRKJkOAJF-T7bVleF3scKMPjDNYcRQmpPvITHiHs9z-NKp6vAc8wH-qYIF4a5Ebz5vRVc7QT-twDNVzuxEPGwpotsRoIuAY26NecAlt9cdFitqCFjUt4jsp_089zjs',
-        movieFormatInfos: 'IMAX • 2D',
-        movieDuration: 180,
-        movieRequiredAge: '18+',
-        movieCategoryInfos: 'Drama',
-        isCommingSoon: false,
-    },
-    {
-        movieId: 'interstellar',
-        movieName: 'Interstellar',
-        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAIs3UTHbUVXCXJX7ZAM49urtKtTflPwsAnLGtarpOqVZ5snE7mjp7xTRed_8ClQ0ubFoCS1q2a2zXdcKr63f7zOydvRbkMuy-2MuXRKnbpVbN3ISJsecMCItqeV0ocUEpyVwpEBsGZsVSdf7LhC_vlzmceg7zHqq26Nzc9MbrnzMEPstancOirh0IGnf6_PaGDm-vRD7N1BN-xAVX36prBb7O5EqsIVI9nZQpZ5c-o7YrU5EEXLeKKPKzS5Y7cd-ERuNjhUuEwhbY',
-        movieFormatInfos: 'IMAX • 2D',
-        movieDuration: 169,
-        movieRequiredAge: '13+',
-        movieCategoryInfos: 'Sci-Fi',
-        isCommingSoon: false,
-    },
-    {
-        movieId: 'blade-runner-2049',
-        movieName: 'Blade Runner 2049',
-        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBm_rETSQAw2_mR7x2Dmk8dM_1ikKv7ZTwStEBA08AKIdUGTrzwnVBh6HrycFpVZO0dzy6h3CYmyDwTMJkhm4nfoWeWTjIWZSiCSDYqq8BtZ2D-f2xq4jWSxDU-cHUuhglSaVL2Busu4hOkub-TN-u1y_oikmFFNyiPjvtfE6euXfAbfeeN3REOayh2Wk4M2oV73HhgfPIcYbraUg-oRL5ZPDjOpY-Xxqz568HE0p9xpHVoPXKgwEthr-TT5GpjTmTYZxVogaJf5lM',
-        movieFormatInfos: '2D • 3D',
-        movieDuration: 164,
-        movieRequiredAge: '16+',
-        movieCategoryInfos: 'Sci-Fi',
-        isCommingSoon: false,
-    },
-    {
-        movieId: 'the-batman',
-        movieName: 'The Batman',
-        moviePosterURL: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDB-BqXjlzjlchGSQdGJNPOe5qA4U7eeFQ_aCm0mBszFfeX6u4TVbZPffBZ5YUaz8vwGJKehxAuZITpcjr3cbxIboJSPR-Q3hQ44LFoJq_7VD03J0HNM95tg83gpevnPCNsAKOJh12XTORrKS6DjltoUX25XZVfNAmPY1FZBN-jCsDshn_00-YI2H1rkAJaQYbIt7NX5JpXNek2WpCbCLvz0w1FBQpjPBS2BgeG2yDLZHAhvjG40VgWM8PSQPNqlFz5jp0J-40FTLE',
-        movieFormatInfos: 'IMAX • 2D',
-        movieDuration: 176,
-        movieRequiredAge: '16+',
-        movieCategoryInfos: 'Action',
-        isCommingSoon: false,
-    }
-];
+
 
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
@@ -90,63 +48,17 @@ const MovieDetailPage: React.FC = () => {
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
 
-            // Fetch recommended movies with fallback
+            // Fetch similar movies (More Like This)
             try {
-                let list: PublicMovieListItem[] = [];
-                const storedUser = localStorage.getItem('user_info');
-                if (storedUser) {
-                    try {
-                        const aiRecsRes = await recommendationApi.getRecommendations();
-                        if (aiRecsRes?.data && aiRecsRes.data.length > 0) {
-                            list = aiRecsRes.data.map((item: any) => ({
-                                movieId: item.movieId,
-                                movieName: item.movieName,
-                                moviePosterURL: item.moviePosterURL || item.movieImageUrl,
-                                movieBannerURL: item.movieBannerURL || item.movieBannerUrl,
-                                movieFormatInfos: item.movieFormatInfos || '',
-                                movieDuration: item.movieDuration,
-                                movieRequiredAge: item.movieRequiredAge || item.movieRequiredAgeSymbol,
-                                movieCategoryInfos: item.movieGenres || 'AI Pick',
-                                isCommingSoon: item.isCommingSoon || false,
-                            }));
-                        }
-                    } catch (e) {
-                        console.log('Survey not completed, using trending fallback');
-                    }
+                const similarRes = await publicApi.getSimilarMovies(movieId!);
+                if (similarRes?.data && similarRes.data.length > 0) {
+                    setRecommendedMovies(similarRes.data);
+                } else {
+                    setRecommendedMovies([]);
                 }
-
-                if (list.length === 0) {
-                    const trendingRes = await commentApi.getTrendingMovies({ take: 8 });
-                    list = (trendingRes?.data || []).map(item => ({
-                        movieId: item.movieId,
-                        movieName: item.movieName,
-                        moviePosterURL: item.movieImageUrl,
-                        movieBannerURL: item.movieBannerUrl,
-                        movieFormatInfos: '',
-                        movieDuration: item.movieDuration,
-                        movieRequiredAge: item.movieRequiredAgeSymbol,
-                        movieCategoryInfos: `Trending score ${item.trendingScore}`,
-                        isCommingSoon: false,
-                    }));
-                }
-
-                if (list.length === 0) {
-                    let recRes = await publicApi.getNowShowing({ pageSize: 10 });
-                    list = recRes?.data || [];
-                    if (list.length === 0) {
-                        const allRes = await publicApi.getAllMovies({ pageSize: 10 });
-                        list = allRes?.data || [];
-                    }
-                }
-
-                let filtered = list.filter(m => m.movieId !== movieId);
-                if (filtered.length === 0) {
-                    filtered = MOCK_RECOMMENDATIONS;
-                }
-                setRecommendedMovies(filtered.slice(0, 6));
             } catch (recErr) {
                 console.error('Failed to load recommended movies:', recErr);
-                setRecommendedMovies(MOCK_RECOMMENDATIONS);
+                setRecommendedMovies([]);
             }
         } catch (err) {
             console.error('Error fetching movie detail:', err);
@@ -463,18 +375,18 @@ const MovieDetailPage: React.FC = () => {
                 <MovieCommentsSection movieId={movie.movieId} />
 
                 {/* Recommended Movies */}
-                {recommendedMovies.length > 0 && (
-                    <section className="bg-[#0e0e0e] py-20 overflow-hidden">
-                        <div className="px-6 md:px-16 max-w-7xl mx-auto">
-                            <div className="flex justify-between items-end mb-10">
-                                <div>
-                                    <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
-                                    <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
-                                </div>
-                                <button onClick={() => navigate('/home')} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
-                                                                        {t('movieDetail.viewAll', 'View All')} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                                </button>
+                <section className="bg-[#0e0e0e] py-20 overflow-hidden">
+                    <div className="px-6 md:px-16 max-w-7xl mx-auto">
+                        <div className="flex justify-between items-end mb-10">
+                            <div>
+                                <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
+                                <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
                             </div>
+                            <button onClick={() => navigate('/home')} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
+                                                                    {t('movieDetail.viewAll', 'View All')} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                            </button>
+                        </div>
+                        {recommendedMovies.length > 0 ? (
                             <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth">
                                 {recommendedMovies.map((recMovie) => (
                                     <div
@@ -502,9 +414,14 @@ const MovieDetailPage: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    </section>
-                )}
+                        ) : (
+                            <div className="text-center py-12 rounded-xl border border-zinc-800/40 bg-zinc-950/20 backdrop-blur-sm">
+                                <span className="material-symbols-outlined text-4xl text-[#ddc1ae]/40 mb-3 block">movie</span>
+                                <p className="text-sm text-[#ddc1ae]/60">{t("movieDetail.noSimilarMovies", "No similar movies found.")}</p>
+                            </div>
+                        )}
+                    </div>
+                </section>
             </main>
 
             {/* Footer */}
