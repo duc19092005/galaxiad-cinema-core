@@ -676,6 +676,12 @@
     "loadError": "Không thể tải thông tin phim. Vui lòng thử lại sau.",
     "noSimilarMovies": "Không tìm thấy phim tương tự nào."
   },
+  "similarMovies": {
+    "vectorSimilarity": "Tìm kiếm tương đồng vector",
+    "basedOn": "Dựa trên",
+    "resultsFound": "kết quả tìm thấy",
+    "searching": "Đang tìm kiếm theo độ tương đồng vector..."
+  },
   "movieComment": {
     "loadError": "Không thể tải bình luận lúc này.",
     "enterContent": "Vui lòng nhập nội dung bình luận.",

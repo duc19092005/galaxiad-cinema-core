@@ -160,9 +160,10 @@ public class PublicMovieController : ControllerBase
     /// Lấy danh sách phim tương tự (More Like This) dựa trên embedding hoặc thể loại
     /// </summary>
     [HttpGet("{movieId}/similar")]
-    public async Task<IActionResult> GetSimilarMovies(Guid movieId)
+    public async Task<IActionResult> GetSimilarMovies(Guid movieId, [FromQuery] int limit = 6)
     {
-        var result = await _getSimilarMoviesUseCase.ExecuteAsync(movieId, HttpContext.RequestAborted);
+        limit = Math.Clamp(limit, 1, 20);
+        var result = await _getSimilarMoviesUseCase.ExecuteAsync(movieId, limit, HttpContext.RequestAborted);
         return Ok(result);
     }
 

@@ -41,9 +41,9 @@ public class GetSimilarMoviesUseCase
         _logger = logger;
     }
 
-    public async Task<BaseResponse<List<ResPublicMovieListDto>>> ExecuteAsync(Guid movieId, CancellationToken cancellationToken)
+    public async Task<BaseResponse<List<ResPublicMovieListDto>>> ExecuteAsync(Guid movieId, int limit, CancellationToken cancellationToken)
     {
-        var cacheKey = $"movies:similar:{movieId}";
+        var cacheKey = $"movies:similar:{movieId}:{limit}";
         var cached = await _cacheService.GetAsync<BaseResponse<List<ResPublicMovieListDto>>>(cacheKey);
         if (cached != null)
         {
@@ -78,7 +78,7 @@ public class GetSimilarMoviesUseCase
             var client = _httpClientFactory.CreateClient();
             client.Timeout = TimeSpan.FromSeconds(5);
 
-            var reqBody = new AiRecommendRequest { UserText = userText, TopK = 12 };
+            var reqBody = new AiRecommendRequest { UserText = userText, TopK = limit + 4 };
             var content = new StringContent(JsonSerializer.Serialize(reqBody), Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync($"{aiServiceUrl}/recommend", content, cancellationToken);
@@ -101,7 +101,7 @@ public class GetSimilarMoviesUseCase
                         .Select(id => candidates.FirstOrDefault(c => c.MovieId == id))
                         .Where(m => m != null)
                         .Cast<MovieInfoEntity>()
-                        .Take(6)
+                        .Take(limit)
                         .ToList();
                 }
             }
@@ -112,7 +112,7 @@ public class GetSimilarMoviesUseCase
         }
 
         // 3. Fallback: Database-based genre matching
-        if (similarMovies.Count < 6)
+        if (similarMovies.Count < limit)
         {
             var targetGenreIds = targetMovie.MovieGenreMovieInfoEntity
                 .Select(g => g.MovieGenreId)
@@ -131,19 +131,19 @@ public class GetSimilarMoviesUseCase
                 .OrderByDescending(x => x.MatchedGenreCount)
                 .ThenByDescending(x => x.Movie.EndedDate)
                 .Select(x => x.Movie)
-                .Take(6 - similarMovies.Count)
+                .Take(limit - similarMovies.Count)
                 .ToList();
 
             similarMovies.AddRange(dbSimilar);
         }
 
         // If we still don't have enough similar movies, grab random active movies as a final fallback
-        if (similarMovies.Count < 6)
+        if (similarMovies.Count < limit)
         {
             var currentSimilarIds = similarMovies.Select(m => m.MovieId).ToHashSet();
             var extraMovies = candidates
                 .Where(m => !currentSimilarIds.Contains(m.MovieId))
-                .Take(6 - similarMovies.Count)
+                .Take(limit - similarMovies.Count)
                 .ToList();
             similarMovies.AddRange(extraMovies);
         }

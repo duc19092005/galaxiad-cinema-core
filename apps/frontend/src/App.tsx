@@ -18,6 +18,7 @@ import ScheduleManagerPage from './features/schedule/ScheduleManagerPage';
 import TheaterManagerPage from './features/theater/TheaterManagerPage';
 import AdminPage from './features/admin/AdminPage';
 import MovieDetailPage from './features/booking/MovieDetailPage';
+import SimilarMoviesPage from './features/booking/SimilarMoviesPage';
 import BookingPage from './features/booking/BookingPage';
 import BookingSuccessPage from './features/booking/BookingSuccessPage';
 import BookingFailedPage from './features/booking/BookingFailedPage';
@@ -73,6 +74,7 @@ function AppRoutes() {
         <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><PageTransition><ScheduleManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie/:movieId" element={<PageTransition><MovieDetailPage /></PageTransition>} />
+        <Route path="/movie/:movieId/similar" element={<PageTransition><SimilarMoviesPage /></PageTransition>} />
         <Route path="/booking/:scheduleId" element={<PageTransition><BookingPage /></PageTransition>} />
         <Route path="/booking/success" element={<PageTransition><BookingSuccessPage /></PageTransition>} />
         <Route path="/booking/failed" element={<PageTransition><BookingFailedPage /></PageTransition>} />

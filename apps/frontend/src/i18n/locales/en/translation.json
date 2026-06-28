@@ -677,6 +677,12 @@
     "loadError": "Failed to load movie details. Please try again later.",
     "noSimilarMovies": "No similar movies found."
   },
+  "similarMovies": {
+    "vectorSimilarity": "Vector Similarity Search",
+    "basedOn": "Based on",
+    "resultsFound": "results found",
+    "searching": "Searching by vector similarity..."
+  },
   "movieComment": {
     "loadError": "Could not load comments at this time.",
     "enterContent": "Please enter your comment.",

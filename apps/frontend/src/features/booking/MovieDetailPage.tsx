@@ -382,7 +382,7 @@ const MovieDetailPage: React.FC = () => {
                                 <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
                                 <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
                             </div>
-                            <button onClick={() => navigate('/home')} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
+                            <button onClick={() => navigate(`/movie/${movieId}/similar`)} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
                                                                     {t('movieDetail.viewAll', 'View All')} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                             </button>
                         </div>
