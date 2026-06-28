@@ -382,13 +382,17 @@ const MovieDetailPage: React.FC = () => {
                                 <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
                                 <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
                             </div>
-                            <button onClick={() => navigate(`/movie/${movieId}/similar`)} className="text-[#ffb77f] font-semibold text-sm flex items-center gap-1 hover:underline bg-transparent border-none cursor-pointer">
-                                                                    {t('movieDetail.viewAll', 'View All')} <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                            <button
+                                onClick={() => navigate(`/movie/${movieId}/similar`)}
+                                className="group flex items-center gap-1 bg-transparent border-none cursor-pointer text-[#ffb77f] font-semibold text-sm"
+                            >
+                                <span className="group-hover:underline">{t('movieDetail.viewAll', 'View All')}</span>
+                                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                             </button>
                         </div>
                         {recommendedMovies.length > 0 ? (
                             <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth">
-                                {recommendedMovies.map((recMovie) => (
+                                {recommendedMovies.slice(0, 5).map((recMovie) => (
                                     <div
                                         key={recMovie.movieId}
                                         onClick={() => navigate(`/movie/${recMovie.movieId}`)}
@@ -405,12 +409,13 @@ const MovieDetailPage: React.FC = () => {
                                                 }}
                                             />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                                                                                <button className="bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold text-sm border-none cursor-pointer">                                                    {t('movieDetail.quickBook', 'Quick Book')}
+                                                <button className="bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold text-sm border-none cursor-pointer">
+                                                    {t('movieDetail.quickBook', 'Quick Book')}
                                                 </button>
                                             </div>
                                         </div>
                                         <h3 className="font-bold text-md text-white group-hover:text-[#ff8a00] transition-colors truncate">{recMovie.movieName}</h3>
-                                                                                <p className="text-xs text-[#ddc1ae] mt-1">{recMovie.movieCategoryInfos || t('movieDetail.movie', 'Movie')} • {recMovie.movieDuration} phút</p>
+                                        <p className="text-xs text-[#ddc1ae] mt-1">{recMovie.movieCategoryInfos || t('movieDetail.movie', 'Movie')} • {recMovie.movieDuration} phút</p>
                                     </div>
                                 ))}
                             </div>
