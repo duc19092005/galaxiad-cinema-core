@@ -17,13 +17,6 @@ public class LocalizationMiddleware
     {
         var localizationService = httpContext.RequestServices.GetRequiredService<ILocalizationService>();
 
-        // Only translate if language is not English (default)
-        if (localizationService.CurrentLanguage == "en")
-        {
-            await _next(httpContext);
-            return;
-        }
-
         // Capture the original response body
         var originalBodyStream = httpContext.Response.Body;
 
