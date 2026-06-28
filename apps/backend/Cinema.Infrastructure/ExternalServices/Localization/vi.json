@@ -107,6 +107,10 @@
         "Schedules is not found or it's has been deleted or Movie is Inactivated": "Không tìm thấy lịch chiếu hoặc lịch chiếu đã bị xóa hoặc phim không hoạt động",
         "Get Required Age Completed": "Lấy danh sách độ tuổi thành công",
         "Get cities list successfully": "Lấy danh sách thành phố thành công",
+        "Get movie comments successfully": "Lấy danh sách bình luận thành công",
+        "Get notifications successfully": "Lấy thông báo thành công",
+        "Get top rated movies successfully": "Lấy danh sách phim đánh giá cao thành công",
+        "Get trending movies successfully": "Lấy phim thịnh hành thành công",
         "Get showtimes successfully": "Lấy lịch chiếu thành công",
         "Get seat map successfully": "Lấy sơ đồ ghế thành công",
         "Get pricing successfully": "Lấy thông tin giá thành công",
@@ -313,6 +317,7 @@
         "Get schedule details successfully": "L?y chi ti?t l?ch chi?u th?nh c?ng.",
         "Get movies list successfully": "L?y danh s?ch phim th?nh c?ng.",
         "Get auditorium detail successfully": "L?y chi ti?t ph?ng chi?u th?nh c?ng.",
-        "Auditorium info not found for this schedule.": "Kh?ng t?m th?y th?ng tin ph?ng chi?u cho su?t chi?u n?y."
+        "Auditorium info not found for this schedule.": "Không tìm thấy thông tin phòng chiếu cho suất chiếu này.",
+        "Your account has not been assigned to any department yet.": "Tài khoản của bạn chưa được gán phòng ban nào."
     }
 }

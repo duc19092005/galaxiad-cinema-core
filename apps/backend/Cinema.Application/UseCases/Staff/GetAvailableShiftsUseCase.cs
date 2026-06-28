@@ -35,7 +35,7 @@ public class GetAvailableShiftsUseCase
             {
                 IsSuccess = true,
                 Data = new List<ResShiftTemplateDto>(),
-                Message = "Tài khoản của bạn chưa được gán phòng ban nào."
+                Message = "Your account has not been assigned to any department yet."
             };
         }
 

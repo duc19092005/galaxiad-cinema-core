@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -31,7 +31,7 @@ public class GetTrendingMoviesUseCase
         return new BaseResponse<List<ResTrendingMovieDto>>
         {
             IsSuccess = true,
-            Message = "Lay phim thinh hanh thanh cong.",
+            Message = "Get trending movies successfully.",
             Data = result
         };
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Comments;
@@ -22,9 +22,8 @@ public class GetMovieCommentsUseCase
         return new BaseResponse<ResMovieCommentsSummaryDto>
         {
             IsSuccess = true,
-            Message = "Lay danh sach binh luan thanh cong.",
+            Message = "Get movie comments successfully.",
             Data = summary
         };
     }
 }
-

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -29,7 +29,7 @@ public class GetTopRatedMoviesUseCase
         return new BaseResponse<List<ResTrendingMovieDto>>
         {
             IsSuccess = true,
-            Message = "Lay danh sach phim danh gia cao thanh cong.",
+            Message = "Get top rated movies successfully.",
             Data = result
         };
     }

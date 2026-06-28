@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -27,7 +27,7 @@ public class GetMyNotificationsUseCase
         return new BaseResponse<List<ResUserNotificationDto>>
         {
             IsSuccess = true,
-            Message = "Lay thong bao thanh cong.",
+            Message = "Get notifications successfully.",
             Data = notifications
         };
     }
