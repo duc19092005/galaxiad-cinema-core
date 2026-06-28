@@ -372,7 +372,16 @@ const ConditionCard: React.FC<{
                   <button
                     type="button"
                     key={pt.value}
-                    onClick={() => onUpdate({ promotionType: pt.value })}
+                    onClick={() => {
+                      let nextVal = cond.adjustmentValue;
+                      const nextIsPercent = pt.value === 'PercentDiscount' || pt.value === 'Surcharge';
+                      if (nextIsPercent && nextVal > 100) {
+                        nextVal = 10; // Sensible default like 10%
+                      } else if (!nextIsPercent && nextVal <= 100) {
+                        nextVal = 45000; // Sensible ticket price like 45k
+                      }
+                      onUpdate({ promotionType: pt.value, adjustmentValue: nextVal });
+                    }}
                     style={{
                       padding: '8px 10px', borderRadius: 8, cursor: 'pointer', textAlign: 'left',
                       border: `1px solid ${cond.promotionType === pt.value ? `${pt.color}60` : 'rgba(255,255,255,0.07)'}`,
@@ -394,11 +403,18 @@ const ConditionCard: React.FC<{
                 value={isPercent ? cond.adjustmentValue.toString() : cond.adjustmentValue.toLocaleString('vi-VN')}
                 onChange={(e) => {
                   const clean = e.target.value.replace(/[^\d]/g, '');
-                  onUpdate({ adjustmentValue: clean ? parseInt(clean, 10) : 0 });
+                  let val = clean ? parseInt(clean, 10) : 0;
+                  if (isPercent && val > 100) {
+                    val = 100;
+                  }
+                  onUpdate({ adjustmentValue: val });
                 }}
               />
               <span style={{ fontSize: 11, color: '#a1a1aa', textAlign: 'center' }}>
-                {isPercent ? `→ giảm ${cond.adjustmentValue}% trên giá gốc` : `→ ${formatVnd(cond.adjustmentValue)}`}
+                {cond.promotionType === 'PercentDiscount' ? `→ giảm ${cond.adjustmentValue}% trên giá gốc` :
+                 cond.promotionType === 'Surcharge' ? `→ phụ thu thêm ${cond.adjustmentValue}%` :
+                 cond.promotionType === 'FixedDiscount' ? `→ giảm ${formatVnd(cond.adjustmentValue)}` :
+                 `→ đồng giá ${formatVnd(cond.adjustmentValue)}`}
               </span>
             </FieldLabel>
           </div>
