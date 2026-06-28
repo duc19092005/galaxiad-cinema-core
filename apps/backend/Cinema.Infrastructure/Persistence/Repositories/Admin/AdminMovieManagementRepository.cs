@@ -52,7 +52,7 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 Director = x.Director,
                 Actors = x.Actors,
                 MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-                MovieManagerName = x.MovieManager != null ? x.MovieManager.UserName : "ChÆ°a cÃ³"
+                MovieManagerName = x.MovieManager != null ? x.MovieManager.UserName : "Chưa có"
             })
             .AsNoTracking()
             .ToListAsync();
@@ -93,7 +93,7 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 Director = m.Director,
                 Actors = m.Actors,
                 MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-                MovieManagerName = m.MovieManager != null ? m.MovieManager.UserName : "ChÆ°a cÃ³"
+                MovieManagerName = m.MovieManager != null ? m.MovieManager.UserName : "Chưa có"
             })
             .FirstOrDefaultAsync();
     }

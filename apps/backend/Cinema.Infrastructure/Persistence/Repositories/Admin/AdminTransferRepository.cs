@@ -41,8 +41,8 @@ public class AdminTransferRepository : IAdminTransferRepository
             {
                 ItemId = c.CinemaId,
                 ItemName = c.CinemaName,
-                Description = $"Vá»‹ trÃ­: {c.CinemaLocation} (CSVC)",
-                ManagerName = c.FacilitiesManager != null ? c.FacilitiesManager.UserName ?? "ChÆ°a cÃ³ quáº£n lÃ½ CSVC" : "ChÆ°a cÃ³ quáº£n lÃ½ CSVC"
+                Description = $"Vị trí: {c.CinemaLocation} (CSVC)",
+                ManagerName = c.FacilitiesManager != null ? c.FacilitiesManager.UserName ?? "Chưa có quản lý CSVC" : "Chưa có quản lý CSVC"
             }).ToListAsync();
         }
 
@@ -53,8 +53,8 @@ public class AdminTransferRepository : IAdminTransferRepository
         {
             ItemId = c.CinemaId,
             ItemName = c.CinemaName,
-            Description = $"Vá»‹ trÃ­: {c.CinemaLocation} (Váº­n hÃ nh)",
-            ManagerName = c.TheaterManager != null ? c.TheaterManager.UserName ?? "ChÆ°a cÃ³ quáº£n lÃ½ váº­n hÃ nh" : "ChÆ°a cÃ³ quáº£n lÃ½ váº­n hÃ nh"
+            Description = $"Vị trí: {c.CinemaLocation} (Vận hành)",
+            ManagerName = c.TheaterManager != null ? c.TheaterManager.UserName ?? "Chưa có quản lý vận hành" : "Chưa có quản lý vận hành"
         }).ToListAsync();
     }
 
@@ -68,8 +68,8 @@ public class AdminTransferRepository : IAdminTransferRepository
         {
             ItemId = m.MovieId,
             ItemName = m.MovieName,
-            Description = $"Äáº¡o diá»…n: {m.Director}",
-            ManagerName = m.MovieManager != null ? m.MovieManager.UserName ?? "ChÆ°a cÃ³ quáº£n lÃ½" : "ChÆ°a cÃ³ quáº£n lÃ½"
+            Description = $"Đạo diễn: {m.Director}",
+            ManagerName = m.MovieManager != null ? m.MovieManager.UserName ?? "Chưa có quản lý" : "Chưa có quản lý"
         }).ToListAsync();
     }
 }

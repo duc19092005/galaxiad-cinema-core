@@ -63,7 +63,7 @@ public class UpdateDepartmentUseCase
             {
                 department.IsActive = request.IsActive.Value;
                 
-                // Äá»“ng bá»™ hÃ³a tráº¡ng thÃ¡i tÃ i khoáº£n dÃ¹ng chung
+                // Đồng bộ hóa trạng thái tài khoản dùng chung
                 if (department.SharedUserInfoEntity != null)
                 {
                     department.SharedUserInfoEntity.AccountStatus = request.IsActive.Value 
