@@ -263,12 +263,22 @@ body {
 .sidebar-nav-item.active {
   background: var(--accent-soft);
   color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 .sidebar-nav-item svg {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-nav-item:hover svg {
+  transform: scale(1.1);
+}
+
+.sidebar-nav-item.active svg {
+  filter: drop-shadow(0 0 4px var(--accent));
 }
 
 .sidebar-section-label {
@@ -672,6 +682,93 @@ tr:hover td {
 
 .animate-in {
   animation: fadeIn 0.4s ease-out forwards;
+}
+
+/* ============================================
+   TAB CONTENT TRANSITION
+   ============================================ */
+@keyframes tabSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.995);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes tabFadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
+}
+
+.tab-content-enter {
+  animation: tabSlideIn 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  will-change: transform, opacity;
+  isolation: isolate;
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel-slide-in {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.overlay-fade-in {
+  animation: fadeInOverlay 0.25s ease-out forwards;
+}
+
+@keyframes stepSlideLeft {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes stepSlideRight {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes aiPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.08); }
+}
+
+.step-forward {
+  animation: stepSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.step-backward {
+  animation: stepSlideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.ai-pulse {
+  animation: aiPulse 2s ease-in-out infinite;
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg,
+    var(--bg-elevated) 25%,
+    var(--bg-hover) 50%,
+    var(--bg-elevated) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
 }
 
 @keyframes pulse-dot {

@@ -410,7 +410,15 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
 
     return (
         <div
-            className="flex-1 overflow-auto custom-scrollbar relative select-none bg-slate-50 dark:bg-slate-900"
+            className="flex-1 overflow-auto custom-scrollbar relative select-none"
+            style={{
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%)',
+                backdropFilter: 'blur(16px) saturate(1.2)',
+                WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04)',
+                borderRadius: 'var(--radius-lg)',
+            }}
             ref={containerRef}
             onDragOver={(e) => {
                 e.preventDefault();
@@ -419,8 +427,8 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
         >
             <div className="flex min-w-max relative min-h-full" style={{ height: TOTAL_HEIGHT + 40 + TOP_OFFSET + BOTTOM_OFFSET }}>
                 {/* Time Ruler */}
-                <div className="w-12 sm:w-16 flex-shrink-0 sticky left-0 z-30 transition-colors duration-300 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800/60">
-                    <div className="h-10 sticky top-0 z-40 transition-colors duration-300 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-800/60"></div>
+                <div className="w-12 sm:w-16 flex-shrink-0 sticky left-0 z-30 transition-colors duration-300 bg-cinema-bg/95 border-r border-cinema-border backdrop-blur-md">
+                    <div className="h-10 sticky top-0 z-40 transition-colors duration-300 bg-cinema-surface/95 border-b border-cinema-border"></div>
                     {Array.from({ length: TOTAL_HOURS + 1 }).map((_, i) => {
                         const rawHour = START_HOUR + i;
                         const displayHour = rawHour % 24;
@@ -429,15 +437,15 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                         return (
                             <div
                                 key={i}
-                                className={`absolute w-full text-right pr-2 text-xs transition-colors duration-300 border-t border-slate-200 dark:border-slate-800/60 ${isPastMidnight ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-500 dark:text-white/60'}`}
+                                className={`absolute w-full text-right pr-2 text-xs transition-colors duration-300 border-t border-cinema-border/50 ${isPastMidnight ? 'text-indigo-400' : 'text-cinema-text-muted'}`}
                                 style={{ top: i * 60 * PIXELS_PER_MIN + 40 + TOP_OFFSET, height: 60 * PIXELS_PER_MIN }}
                             >
-                                <span className="-translate-y-2 block bg-slate-50 dark:bg-slate-900 px-1 inline-block">{label}</span>
+                                <span className="-translate-y-2 block bg-cinema-bg px-1 inline-block text-cinema-text-muted">{label}</span>
                             </div>
                         );
                     })}
                 </div>
-
+ 
                 {/* Days Columns — width increased to 300px for comfortable scheduling */}
                 {activeAuditorium && weekDays.map((dateObj) => {
                     const aud = activeAuditorium;
@@ -446,57 +454,64 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                     const columnId = `${aud.id}-${dateKey}`;
                     const isToday = dateKey === todayKey;
                     const isPastColumn = dateKey < todayKey;
-
+ 
                     const schedule = scheduleData.data.find(d => d.auditoriumId === aud.id);
                     const allSlots = schedule ? schedule.slots : [];
                     const slots = allSlots.filter(s => getLogicalDateKey(s.start) === dateKey);
-
+ 
                     return (
                         <div
                             key={columnId}
-                            className={`min-w-[200px] sm:min-w-[260px] lg:min-w-[300px] flex-1 relative group transition-colors duration-300 border-r border-slate-200 dark:border-slate-800/60 ${
+                            className={`min-w-[200px] sm:min-w-[260px] lg:min-w-[300px] flex-1 relative group transition-colors duration-300 border-r border-cinema-border ${
                                 isPastColumn
-                                    ? 'bg-slate-100/70 dark:bg-slate-950/80'
+                                    ? 'bg-black/20 dark:bg-black/45'
                                     : isToday
-                                        ? 'bg-blue-50/30 dark:bg-blue-950/20'
-                                        : 'bg-white dark:bg-slate-950/50'
+                                        ? 'bg-cinema-accent/5'
+                                        : 'bg-transparent'
                             }`}
                             onDragOver={(e) => handleDragOver(e, aud.id, dateObj)}
                             onDrop={(e) => handleDrop(e, aud.id)}
                             onDragLeave={handleDragLeave}
                         >
                             {/* Header */}
-                            <div className={`h-10 flex items-center justify-center font-bold text-sm sticky top-0 z-10 px-2 text-center transition-colors duration-300 border-b border-slate-200 dark:border-slate-800/60 ${
+                            <div className={`h-10 flex items-center justify-center font-bold text-sm sticky top-0 z-10 px-2 text-center transition-colors duration-300 border-b border-cinema-border backdrop-blur-md ${
                                 isToday
-                                    ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                                    ? 'bg-cinema-accent/20 text-cinema-accent font-black'
                                     : isPastColumn
-                                        ? 'bg-slate-200/70 dark:bg-slate-800/70 text-slate-400 dark:text-slate-500'
-                                        : 'bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-white/90'
+                                        ? 'bg-cinema-bg/85 text-cinema-text-muted opacity-60'
+                                        : 'bg-cinema-surface/85 text-cinema-text'
                             }`}>
                                 {dateString}
-                                {isToday && <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider bg-blue-500 text-white px-1.5 py-0.5 rounded-full">TODAY</span>}
+                                {isToday && <span className="ml-1.5 text-[9px] font-black uppercase tracking-wider bg-cinema-accent text-white px-1.5 py-0.5 rounded-full">TODAY</span>}
                             </div>
-
+ 
                             {/* Past-column dimming overlay */}
                             {isPastColumn && (
-                                <div className="absolute inset-0 top-10 bg-slate-200/10 dark:bg-slate-900/20 pointer-events-none z-[1]" />
+                                <div className="absolute inset-0 top-10 bg-black/10 dark:bg-black/20 pointer-events-none z-[1]" />
                             )}
-
+ 
                             {/* Grid Content */}
                             <div className="relative min-h-full" style={{ height: TOTAL_HEIGHT + TOP_OFFSET + BOTTOM_OFFSET }}>
                                 {/* Grid hour lines */}
                                 {Array.from({ length: TOTAL_HOURS }).map((_, i) => {
-                                    const rawHour = START_HOUR + i;
-                                    const isPastMidnight = rawHour >= 24;
+                                    const hourTop = i * 60 * PIXELS_PER_MIN + TOP_OFFSET;
+                                    const halfHourTop = hourTop + 30 * PIXELS_PER_MIN;
                                     return (
-                                        <div
-                                            key={i}
-                                            className={`absolute w-full border-t border-dashed pointer-events-none ${isPastMidnight ? 'border-indigo-200/50 dark:border-indigo-900/30' : 'border-slate-100 dark:border-slate-800/60/50'}`}
-                                            style={{ top: i * 60 * PIXELS_PER_MIN + TOP_OFFSET, height: 60 * PIXELS_PER_MIN }}
-                                        />
+                                        <React.Fragment key={i}>
+                                            {/* Hourly solid line */}
+                                            <div
+                                                className="absolute left-0 right-0 border-t border-solid pointer-events-none border-cinema-border/60"
+                                                style={{ top: hourTop }}
+                                            />
+                                            {/* Half-hourly dashed line */}
+                                            <div
+                                                className="absolute left-0 right-0 border-t border-dashed pointer-events-none border-cinema-border/20"
+                                                style={{ top: halfHourTop }}
+                                            />
+                                        </React.Fragment>
                                     );
                                 })}
-
+ 
                                 {/* Midnight divider line */}
                                 {(() => {
                                     const midnightPixel = (24 - START_HOUR) * 60 * PIXELS_PER_MIN + TOP_OFFSET;
@@ -505,13 +520,13 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                                             className="absolute left-0 right-0 border-t-2 border-dashed border-indigo-400/40 dark:border-indigo-500/20 pointer-events-none z-[2]"
                                             style={{ top: midnightPixel }}
                                         >
-                                            <span className="absolute right-1 -top-3 text-[10px] font-semibold text-indigo-400 dark:text-indigo-500 bg-white dark:bg-slate-950 px-1 rounded">
+                                            <span className="absolute right-1 -top-3 text-[10px] font-semibold text-indigo-400 dark:text-indigo-500 bg-cinema-surface px-1 rounded border border-cinema-border/50">
                                                 midnight
                                             </span>
                                         </div>
                                     );
                                 })()}
-
+ 
                                 {/* ─── CURRENT TIME INDICATOR (today only, UTC+7) ─── */}
                                 {isToday && nowPixel && nowPixel.dateKey === dateKey && (
                                     <div
@@ -519,11 +534,11 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                                         style={{ top: nowPixel.pixel + TOP_OFFSET }}
                                     >
                                         {/* Line */}
-                                        <div className="absolute left-0 right-0 border-t-2 border-red-500 dark:border-red-400" />
+                                        <div className="absolute left-0 right-0 border-t-2 border-red-500" />
                                         {/* Dot */}
-                                        <div className="absolute left-0 w-2.5 h-2.5 rounded-full bg-red-500 dark:bg-red-400 -translate-y-[5px] -translate-x-1 shadow-lg shadow-red-500/40" />
+                                        <div className="absolute left-0 w-2.5 h-2.5 rounded-full bg-red-500 -translate-y-[5px] -translate-x-1 shadow-lg shadow-red-500/40" />
                                         {/* Label */}
-                                        <span className="absolute left-4 -top-3 text-[9px] font-black text-red-500 dark:text-red-400 bg-blue-50 dark:bg-blue-950 px-1 rounded tracking-wider uppercase">
+                                        <span className="absolute left-4 -top-3 text-[9px] font-black text-red-500 bg-cinema-surface px-1.5 py-0.5 rounded tracking-wider uppercase border border-cinema-border/50">
                                             NOW
                                         </span>
                                     </div>

@@ -21,6 +21,7 @@ import { theaterShiftApi } from '../../../api/theaterShiftApi';
 import { facilitiesApi } from '../../../api/facilitiesApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
 import type { PayrollDto, ShiftRegistrationDto, ShiftTemplateDto, StaffProfileDto, ShiftScheduleDto } from '../../../types/shift.types';
+import { useTranslation } from 'react-i18next';
 
 const statusFilters = ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'] as const;
 
@@ -93,9 +94,9 @@ const addHoursToTime = (timeStr: string, hours: number): string => {
 interface EmployeesShiftWorkspaceProps {
   cinemaId: string | null;
 }
-
 const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinemaId }) => {
   const [activeTab, setActiveTab] = useState<'management' | 'scheduling'>('management');
+  const { t } = useTranslation();
 
   // General State
   const [staff, setStaff] = useState<StaffProfileDto[]>([]);
@@ -992,7 +993,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                               <span className="badge badge-default" style={{ fontSize: 10 }}>{s.roleName}</span>
                               {s.deletionStatus !== 'Active' && (
                                 <span className={statusBadgeClass(s.deletionStatus)}>
-                                  {s.deletionStatus === 'PendingDeletion' ? 'Yêu cầu hủy (Chờ duyệt)' : s.deletionStatus}
+                                  {s.deletionStatus === 'PendingDeletion' ? t('adminShiftApproval.tableStatusPending') : s.deletionStatus}
                                 </span>
                               )}
                             </div>

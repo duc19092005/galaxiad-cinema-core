@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Loader2, RefreshCw, Check, X, Calendar, AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { adminShiftApi } from '../../../api/adminShiftApi';
 import type { PendingDeletionRequestDto } from '../../../types/shift.types';
 import { showSuccess, showError } from '../../../utils/ToastUtils';
 
 const AdminShiftApprovalSection: React.FC = () => {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState<PendingDeletionRequestDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -15,32 +17,33 @@ const AdminShiftApprovalSection: React.FC = () => {
       const res = await adminShiftApi.getPendingDeletionRequests();
       setRequests(res.data || []);
     } catch (error) {
-      showError('Không thể tải danh sách yêu cầu hủy ca.');
+      showError(t('adminShiftApproval.fetchError'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchRequests();
   }, [fetchRequests]);
 
   const handleAction = async (id: string, action: 'approve' | 'reject') => {
-    const actionLabel = action === 'approve' ? 'Duyệt hủy' : 'Từ chối';
-    if (!window.confirm(`Bạn có chắc muốn ${actionLabel} yêu cầu này?`)) return;
+    const actionLabel = action === 'approve' ? t('adminShiftApproval.approve') : t('adminShiftApproval.reject');
+    const confirmMessage = action === 'approve' ? t('adminShiftApproval.confirmApprove') : t('adminShiftApproval.confirmReject');
+    if (!window.confirm(confirmMessage)) return;
 
     setActionLoading(`${action}-${id}`);
     try {
       if (action === 'approve') {
         await adminShiftApi.approveDeletionRequest(id);
-        showSuccess('Đã duyệt yêu cầu hủy ca làm việc.');
+        showSuccess(t('adminShiftApproval.approveSuccess'));
       } else {
         await adminShiftApi.rejectDeletionRequest(id);
-        showSuccess('Đã từ chối yêu cầu hủy ca làm việc.');
+        showSuccess(t('adminShiftApproval.rejectSuccess'));
       }
       await fetchRequests();
     } catch (error) {
-      showError(`Thao tác ${actionLabel} thất bại.`);
+      showError(t('adminShiftApproval.actionFailed', { action: actionLabel }));
     } finally {
       setActionLoading(null);
     }
@@ -59,15 +62,15 @@ const AdminShiftApprovalSection: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: 'var(--text-primary)' }}>
-            Yêu cầu hủy lịch làm việc
+            {t('adminShiftApproval.title')}
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-            Danh sách yêu cầu hủy ca làm việc từ Quản lý các rạp chiếu (chỉ áp dụng đối với ca đã có nhân viên đăng ký).
+            {t('adminShiftApproval.description')}
           </p>
         </div>
         <button className="btn btn-secondary" onClick={fetchRequests} disabled={loading}>
           {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={16} />}
-          Làm mới
+          {t('adminShiftApproval.refresh')}
         </button>
       </div>
 
@@ -75,25 +78,25 @@ const AdminShiftApprovalSection: React.FC = () => {
         {loading ? (
           <div className="state-center" style={{ minHeight: 200 }}>
             <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>Đang tải yêu cầu...</p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 10 }}>{t('adminShiftApproval.loading')}</p>
           </div>
         ) : requests.length === 0 ? (
           <div className="state-center" style={{ minHeight: 200, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
             <Calendar size={32} style={{ color: 'var(--text-muted)', opacity: 0.5, marginBottom: 10 }} />
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>Không có yêu cầu hủy ca nào đang chờ duyệt.</p>
+            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 14 }}>{t('adminShiftApproval.noPendingRequests')}</p>
           </div>
         ) : (
           <div className="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Rạp & Phòng ban</th>
-                  <th>Ca làm việc</th>
-                  <th>Ngày làm việc</th>
-                  <th>Người yêu cầu</th>
-                  <th>Lý do hủy</th>
-                  <th>Ảnh hưởng</th>
-                  <th style={{ textAlign: 'right' }}>Thao tác</th>
+                  <th>{t('adminShiftApproval.tableTheater')}</th>
+                  <th>{t('adminShiftApproval.tableShift')}</th>
+                  <th>{t('adminShiftApproval.tableDate')}</th>
+                  <th>{t('adminShiftApproval.tableRequester')}</th>
+                  <th>{t('adminShiftApproval.tableReason')}</th>
+                  <th>{t('adminShiftApproval.tableImpact')}</th>
+                  <th style={{ textAlign: 'right' }}>{t('adminShiftApproval.tableActions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -132,7 +135,7 @@ const AdminShiftApprovalSection: React.FC = () => {
                         }}
                       >
                         <AlertTriangle size={11} />
-                        {r.registeredStaffCount} nhân viên
+                        {t('adminShiftApproval.staffCount', { count: r.registeredStaffCount })}
                       </span>
                     </td>
                     <td>
@@ -158,7 +161,7 @@ const AdminShiftApprovalSection: React.FC = () => {
                           ) : (
                             <Check size={13} />
                           )}
-                          Duyệt
+                          {t('adminShiftApproval.approve')}
                         </button>
                         <button
                           className="btn"
@@ -181,7 +184,7 @@ const AdminShiftApprovalSection: React.FC = () => {
                           ) : (
                             <X size={13} />
                           )}
-                          Từ chối
+                          {t('adminShiftApproval.reject')}
                         </button>
                       </div>
                     </td>

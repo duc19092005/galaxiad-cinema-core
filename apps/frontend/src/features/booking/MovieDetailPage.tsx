@@ -262,7 +262,19 @@ const MovieDetailPage: React.FC = () => {
                             className="w-full h-full object-cover object-center filter blur-[1px] brightness-[0.6] scale-105"
                             src={movie.movieBannerURL || movie.moviePosterURL}
                             onError={(e) => {
-                                (e.target as HTMLImageElement).src = movie.moviePosterURL || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                const target = e.currentTarget;
+                                target.onerror = null;
+                                const fallback = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                const poster = movie.moviePosterURL;
+                                if (poster && !target.src.endsWith(poster)) {
+                                    target.src = poster;
+                                    target.onerror = () => {
+                                        target.onerror = null;
+                                        target.src = fallback;
+                                    };
+                                } else {
+                                    target.src = fallback;
+                                }
                             }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
@@ -278,7 +290,8 @@ const MovieDetailPage: React.FC = () => {
                                     className="w-full h-full object-cover rounded-lg"
                                     src={movie.moviePosterURL}
                                     onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
                                     }}
                                 />
                             </div>
@@ -475,7 +488,8 @@ const MovieDetailPage: React.FC = () => {
                                                 alt={recMovie.movieName}
                                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                                 onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                                    e.currentTarget.onerror = null;
+                                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
                                                 }}
                                             />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">

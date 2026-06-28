@@ -31,7 +31,8 @@ public class GetAuditoriumByIdUseCase
         try
         {
             var userId = _userContextService.GetUserId();
-            var result = await _repository.GetAuditoriumByIdAsync(id, userId);
+            var isAdmin = _userContextService.IsInRole("Admin");
+            var result = await _repository.GetAuditoriumByIdAsync(id, userId, isAdmin);
 
             if (result == null)
             {

@@ -41,7 +41,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
     const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [availableCinemas, setAvailableCinemas] = useState<{ cinemaId: string; cinemaName: string }[]>([]);
-    const [aiPlannerOpen, setAiPlannerOpen] = useState(false);
+    const [aiPlannerOpen, setAiPlannerOpen] = useState(true);
 
     // App layout sidebar tabs
     const [activeTab, setActiveTab] = useState('schedule');
@@ -336,9 +336,11 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
             <>
               {/* Page Title + Controls */}
               <div style={{
-                padding: '20px 24px', background: 'var(--bg-surface)',
+                padding: isEmbedded ? '0 0 20px 0' : '20px 24px',
+                background: isEmbedded ? 'transparent' : 'var(--bg-surface)',
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                borderBottom: '1px solid var(--border-color)', flexShrink: 0,
+                borderBottom: isEmbedded ? 'none' : '1px solid var(--border-color)',
+                flexShrink: 0,
               }}>
                 <div>
                   <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px' }}>
@@ -412,18 +414,18 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <button
-                    onClick={() => setAiPlannerOpen(true)}
-                    className="btn-ghost"
+                    onClick={() => setAiPlannerOpen(!aiPlannerOpen)}
+                    className={aiPlannerOpen ? "btn btn-primary" : "btn-ghost"}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 8,
                       padding: '10px 14px', fontWeight: 700, fontSize: 12,
                       fontFamily: "'JetBrains Mono', monospace",
                       border: '1px solid rgba(255,138,0,0.35)',
-                      color: 'var(--accent)',
+                      color: aiPlannerOpen ? '#000' : 'var(--accent)',
                     }}
                   >
                     <Sparkles size={16} />
-                    AI Planner
+                    {aiPlannerOpen ? 'Close AI Planner' : 'AI Planner'}
                   </button>
                   <button
                     onClick={handleSaveSchedule}
@@ -443,14 +445,29 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
               </div>
 
               {/* Main Workspace */}
-              <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+              <div style={{
+                flex: 1,
+                display: 'flex',
+                overflow: 'hidden',
+                position: 'relative',
+                gap: isEmbedded ? 16 : 0,
+                padding: isEmbedded ? '4px 0' : 0
+              }}>
                 {/* == Movie Drawer == */}
-                <aside style={{
-                  width: 300, background: 'var(--bg-surface)',
-                  borderRight: '1px solid var(--border-color)', flexShrink: 0,
-                  display: 'flex', flexDirection: 'column', padding: 16, gap: 16,
-                  overflow: 'hidden',
-                }}>
+                <aside
+                  className={isEmbedded ? "glass-card animate-in" : ""}
+                  style={{
+                    width: 300,
+                    background: isEmbedded ? undefined : 'var(--bg-surface)',
+                    borderRight: isEmbedded ? undefined : '1px solid var(--border-color)',
+                    flexShrink: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: 16,
+                    gap: 16,
+                    overflow: 'hidden',
+                  }}
+                >
                   <div>
                     <h4 style={{
                       fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace",
@@ -496,17 +513,40 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                   </div>
                 </aside>
 
-                {/* == Calendar Content == */}
-                <TimelineGrid
-                  auditoriums={filteredAuditoriums}
-                  scheduleData={scheduleData}
-                  selectedDate={selectedDate}
-                  movies={moviesList}
-                  draggingMovie={draggingMovie}
-                  onAddSlot={handleAddSlot}
-                  onUpdateSlot={handleUpdateSlot}
-                  onMoveSlot={handleMoveSlot}
-                />
+                {/* == Calendar Content + TrashCan (positioned over grid) == */}
+                <div style={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', minWidth: 0 }}>
+                  <TimelineGrid
+                    auditoriums={filteredAuditoriums}
+                    scheduleData={scheduleData}
+                    selectedDate={selectedDate}
+                    movies={moviesList}
+                    draggingMovie={draggingMovie}
+                    onAddSlot={handleAddSlot}
+                    onUpdateSlot={handleUpdateSlot}
+                    onMoveSlot={handleMoveSlot}
+                  />
+                  {/* TrashCan floats over the timeline grid only */}
+                  <div style={{ position: 'absolute', bottom: 20, right: 20, zIndex: 20 }}>
+                    <TrashCan onDeleteSlot={handleDeleteSlot} />
+                  </div>
+                </div>
+
+                {/* == AI Planner (Inline) == */}
+                {aiPlannerOpen && (
+                  <AiShowtimePlannerPanel
+                    open={aiPlannerOpen}
+                    cinemaId={activeCinemaId}
+                    auditoriums={auditoriumsList}
+                    selectedAuditoriumId={selectedAuditoriumId}
+                    onClose={() => setAiPlannerOpen(false)}
+                    onApplied={() => {
+                      if (selectedAuditoriumId) {
+                        fetchSchedulesForAuditorium(selectedAuditoriumId);
+                      }
+                    }}
+                    isEmbedded={isEmbedded}
+                  />
+                )}
               </div>
 
               {/* Manual Add Modal */}
@@ -521,28 +561,13 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                   />
               )}
 
-              {/* TrashCan */}
-              <TrashCan onDeleteSlot={handleDeleteSlot} />
-
-              <AiShowtimePlannerPanel
-                open={aiPlannerOpen}
-                cinemaId={activeCinemaId}
-                auditoriums={auditoriumsList}
-                selectedAuditoriumId={selectedAuditoriumId}
-                onClose={() => setAiPlannerOpen(false)}
-                onApplied={() => {
-                  if (selectedAuditoriumId) {
-                    fetchSchedulesForAuditorium(selectedAuditoriumId);
-                  }
-                }}
-              />
             </>
         );
     };
 
     if (isEmbedded) {
         return (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+            <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
                 {renderWorkspace()}
             </div>
         );

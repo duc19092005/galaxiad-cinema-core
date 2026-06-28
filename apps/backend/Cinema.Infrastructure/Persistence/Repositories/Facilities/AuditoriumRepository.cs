@@ -30,6 +30,8 @@ public class AuditoriumRepository : IAuditoriumRepository
             {
                 AuditoriumId = x.AuditoriumId,
                 AuditoriumNumber = x.AuditoriumNumber,
+                CinemaName = x.CinemaInfoEntity.CinemaName,
+                TotalSeats = x.SeatsInfoEntity.Count(),
                 FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo
                 {
                     FormatId = y.MovieFormatInfoEntity.MovieFormatId,
@@ -47,14 +49,16 @@ public class AuditoriumRepository : IAuditoriumRepository
             .ToListAsync();
     }
 
-    public async Task<GetResAuditoriumDto?> GetAuditoriumByIdAsync(Guid id, Guid userId)
+    public async Task<GetResAuditoriumDto?> GetAuditoriumByIdAsync(Guid id, Guid userId, bool isAdmin)
     {
         return await _dbContext.Set<AuditoriumInfoEntities>()
-            .Where(x => x.AuditoriumId == id && x.CreatedByUserId == userId)
+            .Where(x => x.AuditoriumId == id && !x.IsDeleted && (isAdmin || x.CreatedByUserId == userId))
             .Select(x => new GetResAuditoriumDto
             {
                 AuditoriumId = x.AuditoriumId,
                 AuditoriumNumber = x.AuditoriumNumber,
+                CinemaName = x.CinemaInfoEntity.CinemaName,
+                TotalSeats = x.SeatsInfoEntity.Count(),
                 FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo
                 {
                     FormatId = y.MovieFormatInfoEntity.MovieFormatId,
@@ -80,6 +84,8 @@ public class AuditoriumRepository : IAuditoriumRepository
             {
                 AuditoriumId = x.AuditoriumId,
                 AuditoriumNumber = x.AuditoriumNumber,
+                CinemaName = x.CinemaInfoEntity.CinemaName,
+                TotalSeats = x.SeatsInfoEntity.Count(),
                 FormatInfos = x.AuditoriumFormatInfosList.Select(y => new BaseFormatInfo
                 {
                     FormatId = y.MovieFormatInfoEntity.MovieFormatId,

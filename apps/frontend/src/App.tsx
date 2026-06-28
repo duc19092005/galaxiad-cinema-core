@@ -69,6 +69,7 @@ function AppRoutes() {
         <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/theater-manager/:tab" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><PageTransition><ScheduleManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie/:movieId" element={<PageTransition><MovieDetailPage /></PageTransition>} />

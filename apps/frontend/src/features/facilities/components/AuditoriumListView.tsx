@@ -153,9 +153,9 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
               key={aud.auditoriumId}
               className={`card card-hover ${
                 isDark
-                  ? 'bg-gray-900 border-gray-800'
+                  ? 'bg-[#131316] border-[#2e2e38]'
                   : isModern
-                    ? 'bg-[#0f172b]/90 backdrop-blur-xl border-indigo-500/15'
+                    ? 'bg-[#0b1326]/95 backdrop-blur-xl border-indigo-500/15'
                     : 'bg-white border-gray-200'
               }`}
               style={{

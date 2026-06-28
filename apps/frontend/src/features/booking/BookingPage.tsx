@@ -55,21 +55,31 @@ const BookingPage: React.FC = () => {
 
         if (scheduleId) {
             fetchData();
+            let wsUrl = API_BASE_URL
+                ? `${API_BASE_URL}/ws/seat`
+                : 'https://apicinestartplus.runasp.net/ws/seat';
+            // Normalize double slashes if any (except the http:// or https:// protocol separator)
+            wsUrl = wsUrl.replace(/([^:]\/)\/+/g, "$1");
+
             const connection = new signalR.HubConnectionBuilder()
-                .withUrl(`${API_BASE_URL}/ws/seat`, { transport: signalR.HttpTransportType.ServerSentEvents })
+                .withUrl(wsUrl, {
+                    withCredentials: true
+                })
                 .withAutomaticReconnect()
                 .build();
 
             const startConnection = async () => {
                 try {
-                    await connection.start();
-                    await connection.invoke("JoinSchedule", scheduleId);
+                    // Register handlers BEFORE start
                     connection.on("OnSeatSelected", (seatId: string, userName: string) => {
                         setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
                     });
                     connection.on("OnSeatUnselected", (seatId: string) => {
                         setLockedSeats(prev => { const next = { ...prev }; delete next[seatId]; return next; });
                     });
+
+                    await connection.start();
+                    await connection.invoke("JoinSchedule", scheduleId);
                     setHubConnection(connection);
                 } catch (err) { console.error("SignalR Connection Error:", err); }
             };
@@ -237,6 +247,7 @@ const BookingPage: React.FC = () => {
     }
 
     const maxCol = Math.max(...(seatMap.seatMap?.map(s => s.colIndex) || [0])) + 1;
+    const maxRow = Math.max(...(seatMap.seatMap?.map(s => s.rowIndex) || [0])) + 1;
 
     return (
         <div className="min-h-screen bg-[#0A0A0A] text-[#e5e2e1] font-sans selection:bg-[#ff8a00] selection:text-black">
@@ -251,6 +262,7 @@ const BookingPage: React.FC = () => {
                 .seat-selected {
                     background-color: #ff8a00 !important;
                     color: #000 !important;
+                    border-color: #ff8a00 !important;
                     box-shadow: 0 0 15px rgba(255, 138, 0, 0.4);
                 }
                 .screen-curve {
@@ -310,6 +322,7 @@ const BookingPage: React.FC = () => {
                         <div style={{
                             display: 'grid',
                             gridTemplateColumns: `repeat(${maxCol}, minmax(0, 1fr))`,
+                            gridTemplateRows: `repeat(${maxRow}, minmax(0, 1fr))`,
                             gap: 'clamp(4px, 1.5vw, 8px)',
                             padding: 'clamp(8px, 2vw, 16px)',
                             borderRadius: 16,
@@ -328,14 +341,18 @@ const BookingPage: React.FC = () => {
                                         key={seat.seatId}
                                         disabled={seat.isBooked || !!isLockedByOther}
                                         onClick={() => toggleSeat(seat)}
-                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border-none ${
+                                        style={{
+                                            gridColumnStart: seat.colIndex + 1,
+                                            gridRowStart: seat.rowIndex + 1,
+                                        }}
+                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border ${
                                             seat.isBooked
-                                                ? 'bg-white/5 opacity-20 cursor-not-allowed text-zinc-600'
+                                                ? 'bg-zinc-900/50 text-zinc-700 border-zinc-800/40 opacity-40 cursor-not-allowed'
                                                 : isLockedByOther
-                                                ? 'bg-amber-500/10 text-[#e9c349] border border-[#e9c349]/30 cursor-not-allowed'
+                                                ? 'bg-red-500/20 text-[#ef4444] border-red-500/40 cursor-not-allowed'
                                                 : isSelected
                                                 ? 'seat-selected'
-                                                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer'
+                                                : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer border-zinc-700/50'
                                         }`}
                                         title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
                                     >
@@ -348,19 +365,19 @@ const BookingPage: React.FC = () => {
                         {/* Legend */}
                         <div className="flex flex-wrap justify-center gap-8 px-6 py-4 rounded-full glass-card">
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-zinc-800"></div>
+                                <div className="w-4 h-4 rounded-sm bg-zinc-800 border border-zinc-700/50"></div>
                                 <span className="text-xs text-[#ddc1ae]">Available</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-[#ff8a00] shadow-[0_0_8px_rgba(255,138,0,0.5)]"></div>
+                                <div className="w-4 h-4 rounded-sm bg-[#ff8a00] shadow-[0_0_8px_rgba(255,138,0,0.5)] border border-[#ff8a00]"></div>
                                 <span className="text-xs text-[#ddc1ae]">Selected</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-amber-500/20 border border-amber-500/40"></div>
-                                <span className="text-xs text-[#ddc1ae]">Locked</span>
+                                <div className="w-4 h-4 rounded-sm bg-red-500/20 border border-red-500/40"></div>
+                                <span className="text-xs text-[#ddc1ae]">Locked (by others)</span>
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className="w-4 h-4 rounded-sm bg-white/5 opacity-20"></div>
+                                <div className="w-4 h-4 rounded-sm bg-zinc-900/50 border border-zinc-800/40 opacity-40"></div>
                                 <span className="text-xs text-[#ddc1ae]">Occupied</span>
                             </div>
                         </div>

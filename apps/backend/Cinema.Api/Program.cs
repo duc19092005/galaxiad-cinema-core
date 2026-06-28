@@ -166,6 +166,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("web");
+app.UseWebSockets();
 
 app.UseLocalizationMiddleware();
 app.UseErrorMiddleware();

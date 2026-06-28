@@ -10,7 +10,7 @@ namespace Cinema.Application.Interfaces.Facilities;
 public interface IAuditoriumRepository
 {
     Task<List<GetResAuditoriumDto>> GetAllAuditoriumsAsync();
-    Task<GetResAuditoriumDto?> GetAuditoriumByIdAsync(Guid id, Guid userId);
+    Task<GetResAuditoriumDto?> GetAuditoriumByIdAsync(Guid id, Guid userId, bool isAdmin);
     Task<List<GetResAuditoriumDtoCinema>> GetAuditoriumsByCinemaIdAsync(Guid cinemaId);
     Task<bool> IsDuplicateAuditoriumNumberAsync(Guid? auditoriumId, string auditoriumNumber, Guid cinemaId);
     Task<AuditoriumInfoEntities?> GetAuditoriumEntityByIdAsync(Guid id);

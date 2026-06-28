@@ -2,7 +2,7 @@
 // Complete redesign with dark cinema theme
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { authApi } from '../../api/authApi';
@@ -32,7 +32,8 @@ const TheaterManagerPage: React.FC = () => {
   const { managedCinemas, activeCinemaId, activeCinemaName, setActiveCinemaId, loading: cinemaLoading } = useCinema();
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'employees' | 'schedule'>('dashboard');
+  const { tab } = useParams<{ tab?: string }>();
+  const activeTab = (tab || 'dashboard') as 'dashboard' | 'employees' | 'schedule';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -128,12 +129,16 @@ const TheaterManagerPage: React.FC = () => {
     }
     switch (activeTab) {
       case 'dashboard':
-        return <ManagementDashboard role="theater" />;
+        return (
+          <div className="animate-in">
+            <ManagementDashboard role="theater" />
+          </div>
+        );
       case 'employees':
         return <EmployeesShiftWorkspace cinemaId={activeCinemaId} />;
       case 'schedule':
         return (
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+          <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
             <ScheduleManagerPage isEmbedded={true} />
           </div>
         );
@@ -148,7 +153,7 @@ const TheaterManagerPage: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((open) => !open)}
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as 'dashboard' | 'employees' | 'schedule')}
+        onTabChange={(tab) => navigate(`/theater-manager/${tab}`)}
         sections={sidebarSections}
         role="Theater Manager"
         collapsibleDesktop

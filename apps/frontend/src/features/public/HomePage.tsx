@@ -387,7 +387,8 @@ const HomePage: React.FC = () => {
                       style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }}
                       loading={i === 0 ? 'eager' : 'lazy'}
                       onError={(event) => {
-                        (event.target as HTMLImageElement).src = PLACEHOLDER_POSTER;
+                        event.currentTarget.onerror = null;
+                        event.currentTarget.src = PLACEHOLDER_POSTER;
                       }}
                     />
                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 52%, rgba(0,0,0,0.08) 100%)' }} />
@@ -510,7 +511,7 @@ const HomePage: React.FC = () => {
                             alt={movie.movieName}
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                             loading="lazy"
-                            onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
+                            onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_POSTER; }}
                           />
                         </div>
                         <div style={{ padding: 16 }}>
@@ -650,7 +651,7 @@ const HomePage: React.FC = () => {
                           alt={movie.movieName}
                           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                           loading="lazy"
-                          onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
+                          onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_POSTER; }}
                         />
                       </div>
                       <div style={{ padding: 14 }}>
@@ -730,7 +731,7 @@ const HomePage: React.FC = () => {
                             alt={movie.movieName}
                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                             loading="lazy"
-                            onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
+                            onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_POSTER; }}
                           />
                         </div>
                         <div style={{ padding: 16 }}>

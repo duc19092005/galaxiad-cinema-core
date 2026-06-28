@@ -226,7 +226,7 @@ const AllMoviesPage: React.FC = () => {
                       alt={movie.movieName}
                       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       loading="lazy"
-                      onError={e => { (e.target as HTMLImageElement).src = PLACEHOLDER_POSTER; }}
+                      onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = PLACEHOLDER_POSTER; }}
                     />
                   </div>
                   <div style={{ padding: 16 }}>
