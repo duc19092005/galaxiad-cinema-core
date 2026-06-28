@@ -100,6 +100,11 @@ const toApiTime = (value?: string | null) => {
 
 const formatVnd = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}Đ`;
 
+const formatAdjustmentInput = (value: number, isPercent: boolean): string => {
+  if (isPercent) return value.toString();
+  return value.toLocaleString('vi-VN');
+};
+
 const getTypeLabel = (type: string) => promotionTypes.find((item) => item.value === type)?.label ?? type;
 const getTypeColor = (type: string) => promotionTypes.find((item) => item.value === type)?.color ?? '#fff';
 
@@ -272,8 +277,18 @@ const RuleCard: React.FC<{
                 {promotionTypes.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
               </select>
             </FieldLabel>
-            <FieldLabel label={rule.promotionType === 'PercentDiscount' || rule.promotionType === 'Surcharge' ? 'Giá trị (%)' : 'Giá trị (VND)'}>
-              <input type="number" min={0} className="input" value={rule.adjustmentValue} onChange={(e) => onUpdate({ adjustmentValue: Number(e.target.value) || 0 })} />
+            <FieldLabel label={rule.promotionType === 'PercentDiscount' || rule.promotionType === 'Surcharge' ? 'Giá trị (%)' : 'Giá trị (Đ)'}>
+              <input
+                type="text"
+                className="input"
+                value={formatAdjustmentInput(rule.adjustmentValue, rule.promotionType === 'PercentDiscount' || rule.promotionType === 'Surcharge')}
+                onChange={(e) => {
+                  const rawVal = e.target.value;
+                  const cleanVal = rawVal.replace(/[^\d]/g, '');
+                  const num = cleanVal ? parseInt(cleanVal, 10) : 0;
+                  onUpdate({ adjustmentValue: num });
+                }}
+              />
             </FieldLabel>
             <FieldLabel label="Độ ưu tiên">
               <input type="number" className="input" value={rule.priority} onChange={(e) => onUpdate({ priority: Number(e.target.value) || 0 })} />
