@@ -250,7 +250,11 @@
     "logoutWarning": "After logging out, you will need to log back in to continue using the service.",
     "cancel": "Cancel",
     "signedInAsLabel": "SIGNED IN AS",
-    "roleLabel": "Role:"
+    "roleLabel": "Role:",
+    "notifications": "Notifications",
+    "refresh": "Refresh",
+    "loadingNotifications": "Loading notifications...",
+    "noNewNotifications": "No new notifications."
   },
   "admin": {
     "panel": "Admin Panel",
@@ -1079,5 +1083,15 @@
     "support_msg": "If you were charged but didn't receive your tickets, please contact our support with the Order ID above. We'll resolve this as soon as possible.",
     "try_again": "Try Booking Again",
     "return_home": "Return to Home"
+  },
+  "notifications": {
+    "shiftApproved": "Shift approved",
+    "shiftRejected": "Shift rejected",
+    "shiftCancelled": "Shift cancelled",
+    "shiftAssigned": "Shift assigned",
+    "payrollProcessed": "Payroll processed",
+    "commentReply": "Someone replied to your comment",
+    "commentRejected": "Your comment has been removed",
+    "default": "Notification"
   }
 }

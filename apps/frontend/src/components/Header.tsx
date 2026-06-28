@@ -245,20 +245,20 @@ const Header: React.FC<HeaderProps> = ({
                       }}
                     >
                       <div className="px-4 py-3 border-b border-zinc-800 flex items-center justify-between">
-                        <p className="text-sm font-bold text-white m-0">Thong bao</p>
+                        <p className="text-sm font-bold text-white m-0">{t('header.notifications')}</p>
                         <button
                           onClick={fetchNotifications}
                           className="text-xs text-[#ffb77f] hover:text-[#ff8a00] bg-transparent border-none cursor-pointer font-semibold"
                         >
-                          Lam moi
+                          {t('header.refresh')}
                         </button>
                       </div>
 
                       <div className="max-h-[360px] overflow-y-auto">
                         {loadingNotifications ? (
-                          <div className="px-4 py-6 text-sm text-zinc-400">Dang tai thong bao...</div>
+                          <div className="px-4 py-6 text-sm text-zinc-400">{t('header.loadingNotifications')}</div>
                         ) : notifications.length === 0 ? (
-                          <div className="px-4 py-6 text-sm text-zinc-400">Chua co thong bao moi.</div>
+                          <div className="px-4 py-6 text-sm text-zinc-400">{t('header.noNewNotifications')}</div>
                         ) : (
                           notifications.map(notification => (
                             <button

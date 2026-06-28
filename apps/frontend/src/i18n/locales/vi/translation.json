@@ -249,7 +249,11 @@
     "logoutWarning": "Sau khi đăng xuất, bạn sẽ cần đăng nhập lại để tiếp tục sử dụng.",
     "cancel": "Hủy",
     "signedInAsLabel": "ĐÃ ĐĂNG NHẬP BỞI",
-    "roleLabel": "Vai trò:"
+    "roleLabel": "Vai Trò:",
+    "notifications": "Thông báo",
+    "refresh": "Làm mới",
+    "loadingNotifications": "Đang tải thông báo...",
+    "noNewNotifications": "Chưa có thông báo mới."
   },
   "admin": {
     "panel": "Trang Quản Trị",
@@ -1077,5 +1081,15 @@
     "support_msg": "Nếu bạn đã bị trừ tiền nhưng không nhận được vé, vui lòng liên hệ hỗ trợ của chúng tôi với Mã Đơn hàng ở trên. Chúng tôi sẽ giải quyết sớm nhất có thể.",
     "try_again": "Thử Đặt Lại",
     "return_home": "Về Trang Chủ"
+  },
+  "notifications": {
+    "shiftApproved": "Ca làm đã được phê duyệt",
+    "shiftRejected": "Ca làm đã bị từ chối",
+    "shiftCancelled": "Ca làm đã bị hủy",
+    "shiftAssigned": "Ca làm đã được gán",
+    "payrollProcessed": "Tiền lương đã được xử lý",
+    "commentReply": "Có người phản hồi bình luận của bạn",
+    "commentRejected": "Bình luận của bạn đã bị gỡ",
+    "default": "Thông báo"
   }
 }
