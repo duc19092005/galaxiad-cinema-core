@@ -20,67 +20,76 @@ public class LocalizationService : ILocalizationService
     private static readonly HashSet<string> SupportedLanguages = new() { "en", "vi", "ru" };
 
     // ──────────────────────────────────────────────
-    //  Translation data loaded from JSON
+    //  Translation data loaded from JSON (lazily initialized)
     // ──────────────────────────────────────────────
 
+    private static readonly Lazy<TranslationData> _translations = new(LoadFromJson);
+
     // Exact string: EN -> VI
-    private static readonly Dictionary<string, string> EnToViTranslations = new(StringComparer.OrdinalIgnoreCase);
-
+    private static Dictionary<string, string> EnToViTranslations => _translations.Value.EnToVi;
     // Exact string: EN -> RU
-    private static readonly Dictionary<string, string> EnToRuTranslations = new(StringComparer.OrdinalIgnoreCase);
-
+    private static Dictionary<string, string> EnToRuTranslations => _translations.Value.EnToRu;
     // Reverse: VI -> EN
-    private static readonly Dictionary<string, string> ViToEnTranslations = new(StringComparer.OrdinalIgnoreCase);
-
+    private static Dictionary<string, string> ViToEnTranslations => _translations.Value.ViToEn;
     // Reverse: RU -> EN
-    private static readonly Dictionary<string, string> RuToEnTranslations = new(StringComparer.OrdinalIgnoreCase);
-
+    private static Dictionary<string, string> RuToEnTranslations => _translations.Value.RuToEn;
     // Regex-based translations: (Pattern, Replacement) - EN patterns, localized replacement
-    private static readonly List<(Regex Pattern, string Replacement)> ViRegexTranslations = new();
-    private static readonly List<(Regex Pattern, string Replacement)> RuRegexTranslations = new();
-
+    private static List<(Regex Pattern, string Replacement)> ViRegexTranslations => _translations.Value.ViRegex;
+    private static List<(Regex Pattern, string Replacement)> RuRegexTranslations => _translations.Value.RuRegex;
     // Cross: VI -> RU
-    private static readonly Dictionary<string, string> ViToRuTranslations = new(StringComparer.OrdinalIgnoreCase);
-
+    private static Dictionary<string, string> ViToRuTranslations => _translations.Value.ViToRu;
     // Cross: RU -> VI
-    private static readonly Dictionary<string, string> RuToViTranslations = new(StringComparer.OrdinalIgnoreCase);
+    private static Dictionary<string, string> RuToViTranslations => _translations.Value.RuToVi;
 
-    static LocalizationService()
+    public LocalizationService(IHttpContextAccessor httpContextAccessor)
     {
-        LoadFromJson();
+        _httpContextAccessor = httpContextAccessor;
     }
 
-    private static void LoadFromJson()
+    private class TranslationData
     {
+        public Dictionary<string, string> EnToVi { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> EnToRu { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> ViToEn { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> RuToEn { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public List<(Regex Pattern, string Replacement)> ViRegex { get; } = new();
+        public List<(Regex Pattern, string Replacement)> RuRegex { get; } = new();
+        public Dictionary<string, string> ViToRu { get; } = new(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> RuToVi { get; } = new(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static TranslationData LoadFromJson()
+    {
+        var data = new TranslationData();
         var baseDir = FindBaseDirectory();
         if (baseDir == null)
         {
             Console.Error.WriteLine("[LocalizationService] Localization directory not found. Translations will be unavailable.");
-            return;
+            return data;
         }
 
         try
         {
             // Load exact translations: each file is { "exact": { "enKey": "translatedValue" }, "regex": [...] }
-            LoadLanguageFile(Path.Combine(baseDir, "vi.json"), EnToViTranslations, ViRegexTranslations);
-            LoadLanguageFile(Path.Combine(baseDir, "ru.json"), EnToRuTranslations, RuRegexTranslations);
+            LoadLanguageFile(Path.Combine(baseDir, "vi.json"), data.EnToVi, data.ViRegex);
+            LoadLanguageFile(Path.Combine(baseDir, "ru.json"), data.EnToRu, data.RuRegex);
 
             // Build reverse maps: translatedText -> English key
-            foreach (var kvp in EnToViTranslations)
-                if (!ViToEnTranslations.ContainsKey(kvp.Value))
-                    ViToEnTranslations[kvp.Value] = kvp.Key;
+            foreach (var kvp in data.EnToVi)
+                if (!data.ViToEn.ContainsKey(kvp.Value))
+                    data.ViToEn[kvp.Value] = kvp.Key;
 
-            foreach (var kvp in EnToRuTranslations)
-                if (!RuToEnTranslations.ContainsKey(kvp.Value))
-                    RuToEnTranslations[kvp.Value] = kvp.Key;
+            foreach (var kvp in data.EnToRu)
+                if (!data.RuToEn.ContainsKey(kvp.Value))
+                    data.RuToEn[kvp.Value] = kvp.Key;
 
             // Build cross maps: VI <-> RU  (common English key serves as bridge)
-            foreach (var kvp in EnToViTranslations)
+            foreach (var kvp in data.EnToVi)
             {
-                if (EnToRuTranslations.TryGetValue(kvp.Key, out var ruValue))
+                if (data.EnToRu.TryGetValue(kvp.Key, out var ruValue))
                 {
-                    ViToRuTranslations[kvp.Value] = ruValue;
-                    RuToViTranslations[ruValue] = kvp.Value;
+                    data.ViToRu[kvp.Value] = ruValue;
+                    data.RuToVi[ruValue] = kvp.Value;
                 }
             }
         }
@@ -88,6 +97,8 @@ public class LocalizationService : ILocalizationService
         {
             Console.Error.WriteLine($"[LocalizationService] Failed to load localization files: {ex.Message}");
         }
+
+        return data;
     }
 
     private static string? FindBaseDirectory()
@@ -97,6 +108,8 @@ public class LocalizationService : ILocalizationService
         [
             Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "ExternalServices", "Localization"),
             Path.Combine(Directory.GetCurrentDirectory(), "ExternalServices", "Localization"),
+            // Docker dotnet watch: CWD is in project dir (e.g. /src/Cinema.Api), files in Infrastructure project
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "Cinema.Infrastructure", "ExternalServices", "Localization"),
             // Docker: files are copied to output
             AppContext.BaseDirectory,
             Directory.GetCurrentDirectory(),
@@ -156,11 +169,6 @@ public class LocalizationService : ILocalizationService
         }
     }
 
-    public LocalizationService(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
-
     public string CurrentLanguage
     {
         get
@@ -174,29 +182,31 @@ public class LocalizationService : ILocalizationService
     {
         if (string.IsNullOrEmpty(key)) return key;
 
+        // Sanitize: trim trailing dots to support keys stored without dots
+        var sanitizedKey = key.TrimEnd('.');
         var lang = CurrentLanguage;
 
         // ─── Target: Vietnamese ───
         if (lang == "vi")
         {
             // Direct EN -> VI
-            if (EnToViTranslations.TryGetValue(key, out var viValue))
+            if (EnToViTranslations.TryGetValue(sanitizedKey, out var viValue))
                 return viValue;
 
             // RU -> VI (via EN as bridge)
-            if (RuToEnTranslations.TryGetValue(key, out var enViaRu) &&
+            if (RuToEnTranslations.TryGetValue(sanitizedKey, out var enViaRu) &&
                 EnToViTranslations.TryGetValue(enViaRu, out var viViaRu))
                 return viViaRu;
 
             // Direct VI -> VI (key is already VI, check reverse map to confirm it's a known VI string)
-            if (ViToEnTranslations.ContainsKey(key) || ViToRuTranslations.ContainsKey(key))
+            if (ViToEnTranslations.ContainsKey(sanitizedKey) || ViToRuTranslations.ContainsKey(sanitizedKey))
                 return key;
 
             // Regex (EN patterns since messages are EN keys)
             foreach (var (pattern, replacement) in ViRegexTranslations)
             {
-                if (pattern.IsMatch(key))
-                    return pattern.Replace(key, replacement);
+                if (pattern.IsMatch(sanitizedKey))
+                    return pattern.Replace(sanitizedKey, replacement);
             }
 
             return key;
@@ -206,23 +216,23 @@ public class LocalizationService : ILocalizationService
         if (lang == "ru")
         {
             // Direct EN -> RU
-            if (EnToRuTranslations.TryGetValue(key, out var ruValue))
+            if (EnToRuTranslations.TryGetValue(sanitizedKey, out var ruValue))
                 return ruValue;
 
             // VI -> RU (via EN as bridge)
-            if (ViToEnTranslations.TryGetValue(key, out var enViaVi) &&
+            if (ViToEnTranslations.TryGetValue(sanitizedKey, out var enViaVi) &&
                 EnToRuTranslations.TryGetValue(enViaVi, out var ruViaEn))
                 return ruViaEn;
 
             // Direct RU -> RU (key is already RU)
-            if (RuToEnTranslations.ContainsKey(key) || RuToViTranslations.ContainsKey(key))
+            if (RuToEnTranslations.ContainsKey(sanitizedKey) || RuToViTranslations.ContainsKey(sanitizedKey))
                 return key;
 
             // Regex
             foreach (var (pattern, replacement) in RuRegexTranslations)
             {
-                if (pattern.IsMatch(key))
-                    return pattern.Replace(key, replacement);
+                if (pattern.IsMatch(sanitizedKey))
+                    return pattern.Replace(sanitizedKey, replacement);
             }
 
             return key;
@@ -230,19 +240,19 @@ public class LocalizationService : ILocalizationService
 
         // ─── Target: English ───
         // Direct EN
-        if (EnToViTranslations.ContainsKey(key) || EnToRuTranslations.ContainsKey(key))
+        if (EnToViTranslations.ContainsKey(sanitizedKey) || EnToRuTranslations.ContainsKey(sanitizedKey))
             return key;
 
         // VI -> EN
-        if (ViToEnTranslations.TryGetValue(key, out var enValue))
+        if (ViToEnTranslations.TryGetValue(sanitizedKey, out var enValue))
             return enValue;
 
         // RU -> EN
-        if (RuToEnTranslations.TryGetValue(key, out var enFromRu))
+        if (RuToEnTranslations.TryGetValue(sanitizedKey, out var enFromRu))
             return enFromRu;
 
         // Cross: VI -> RU -> EN (if somehow only RU has the translation)
-        if (ViToRuTranslations.ContainsKey(key) || RuToViTranslations.ContainsKey(key))
+        if (ViToRuTranslations.ContainsKey(sanitizedKey) || RuToViTranslations.ContainsKey(sanitizedKey))
             return key;
 
         // Regex

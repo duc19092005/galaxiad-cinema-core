@@ -481,7 +481,18 @@
     "aboutUs": "Về Chúng Tôi",
     "cookiePolicy": "Chính Sách Cookie",
     "safetyRules": "Nội Quy An Toàn",
-    "allCities": "Tất Cả Thành Phố"
+    "allCities": "Tất Cả Thành Phố",
+    "systemWide": "Toàn Hệ Thống",
+    "localLabel": "Local",
+    "inCity": "Ở {{city}}",
+    "noTrendingData": "Chưa có dữ liệu thịnh hành.",
+    "noTrendingDesc": "Dữ liệu sẽ xuất hiện khi có lượt xem, đánh giá hoặc vé thanh toán thành công.",
+    "noNowShowing": "Không có phim nào đang chiếu tại rạp này.",
+    "forYou": "✨ Dành Riêng Cho Bạn",
+    "personalizedRecs": "Gợi Ý Phim Cá Nhân Hóa",
+    "updatePreferences": "Cập nhật sở thích",
+    "noRecsYet": "Chưa có gợi ý. AI đang xử lý sở thích của bạn...",
+    "aiPick": "✨ AI Pick"
   },
   "allmovies": {
     "title": "Tất Cả Phim",

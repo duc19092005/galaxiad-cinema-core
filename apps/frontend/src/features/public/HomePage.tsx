@@ -314,7 +314,7 @@ const HomePage: React.FC = () => {
                 transition: 'all 0.2s',
               }}
             >
-              Toàn Hệ Thống
+              {t('home.systemWide')}
             </button>
             <button
               onClick={() => setTrendingTab('local')}
@@ -330,7 +330,7 @@ const HomePage: React.FC = () => {
                 transition: 'all 0.2s',
               }}
             >
-              {selectedCity ? `In ${selectedCity}` : 'Local'}
+              {selectedCity ? t('home.inCity', { city: selectedCity }) : t('home.localLabel')}
             </button>
           </div>
         </div>
@@ -363,8 +363,8 @@ const HomePage: React.FC = () => {
             <div className="glass-card" style={{ minHeight: 180, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
               <div>
                 <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
-                <p style={{ color: 'white', fontWeight: 700, margin: 0 }}>Chưa có dữ liệu thịnh hành.</p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>Dữ liệu sẽ xuất hiện khi có lượt xem, đánh giá hoặc vé thanh toán thành công.</p>
+                <p style={{ color: 'white', fontWeight: 700, margin: 0 }}>{t('home.noTrendingData')}</p>
+                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>{t('home.noTrendingDesc')}</p>
               </div>
             </div>
           ) : (
@@ -412,7 +412,7 @@ const HomePage: React.FC = () => {
                         className="btn-primary cta-glow"
                         style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer' }}
                       >
-                        <Ticket size={14} /> Đặt Vé Ngay
+                        <Ticket size={14} /> {t('home.bookNowBadge')}
                       </button>
                     </div>
                   </div>
@@ -452,7 +452,7 @@ const HomePage: React.FC = () => {
             {loading ? (
               <div className="state-center" style={{ minHeight: 300 }}>
                 <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-                <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-16)' }}>Loading movies...</p>
+                <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-16)' }}>{t('common.loading', 'Loading movies...')}</p>
               </div>
             ) : error ? (
               <div className="state-center" style={{ minHeight: 300 }}>
@@ -461,7 +461,7 @@ const HomePage: React.FC = () => {
               </div>
             ) : nowShowing.length === 0 ? (
               <div className="glass-card" style={{ padding: 48, borderRadius: 16, textAlign: 'center', color: 'var(--text-secondary)' }}>
-                No movies currently showing at this theater.
+                {t('home.noNowShowing')}
               </div>
             ) : (
               <div>
@@ -572,10 +572,10 @@ const HomePage: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 32px)', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-                    ✨ Dành Riêng Cho Bạn
+                    ✨ {t('home.forYou')}
                   </span>
                   <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
-                    Gợi Ý Phim Cá Nhân Hóa
+                    {t('home.personalizedRecs')}
                   </h2>
                 </div>
                 <button
@@ -591,7 +591,7 @@ const HomePage: React.FC = () => {
                   onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,138,0,0.15)'; }}
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,138,0,0.08)'; }}
                 >
-                  Cập nhật sở thích
+                  {t('home.updatePreferences')}
                 </button>
               </div>
 
@@ -608,7 +608,7 @@ const HomePage: React.FC = () => {
               ) : recommendations.length === 0 ? (
                 <div className="glass-card" style={{ padding: '36px 24px', borderRadius: 16, textAlign: 'center' }}>
                   <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
-                  <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>Chưa có gợi ý. AI đang xử lý sở thích của bạn...</p>
+                  <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: 14 }}>{t('home.noRecsYet')}</p>
                 </div>
               ) : (
                 <div
@@ -642,7 +642,7 @@ const HomePage: React.FC = () => {
                         fontSize: 10, fontWeight: 800, color: 'black',
                         boxShadow: '0 2px 8px rgba(255,138,0,0.4)',
                       }}>
-                        ✨ AI Pick
+                        ✨ {t('home.aiPick')}
                       </div>
                       <div style={{ position: 'relative', width: '100%', paddingTop: '140%' }}>
                         <img
@@ -737,7 +737,7 @@ const HomePage: React.FC = () => {
                           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{movie.movieName}</h3>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'flex-start' }}>
                             <span style={{ padding: '2px 10px', borderRadius: 'var(--radius-full)', fontSize: 11, fontWeight: 700, background: 'var(--bg-surface)', color: 'var(--accent)', display: 'inline-block' }}>
-                              Coming Soon
+                              {t('home.comingSoon')}
                             </span>
                             {movie.startedDate && (
                               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>

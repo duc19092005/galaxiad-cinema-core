@@ -482,7 +482,18 @@
     "aboutUs": "About Us",
     "cookiePolicy": "Cookie Policy",
     "safetyRules": "Safety Rules",
-    "allCities": "All Cities"
+    "allCities": "All Cities",
+    "systemWide": "System Wide",
+    "localLabel": "Local",
+    "inCity": "In {{city}}",
+    "noTrendingData": "No trending data available.",
+    "noTrendingDesc": "Data will appear when there are views, ratings or successful ticket payments.",
+    "noNowShowing": "No movies currently showing at this theater.",
+    "forYou": "✨ For You",
+    "personalizedRecs": "Personalized Movie Suggestions",
+    "updatePreferences": "Update Preferences",
+    "noRecsYet": "No suggestions yet. AI is processing your preferences...",
+    "aiPick": "✨ AI Pick"
   },
   "allmovies": {
     "title": "All Movies",
