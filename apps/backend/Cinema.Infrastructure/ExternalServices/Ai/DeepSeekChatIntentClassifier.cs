@@ -55,6 +55,7 @@ public class DeepSeekChatIntentClassifier : IChatIntentClassifier
                 intent != ChatbotConstants.Intents.GetShowtimes &&
                 intent != ChatbotConstants.Intents.GetMyBookings &&
                 intent != ChatbotConstants.Intents.GetCinemaStatistics &&
+                intent != ChatbotConstants.Intents.GetShowtimeRecommendations &&
                 intent != ChatbotConstants.Intents.GetSystemAuditLogs)
             {
                 intent = ChatbotConstants.Intents.GeneralFAQ;

@@ -24,6 +24,7 @@ public static class ChatbotBootstrap
         services.AddScoped<IChatTool, GetShowtimesTool>();
         services.AddScoped<IChatTool, GetMyBookingsTool>();
         services.AddScoped<IChatTool, GetCinemaStatisticsTool>();
+        services.AddScoped<IChatTool, GetShowtimeRecommendationsTool>();
         services.AddScoped<IChatTool, GetSystemAuditLogsTool>();
 
         // Tool Registry

@@ -459,6 +459,48 @@ public static class Messages
     }
 
     // =============================================================
+    //  SHOWTIME RECOMMENDATION
+    // =============================================================
+    public static class ShowtimeRecommendation
+    {
+        public const string DateRangeInvalid = "The recommendation date range is invalid.";
+        public const string NoActiveAuditorium = "No active auditorium is available for recommendations.";
+        public const string NoActiveMovie = "No active movie is available for recommendations.";
+        public const string NoCinemaPermission = "You do not have permission to manage this cinema.";
+        public const string BatchNotFound = "Recommendation batch not found.";
+        public const string RecommendationNotFound = "Recommendation not found.";
+        public const string GenerateSuccess = "Showtime recommendations generated successfully.";
+        public const string PreviewSuccess = "Showtime recommendation preview generated successfully.";
+        public const string ApplySuccess = "Showtime recommendations applied successfully.";
+        public const string DismissSuccess = "Showtime recommendation dismissed successfully.";
+        public const string HistorySuccess = "Showtime recommendation history retrieved successfully.";
+        public const string ApplyValidationFailed = "Some recommendations failed validation. Preview the result or enable apply valid only.";
+        public const string ReadyToApply = "Ready to apply.";
+        public const string NoSelectedRecommendationCanApply = "No selected recommendation can be applied safely.";
+        public const string SuggestedShowtimeInPast = "The suggested showtime is in the past.";
+        public const string MovieOutsideActivePeriod = "The movie is outside its active screening period.";
+        public const string ExistingShowtimeConflict = "This suggestion conflicts with an existing showtime or cleanup buffer.";
+        public const string SelectedSuggestionConflict = "This suggestion conflicts with another selected suggestion.";
+        public const string RecentReleaseFreshness = "Recent release freshness can lift demand.";
+        public const string EligibleActiveMovie = "Eligible active movie with available scheduling window.";
+        public const string ExpectedDemandHigh = "Expected demand level is High.";
+        public const string ExpectedDemandMedium = "Expected demand level is Medium.";
+        public const string ExpectedDemandLow = "Expected demand level is Low.";
+        public const string HighExpectedImpact = "High expected occupancy during prime time.";
+        public const string ModerateExpectedImpact = "Moderate demand lift expected.";
+        public const string ChatbotCinemaRequired = "Please select a cinema before requesting showtime recommendations.";
+
+        public static string RecentTicketsSold(int count) => $"{count} tickets sold in the last 7 days.";
+        public static string TotalPaidTickets(int count) => $"{count} total paid tickets in recent history.";
+        public static string CustomerViews(int count) => $"{count} customer views indicate active interest.";
+        public static string StrongAudienceRating(decimal rating) => $"Strong audience rating: {rating:0.0}/5.";
+        public static string PrimeTimeScore(decimal score) => $"Prime-time score for this slot is {score:0}.";
+        public static string AuditoriumSupports(string auditoriumNumber, string formatName) => $"Auditorium {auditoriumNumber} supports {formatName}.";
+        public static string AppliedAuditDescription(int count) => $"Applied {count} showtime recommendation(s).";
+        public static string GeneratedAuditDescription(int count) => $"Generated {count} showtime recommendation(s).";
+    }
+
+    // =============================================================
     //  UTILITY ERRORS
     // =============================================================
     public static class Utility

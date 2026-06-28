@@ -89,6 +89,12 @@ public class CinemaDbContext : DbContext
     public DbSet<MovieCommentEntity> MovieCommentEntity { get; set; }
 
     public DbSet<MovieViewEntity> MovieViewEntity { get; set; }
+
+    public DbSet<ShowtimeRecommendationBatchEntity> ShowtimeRecommendationBatchEntity { get; set; }
+
+    public DbSet<ShowtimeRecommendationItemEntity> ShowtimeRecommendationItemEntity { get; set; }
+
+    public DbSet<ShowtimeRecommendationActionEntity> ShowtimeRecommendationActionEntity { get; set; }
     
     public DbSet<AuditoriumFormatInfos> AuditoriumFormatInfosEntity { get; set; }
     
@@ -187,6 +193,93 @@ public class CinemaDbContext : DbContext
             entity.HasOne(x => x.MovieInfoEntity)
                 .WithMany(x => x.MovieViewEntities)
                 .HasForeignKey(x => x.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ShowtimeRecommendationBatchEntity>(entity =>
+        {
+            entity.HasKey(x => x.BatchId);
+            entity.HasIndex(x => new { x.CinemaId, x.CreatedAt });
+            entity.HasIndex(x => x.RequestedByUserId);
+
+            entity.HasOne(x => x.CinemaInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.CinemaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.RequestedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.RequestedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AuditoriumInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.AuditoriumId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ShowtimeRecommendationItemEntity>(entity =>
+        {
+            entity.HasKey(x => x.RecommendationId);
+            entity.HasIndex(x => new { x.BatchId, x.Status });
+            entity.HasIndex(x => new { x.CinemaId, x.StartTime });
+            entity.Property(x => x.Status).HasConversion<int>();
+
+            entity.HasOne(x => x.Batch)
+                .WithMany(x => x.Items)
+                .HasForeignKey(x => x.BatchId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.CinemaInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.CinemaId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AuditoriumInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.AuditoriumId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.MovieInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.MovieFormatInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.FormatId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AppliedSchedule)
+                .WithMany()
+                .HasForeignKey(x => x.AppliedScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.AppliedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.AppliedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.DismissedByUser)
+                .WithMany()
+                .HasForeignKey(x => x.DismissedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ShowtimeRecommendationActionEntity>(entity =>
+        {
+            entity.HasKey(x => x.ActionId);
+            entity.HasIndex(x => new { x.RecommendationId, x.CreatedAt });
+            entity.HasIndex(x => x.ActorUserId);
+
+            entity.HasOne(x => x.Recommendation)
+                .WithMany(x => x.Actions)
+                .HasForeignKey(x => x.RecommendationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.ActorUser)
+                .WithMany()
+                .HasForeignKey(x => x.ActorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

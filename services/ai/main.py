@@ -199,42 +199,39 @@ async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float
 
 @app.post("/classify-intent", response_model=ClassifyIntentResponse)
 async def classify_intent(request: ClassifyIntentRequest):
-    """
-    Classify user message into predefined Cinema intents and extract variables.
-    Delegates to DeepSeek LLM for structuring intent detection.
-    """
+    """Classify user message into predefined Cinema intents and extract variables."""
     today_str = datetime.now().strftime("%Y-%m-%d")
-    system_prompt = f"""Bạn là một AI chuyên phân loại ý định (Intent Classifier) cho hệ thống chatbot của rạp chiếu phim Galaxiad Cinema.
-Nhiệm vụ của bạn là phân tích câu hỏi của người dùng và trả về kết quả dưới định dạng JSON duy nhất. KHÔNG giải thích, KHÔNG thêm ký tự khác ngoài JSON.
+    system_prompt = f"""You are an intent classifier for Galaxiad Cinema chatbot.
+Return only one valid JSON object. Do not explain.
 
-Danh sách các ý định (Intents) hỗ trợ:
-1. "GetMovies": Khi người dùng muốn xem danh sách phim, tìm phim đang chiếu, phim sắp chiếu, hoặc hỏi xem rạp đang có những phim nào.
-2. "GetShowtimes": Khi người dùng hỏi về lịch chiếu, suất chiếu, thời gian chiếu của phim hoặc tại cụm rạp nào đó.
-   - Các tham số có thể trích xuất (nếu có):
-     * "movieId": ID hoặc tên bộ phim đề cập (nếu họ chỉ nhắc đến tên phim, hãy cố gắng điền tên phim vào tham số này nếu không phân giải được ID).
-     * "cinemaId": ID hoặc tên cụm rạp đề cập (nếu họ chỉ nhắc tên rạp, hãy điền tên rạp vào tham số này).
-     * "date": Ngày muốn xem lịch chiếu (định dạng yyyy-MM-dd, mặc định là ngày hôm nay nếu không nhắc đến).
-     * "city": Tên thành phố được nhắc đến (ví dụ: "Hồ Chí Minh", "Hà Nội").
-3. "GetMyBookings": Khi người dùng muốn xem danh sách vé đã mua, lịch sử đặt vé, hoặc kiểm tra giao dịch đặt vé của chính họ.
-4. "GetCinemaStatistics": Khi người quản lý (Manager) hoặc quản trị viên (Admin) muốn xem báo cáo thống kê, doanh thu rạp phim, số lượng vé bán ra, số lượng phim hoạt động.
-5. "GetSystemAuditLogs": Khi Admin muốn xem nhật ký hoạt động hệ thống (Audit Logs), theo dõi các thao tác của nhân viên.
-   - Các tham số trích xuất:
-     * "limit": Số lượng bản ghi nhật ký (mặc định "15" nếu không chỉ định).
-6. "GeneralFAQ": Chào hỏi, cảm ơn, hỏi chính sách chung (ví dụ: hoàn vé, quy định độ tuổi), hoặc bất kỳ câu hỏi thông thường nào không khớp với các công cụ trên.
+Supported intents:
+1. "GetMovies": customer asks for movies, now showing, coming soon, or movie discovery.
+2. "GetShowtimes": customer asks for showtimes, schedules, screening dates, cinema, city, or movie schedule.
+   Parameters: movieId, cinemaId, date, city.
+3. "GetMyBookings": logged-in customer asks for purchased tickets, booking history, or their transactions.
+4. "GetCinemaStatistics": manager/admin asks for cinema reports, revenue, tickets sold, active users, or active movies.
+5. "GetShowtimeRecommendations": TheaterManager/Admin asks AI to suggest showtimes, prime-time slots, hot movies to schedule, or weekend schedule plans.
+   Parameters: cinemaId, fromDate, toDate, auditoriumId, maxSuggestions.
+6. "GetSystemAuditLogs": admin asks for audit logs or staff activity logs.
+   Parameters: limit.
+7. "GeneralFAQ": greeting, thanks, policy questions, or anything that does not match the tools above.
 
-YÊU CẦU:
-Trả về định dạng JSON chính xác như sau:
+Return JSON exactly like:
 {{
   "Intent": "GetMovies",
   "Parameters": {{
     "movieId": "",
     "cinemaId": "",
     "date": "{today_str}",
+    "fromDate": "",
+    "toDate": "",
+    "auditoriumId": "",
+    "maxSuggestions": "",
     "city": "",
     "limit": ""
   }}
 }}
-Tất cả các tham số không có thông tin phải để trống "".
+Use yyyy-MM-dd for date/fromDate/toDate. Leave unknown parameters as empty strings.
 """
 
     response_text = await call_deepseek(system_prompt, request.message, temperature=0.2)
@@ -254,7 +251,7 @@ Tất cả các tham số không có thông tin phải để trống "".
             for k, v in parameters.items():
                 parameters_str[k] = str(v) if v is not None else ""
 
-        valid_intents = {"GetMovies", "GetShowtimes", "GetMyBookings", "GetCinemaStatistics", "GetSystemAuditLogs", "GeneralFAQ"}
+        valid_intents = {"GetMovies", "GetShowtimes", "GetMyBookings", "GetCinemaStatistics", "GetShowtimeRecommendations", "GetSystemAuditLogs", "GeneralFAQ"}
         if intent not in valid_intents:
             intent = "GeneralFAQ"
 
@@ -262,8 +259,6 @@ Tất cả các tham số không có thông tin phải để trống "".
     except Exception as e:
         logger.error(f"Error parsing intent classifier response: {e}. Raw text: {response_text}")
         return ClassifyIntentResponse(intent="GeneralFAQ", parameters={})
-
-
 @app.post("/chat", response_model=ChatLlmResponse)
 async def chat_llm(request: ChatLlmRequest):
     """Generic text completion endpoint for chatbot response generation."""

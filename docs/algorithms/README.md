@@ -1,6 +1,8 @@
 # Algorithms Overview
 
-This folder contains the product and technical algorithms.
+Languages: [English](README.md) | [Tiếng Việt](README.vi.md) | [Русский](README.ru.md)
+
+This folder contains the product and technical algorithms used by Galaxiad Cinema.
 
 ## Documents
 
@@ -12,6 +14,26 @@ This folder contains the product and technical algorithms.
 | Role-Aware Chatbot Plan | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.vi.md](role-aware-chatbot.vi.md) | [role-aware-chatbot.ru.md](role-aware-chatbot.ru.md) |
 | Redis Cache Strategy | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.vi.md](redis-cache-strategy.vi.md) | [redis-cache-strategy.ru.md](redis-cache-strategy.ru.md) |
 | Shift Scheduling Rules | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.vi.md](shift-schedule-rules.vi.md) | [shift-schedule-rules.ru.md](shift-schedule-rules.ru.md) |
+
+## AI Showtime Planner
+
+The AI Showtime Planner recommends movie schedules for Theater Managers and Admins. It does not train a custom model in V1. The backend scores real business data with deterministic rules, stores recommendation and apply history, and only uses the LLM for natural-language explanation through chatbot integration.
+
+Main inputs:
+
+1. Paid ticket trend, occupancy, and revenue.
+2. Movie view/search signals when available.
+3. Ratings and comments.
+4. Movie release freshness and active screening date range.
+5. Auditorium capacity, supported formats, and existing schedule conflicts.
+6. Prime-time windows, including weekday evenings and stronger weekend slots.
+
+Main guarantees:
+
+1. The LLM never creates schedules directly.
+2. Managers must preview recommendations before applying them.
+3. Apply always revalidates movie authorization, movie format support, active date range, past time, auditorium conflicts, and the cleanup gap.
+4. Applied, dismissed, failed validation, and viewed actions are stored for audit and future improvement.
 
 ## Core Principle
 

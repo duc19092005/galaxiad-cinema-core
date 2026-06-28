@@ -1,5 +1,7 @@
 using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.UseCases.TheaterManager.MovieSchedules;
+using Cinema.Application.UseCases.TheaterManager.ShowtimeRecommendations;
+using Cinema.Application.Services.TheaterManager.ShowtimeRecommendations;
 
 namespace Cinema.Api.Bootstraps.Facilities;
 
@@ -19,6 +21,7 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IShiftManagerRepository, Cinema.Infrastructure.Repositories.ShiftManagerRepository>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IStaffShiftRepository, Cinema.Infrastructure.Repositories.StaffShiftRepository>();
         services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IMovieScheduleRepository, Cinema.Infrastructure.Repositories.MovieScheduleRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IShowtimeRecommendationRepository, Cinema.Infrastructure.Repositories.ShowtimeRecommendationRepository>();
 
 
         // ----------------------------------------------------------------
@@ -56,6 +59,14 @@ public static class FacilitiesServicesBootstrap
         services.AddScoped<ReadMovieSchedules>();
         services.AddScoped<GetMoviesWithFormatsUseCase>();
         services.AddScoped<GetMyAuditoriumsUseCase>();
+        services.AddScoped<ShowtimeRecommendationAccessGuard>();
+        services.AddScoped<ShowtimeRecommendationPreviewService>();
+        services.AddScoped<ShowtimeRecommendationApplyService>();
+        services.AddScoped<GenerateShowtimeRecommendationsUseCase>();
+        services.AddScoped<PreviewShowtimeRecommendationsUseCase>();
+        services.AddScoped<ApplyShowtimeRecommendationsUseCase>();
+        services.AddScoped<DismissShowtimeRecommendationUseCase>();
+        services.AddScoped<GetShowtimeRecommendationHistoryUseCase>();
 
         // Shift management use cases (manager-side)
         services.AddScoped<CreateShiftTemplateUseCase>();

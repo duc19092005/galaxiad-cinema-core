@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import TimelineGrid from './components/TimelineGrid';
 import DraggableMovie from './components/DraggableMovie';
+import AiShowtimePlannerPanel from './components/AiShowtimePlannerPanel';
 import type { Movie as ScheduleMovie, ScheduleData, ShowTimeSlot, Auditorium as ScheduleAuditorium } from './types';
-import { Save, Loader2, Search, ChevronLeft, ChevronRight, Calendar, Film, Building2 } from 'lucide-react';
+import { Save, Loader2, Search, ChevronLeft, ChevronRight, Calendar, Film, Building2, Sparkles } from 'lucide-react';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import TrashCan from './components/TrashCan';
 import ManualAddModal from './components/ManualAddModal';
@@ -40,6 +41,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
     const [saving, setSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [availableCinemas, setAvailableCinemas] = useState<{ cinemaId: string; cinemaName: string }[]>([]);
+    const [aiPlannerOpen, setAiPlannerOpen] = useState(false);
 
     // App layout sidebar tabs
     const [activeTab, setActiveTab] = useState('schedule');
@@ -408,21 +410,36 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
                     </button>
                   </div>
                 </div>
-                {/* Save Button */}
-                <button
-                  onClick={handleSaveSchedule}
-                  disabled={saving}
-                  className="btn btn-primary"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '10px 20px', fontWeight: 700, fontSize: 12,
-                    fontFamily: "'JetBrains Mono', monospace",
-                    opacity: saving ? 0.6 : 1,
-                  }}
-                >
-                  {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
-                  Save Changes
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <button
+                    onClick={() => setAiPlannerOpen(true)}
+                    className="btn-ghost"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '10px 14px', fontWeight: 700, fontSize: 12,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      border: '1px solid rgba(255,138,0,0.35)',
+                      color: 'var(--accent)',
+                    }}
+                  >
+                    <Sparkles size={16} />
+                    AI Planner
+                  </button>
+                  <button
+                    onClick={handleSaveSchedule}
+                    disabled={saving}
+                    className="btn btn-primary"
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '10px 20px', fontWeight: 700, fontSize: 12,
+                      fontFamily: "'JetBrains Mono', monospace",
+                      opacity: saving ? 0.6 : 1,
+                    }}
+                  >
+                    {saving ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Save size={16} />}
+                    Save Changes
+                  </button>
+                </div>
               </div>
 
               {/* Main Workspace */}
@@ -506,6 +523,19 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
 
               {/* TrashCan */}
               <TrashCan onDeleteSlot={handleDeleteSlot} />
+
+              <AiShowtimePlannerPanel
+                open={aiPlannerOpen}
+                cinemaId={activeCinemaId}
+                auditoriums={auditoriumsList}
+                selectedAuditoriumId={selectedAuditoriumId}
+                onClose={() => setAiPlannerOpen(false)}
+                onApplied={() => {
+                  if (selectedAuditoriumId) {
+                    fetchSchedulesForAuditorium(selectedAuditoriumId);
+                  }
+                }}
+              />
             </>
         );
     };

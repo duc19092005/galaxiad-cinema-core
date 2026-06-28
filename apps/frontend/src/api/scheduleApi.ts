@@ -3,9 +3,15 @@ import { theaterAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
     CreateScheduleRequest,
+    ApplyShowtimeRecommendationsRequest,
+    GenerateShowtimeRecommendationsRequest,
     MovieWithFormat,
     MyCinemaAuditoriums,
+    RecommendationSelectionRequest,
+    ApplyShowtimeRecommendationsResponse,
     ScheduleDetail,
+    ShowtimeRecommendationBatch,
+    ShowtimeRecommendationPreview,
     UpdateScheduleRequest
 } from '../types/schedule.types';
 
@@ -63,5 +69,36 @@ export const scheduleApi = {
             data
         );
         return normalizeSuccessResponse(response);
+    },
+
+    generateRecommendations: async (data: GenerateShowtimeRecommendationsRequest): Promise<ApiSuccessResponse<ShowtimeRecommendationBatch>> => {
+        const response = await theaterAxios.post<any>(
+            '/TheaterManager/MovieScheduleRecommendations/generate',
+            data
+        );
+        return normalizeSuccessResponse<ShowtimeRecommendationBatch>(response);
+    },
+
+    previewRecommendations: async (data: RecommendationSelectionRequest): Promise<ApiSuccessResponse<ShowtimeRecommendationPreview>> => {
+        const response = await theaterAxios.post<any>(
+            '/TheaterManager/MovieScheduleRecommendations/preview',
+            data
+        );
+        return normalizeSuccessResponse<ShowtimeRecommendationPreview>(response);
+    },
+
+    applyRecommendations: async (data: ApplyShowtimeRecommendationsRequest): Promise<ApiSuccessResponse<ApplyShowtimeRecommendationsResponse>> => {
+        const response = await theaterAxios.post<any>(
+            '/TheaterManager/MovieScheduleRecommendations/apply',
+            data
+        );
+        return normalizeSuccessResponse<ApplyShowtimeRecommendationsResponse>(response);
+    },
+
+    dismissRecommendation: async (recommendationId: string): Promise<ApiSuccessResponse<boolean>> => {
+        const response = await theaterAxios.post<any>(
+            `/TheaterManager/MovieScheduleRecommendations/${recommendationId}/dismiss`
+        );
+        return normalizeSuccessResponse<boolean>(response);
     },
 };

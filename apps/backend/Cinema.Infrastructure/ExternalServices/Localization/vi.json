@@ -217,7 +217,58 @@
         "Assigned shift successfully.": "Gán ca trực thành công.",
         "System is experiencing issues processing your request. Please try again later.": "Hệ thống đang gặp sự cố khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.",
         "You do not have permission to perform this action with your current role.": "Bạn không có quyền thực hiện yêu cầu này với vai trò hiện tại.",
-        "Please log in to perform this action.": "Vui lòng đăng nhập để thực hiện yêu cầu này."
+        "Please log in to perform this action.": "Vui lòng đăng nhập để thực hiện yêu cầu này.",
+        "The recommendation date range is invalid.": "Khoảng thời gian gợi ý lịch chiếu không hợp lệ.",
+        "The recommendation date range is invalid": "Khoảng thời gian gợi ý lịch chiếu không hợp lệ.",
+        "No active auditorium is available for recommendations.": "Không có phòng chiếu đang hoạt động để tạo gợi ý lịch chiếu.",
+        "No active auditorium is available for recommendations": "Không có phòng chiếu đang hoạt động để tạo gợi ý lịch chiếu.",
+        "No active movie is available for recommendations.": "Không có phim đang hoạt động để tạo gợi ý lịch chiếu.",
+        "No active movie is available for recommendations": "Không có phim đang hoạt động để tạo gợi ý lịch chiếu.",
+        "You do not have permission to manage this cinema": "Bạn không có quyền quản lý rạp này.",
+        "Recommendation batch not found.": "Không tìm thấy lô gợi ý lịch chiếu.",
+        "Recommendation batch not found": "Không tìm thấy lô gợi ý lịch chiếu.",
+        "Recommendation not found.": "Không tìm thấy gợi ý lịch chiếu.",
+        "Recommendation not found": "Không tìm thấy gợi ý lịch chiếu.",
+        "Showtime recommendations generated successfully.": "Tạo gợi ý lịch chiếu thành công.",
+        "Showtime recommendations generated successfully": "Tạo gợi ý lịch chiếu thành công.",
+        "Showtime recommendation preview generated successfully.": "Tạo bản xem trước gợi ý lịch chiếu thành công.",
+        "Showtime recommendation preview generated successfully": "Tạo bản xem trước gợi ý lịch chiếu thành công.",
+        "Showtime recommendations applied successfully.": "Áp dụng gợi ý lịch chiếu thành công.",
+        "Showtime recommendations applied successfully": "Áp dụng gợi ý lịch chiếu thành công.",
+        "Showtime recommendation dismissed successfully.": "Đã bỏ qua gợi ý lịch chiếu thành công.",
+        "Showtime recommendation dismissed successfully": "Đã bỏ qua gợi ý lịch chiếu thành công.",
+        "Showtime recommendation history retrieved successfully.": "Lấy lịch sử gợi ý lịch chiếu thành công.",
+        "Showtime recommendation history retrieved successfully": "Lấy lịch sử gợi ý lịch chiếu thành công.",
+        "Some recommendations failed validation. Preview the result or enable apply valid only.": "Một số gợi ý không vượt qua bước kiểm tra. Vui lòng xem trước kết quả hoặc bật chế độ chỉ áp dụng gợi ý hợp lệ.",
+        "Some recommendations failed validation. Preview the result or enable apply valid only": "Một số gợi ý không vượt qua bước kiểm tra. Vui lòng xem trước kết quả hoặc bật chế độ chỉ áp dụng gợi ý hợp lệ.",
+        "Ready to apply.": "Sẵn sàng áp dụng.",
+        "Ready to apply": "Sẵn sàng áp dụng.",
+        "No selected recommendation can be applied safely.": "Không có gợi ý đã chọn nào có thể áp dụng an toàn.",
+        "No selected recommendation can be applied safely": "Không có gợi ý đã chọn nào có thể áp dụng an toàn.",
+        "The suggested showtime is in the past.": "Suất chiếu được gợi ý đã nằm trong quá khứ.",
+        "The suggested showtime is in the past": "Suất chiếu được gợi ý đã nằm trong quá khứ.",
+        "The movie is outside its active screening period.": "Phim nằm ngoài thời gian được phép chiếu.",
+        "The movie is outside its active screening period": "Phim nằm ngoài thời gian được phép chiếu.",
+        "This suggestion conflicts with an existing showtime or cleanup buffer.": "Gợi ý này bị trùng với suất chiếu hiện có hoặc khoảng thời gian dọn phòng.",
+        "This suggestion conflicts with an existing showtime or cleanup buffer": "Gợi ý này bị trùng với suất chiếu hiện có hoặc khoảng thời gian dọn phòng.",
+        "This suggestion conflicts with another selected suggestion.": "Gợi ý này bị trùng với một gợi ý khác đã chọn.",
+        "This suggestion conflicts with another selected suggestion": "Gợi ý này bị trùng với một gợi ý khác đã chọn.",
+        "Recent release freshness can lift demand.": "Phim mới phát hành có thể giúp tăng nhu cầu xem.",
+        "Recent release freshness can lift demand": "Phim mới phát hành có thể giúp tăng nhu cầu xem.",
+        "Eligible active movie with available scheduling window.": "Phim đang hoạt động và có khung giờ phù hợp để xếp lịch.",
+        "Eligible active movie with available scheduling window": "Phim đang hoạt động và có khung giờ phù hợp để xếp lịch.",
+        "Expected demand level is High.": "Mức nhu cầu dự kiến là cao.",
+        "Expected demand level is High": "Mức nhu cầu dự kiến là cao.",
+        "Expected demand level is Medium.": "Mức nhu cầu dự kiến là trung bình.",
+        "Expected demand level is Medium": "Mức nhu cầu dự kiến là trung bình.",
+        "Expected demand level is Low.": "Mức nhu cầu dự kiến là thấp.",
+        "Expected demand level is Low": "Mức nhu cầu dự kiến là thấp.",
+        "High expected occupancy during prime time.": "Dự kiến tỷ lệ lấp đầy cao trong khung giờ vàng.",
+        "High expected occupancy during prime time": "Dự kiến tỷ lệ lấp đầy cao trong khung giờ vàng.",
+        "Moderate demand lift expected.": "Dự kiến nhu cầu tăng ở mức vừa phải.",
+        "Moderate demand lift expected": "Dự kiến nhu cầu tăng ở mức vừa phải.",
+        "Please select a cinema before requesting showtime recommendations.": "Vui lòng chọn rạp trước khi yêu cầu gợi ý lịch chiếu.",
+        "Please select a cinema before requesting showtime recommendations": "Vui lòng chọn rạp trước khi yêu cầu gợi ý lịch chiếu."
     },
     "regex": [
         {
@@ -299,6 +350,38 @@
         {
             "pattern": "^User status updated to (.*) successfully\\.$",
             "replacement": "C?p nh?t tr?ng th?i ng??i d?ng th?nh $1 th?nh c?ng."
+        },
+        {
+            "pattern": "^(\\d+) tickets sold in the last 7 days\\.?$",
+            "replacement": "$1 vé đã bán trong 7 ngày gần đây."
+        },
+        {
+            "pattern": "^(\\d+) total paid tickets in recent history\\.?$",
+            "replacement": "$1 vé đã thanh toán trong dữ liệu gần đây."
+        },
+        {
+            "pattern": "^(\\d+) customer views indicate active interest\\.?$",
+            "replacement": "$1 lượt xem của khách hàng cho thấy mức độ quan tâm đang tăng."
+        },
+        {
+            "pattern": "^Strong audience rating: ([0-9]+(?:\\.[0-9]+)?)/5\\.?$",
+            "replacement": "Điểm đánh giá khán giả cao: $1/5."
+        },
+        {
+            "pattern": "^Prime-time score for this slot is ([0-9]+)\\.?$",
+            "replacement": "Điểm khung giờ vàng cho suất chiếu này là $1."
+        },
+        {
+            "pattern": "^Auditorium (.*) supports (.*)\\.?$",
+            "replacement": "Phòng chiếu $1 hỗ trợ định dạng $2."
+        },
+        {
+            "pattern": "^Generated (\\d+) showtime recommendation\\(s\\)\\.?$",
+            "replacement": "Đã tạo $1 gợi ý lịch chiếu."
+        },
+        {
+            "pattern": "^Applied (\\d+) showtime recommendation\\(s\\)\\.?$",
+            "replacement": "Đã áp dụng $1 gợi ý lịch chiếu."
         }
     ],
     "messages": {

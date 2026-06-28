@@ -217,7 +217,58 @@
         "Assigned shift successfully.": "Смена успешно назначена.",
         "System is experiencing issues processing your request. Please try again later.": "Система испытывает проблемы при обработке вашего запроса. Пожалуйста, повторите попытку позже.",
         "You do not have permission to perform this action with your current role.": "У вас нет прав для выполнения этого действия с текущей ролью.",
-        "Please log in to perform this action.": "Пожалуйста, войдите в систему, чтобы выполнить это действие."
+        "Please log in to perform this action.": "Пожалуйста, войдите в систему, чтобы выполнить это действие.",
+        "The recommendation date range is invalid.": "Диапазон дат для рекомендаций расписания недействителен.",
+        "The recommendation date range is invalid": "Диапазон дат для рекомендаций расписания недействителен.",
+        "No active auditorium is available for recommendations.": "Нет активного зала, доступного для рекомендаций расписания.",
+        "No active auditorium is available for recommendations": "Нет активного зала, доступного для рекомендаций расписания.",
+        "No active movie is available for recommendations.": "Нет активного фильма, доступного для рекомендаций расписания.",
+        "No active movie is available for recommendations": "Нет активного фильма, доступного для рекомендаций расписания.",
+        "You do not have permission to manage this cinema": "У вас нет прав на управление этим кинотеатром.",
+        "Recommendation batch not found.": "Пакет рекомендаций расписания не найден.",
+        "Recommendation batch not found": "Пакет рекомендаций расписания не найден.",
+        "Recommendation not found.": "Рекомендация расписания не найдена.",
+        "Recommendation not found": "Рекомендация расписания не найдена.",
+        "Showtime recommendations generated successfully.": "Рекомендации расписания успешно созданы.",
+        "Showtime recommendations generated successfully": "Рекомендации расписания успешно созданы.",
+        "Showtime recommendation preview generated successfully.": "Предпросмотр рекомендаций расписания успешно создан.",
+        "Showtime recommendation preview generated successfully": "Предпросмотр рекомендаций расписания успешно создан.",
+        "Showtime recommendations applied successfully.": "Рекомендации расписания успешно применены.",
+        "Showtime recommendations applied successfully": "Рекомендации расписания успешно применены.",
+        "Showtime recommendation dismissed successfully.": "Рекомендация расписания успешно отклонена.",
+        "Showtime recommendation dismissed successfully": "Рекомендация расписания успешно отклонена.",
+        "Showtime recommendation history retrieved successfully.": "История рекомендаций расписания успешно получена.",
+        "Showtime recommendation history retrieved successfully": "История рекомендаций расписания успешно получена.",
+        "Some recommendations failed validation. Preview the result or enable apply valid only.": "Некоторые рекомендации не прошли проверку. Просмотрите результат или включите применение только корректных рекомендаций.",
+        "Some recommendations failed validation. Preview the result or enable apply valid only": "Некоторые рекомендации не прошли проверку. Просмотрите результат или включите применение только корректных рекомендаций.",
+        "Ready to apply.": "Готово к применению.",
+        "Ready to apply": "Готово к применению.",
+        "No selected recommendation can be applied safely.": "Ни одну выбранную рекомендацию нельзя безопасно применить.",
+        "No selected recommendation can be applied safely": "Ни одну выбранную рекомендацию нельзя безопасно применить.",
+        "The suggested showtime is in the past.": "Предложенный сеанс находится в прошлом.",
+        "The suggested showtime is in the past": "Предложенный сеанс находится в прошлом.",
+        "The movie is outside its active screening period.": "Фильм находится вне активного периода показа.",
+        "The movie is outside its active screening period": "Фильм находится вне активного периода показа.",
+        "This suggestion conflicts with an existing showtime or cleanup buffer.": "Эта рекомендация конфликтует с существующим сеансом или буфером уборки.",
+        "This suggestion conflicts with an existing showtime or cleanup buffer": "Эта рекомендация конфликтует с существующим сеансом или буфером уборки.",
+        "This suggestion conflicts with another selected suggestion.": "Эта рекомендация конфликтует с другой выбранной рекомендацией.",
+        "This suggestion conflicts with another selected suggestion": "Эта рекомендация конфликтует с другой выбранной рекомендацией.",
+        "Recent release freshness can lift demand.": "Недавний релиз может повысить спрос.",
+        "Recent release freshness can lift demand": "Недавний релиз может повысить спрос.",
+        "Eligible active movie with available scheduling window.": "Активный фильм подходит для доступного окна расписания.",
+        "Eligible active movie with available scheduling window": "Активный фильм подходит для доступного окна расписания.",
+        "Expected demand level is High.": "Ожидаемый уровень спроса: высокий.",
+        "Expected demand level is High": "Ожидаемый уровень спроса: высокий.",
+        "Expected demand level is Medium.": "Ожидаемый уровень спроса: средний.",
+        "Expected demand level is Medium": "Ожидаемый уровень спроса: средний.",
+        "Expected demand level is Low.": "Ожидаемый уровень спроса: низкий.",
+        "Expected demand level is Low": "Ожидаемый уровень спроса: низкий.",
+        "High expected occupancy during prime time.": "Ожидается высокая заполняемость в прайм-тайм.",
+        "High expected occupancy during prime time": "Ожидается высокая заполняемость в прайм-тайм.",
+        "Moderate demand lift expected.": "Ожидается умеренный рост спроса.",
+        "Moderate demand lift expected": "Ожидается умеренный рост спроса.",
+        "Please select a cinema before requesting showtime recommendations.": "Пожалуйста, выберите кинотеатр перед запросом рекомендаций расписания.",
+        "Please select a cinema before requesting showtime recommendations": "Пожалуйста, выберите кинотеатр перед запросом рекомендаций расписания."
     },
     "regex": [
         {
@@ -299,6 +350,38 @@
         {
             "pattern": "^User status updated to (.*) successfully\\.$",
             "replacement": "Статус пользователя обновлён до $1 успешно."
+        },
+        {
+            "pattern": "^(\\d+) tickets sold in the last 7 days\\.?$",
+            "replacement": "За последние 7 дней продано $1 билетов."
+        },
+        {
+            "pattern": "^(\\d+) total paid tickets in recent history\\.?$",
+            "replacement": "В недавней истории оплачено $1 билетов."
+        },
+        {
+            "pattern": "^(\\d+) customer views indicate active interest\\.?$",
+            "replacement": "$1 просмотров клиентов показывают активный интерес."
+        },
+        {
+            "pattern": "^Strong audience rating: ([0-9]+(?:\\.[0-9]+)?)/5\\.?$",
+            "replacement": "Высокая оценка зрителей: $1/5."
+        },
+        {
+            "pattern": "^Prime-time score for this slot is ([0-9]+)\\.?$",
+            "replacement": "Оценка прайм-тайма для этого слота: $1."
+        },
+        {
+            "pattern": "^Auditorium (.*) supports (.*)\\.?$",
+            "replacement": "Зал $1 поддерживает формат $2."
+        },
+        {
+            "pattern": "^Generated (\\d+) showtime recommendation\\(s\\)\\.?$",
+            "replacement": "Создано $1 рекомендаций расписания."
+        },
+        {
+            "pattern": "^Applied (\\d+) showtime recommendation\\(s\\)\\.?$",
+            "replacement": "Применено $1 рекомендаций расписания."
         }
     ],
     "messages": {

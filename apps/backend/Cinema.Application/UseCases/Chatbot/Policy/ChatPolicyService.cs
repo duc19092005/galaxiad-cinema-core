@@ -39,10 +39,15 @@ public class ChatPolicyService : IChatPolicyService
 
             case ChatbotConstants.Intents.GetCinemaStatistics:
                 // Requires manager or admin roles
-                var isManagerOrAdmin = _userContextService.IsInRole("TheaterManager") || 
-                                       _userContextService.IsInRole("FacilitiesManager") || 
+                var isManagerOrAdmin = _userContextService.IsInRole("TheaterManager") ||
+                                       _userContextService.IsInRole("FacilitiesManager") ||
                                        _userContextService.IsInRole("Admin");
                 return Task.FromResult(isManagerOrAdmin);
+
+            case ChatbotConstants.Intents.GetShowtimeRecommendations:
+                var isSchedulePlanner = _userContextService.IsInRole("TheaterManager") ||
+                                        _userContextService.IsInRole("Admin");
+                return Task.FromResult(isSchedulePlanner);
 
             case ChatbotConstants.Intents.GetSystemAuditLogs:
                 // Requires admin role only

@@ -8,6 +8,7 @@ public static class ChatbotConstants
         public const string GetShowtimes = "GetShowtimes";
         public const string GetMyBookings = "GetMyBookings";
         public const string GetCinemaStatistics = "GetCinemaStatistics";
+        public const string GetShowtimeRecommendations = "GetShowtimeRecommendations";
         public const string GetSystemAuditLogs = "GetSystemAuditLogs";
         public const string GeneralFAQ = "GeneralFAQ";
     }
