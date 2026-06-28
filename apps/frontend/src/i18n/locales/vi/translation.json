@@ -1034,5 +1034,37 @@
     "addressBody": "123 Cinema Boulevard, Quận 1, TP. Hồ Chí Minh, Việt Nam",
     "hours": "Giờ Làm Việc",
     "hoursBody": "Thứ Hai - Chủ Nhật: 8:00 - 23:00"
+  },
+  "auth": {
+    "the_ultimate_cinematic_experience": "Trải Nghiệm Điện Ảnh Tuyệt Vời Nhất",
+    "email_address": "Địa chỉ email",
+    "password": "Mật khẩu",
+    "signing_in": "Đang đăng nhập...",
+    "login": "Đăng nhập",
+    "login_failed": "Đăng nhập thất bại. Vui lòng kiểm tra thông tin đăng nhập của bạn.",
+    "cannot_connect": "Không thể kết nối đến máy chủ.",
+    "error_occurred": "Đã xảy ra lỗi.",
+    "unexpected_error": "Đã xảy ra lỗi không mong muốn.",
+    "google_login_failed": "Không thể khởi tạo Đăng nhập Google.",
+    "google_connect_failed": "Không thể kết nối đến dịch vụ Đăng nhập Google.",
+    "or_continue_with": "HOẶC TIẾP TỤC VỚI",
+    "google_account": "Tài khoản Google",
+    "no_account": "Chưa có tài khoản?",
+    "register_now": "Đăng ký ngay",
+    "no_login": "Không muốn đăng nhập?",
+    "go_to_movies": "Vào xem phim"
+  },
+  "booking": {
+    "payment_failed": "Thanh Toán Thất Bại",
+    "processing_error_title": "Lỗi Xử Lý",
+    "processing_error_msg": "Đã xảy ra lỗi trong quá trình xử lý thanh toán của bạn. Nếu tiền đã được trừ, vui lòng liên hệ đội hỗ trợ của chúng tôi để được trợ giúp.",
+    "processing_error_detail": "Mã lỗi: processing_error — Vui lòng liên hệ hỗ trợ với Mã Đơn hàng của bạn.",
+    "payment_interrupted_title": "Thanh Toán Bị Gián Đoạn",
+    "payment_interrupted_msg": "Quá trình thanh toán đã bị gián đoạn hoặc hủy bỏ. Không có khoản tiền nào được trừ từ tài khoản của bạn.",
+    "payment_interrupted_detail": "Nếu bạn gặp lỗi trong quá trình thanh toán, vui lòng thử phương thức thanh toán khác hoặc liên hệ ngân hàng của bạn.",
+    "need_help": "Cần Trợ Giúp?",
+    "support_msg": "Nếu bạn đã bị trừ tiền nhưng không nhận được vé, vui lòng liên hệ hỗ trợ của chúng tôi với Mã Đơn hàng ở trên. Chúng tôi sẽ giải quyết sớm nhất có thể.",
+    "try_again": "Thử Đặt Lại",
+    "return_home": "Về Trang Chủ"
   }
 }

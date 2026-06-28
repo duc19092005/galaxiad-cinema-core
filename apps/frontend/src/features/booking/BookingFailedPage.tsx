@@ -1,8 +1,10 @@
 import React from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { XCircle, Home, RefreshCw, AlertTriangle, ShieldAlert, HelpCircle } from 'lucide-react';
 
 const BookingFailedPage: React.FC = () => {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get('orderId');
     const error = searchParams.get('error');
@@ -13,14 +15,14 @@ const BookingFailedPage: React.FC = () => {
             case 'processing_error':
                 return {
                     icon: <ShieldAlert size={18} style={{ color: '#ef4444', flexShrink: 0 }} />,
-                    title: 'Processing Error',
-                    message: 'An error occurred while processing your payment. If money was deducted, please contact our support team for assistance.'
+                    title: t('booking.processing_error_title'),
+                    message: t('booking.processing_error_msg')
                 };
             default:
                 return {
                     icon: <AlertTriangle size={18} style={{ color: '#f59e0b', flexShrink: 0 }} />,
-                    title: 'Payment Interrupted',
-                    message: 'The payment process was interrupted or canceled. No funds have been deducted from your account.'
+                    title: t('booking.payment_interrupted_title'),
+                    message: t('booking.payment_interrupted_msg')
                 };
         }
     };
@@ -43,7 +45,7 @@ const BookingFailedPage: React.FC = () => {
                     <XCircle size={56} style={{ color: '#ef4444' }} />
                 </div>
 
-                <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: '8px', color: '#ef4444' }}>Payment Failed</h2>
+                <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: '8px', color: '#ef4444' }}>{t('booking.payment_failed')}</h2>
                 {orderId && <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: '8px', fontFamily: "'JetBrains Mono', monospace" }}>Order ID: {orderId}</p>}
                 <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: '32px' }}>
                     {errorDetails.message}
@@ -65,8 +67,8 @@ const BookingFailedPage: React.FC = () => {
                         </p>
                         <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
                             {error === 'processing_error'
-                                ? 'Error code: processing_error — Please contact support with your Order ID.'
-                                : 'If you encountered an error during payment, please try a different payment method or contact your bank.'
+                                ? t('booking.processing_error_detail')
+                                : t('booking.payment_interrupted_detail')
                             }
                         </p>
                     </div>
@@ -82,10 +84,10 @@ const BookingFailedPage: React.FC = () => {
                         <HelpCircle size={18} style={{ color: '#0ea5e9', flexShrink: 0 }} />
                         <div>
                             <p style={{ fontSize: 12, fontWeight: 700, marginBottom: '4px', color: '#0ea5e9' }}>
-                                Need Help?
+                                {t('booking.need_help')}
                             </p>
                             <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                If you were charged but didn't receive your tickets, please contact our support with the Order ID above. We'll resolve this as soon as possible.
+                                {t('booking.support_msg')}
                             </p>
                         </div>
                     </div>
@@ -97,14 +99,14 @@ const BookingFailedPage: React.FC = () => {
                         className="btn btn-primary cta-glow"
                         style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: '8px' }}
                     >
-                        <RefreshCw size={16} /> Try Booking Again
+                        <RefreshCw size={16} /> {t('booking.try_again')}
                     </button>
                     <button
                         onClick={() => navigate('/home')}
                         className="btn btn-secondary"
                         style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: '8px' }}
                     >
-                        <Home size={16} /> Return to Home
+                        <Home size={16} /> {t('booking.return_home')}
                     </button>
                 </div>
             </div>

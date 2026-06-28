@@ -1036,5 +1036,37 @@
     "addressBody": "123 Cinema Boulevard, District 1, Ho Chi Minh City, Vietnam",
     "hours": "Business Hours",
     "hoursBody": "Monday - Sunday: 8:00 AM - 11:00 PM"
+  },
+  "auth": {
+    "the_ultimate_cinematic_experience": "The Ultimate Cinematic Experience",
+    "email_address": "Email address",
+    "password": "Password",
+    "signing_in": "Signing in...",
+    "login": "Login",
+    "login_failed": "Login failed. Please check your credentials.",
+    "cannot_connect": "Unable to connect to server.",
+    "error_occurred": "An error occurred.",
+    "unexpected_error": "An unexpected error occurred.",
+    "google_login_failed": "Failed to initialize Google Login.",
+    "google_connect_failed": "Failed to connect to Google Login service.",
+    "or_continue_with": "OR CONTINUE WITH",
+    "google_account": "Google account",
+    "no_account": "Don't have an account?",
+    "register_now": "Register now",
+    "no_login": "Don't want to login?",
+    "go_to_movies": "Browse Movies"
+  },
+  "booking": {
+    "payment_failed": "Payment Failed",
+    "processing_error_title": "Processing Error",
+    "processing_error_msg": "An error occurred while processing your payment. If money was deducted, please contact our support team for assistance.",
+    "processing_error_detail": "Error code: processing_error — Please contact support with your Order ID.",
+    "payment_interrupted_title": "Payment Interrupted",
+    "payment_interrupted_msg": "The payment process was interrupted or canceled. No funds have been deducted from your account.",
+    "payment_interrupted_detail": "If you encountered an error during payment, please try a different payment method or contact your bank.",
+    "need_help": "Need Help?",
+    "support_msg": "If you were charged but didn't receive your tickets, please contact our support with the Order ID above. We'll resolve this as soon as possible.",
+    "try_again": "Try Booking Again",
+    "return_home": "Return to Home"
   }
 }

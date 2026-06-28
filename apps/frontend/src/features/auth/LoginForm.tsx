@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import { Clapperboard, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import Cookies from 'js-cookie';
 import { authApi } from '../../api/authApi';
@@ -11,6 +12,7 @@ import { identityAxios } from '../../api/axiosClient';
 import type { LoginRequest, ApiErrorResponse } from '../../types/auth.types';
 
 const LoginForm: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -66,13 +68,13 @@ const LoginForm: React.FC = () => {
         } else {
           navigate('/role-selection');
         }
-      } else { setErrorMsg('Login failed. Please check your credentials.'); }
+      } else { setErrorMsg(t('auth.login_failed')); }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         if (error.response) { setErrorMsg((error.response.data as ApiErrorResponse).message || 'Login failed.'); }
-        else if (error.request) { setErrorMsg('Unable to connect to server.'); }
-        else { setErrorMsg('An error occurred.'); }
-      } else { setErrorMsg('An unexpected error occurred.'); }
+        else if (error.request) { setErrorMsg(t('auth.cannot_connect')); }
+        else { setErrorMsg(t('auth.error_occurred')); }
+      } else { setErrorMsg(t('auth.unexpected_error')); }
     } finally { setLoading(false); }
   };
 
@@ -82,8 +84,8 @@ const LoginForm: React.FC = () => {
       const response = await identityAxios.get('/IdentityAccess/google-login?platform=web');
       const data = response.data;
       if (data.isSuccess) { window.location.href = data.data.redirectUrl; }
-      else { setErrorMsg('Failed to initialize Google Login.'); setLoading(false); }
-    } catch { setErrorMsg('Failed to connect to Google Login service.'); setLoading(false); }
+      else { setErrorMsg(t('auth.google_login_failed')); setLoading(false); }
+    } catch { setErrorMsg(t('auth.google_connect_failed')); setLoading(false); }
   };
 
   return (
@@ -161,7 +163,7 @@ const LoginForm: React.FC = () => {
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}>
-              The Ultimate Cinematic Experience
+              {t('auth.the_ultimate_cinematic_experience')}
             </p>
           </div>
 
@@ -181,7 +183,7 @@ const LoginForm: React.FC = () => {
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
-                Email address
+                {t('auth.email_address')}
               </label>
               <div className="relative">
                 <Mail size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
@@ -200,7 +202,7 @@ const LoginForm: React.FC = () => {
 
             <div>
               <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6, letterSpacing: '0.03em' }}>
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <Lock size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
@@ -234,9 +236,9 @@ const LoginForm: React.FC = () => {
                 justifyContent: 'center', marginTop: 4,
               }}
             >
-              {loading ? (
-                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Signing in...</>
-              ) : 'Login'}
+                {loading ? (
+                <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> {t('auth.signing_in')}</>
+              ) : t('auth.login')}
             </button>
           </form>
 
@@ -253,7 +255,7 @@ const LoginForm: React.FC = () => {
               fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}>
-              OR CONTINUE WITH
+              {t('auth.or_continue_with')}
             </span>
           </div>
 
@@ -274,7 +276,7 @@ const LoginForm: React.FC = () => {
               <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
               <path fill="none" d="M0 0h48v48H0z" />
             </svg>
-            Google account
+            {t('auth.google_account')}
           </button>
 
           <div style={{
@@ -283,12 +285,12 @@ const LoginForm: React.FC = () => {
             display: 'flex', flexDirection: 'column', gap: 12,
           }}>
             <div>
-              Don't have an account?{' '}
-              <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>Register now</Link>
+              {t('auth.no_account')}{' '}
+              <Link to="/register" style={{ color: 'var(--accent)', fontWeight: 600 }}>{t('auth.register_now')}</Link>
             </div>
             <div>
-              <span style={{ opacity: 0.6 }}>Không muốn đăng nhập? </span>
-              <Link to="/home" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Vào xem phim</Link>
+              <span style={{ opacity: 0.6 }}>{t('auth.no_login')} </span>
+              <Link to="/home" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{t('auth.go_to_movies')}</Link>
             </div>
           </div>
         </div>
