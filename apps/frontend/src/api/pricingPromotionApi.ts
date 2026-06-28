@@ -56,10 +56,8 @@ export interface PricingPromotionDto {
 
 export interface PricingPromotionRuleRequestDto {
   pricingPromotionRuleId?: string | null;
-  movieFormatId?: string | null;
-  cinemaId?: string | null;
-  auditoriumId?: string | null;
-  requiredMembershipTierId?: string | null;
+  movieFormatIds?: string[];
+  cinemaIds?: string[];
   promotionType: PromotionTypeName;
   adjustmentValue: number;
   startDate?: string | null;

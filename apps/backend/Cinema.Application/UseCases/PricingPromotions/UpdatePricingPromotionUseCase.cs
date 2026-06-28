@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
@@ -55,7 +55,7 @@ public class UpdatePricingPromotionUseCase
         promotion.UpdatedBy = TryGetUserId();
 
         _repository.RemovePromotionRulesRange(promotion.Rules);
-        promotion.Rules = dto.Rules.Select(PricingPromotionHelper.BuildRule).ToList();
+        promotion.Rules = dto.Rules.SelectMany(PricingPromotionHelper.BuildRules).ToList();
 
         _repository.UpdatePromotion(promotion);
         await _unitOfWork.SaveChangesAsync();

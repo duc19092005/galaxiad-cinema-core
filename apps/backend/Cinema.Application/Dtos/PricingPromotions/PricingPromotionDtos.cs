@@ -6,8 +6,8 @@ namespace Cinema.Application.Dtos.PricingPromotions;
 public class PricingPromotionRuleRequestDto
 {
     public Guid? PricingPromotionRuleId { get; set; }
-    public Guid? MovieFormatId { get; set; }
-    public Guid? CinemaId { get; set; }
+    public List<Guid> MovieFormatIds { get; set; } = [];
+    public List<Guid> CinemaIds { get; set; } = [];
     public Guid? AuditoriumId { get; set; }
     public Guid? RequiredMembershipTierId { get; set; }
     [Required]

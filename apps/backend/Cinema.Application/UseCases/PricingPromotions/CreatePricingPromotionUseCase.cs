@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
@@ -52,7 +52,7 @@ public class CreatePricingPromotionUseCase
             UpdatedAt = DateTime.UtcNow,
             CreatedBy = userId,
             UpdatedBy = userId,
-            Rules = dto.Rules.Select(PricingPromotionHelper.BuildRule).ToList()
+            Rules = dto.Rules.SelectMany(PricingPromotionHelper.BuildRules).ToList()
         };
 
         await _repository.AddPromotionAsync(promotion);

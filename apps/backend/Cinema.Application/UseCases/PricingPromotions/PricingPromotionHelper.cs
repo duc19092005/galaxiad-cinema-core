@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -13,25 +13,34 @@ namespace Cinema.Application.UseCases.PricingPromotions;
 
 public static class PricingPromotionHelper
 {
-    public static PricingPromotionRuleEntity BuildRule(PricingPromotionRuleRequestDto dto)
+    public static IEnumerable<PricingPromotionRuleEntity> BuildRules(PricingPromotionRuleRequestDto dto)
     {
-        return new PricingPromotionRuleEntity
+        var formats = dto.MovieFormatIds.Count > 0 ? dto.MovieFormatIds.Cast<Guid?>().ToList() : new List<Guid?> { null };
+        var cinemas = dto.CinemaIds.Count > 0 ? dto.CinemaIds.Cast<Guid?>().ToList() : new List<Guid?> { null };
+
+        foreach (var formatId in formats)
         {
-            PricingPromotionRuleId = dto.PricingPromotionRuleId.GetValueOrDefault(Guid.NewGuid()),
-            MovieFormatId = dto.MovieFormatId,
-            CinemaId = dto.CinemaId,
-            AuditoriumId = dto.AuditoriumId,
-            RequiredMembershipTierId = dto.RequiredMembershipTierId,
-            PromotionType = dto.PromotionType,
-            AdjustmentValue = dto.AdjustmentValue,
-            StartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate),
-            EndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate),
-            TimeFrom = dto.TimeFrom,
-            TimeTo = dto.TimeTo,
-            DaysOfWeekMask = DaysOfWeekMaskHelper.Encode(dto.DaysOfWeek),
-            Priority = dto.Priority,
-            IsActive = dto.IsActive
-        };
+            foreach (var cinemaId in cinemas)
+            {
+                yield return new PricingPromotionRuleEntity
+                {
+                    PricingPromotionRuleId = Guid.NewGuid(),
+                    MovieFormatId = formatId,
+                    CinemaId = cinemaId,
+                    AuditoriumId = dto.AuditoriumId,
+                    RequiredMembershipTierId = dto.RequiredMembershipTierId,
+                    PromotionType = dto.PromotionType,
+                    AdjustmentValue = dto.AdjustmentValue,
+                    StartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate),
+                    EndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate),
+                    TimeFrom = dto.TimeFrom,
+                    TimeTo = dto.TimeTo,
+                    DaysOfWeekMask = DaysOfWeekMaskHelper.Encode(dto.DaysOfWeek),
+                    Priority = dto.Priority,
+                    IsActive = dto.IsActive
+                };
+            }
+        }
     }
 
     public static PricingPromotionDto MapPromotion(PricingPromotionEntity promotion)
