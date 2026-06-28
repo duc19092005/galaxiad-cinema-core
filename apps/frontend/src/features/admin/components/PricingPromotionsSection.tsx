@@ -98,7 +98,7 @@ const toApiTime = (value?: string | null) => {
   return value.length === 5 ? `${value}:00` : value;
 };
 
-const formatVnd = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')} VND`;
+const formatVnd = (value?: number | null) => `${(value ?? 0).toLocaleString('vi-VN')}Đ`;
 
 const getTypeLabel = (type: string) => promotionTypes.find((item) => item.value === type)?.label ?? type;
 const getTypeColor = (type: string) => promotionTypes.find((item) => item.value === type)?.color ?? '#fff';
@@ -243,7 +243,7 @@ const RuleCard: React.FC<{
           Quy tắc #{index + 1} · {typeInfo?.label}
         </span>
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', flex: 1 }}>
-          {rule.adjustmentValue.toLocaleString('vi-VN')}{rule.promotionType === 'PercentDiscount' || rule.promotionType === 'Surcharge' ? '%' : ' đ'}
+          {rule.adjustmentValue.toLocaleString('vi-VN')}{rule.promotionType === 'PercentDiscount' || rule.promotionType === 'Surcharge' ? '%' : 'Đ'}
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <button
