@@ -214,7 +214,10 @@
         "Rejected shift registration request successfully.": "Запрос на регистрацию смены отклонен.",
         "Cancelled approved shift successfully. Slot is now open for others.": "Одобренная смена отменена. Слот теперь открыт для других.",
         "Assigned staff directly to shift successfully.": "Сотрудник назначен на смену напрямую.",
-        "Assigned shift successfully.": "Смена успешно назначена."
+        "Assigned shift successfully.": "Смена успешно назначена.",
+        "System is experiencing issues processing your request. Please try again later.": "Система испытывает проблемы при обработке вашего запроса. Пожалуйста, повторите попытку позже.",
+        "You do not have permission to perform this action with your current role.": "У вас нет прав для выполнения этого действия с текущей ролью.",
+        "Please log in to perform this action.": "Пожалуйста, войдите в систему, чтобы выполнить это действие."
     },
     "regex": [
         {

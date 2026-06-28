@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text.Json;
@@ -154,7 +154,7 @@ ThÃ´ng tin Ä‘á»‹nh danh ngÆ°á»i dÃ¹ng gá»­i cÃ¢u há»i:
                 IsSuccess = true,
                 Data = new ChatbotResponseDto
                 {
-                    Response = ChatbotConstants.RefusalMessages.SystemError + $" (Chi tiáº¿t: {ex.Message})",
+                    Response = ChatbotConstants.RefusalMessages.SystemError,
                     Intent = "Error",
                     IsAuthorized = true
                 }

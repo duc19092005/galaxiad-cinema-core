@@ -214,7 +214,10 @@
         "Rejected shift registration request successfully.": "Từ chối yêu cầu đăng ký ca trực thành công.",
         "Cancelled approved shift successfully. Slot is now open for others.": "Hủy ca làm việc đã phê duyệt thành công. Vị trí ca làm hiện đã trống cho người khác đăng ký.",
         "Assigned staff directly to shift successfully.": "Gán trực tiếp nhân viên vào ca trực thành công.",
-        "Assigned shift successfully.": "Gán ca trực thành công."
+        "Assigned shift successfully.": "Gán ca trực thành công.",
+        "System is experiencing issues processing your request. Please try again later.": "Hệ thống đang gặp sự cố khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.",
+        "You do not have permission to perform this action with your current role.": "Bạn không có quyền thực hiện yêu cầu này với vai trò hiện tại.",
+        "Please log in to perform this action.": "Vui lòng đăng nhập để thực hiện yêu cầu này."
     },
     "regex": [
         {
