@@ -115,4 +115,32 @@ public static class BookingMapper
             ).FirstOrDefault() ?? ""
         };
     }
+
+    public static ResStaffSaleHistoryDto ToResStaffSaleHistoryDto(OrderInfoEntity o)
+    {
+        return new ResStaffSaleHistoryDto
+        {
+            OrderId = o.OrderId,
+            BookingCode = o.BookingCode,
+            OrderDate = o.OrderDate,
+            TotalPrice = o.TotalPrice,
+            OrderStatus = o.OrderStatus.ToString(),
+            MovieName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
+            CinemaName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
+            AuditoriumNumber = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
+            StartTime = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
+            Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList()
+        };
+    }
+
+    public static ResBookingCustomerLookupDto ToResBookingCustomerLookupDto(UserInfoEntity user)
+    {
+        return new ResBookingCustomerLookupDto
+        {
+            UserId = user.UserId,
+            UserName = user.UserName,
+            Email = user.UserEmail,
+            PhoneNumber = user.PhoneNumber
+        };
+    }
 }

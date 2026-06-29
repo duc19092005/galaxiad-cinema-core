@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Play, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
@@ -14,7 +14,9 @@ import MovieCommentsSection from './components/MovieCommentsSection';
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation();
+    const isPosMode = new URLSearchParams(location.search).get('pos') === '1';
 
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
     const [cities, setCities] = useState<string[]>([]);
@@ -33,7 +35,7 @@ const MovieDetailPage: React.FC = () => {
         if (movieId) {
             fetchData();
         }
-    }, [movieId]);
+    }, [movieId, isPosMode]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -48,17 +50,19 @@ const MovieDetailPage: React.FC = () => {
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
 
-            // Fetch similar movies (More Like This)
-            try {
-                const similarRes = await publicApi.getSimilarMovies(movieId!);
-                if (similarRes?.data && similarRes.data.length > 0) {
-                    setRecommendedMovies(similarRes.data);
-                } else {
+            if (!isPosMode) {
+                // Fetch similar movies (More Like This)
+                try {
+                    const similarRes = await publicApi.getSimilarMovies(movieId!);
+                    if (similarRes?.data && similarRes.data.length > 0) {
+                        setRecommendedMovies(similarRes.data);
+                    } else {
+                        setRecommendedMovies([]);
+                    }
+                } catch (recErr) {
+                    console.error('Failed to load recommended movies:', recErr);
                     setRecommendedMovies([]);
                 }
-            } catch (recErr) {
-                console.error('Failed to load recommended movies:', recErr);
-                setRecommendedMovies([]);
             }
         } catch (err) {
             console.error('Error fetching movie detail:', err);
@@ -354,7 +358,7 @@ const MovieDetailPage: React.FC = () => {
                                                             {(cinema.scheduleTimesInfos || []).map((showtime) => (
                                                                 <button
                                                                     key={showtime.scheduleId}
-                                                                    onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
+                                                                    onClick={() => navigate(isPosMode ? `/booking/${showtime.scheduleId}?pos=1` : `/booking/${showtime.scheduleId}`)}
                                                                     className="px-6 py-2 rounded-lg bg-[#353534] text-white border border-[#ffb77f]/20 hover:bg-[#ff8a00] hover:text-black transition-all font-semibold text-sm cursor-pointer"
                                                                 >
                                                                     {new Date(showtime.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
@@ -375,6 +379,7 @@ const MovieDetailPage: React.FC = () => {
                 <MovieCommentsSection movieId={movie.movieId} />
 
                 {/* Recommended Movies */}
+                {!isPosMode && (
                 <section className="bg-[#0e0e0e] py-20 overflow-hidden">
                     <div className="px-6 md:px-16 max-w-7xl mx-auto">
                         <div className="flex justify-between items-end mb-10">
@@ -427,6 +432,7 @@ const MovieDetailPage: React.FC = () => {
                         )}
                     </div>
                 </section>
+                )}
             </main>
 
             {/* Footer */}

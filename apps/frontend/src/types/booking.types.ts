@@ -24,6 +24,13 @@ export interface CreateBookingResponse {
     orderDate: string;
 }
 
+export interface BookingCustomerLookup {
+    userId: string;
+    userName: string;
+    email: string;
+    phoneNumber: string;
+}
+
 export interface TicketSeat {
     seatNumber: string;
     segmentName: string;
@@ -82,4 +89,17 @@ export interface BookingHistoryItem {
     seats: string[];
     isMovieAired: boolean;
     movieAiringStatus: "Upcoming" | "Airing" | "Finished";
+}
+
+export interface StaffSaleHistoryItem {
+    orderId: string;
+    bookingCode: string;
+    orderDate: string;
+    totalPrice: number;
+    orderStatus: string;
+    movieName: string;
+    cinemaName: string;
+    auditoriumNumber: string;
+    startTime: string;
+    seats: string[];
 }

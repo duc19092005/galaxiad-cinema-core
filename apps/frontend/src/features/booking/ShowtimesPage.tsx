@@ -138,6 +138,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 export const ShowtimesPage: React.FC = () => {
   const navigate = useNavigate();
+  const isPosMode = new URLSearchParams(window.location.search).get('pos') === '1';
 
   // Read initial parameters from URL or localStorage to prevent race conditions on mount
   const getInitialParams = () => {
@@ -573,7 +574,7 @@ export const ShowtimesPage: React.FC = () => {
                               {format.showtimes.map((showtime) => (
                                 <button
                                   key={showtime.scheduleId}
-                                  onClick={() => navigate(`/booking/${showtime.scheduleId}`)}
+                                  onClick={() => navigate(isPosMode ? `/booking/${showtime.scheduleId}?pos=1` : `/booking/${showtime.scheduleId}`)}
                                   style={{
                                     padding: '8px 16px',
                                     borderRadius: 'var(--radius-sm, 6px)',

@@ -20,6 +20,7 @@ public class BookingController : ControllerBase
     private readonly ProcessVnPayCallbackUseCase _processVnPayCallbackUseCase;
     private readonly GetUserAccountInfoUseCase _getUserAccountInfoUseCase;
     private readonly GetUserBookingHistoryUseCase _getUserBookingHistoryUseCase;
+    private readonly GetBookingCustomerByEmailUseCase _getBookingCustomerByEmailUseCase;
     private readonly SseConnectionManager _sseManager;
     private readonly ILogger<BookingController> _logger;
     private readonly IConfiguration _configuration;
@@ -30,6 +31,7 @@ public class BookingController : ControllerBase
         ProcessVnPayCallbackUseCase processVnPayCallbackUseCase,
         GetUserAccountInfoUseCase getUserAccountInfoUseCase,
         GetUserBookingHistoryUseCase getUserBookingHistoryUseCase,
+        GetBookingCustomerByEmailUseCase getBookingCustomerByEmailUseCase,
         SseConnectionManager sseManager,
         ILogger<BookingController> logger,
         IConfiguration configuration)
@@ -39,6 +41,7 @@ public class BookingController : ControllerBase
         _processVnPayCallbackUseCase = processVnPayCallbackUseCase;
         _getUserAccountInfoUseCase = getUserAccountInfoUseCase;
         _getUserBookingHistoryUseCase = getUserBookingHistoryUseCase;
+        _getBookingCustomerByEmailUseCase = getBookingCustomerByEmailUseCase;
         _sseManager = sseManager;
         _logger = logger;
         _configuration = configuration;
@@ -168,6 +171,14 @@ public class BookingController : ControllerBase
         {
             _sseManager.Unregister(orderId);
         }
+    }
+
+    [Authorize]
+    [HttpGet("customer-lookup")]
+    public async Task<IActionResult> LookupCustomer([FromQuery] string email)
+    {
+        var result = await _getBookingCustomerByEmailUseCase.ExecuteAsync(email);
+        return Ok(result);
     }
 
     [Authorize]

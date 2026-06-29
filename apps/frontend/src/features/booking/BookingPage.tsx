@@ -32,6 +32,7 @@ const BookingPage: React.FC = () => {
     const [myVouchers, setMyVouchers] = useState<UserVoucherDto[]>([]);
     const [selectedVoucherId, setSelectedVoucherId] = useState<string>('');
     const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
+    const [customerLookupStatus, setCustomerLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
 
     const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
     const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
@@ -118,6 +119,41 @@ const BookingPage: React.FC = () => {
         }
     }, [isLoggedIn]);
 
+    useEffect(() => {
+        if (!isCashierMode) return;
+        const email = customerInfo.email.trim();
+        if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setCustomerLookupStatus('idle');
+            return;
+        }
+
+        let cancelled = false;
+        const timer = window.setTimeout(async () => {
+            setCustomerLookupStatus('loading');
+            try {
+                const response = await bookingApi.lookupCustomerByEmail(email);
+                if (cancelled) return;
+                if (response.data) {
+                    setCustomerInfo(prev => ({
+                        ...prev,
+                        name: response.data?.userName || prev.name,
+                        phone: response.data?.phoneNumber || prev.phone,
+                    }));
+                    setCustomerLookupStatus('found');
+                } else {
+                    setCustomerLookupStatus('not-found');
+                }
+            } catch {
+                if (!cancelled) setCustomerLookupStatus('not-found');
+            }
+        }, 450);
+
+        return () => {
+            cancelled = true;
+            window.clearTimeout(timer);
+        };
+    }, [customerInfo.email, isCashierMode]);
+
     const selectedVoucher = myVouchers.find(v => v.voucherId === selectedVoucherId);
 
     const fetchData = async () => {
@@ -161,7 +197,10 @@ const BookingPage: React.FC = () => {
     const handleBooking = async () => {
         if (selectedSeats.length === 0) { showError(t('toast.selectSeat')); return; }
         if (!isLoggedIn || isCashierMode) {
-            if (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim()) {
+            if (isCashierMode && (!customerInfo.name.trim() || !customerInfo.phone.trim())) {
+                showError('Vui lòng nhập tên và số điện thoại khách hàng. Email có thể để trống.'); return;
+            }
+            if (!isCashierMode && (!customerInfo.name.trim() || !customerInfo.email.trim() || !customerInfo.phone.trim())) {
                 showError(t('toast.fillContactInfo')); return;
             }
         }
@@ -180,7 +219,7 @@ const BookingPage: React.FC = () => {
                 scheduleId: scheduleId!.trim(),
                 seatSelections: selectedSeats.map(s => ({ seatId: s.seatId, userSegmentId: seatSegmentMap[s.seatId] })),
                 customerName: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.name.trim(),
-                customerEmail: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.email.trim(),
+                customerEmail: (isLoggedIn && !isCashierMode) ? undefined : (customerInfo.email.trim() || undefined),
                 customerPhone: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.phone.trim(),
                 customerAddress: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.address.trim(),
                 voucherId: selectedVoucherId ? selectedVoucherId : undefined,
@@ -538,7 +577,7 @@ const BookingPage: React.FC = () => {
                                         <div className="grid grid-cols-2 gap-3">
                                             <input
                                                 type="email"
-                                                placeholder="Email *"
+                                                placeholder={isCashierMode ? 'Email (Optional)' : 'Email *'}
                                                 value={customerInfo.email}
                                                 onChange={e => setCustomerInfo(prev => ({ ...prev, email: e.target.value }))}
                                                 className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
@@ -558,6 +597,15 @@ const BookingPage: React.FC = () => {
                                             onChange={e => setCustomerInfo(prev => ({ ...prev, address: e.target.value }))}
                                             className="w-full bg-black/40 text-white text-sm p-3 rounded-lg border border-white/10 outline-none focus:border-[#ff8a00] transition-colors"
                                         />
+                                        {isCashierMode && customerLookupStatus !== 'idle' && (
+                                            <p className="text-[11px] text-zinc-400 m-0">
+                                                {customerLookupStatus === 'loading'
+                                                    ? 'Dang kiem tra email khach hang...'
+                                                    : customerLookupStatus === 'found'
+                                                    ? 'Da tim thay tai khoan, ten va SDT da duoc dien tu dong.'
+                                                    : 'Email chua co tai khoan. Ve van luu email nay de khach nhan lich su sau khi tao tai khoan.'}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ) : (

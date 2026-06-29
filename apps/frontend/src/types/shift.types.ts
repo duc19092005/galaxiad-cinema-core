@@ -1,3 +1,5 @@
+import type { StaffSaleHistoryItem } from './booking.types';
+
 export type ShiftRegistrationStatus = 'Pending' | 'Approved' | 'Rejected' | 'Cancelled' | string;
 export type PayrollStatus = 'Pending' | 'Paid' | string;
 
@@ -66,6 +68,7 @@ export interface StaffWorkingLogDto {
   endedShiftTime?: string | null;
   workingDate: string;
   totalReceived: number;
+  sales?: StaffSaleHistoryItem[];
 }
 
 export interface PayrollDto {

@@ -120,6 +120,9 @@ public class ReqCreateBookingDto
     [EmailAddress(ErrorMessage = "Invalid email format")]
     public string? CustomerEmail { get; set; }
 
+    [StringLength(20)]
+    public string? CustomerPhone { get; set; }
+
     public Guid? VoucherId { get; set; }
 
     /// <summary>Id của nhân viên đứng quầy bán vé (truyền lên từ máy POS)</summary>
@@ -182,6 +185,14 @@ public class ResCreateBookingDto
     public decimal TotalPrice { get; set; }
     public int TotalQuantity { get; set; }
     public DateTime OrderDate { get; set; }
+}
+
+public class ResBookingCustomerLookupDto
+{
+    public Guid UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
 }
 
 // ==========================================
@@ -268,6 +279,20 @@ public class ResUserBookingHistoryDto
     /// Detailed status: "Upcoming", "Airing", "Finished"
     /// </summary>
     public string MovieAiringStatus { get; set; } = string.Empty;
+}
+
+public class ResStaffSaleHistoryDto
+{
+    public Guid OrderId { get; set; }
+    public string BookingCode { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public decimal TotalPrice { get; set; }
+    public string OrderStatus { get; set; } = string.Empty;
+    public string MovieName { get; set; } = string.Empty;
+    public string CinemaName { get; set; } = string.Empty;
+    public string AuditoriumNumber { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
+    public List<string> Seats { get; set; } = [];
 }
 
 // ==========================================

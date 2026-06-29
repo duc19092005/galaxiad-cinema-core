@@ -51,7 +51,7 @@ public class ClockInUseCase
             throw new AppException(Messages.Staff.FaceNotRegistered, 400, "CLOCK_IN_ERR");
         }
 
-        // 2. So khớp khuôn mặt Euclidean Distance
+        // 2. So khớp khuôn mặt bằng cosine distance
         var aesKey = _configuration["AES_256:Key"];
         var aesIv = _configuration["AES_256:IV"];
         if (string.IsNullOrEmpty(aesKey) || string.IsNullOrEmpty(aesIv))
@@ -81,16 +81,24 @@ public class ClockInUseCase
             throw new AppException(Messages.Staff.FaceVectorInvalid, 400, "CLOCK_IN_ERR");
         }
 
-        // Tính khoảng cách Euclidean
-        double sum = 0;
+        double dot = 0;
+        double sampleMagnitude = 0;
+        double inputMagnitude = 0;
         for (int i = 0; i < 128; i++)
         {
-            double diff = sampleVector[i] - dto.FaceVector[i];
-            sum += diff * diff;
+            dot += sampleVector[i] * dto.FaceVector[i];
+            sampleMagnitude += sampleVector[i] * sampleVector[i];
+            inputMagnitude += dto.FaceVector[i] * dto.FaceVector[i];
         }
-        double distance = Math.Sqrt(sum);
 
-        if (distance > 0.6)
+        if (sampleMagnitude == 0 || inputMagnitude == 0)
+        {
+            throw new AppException(Messages.Staff.FaceVectorInvalid, 400, "CLOCK_IN_ERR");
+        }
+
+        double distance = 1 - (dot / (Math.Sqrt(sampleMagnitude) * Math.Sqrt(inputMagnitude)));
+
+        if (distance > 0.35)
         {
             throw new AppException(string.Format(Messages.Staff.FaceMismatch, distance), 400, "CLOCK_IN_ERR");
         }

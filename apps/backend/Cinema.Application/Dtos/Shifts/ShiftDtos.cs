@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Enums;
 
 namespace Cinema.Application.Dtos.Shifts;
@@ -172,6 +173,7 @@ public class ResStaffWorkingLogDto
     public DateTime? EndedShiftTime { get; set; }
     public DateTime WorkingDate { get; set; }
     public decimal TotalReceived { get; set; }
+    public List<ResStaffSaleHistoryDto> Sales { get; set; } = [];
 }
 
 public class ReqCreateShiftScheduleDto

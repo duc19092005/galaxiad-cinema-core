@@ -1,7 +1,7 @@
 // src/api/bookingApi.ts
 import { bookingAxios, API_BASE_URL } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { CreateBookingRequest, CreateBookingResponse, UserAccountInfo, BookingHistoryItem, TicketInfo } from '../types/booking.types';
+import type { BookingCustomerLookup, CreateBookingRequest, CreateBookingResponse, UserAccountInfo, BookingHistoryItem, TicketInfo } from '../types/booking.types';
 
 const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
     isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
@@ -33,6 +33,11 @@ export const bookingApi = {
             `/history`
         );
         return response.data;
+    },
+
+    lookupCustomerByEmail: async (email: string): Promise<ApiSuccessResponse<BookingCustomerLookup | null>> => {
+        const response = await bookingAxios.get<any>(`/customer-lookup`, { params: { email } });
+        return normalizeSuccessResponse<BookingCustomerLookup | null>(response);
     },
 
     /** SSE Realtime Payment Status setup URL helper */

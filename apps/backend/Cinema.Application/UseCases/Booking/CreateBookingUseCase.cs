@@ -63,6 +63,9 @@ public class CreateBookingUseCase
         {
             var userId = _userContextService.TryGetUserId();
             var isCashier = _userContextService.IsInRole("Cashier");
+            var customerEmail = request.CustomerEmail?.Trim();
+            var customerName = request.CustomerName?.Trim();
+            var customerPhone = request.CustomerPhone?.Trim();
 
             Guid? orderUserId = null;
             Guid? orderStaffId = null;
@@ -85,9 +88,9 @@ public class CreateBookingUseCase
                     }
                 }
 
-                if (!string.IsNullOrEmpty(request.CustomerEmail))
+                if (!string.IsNullOrEmpty(customerEmail))
                 {
-                    var customer = await _orderRepository.FindUserByEmailAsync(request.CustomerEmail);
+                    var customer = await _orderRepository.FindUserByEmailAsync(customerEmail);
                     if (customer != null)
                     {
                         orderUserId = customer.UserId;
@@ -260,21 +263,26 @@ public class CreateBookingUseCase
 
             string? finalCustomerName = null;
             string? finalCustomerEmail = null;
+            string? finalCustomerPhone = null;
 
             if (orderUserId.HasValue)
             {
                 var user = await _orderRepository.FindUserByIdAsync(orderUserId.Value);
                 finalCustomerName = user?.UserName;
                 finalCustomerEmail = user?.UserEmail;
+                finalCustomerPhone = user?.PhoneNumber;
             }
             else
             {
-                if (string.IsNullOrEmpty(request.CustomerName) || string.IsNullOrEmpty(request.CustomerEmail))
+                var cashierGuestMissingInfo = isCashier && (string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(customerPhone));
+                var publicGuestMissingInfo = !isCashier && (string.IsNullOrEmpty(customerName) || string.IsNullOrEmpty(customerEmail));
+                if (cashierGuestMissingInfo || publicGuestMissingInfo)
                 {
                     throw new BadRequestException(Messages.Validation.GuestBookingRequiresInfo, "BK05");
                 }
-                finalCustomerName = request.CustomerName;
-                finalCustomerEmail = request.CustomerEmail;
+                finalCustomerName = customerName;
+                finalCustomerEmail = customerEmail;
+                finalCustomerPhone = customerPhone;
             }
 
             var order = new OrderInfoEntity
@@ -304,6 +312,7 @@ public class CreateBookingUseCase
                 TotalQuantity = seatIds.Count,
                 CustomerName = finalCustomerName,
                 CustomerEmail = finalCustomerEmail,
+                CustomerPhone = finalCustomerPhone,
                 CustomerAddress = orderUserId.HasValue ? null : request.CustomerAddress,
                 VoucherId = request.VoucherId
             };

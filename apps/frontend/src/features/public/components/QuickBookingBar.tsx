@@ -10,6 +10,7 @@ import CustomSelectField from './CustomSelectField';
 interface QuickBookingBarProps {
   selectedCity: string;
   onCinemaChange?: (cinemaId: string) => void;
+  posMode?: boolean;
 }
 
 // City center coordinates for distance calculation
@@ -18,7 +19,7 @@ const CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   'Hà Nội': { lat: 21.0285, lng: 105.8542 },
 };
 
-const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinemaChange }) => {
+const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinemaChange, posMode = false }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -333,7 +334,7 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinem
 
         {/* Search Button */}
         <button
-          onClick={() => navigate(`/showtimes?date=${selectedDate}&movie=${selectedMovieId}&cinema=${selectedCinemaId}`)}
+          onClick={() => navigate(`/showtimes?date=${selectedDate}&movie=${selectedMovieId}&cinema=${selectedCinemaId}${posMode ? '&pos=1' : ''}`)}
           className="btn-primary cta-glow"
           style={{
             width: '100%',

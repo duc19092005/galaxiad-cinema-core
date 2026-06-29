@@ -31,7 +31,9 @@ public class GetUserBookingHistoryUseCase
     public async Task<BaseResponse<List<ResUserBookingHistoryDto>>> ExecuteAsync()
     {
         var userId = _userContextService.GetUserId();
-        var cacheKey = $"user:bookings:{userId}";
+        var account = await _repo.GetUserAccountInfoAsync(userId);
+        var userEmail = account?.UserEmail ?? string.Empty;
+        var cacheKey = $"user:bookings:{userId}:{userEmail}";
 
         var cached = await _cacheService.GetAsync<BaseResponse<List<ResUserBookingHistoryDto>>>(cacheKey);
         if (cached != null)
@@ -40,7 +42,7 @@ public class GetUserBookingHistoryUseCase
         }
 
         var nowUtc = DateTime.UtcNow;
-        var orders = await _repo.GetUserBookingHistoryAsync(userId);
+        var orders = await _repo.GetUserBookingHistoryAsync(userId, userEmail);
 
         var dtos = orders.Select(o => BookingMapper.ToResUserBookingHistoryDto(o, nowUtc)).ToList();
 

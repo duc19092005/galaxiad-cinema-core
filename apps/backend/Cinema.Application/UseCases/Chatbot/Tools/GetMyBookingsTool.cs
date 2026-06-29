@@ -33,7 +33,8 @@ public class GetMyBookingsTool : IChatTool
             return JsonSerializer.Serialize(new { Error = ChatbotResponseMessages.Refusals.RequireLogin });
         }
 
-        var orders = await _repo.GetUserBookingHistoryAsync(userId);
+        var account = await _repo.GetUserAccountInfoAsync(userId);
+        var orders = await _repo.GetUserBookingHistoryAsync(userId, account?.UserEmail ?? string.Empty);
         var nowUtc = DateTime.UtcNow;
 
         var result = orders.Select(o => new

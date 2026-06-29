@@ -26,6 +26,10 @@ const HERO_IMG = IMG_BASE + 'AB6AXuBb-6tDUgXoRgmgTRBXwngoVTj0smOmB_NZPmcLz1kiOTf
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
 
+interface HomePageProps {
+  mode?: 'public' | 'cashier-sales';
+}
+
 const FooterLink: React.FC<{ label: string; path: string }> = ({ label, path }) => {
   const nav = useNavigate();
   return (
@@ -42,13 +46,14 @@ const FooterLink: React.FC<{ label: string; path: string }> = ({ label, path }) 
   );
 };
 
-const HomePage: React.FC = () => {
+const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const isCashierSales = mode === 'cashier-sales';
 
   const handleMovieClick = (movieId: string) => {
     commentApi.trackMovieView(movieId).catch(() => undefined);
-    navigate(`/movie/${movieId}`);
+    navigate(isCashierSales ? `/movie/${movieId}?pos=1` : `/movie/${movieId}`);
   };
 
   const [nowShowing, setNowShowing] = useState<PublicMovieListItem[]>([]);
@@ -74,6 +79,12 @@ const HomePage: React.FC = () => {
   const [recommendations, setRecommendations] = useState<RecommendedMovie[]>([]);
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
+
+  useEffect(() => {
+    if (isCashierSales && !localStorage.getItem('cashier_shift_session')) {
+      navigate('/cashier', { replace: true });
+    }
+  }, [isCashierSales, navigate]);
 
   useEffect(() => {
     const handleCityChange = () => {
@@ -128,6 +139,7 @@ const HomePage: React.FC = () => {
   // ── Survey status check & recommendation loader ──
   useEffect(() => {
     const userInfo = localStorage.getItem('user_info');
+    if (isCashierSales) return;
     if (!userInfo) return; // not logged in, skip
 
     const checkSurveyAndLoad = async () => {
@@ -140,7 +152,7 @@ const HomePage: React.FC = () => {
       }
     };
     checkSurveyAndLoad();
-  }, []);
+  }, [isCashierSales]);
 
   const loadRecommendations = async () => {
     setLoadingRecs(true);
@@ -281,7 +293,7 @@ const HomePage: React.FC = () => {
         }}>
           <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
             setSelectedCinemaId(cinemaId);
-          }} />
+          }} posMode={isCashierSales} />
         </div>
       </section>
 
@@ -568,7 +580,7 @@ const HomePage: React.FC = () => {
           </div>
 
           {/* ── Personalised Recommendation Section ── */}
-          {surveyCompleted && (
+          {!isCashierSales && surveyCompleted && (
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 32px)', flexWrap: 'wrap', gap: 12 }}>
                 <div>
@@ -888,7 +900,7 @@ const HomePage: React.FC = () => {
       <BackToTop />
 
       {/* Survey Modal – rendered at root level for correct z-index */}
-      {showSurvey && (
+      {!isCashierSales && showSurvey && (
         <SurveyModal
           onClose={() => setShowSurvey(false)}
           onComplete={handleSurveyComplete}

@@ -13,8 +13,10 @@ public class UserBookingRepository : IUserBookingRepository
         _dbContext = dbContext;
     }
 
-    public async Task<List<OrderInfoEntity>> GetUserBookingHistoryAsync(Guid userId)
+    public async Task<List<OrderInfoEntity>> GetUserBookingHistoryAsync(Guid userId, string userEmail)
     {
+        var normalizedEmail = userEmail.Trim();
+
         return await _dbContext.Set<OrderInfoEntity>()
             .Include(o => o.OrderDetailsInfo)
                 .ThenInclude(d => d.MovieScheduleInfoEntity!)
@@ -25,7 +27,8 @@ public class UserBookingRepository : IUserBookingRepository
                         .ThenInclude(a => a.CinemaInfoEntity!)
             .Include(o => o.OrderDetailsInfo)
                 .ThenInclude(d => d.SeatsInfoEntity!)
-            .Where(o => o.UserId == userId)
+            .Where(o => o.UserId == userId
+                        || (!string.IsNullOrEmpty(normalizedEmail) && o.CustomerEmail == normalizedEmail))
             .OrderByDescending(o => o.OrderDate)
             .AsNoTracking()
             .ToListAsync();

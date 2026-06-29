@@ -220,6 +220,7 @@ const CashierPage: React.FC = () => {
       localStorage.setItem(CASHIER_SHIFT_SESSION_KEY, JSON.stringify(nextSession));
       setSession(nextSession);
       showSuccess(response.message || `Chào mừng ${response.data.staffName} vào ca!`);
+      navigate('/cashier/sales');
     } catch (error) {
       showError(getApiErrorMessage(error, 'Điểm danh thất bại. Thử lại.'));
     } finally {

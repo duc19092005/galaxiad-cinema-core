@@ -8,6 +8,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IIdentityAccess;
+using Cinema.Application.Mappers.Facilities;
 using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
@@ -56,8 +57,8 @@ public class CreateDepartmentUseCase
 
         var departmentId = Guid.NewGuid();
         var sharedUserId = Guid.NewGuid();
-        var email = $"{request.CashierType.ToString().ToLower()}_{departmentId:N}@cinema.com";
-        const string defaultPassword = "123456";
+        var email = DepartmentSharedAccountMapper.BuildEmail(request, cinema);
+        const string defaultPassword = DepartmentSharedAccountMapper.DefaultPassword;
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
@@ -73,7 +74,7 @@ public class CreateDepartmentUseCase
                 DateOfBirth = new DateTime(2000, 1, 1),
                 IdentityCode = $"DEPT_{departmentId:N}",
                 PhoneNumber = cinema.CinemaHotLineNumber,
-                UserName = $"{request.DepartmentName} - {cinema.CinemaName}"
+                UserName = DepartmentSharedAccountMapper.BuildUserName(request, cinema)
             };
             await _unitOfWork.Repository<UserInfoEntity>().AddAsync(sharedUser);
 

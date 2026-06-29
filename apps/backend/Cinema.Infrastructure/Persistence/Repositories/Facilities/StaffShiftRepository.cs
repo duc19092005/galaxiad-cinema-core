@@ -121,6 +121,29 @@ public class StaffShiftRepository : IStaffShiftRepository
             .ToListAsync();
     }
 
+    public async Task<List<OrderInfoEntity>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs)
+    {
+        if (logs.Count == 0) return [];
+
+        var from = logs.Min(l => l.StartedShiftTime);
+        var to = logs.Max(l => l.EndedShiftTime ?? DateTime.UtcNow);
+
+        return await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.MovieInfoEntity!)
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.AuditoriumInfoEntities!)
+                        .ThenInclude(a => a.CinemaInfoEntity!)
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.SeatsInfoEntity!)
+            .Where(o => o.StaffId == staffId && o.OrderDate >= from && o.OrderDate <= to)
+            .OrderByDescending(o => o.OrderDate)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public async Task<List<ResPayrollDto>> GetMyPayrollAsync(Guid staffId)
     {
         // Load raw entities then convert UTC → VN time in-memory

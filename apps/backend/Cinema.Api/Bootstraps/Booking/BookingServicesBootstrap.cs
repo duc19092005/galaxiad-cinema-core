@@ -46,6 +46,7 @@ public static class BookingServicesBootstrap
         services.AddScoped<ProcessVnPayCallbackUseCase>();
         services.AddScoped<GetUserAccountInfoUseCase>();
         services.AddScoped<GetUserBookingHistoryUseCase>();
+        services.AddScoped<GetBookingCustomerByEmailUseCase>();
 
         // Vouchers Use Cases
         services.AddScoped<CreateVoucherUseCase>();

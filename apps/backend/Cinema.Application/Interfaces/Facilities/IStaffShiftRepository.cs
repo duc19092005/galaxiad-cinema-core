@@ -18,5 +18,6 @@ public interface IStaffShiftRepository
     Task RemoveRegistrationsAsync(List<StaffShiftRegistrationEntity> registrations);
     Task<List<StaffShiftRegistrationEntity>> GetPendingRegistrationsByIdsAsync(List<Guid> ids, Guid staffId);
     Task<List<StaffWorkingLoggerEntity>> GetMyWorkingHistoryAsync(Guid staffId);
+    Task<List<OrderInfoEntity>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs);
     Task<List<ResPayrollDto>> GetMyPayrollAsync(Guid staffId);
 }
