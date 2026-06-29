@@ -54,6 +54,7 @@ class ChatLlmRequest(BaseModel):
     tool_context: Optional[str] = ""
     user_role: Optional[str] = ""
     user_id: Optional[str] = ""
+    language: Optional[str] = "vi"
 
 
 class ChatLlmResponse(BaseModel):
@@ -72,6 +73,7 @@ class ModerationResponse(BaseModel):
 class GuardRequest(BaseModel):
     message: str
     user_role: Optional[str] = "Guest"
+    language: Optional[str] = "vi"
 
 
 class GuardResponse(BaseModel):

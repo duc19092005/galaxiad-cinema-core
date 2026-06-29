@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Interfaces.Chatbot;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Infrastructure.Services;
 
@@ -14,12 +15,17 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<DeepSeekChatLlmClient> _logger;
+    private readonly ILocalizationService _localizationService;
     private static readonly HttpClient HttpClient = new();
 
-    public DeepSeekChatLlmClient(IConfiguration configuration, ILogger<DeepSeekChatLlmClient> logger)
+    public DeepSeekChatLlmClient(
+        IConfiguration configuration,
+        ILogger<DeepSeekChatLlmClient> logger,
+        ILocalizationService localizationService)
     {
         _configuration = configuration;
         _logger = logger;
+        _localizationService = localizationService;
     }
 
     public async Task<string> SendChatRequestAsync(string userPrompt, string toolContext, string userRole, string userId)
@@ -33,7 +39,8 @@ public class DeepSeekChatLlmClient : IChatLlmClient
                 UserPrompt = userPrompt,
                 ToolContext = toolContext,
                 UserRole = userRole,
-                UserId = userId
+                UserId = userId,
+                Language = _localizationService.CurrentLanguage
             };
 
             var content = new StringContent(
@@ -63,7 +70,11 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 
         try
         {
-            var payload = new GuardRequest { Message = message };
+            var payload = new GuardRequest 
+            { 
+                Message = message,
+                Language = _localizationService.CurrentLanguage
+            };
             var content = new StringContent(
                 JsonSerializer.Serialize(payload),
                 Encoding.UTF8,
@@ -102,6 +113,9 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 
         [JsonPropertyName("user_id")]
         public string UserId { get; init; } = string.Empty;
+
+        [JsonPropertyName("language")]
+        public string Language { get; init; } = string.Empty;
     }
 
     private sealed class ChatResponse
@@ -114,6 +128,9 @@ public class DeepSeekChatLlmClient : IChatLlmClient
     {
         [JsonPropertyName("message")]
         public string Message { get; init; } = string.Empty;
+
+        [JsonPropertyName("language")]
+        public string Language { get; init; } = string.Empty;
     }
 
     private sealed class GuardResponse
