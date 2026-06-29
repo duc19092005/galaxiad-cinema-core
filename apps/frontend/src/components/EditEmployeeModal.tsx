@@ -59,7 +59,6 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
-  const [initialDepartmentId, setInitialDepartmentId] = useState('');
   const [departmentsLoading, setDepartmentsLoading] = useState(false);
 
   // ── Status
@@ -105,7 +104,6 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
     // Set initial Cinema & Department
     setSelectedCinemaId(user.cinemaId ?? '');
     setSelectedDepartmentId(user.departmentId ?? '');
-    setInitialDepartmentId(user.departmentId ?? '');
     setCinemaSearch('');
 
     // Load roles
@@ -282,7 +280,6 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
           );
           setInitialRoleIds(selectedRoleIds);
           setInitialEmployeeType(employeeType);
-          setInitialDepartmentId(selectedDepartmentId);
           anySuccess = true;
 
           // If current user modified their own roles, log out
@@ -434,7 +431,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                 }}>
                   {portraitPreview || user.portraitImageUrl ? (
                     <img
-                      src={portraitPreview || user.portraitImageUrl}
+                      src={(portraitPreview || user.portraitImageUrl) ?? undefined}
                       alt="Portrait"
                       style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />

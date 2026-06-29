@@ -19,6 +19,7 @@ export interface CreateBookingRequest {
 
 export interface CreateBookingResponse {
     orderId: string;
+    bookingCode?: string;
     paymentUrl: string;
     totalPrice: number;
     totalQuantity: number;

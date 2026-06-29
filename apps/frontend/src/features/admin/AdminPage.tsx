@@ -341,22 +341,52 @@ const UsersSection: React.FC<UsersSectionProps> = ({
 }) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('nameAsc');
 
-  const filtered = users.filter(u =>
-    u.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.userName || '').toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredAndSorted = useMemo(() => {
+    let result = users.filter(u => {
+      const email = (u.userEmail || '').toLowerCase();
+      const fullName = (u.fullName || '').toLowerCase();
+      const userName = (u.userName || '').toLowerCase();
+      const phone = (u.phoneNumber || '').toLowerCase();
+      const query = searchQuery.toLowerCase();
+      return email.includes(query) || fullName.includes(query) || userName.includes(query) || phone.includes(query);
+    });
+
+    if (roleFilter) {
+      result = result.filter(u => {
+        const roles = (u.userRoles || '').split(',').map(r => r.trim()).filter(Boolean);
+        if (roleFilter === 'Customer') {
+          return roles.includes('Customer') || roles.length === 0;
+        }
+        return roles.includes(roleFilter);
+      });
+    }
+
+    result.sort((a, b) => {
+      const nameA = (a.fullName || a.userName || '').trim().toLowerCase();
+      const nameB = (b.fullName || b.userName || '').trim().toLowerCase();
+      
+      if (sortOrder === 'nameAsc') {
+        return nameA.localeCompare(nameB, 'vi');
+      } else {
+        return nameB.localeCompare(nameA, 'vi');
+      }
+    });
+
+    return result;
+  }, [users, searchQuery, roleFilter, sortOrder]);
 
   return (
     <div className="animate-in">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
         <div>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('User Management')}</h2>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('Manage system users and their roles')}</p>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
           <div className="relative">
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
@@ -365,13 +395,39 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="input"
-              style={{ paddingLeft: 32, width: 240 }}
+              style={{ paddingLeft: 32, width: 200, height: 38 }}
             />
           </div>
+
+          <select
+            value={roleFilter}
+            onChange={e => setRoleFilter(e.target.value)}
+            className="input select"
+            style={{ width: 150, fontSize: 13, height: 38, minHeight: 0 }}
+          >
+            <option value="">{t('All Roles', 'Tất cả vai trò')}</option>
+            <option value="Admin">Admin</option>
+            <option value="Cashier">Cashier</option>
+            <option value="MovieManager">Movie Manager</option>
+            <option value="TheaterManager">Theater Manager</option>
+            <option value="FacilitiesManager">Facilities Manager</option>
+            <option value="Customer">Customer</option>
+          </select>
+
+          <select
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value)}
+            className="input select"
+            style={{ width: 150, fontSize: 13, height: 38, minHeight: 0 }}
+          >
+            <option value="nameAsc">{t('Name: A to Z', 'Tên: A đến Z')}</option>
+            <option value="nameDesc">{t('Name: Z to A', 'Tên: Z đến A')}</option>
+          </select>
+
           <button
             onClick={onCreateUser}
             className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', height: 38 }}
           >
             <UserPlus size={16} />
             {t('Add User')}
@@ -401,7 +457,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               </tr>
             </thead>
             <tbody>
-              {filtered.map((user) => {
+              {filteredAndSorted.map((user) => {
                 return (
                 <tr key={user.userId}>
                   <td>
@@ -445,7 +501,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                 </tr>
                 );
               })}
-              {filtered.length === 0 && (
+              {filteredAndSorted.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
                     {t('No users found.')}

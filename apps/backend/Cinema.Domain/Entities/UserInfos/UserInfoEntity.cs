@@ -36,6 +36,9 @@ namespace Cinema.Domain.Entities.UserInfos
         
         [Required]
         public AccountStatusEnum AccountStatus { get; set; }
+
+        [Required]
+        public UserTypeEnum UserType { get; set; } = UserTypeEnum.Customer;
         
         public string? LockoutReason { get; set; }
 

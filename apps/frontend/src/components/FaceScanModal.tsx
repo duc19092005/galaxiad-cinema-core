@@ -176,7 +176,6 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
 
           // Draw bounding box
           const box = detection.detection.box;
-          const score = detection.detection.score;
 
           // Box glow effect
           ctx.shadowColor = '#a78bfa';

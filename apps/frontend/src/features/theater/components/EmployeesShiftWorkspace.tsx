@@ -22,7 +22,6 @@ import { facilitiesApi } from '../../../api/facilitiesApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
 import type { PayrollDto, ShiftRegistrationDto, ShiftTemplateDto, StaffProfileDto, ShiftScheduleDto } from '../../../types/shift.types';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import FaceScanModal from '../../../components/FaceScanModal';
 
 
@@ -87,9 +86,9 @@ const minutesArray = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, 
 interface EmployeesShiftWorkspaceProps {
   cinemaId: string | null;
   defaultTab?: 'management' | 'scheduling';
+  mode?: 'staff-only' | 'shift-management';
 }
-const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinemaId, defaultTab = 'management' }) => {
-  const navigate = useNavigate();
+const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinemaId, defaultTab = 'management', mode = 'shift-management' }) => {
   const [activeTab, setActiveTab] = useState<'management' | 'scheduling'>(defaultTab);
   
   useEffect(() => {
@@ -290,6 +289,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       const normalizedPayrolls = rawPayrolls.map((p: any) => ({
         ...p,
         payrollId: p.payrollId ?? p.PayrollId,
+        salaryTotalLoggerId: p.salaryTotalLoggerId ?? p.SalaryTotalLoggerId,
         staffId: p.staffId ?? p.StaffId,
         staffName: p.staffName ?? p.StaffName,
         totalHours: p.totalHours ?? p.TotalHours,
@@ -633,47 +633,57 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       {/* Workspace Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>Employee Operations</h2>
+          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>
+            {mode === 'staff-only' ? 'Quản lý nhân viên' : 'Duyệt ca & Lập lịch làm việc'}
+          </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-            Manage shift templates, department schedules, registrations, face data, and payroll.
+            {mode === 'staff-only'
+              ? 'Xem danh sách nhân viên, trạng thái khuôn mặt, và tài khoản quầy phòng ban.'
+              : 'Duyệt đăng ký ca, lập lịch phòng ban, tính lương và phân ca trực tiếp.'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <button 
-            className={`btn ${activeTab === 'management' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => navigate('/theater-manager/employees')}
-          >
-            <Users size={16} />
-            Duyệt ca & Nhân sự
-          </button>
-          <button 
-            className={`btn ${activeTab === 'scheduling' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => navigate('/theater-manager/employees-schedule')}
-          >
-            <Calendar size={16} />
-            Lập lịch làm việc
-          </button>
+          {mode === 'shift-management' && (
+            <>
+              <button
+                className={`btn ${activeTab === 'management' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('management')}
+              >
+                <CalendarPlus size={16} />
+                Duyệt ca
+              </button>
+              <button
+                className={`btn ${activeTab === 'scheduling' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('scheduling')}
+              >
+                <Calendar size={16} />
+                Lập lịch
+              </button>
+            </>
+          )}
           <button className="btn btn-secondary" onClick={loadData} disabled={loading}>
             {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={16} />}
-            Refresh
+            Làm mới
           </button>
         </div>
       </div>
 
-      {/* RENDER TAB 1: DUYỆT CA & NHÂN SỰ */}
-      {activeTab === 'management' && (
+      {/* RENDER: QUẢN LÝ NHÂN VIÊN (hiển thị cho cả 2 mode nhưng staff-only chỉ có phần này) */}
+      {(mode === 'staff-only' || activeTab === 'management') && (
         <>
           <div className="employee-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
-            <SummaryTile icon={<Users size={18} />} label="Active staff" value={`${activeStaff.length}/${staff.length}`} />
-            <SummaryTile icon={<CalendarPlus size={18} />} label="Pending requests" value={String(pendingRegistrations.length)} />
-            <SummaryTile icon={<ScanFace size={18} />} label="Face ready" value={`${faceReadyCount}/${staff.length}`} />
-            <SummaryTile icon={<Banknote size={18} />} label="Pending payrolls" value={String(pendingPayrolls.length)} />
+            <SummaryTile icon={<Users size={18} />} label="Nhân viên hoạt động" value={`${activeStaff.length}/${staff.length}`} />
+            <SummaryTile icon={<ScanFace size={18} />} label="Đã đăng ký khuôn mặt" value={`${faceReadyCount}/${staff.length}`} />
+            <SummaryTile icon={<CalendarPlus size={18} />} label="Đăng ký chờ duyệt" value={String(pendingRegistrations.length)} />
+            <SummaryTile icon={<Banknote size={18} />} label="Lương chờ thanh toán" value={String(pendingPayrolls.length)} />
           </div>
 
+          {/* Phần duyệt ca chỉ hiện ở mode shift-management */}
+          {mode === 'shift-management' && (
           <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)', gap: 16 }}>
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Shift registrations</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Đăng ký ca làm việc</h3>
                 <select className="input select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusFilters)[number])} style={{ width: 180 }}>
                   {statusFilters.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
@@ -798,24 +808,74 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                   Calculate payroll
                 </button>
               </Panel>
+
+              <Panel title="Lịch sử lương" icon={<Banknote size={18} />}>
+                {payrolls.length === 0 ? (
+                  <EmptyState label="Chưa có bản ghi lương nào." />
+                ) : (
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Nhân viên</th>
+                          <th>Số tiền</th>
+                          <th>Trạng thái</th>
+                          <th>Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {payrolls.map((payroll) => (
+                          <tr key={payroll.salaryTotalLoggerId}>
+                            <td>
+                              <strong>{payroll.staffName}</strong>
+                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDate(payroll.receivedDay)}</div>
+                            </td>
+                            <td>{formatMoney(payroll.totalReceived)}</td>
+                            <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
+                            <td>
+                              {payroll.paymentStatus === 'Pending' ? (
+                                <ActionButton label="Thanh toán" tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
+                              ) : (
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || 'Đã đóng'}</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </Panel>
             </div>
           </section>
-
-          <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 16 }}>
+          )}{/* end mode === shift-management */}
+          {/* Bảng nhân viên & phòng ban chỉ hiện ở trang Quản lý nhân viên */}
+          {mode === 'staff-only' && (
+          <section className="employee-layout" style={{ display: 'grid', gap: 16 }}>
+            {/* ─── Bảng 1: Nhân viên thực thể ─── */}
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800 }}>Staff profiles</h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <UserRound size={18} style={{ color: 'var(--accent)' }} />
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Nhân viên</h3>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
+                  background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent)',
+                }}>
+                  {staff.length} người
+                </span>
+              </div>
               {staff.length === 0 ? (
-                <EmptyState label="No staff profiles found for this cinema." />
+                <EmptyState label="Không tìm thấy nhân viên nào tại rạp này." />
               ) : (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Staff</th>
-                        <th>Department</th>
-                        <th>Face</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>Nhân viên</th>
+                        <th>Phòng ban</th>
+                        <th>Khuôn mặt</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -837,18 +897,17 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           </td>
                           <td>
                             <span className={profile.hasFaceRegistered ? 'badge badge-success' : 'badge badge-warning'}>
-                              {profile.hasFaceRegistered ? 'Ready' : 'Missing'}
+                              {profile.hasFaceRegistered ? 'Đã đăng ký' : 'Chưa có'}
                             </span>
                           </td>
                           <td>
                             <span className={profile.workingStatus ? 'badge badge-success' : 'badge badge-default'}>
-                              {profile.workingStatus ? 'Active' : 'Inactive'}
+                              {profile.workingStatus ? 'Đang làm' : 'Ngừng'}
                             </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <ActionButton label="Face" tone="neutral" icon={<ScanFace size={13} />} loading={actionLoading === `face-${profile.userId}`} onClick={() => { setFaceStaff(profile); setShowFaceScanModal(true); }} />
-                              <ActionButton label={profile.workingStatus ? 'Disable' : 'Enable'} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
+                              <ActionButton label={profile.workingStatus ? 'Vô hiệu' : 'Kích hoạt'} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
                             </div>
                           </td>
                         </tr>
@@ -859,19 +918,104 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
               )}
             </div>
 
+            {/* ─── Bảng 2: Tài khoản quầy phòng ban (POS Shared Accounts) ─── */}
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800 }}>Payroll history</h3>
-              {payrolls.length === 0 ? (
-                <EmptyState label="No payroll records found." />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <Users size={18} style={{ color: '#f59e0b' }} />
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Tài khoản quầy phòng ban</h3>
+                <span style={{
+                  fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
+                  background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.35)',
+                }}>
+                  {departments.length} phòng ban
+                </span>
+              </div>
+              {departments.length === 0 ? (
+                <EmptyState label="Không có phòng ban nào tại rạp này." />
               ) : (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Staff</th>
-                        <th>Amount</th>
-                        <th>Status</th>
-                        <th>Action</th>
+                        <th>Phòng ban</th>
+                        <th>Loại</th>
+                        <th>Email tài khoản POS</th>
+                        <th>Trạng thái</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {departments.map((dept, index) => {
+                        const id = dept.departmentId ?? dept.DepartmentId;
+                        const name = dept.departmentName ?? dept.DepartmentName;
+                        const type = dept.cashierType ?? dept.CashierType ?? dept.departmentType ?? dept.DepartmentType;
+                        const email = dept.sharedUserEmail ?? dept.SharedUserEmail;
+                        const isActive = dept.isActive ?? dept.IsActive;
+                        const typeLabel = type === 1 ? 'Quầy vé' : type === 2 ? 'Quầy bắp nước' : type === 3 ? 'Kho' : 'Phòng ban';
+                        const typeTone = type === 1 ? '#3b82f6' : type === 2 ? '#f59e0b' : type === 3 ? '#8b5cf6' : '#6b7280';
+                        const itemKey = (!id || id === '00000000-0000-0000-0000-000000000000') ? `dept-${index}` : id;
+                        return (
+                          <tr key={itemKey}>
+                            <td>
+                              <strong style={{ color: 'var(--text-primary)' }}>{name}</strong>
+                            </td>
+                            <td>
+                              <span style={{
+                                fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
+                                background: `${typeTone}18`, color: typeTone, border: `1px solid ${typeTone}40`,
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {typeLabel}
+                              </span>
+                            </td>
+                            <td>
+                              {email ? (
+                                <div>
+                                  <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{email}</div>
+                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Tài khoản POS dùng chung</div>
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Chưa cấu hình</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className={isActive ? 'badge badge-success' : 'badge badge-default'}>
+                                {isActive ? 'Hoạt động' : 'Tắt'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* ─── Bảng 3: Lịch sử lương ─── */}
+            <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <Banknote size={18} style={{ color: '#22c55e' }} />
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Lịch sử lương</h3>
+                {pendingPayrolls.length > 0 && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
+                    background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.35)',
+                  }}>
+                    {pendingPayrolls.length} chờ thanh toán
+                  </span>
+                )}
+              </div>
+              {payrolls.length === 0 ? (
+                <EmptyState label="Chưa có bản ghi lương nào." />
+              ) : (
+                <div className="table-container">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Nhân viên</th>
+                        <th>Số tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -885,9 +1029,9 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
                           <td>
                             {payroll.paymentStatus === 'Pending' ? (
-                              <ActionButton label="Pay" tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
+                              <ActionButton label="Thanh toán" tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
                             ) : (
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || 'Closed'}</span>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || 'Đã đóng'}</span>
                             )}
                           </td>
                         </tr>
@@ -898,11 +1042,12 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
               )}
             </div>
           </section>
+          )}{/* end mode === staff-only */}
         </>
       )}
 
-      {/* RENDER TAB 2: LẬP LỊCH LÀM VIỆC */}
-      {activeTab === 'scheduling' && (
+      {/* RENDER TAB 2: LẬP LỊCH LÀM VIỆC - chỉ hiện ở mode shift-management */}
+      {mode === 'shift-management' && activeTab === 'scheduling' && (
         <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)', gap: 16 }}>
           {/* LEFT: SCHEDULE LIST */}
           <div className="glass-card" style={{ padding: 20, display: 'grid', gap: 16 }}>
@@ -921,11 +1066,12 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                   onChange={(e) => setSelectedDeptId(e.target.value)}
                   style={{ width: 180 }}
                 >
-                  {departments.map((d) => {
+                  {departments.map((d, index) => {
                     const id = d.departmentId ?? d.DepartmentId;
                     const name = d.departmentName ?? d.DepartmentName;
+                    const itemKey = (!id || id === '00000000-0000-0000-0000-000000000000') ? `dept-opt-${index}` : id;
                     return (
-                      <option key={id} value={id}>{name}</option>
+                      <option key={itemKey} value={id}>{name}</option>
                     );
                   })}
                 </select>

@@ -95,7 +95,8 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
                 DateOfBirth = dto.DateOfBirth,
                 IdentityCode = encryptedIdentityCode,
                 PhoneNumber = dto.PhoneNumber,
-                UserName = dto.UserName
+                UserName = dto.UserName,
+                UserType = UserTypeEnum.Customer
             });
 
             await _repository.AddUserRoleAsync(new UserRoleInfoEntity

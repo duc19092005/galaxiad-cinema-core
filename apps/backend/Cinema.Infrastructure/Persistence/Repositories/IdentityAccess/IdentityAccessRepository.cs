@@ -83,6 +83,19 @@ public class IdentityAccessRepository : IIdentityAccessRepository
             .ToListAsync();
     }
 
+    public async Task<List<ManagedCinemaInfoDto>> GetPosSharedCinemasAsync(Guid userId)
+    {
+        return await _dbContext.Set<DepartmentEntity>()
+            .Include(d => d.CinemaInfoEntity)
+            .Where(d => d.SharedUserId == userId && d.IsActive && !d.CinemaInfoEntity.IsDeleted)
+            .Select(d => new ManagedCinemaInfoDto
+            {
+                CinemaId = d.CinemaId,
+                CinemaName = d.CinemaInfoEntity.CinemaName
+            })
+            .ToListAsync();
+    }
+
     public async Task<List<Guid>> GetUserRoleIdsAsync(Guid userId)
     {
         return await _dbContext.Set<UserRoleInfoEntity>()

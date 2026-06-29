@@ -163,7 +163,8 @@ public class GoogleLoginCallbackUseCase
                     UserName = username,
                     IdentityCode = encryptedIdentity,
                     DateOfBirth = DateTime.MinValue,
-                    PhoneNumber = $"0{Random.Shared.Next(100000000, 999999999)}"
+                    PhoneNumber = $"0{Random.Shared.Next(100000000, 999999999)}",
+                    UserType = UserTypeEnum.Customer
                 });
 
                 await _repository.AddUserRoleAsync(new UserRoleInfoEntity

@@ -200,10 +200,33 @@ public class ClockInUseCase
             throw new AppException(Messages.Staff.NoApprovedShiftToday, 400, "CLOCK_IN_ERR");
         }
 
+        // Trích xuất thông tin ca làm việc từ Template hoặc Schedule
+        TimeSpan shiftStart;
+        TimeSpan shiftEnd;
+        Guid roleId;
+        decimal salaryPerHour;
+
+        if (activeShiftReg.CinemaShiftTemplateEntity != null)
+        {
+            shiftStart = activeShiftReg.CinemaShiftTemplateEntity.StartTime;
+            shiftEnd = activeShiftReg.CinemaShiftTemplateEntity.EndTime;
+            roleId = activeShiftReg.CinemaShiftTemplateEntity.RoleId;
+            salaryPerHour = activeShiftReg.CinemaShiftTemplateEntity.RoleListInfoEntity?.SalaryPerHour ?? 0;
+        }
+        else if (activeShiftReg.CinemaShiftScheduleEntity != null)
+        {
+            shiftStart = activeShiftReg.CinemaShiftScheduleEntity.StartTime;
+            shiftEnd = activeShiftReg.CinemaShiftScheduleEntity.EndTime;
+            roleId = activeShiftReg.CinemaShiftScheduleEntity.RoleId;
+            salaryPerHour = activeShiftReg.CinemaShiftScheduleEntity.RoleListInfoEntity?.SalaryPerHour ?? 0;
+        }
+        else
+        {
+            throw new AppException("Không tìm thấy cấu hình thời gian ca làm việc trong lịch đăng ký.", 500, "CLOCK_IN_ERR");
+        }
+
         // Kiểm tra khung thời gian ca làm việc (Cho phép điểm danh sớm tối đa 30 phút và trong suốt ca trực)
         var timeOfDay = clockInTime.TimeOfDay;
-        var shiftStart = activeShiftReg.CinemaShiftTemplateEntity.StartTime;
-        var shiftEnd = activeShiftReg.CinemaShiftTemplateEntity.EndTime;
         var allowedStart = shiftStart.Subtract(TimeSpan.FromMinutes(30));
 
         bool isWithinShift;
@@ -221,24 +244,63 @@ public class ClockInUseCase
             throw new AppException(string.Format(Messages.Staff.ClockInShiftTimeWindow, shiftStart, shiftEnd), 400, "CLOCK_IN_ERR");
         }
 
-        // 6. Kiểm tra xem đã điểm danh trước đó chưa
-        var alreadyClockedIn = await _repository.HasActiveWorkingLogAsync(resolvedStaffId, todayDate);
+        // 6. Kiểm tra xem đã điểm danh trước đó chưa. Nếu có rồi thì cho phép tiếp tục sử dụng ca đang hoạt động (phục hồi phiên làm việc)
+        var activeWorkingLog = await _repository.GetActiveWorkingLogAsync(resolvedStaffId);
 
-        if (alreadyClockedIn)
+        if (activeWorkingLog != null)
         {
-            throw new AppException(Messages.Staff.AlreadyClockedIn, 400, "CLOCK_IN_ERR");
+            var resumeUserRoles = (await _repository.GetUserRoleNamesAsync(resolvedStaffId)).ToArray();
+            var resumeRoleIds = await _repository.GetUserRoleIdsAsync(resolvedStaffId);
+            var resumePermissions = (await _repository.GetRolePermissionsAsync(resumeRoleIds)).ToArray();
+
+            string? resumeJwtKey = _configuration["JWT_Info:Key"];
+            string? resumeJwtIss = _configuration["JWT_Info:Iss"];
+            string? resumeJwtAud = _configuration["JWT_Info:Aud"];
+
+            if (string.IsNullOrEmpty(resumeJwtKey) || string.IsNullOrEmpty(resumeJwtIss) || string.IsNullOrEmpty(resumeJwtAud))
+            {
+                throw new AppException(Messages.Staff.MissingJWTConfig, 500, "CLOCK_IN_ERR");
+            }
+
+            var resumeUserEmail = resolvedStaffProfile.UserInfoEntity.UserEmail;
+            var resumeUsername = resolvedStaffProfile.UserInfoEntity.UserName;
+
+            var resumeToken = _jwtService.GenerateToken(resumeJwtKey, resumeJwtIss, resumeJwtAud, resumeUserEmail, resumeUsername, resolvedStaffId, resumeUserRoles, resumePermissions);
+
+            if (string.IsNullOrEmpty(resumeToken))
+            {
+                throw new AppException(Messages.Staff.CannotGenerateToken, 500, "CLOCK_IN_ERR");
+            }
+
+            return new BaseResponse<ResClockInDto>
+            {
+                IsSuccess = true,
+                Data = new ResClockInDto
+                {
+                    AccessToken = resumeToken,
+                    StaffName = resumeUsername,
+                    StaffId = resolvedStaffId
+                },
+                Message = $"Chào mừng bạn quay trở lại ca làm việc, {resumeUsername}!"
+            };
+        }
+
+        // Nếu điểm danh sớm trước giờ bắt đầu ca làm việc, tính công bắt đầu từ đúng giờ ca trực
+        var startedShiftTime = clockInTime;
+        if (timeOfDay < shiftStart)
+        {
+            startedShiftTime = todayDate.Add(shiftStart);
         }
 
         // 7. Ghi nhận nhật ký bắt đầu ca làm việc
-        var salaryPerHour = activeShiftReg.CinemaShiftTemplateEntity.RoleListInfoEntity.SalaryPerHour;
         var workingLog = new StaffWorkingLoggerEntity
         {
             StaffWorkingLoggerId = Guid.NewGuid(),
             StaffId = resolvedStaffId,
-            RoleId = activeShiftReg.CinemaShiftTemplateEntity.RoleId,
+            RoleId = roleId,
             SalaryPerHour = salaryPerHour,
             WorkingHour = 0,
-            StartedShiftTime = clockInTime,
+            StartedShiftTime = startedShiftTime,
             EndedShiftTime = null,
             WorkingDate = todayDate,
             TotalReceived = 0,

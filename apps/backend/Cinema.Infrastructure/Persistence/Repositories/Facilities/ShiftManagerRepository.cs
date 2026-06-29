@@ -171,9 +171,14 @@ public class ShiftManagerRepository : IShiftManagerRepository
 
     public async Task<List<ResStaffProfileDto>> GetStaffProfilesAsync(Guid cinemaId)
     {
+        var sharedUserIds = await _dbContext.Set<DepartmentEntity>()
+            .Where(d => d.CinemaId == cinemaId && d.SharedUserId != null)
+            .Select(d => d.SharedUserId!.Value)
+            .ToListAsync();
+
         return await _dbContext.Set<StaffProfileEntity>()
             .Include(s => s.UserInfoEntity)
-            .Where(s => s.CinemaId == cinemaId)
+            .Where(s => s.CinemaId == cinemaId && !sharedUserIds.Contains(s.UserId))
             .Select(s => new ResStaffProfileDto
             {
                 UserId = s.UserId,

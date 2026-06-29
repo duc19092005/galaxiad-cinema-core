@@ -47,14 +47,13 @@ public class ClockOutUseCase
             clockOutTime = DateTime.UtcNow;
         }
 
-        if (clockOutTime <= activeLog.StartedShiftTime)
-        {
-            throw new AppException(Messages.Staff.ClockOutNotAllowed, 400, "CLOCK_OUT_ERR");
-        }
-
         // 3. Tính toán số giờ làm việc thực tế
         var duration = clockOutTime - activeLog.StartedShiftTime;
         var workingHours = (decimal)duration.TotalHours;
+        if (workingHours < 0)
+        {
+            workingHours = 0;
+        }
 
         // Tránh sai số quá nhỏ hoặc làm tròn
         activeLog.EndedShiftTime = clockOutTime;

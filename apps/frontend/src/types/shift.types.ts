@@ -31,6 +31,7 @@ export interface ShiftRegistrationDto {
   staffId: string;
   staffName: string;
   shiftTemplateId: string;
+  shiftScheduleId?: string;
   shiftName: string;
   startTime: string;
   endTime: string;

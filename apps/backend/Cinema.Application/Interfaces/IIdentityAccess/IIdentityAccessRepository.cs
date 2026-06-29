@@ -16,6 +16,7 @@ public interface IIdentityAccessRepository
     Task<bool> IsSharedPosAccountAsync(Guid userId);
     Task<List<ManagedCinemaInfoDto>> GetActiveCinemasAsync();
     Task<List<ManagedCinemaInfoDto>> GetManagedCinemasAsync(Guid userId);
+    Task<List<ManagedCinemaInfoDto>> GetPosSharedCinemasAsync(Guid userId);
     Task<List<Guid>> GetUserRoleIdsAsync(Guid userId);
     Task<List<string>> GetUserPermissionsAsync(List<Guid> roleIds);
     Task AddUserAsync(UserInfoEntity user);

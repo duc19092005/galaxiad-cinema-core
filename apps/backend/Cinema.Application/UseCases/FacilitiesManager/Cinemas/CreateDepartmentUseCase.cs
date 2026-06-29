@@ -74,7 +74,8 @@ public class CreateDepartmentUseCase
                 DateOfBirth = new DateTime(2000, 1, 1),
                 IdentityCode = $"DEPT_{departmentId:N}",
                 PhoneNumber = cinema.CinemaHotLineNumber,
-                UserName = DepartmentSharedAccountMapper.BuildUserName(request, cinema)
+                UserName = DepartmentSharedAccountMapper.BuildUserName(request, cinema),
+                UserType = UserTypeEnum.SharedPOS
             };
             await _unitOfWork.Repository<UserInfoEntity>().AddAsync(sharedUser);
 

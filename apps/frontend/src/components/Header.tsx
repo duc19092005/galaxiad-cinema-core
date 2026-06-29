@@ -194,6 +194,16 @@ const Header: React.FC<HeaderProps> = ({
               >
                 {t('home.offersNav', 'Offers')}
               </span>
+              {user?.isSharedPosAccount && (
+                <span 
+                  onClick={() => navigate('/cashier')} 
+                  className="text-[#ff8a00] font-bold hover:text-white transition-colors font-sans text-xs lg:text-sm cursor-pointer whitespace-nowrap flex items-center gap-1"
+                  style={{ textShadow: '0 0 8px rgba(255,138,0,0.3)' }}
+                >
+                  <Ticket size={14} />
+                  {t('POS Terminal', 'Vào quầy POS')}
+                </span>
+              )}
             </div>
           </div>
 
@@ -449,6 +459,14 @@ const Header: React.FC<HeaderProps> = ({
           <MobileNavItem icon={<Calendar size={18} />} label={t('home.showtimesNav', 'Showtimes')} onClick={() => { navigate('/showtimes'); setIsMobileMenuOpen(false); }} active={location.pathname === '/showtimes'} />
           <MobileNavItem icon={<MapPin size={18} />} label={t('home.theatersNav', 'Theaters')} onClick={() => { navigate('/theaters'); setIsMobileMenuOpen(false); }} active={location.pathname === '/theaters'} />
           <MobileNavItem icon={<Ticket size={18} />} label={t('home.offersNav', 'Offers')} onClick={() => { navigate('/offers'); setIsMobileMenuOpen(false); }} active={location.pathname === '/offers'} />
+          {user?.isSharedPosAccount && (
+            <MobileNavItem 
+              icon={<Ticket size={18} style={{ color: '#ff8a00' }} />} 
+              label={t('POS Terminal', 'Vào quầy POS')} 
+              onClick={() => { navigate('/cashier'); setIsMobileMenuOpen(false); }} 
+              active={location.pathname.startsWith('/cashier')} 
+            />
+          )}
 
           <div className="h-px bg-white/5 my-2" />
 

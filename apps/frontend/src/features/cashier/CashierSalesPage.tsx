@@ -2,14 +2,16 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Film, Calendar, Clock, Monitor, ShoppingCart, User, CreditCard,
-  CheckCircle2, Printer, LogOut, Loader2, AlertCircle, RefreshCw, Ticket, Check, ChevronRight
+  CheckCircle2, Printer, LogOut, Loader2, RefreshCw, Ticket, ChevronRight, Banknote
 } from 'lucide-react';
 import * as signalR from '@microsoft/signalr';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import { staffShiftApi, CASHIER_SHIFT_SESSION_KEY, readCashierShiftSession } from '../../api/staffShiftApi';
+import { authApi } from '../../api/authApi';
+import Cookies from 'js-cookie';
 import type { SearchScheduleResult, PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
-import type { CashierShiftSession, StaffWorkingLogDto } from '../../types/shift.types';
+import type { CashierShiftSession } from '../../types/shift.types';
 import { showError, showSuccess } from '../../utils/ToastUtils';
 import { API_BASE_URL } from '../../api/axiosClient';
 
@@ -24,7 +26,7 @@ const CashierSalesPage: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [schedules, setSchedules] = useState<SearchScheduleResult[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>(() => {
+  const [selectedDate] = useState<string>(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   });
@@ -43,7 +45,7 @@ const CashierSalesPage: React.FC = () => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerLookupStatus, setCustomerLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
-  const [resolvedCustomerId, setResolvedCustomerId] = useState<string | null>(null);
+
   
   const [voucherId, setVoucherId] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<number>(2); // Default to CASH (2)
@@ -82,7 +84,7 @@ const CashierSalesPage: React.FC = () => {
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-        cinemaId = user.cinemaId || '';
+        cinemaId = user.cinemaId || (user.managedCinemas && user.managedCinemas[0]?.cinemaId) || '';
       } catch { /* ignore */ }
     }
 
@@ -211,7 +213,6 @@ const CashierSalesPage: React.FC = () => {
       if (response.data) {
         setCustomerName(response.data.userName);
         setCustomerPhone(response.data.phoneNumber);
-        setResolvedCustomerId(response.data.userId);
         setCustomerLookupStatus('found');
         showSuccess(`Đã tìm thấy thành viên: ${response.data.userName}`);
       } else {
@@ -345,14 +346,38 @@ const CashierSalesPage: React.FC = () => {
     try {
       const staffToken = session?.accessToken;
       await staffShiftApi.clockOut({}, staffToken);
+      showSuccess('Đã đăng xuất ca trực thành công.');
+    } catch (err) {
+      showError('Bàn giao ca thất bại ở máy chủ, nhưng ca trực cục bộ sẽ được dọn dẹp.');
+    } finally {
       localStorage.removeItem(CASHIER_SHIFT_SESSION_KEY);
       setSession(null);
-      showSuccess('Đã đăng xuất ca trực thành công.');
-      navigate('/cashier', { replace: true });
-    } catch {
-      showError('Đăng xuất ca trực thất bại.');
-    } finally {
       setBookingLoading(false);
+      navigate('/cashier', { replace: true });
+    }
+  };
+
+  // Website logout (completely log out of the shared POS account)
+  const handleWebsiteLogout = async () => {
+    if (!window.confirm('Bạn có chắc chắn muốn đăng xuất tài khoản POS khỏi trình duyệt này?')) return;
+    setBookingLoading(true);
+    try {
+      if (session?.accessToken) {
+        try {
+          await staffShiftApi.clockOut({}, session.accessToken);
+        } catch { /* ignore clockout error */ }
+      }
+      await authApi.logout();
+    } catch {
+      // ignore
+    } finally {
+      localStorage.removeItem('user_info');
+      localStorage.removeItem(CASHIER_SHIFT_SESSION_KEY);
+      Cookies.remove('X-Access-Token');
+      setSession(null);
+      setBookingLoading(false);
+      showSuccess('Đã đăng xuất tài khoản thành công.');
+      navigate('/login', { replace: true });
     }
   };
 
@@ -362,7 +387,6 @@ const CashierSalesPage: React.FC = () => {
     setCustomerEmail('');
     setCustomerName('');
     setCustomerPhone('');
-    setResolvedCustomerId(null);
     setCustomerLookupStatus('idle');
     setVoucherId('');
     setPaymentMethod(2);
@@ -380,10 +404,6 @@ const CashierSalesPage: React.FC = () => {
     );
   }, [schedules, searchKeyword]);
 
-  // Get active movie object
-  const activeMovie = useMemo(() => {
-    return schedules.find(s => s.movieId === selectedMovieId) || null;
-  }, [schedules, selectedMovieId]);
 
   // Max Col and Row for rendering grid
   const maxCol = seatMap?.seatMap ? Math.max(...seatMap.seatMap.map(s => s.colIndex)) + 1 : 0;
@@ -457,6 +477,15 @@ const CashierSalesPage: React.FC = () => {
             >
               <LogOut size={14} />
               Bàn giao ca
+            </button>
+
+            <button
+              onClick={handleWebsiteLogout}
+              disabled={bookingLoading}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-colors"
+            >
+              <LogOut size={14} />
+              Đăng xuất
             </button>
           </div>
         )}

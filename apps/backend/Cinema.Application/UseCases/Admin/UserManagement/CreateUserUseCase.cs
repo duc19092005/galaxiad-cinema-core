@@ -96,6 +96,7 @@ public class CreateUserUseCase
                 throw new BadRequestException(validationErrors, "VALIDATION_ERROR");
 
             var userId = Guid.NewGuid();
+            var initialUserType = AdminUserManagementHelper.DetermineUserType(normalizedRoleIds);
             await userRepository.AddAsync(new UserInfoEntity
             {
                 UserId = userId,
@@ -106,7 +107,8 @@ public class CreateUserUseCase
                 DateOfBirth = dto.DateOfBirth,
                 IdentityCode = encryptedIdentityCode,
                 PhoneNumber = dto.PhoneNumber,
-                UserName = dto.UserName
+                UserName = dto.UserName,
+                UserType = initialUserType
             });
 
             await AdminUserManagementHelper.ReplaceStaffRolesAsync(_unitOfWork, _adminUserRepository, userId, normalizedRoleIds, staffCinemaId, dto.DepartmentId, encryptedFaceVector, dto.EmployeeType);

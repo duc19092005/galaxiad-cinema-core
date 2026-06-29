@@ -103,6 +103,10 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto, ResR
             {
                 managedCinemasList = await _repository.GetManagedCinemasAsync(getUserInfo.UserId);
             }
+            else if (isSharedPosAccount)
+            {
+                managedCinemasList = await _repository.GetPosSharedCinemasAsync(getUserInfo.UserId);
+            }
 
             return new BaseResponse<ResRegularLoginDto>
             {

@@ -24,7 +24,13 @@ public class AdminUserRepository : IAdminUserRepository
 
     public async Task<List<AdminUserDto>> GetAllUsersAsync()
     {
+        var sharedUserIds = await _dbContext.Set<DepartmentEntity>()
+            .Where(d => d.SharedUserId != null)
+            .Select(d => d.SharedUserId.GetValueOrDefault())
+            .ToListAsync();
+
         return await _dbContext.Set<UserInfoEntity>()
+            .Where(u => !sharedUserIds.Contains(u.UserId))
             .OrderByDescending(u => u.UserId)
             .Select(u => new AdminUserDto
             {

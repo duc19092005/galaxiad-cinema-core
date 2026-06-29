@@ -27,6 +27,33 @@ public static class AdminUserManagementHelper
         userRoles.FacilitiesManager
     ];
 
+    /// <summary>
+    /// Determine UserType based on the staff role IDs being assigned.
+    /// Manager roles take priority, then Staff roles.
+    /// Returns null if no staff roles are present (caller should decide fallback).
+    /// </summary>
+    public static UserTypeEnum DetermineUserType(IEnumerable<Guid> roleIds)
+    {
+        var roleList = roleIds.ToList();
+        if (roleList.Contains(userRoles.TheaterManager))
+            return UserTypeEnum.Manager;
+        if (roleList.Any(r => StaffRoleIds.Contains(r)))
+            return UserTypeEnum.Staff;
+        return UserTypeEnum.Customer;
+    }
+
+    public static async Task UpdateUserTypeAsync(
+        IAdminUserRepository adminUserRepository,
+        Guid userId,
+        UserTypeEnum userType)
+    {
+        var userEntity = await adminUserRepository.FindUserByIdAsync(userId);
+        if (userEntity != null)
+        {
+            userEntity.UserType = userType;
+        }
+    }
+
     public static List<Guid> NormalizeStaffRoleIds(IEnumerable<Guid>? roleIds)
     {
         var nextRoleIds = (roleIds ?? []).Distinct().ToList();
@@ -188,6 +215,10 @@ public static class AdminUserManagementHelper
             }).ToList();
             await unitOfWork.Repository<UserRoleInfoEntity>().AddRangeAsync(rolesToAdd);
             await EnsureStaffProfileAsync(unitOfWork, adminUserRepository, userId, roleIds, cinemaId, departmentId, encryptedFaceVector, employeeType);
+
+            // Update UserType based on newly assigned roles
+            var newUserType = DetermineUserType(roleIds);
+            await UpdateUserTypeAsync(adminUserRepository, userId, newUserType);
         }
         else
         {
@@ -198,6 +229,9 @@ public static class AdminUserManagementHelper
                 staffProfile.IsCinemaManager = false;
                 unitOfWork.Repository<StaffProfileEntity>().Update(staffProfile);
             }
+
+            // No staff roles → revert to Customer
+            await UpdateUserTypeAsync(adminUserRepository, userId, UserTypeEnum.Customer);
         }
     }
 }

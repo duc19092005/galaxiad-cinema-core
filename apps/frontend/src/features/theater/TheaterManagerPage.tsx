@@ -17,7 +17,7 @@ import { useCinema } from '../../contexts/CinemaContext';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
-import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar } from 'lucide-react';
+import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar, Film } from 'lucide-react';
 import EmployeesShiftWorkspace from './components/EmployeesShiftWorkspace';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema } from '../../types/facilities.types';
@@ -91,9 +91,9 @@ const TheaterManagerPage: React.FC = () => {
     {
       items: [
         { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={18} /> },
-        { id: 'employees', label: t('Employees', 'Duyệt ca & Nhân sự'), icon: <Users size={18} /> },
-        { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Lập lịch làm việc'), icon: <Calendar size={18} /> },
-        { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} /> },
+        { id: 'employees', label: t('Employees', 'Quản lý nhân viên'), icon: <Users size={18} /> },
+        { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Ca làm việc'), icon: <Calendar size={18} /> },
+        { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Film size={18} /> },
       ],
     },
   ];
@@ -136,9 +136,9 @@ const TheaterManagerPage: React.FC = () => {
           </div>
         );
       case 'employees':
-        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="management" />;
+        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="management" mode="staff-only" />;
       case 'employees-schedule':
-        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="scheduling" />;
+        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="scheduling" mode="shift-management" />;
       case 'schedule':
         return (
           <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
