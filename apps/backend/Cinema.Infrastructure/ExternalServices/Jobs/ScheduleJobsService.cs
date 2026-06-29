@@ -58,7 +58,7 @@ public class ScheduleJobsService : IScheduleJobsService
         return (sId, eId);
     }
 
-    public async Task<string> AddJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end)
+    private async Task<string> AddJobIntoBackgroundInternal(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end, bool saveChanges)
     {
         try
         {
@@ -95,7 +95,10 @@ public class ScheduleJobsService : IScheduleJobsService
             if (logs.Any())
             {
                 await Repository<ScheduleJobLogger>().AddRangeAsync(logs);
-                await _unitOfWork.SaveChangesAsync();
+                if (saveChanges)
+                {
+                    await _unitOfWork.SaveChangesAsync();
+                }
             }
             return "OK";
         }
@@ -104,6 +107,16 @@ public class ScheduleJobsService : IScheduleJobsService
             _logger.LogError(e, "Error adding background jobs for {TargetId}", targetId);
             throw;
         }
+    }
+
+    public Task<string> AddJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end)
+    {
+        return AddJobIntoBackgroundInternal(type, targetId, start, end, saveChanges: true);
+    }
+
+    public Task<string> AddJobIntoBackgroundWithoutSave(SchedulesJobCategoryEnums type, Guid targetId, DateTime start, DateTime end)
+    {
+        return AddJobIntoBackgroundInternal(type, targetId, start, end, saveChanges: false);
     }
 
     public async Task<bool> UpdatedJobIntoBackground(SchedulesJobCategoryEnums type, Guid targetId, DateTime? start, DateTime? end)
@@ -225,7 +238,7 @@ public class ScheduleJobsService : IScheduleJobsService
             
             try 
             {
-                await AddJobIntoBackground(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
+                await AddJobIntoBackgroundWithoutSave(SchedulesJobCategoryEnums.Movies, movie.MovieId, movie.ActiveAt, movie.EndedDate);
             }
             catch (Exception ex)
             {
@@ -253,7 +266,7 @@ public class ScheduleJobsService : IScheduleJobsService
 
             try 
             {
-                await AddJobIntoBackground(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
+                await AddJobIntoBackgroundWithoutSave(SchedulesJobCategoryEnums.Schedules, schedule.MovieScheduleInfoId, schedule.ActiveAt, schedule.EndedTime);
             }
             catch (Exception ex)
             {
