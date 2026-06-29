@@ -20,7 +20,7 @@ export async function loadFaceModels(): Promise<void> {
 
   modelsLoading = (async () => {
     await Promise.all([
-      faceapi.nets.ssdMobilenetv1.loadFromUri(MODELS_URL),
+      faceapi.nets.tinyFaceDetector.loadFromUri(MODELS_URL),
       faceapi.nets.faceLandmark68Net.loadFromUri(MODELS_URL),
       faceapi.nets.faceRecognitionNet.loadFromUri(MODELS_URL),
     ]);
@@ -50,7 +50,7 @@ export async function detectFaceDescriptor(
   }
 
   const detection = await faceapi
-    .detectSingleFace(input, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+    .detectSingleFace(input, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 
@@ -68,7 +68,7 @@ export async function detectFaceWithBox(
   await loadFaceModels();
 
   const detection = await faceapi
-    .detectSingleFace(source, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
+    .detectSingleFace(source, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
     .withFaceLandmarks()
     .withFaceDescriptor();
 

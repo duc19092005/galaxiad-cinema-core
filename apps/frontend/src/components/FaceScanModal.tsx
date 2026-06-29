@@ -134,7 +134,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
 
       try {
         const detection = await faceapi
-          .detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
+          .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
           .withFaceLandmarks()
           .withFaceDescriptor();
 
