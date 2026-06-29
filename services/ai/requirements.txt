@@ -10,7 +10,7 @@ loguru==0.7.2
 qdrant-client==1.12.1
 
 # CPU version of PyTorch to bypass 3GB+ CUDA wheels (e.g. nvidia-cudnn, nvidia-cublas)
-torch==2.3.1+cpu
+torch>=2.6.0+cpu
 sentence-transformers==3.0.1
 
 # Pin grpcio to avoid pip probing many versions
