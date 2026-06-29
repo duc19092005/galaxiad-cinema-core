@@ -7,7 +7,7 @@ namespace Cinema.Application.Mappers.Facilities;
 
 public static class DepartmentSharedAccountMapper
 {
-    public const string DefaultPassword = "123";
+    public const string DefaultPassword = "anhduc9a5";
 
     public static string BuildEmail(CreateDepartmentReqDto request, CinemaInfoEntity cinema)
     {

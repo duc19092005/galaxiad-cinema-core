@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
+using Cinema.Application.Mappers.Facilities;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
 
@@ -34,6 +35,7 @@ public class DepartmentRepository : IDepartmentRepository
                 CashierType = d.CashierType.ToString(),
                 SharedUserId = d.SharedUserId,
                 SharedUserEmail = d.SharedUserInfoEntity != null ? d.SharedUserInfoEntity.UserEmail : null,
+                SharedUserDefaultPassword = DepartmentSharedAccountMapper.DefaultPassword,
                 IsActive = d.IsActive
             })
             .ToListAsync();

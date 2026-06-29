@@ -245,7 +245,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy vé",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.TicketPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11"),
                 IsActive = true
             },
             new DepartmentEntity
@@ -255,7 +255,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy bắp nước",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.FoodPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a12"),
                 IsActive = true
             },
 
@@ -267,7 +267,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy vé",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.TicketPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a21"),
                 IsActive = true
             },
             new DepartmentEntity
@@ -277,7 +277,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy bắp nước",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.FoodPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22"),
                 IsActive = true
             },
 
@@ -289,7 +289,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy vé",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.TicketPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31"),
                 IsActive = true
             },
             new DepartmentEntity
@@ -299,7 +299,7 @@ public static class CinemaAndMovieSeedData
                 DepartmentName = "Quầy bắp nước",
                 DepartmentType = DepartmentType.Cashier,
                 CashierType = CashierType.FoodPOS,
-                SharedUserId = null,
+                SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"),
                 IsActive = true
             }
         };

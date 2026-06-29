@@ -33,5 +33,6 @@ public class ResDepartmentDto
     public string CashierType { get; set; } = string.Empty;
     public Guid? SharedUserId { get; set; }
     public string? SharedUserEmail { get; set; }
+    public string SharedUserDefaultPassword { get; set; } = string.Empty;
     public bool IsActive { get; set; }
 }

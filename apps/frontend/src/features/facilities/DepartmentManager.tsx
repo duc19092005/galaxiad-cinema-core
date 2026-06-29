@@ -344,6 +344,16 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
 
               {/* Body */}
               <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)', fontSize: 12, fontWeight: 800 }}>
+                  <UserCheck size={14} />
+                  <span>Thông tin tài khoản phòng ban</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 12 }}>
+                  <span style={{ color: 'var(--text-muted)' }}>User ID</span>
+                  <span style={{ color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11, overflowWrap: 'anywhere', textAlign: 'right' }}>
+                    {dept.sharedUserId || '-'}
+                  </span>
+                </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span style={{ color: 'var(--text-muted)' }}>{t('departmentManager.accountEmail')}</span>
                   <span style={{ color: 'var(--text-primary)', fontWeight: 600, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>
@@ -353,7 +363,7 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
                   <span style={{ color: 'var(--text-muted)' }}>{t('departmentManager.defaultPassword')}</span>
                   <span style={{ color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace", fontSize: 11 }}>
-                    <code>123456</code>
+                    <code>{dept.sharedUserDefaultPassword || 'anhduc9a5'}</code>
                   </span>
                 </div>
               </div>

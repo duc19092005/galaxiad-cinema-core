@@ -112,6 +112,7 @@ export interface Department {
     cashierType: CashierDepartmentType;
     sharedUserId: string | null;
     sharedUserEmail: string | null;
+    sharedUserDefaultPassword?: string | null;
     isActive: boolean;
 }
 
