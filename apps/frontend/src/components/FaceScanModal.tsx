@@ -311,6 +311,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
               display: 'block',
               opacity: captured ? 0.35 : 1,
               transition: 'opacity 0.3s',
+              transform: 'scaleX(-1)',
             }}
           />
 
@@ -322,6 +323,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
               top: 0, left: 0,
               width: '100%', height: '100%',
               pointerEvents: 'none',
+              transform: 'scaleX(-1)',
             }}
           />
 
