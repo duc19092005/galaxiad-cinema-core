@@ -6,6 +6,7 @@ python-dotenv==1.0.1
 httpx==0.27.0
 loguru==0.7.2
 qdrant-client==1.12.1
+sentence-transformers==3.0.1
 
 # Pin grpcio to avoid pip probing many versions
 grpcio==1.72.1

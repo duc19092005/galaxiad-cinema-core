@@ -2,40 +2,66 @@ import hashlib
 import time
 from typing import Dict, List, Tuple
 
-import google.generativeai as genai
 import numpy as np
 from loguru import logger
 from qdrant_client import QdrantClient, models as qdrant_models
+from sentence_transformers import SentenceTransformer
 
 from config import (
     EMBEDDING_DIM,
     EMBEDDING_MODEL,
-    GOOGLE_API_KEY,
     QDRANT_COLLECTION,
     QDRANT_URL,
 )
 
 
-genai.configure(api_key=GOOGLE_API_KEY)
-
-
 class MovieEmbedder:
     """
-    Manages movie embeddings using Gemini for vector generation and Qdrant for
-    persistent vector storage/search.
+    Manages movie embeddings using a local SentenceTransformer model (e.g. BAAI/bge-m3)
+    for vector generation and Qdrant for persistent vector storage/search.
     """
 
     def __init__(self):
         self.collection_name = QDRANT_COLLECTION
         self.client = QdrantClient(url=QDRANT_URL)
         self._initialized = False
+        
+        # Load local embedding model
+        logger.info("=" * 50)
+        logger.info("Initializing local SentenceTransformer model: {}", EMBEDDING_MODEL)
+        logger.info("This may take some time on the first run to download the model.")
+        self.model = SentenceTransformer(EMBEDDING_MODEL)
+        logger.info("Local SentenceTransformer model loaded successfully.")
+        logger.info("=" * 50)
 
     def ensure_collection(self, retries: int = 1, delay_seconds: float = 0.0) -> None:
         last_error: Exception | None = None
 
         for attempt in range(1, retries + 1):
             try:
-                self.client.get_collection(collection_name=self.collection_name)
+                info = self.client.get_collection(collection_name=self.collection_name)
+                
+                # Verify vector size to prevent dimension mismatch crashes on transition
+                try:
+                    vectors_config = info.config.params.vectors
+                    if isinstance(vectors_config, dict):
+                        size = next(iter(vectors_config.values())).size
+                    else:
+                        size = vectors_config.size
+                    
+                    if size != EMBEDDING_DIM:
+                        logger.warning(
+                            "Qdrant collection dimension mismatch (found {}, expected {}). Re-creating collection...",
+                            size,
+                            EMBEDDING_DIM
+                        )
+                        self.client.delete_collection(collection_name=self.collection_name)
+                        raise ValueError("Dimension mismatch")
+                except Exception as shape_err:
+                    if isinstance(shape_err, ValueError):
+                        raise
+                    logger.warning("Could not verify Qdrant vector size: {}", shape_err)
+
                 self._initialized = True
                 return
             except Exception as exc:
@@ -69,16 +95,8 @@ class MovieEmbedder:
             self.ensure_collection()
 
     def _embed_text(self, text: str) -> List[float]:
-        """Call Gemini Embedding API and return an L2-normalized vector."""
-        result = genai.embed_content(
-            model=EMBEDDING_MODEL,
-            content=text,
-            task_type="SEMANTIC_SIMILARITY",
-        )
-        vector = np.array(result["embedding"], dtype=np.float32)
-        norm = np.linalg.norm(vector)
-        if norm > 0:
-            vector = vector / norm
+        """Call local SentenceTransformer model and return L2-normalized vector."""
+        vector = self.model.encode(text, normalize_embeddings=True)
         return vector.astype(float).tolist()
 
     @staticmethod

@@ -19,19 +19,19 @@ SQL Server is the source of truth. Qdrant stores persistent movie vectors only. 
 
 Hệ thống gợi ý phim hoạt động linh hoạt theo hai cơ chế tùy thuộc vào trạng thái cấu hình của hệ thống AI:
 
-### 1. Khi có Embedding (Gemini API Key hợp lệ)
-Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 768 chiều. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để tính khoảng cách Euclidean và tìm các bộ phim có nội dung tương đồng ngữ nghĩa nhất.
+### 1. Khi có Embedding (Local BAAI/bge-m3 Model)
+Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 1024 chiều thông qua mô hình local `BAAI/bge-m3` được nhúng chạy trực tiếp trong container AI service. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để tính khoảng cách Cosine và tìm các bộ phim có nội dung tương đồng ngữ nghĩa nhất.
 
-Điểm `SimilarityScore` lúc này là **khoảng cách** (distance): nhỏ hơn = khớp hơn.  
-Để hiển thị `MatchPercentage` trực quan (% cao = phù hợp nhiều), backend **đảo ngược chiều**:
+Điểm `SimilarityScore` lúc này là khoảng cách Cosine (distance): nhỏ hơn = khớp hơn.  
+Để hiển thị `MatchPercentage` trực quan (% cao = phù hợp nhiều), backend đảo ngược chiều:
 
 ```text
 # Chế độ AI Embedding — đảo chiều khoảng cách
-MatchPercentage = (1 - SimilarityScore / MaxScore) * 100%
+MatchPercentage = (1 - SimilarityScore) * 100%
 
-# Ví dụ: Phim A distance=0.05, Phim B distance=0.40, MaxScore=0.40
-MatchPercentage(A) = (1 - 0.05/0.40) * 100 = 87.5%
-MatchPercentage(B) = (1 - 0.40/0.40) * 100 = 0.0%
+# Ví dụ: Phim A distance=0.05, Phim B distance=0.40
+MatchPercentage(A) = (1 - 0.05) * 100 = 95.0%
+MatchPercentage(B) = (1 - 0.40) * 100 = 60.0%
 ```
 
 ### 2. Khi không có Embedding (Cơ chế Dự phòng - Fallback)

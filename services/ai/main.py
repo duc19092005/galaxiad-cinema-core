@@ -29,8 +29,8 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 50)
     logger.info("Cinema AI Service starting...")
     logger.info(f"Embedding model: {EMBEDDING_MODEL}")
-    if not GOOGLE_API_KEY:
-        logger.warning("GOOGLE_API_KEY not set! Embedding calls will fail.")
+    if "models/text-embedding" in EMBEDDING_MODEL and not GOOGLE_API_KEY:
+        logger.warning("GOOGLE_API_KEY not set! Gemini embedding calls will fail.")
     embedder.ensure_collection(retries=10, delay_seconds=2)
 
     # Initialize HTTP client

@@ -64,12 +64,16 @@ services:
     container_name: cinema-ai-service
     ports:
       - "8000:8000"
+    volumes:
+      - hf_cache:/root/.cache/huggingface
     env_file:
       - path: ./services/ai/.env
         required: false
     environment:
       - HOST=0.0.0.0
       - PORT=8000
+      - EMBEDDING_MODEL=BAAI/bge-m3
+      - EMBEDDING_DIM=1024
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=cinema_movies
     depends_on:
@@ -79,7 +83,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 20s
+      start_period: 300s
     restart: unless-stopped
     networks:
       - cinema-network
@@ -128,3 +132,4 @@ networks:
 volumes:
   sqlvolume:
   qdrant_storage:
+  hf_cache:
