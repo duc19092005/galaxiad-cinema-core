@@ -148,14 +148,15 @@ The response includes:
 
 When `CreateBooking` runs, the backend recalculates pricing instead of trusting the frontend. It stores snapshots on the order/order detail so old paid orders keep their historical price even if the admin later edits or deletes a promotion.
 
-## Admin Flow
+## Admin Flow & Cartesian Product Expansion
 
 Admin uses `/admin/pricing-promotions` to manage campaigns:
 
 1. Create campaign info and policy text.
 2. Add one or more rules.
 3. Select day checkboxes. The frontend sends day names; backend stores `DaysOfWeekMask`.
-4. Select format/cinema/auditorium/customer segment scopes when needed.
+4. Select format/cinema/auditorium/customer segment scopes. 
+   - **Cartesian Product Generation**: To support selecting multiple formats and cinemas in the UI, the frontend sends arrays of `MovieFormatIds` and `CinemaIds`. The C# backend (`PricingPromotionHelper.BuildRules`) then expands this input into a Cartesian product, creating and persisting a separate `PricingPromotionRuleEntity` for each combination of `MovieFormatId` and `CinemaId` in the database.
 5. Toggle campaign/rule active state.
 
 ## Public Flow

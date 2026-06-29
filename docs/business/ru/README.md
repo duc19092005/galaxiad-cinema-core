@@ -1,9 +1,9 @@
 # Galaxiad Cinema — Справочник бизнес-правил
 
 > **Версии документа:**
-> - [English](README.md)
-> - [Tiếng Việt](README.vi.md)
-> - [Русский (этот файл)](README.ru.md)
+> - [English](../README.md)
+> - [Tiếng Việt](../vi/README.md)
+> - [Русский (этот файл)](README.md)
 
 ---
 

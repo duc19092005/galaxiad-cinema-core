@@ -262,6 +262,34 @@ score = bookingCount * 3
       + ratingCount;
 ```
 
+## Related Movies Recommendation (Gợi ý Phim Liên quan)
+
+For showing similar movies on a movie detail page (`GET /api/v1/public/movies/{movieId}/similar`), the system applies a hybrid lookup using cache, semantic AI search, and SQL genre matching:
+
+### 1. Caching Layer
+Retrievals are cached in Redis using the key:
+`movies:similar:{movieId}:{limit}` with a TTL of 30 minutes.
+
+### 2. Candidate Pool
+The query pre-loads a candidate pool containing up to 100 Now Showing and 100 Coming Soon movies from the SQL Server database. The target movie itself is excluded.
+
+### 3. AI Semantic Similarity
+The backend constructs a target text block describing the movie:
+```text
+Tên phim: {MovieName}. Thể loại: {Genres}. Mô tả: {Description}. Đạo diễn: {Director}. Diễn viên: {Actors}
+```
+This text is sent to the FastAPI AI Service `/recommend` endpoint. The AI service embeds the text and queries Qdrant to find nearest semantic matches. The C# backend then filters and maps these back to the candidate pool while preserving the AI similarity order.
+
+### 4. Database Genre-Matching Fallback
+If the AI service fails or returns insufficient results, the system queries the candidate pool directly using a fallback matching algorithm:
+- Finds movies that share at least one genre with the target movie.
+- Orders them by the number of matched genres (descending), then by the movie's screening end date (descending) to prefer active releases.
+
+### 5. Final Fallback
+If the list is still short of the requested limit, the remaining slots are filled with general active movies from the candidate pool.
+
+---
+
 ## Notes
 
 - Survey is optional.

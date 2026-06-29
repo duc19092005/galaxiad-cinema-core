@@ -1,9 +1,9 @@
 # Galaxiad Cinema — Quy Định Kinh Doanh
 
 > **Phiên bản tài liệu:**
-> - [English](README.md)
-> - [Tiếng Việt (tập tin này)](README.vi.md)
-> - [Русский](README.ru.md)
+> - [English](../README.md)
+> - [Tiếng Việt (tập tin này)](README.md)
+> - [Русский](../ru/README.md)
 
 ---
 

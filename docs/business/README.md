@@ -2,8 +2,8 @@
 
 > **Document Versions:**
 > - [English (this file)](README.md)
-> - [Tiếng Việt](README.vi.md)
-> - [Русский](README.ru.md)
+> - [Tiếng Việt](vi/README.md)
+> - [Русский](ru/README.md)
 
 ---
 

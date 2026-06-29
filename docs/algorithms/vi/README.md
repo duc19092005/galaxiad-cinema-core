@@ -1,6 +1,6 @@
 # Tổng quan thuật toán
 
-Ngôn ngữ: [English](README.md) | [Tiếng Việt](README.vi.md) | [Русский](README.ru.md)
+Ngôn ngữ: [English](../README.md) | [Tiếng Việt](README.md) | [Русский](../ru/README.md)
 
 Thư mục này mô tả các thuật toán sản phẩm và thuật toán kỹ thuật được dùng trong hệ thống Galaxiad Cinema.
 
@@ -8,12 +8,12 @@ Thư mục này mô tả các thuật toán sản phẩm và thuật toán kỹ 
 
 | Tài liệu | English | Tiếng Việt | Russian |
 | --- | --- | --- | --- |
-| Thuật toán tìm kiếm phim | [movie-search.md](movie-search.md) | [movie-search.vi.md](movie-search.vi.md) | [movie-search.ru.md](movie-search.ru.md) |
-| Thuật toán gợi ý phim | [movie-recommendation.md](movie-recommendation.md) | [movie-recommendation.vi.md](movie-recommendation.vi.md) | [movie-recommendation.ru.md](movie-recommendation.ru.md) |
-| Khuyến mãi giá động | [pricing-promotions.md](pricing-promotions.md) | [pricing-promotions.vi.md](pricing-promotions.vi.md) | [pricing-promotions.ru.md](pricing-promotions.ru.md) |
-| Kế hoạch chatbot theo vai trò | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.vi.md](role-aware-chatbot.vi.md) | [role-aware-chatbot.ru.md](role-aware-chatbot.ru.md) |
-| Chiến lược Redis Cache | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.vi.md](redis-cache-strategy.vi.md) | [redis-cache-strategy.ru.md](redis-cache-strategy.ru.md) |
-| Quy tắc xếp lịch ca làm | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.vi.md](shift-schedule-rules.vi.md) | [shift-schedule-rules.ru.md](shift-schedule-rules.ru.md) |
+| Thuật toán tìm kiếm phim | [movie-search.md](../movie-search.md) | [movie-search.md](movie-search.md) | [movie-search.md](../ru/movie-search.md) |
+| Thuật toán gợi ý phim | [movie-recommendation.md](../movie-recommendation.md) | [movie-recommendation.md](movie-recommendation.md) | [movie-recommendation.md](../ru/movie-recommendation.md) |
+| Khuyến mãi giá động | [pricing-promotions.md](../pricing-promotions.md) | [pricing-promotions.md](pricing-promotions.md) | [pricing-promotions.md](../ru/pricing-promotions.md) |
+| Chatbot theo vai trò | [role-aware-chatbot.md](../role-aware-chatbot.md) | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.md](../ru/role-aware-chatbot.md) |
+| Chiến lược Redis Cache | [redis-cache-strategy.md](../redis-cache-strategy.md) | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.md](../ru/redis-cache-strategy.md) |
+| Quy tắc xếp lịch ca làm | [shift-schedule-rules.md](../shift-schedule-rules.md) | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.md](../ru/shift-schedule-rules.md) |
 
 ## AI Showtime Planner
 

@@ -1,6 +1,6 @@
 # Algorithms Overview
 
-Languages: [English](README.md) | [Tiếng Việt](README.vi.md) | [Русский](README.ru.md)
+Languages: [English](README.md) | [Tiếng Việt](vi/README.md) | [Русский](ru/README.md)
 
 This folder contains the product and technical algorithms used by Galaxiad Cinema.
 
@@ -8,12 +8,12 @@ This folder contains the product and technical algorithms used by Galaxiad Cinem
 
 | Document | English | Vietnamese | Russian |
 | --- | --- | --- | --- |
-| Movie Search Algorithm | [movie-search.md](movie-search.md) | [movie-search.vi.md](movie-search.vi.md) | [movie-search.ru.md](movie-search.ru.md) |
-| Movie Recommendation Algorithm | [movie-recommendation.md](movie-recommendation.md) | [movie-recommendation.vi.md](movie-recommendation.vi.md) | [movie-recommendation.ru.md](movie-recommendation.ru.md) |
-| Dynamic Pricing Promotions | [pricing-promotions.md](pricing-promotions.md) | [pricing-promotions.vi.md](pricing-promotions.vi.md) | [pricing-promotions.ru.md](pricing-promotions.ru.md) |
-| Role-Aware Chatbot Plan | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.vi.md](role-aware-chatbot.vi.md) | [role-aware-chatbot.ru.md](role-aware-chatbot.ru.md) |
-| Redis Cache Strategy | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.vi.md](redis-cache-strategy.vi.md) | [redis-cache-strategy.ru.md](redis-cache-strategy.ru.md) |
-| Shift Scheduling Rules | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.vi.md](shift-schedule-rules.vi.md) | [shift-schedule-rules.ru.md](shift-schedule-rules.ru.md) |
+| Movie Search Algorithm | [movie-search.md](movie-search.md) | [movie-search.md](vi/movie-search.md) | [movie-search.md](ru/movie-search.md) |
+| Movie Recommendation Algorithm | [movie-recommendation.md](movie-recommendation.md) | [movie-recommendation.md](vi/movie-recommendation.md) | [movie-recommendation.md](ru/movie-recommendation.md) |
+| Dynamic Pricing Promotions | [pricing-promotions.md](pricing-promotions.md) | [pricing-promotions.md](vi/pricing-promotions.md) | [pricing-promotions.md](ru/pricing-promotions.md) |
+| Role-Aware Chatbot | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.md](vi/role-aware-chatbot.md) | [role-aware-chatbot.md](ru/role-aware-chatbot.md) |
+| Redis Cache Strategy | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.md](vi/redis-cache-strategy.md) | [redis-cache-strategy.md](ru/redis-cache-strategy.md) |
+| Shift Scheduling Rules | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
 
 ## AI Showtime Planner
 
