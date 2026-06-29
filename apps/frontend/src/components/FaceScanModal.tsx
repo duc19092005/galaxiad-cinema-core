@@ -43,6 +43,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastDescriptorRef = useRef<Float32Array | null>(null);
+  const hasTriggeredRef = useRef(false);
 
   const [status, setStatus] = useState<ScanStatus>('loading_models');
   const [confidence, setConfidence] = useState<number | null>(null);
@@ -151,6 +152,28 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
           setConfidence(detection.detection.score);
           setStatus('face_found');
 
+          // Tự động chụp và xác thực sau 800ms khi phát hiện thấy khuôn mặt rõ ràng
+          const score = detection.detection.score;
+          if (score >= 0.65 && !hasTriggeredRef.current) {
+            hasTriggeredRef.current = true;
+            
+            // Tạm dừng khung hình camera để tạo cảm giác đã chụp
+            if (videoRef.current) {
+              try {
+                videoRef.current.pause();
+              } catch { /* ignore */ }
+            }
+            
+            stopCamera();
+            setCapturedDescriptor(detection.descriptor);
+            setCaptured(true);
+            setStatus('captured');
+            
+            setTimeout(() => {
+              onDescriptor(Array.from(detection.descriptor));
+            }, 800);
+          }
+
           // Draw bounding box
           const box = detection.detection.box;
           const score = detection.detection.score;
@@ -225,6 +248,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
 
   // ── Retry ─────────────────────────────────────
   const handleRetry = useCallback(() => {
+    hasTriggeredRef.current = false;
     setCaptured(false);
     setCapturedDescriptor(null);
     setConfidence(null);
