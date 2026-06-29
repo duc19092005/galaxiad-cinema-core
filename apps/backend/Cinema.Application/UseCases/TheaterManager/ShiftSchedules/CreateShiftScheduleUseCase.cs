@@ -69,12 +69,15 @@ public class CreateShiftScheduleUseCase
                     throw new AppException(Messages.Staff.CinemaOperatingHours, 400, "SHIFT_ERR");
                 }
 
-                var localStart = targetDate.Date + shiftItem.StartTime;
-                var localEnd = targetDate.Date + shiftItem.EndTime;
+                var rawStart = targetDate.Date + shiftItem.StartTime;
+                var rawEnd = targetDate.Date + shiftItem.EndTime;
                 if (shiftItem.EndTime <= shiftItem.StartTime)
                 {
-                    localEnd = localEnd.AddDays(1);
+                    rawEnd = rawEnd.AddDays(1);
                 }
+
+                var localStart = DateTime.SpecifyKind(rawStart, DateTimeKind.Unspecified);
+                var localEnd = DateTime.SpecifyKind(rawEnd, DateTimeKind.Unspecified);
 
                 var utcStart = DateTimeHelper.NormalizeIncoming(localStart);
                 var utcEnd = DateTimeHelper.NormalizeIncoming(localEnd);

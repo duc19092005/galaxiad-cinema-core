@@ -12,11 +12,12 @@ interface RoleUpdateModalProps {
   userId: string;
   currentUserEmail: string;
   currentUserRoles: string;
+  initialEmployeeType?: number;
   onSuccess: (userId: string) => void;
 }
 
 const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
-  isOpen, onClose, userId, currentUserEmail, currentUserRoles, onSuccess,
+  isOpen, onClose, userId, currentUserEmail, currentUserRoles, initialEmployeeType, onSuccess,
 }) => {
   const { t } = useTranslation();
   const [roles, setRoles] = useState<RoleDto[]>([]);
@@ -25,6 +26,13 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [selectedRoleIds, setSelectedRoleIds] = useState<string[]>([]);
   const [initialRoleIds, setInitialRoleIds] = useState<string[]>([]);
+  const [employeeType, setEmployeeType] = useState<number>(1);
+
+  useEffect(() => {
+    if (isOpen) {
+      setEmployeeType(initialEmployeeType ?? 1);
+    }
+  }, [isOpen, initialEmployeeType]);
 
   useEffect(() => { if (isOpen) fetchRoles(); }, [isOpen]);
 
@@ -86,11 +94,16 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
     );
   };
 
+  const isCashierSelected = roles.some(role => selectedRoleIds.includes(role.roleId) && role.roleName === 'Cashier');
+  const initialIsCashierSelected = roles.some(role => initialRoleIds.includes(role.roleId) && role.roleName === 'Cashier');
+  const employeeTypeChanged = isCashierSelected && (employeeType !== (initialEmployeeType ?? 1) || isCashierSelected !== initialIsCashierSelected);
+  const hasChanges = !sameRoleSet(selectedRoleIds, initialRoleIds) || employeeTypeChanged;
+
   const handleUpdate = async () => {
-    if (sameRoleSet(selectedRoleIds, initialRoleIds)) return;
+    if (!hasChanges) return;
     setUpdating(true);
     try {
-      await adminApi.updateUserRole(userId, selectedRoleIds);
+      await adminApi.updateUserRole(userId, selectedRoleIds, isCashierSelected ? employeeType : undefined);
       const storedUser = JSON.parse(localStorage.getItem('user_info') || '{}');
       if (storedUser.userId === userId) {
         showSuccess(t('toast.permissionsChanged'), { duration: 3000 });
@@ -114,7 +127,6 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
 
   const currentRoleList = roles.filter(r => selectedRoleIds.includes(r.roleId));
   const availableRoleList = roles.filter(r => !selectedRoleIds.includes(r.roleId));
-  const hasChanges = !sameRoleSet(selectedRoleIds, initialRoleIds);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -247,6 +259,44 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                   )}
                 </div>
               </div>
+
+              {/* Employee Type Selection for Cashier role */}
+              {isCashierSelected && (
+                <div style={{ marginTop: '28px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
+                  <p className="text-muted" style={{ fontSize: 13, marginBottom: '12px', letterSpacing: '0.3px' }}>
+                    Loại nhân viên (Cashier Staff)
+                  </p>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {([{ value: 1, label: 'Full-time', desc: 'Ca 8h, lý do bắt buộc nếu đăng ký ca ngắn' }, { value: 2, label: 'Part-time', desc: 'Chỉ đăng ký được ca ≤ 4h' }] as const).map((opt) => {
+                      const selected = employeeType === opt.value;
+                      return (
+                        <div
+                          key={opt.value}
+                          onClick={() => setEmployeeType(opt.value)}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1.5px solid ${selected ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
+                            background: selected ? 'rgba(255, 138, 0, 0.1)' : 'rgba(255,255,255,0.025)',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4,
+                            transition: 'all 0.15s ease',
+                            userSelect: 'none',
+                          }}
+                        >
+                          <span style={{ fontSize: 13, fontWeight: 800, color: selected ? 'var(--accent)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={{ width: 12, height: 12, borderRadius: '50%', border: `2px solid ${selected ? 'var(--accent)' : 'rgba(255,255,255,0.3)'}`, background: selected ? 'var(--accent)' : 'transparent', flexShrink: 0, display: 'inline-block' }} />
+                            {opt.label}
+                          </span>
+                          <span style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{opt.desc}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>

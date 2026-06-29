@@ -36,8 +36,7 @@ import TransferRightsView from './components/TransferRightsView';
 import RolePermissionsSection from './components/RolePermissionsSection';
 import { adminApi } from '../../api/adminApi';
 import type { AdminUserDto, AuditLogDto, ManagementDashboardDto, RoleDto } from '../../types/admin.types';
-import RoleUpdateModal from '../../components/RoleUpdateModal';
-import CinemaAssignModal from '../../components/CinemaAssignModal';
+import EditEmployeeModal from '../../components/EditEmployeeModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { VouchersSection } from './components/VouchersSection';
 import { PricingPromotionsSection } from './components/PricingPromotionsSection';
@@ -83,14 +82,18 @@ const getAccountStatusLabel = (status: AdminUserDto['accountStatus']) => {
   return 'Locked';
 };
 
-const createFaceVectorFromImage = async (file: File): Promise<number[]> => {
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-  return Array.from({ length: 128 }, (_, index) => {
-    const mixed = digest[index % digest.length] ^ bytes[index % Math.max(bytes.length, 1)] ^ index;
-    return Number((((mixed / 255) - 0.5) * 0.16).toFixed(4));
-  });
+const createFaceVectorFromImage = async (file: File): Promise<number[] | null> => {
+  try {
+    const { detectFaceDescriptor } = await import('../../utils/faceApiUtils');
+    const descriptor = await detectFaceDescriptor(file);
+    if (!descriptor) return null;
+    return Array.from(descriptor);
+  } catch (err) {
+    console.error('Face detection failed:', err);
+    return null;
+  }
 };
+
 
 const formatVnd = (value?: number | null) => {
   const amount = value ?? 0;
@@ -326,18 +329,14 @@ const UserPortrait: React.FC<{ src?: string | null; name?: string; size?: number
 interface UsersSectionProps {
   users: AdminUserDto[];
   loading: boolean;
-  onUpdateStatus: (userId: string, newStatus: number) => void;
-  onUpdateRole: (userId: string, email: string, roles: string) => void;
-  onAssignCinema: (userId: string, email: string) => void;
+  onEditUser: (user: AdminUserDto) => void;
   onCreateUser: () => void;
 }
 
 const UsersSection: React.FC<UsersSectionProps> = ({
   users,
   loading,
-  onUpdateStatus,
-  onUpdateRole,
-  onAssignCinema,
+  onEditUser,
   onCreateUser,
 }) => {
   const { t } = useTranslation();
@@ -398,13 +397,11 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                 <th>{t('Role')}</th>
                 <th>{t('cinema')}</th>
                 <th>{t('Status')}</th>
-                <th style={{ width: 300 }}>{t('Actions')}</th>
+                <th style={{ width: 120 }}>{t('Actions')}</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((user) => {
-                const accountActive = isAccountActive(user.accountStatus);
-
                 return (
                 <tr key={user.userId}>
                   <td>
@@ -431,52 +428,17 @@ const UsersSection: React.FC<UsersSectionProps> = ({
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      {accountActive ? (
-                        <button
-                          onClick={() => onUpdateStatus(user.userId, 2)}
-                          className="btn"
-                          style={{
-                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
-                            borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--danger)',
-                            background: 'rgba(239, 68, 68, 0.05)',
-                          }}
-                        >
-                          {t('Block')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => onUpdateStatus(user.userId, 1)}
-                          className="btn"
-                          style={{
-                            padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
-                            borderColor: 'rgba(34, 197, 94, 0.4)', color: 'var(--success)',
-                            background: 'rgba(34, 197, 94, 0.05)',
-                          }}
-                        >
-                          {t('Activate')}
-                        </button>
-                      )}
                       <button
-                        onClick={() => onUpdateRole(user.userId, user.userEmail, user.userRoles)}
+                        onClick={() => onEditUser(user)}
                         className="btn"
                         style={{
-                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
-                          borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8',
-                          background: 'rgba(99, 102, 241, 0.05)',
+                          padding: '4px 12px', fontSize: 12, height: 28, minHeight: 0,
+                          borderColor: 'var(--accent)', color: 'var(--accent)',
+                          background: 'var(--accent-soft)',
+                          fontWeight: 700
                         }}
                       >
-                        {t('Role')}
-                      </button>
-                      <button
-                        onClick={() => onAssignCinema(user.userId, user.userEmail)}
-                        className="btn"
-                        style={{
-                          padding: '4px 10px', fontSize: 12, height: 28, minHeight: 0,
-                          borderColor: 'rgba(236, 72, 153, 0.4)', color: '#f472b6',
-                          background: 'rgba(236, 72, 153, 0.05)',
-                        }}
-                      >
-                        {t('Assign Cinema')}
+                        Sửa
                       </button>
                     </div>
                   </td>
@@ -898,15 +860,13 @@ const AdminPage: React.FC = () => {
   const [createUserDepartmentsLoading, setCreateUserDepartmentsLoading] = useState(false);
 
   // Modals state
-  const [roleModalOpen, setRoleModalOpen] = useState(false);
-  const [cinemaModalOpen, setCinemaModalOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedUserEmail, setSelectedUserEmail] = useState('');
-  const [selectedUserRoles, setSelectedUserRoles] = useState('');
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AdminUserDto | null>(null);
 
   // Create User Modal
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
   const [createUserSubmitting, setCreateUserSubmitting] = useState(false);
+  // 1 = FullTime, 2 = PartTime  (mirrors backend EmployeeWorkType enum)
   const [createUserForm, setCreateUserForm] = useState({
     userName: '',
     userEmail: '',
@@ -919,6 +879,7 @@ const AdminPage: React.FC = () => {
     roleIds: [] as string[],
     cinemaId: '',
     departmentId: '',
+    employeeType: 1 as 1 | 2,
   });
   const [createUserPortraitFile, setCreateUserPortraitFile] = useState<File | null>(null);
   const [createUserPortraitPreview, setCreateUserPortraitPreview] = useState<string | null>(null);
@@ -1010,34 +971,12 @@ const AdminPage: React.FC = () => {
     fetchCinemas();
   }, [fetchCinemas]);
 
-  const handleUpdateUserStatus = async (userId: string, newStatus: number) => {
-    try {
-      await adminApi.updateUserStatus(userId, newStatus);
-      showSuccess(t('toast.userStatusUpdated'));
-      fetchUsers();
-    } catch (err) {
-      showError(getAdminErrorMessage(err, t('toast.userStatusUpdateFailed')));
-    }
+  const handleOpenEditModal = (user: AdminUserDto) => {
+    setEditingUser(user);
+    setEditModalOpen(true);
   };
 
-  const handleOpenRoleModal = (userId: string, email: string, roles: string) => {
-    setSelectedUserId(userId);
-    setSelectedUserEmail(email);
-    setSelectedUserRoles(roles);
-    setRoleModalOpen(true);
-  };
-
-  const handleOpenCinemaModal = (userId: string, email: string) => {
-    setSelectedUserId(userId);
-    setSelectedUserEmail(email);
-    setCinemaModalOpen(true);
-  };
-
-  const handleRoleUpdateSuccess = () => {
-    fetchUsers();
-  };
-
-  const handleCinemaAssignSuccess = () => {
+  const handleEditSuccess = () => {
     fetchUsers();
   };
 
@@ -1060,6 +999,7 @@ const AdminPage: React.FC = () => {
       roleIds: [],
       cinemaId: '',
       departmentId: '',
+      employeeType: 1,
     });
     setCreateUserPortraitFile(null);
     setCreateUserPortraitPreview(null);
@@ -1169,7 +1109,17 @@ const AdminPage: React.FC = () => {
     }
     setCreateUserSubmitting(true);
     try {
-      const faceVector = createUserPortraitFile ? await createFaceVectorFromImage(createUserPortraitFile) : undefined;
+      let faceVector: number[] | undefined = undefined;
+      if (createUserPortraitFile && hasCreateStaffRole) {
+        showSuccess('Đang phân tích khuôn mặt trong ảnh...');
+        const detected = await createFaceVectorFromImage(createUserPortraitFile);
+        if (!detected) {
+          showError('Không phát hiện được khuôn mặt trong ảnh. Hãy dùng ảnh chân dung rõ nét, đủ ánh sáng và khuôn mặt nhìn thẳng.');
+          setCreateUserSubmitting(false);
+          return;
+        }
+        faceVector = detected;
+      }
       const res = await adminApi.createUser({
         userName: createUserForm.userName,
         userEmail: createUserForm.userEmail,
@@ -1182,6 +1132,7 @@ const AdminPage: React.FC = () => {
         cinemaId: createUserForm.cinemaId || undefined,
         departmentId: createUserForm.departmentId || undefined,
         faceVector,
+        employeeType: hasCreateCashierRole ? createUserForm.employeeType : undefined,
       });
       if (res.isSuccess) {
         const createdUserId = res.data?.userId;
@@ -1389,9 +1340,7 @@ const AdminPage: React.FC = () => {
           <UsersSection
             users={users}
             loading={usersLoading}
-            onUpdateStatus={handleUpdateUserStatus}
-            onUpdateRole={handleOpenRoleModal}
-            onAssignCinema={handleOpenCinemaModal}
+            onEditUser={handleOpenEditModal}
             onCreateUser={handleOpenCreateUser}
           />
         );
@@ -1467,22 +1416,17 @@ const AdminPage: React.FC = () => {
         </div>
       </main>
 
-      <RoleUpdateModal
-        isOpen={roleModalOpen}
-        onClose={() => setRoleModalOpen(false)}
-        userId={selectedUserId}
-        currentUserEmail={selectedUserEmail}
-        currentUserRoles={selectedUserRoles}
-        onSuccess={handleRoleUpdateSuccess}
-      />
-
-      <CinemaAssignModal
-        isOpen={cinemaModalOpen}
-        onClose={() => setCinemaModalOpen(false)}
-        userId={selectedUserId}
-        currentUserEmail={selectedUserEmail}
-        onSuccess={handleCinemaAssignSuccess}
-      />
+      {editModalOpen && editingUser && (
+        <EditEmployeeModal
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setEditingUser(null);
+          }}
+          user={editingUser}
+          onSuccess={handleEditSuccess}
+        />
+      )}
 
       {/* Create User Modal */}
       {createUserModalOpen && (
@@ -1771,6 +1715,41 @@ const AdminPage: React.FC = () => {
                       </label>
                     )}
                   </div>
+
+                  {hasCreateCashierRole && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Loại nhân viên *</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                        {([{ value: 1, label: 'Full-time', desc: 'Ca 8h, lý do bắt buộc nếu đăng ký ca ngắn' }, { value: 2, label: 'Part-time', desc: 'Chỉ đăng ký được ca ≤ 4h' }] as const).map((opt) => {
+                          const selected = createUserForm.employeeType === opt.value;
+                          return (
+                            <div
+                              key={opt.value}
+                              onClick={() => setCreateUserForm({ ...createUserForm, employeeType: opt.value })}
+                              style={{
+                                padding: '12px 14px',
+                                borderRadius: 'var(--radius-md)',
+                                border: `1.5px solid ${selected ? 'var(--accent)' : 'rgba(255,255,255,0.1)'}`,
+                                background: selected ? 'rgba(255, 138, 0, 0.1)' : 'rgba(255,255,255,0.025)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 4,
+                                transition: 'all 0.15s ease',
+                                userSelect: 'none',
+                              }}
+                            >
+                              <span style={{ fontSize: 13, fontWeight: 800, color: selected ? 'var(--accent)' : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                                <span style={{ width: 12, height: 12, borderRadius: '50%', border: `2px solid ${selected ? 'var(--accent)' : 'rgba(255,255,255,0.3)'}`, background: selected ? 'var(--accent)' : 'transparent', flexShrink: 0, display: 'inline-block' }} />
+                                {opt.label}
+                              </span>
+                              <span style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>{opt.desc}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </section>
               )}
 

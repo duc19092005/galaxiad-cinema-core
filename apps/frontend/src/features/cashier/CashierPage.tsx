@@ -13,7 +13,7 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
-  ShieldCheck,
+
   Shirt,
   Ticket,
   UserRound,
@@ -24,27 +24,9 @@ import { showError, showSuccess } from '../../utils/ToastUtils';
 import { useCinema } from '../../contexts/CinemaContext';
 import type { CashierShiftSession, ShiftRegistrationDto, StaffProfileDto } from '../../types/shift.types';
 import StaffShiftSelfService from '../booking/components/StaffShiftSelfService';
+import FaceScanModal from '../../components/FaceScanModal';
 
-const makeDemoVector = () => Array.from({ length: 128 }, (_, index) => Number((Math.sin(index + 1) * 0.08).toFixed(4)));
 
-const parseFaceVector = (value: string): number[] => {
-  const trimmed = value.trim();
-  if (!trimmed) return [];
-
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (Array.isArray(parsed)) {
-      return parsed.map(Number).filter(Number.isFinite);
-    }
-  } catch {
-    // Fall through to CSV parsing.
-  }
-
-  return trimmed
-    .split(/[\s,;]+/)
-    .map(Number)
-    .filter(Number.isFinite);
-};
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (!axios.isAxiosError(error)) return fallback;
@@ -129,19 +111,18 @@ const shiftPreparationNotes = [
 const CashierPage: React.FC = () => {
   const navigate = useNavigate();
   const { activeCinemaId, activeCinemaName } = useCinema();
-  const demoVector = useMemo(() => makeDemoVector(), []);
   const [session, setSession] = useState<CashierShiftSession | null>(() => readCashierShiftSession());
   const [staffProfiles, setStaffProfiles] = useState<StaffProfileDto[]>([]);
   const [staffLoading, setStaffLoading] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState('');
   const [manualStaffId, setManualStaffId] = useState('');
-  const [vectorText, setVectorText] = useState(() => JSON.stringify(demoVector));
   const [simulatedDateTime, setSimulatedDateTime] = useState('');
   const [registrations, setRegistrations] = useState<ShiftRegistrationDto[]>([]);
   const [reminderLoading, setReminderLoading] = useState(false);
   const [reminderError, setReminderError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [activeView, setActiveView] = useState<'terminal' | 'profile'>('terminal');
+  const [showFaceScan, setShowFaceScan] = useState(false);
 
   const effectiveStaffId = selectedStaffId || manualStaffId.trim();
 
@@ -217,22 +198,12 @@ const CashierPage: React.FC = () => {
 
   const reminderCopy = upcomingShift ? getReminderCopy(getMinutesUntil(upcomingShift.startsAt)) : null;
 
-  const handleUseDemoVector = () => {
-    setVectorText(JSON.stringify(demoVector));
-  };
-
-  const handleClockIn = async () => {
+  const handleClockIn = async (faceVector: number[]) => {
+    setShowFaceScan(false);
     if (!effectiveStaffId) {
-      showError('Select a staff member or enter Staff ID.');
+      showError('Chọn nhân viên trước khi điểm danh.');
       return;
     }
-
-    const faceVector = parseFaceVector(vectorText);
-    if (faceVector.length !== 128) {
-      showError(`Face vector must contain 128 numbers. Current: ${faceVector.length}.`);
-      return;
-    }
-
     setSubmitting(true);
     try {
       const response = await staffShiftApi.clockIn({
@@ -240,7 +211,6 @@ const CashierPage: React.FC = () => {
         faceVector,
         simulatedDateTime: simulatedDateTime ? new Date(simulatedDateTime).toISOString() : null,
       });
-
       const nextSession: CashierShiftSession = {
         staffId: effectiveStaffId,
         staffName: response.data.staffName,
@@ -249,9 +219,9 @@ const CashierPage: React.FC = () => {
       };
       localStorage.setItem(CASHIER_SHIFT_SESSION_KEY, JSON.stringify(nextSession));
       setSession(nextSession);
-      showSuccess(response.message || `Welcome ${response.data.staffName}.`);
+      showSuccess(response.message || `Chào mừng ${response.data.staffName} vào ca!`);
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Clock-in failed.'));
+      showError(getApiErrorMessage(error, 'Điểm danh thất bại. Thử lại.'));
     } finally {
       setSubmitting(false);
     }
@@ -433,7 +403,7 @@ const CashierPage: React.FC = () => {
                   <input
                     id="manual-staff"
                     className="input"
-                    placeholder="Paste staff UserId when POS account cannot list staff"
+                    placeholder="Paste staff UserId khi POS không thể liệt kê nhân viên"
                     value={manualStaffId}
                     onChange={(event) => {
                       setManualStaffId(event.target.value);
@@ -442,38 +412,44 @@ const CashierPage: React.FC = () => {
                   />
                 </div>
 
+                {/* Simulated time — dev only */}
                 <div>
-                  <label className="input-label" htmlFor="face-vector">Face vector</label>
-                  <textarea
-                    id="face-vector"
+                  <label className="input-label" htmlFor="clockin-time">Thời gian giả lập (dev only)</label>
+                  <input
+                    id="clockin-time"
                     className="input"
-                    value={vectorText}
-                    onChange={(event) => setVectorText(event.target.value)}
-                    rows={7}
-                    style={{ resize: 'vertical', lineHeight: 1.5, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
+                    type="datetime-local"
+                    value={simulatedDateTime}
+                    onChange={(event) => setSimulatedDateTime(event.target.value)}
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
-                  <div>
-                    <label className="input-label" htmlFor="clockin-time">Simulated clock-in time</label>
-                    <input
-                      id="clockin-time"
-                      className="input"
-                      type="datetime-local"
-                      value={simulatedDateTime}
-                      onChange={(event) => setSimulatedDateTime(event.target.value)}
-                    />
-                  </div>
-                  <button className="btn btn-secondary" onClick={handleUseDemoVector} style={{ alignSelf: 'end', minHeight: 42 }}>
-                    <Camera size={16} />
-                    Demo vector
-                  </button>
-                </div>
-
-                <button className="btn btn-primary" onClick={handleClockIn} disabled={submitting} style={{ minHeight: 46 }}>
-                  {submitting ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <ShieldCheck size={16} />}
-                  Clock in staff session
+                {/* Camera clock-in button */}
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    if (!effectiveStaffId) {
+                      showError('Vui lòng chọn nhân viên trước khi điểm danh.');
+                      return;
+                    }
+                    setShowFaceScan(true);
+                  }}
+                  disabled={submitting}
+                  style={{
+                    minHeight: 52,
+                    fontSize: 15,
+                    fontWeight: 700,
+                    background: 'linear-gradient(135deg, var(--accent), #7c3aed)',
+                    border: 'none',
+                    boxShadow: '0 4px 18px rgba(124,58,237,0.35)',
+                    gap: 10,
+                  }}
+                >
+                  {submitting
+                    ? <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+                    : <Camera size={20} />
+                  }
+                  {submitting ? 'Đang xử lý...' : 'Quét khuôn mặt & Điểm danh'}
                 </button>
               </div>
             )}
@@ -644,6 +620,16 @@ const CashierPage: React.FC = () => {
         </section>
         )}
       </main>
+
+      {/* Face Scan Modal — camera-based clock-in */}
+      {showFaceScan && (
+        <FaceScanModal
+          mode="clockin"
+          staffName={staffProfiles.find((s) => s.userId === effectiveStaffId)?.userName}
+          onDescriptor={handleClockIn}
+          onClose={() => setShowFaceScan(false)}
+        />
+      )}
     </div>
   );
 };

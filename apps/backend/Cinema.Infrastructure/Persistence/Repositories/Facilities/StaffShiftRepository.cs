@@ -2,6 +2,7 @@ using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Utils;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Infrastructure.Repositories;
@@ -37,30 +38,53 @@ public class StaffShiftRepository : IStaffShiftRepository
                              && (r.Status == "Approved" || r.Status == "Pending"));
     }
 
+
     public async Task<List<ResStaffShiftRegistrationDto>> GetMyRegistrationsAsync(Guid staffId)
     {
-        return await _dbContext.Set<StaffShiftRegistrationEntity>()
+        // Load raw entities first (cannot call DateTimeHelper in EF query tree)
+        var rawList = await _dbContext.Set<StaffShiftRegistrationEntity>()
             .Include(r => r.CinemaShiftTemplateEntity)
             .Include(r => r.CinemaShiftScheduleEntity)
+            .Include(r => r.StaffProfileEntity!.UserInfoEntity)
             .Where(r => r.StaffId == staffId)
             .OrderByDescending(r => r.RegistrationDate)
-            .Select(r => new ResStaffShiftRegistrationDto
+            .ToListAsync();
+
+        // Convert UTC dates and times to Vietnam time (UTC+7) before returning to FE
+        return rawList.Select(r => 
+        {
+            var startTimeUtc = r.CinemaShiftTemplateEntity?.StartTime ?? r.CinemaShiftScheduleEntity?.StartTime ?? default;
+            var endTimeUtc = r.CinemaShiftTemplateEntity?.EndTime ?? r.CinemaShiftScheduleEntity?.EndTime ?? default;
+
+            // Reconstruct full DateTime to safely convert using DateTimeHelper
+            var utcStart = r.RegistrationDate.Date + startTimeUtc;
+            var utcEnd = r.RegistrationDate.Date + endTimeUtc;
+            if (endTimeUtc <= startTimeUtc)
+            {
+                utcEnd = utcEnd.AddDays(1);
+            }
+
+            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
+            var localEnd = DateTimeHelper.ToVietnamTime(utcEnd);
+
+            return new ResStaffShiftRegistrationDto
             {
                 ShiftRegistrationId = r.ShiftRegistrationId,
                 StaffId = r.StaffId,
-                StaffName = r.StaffProfileEntity != null && r.StaffProfileEntity.UserInfoEntity != null
-                    ? r.StaffProfileEntity.UserInfoEntity.UserName : "",
+                StaffName = r.StaffProfileEntity?.UserInfoEntity?.UserName ?? "",
                 ShiftTemplateId = r.ShiftTemplateId ?? Guid.Empty,
-                ShiftName = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.ShiftName : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.ShiftName : ""),
-                StartTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.StartTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.StartTime : default),
-                EndTime = r.CinemaShiftTemplateEntity != null ? r.CinemaShiftTemplateEntity.EndTime : (r.CinemaShiftScheduleEntity != null ? r.CinemaShiftScheduleEntity.EndTime : default),
-                RegistrationDate = r.RegistrationDate,
+                ShiftName = r.CinemaShiftTemplateEntity?.ShiftName ?? r.CinemaShiftScheduleEntity?.ShiftName ?? "",
+                StartTime = localStart.TimeOfDay,
+                EndTime = localEnd.TimeOfDay,
+                // Make sure date-only field is exactly at local 00:00:00 (no 07:00:00 offset)
+                RegistrationDate = DateTimeHelper.ToVietnamTime(r.RegistrationDate).Date,
                 Status = r.Status,
-                ApprovedAt = r.ApprovedAt,
+                ApprovedAt = DateTimeHelper.ToVietnamTime(r.ApprovedAt),
                 Notes = r.Notes
-            })
-            .ToListAsync();
+            };
+        }).OrderByDescending(r => r.RegistrationDate).ToList();
     }
+
 
     public async Task<StaffShiftRegistrationEntity?> GetRegistrationByIdAndStaffAsync(Guid registrationId, Guid staffId)
     {
@@ -99,33 +123,36 @@ public class StaffShiftRepository : IStaffShiftRepository
 
     public async Task<List<ResPayrollDto>> GetMyPayrollAsync(Guid staffId)
     {
-        return await _dbContext.Set<StaffSalaryTotalLoggerEntity>()
+        // Load raw entities then convert UTC → VN time in-memory
+        var rawList = await _dbContext.Set<StaffSalaryTotalLoggerEntity>()
             .Include(p => p.PaidByUser)
+            .Include(p => p.StaffProfileEntity!.UserInfoEntity)
+            .Include(p => p.StaffWorkingLoggerEntities)
             .Where(p => p.StaffId == staffId)
             .OrderByDescending(p => p.ReceivedDay)
-            .Select(p => new ResPayrollDto
-            {
-                SalaryTotalLoggerId = p.SalaryTotalLoggerId,
-                TotalReceived = p.TotalReceived,
-                ReceivedDay = p.ReceivedDay,
-                StaffId = p.StaffId,
-                StaffName = p.StaffProfileEntity != null && p.StaffProfileEntity.UserInfoEntity != null
-                    ? p.StaffProfileEntity.UserInfoEntity.UserName : "",
-                PaidByUserId = p.PaidByUserId,
-                PaidByName = p.PaidByUser != null ? p.PaidByUser.UserName : null,
-                PaymentStatus = p.PaymentStatus,
-                WorkingLogs = p.StaffWorkingLoggerEntities.Select(l => new ResStaffWorkingLogDto
-                {
-                    StaffWorkingLoggerId = l.StaffWorkingLoggerId,
-                    SalaryPerHour = l.SalaryPerHour,
-                    WorkingHour = l.WorkingHour,
-                    StartedShiftTime = l.StartedShiftTime,
-                    EndedShiftTime = l.EndedShiftTime,
-                    WorkingDate = l.WorkingDate,
-                    TotalReceived = l.TotalReceived
-                }).ToList()
-            })
             .ToListAsync();
+
+        return rawList.Select(p => new ResPayrollDto
+        {
+            SalaryTotalLoggerId = p.SalaryTotalLoggerId,
+            TotalReceived = p.TotalReceived,
+            ReceivedDay = DateTimeHelper.ToVietnamTime(p.ReceivedDay),
+            StaffId = p.StaffId,
+            StaffName = p.StaffProfileEntity?.UserInfoEntity?.UserName ?? "",
+            PaidByUserId = p.PaidByUserId,
+            PaidByName = p.PaidByUser?.UserName,
+            PaymentStatus = p.PaymentStatus,
+            WorkingLogs = p.StaffWorkingLoggerEntities.Select(l => new ResStaffWorkingLogDto
+            {
+                StaffWorkingLoggerId = l.StaffWorkingLoggerId,
+                SalaryPerHour = l.SalaryPerHour,
+                WorkingHour = l.WorkingHour,
+                StartedShiftTime = DateTimeHelper.ToVietnamTime(l.StartedShiftTime),
+                EndedShiftTime = DateTimeHelper.ToVietnamTime(l.EndedShiftTime),
+                WorkingDate = DateTimeHelper.ToVietnamTime(l.WorkingDate),
+                TotalReceived = l.TotalReceived
+            }).ToList()
+        }).ToList();
     }
 
     public async Task<int> CountApprovedOrPendingRegistrationsForScheduleAsync(Guid shiftScheduleId)
@@ -138,16 +165,28 @@ public class StaffShiftRepository : IStaffShiftRepository
     public async Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
     {
         var dateOnly = date.Date;
-        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+        var startUtcLimit = dateOnly.AddDays(-1);
+        var endUtcLimit = dateOnly.AddDays(1);
+
+        var rawList = await _dbContext.Set<CinemaShiftScheduleEntity>()
             .Include(s => s.RoleListInfoEntity)
             .Include(s => s.DepartmentEntity)
             .Include(s => s.StaffShiftRegistrationEntities)
             .Where(s => s.CinemaId == cinemaId 
                      && s.DepartmentId == departmentId 
-                     && s.Date == dateOnly 
+                     && s.Date >= startUtcLimit
+                     && s.Date <= endUtcLimit
                      && s.IsActive 
                      && s.DeletionStatus == "Active")
             .ToListAsync();
+
+        // Filter in-memory using local Vietnam time conversion
+        return rawList.Where(s => 
+        {
+            var utcStart = s.Date.Date + s.StartTime;
+            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
+            return localStart.Date == dateOnly;
+        }).ToList();
     }
 
     public async Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId)

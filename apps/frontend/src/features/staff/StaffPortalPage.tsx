@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
 import { Banknote, CalendarDays, Clock3, LayoutDashboard, LogIn, RefreshCw, TimerReset } from 'lucide-react';
@@ -26,9 +26,10 @@ const minutesUntil = (date: Date) => Math.round((date.getTime() - Date.now()) / 
 
 const StaffPortalPage: React.FC = () => {
   const navigate = useNavigate();
+  const { tab } = useParams<{ tab: string }>();
+  const activeTab = tab || 'dashboard';
   const { t } = useTranslation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [registrations, setRegistrations] = useState<ShiftRegistrationDto[]>([]);
   const [history, setHistory] = useState<StaffWorkingLogDto[]>([]);
   const [payrolls, setPayrolls] = useState<PayrollDto[]>([]);
@@ -81,7 +82,11 @@ const StaffPortalPage: React.FC = () => {
         return startsAt ? { item, startsAt } : null;
       })
       .filter((item): item is { item: ShiftRegistrationDto; startsAt: Date } => Boolean(item))
-      .filter((item) => item.startsAt.getTime() >= Date.now() - 30 * 60000)
+      .filter((item) => {
+        const timeDiff = item.startsAt.getTime() - Date.now();
+        // Only show shifts starting within the next 3 hours (3 * 3600 * 1000) or started up to 30 minutes ago (-30 * 60 * 1000)
+        return timeDiff <= 3 * 60 * 60 * 1000 && timeDiff >= -30 * 60 * 1000;
+      })
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0] || null;
 
     return { todayHours, todayMoney, pending, approved, totalPayroll, upcoming };
@@ -109,7 +114,7 @@ const StaffPortalPage: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((value) => !value)}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(id) => navigate('/staff/' + id)}
         sections={sidebarSections}
         role="Cashier Staff"
         collapsibleDesktop

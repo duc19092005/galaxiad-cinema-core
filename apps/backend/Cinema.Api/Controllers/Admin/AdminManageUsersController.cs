@@ -28,6 +28,7 @@ public class AdminManageUsersController : ControllerBase
     private readonly GetAllPermissionsUseCase _getAllPermissionsUseCase;
     private readonly GetRolesPermissionsUseCase _getRolesPermissionsUseCase;
     private readonly UpdateRolePermissionsUseCase _updateRolePermissionsUseCase;
+    private readonly AdminUpdateUserProfileUseCase _adminUpdateUserProfileUseCase;
 
     public AdminManageUsersController(
         GetAllUsersUseCase getAllUsersUseCase,
@@ -40,7 +41,8 @@ public class AdminManageUsersController : ControllerBase
         GetAssignableRolesUseCase getAssignableRolesUseCase,
         GetAllPermissionsUseCase getAllPermissionsUseCase,
         GetRolesPermissionsUseCase getRolesPermissionsUseCase,
-        UpdateRolePermissionsUseCase updateRolePermissionsUseCase)
+        UpdateRolePermissionsUseCase updateRolePermissionsUseCase,
+        AdminUpdateUserProfileUseCase adminUpdateUserProfileUseCase)
     {
         _getAllUsersUseCase = getAllUsersUseCase;
         _setUserStatusUseCase = setUserStatusUseCase;
@@ -53,12 +55,22 @@ public class AdminManageUsersController : ControllerBase
         _getAllPermissionsUseCase = getAllPermissionsUseCase;
         _getRolesPermissionsUseCase = getRolesPermissionsUseCase;
         _updateRolePermissionsUseCase = updateRolePermissionsUseCase;
+        _adminUpdateUserProfileUseCase = adminUpdateUserProfileUseCase;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetAllUsers()
     {
         var result = await _getAllUsersUseCase.ExecuteAsync();
+        return Ok(result);
+    }
+
+    [HttpPut("{userId}/profile")]
+    public async Task<IActionResult> UpdateUserProfile(Guid userId, [FromBody] AdminUpdateUserProfileDto dto)
+    {
+        var result = await _adminUpdateUserProfileUseCase.ExecuteAsync(userId, dto);
+        if (!result.IsSuccess)
+            return BadRequest(result);
         return Ok(result);
     }
 
@@ -93,9 +105,9 @@ public class AdminManageUsersController : ControllerBase
     }
 
     [HttpPut("{userId}/role")]
-    public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] List<Guid> roleIds)
+    public async Task<IActionResult> UpdateUserRole(Guid userId, [FromBody] UpdateUserRoleRequestDto request)
     {
-        var result = await _assignRoleToUserUseCase.ExecuteAsync(userId, roleIds);
+        var result = await _assignRoleToUserUseCase.ExecuteAsync(userId, request);
         if (!result.IsSuccess)
         {
             return BadRequest(result);

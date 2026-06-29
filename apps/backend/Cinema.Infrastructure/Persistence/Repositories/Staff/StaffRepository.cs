@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Interfaces.Staff;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Utils;
+
 
 namespace Cinema.Infrastructure.Repositories;
 
@@ -133,16 +135,28 @@ public class StaffRepository : IStaffRepository
     public async Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
     {
         var dateOnly = date.Date;
-        return await _dbContext.Set<CinemaShiftScheduleEntity>()
+        var startUtcLimit = dateOnly.AddDays(-1);
+        var endUtcLimit = dateOnly.AddDays(1);
+
+        var rawList = await _dbContext.Set<CinemaShiftScheduleEntity>()
             .Include(s => s.RoleListInfoEntity)
             .Include(s => s.DepartmentEntity)
             .Include(s => s.StaffShiftRegistrationEntities)
             .Where(s => s.CinemaId == cinemaId 
                      && s.DepartmentId == departmentId 
-                     && s.Date == dateOnly 
+                     && s.Date >= startUtcLimit
+                     && s.Date <= endUtcLimit
                      && s.IsActive 
                      && s.DeletionStatus == "Active")
             .ToListAsync();
+
+        // Filter in-memory using local Vietnam time conversion
+        return rawList.Where(s => 
+        {
+            var utcStart = s.Date.Date + s.StartTime;
+            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
+            return localStart.Date == dateOnly;
+        }).ToList();
     }
 
     public async Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId)

@@ -70,12 +70,12 @@ public class RegisterShiftUseCase
             throw new AppException(Messages.Staff.AccountNotLinkedToCinema, 400, "SHIFT_ERR");
         }
 
-        if (dto.ShiftScheduleId.HasValue)
+        if (dto.ShiftScheduleId.HasValue && dto.ShiftScheduleId.Value != Guid.Empty)
         {
             return await RegisterForScheduleAsync(staffId, dto, staffProfile);
         }
 
-        if (dto.ShiftTemplateId.HasValue)
+        if (dto.ShiftTemplateId.HasValue && dto.ShiftTemplateId.Value != Guid.Empty)
         {
             return await RegisterForTemplateAsync(staffId, dto, staffProfile);
         }

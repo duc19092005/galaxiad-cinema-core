@@ -33,7 +33,7 @@ const TheaterManagerPage: React.FC = () => {
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const { tab } = useParams<{ tab?: string }>();
-  const activeTab = (tab || 'dashboard') as 'dashboard' | 'employees' | 'schedule';
+  const activeTab = (tab || 'dashboard') as 'dashboard' | 'employees' | 'employees-schedule' | 'schedule';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -91,7 +91,8 @@ const TheaterManagerPage: React.FC = () => {
     {
       items: [
         { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={18} /> },
-        { id: 'employees', label: t('Employees', 'Nhân sự'), icon: <Users size={18} /> },
+        { id: 'employees', label: t('Employees', 'Duyệt ca & Nhân sự'), icon: <Users size={18} /> },
+        { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Lập lịch làm việc'), icon: <Calendar size={18} /> },
         { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} /> },
       ],
     },
@@ -135,7 +136,9 @@ const TheaterManagerPage: React.FC = () => {
           </div>
         );
       case 'employees':
-        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} />;
+        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="management" />;
+      case 'employees-schedule':
+        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="scheduling" />;
       case 'schedule':
         return (
           <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>

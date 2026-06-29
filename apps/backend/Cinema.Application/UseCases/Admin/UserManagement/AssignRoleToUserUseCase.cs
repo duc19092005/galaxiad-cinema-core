@@ -1,7 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Admin;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces;
@@ -26,7 +27,7 @@ public class AssignRoleToUserUseCase
         _auditLogService = auditLogService;
     }
 
-    public async Task<BaseResponse<string>> ExecuteAsync(Guid userId, List<Guid> roleIds)
+    public async Task<BaseResponse<string>> ExecuteAsync(Guid userId, UpdateUserRoleRequestDto dto)
     {
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
@@ -37,8 +38,8 @@ public class AssignRoleToUserUseCase
                 return new BaseResponse<string> { IsSuccess = false, Message = Messages.Admin.UserNotFound };
             }
 
-            var normalizedRoleIds = AdminUserManagementHelper.NormalizeStaffRoleIds(roleIds);
-            await AdminUserManagementHelper.ReplaceStaffRolesAsync(_unitOfWork, _adminUserRepository, userId, normalizedRoleIds, null, null, null);
+            var normalizedRoleIds = AdminUserManagementHelper.NormalizeStaffRoleIds(dto.RoleIds);
+            await AdminUserManagementHelper.ReplaceStaffRolesAsync(_unitOfWork, _adminUserRepository, userId, normalizedRoleIds, dto.CinemaId, dto.DepartmentId, null, dto.EmployeeType);
 
             await _auditLogService.WriteAsync(
                 "Update",

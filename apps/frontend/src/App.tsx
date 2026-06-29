@@ -66,6 +66,7 @@ function AppRoutes() {
         <Route path="/offers" element={<PageTransition><OffersPage /></PageTransition>} />
         <Route path="/cashier" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/staff/:tab" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />

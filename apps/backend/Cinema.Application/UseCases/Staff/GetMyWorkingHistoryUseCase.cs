@@ -1,6 +1,7 @@
-﻿using Cinema.Application.Dtos;
-using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Domain.Utils;
 
 namespace Cinema.Application.UseCases.Staff;
 
@@ -16,10 +17,21 @@ public class GetMyWorkingHistoryUseCase
         _repository = repository;
     }
 
-    public async Task<BaseResponse<List<StaffWorkingLoggerEntity>>> ExecuteAsync(Guid staffId)
+    public async Task<BaseResponse<List<ResStaffWorkingLogDto>>> ExecuteAsync(Guid staffId)
     {
         var history = await _repository.GetMyWorkingHistoryAsync(staffId);
-        return new BaseResponse<List<StaffWorkingLoggerEntity>> { IsSuccess = true, Data = history };
+        // Convert UTC times stored in DB to Vietnam time (UTC+7) before returning to FE
+        var dtos = history.Select(l => new ResStaffWorkingLogDto
+        {
+            StaffWorkingLoggerId = l.StaffWorkingLoggerId,
+            SalaryPerHour = l.SalaryPerHour,
+            WorkingHour = l.WorkingHour,
+            StartedShiftTime = DateTimeHelper.ToVietnamTime(l.StartedShiftTime),
+            EndedShiftTime = DateTimeHelper.ToVietnamTime(l.EndedShiftTime),
+            WorkingDate = DateTimeHelper.ToVietnamTime(l.WorkingDate),
+            TotalReceived = l.TotalReceived
+        }).ToList();
+        return new BaseResponse<List<ResStaffWorkingLogDto>> { IsSuccess = true, Data = dtos };
     }
 }
 

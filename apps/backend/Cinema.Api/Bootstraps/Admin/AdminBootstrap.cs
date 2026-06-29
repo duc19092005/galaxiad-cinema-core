@@ -49,6 +49,7 @@ public static class AdminBootstrap
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.GetAllPermissionsUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.GetRolesPermissionsUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.UpdateRolePermissionsUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.AdminUpdateUserProfileUseCase>();
 
         return services;
     }

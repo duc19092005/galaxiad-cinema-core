@@ -14,6 +14,27 @@ public class AdminUserDto
     public AccountStatusEnum AccountStatus { get; set; }
     public RegisterMethodEnum RegisterMethod { get; set; }
     public string? CinemaName { get; set; }
+    public Guid? CinemaId { get; set; }
+    public string? DepartmentName { get; set; }
+    public Guid? DepartmentId { get; set; }
+    public EmployeeWorkType? EmployeeType { get; set; }
+    public string? PhoneNumber { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+}
+
+public class AdminUpdateUserProfileDto
+{
+    public string? UserName { get; set; }
+    public string? PhoneNumber { get; set; }
+    public DateTime? DateOfBirth { get; set; }
+}
+
+public class UpdateUserRoleRequestDto
+{
+    public List<Guid> RoleIds { get; set; } = [];
+    public EmployeeWorkType? EmployeeType { get; set; }
+    public Guid? CinemaId { get; set; }
+    public Guid? DepartmentId { get; set; }
 }
 
 public class AdminCreateUserRequestDto

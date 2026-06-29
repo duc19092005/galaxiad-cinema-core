@@ -41,7 +41,7 @@ public class ShiftManagerRepository : IShiftManagerRepository
             .ToListAsync();
 
         return templates.Select(t => {
-            var dummyDate = DateTime.Today;
+            var dummyDate = DateTime.UtcNow.Date;
             var utcStart = dummyDate + t.StartTime;
             var utcEnd = dummyDate + t.EndTime;
             if (t.EndTime <= t.StartTime)

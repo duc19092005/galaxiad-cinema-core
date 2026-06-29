@@ -34,6 +34,8 @@ public class AdminUserRepository : IAdminUserRepository
                 PortraitImageUrl = u.PortraitImageUrl,
                 AccountStatus = u.AccountStatus,
                 RegisterMethod = u.RegisterMethod,
+                PhoneNumber = u.PhoneNumber,
+                DateOfBirth = u.DateOfBirth,
                 UserRoles = string.Join(",", u.UserRoleInfoEntity.Select(x => x.RoleListInfoEntity.RoleName)),
                 CinemaName = u.StaffProfileEntity != null && u.StaffProfileEntity.CinemaInfoEntity != null 
                     ? u.StaffProfileEntity.CinemaInfoEntity.CinemaName 
@@ -41,7 +43,19 @@ public class AdminUserRepository : IAdminUserRepository
                         ? u.TheaterManagedCinemas.First().CinemaName 
                         : u.FacilitiesManagedCinemas.Any() 
                             ? u.FacilitiesManagedCinemas.First().CinemaName 
-                            : null
+                            : null,
+                CinemaId = u.StaffProfileEntity != null 
+                    ? u.StaffProfileEntity.CinemaId 
+                    : u.TheaterManagedCinemas.Any() 
+                        ? u.TheaterManagedCinemas.First().CinemaId 
+                        : (Guid?)null,
+                DepartmentName = u.StaffProfileEntity != null && u.StaffProfileEntity.DepartmentEntity != null
+                    ? u.StaffProfileEntity.DepartmentEntity.DepartmentName
+                    : null,
+                DepartmentId = u.StaffProfileEntity != null
+                    ? u.StaffProfileEntity.DepartmentId
+                    : null,
+                EmployeeType = u.StaffProfileEntity != null ? (EmployeeWorkType?)u.StaffProfileEntity.EmployeeType : null
             })
             .ToListAsync();
     }

@@ -128,13 +128,19 @@ public static class AdminUserManagementHelper
         EmployeeWorkType? employeeType = null)
     {
         var staffProfile = await adminUserRepository.FindStaffProfileAsync(userId);
-        var targetCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
 
         if (staffProfile != null)
         {
             staffProfile.WorkingStatus = true;
-            staffProfile.CinemaId = targetCinema.CinemaId;
-            staffProfile.DepartmentId = departmentId;
+            if (cinemaId.HasValue)
+            {
+                var targetCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
+                staffProfile.CinemaId = targetCinema.CinemaId;
+            }
+            if (departmentId.HasValue)
+            {
+                staffProfile.DepartmentId = departmentId.Value == Guid.Empty ? null : departmentId;
+            }
             staffProfile.IsCinemaManager = roleIds.Contains(userRoles.TheaterManager);
             if (employeeType.HasValue)
             {
@@ -148,12 +154,13 @@ public static class AdminUserManagementHelper
             return;
         }
 
+        var resolvedCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
         await unitOfWork.Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
         {
             UserId = userId,
             WorkingStatus = true,
-            CinemaId = targetCinema.CinemaId,
-            DepartmentId = departmentId,
+            CinemaId = resolvedCinema.CinemaId,
+            DepartmentId = departmentId == Guid.Empty ? null : departmentId,
             IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
             FaceVector = encryptedFaceVector,
             EmployeeType = employeeType ?? EmployeeWorkType.PartTime

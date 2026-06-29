@@ -1,10 +1,10 @@
 // src/api/adminApi.ts
 import { identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { AdminCreateUserRequest, AdminCreateUserResponse, AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, PermissionDto, RoleDto, RolePermissionsDto, UserRoleDto } from '../types/admin.types';
+import type { AdminCreateUserRequest, AdminCreateUserResponse, AdminUpdateUserProfileRequest, AdminUserDto, AuditLogDto, GroupedScheduleJobDto, ManagementDashboardDto, PermissionDto, RoleDto, RolePermissionsDto, UserRoleDto } from '../types/admin.types';
 
 const isRecord = (value: unknown): value is Record<string, unknown> => (
-    typeof value === 'object' && value !== null
+    typeof value === 'object' && value !== null && !Array.isArray(value)
 );
 
 const readString = (record: Record<string, unknown>, ...keys: string[]) => {
@@ -141,6 +141,15 @@ export const adminApi = {
         };
     },
 
+    /** PUT /api/v1/AdminManageUsers/{userId}/profile */
+    updateUserProfile: async (userId: string, data: AdminUpdateUserProfileRequest): Promise<ApiSuccessResponse> => {
+        const response = await identityAxios.put<ApiSuccessResponse>(
+            `/AdminManageUsers/${userId}/profile`,
+            data
+        );
+        return response.data;
+    },
+
     /** PUT /api/v1/AdminManageUsers/{userId}/status?status={STATUS_INT} */
     updateUserStatus: async (userId: string, status: number): Promise<ApiSuccessResponse> => {
         const response = await identityAxios.put<ApiSuccessResponse>(
@@ -174,10 +183,10 @@ export const adminApi = {
     },
 
     /** PUT /api/v1/AdminManageUsers/{userId}/role */
-    updateUserRole: async (userId: string, roleIds: string[]): Promise<ApiSuccessResponse<unknown>> => {
+    updateUserRole: async (userId: string, roleIds: string[], employeeType?: number, cinemaId?: string | null, departmentId?: string | null): Promise<ApiSuccessResponse<unknown>> => {
         const response = await identityAxios.put<unknown>(
             `/AdminManageUsers/${userId}/role`,
-            roleIds
+            { roleIds, employeeType, cinemaId: cinemaId || null, departmentId: departmentId || null }
         );
         const payload = response.data;
         if (!isRecord(payload)) {

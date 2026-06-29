@@ -3,12 +3,24 @@ export interface AdminUserDto {
     userId: string;
     userEmail: string;
     userName: string;
-    fullName?: string; // Kept for backward compatibility if needed
+    fullName?: string;
     portraitImageUrl?: string | null;
-    userRoles: string; // e.g., "Admin,TheaterManager"
-    accountStatus: number | string; // 1/"Active": Active, 2/"Banned": blocked
+    userRoles: string;
+    accountStatus: number | string;
     registerMethod: number | string;
     cinemaName?: string | null;
+    cinemaId?: string | null;
+    departmentName?: string | null;
+    departmentId?: string | null;
+    employeeType?: number;
+    phoneNumber?: string | null;
+    dateOfBirth?: string | null;
+}
+
+export interface AdminUpdateUserProfileRequest {
+    userName?: string;
+    phoneNumber?: string;
+    dateOfBirth?: string;
 }
 
 export interface AdminCreateUserRequest {
@@ -23,6 +35,8 @@ export interface AdminCreateUserRequest {
     cinemaId?: string;
     departmentId?: string;
     faceVector?: number[];
+    /** 1 = FullTime, 2 = PartTime */
+    employeeType?: number;
 }
 
 export interface AdminCreateUserResponse {

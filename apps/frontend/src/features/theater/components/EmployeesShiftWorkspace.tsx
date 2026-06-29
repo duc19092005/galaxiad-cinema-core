@@ -22,23 +22,13 @@ import { facilitiesApi } from '../../../api/facilitiesApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
 import type { PayrollDto, ShiftRegistrationDto, ShiftTemplateDto, StaffProfileDto, ShiftScheduleDto } from '../../../types/shift.types';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import FaceScanModal from '../../../components/FaceScanModal';
+
 
 const statusFilters = ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'] as const;
 
 const todayInput = () => new Date().toISOString().slice(0, 10);
-const makeDemoVector = () => Array.from({ length: 128 }, (_, index) => Number((Math.cos(index + 3) * 0.07).toFixed(4)));
-
-const parseFaceVector = (value: string): number[] => {
-  const trimmed = value.trim();
-  if (!trimmed) return [];
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (Array.isArray(parsed)) return parsed.map(Number).filter(Number.isFinite);
-  } catch {
-    // Fall through to CSV parsing.
-  }
-  return trimmed.split(/[\s,;]+/).map(Number).filter(Number.isFinite);
-};
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (!axios.isAxiosError(error)) return fallback;
@@ -91,11 +81,21 @@ const addHoursToTime = (timeStr: string, hours: number): string => {
   return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 };
 
+const hoursArray = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+const minutesArray = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
 interface EmployeesShiftWorkspaceProps {
   cinemaId: string | null;
+  defaultTab?: 'management' | 'scheduling';
 }
-const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinemaId }) => {
-  const [activeTab, setActiveTab] = useState<'management' | 'scheduling'>('management');
+const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinemaId, defaultTab = 'management' }) => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'management' | 'scheduling'>(defaultTab);
+  
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
   const { t } = useTranslation();
 
   // General State
@@ -119,7 +119,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
   // Face Registration State
   const [faceStaff, setFaceStaff] = useState<StaffProfileDto | null>(null);
-  const [faceVectorText, setFaceVectorText] = useState(() => JSON.stringify(makeDemoVector()));
+  const [showFaceScanModal, setShowFaceScanModal] = useState(false);
 
   // Scheduling Tab State
   const [selectedDeptId, setSelectedDeptId] = useState('');
@@ -523,21 +523,17 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     }
   };
 
-  const handleRegisterFace = async () => {
+  const handleRegisterFace = async (faceVector: number[]) => {
     if (!faceStaff) return;
-    const faceVector = parseFaceVector(faceVectorText);
-    if (faceVector.length !== 128) {
-      showError(`Face vector must contain 128 numbers. Current: ${faceVector.length}.`);
-      return;
-    }
+    setShowFaceScanModal(false);
     setActionLoading(`face-${faceStaff.userId}`);
     try {
       await staffShiftApi.registerFace(faceStaff.userId, { faceVector });
-      showSuccess('Face vector saved.');
+      showSuccess(`Đã đăng ký khuôn mặt cho ${faceStaff.userName} thành công!`);
       setFaceStaff(null);
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to register face vector.'));
+      showError(getApiErrorMessage(error, 'Không thể đăng ký khuôn mặt. Thử lại.'));
     } finally {
       setActionLoading(null);
     }
@@ -645,14 +641,14 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         <div style={{ display: 'flex', gap: 10 }}>
           <button 
             className={`btn ${activeTab === 'management' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('management')}
+            onClick={() => navigate('/theater-manager/employees')}
           >
             <Users size={16} />
             Duyệt ca & Nhân sự
           </button>
           <button 
             className={`btn ${activeTab === 'scheduling' ? 'btn-primary' : 'btn-secondary'}`}
-            onClick={() => setActiveTab('scheduling')}
+            onClick={() => navigate('/theater-manager/employees-schedule')}
           >
             <Calendar size={16} />
             Lập lịch làm việc
@@ -851,7 +847,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <ActionButton label="Face" tone="neutral" icon={<ScanFace size={13} />} loading={actionLoading === `face-${profile.userId}`} onClick={() => setFaceStaff(profile)} />
+                              <ActionButton label="Face" tone="neutral" icon={<ScanFace size={13} />} loading={actionLoading === `face-${profile.userId}`} onClick={() => { setFaceStaff(profile); setShowFaceScanModal(true); }} />
                               <ActionButton label={profile.workingStatus ? 'Disable' : 'Enable'} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
                             </div>
                           </td>
@@ -1098,17 +1094,66 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                 </Field>
               </div>
               <Field label="Giờ bắt đầu">
-                <input className="input" type="time" value={newSchedStart} onChange={(e) => setNewSchedStart(e.target.value)} />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select 
+                    className="input select" 
+                    value={newSchedStart.split(':')[0] || '08'} 
+                    onChange={(e) => {
+                      const min = newSchedStart.split(':')[1] || '00';
+                      setNewSchedStart(`${e.target.value}:${min}`);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    {hoursArray.map((h) => (
+                      <option key={h} value={h}>{h}h</option>
+                    ))}
+                  </select>
+                  <select 
+                    className="input select" 
+                    value={newSchedStart.split(':')[1] || '00'} 
+                    onChange={(e) => {
+                      const hr = newSchedStart.split(':')[0] || '08';
+                      setNewSchedStart(`${hr}:${e.target.value}`);
+                    }}
+                    style={{ flex: 1 }}
+                  >
+                    {minutesArray.map((m) => (
+                      <option key={m} value={m}>{m}m</option>
+                    ))}
+                  </select>
+                </div>
               </Field>
               <Field label="Giờ kết thúc (Khóa nếu ca cố định)">
-                <input 
-                  className="input" 
-                  type="time" 
-                  value={newSchedEnd} 
-                  onChange={(e) => setNewSchedEnd(e.target.value)} 
-                  disabled={newSchedShiftType !== 3}
-                  style={newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
-                />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <select 
+                    className="input select" 
+                    value={newSchedEnd.split(':')[0] || '16'} 
+                    onChange={(e) => {
+                      const min = newSchedEnd.split(':')[1] || '00';
+                      setNewSchedEnd(`${e.target.value}:${min}`);
+                    }}
+                    disabled={newSchedShiftType !== 3}
+                    style={{ flex: 1, ...(newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}
+                  >
+                    {hoursArray.map((h) => (
+                      <option key={h} value={h}>{h}h</option>
+                    ))}
+                  </select>
+                  <select 
+                    className="input select" 
+                    value={newSchedEnd.split(':')[1] || '00'} 
+                    onChange={(e) => {
+                      const hr = newSchedEnd.split(':')[0] || '16';
+                      setNewSchedEnd(`${hr}:${e.target.value}`);
+                    }}
+                    disabled={newSchedShiftType !== 3}
+                    style={{ flex: 1, ...(newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}
+                  >
+                    {minutesArray.map((m) => (
+                      <option key={m} value={m}>{m}m</option>
+                    ))}
+                  </select>
+                </div>
               </Field>
               <Field label="Số nhân viên tối đa">
                 <input className="input" type="number" min={1} value={newSchedMaxStaff} onChange={(e) => setNewSchedMaxStaff(Number(e.target.value))} />
@@ -1172,39 +1217,17 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         </section>
       )}
 
-      {/* Face Vector Modal */}
-      {faceStaff && (
-        <div className="modal-overlay" onClick={() => setFaceStaff(null)}>
-          <div className="modal-content" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Register face vector</h3>
-                <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>{faceStaff.userName}</p>
-              </div>
-              <button className="btn-icon" onClick={() => setFaceStaff(null)}><X size={16} /></button>
-            </div>
-            <div className="modal-body" style={{ display: 'grid', gap: 12 }}>
-              <textarea
-                className="input"
-                rows={8}
-                value={faceVectorText}
-                onChange={(event) => setFaceVectorText(event.target.value)}
-                style={{ resize: 'vertical', lineHeight: 1.5, fontFamily: "'JetBrains Mono', monospace", fontSize: 12 }}
-              />
-              <button className="btn btn-secondary" onClick={() => setFaceVectorText(JSON.stringify(makeDemoVector()))}>
-                <ScanFace size={16} />
-                Fill demo vector
-              </button>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setFaceStaff(null)}>Cancel</button>
-              <button className="btn btn-primary" onClick={handleRegisterFace} disabled={actionLoading === `face-${faceStaff.userId}`}>
-                {actionLoading === `face-${faceStaff.userId}` ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <ScanFace size={16} />}
-                Save vector
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Face Scan Modal — camera-based real AI recognition */}
+      {faceStaff && showFaceScanModal && (
+        <FaceScanModal
+          mode="register"
+          staffName={faceStaff.userName}
+          onDescriptor={handleRegisterFace}
+          onClose={() => {
+            setShowFaceScanModal(false);
+            setFaceStaff(null);
+          }}
+        />
       )}
     </div>
   );

@@ -13,6 +13,7 @@
     "@microsoft/signalr": "^10.0.0",
     "@tailwindcss/postcss": "^4.1.18",
     "axios": "^1.13.2",
+    "face-api.js": "^0.22.2",
     "framer-motion": "^12.40.0",
     "html2canvas": "^1.4.1",
     "i18next": "^25.8.13",
