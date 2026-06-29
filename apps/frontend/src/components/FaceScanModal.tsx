@@ -130,7 +130,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
     intervalRef.current = setInterval(async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      if (!video || !canvas || video.readyState < 2) return;
+      if (!video || !canvas || video.paused || video.ended || !video.videoWidth || !video.videoHeight) return;
 
       try {
         const detection = await faceapi
@@ -161,7 +161,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
           ctx.strokeStyle = score > 0.85 ? '#22c55e' : '#a78bfa';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
-          ctx.roundRect(box.x, box.y, box.width, box.height, 8);
+          ctx.rect(box.x, box.y, box.width, box.height);
           ctx.stroke();
           ctx.shadowBlur = 0;
 
@@ -201,8 +201,8 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
           setConfidence(null);
           setStatus('no_face');
         }
-      } catch {
-        // Ignore transient detection errors
+      } catch (err) {
+        console.error("Face detection loop error:", err);
       }
     }, SCAN_INTERVAL_MS);
   }, []);
