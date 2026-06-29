@@ -31,6 +31,14 @@ public class StaffRepository : IStaffRepository
             .Include(s => s.UserInfoEntity)
             .FirstOrDefaultAsync(s => s.UserId == userId && s.WorkingStatus);
     }
+    
+    public async Task<List<StaffProfileEntity>> GetStaffProfilesByCinemaIdAsync(Guid cinemaId)
+    {
+        return await _dbContext.Set<StaffProfileEntity>()
+            .Include(s => s.UserInfoEntity)
+            .Where(s => s.CinemaId == cinemaId && s.WorkingStatus)
+            .ToListAsync();
+    }
 
     public async Task<StaffShiftRegistrationEntity?> GetApprovedShiftRegistrationAsync(Guid staffId, DateTime date)
     {

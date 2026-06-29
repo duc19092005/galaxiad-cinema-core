@@ -124,7 +124,14 @@ public class StaffShiftController : ControllerBase
     [HttpPost("clock-in")]
     public async Task<IActionResult> ClockIn([FromBody] ReqClockInDto dto)
     {
-        var result = await _clockInUseCase.ExecuteAsync(dto);
+        Guid? sharedUserId = null;
+        var sid = User.FindFirstValue(ClaimTypes.Sid);
+        if (!string.IsNullOrEmpty(sid) && Guid.TryParse(sid, out var parsedId))
+        {
+            sharedUserId = parsedId;
+        }
+
+        var result = await _clockInUseCase.ExecuteAsync(dto, sharedUserId);
         return Ok(result);
     }
 

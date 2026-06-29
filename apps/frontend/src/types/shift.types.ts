@@ -46,7 +46,7 @@ export interface RegisterFaceRequest {
 }
 
 export interface ClockInRequest {
-  staffId: string;
+  staffId?: string;
   faceVector: number[];
   simulatedDateTime?: string | null;
 }
@@ -54,6 +54,7 @@ export interface ClockInRequest {
 export interface ClockInResponse {
   accessToken: string;
   staffName: string;
+  staffId: string;
 }
 
 export interface ClockOutRequest {

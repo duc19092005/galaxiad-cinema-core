@@ -127,6 +127,9 @@ public class ReqCreateBookingDto
 
     /// <summary>Id của nhân viên đứng quầy bán vé (truyền lên từ máy POS)</summary>
     public Guid? StaffId { get; set; }
+
+    /// <summary>Phương thức thanh toán (0 = VNPAY, 1 = GOOGLEPAY, 2 = CASH)</summary>
+    public Cinema.Domain.Enums.PaymentMethodEnum? PaymentMethod { get; set; }
 }
 
 public class SeatSelectionDto

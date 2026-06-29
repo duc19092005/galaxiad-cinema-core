@@ -11,6 +11,7 @@ public interface IStaffRepository
     // Profile
     Task<StaffProfileEntity?> GetStaffProfileByIdAsync(Guid staffId);
     Task<StaffProfileEntity?> GetActiveStaffProfileAsync(Guid userId);
+    Task<List<StaffProfileEntity>> GetStaffProfilesByCinemaIdAsync(Guid cinemaId);
     
     // Shifts & Registrations
     Task<StaffShiftRegistrationEntity?> GetApprovedShiftRegistrationAsync(Guid staffId, DateTime date);

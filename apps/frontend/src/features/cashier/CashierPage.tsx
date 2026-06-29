@@ -200,19 +200,15 @@ const CashierPage: React.FC = () => {
 
   const handleClockIn = async (faceVector: number[]) => {
     setShowFaceScan(false);
-    if (!effectiveStaffId) {
-      showError('Chọn nhân viên trước khi điểm danh.');
-      return;
-    }
     setSubmitting(true);
     try {
       const response = await staffShiftApi.clockIn({
-        staffId: effectiveStaffId,
+        staffId: effectiveStaffId || undefined,
         faceVector,
         simulatedDateTime: simulatedDateTime ? new Date(simulatedDateTime).toISOString() : null,
       });
       const nextSession: CashierShiftSession = {
-        staffId: effectiveStaffId,
+        staffId: response.data.staffId || effectiveStaffId,
         staffName: response.data.staffName,
         accessToken: response.data.accessToken,
         clockedInAt: new Date().toISOString(),
@@ -375,7 +371,7 @@ const CashierPage: React.FC = () => {
               <div style={{ display: 'grid', gap: 16 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 10 }}>
                   <div>
-                    <label className="input-label" htmlFor="staff-select">Staff profile</label>
+                    <label className="input-label" htmlFor="staff-select">Staff profile (Tùy chọn - Tự động nhận dạng khi quét mặt)</label>
                     <select
                       id="staff-select"
                       className="input select"
@@ -400,7 +396,7 @@ const CashierPage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="input-label" htmlFor="manual-staff">Manual Staff ID</label>
+                  <label className="input-label" htmlFor="manual-staff">Manual Staff ID (Tùy chọn)</label>
                   <input
                     id="manual-staff"
                     className="input"
@@ -429,10 +425,6 @@ const CashierPage: React.FC = () => {
                 <button
                   className="btn btn-primary"
                   onClick={() => {
-                    if (!effectiveStaffId) {
-                      showError('Vui lòng chọn nhân viên trước khi điểm danh.');
-                      return;
-                    }
                     setShowFaceScan(true);
                   }}
                   disabled={submitting}

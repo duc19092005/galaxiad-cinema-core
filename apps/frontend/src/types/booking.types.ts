@@ -14,6 +14,7 @@ export interface CreateBookingRequest {
     customerAddress?: string;
     voucherId?: string | null;
     staffId?: string | null;
+    paymentMethod?: number;
 }
 
 export interface CreateBookingResponse {

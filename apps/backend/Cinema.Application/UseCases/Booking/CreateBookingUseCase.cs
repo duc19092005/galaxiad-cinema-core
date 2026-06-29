@@ -285,14 +285,22 @@ public class CreateBookingUseCase
                 finalCustomerPhone = customerPhone;
             }
 
+            var resolvedPaymentMethod = request.PaymentMethod ?? PaymentMethodEnum.VNPAY;
+            var resolvedOrderStatus = OrderStatusEnum.Pending;
+
+            if (isCashier && resolvedPaymentMethod == PaymentMethodEnum.CASH)
+            {
+                resolvedOrderStatus = OrderStatusEnum.Booked;
+            }
+
             var order = new OrderInfoEntity
             {
                 OrderId     = orderId,
                 BookingCode = "GXD-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
                 UserId = orderUserId,
                 StaffId = orderStaffId,
-                OrderStatus = OrderStatusEnum.Pending,
-                PaymentMethod = PaymentMethodEnum.VNPAY,
+                OrderStatus = resolvedOrderStatus,
+                PaymentMethod = resolvedPaymentMethod,
                 TotalPrice = finalPrice,
                 SubtotalPrice = totalPrice,
                 PromotionDiscountAmount = orderDetails.Sum(x => x.PricingAdjustmentAmount < 0 ? Math.Abs(x.PricingAdjustmentAmount) : 0),
@@ -322,11 +330,6 @@ public class CreateBookingUseCase
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            _jobScheduler.Schedule<IPendingOrderCancellationJob>(
-                job => job.ExecuteForOrderAsync(orderId),
-                TimeSpan.FromMinutes(10)
-            );
-
             if (orderUserId.HasValue)
             {
                 try
@@ -339,7 +342,19 @@ public class CreateBookingUseCase
                 }
             }
 
-            var paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);
+            if (resolvedOrderStatus == OrderStatusEnum.Pending)
+            {
+                _jobScheduler.Schedule<IPendingOrderCancellationJob>(
+                    job => job.ExecuteForOrderAsync(orderId),
+                    TimeSpan.FromMinutes(10)
+                );
+            }
+
+            string paymentUrl = string.Empty;
+            if (resolvedOrderStatus == OrderStatusEnum.Pending)
+            {
+                paymentUrl = _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress);
+            }
 
             return new BaseResponse<ResCreateBookingDto>
             {

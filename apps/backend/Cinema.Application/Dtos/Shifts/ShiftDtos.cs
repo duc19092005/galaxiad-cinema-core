@@ -75,8 +75,7 @@ public class ReqRegisterFaceDto
 
 public class ReqClockInDto
 {
-    [Required]
-    public Guid StaffId { get; set; }
+    public Guid? StaffId { get; set; }
 
     [Required]
     public float[] FaceVector { get; set; } = [];
@@ -88,6 +87,7 @@ public class ResClockInDto
 {
     public string AccessToken { get; set; } = string.Empty;
     public string StaffName { get; set; } = string.Empty;
+    public Guid StaffId { get; set; }
 }
 
 public class ReqClockOutDto
