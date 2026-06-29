@@ -1,33 +1,31 @@
-// ReSharper disable All
-
 using Cinema.Application.Abstractions.Security;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Cinema.Application.Constants;
+namespace Cinema.Infrastructure.Identity;
 
 public class UserIdentityCodeConstant
 {
-    public IConfiguration _IConfiguration;
-    
-    private ILogger<UserIdentityCodeConstant> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly ILogger<UserIdentityCodeConstant> _logger;
     private readonly IEncryptionService _encryptionService;
 
-    public UserIdentityCodeConstant(IConfiguration _IConfiguration ,
-        ILogger<UserIdentityCodeConstant> _logger,
+    public UserIdentityCodeConstant(
+        IConfiguration configuration,
+        ILogger<UserIdentityCodeConstant> logger,
         IEncryptionService encryptionService)
     {
-        this._IConfiguration = _IConfiguration;
-        this._logger = _logger;
+        _configuration = configuration;
+        _logger = logger;
         _encryptionService = encryptionService;
     }
 
     public string[] getUserIdentityCode()
     {
-        string? getAESKey = _IConfiguration["AES_256:Key"];
-        string? getAESIV = _IConfiguration["AES_256:IV"];
+        string? getAESKey = _configuration["AES_256:Key"];
+        string? getAESIV = _configuration["AES_256:IV"];
         
         if (getAESKey == null || getAESIV == null)
         {

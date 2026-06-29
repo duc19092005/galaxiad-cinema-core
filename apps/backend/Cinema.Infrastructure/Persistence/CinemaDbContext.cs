@@ -1,4 +1,4 @@
-using Cinema.Application.Constants;
+using Cinema.Infrastructure.Identity;
 using Cinema.Domain.Entities.AuditLogs;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;

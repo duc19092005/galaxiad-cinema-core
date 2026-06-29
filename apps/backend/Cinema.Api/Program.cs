@@ -11,7 +11,7 @@ using Cinema.Api.Hubs;
 using Cinema.Api.Middlewares;
 using Cinema.Application.Exceptions;
 using Cinema.Infrastructure;
-using Cinema.Application.Constants;
+using Cinema.Infrastructure.Identity;
 using Hangfire;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Mvc;

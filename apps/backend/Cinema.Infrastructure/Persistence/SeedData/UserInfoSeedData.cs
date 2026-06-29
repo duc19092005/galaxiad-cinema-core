@@ -1,5 +1,6 @@
-using Cinema.Application.Constants;
+using Cinema.Infrastructure.Identity;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Infrastructure.SeedData;
