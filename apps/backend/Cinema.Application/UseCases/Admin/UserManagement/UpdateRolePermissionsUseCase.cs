@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces;
+using Cinema.Application.Constants;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Utils;
 
@@ -29,7 +30,7 @@ public class GetMyBookingsTool : IChatTool
         var userId = _userContextService.GetUserId();
         if (userId == Guid.Empty)
         {
-            return JsonSerializer.Serialize(new { Error = ChatbotConstants.RefusalMessages.RequireLogin });
+            return JsonSerializer.Serialize(new { Error = ChatbotResponseMessages.Refusals.RequireLogin });
         }
 
         var orders = await _repo.GetUserBookingHistoryAsync(userId);

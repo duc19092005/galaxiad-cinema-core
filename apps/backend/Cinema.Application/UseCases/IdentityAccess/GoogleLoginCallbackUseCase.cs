@@ -7,7 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Cinema.Application.Abstractions.Security;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Cinema.Domain.Entities.UserInfos;

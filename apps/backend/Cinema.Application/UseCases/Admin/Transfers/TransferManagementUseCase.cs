@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;

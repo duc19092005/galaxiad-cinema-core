@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Abstractions.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;

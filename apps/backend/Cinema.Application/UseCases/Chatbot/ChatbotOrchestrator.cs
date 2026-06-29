@@ -8,6 +8,7 @@ using Cinema.Application.Dtos.Chatbot;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
+using Cinema.Application.Constants;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Chatbot;
@@ -60,7 +61,7 @@ public class ChatbotOrchestrator
                     IsSuccess = true,
                     Data = new ChatbotResponseDto
                     {
-                        Response = ChatbotConstants.RefusalMessages.Unauthorized,
+                        Response = ChatbotResponseMessages.Refusals.Unauthorized,
                         Intent = intent,
                         IsAuthorized = false
                     }
@@ -132,7 +133,7 @@ public class ChatbotOrchestrator
                 IsSuccess = true,
                 Data = new ChatbotResponseDto
                 {
-                    Response = ChatbotConstants.RefusalMessages.SystemError,
+                    Response = ChatbotResponseMessages.Refusals.SystemError,
                     Intent = "Error",
                     IsAuthorized = true
                 }

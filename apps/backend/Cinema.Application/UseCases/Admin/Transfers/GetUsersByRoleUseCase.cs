@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin.Responses;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;
 

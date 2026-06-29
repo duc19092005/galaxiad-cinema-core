@@ -1,4 +1,4 @@
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 

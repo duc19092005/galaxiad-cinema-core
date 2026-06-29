@@ -1,4 +1,6 @@
-namespace Cinema.Application.Constants;
+using System;
+
+namespace Cinema.Domain.Constants;
 
 public static class movie_visual_constant
 {

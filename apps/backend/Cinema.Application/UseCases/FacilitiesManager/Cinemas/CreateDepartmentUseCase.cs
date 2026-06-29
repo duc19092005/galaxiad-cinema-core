@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
 using Cinema.Domain.Entities.CinemaInfos;

@@ -8,7 +8,7 @@ using Cinema.Application.Dtos.IdentityAccess.Requests;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Localization;
 using Cinema.Application.Interfaces.IIdentityAccess;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces;
 using Cinema.Domain.Enums;

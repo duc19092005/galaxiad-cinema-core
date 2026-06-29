@@ -1,5 +1,5 @@
 using System;
-using Cinema.Application.Constants;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.Vouchers;
 using Microsoft.EntityFrameworkCore;
 
