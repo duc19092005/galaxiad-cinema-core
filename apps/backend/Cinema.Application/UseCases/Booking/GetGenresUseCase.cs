@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Mappers.Booking;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
@@ -21,12 +22,7 @@ public class GetGenresUseCase
     public async Task<BaseResponse<List<ResPublicGenreDto>>> ExecuteAsync()
     {
         var genres = await _repository.GetGenresAsync();
-        var list = genres.Select(x => new ResPublicGenreDto
-        {
-            GenreId = x.MovieGenreId,
-            GenreName = x.MovieGenreName,
-            Description = x.MovieGenreDescription
-        }).ToList();
+        var list = genres.Select(BookingMapper.ToResPublicGenreDto).ToList();
 
         return new BaseResponse<List<ResPublicGenreDto>>
         {

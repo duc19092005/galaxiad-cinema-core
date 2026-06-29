@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Interfaces.Facilities;
+using Cinema.Application.Mappers.Staff;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Staff;
@@ -47,20 +48,7 @@ public class GetAvailableShiftsUseCase
         foreach (var s in schedules)
         {
             var count = await _repository.CountApprovedOrPendingRegistrationsForScheduleAsync(s.ShiftScheduleId);
-            resultList.Add(new ResShiftTemplateDto
-            {
-                ShiftTemplateId = Guid.Empty,
-                ShiftScheduleId = s.ShiftScheduleId,
-                CinemaId = s.CinemaId,
-                CinemaName = s.CinemaInfoEntity?.CinemaName ?? "",
-                ShiftName = s.ShiftName,
-                StartTime = s.StartTime,
-                EndTime = s.EndTime,
-                MaxStaff = s.MaxStaff,
-                RegisteredCount = count,
-                RoleId = s.RoleId,
-                RoleName = s.RoleListInfoEntity?.RoleName ?? ""
-            });
+            resultList.Add(StaffMapper.ToResShiftTemplateDto(s, count));
         }
 
         return new BaseResponse<List<ResShiftTemplateDto>> { IsSuccess = true, Data = resultList };

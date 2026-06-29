@@ -97,6 +97,7 @@ public static class CommonServicesBootstrap
         services.AddScoped<ClockInUseCase>();
         services.AddScoped<ClockOutUseCase>();
         services.AddScoped<CalculatePayrollUseCase>();
+        services.AddScoped<PayPayrollUseCase>();
         services.AddScoped<CreateShiftScheduleUseCase>();
         services.AddScoped<GetShiftSchedulesUseCase>();
         services.AddScoped<DeleteShiftScheduleUseCase>();

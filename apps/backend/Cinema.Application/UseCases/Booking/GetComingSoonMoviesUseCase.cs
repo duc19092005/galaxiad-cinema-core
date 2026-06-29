@@ -6,6 +6,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Mappers.Booking;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
@@ -34,21 +35,7 @@ public class GetComingSoonMoviesUseCase
         var skip = (pageIndex - 1) * pageSize;
         var movies = await _repository.GetComingSoonMoviesPagedAsync(keyword, skip, pageSize);
 
-        var list = movies.Select(x => new ResPublicMovieListDto
-        {
-            MovieId = x.MovieId,
-            MovieName = x.MovieName,
-            MovieImageUrl = x.MovieImageUrl,
-            MovieDescription = x.MovieDescription,
-            MovieDuration = x.MovieDuration,
-            StartedDate = x.ActiveAt,
-            EndedDate = x.EndedDate,
-            MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-            MovieGenres = x.MovieGenreMovieInfoEntity
-                .Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList(),
-            MovieFormats = x.MovieFormatMovieInfoEntity
-                .Select(f => f.MovieFormatInfoEntity.MovieFormatName).ToList()
-        }).ToList();
+        var list = movies.Select(BookingMapper.ToResPublicMovieListDto).ToList();
 
         var response = new BaseResponse<PagedResult<ResPublicMovieListDto>>
         {

@@ -17,6 +17,7 @@ public class TheaterManagerShiftController : ControllerBase
 {
     private readonly ApproveShiftRegistrationUseCase _approveShiftRegistrationUseCase;
     private readonly CalculatePayrollUseCase _calculatePayrollUseCase;
+    private readonly PayPayrollUseCase _payPayrollUseCase;
     private readonly CreateShiftTemplateUseCase _createShiftTemplateUseCase;
     private readonly GetShiftTemplatesUseCase _getShiftTemplatesUseCase;
     private readonly GetShiftRegistrationsUseCase _getShiftRegistrationsUseCase;
@@ -31,6 +32,7 @@ public class TheaterManagerShiftController : ControllerBase
     public TheaterManagerShiftController(
         ApproveShiftRegistrationUseCase approveShiftRegistrationUseCase,
         CalculatePayrollUseCase calculatePayrollUseCase,
+        PayPayrollUseCase payPayrollUseCase,
         CreateShiftTemplateUseCase createShiftTemplateUseCase,
         GetShiftTemplatesUseCase getShiftTemplatesUseCase,
         GetShiftRegistrationsUseCase getShiftRegistrationsUseCase,
@@ -44,6 +46,7 @@ public class TheaterManagerShiftController : ControllerBase
     {
         _approveShiftRegistrationUseCase = approveShiftRegistrationUseCase;
         _calculatePayrollUseCase = calculatePayrollUseCase;
+        _payPayrollUseCase = payPayrollUseCase;
         _createShiftTemplateUseCase = createShiftTemplateUseCase;
         _getShiftTemplatesUseCase = getShiftTemplatesUseCase;
         _getShiftRegistrationsUseCase = getShiftRegistrationsUseCase;
@@ -148,7 +151,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> CalculatePayroll([FromBody] ReqCalculatePayrollDto dto)
     {
         var managerId = GetCurrentUserId();
-        var result = await _calculatePayrollUseCase.CalculateAsync(dto, managerId);
+        var result = await _calculatePayrollUseCase.ExecuteAsync(dto, managerId);
         return Ok(result);
     }
 
@@ -157,7 +160,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> PayPayroll(Guid id)
     {
         var managerId = GetCurrentUserId();
-        var result = await _calculatePayrollUseCase.PayAsync(id, managerId);
+        var result = await _payPayrollUseCase.ExecuteAsync(id, managerId);
         return Ok(result);
     }
 

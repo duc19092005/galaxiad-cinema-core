@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
-
+using Cinema.Application.Mappers.Booking;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
@@ -29,15 +29,7 @@ public class GetNearestCinemasUseCase
                 ? CalculateDistanceInKm(userLat, userLon, c.Latitude.Value, c.Longitude.Value)
                 : 9999.0;
 
-            return new ResPublicNearestCinemaDto
-            {
-                CinemaId = c.CinemaId,
-                CinemaName = c.CinemaName,
-                CinemaLocation = c.CinemaLocation,
-                Latitude = c.Latitude,
-                Longitude = c.Longitude,
-                DistanceInKm = Math.Round(distance, 2)
-            };
+            return BookingMapper.ToResPublicNearestCinemaDto(c, distance);
         })
         .OrderBy(c => c.DistanceInKm)
         .ToList();

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
-
+using Cinema.Application.Mappers.Booking;
 using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking;
@@ -22,12 +22,7 @@ public class GetActiveCinemasUseCase
     public async Task<BaseResponse<List<ResPublicSimpleCinemaDto>>> ExecuteAsync()
     {
         var cinemas = await _repository.GetActiveCinemasAsync();
-        var list = cinemas.Select(c => new ResPublicSimpleCinemaDto
-        {
-            CinemaId = c.CinemaId,
-            CinemaName = c.CinemaName,
-            CinemaCity = c.CinemaCity
-        }).ToList();
+        var list = cinemas.Select(BookingMapper.ToResPublicSimpleCinemaDto).ToList();
 
         return new BaseResponse<List<ResPublicSimpleCinemaDto>>
         {

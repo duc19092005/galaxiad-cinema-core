@@ -16,6 +16,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Cinema.Application.Mappers.Booking;
 
 namespace Cinema.Application.UseCases.Booking;
 
@@ -148,21 +149,7 @@ public class GetSimilarMoviesUseCase
             similarMovies.AddRange(extraMovies);
         }
 
-        var dtoList = similarMovies.Select(x => new ResPublicMovieListDto
-        {
-            MovieId = x.MovieId,
-            MovieName = x.MovieName,
-            MovieImageUrl = x.MovieImageUrl,
-            MovieDescription = x.MovieDescription,
-            MovieDuration = x.MovieDuration,
-            StartedDate = x.ActiveAt,
-            EndedDate = x.EndedDate,
-            MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity?.MovieRequiredAgeSymbol.Trim() ?? "P",
-            MovieGenres = x.MovieGenreMovieInfoEntity
-                .Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList(),
-            MovieFormats = x.MovieFormatMovieInfoEntity
-                .Select(f => f.MovieFormatInfoEntity.MovieFormatName).ToList()
-        }).ToList();
+        var dtoList = similarMovies.Select(BookingMapper.ToResPublicMovieListDto).ToList();
 
         var finalResponse = new BaseResponse<List<ResPublicMovieListDto>>
         {

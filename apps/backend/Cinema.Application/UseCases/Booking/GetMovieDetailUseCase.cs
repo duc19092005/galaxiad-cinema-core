@@ -6,6 +6,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Mappers.Booking;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 
@@ -37,24 +38,7 @@ public class GetMovieDetailUseCase
             throw new NotFoundException(Messages.Movie.NotFoundById(movieId));
         }
 
-        var dto = new ResPublicMovieDetailDto
-        {
-            MovieId = movie.MovieId,
-            MovieName = movie.MovieName,
-            MovieImageUrl = movie.MovieImageUrl,
-            MovieDescription = movie.MovieDescription,
-            TrailerUrl = movie.TrailerUrl,
-            Director = movie.Director,
-            Actors = movie.Actors,
-            MovieDuration = movie.MovieDuration,
-            StartedDate = movie.ActiveAt,
-            EndedDate = movie.EndedDate,
-            MovieRequiredAgeSymbol = movie.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-            MovieGenres = movie.MovieGenreMovieInfoEntity
-                .Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList(),
-            MovieFormats = movie.MovieFormatMovieInfoEntity
-                .Select(f => f.MovieFormatInfoEntity.MovieFormatName).ToList()
-        };
+        var dto = BookingMapper.ToResPublicMovieDetailDto(movie);
 
         var response = new BaseResponse<ResPublicMovieDetailDto>
         {

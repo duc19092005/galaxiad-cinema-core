@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.Exceptions;
@@ -13,19 +16,16 @@ public class CalculatePayrollUseCase
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IShiftManagerRepository _repository;
-    private readonly ISseNotificationService _sseNotificationService;
 
     public CalculatePayrollUseCase(
         IShiftManagerRepository repository,
-        ISseNotificationService sseNotificationService,
         IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
         _repository = repository;
-        _sseNotificationService = sseNotificationService;
     }
 
-    public async Task<BaseResponse<ResPayrollDto>> CalculateAsync(ReqCalculatePayrollDto dto, Guid managerUserId)
+    public async Task<BaseResponse<ResPayrollDto>> ExecuteAsync(ReqCalculatePayrollDto dto, Guid managerUserId)
     {
         var staffProfile = await _repository.GetStaffProfileWithUserAsync(dto.StaffId);
         if (staffProfile == null)
@@ -91,42 +91,6 @@ public class CalculatePayrollUseCase
             IsSuccess = true,
             Data = result,
             Message = Messages.Staff.PayrollCalculated(uncalculatedLogs.Count, totalReceived)
-        };
-    }
-
-    public async Task<BaseResponse<bool>> PayAsync(Guid payrollId, Guid managerUserId)
-    {
-        var payroll = await _repository.GetSalaryTotalLogByIdAsync(payrollId);
-        if (payroll == null)
-        {
-            throw new AppException(Messages.Staff.PayrollNotFound, 404, "PAYROLL_ERR");
-        }
-
-        if (payroll.PaymentStatus == "Paid")
-        {
-            throw new AppException(Messages.Staff.PayrollAlreadyPaid, 400, "PAYROLL_ERR");
-        }
-
-        await VerifyManagerPermissionAsync(managerUserId, payroll.StaffProfileEntity.CinemaId);
-
-        payroll.PaymentStatus = "Paid";
-        payroll.PaidByUserId = managerUserId;
-        payroll.ReceivedDay = DateTime.UtcNow;
-
-        await _unitOfWork.SaveChangesAsync();
-
-        await _sseNotificationService.SendNotificationAsync(
-            payroll.StaffId,
-            "Payroll paid",
-            $"Your payroll of {payroll.TotalReceived:N0} VND has been confirmed as paid.",
-            "PayrollProcessed"
-        );
-
-        return new BaseResponse<bool>
-        {
-            IsSuccess = true,
-            Data = true,
-            Message = Messages.Staff.PayrollPaid(payroll.TotalReceived)
         };
     }
 

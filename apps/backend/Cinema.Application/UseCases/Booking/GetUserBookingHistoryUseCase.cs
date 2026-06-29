@@ -3,6 +3,7 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces;
+using Cinema.Application.Mappers.Booking;
 using Cinema.Domain.Localization;
 using System;
 using System.Collections.Generic;
@@ -41,24 +42,7 @@ public class GetUserBookingHistoryUseCase
         var nowUtc = DateTime.UtcNow;
         var orders = await _repo.GetUserBookingHistoryAsync(userId);
 
-        var dtos = orders.Select(o => new ResUserBookingHistoryDto
-        {
-            OrderId = o.OrderId,
-            OrderDate = o.OrderDate,
-            TotalPrice = o.TotalPrice,
-            OrderStatus = o.OrderStatus.ToString(),
-            MovieName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
-            MovieImageUrl = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieImageUrl).FirstOrDefault() ?? "",
-            CinemaName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
-            AuditoriumNumber = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
-            StartTime = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
-            Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList(),
-            IsMovieAired = o.OrderDetailsInfo.Any(od => od.MovieScheduleInfoEntity.StartTime <= nowUtc),
-            MovieAiringStatus = o.OrderDetailsInfo.Select(od =>
-                nowUtc < od.MovieScheduleInfoEntity.StartTime ? "Upcoming" :
-                (nowUtc >= od.MovieScheduleInfoEntity.StartTime && nowUtc <= od.MovieScheduleInfoEntity.EndedTime) ? "Airing" : "Finished"
-            ).FirstOrDefault() ?? ""
-        }).ToList();
+        var dtos = orders.Select(o => BookingMapper.ToResUserBookingHistoryDto(o, nowUtc)).ToList();
 
         var response = new BaseResponse<List<ResUserBookingHistoryDto>>
         {
