@@ -19,13 +19,23 @@ public static class ChatbotBootstrap
         // Policy Service
         services.AddScoped<IChatPolicyService, ChatPolicyService>();
 
-        // Predefined Chatbot Tools
+        // Predefined Chatbot Tools (original)
         services.AddScoped<IChatTool, GetMoviesTool>();
         services.AddScoped<IChatTool, GetShowtimesTool>();
         services.AddScoped<IChatTool, GetMyBookingsTool>();
         services.AddScoped<IChatTool, GetCinemaStatisticsTool>();
         services.AddScoped<IChatTool, GetShowtimeRecommendationsTool>();
         services.AddScoped<IChatTool, GetSystemAuditLogsTool>();
+
+        // New tools
+        services.AddScoped<IChatTool, GetPromotionsTool>();
+        services.AddScoped<IChatTool, GetBookingStatusTool>();
+        services.AddScoped<IChatTool, GetCinemaLocationsTool>();
+        services.AddScoped<IChatTool, GetAvailableSeatsTool>();
+        services.AddScoped<IChatTool, SearchMoviesSemanticTool>();
+
+        // AI Semantic Search Client (for SearchMoviesSemanticTool → Python /recommend)
+        services.AddScoped<IAiSemanticSearchClient, AiSemanticSearchClient>();
 
         // Tool Registry
         services.AddScoped<IChatToolRegistry, ChatToolRegistry>();

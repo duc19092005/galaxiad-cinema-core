@@ -19,10 +19,12 @@ public class DeepSeekChatIntentClassifier : IChatIntentClassifier
     private readonly ILogger<DeepSeekChatIntentClassifier> _logger;
     private static readonly HttpClient HttpClient = new();
 
-    public DeepSeekChatIntentClassifier(IConfiguration configuration, ILogger<DeepSeekChatIntentClassifier> logger)
+    public DeepSeekChatIntentClassifier(
+        IConfiguration configuration,
+        ILogger<DeepSeekChatIntentClassifier> logger)
     {
         _configuration = configuration;
-        _logger = logger;
+        _logger        = logger;
     }
 
     public async Task<ChatIntentResult> ClassifyIntentAsync(string message)
@@ -42,28 +44,36 @@ public class DeepSeekChatIntentClassifier : IChatIntentClassifier
             response.EnsureSuccessStatusCode();
 
             var responseText = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<ClassifyResponse>(responseText);
+            var result       = JsonSerializer.Deserialize<ClassifyResponse>(responseText);
 
             if (result == null)
-            {
                 return GetFallbackResult();
-            }
 
-            // Fallback default intent if invalid or unknown
+            // Whitelist kiểm tra intent — nếu không nằm trong danh sách hợp lệ, fallback về GeneralFAQ
             var intent = result.Intent;
-            if (intent != ChatbotConstants.Intents.GetMovies &&
-                intent != ChatbotConstants.Intents.GetShowtimes &&
-                intent != ChatbotConstants.Intents.GetMyBookings &&
-                intent != ChatbotConstants.Intents.GetCinemaStatistics &&
-                intent != ChatbotConstants.Intents.GetShowtimeRecommendations &&
-                intent != ChatbotConstants.Intents.GetSystemAuditLogs)
+            var validIntents = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             {
+                ChatbotConstants.Intents.GetMovies,
+                ChatbotConstants.Intents.GetShowtimes,
+                ChatbotConstants.Intents.GetMyBookings,
+                ChatbotConstants.Intents.GetCinemaStatistics,
+                ChatbotConstants.Intents.GetShowtimeRecommendations,
+                ChatbotConstants.Intents.GetSystemAuditLogs,
+                ChatbotConstants.Intents.GeneralFAQ,
+                // Intents mới
+                ChatbotConstants.Intents.GetPromotions,
+                ChatbotConstants.Intents.GetBookingStatus,
+                ChatbotConstants.Intents.GetCinemaLocations,
+                ChatbotConstants.Intents.GetAvailableSeats,
+                ChatbotConstants.Intents.SearchMoviesSemantic,
+            };
+
+            if (!validIntents.Contains(intent))
                 intent = ChatbotConstants.Intents.GeneralFAQ;
-            }
 
             return new ChatIntentResult
             {
-                Intent = intent,
+                Intent     = intent,
                 Parameters = result.Parameters ?? []
             };
         }
@@ -74,14 +84,8 @@ public class DeepSeekChatIntentClassifier : IChatIntentClassifier
         }
     }
 
-    private static ChatIntentResult GetFallbackResult()
-    {
-        return new ChatIntentResult
-        {
-            Intent = ChatbotConstants.Intents.GeneralFAQ,
-            Parameters = []
-        };
-    }
+    private static ChatIntentResult GetFallbackResult() =>
+        new() { Intent = ChatbotConstants.Intents.GeneralFAQ, Parameters = [] };
 
     private sealed class ClassifyRequest
     {

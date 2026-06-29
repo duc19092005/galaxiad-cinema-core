@@ -68,3 +68,12 @@ class ModerationResponse(BaseModel):
     blocked: bool
     reason: str
 
+
+class GuardRequest(BaseModel):
+    message: str
+    user_role: Optional[str] = "Guest"
+
+
+class GuardResponse(BaseModel):
+    is_blocked: bool
+    reason: str  # Thông báo tiếng Việt lịch sự khi bị block, hoặc '' khi pass

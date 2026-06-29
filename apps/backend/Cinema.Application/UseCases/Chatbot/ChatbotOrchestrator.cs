@@ -48,6 +48,22 @@ public class ChatbotOrchestrator
 
         try
         {
+            // 0. Kiểm tra an toàn ngôn ngữ (Python /guard) — chạy trước mọi bước khác
+            var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
+            if (guardResult.IsBlocked)
+            {
+                return new BaseResponse<ChatbotResponseDto>
+                {
+                    IsSuccess = true,
+                    Data = new ChatbotResponseDto
+                    {
+                        Response     = guardResult.Reason,
+                        Intent       = "Blocked",
+                        IsAuthorized = false
+                    }
+                };
+            }
+
             // 1. Phân loại ý định (Intent Classification)
             var classification = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
             var intent = classification.Intent;

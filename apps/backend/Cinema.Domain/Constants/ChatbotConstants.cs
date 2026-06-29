@@ -11,5 +11,11 @@ public static class ChatbotConstants
         public const string GetShowtimeRecommendations = "GetShowtimeRecommendations";
         public const string GetSystemAuditLogs = "GetSystemAuditLogs";
         public const string GeneralFAQ = "GeneralFAQ";
+
+        public const string GetPromotions        = "GetPromotions";
+        public const string GetBookingStatus     = "GetBookingStatus";
+        public const string GetCinemaLocations   = "GetCinemaLocations";
+        public const string GetAvailableSeats    = "GetAvailableSeats";
+        public const string SearchMoviesSemantic = "SearchMoviesSemantic";
     }
 }

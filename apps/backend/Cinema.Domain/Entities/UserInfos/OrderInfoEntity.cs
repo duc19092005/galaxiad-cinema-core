@@ -6,7 +6,9 @@ namespace Cinema.Domain.Entities.UserInfos;
 public class OrderInfoEntity
 {
     public Guid OrderId { get; set; }
-    
+
+    [Column(TypeName = "varchar(20)")]
+    public string BookingCode { get; set; } = string.Empty;
     public Guid? UserId { get; set; }
 
     public Guid? StaffId {get;set;}

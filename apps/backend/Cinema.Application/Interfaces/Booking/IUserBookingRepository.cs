@@ -6,4 +6,5 @@ public interface IUserBookingRepository
 {
     Task<List<OrderInfoEntity>> GetUserBookingHistoryAsync(Guid userId);
     Task<UserInfoEntity?> GetUserAccountInfoAsync(Guid userId);
+    Task<OrderInfoEntity?> GetOrderByBookingCodeAsync(string bookingCode);
 }

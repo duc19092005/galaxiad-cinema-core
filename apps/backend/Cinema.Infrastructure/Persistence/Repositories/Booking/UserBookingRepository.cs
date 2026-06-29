@@ -38,4 +38,21 @@ public class UserBookingRepository : IUserBookingRepository
                 .ThenInclude(cp => cp.UserSegmentsInfoEntity!)
             .FirstOrDefaultAsync(u => u.UserId == userId);
     }
+
+    public async Task<OrderInfoEntity?> GetOrderByBookingCodeAsync(string bookingCode)
+    {
+        return await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.MovieInfoEntity!)
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.MovieScheduleInfoEntity!)
+                    .ThenInclude(s => s.AuditoriumInfoEntities!)
+                        .ThenInclude(a => a.CinemaInfoEntity!)
+            .Include(o => o.OrderDetailsInfo)
+                .ThenInclude(d => d.SeatsInfoEntity!)
+            .Where(o => o.BookingCode == bookingCode)
+            .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
 }

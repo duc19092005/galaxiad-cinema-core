@@ -279,7 +279,8 @@ public class CreateBookingUseCase
 
             var order = new OrderInfoEntity
             {
-                OrderId = orderId,
+                OrderId     = orderId,
+                BookingCode = "GXD-" + Guid.NewGuid().ToString("N")[..8].ToUpper(),
                 UserId = orderUserId,
                 StaffId = orderStaffId,
                 OrderStatus = OrderStatusEnum.Pending,

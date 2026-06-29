@@ -19,4 +19,5 @@ public interface IPublicCatalogRepository
     Task<List<MovieScheduleInfoEntity>> GetSchedulesByDateAsync(DateTime startUtc, DateTime endUtc, string? city);
     Task<GetAuditoriumInfosRes?> GetAuditoriumDetailsAsync(Guid scheduleId);
     Task<List<DateTime>> GetAllUpcomingUtcTimesAsync(string? city, Guid? cinemaId);
+    Task<List<MovieInfoEntity>> GetMoviesByIdsAsync(List<Guid> ids);
 }

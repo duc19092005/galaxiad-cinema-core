@@ -227,4 +227,14 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             .OrderBy(d => d)
             .ToListAsync();
     }
+
+    public async Task<List<MovieInfoEntity>> GetMoviesByIdsAsync(List<Guid> ids)
+    {
+        return await _dbContext.Set<MovieInfoEntity>()
+            .Include(m => m.MovieGenreMovieInfoEntity)
+                .ThenInclude(g => g.MovieGenreInfoEntity)
+            .Where(m => !m.IsDeleted && ids.Contains(m.MovieId))
+            .AsNoTracking()
+            .ToListAsync();
+    }
 }

@@ -57,6 +57,38 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         }
     }
 
+    public async Task<ChatGuardResult> CheckMessageSafetyAsync(string message)
+    {
+        var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
+
+        try
+        {
+            var payload = new GuardRequest { Message = message };
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            using var response = await HttpClient.PostAsync($"{aiServiceUrl}/guard", content);
+            response.EnsureSuccessStatusCode();
+
+            var responseText = await response.Content.ReadAsStringAsync();
+            var guardResult  = JsonSerializer.Deserialize<GuardResponse>(responseText);
+
+            return new ChatGuardResult(
+                IsBlocked: guardResult?.IsBlocked ?? false,
+                Reason:    guardResult?.Reason    ?? string.Empty
+            );
+        }
+        catch (Exception ex)
+        {
+            // Fail-open: nếu không gọi được /guard, cho qua — tránh block nhầm người dùng hợp lệ
+            _logger.LogWarning(ex, "Guard check failed for message. Failing open.");
+            return new ChatGuardResult(IsBlocked: false, Reason: string.Empty);
+        }
+    }
+
     private sealed class ChatRequest
     {
         [JsonPropertyName("user_prompt")]
@@ -76,6 +108,21 @@ public class DeepSeekChatLlmClient : IChatLlmClient
     {
         [JsonPropertyName("response")]
         public string Response { get; init; } = string.Empty;
+    }
+
+    private sealed class GuardRequest
+    {
+        [JsonPropertyName("message")]
+        public string Message { get; init; } = string.Empty;
+    }
+
+    private sealed class GuardResponse
+    {
+        [JsonPropertyName("is_blocked")]
+        public bool IsBlocked { get; init; }
+
+        [JsonPropertyName("reason")]
+        public string Reason { get; init; } = string.Empty;
     }
 }
 
