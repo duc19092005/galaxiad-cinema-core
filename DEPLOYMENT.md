@@ -2,80 +2,105 @@
 
 ## Overview
 
-Galaxiad Cinema Core is deployed in a split architecture:
+Galaxiad Cinema Core uses a split cloud + VPS architecture:
 
 ```
-┌─────────────┐      ┌─────────────────────────────────┐
-│   Vercel     │─────▶│         VPS (6GB RAM)            │
-│  (Frontend)  │      │                                  │
-│              │      │  ┌───────┐  ┌───────┐           │
-│  React SPA   │      │  │  API  │  │  AI   │           │
-│  + Vercel    │      │  │ .NET  │  │Python │           │
-│    rewrite   │      │  │ 8080  │  │ 8000  │           │
-│              │      │  └───┬───┘  └───┬───┘           │
-└─────────────┘      │      │          │                │
-                     │  ┌───┴───┐  ┌───┴───┐  ┌──────┐ │
-                     │  │ MSSQL │  │ Qdrant│  │Redis │ │
-                     │  │ 1433  │  │ 6333  │  │ 6379 │ │
-                     │  └───────┘  └───────┘  └──────┘ │
-                     └─────────────────────────────────┘
+┌─────────────┐      ┌─────────────────────┐
+│   Vercel     │─────▶│    VPS (4GB RAM)     │
+│  (Frontend)  │      │                      │
+│              │      │  ┌───────┐ ┌───────┐ │
+│  React SPA   │      │  │  API  │ │  AI   │ │
+│  + rewrite   │      │  │ .NET  │ │Python │ │
+│              │      │  │ 8080  │ │ 8000  │ │
+└─────────────┘      │  └───┬───┘ └───┬───┘ │
+                     │      │         │      │
+                     │  ┌───┴───┐     │      │
+                     │  │ MSSQL │     │      │
+                     │  │ 1433  │     │      │
+                     │  └───────┘     │      │
+                     └────────────────┼──────┘
+                                      │
+              ┌───────────────────────┼───────────────────┐
+              │                       │                   │
+    ┌─────────┴─────────┐  ┌─────────┴─────────┐  ┌──────┴──────┐
+    │   Redis Cloud     │  │   Qdrant Cloud    │  │   Jina AI   │
+    │   (free 30MB)     │  │   (free tier)     │  │  (1M free)  │
+    │   Cache & Lock    │  │   Vector DB       │  │  Embedding  │
+    └───────────────────┘  └───────────────────┘  └─────────────┘
 ```
 
-## Prerequisites
+## Production vs Development
 
-- VPS: Ubuntu 22.04 LTS, 6GB RAM, 2 vCPU
+| | Development | Production |
+|---|---|---|
+| Command | `docker compose up --build` | `docker compose -f docker-compose.prod.yml up -d --build` |
+| AI Embedding | Local BAAI/bge-m3 (4GB RAM) | Cloud Jina AI (512MB RAM) |
+| Redis | Local Docker (128MB) | Cloud free tier (30MB) |
+| Qdrant | Local Docker (512MB) | Cloud free tier |
+| VPS RAM needed | 8GB | **4GB** |
+| Services on VPS | 6 (all) | **3** (API + MSSQL + AI) |
+
+## Prerequisites (Production)
+
+- VPS: Ubuntu 22.04 LTS, **4GB RAM**, 2 vCPU
 - Docker + Docker Compose v2
-- GitHub account (for CI/CD and Vercel deployment)
+- Cloud accounts: Redis Cloud, Qdrant Cloud, Jina AI (all free tier)
+- GitHub account (for CI/CD + Vercel)
 
-## Quick Start
+## Quick Start (Production)
 
 ```bash
 # 1. Clone the repo
 git clone https://github.com/your-username/galaxiad-cinema-core.git
 cd galaxiad-cinema-core
 
-# 2. Create .env file
+# 2. Create VPS .env file
 cp .env.example .env
-# Edit .env with your MSSQL password
+# Edit .env → set MSSQL_SA_PASSWORD
 
-# 3. Start production services
+# 3. Create AI service cloud config
+cp services/ai/.env.cloud.example services/ai/.env
+# Edit services/ai/.env → fill in:
+#   JINA_API_KEY (from jina.ai)
+#   QDRANT_URL (from cloud.qdrant.io)
+#   QDRANT_API_KEY (from cloud.qdrant.io)
+#   claude-opus-4.8 (LLM)
+
+# 4. Start production services
 docker compose -f docker-compose.prod.yml up -d --build
 
-# 4. Wait for AI model to load (~2-3 minutes first time)
-docker compose -f docker-compose.prod.yml logs -f ai
-
-# 5. Verify all services are running
+# 5. Verify
 docker compose -f docker-compose.prod.yml ps
 ```
 
-## Service Endpoints
+## Cloud Services Setup
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| API | http://your-vps-ip:8080 | Backend REST API |
-| Swagger | http://your-vps-ip:8080/swagger | API documentation |
-| AI Service | http://your-vps-ip:8000 | AI recommendation + chatbot |
-| Frontend | https://renewcinemaprojectfrontend.vercel.app | Customer-facing SPA |
+### Redis Cloud (free 30MB)
+1. Sign up at redis.com/try-free
+2. Create a free database (30MB)
+3. Get connection string: `rediss://default:PASSWORD@HOST:PORT`
+4. Update `appsettings.Production.json` → `ConnectionStrings.RedisConnection`
 
-## Resource Allocation (6GB VPS)
+### Qdrant Cloud (free tier)
+1. Sign up at cloud.qdrant.io
+2. Create a free cluster
+3. Get URL and API key from dashboard
+4. Update `services/ai/.env` → `QDRANT_URL`, `QDRANT_API_KEY`
+
+### Jina AI (free 1M tokens/month)
+1. Sign up at jina.ai
+2. Get API key from dashboard
+3. Update `services/ai/.env` → `JINA_API_KEY`
+
+## Resource Allocation (4GB VPS)
 
 | Service | RAM | CPU | Notes |
 |---------|-----|-----|-------|
 | API (.NET) | 512MB | 1.0 | Backend REST API |
-| AI (Python) | 4GB | 2.0 | BAAI/bge-m3 embedding model |
+| AI (Python) | 512MB | 1.0 | Cloud embedding (no local model) |
 | MSSQL | 1.5GB | 2.0 | SQL Server 2022 |
-| Redis | 128MB | 0.5 | Cache layer |
-| Qdrant | 512MB | 1.0 | Vector database |
-| **Total** | **~6.7GB** | | OS uses ~300MB |
-
-> **Note:** Total exceeds 6GB slightly. Add 2GB swap to be safe:
-> ```bash
-> sudo fallocate -l 2G /swapfile
-> sudo chmod 600 /swapfile
-> sudo mkswap /swapfile
-> sudo swapon /swapfile
-> echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-> ```
+| OS + Docker | ~300MB | - | Ubuntu + Docker daemon |
+| **Total** | **~2.8GB** | | 1.2GB free headroom |
 
 ## Seed Data
 
@@ -101,29 +126,24 @@ Frontend auto-deploys from `main` branch via Vercel:
 - Preview: PR branches get preview URLs
 - Production: `main` branch → https://renewcinemaprojectfrontend.vercel.app
 
-### Manual Backend Deploy
-
-Backend is deployed to runasp.net via manual upload or Git deployment.
-
 ## Troubleshooting
 
-### AI service slow on first start
-The BAAI/bge-m3 model (~2.2GB) downloads from HuggingFace on first run. Check progress:
+### Cloud embedding not working
+Check AI service logs:
 ```bash
-docker compose -f docker-compose.prod.yml logs -f ai
+docker compose -f docker-compose.prod.yml logs ai
 ```
+Verify JINA_API_KEY is set and valid.
 
 ### MSSQL out of memory
 SQL Server may crash if RAM is insufficient. Solutions:
-1. Increase swap space (see above)
+1. Add swap space (2GB recommended)
 2. Reduce MSSQL memory limit in docker-compose.prod.yml
-3. Consider using a managed database service
 
 ### SSE connection drops
 If clients lose SSE connection frequently:
 1. Check CORS config in Program.cs
-2. Check nginx proxy timeout (default 60s, configured to 600s)
-3. Check Vercel rewrite rules for SSE endpoints
+2. Check Vercel rewrite rules for SSE endpoints
 
 ### Frontend not loading
 1. Verify Vercel deployment is successful

@@ -448,14 +448,6 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           background: rgba(255,138,0,0.12);
           transform: scale(1.04);
         }
-        .home-hero-booking {
-          position: absolute;
-          z-index: 4;
-          left: 50%;
-          bottom: 0;
-          width: min(100% - 32px, 1000px);
-          transform: translate(-50%, 50%);
-        }
         .home-trending-stage {
           display: grid;
           grid-template-columns: minmax(0, 2fr) minmax(300px, 0.95fr);
@@ -637,14 +629,36 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           font-size: 11px;
           font-weight: 800;
         }
+        .home-movie-card {
+          flex: 0 0 250px;
+          border-radius: 16px;
+          overflow: hidden;
+          cursor: pointer;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          scroll-snap-align: start;
+        }
+        .home-movie-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+        @media (max-width: 640px) {
+          .home-movie-card {
+            flex: 0 0 160px;
+          }
+        }
+        @media (max-width: 480px) {
+          .home-movie-card {
+            flex: 0 0 140px;
+          }
+        }
         @media (max-width: 900px) {
           .home-hero-shell {
             min-height: auto;
           }
           .home-hero-content {
             grid-template-columns: 1fr;
-            padding-top: 96px;
-            padding-bottom: 132px;
+            padding-top: 100px;
+            padding-bottom: 40px;
           }
           .home-hero-thumbs {
             align-items: stretch;
@@ -663,16 +677,59 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
             flex: 0 0 auto;
           }
         }
+        @media (max-width: 768px) {
+          .home-hero-content {
+            padding-top: 90px;
+            padding-bottom: 24px;
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+          .home-hero-title {
+            font-size: clamp(1.8rem, 8vw, 3rem);
+          }
+          .home-hero-copy {
+            font-size: 13px;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+          .home-hero-actions {
+            margin-top: 20px;
+          }
+          .home-hero-actions button {
+            font-size: 12px !important;
+            padding: 10px 18px !important;
+            min-height: 42px !important;
+          }
+        }
         @media (max-width: 980px) {
           .home-trending-stage {
             grid-template-columns: 1fr;
+            overflow: hidden;
           }
           .home-trending-feature,
           .home-trending-list {
-            min-height: auto;
+            min-height: auto !important;
+            max-width: 100%;
+            overflow: hidden;
           }
           .home-trending-feature {
             aspect-ratio: 16 / 12;
+          }
+          .home-trending-feature-content {
+            padding: clamp(16px, 4vw, 32px) !important;
+          }
+          .home-trending-title {
+            font-size: clamp(18px, 4vw, 24px) !important;
+          }
+          .home-trending-desc {
+            font-size: 13px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
           }
         }
         @media (max-width: 640px) {
@@ -686,6 +743,20 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           }
           .home-trending-row img {
             width: 62px;
+          }
+          .home-trending-desc {
+            -webkit-line-clamp: 2;
+          }
+          .home-trending-title {
+            font-size: 16px !important;
+          }
+          .home-trending-actions {
+            margin-top: 16px;
+          }
+          .home-trending-actions button {
+            font-size: 12px !important;
+            padding: 10px 16px !important;
+            min-height: 40px !important;
           }
         }
       `}</style>
@@ -823,14 +894,14 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
             </div>
           )}
         </div>
-
-        {/* Quick Booking Bar */}
-        <div className="home-hero-booking">
-          <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
-            setSelectedCinemaId(cinemaId);
-          }} posMode={isCashierSales} />
-        </div>
       </section>
+
+      {/* Quick Booking Bar */}
+      <div style={{ width: '100%', maxWidth: 1000, margin: '0 auto', padding: '0 16px', boxSizing: 'border-box' }}>
+        <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
+          setSelectedCinemaId(cinemaId);
+        }} posMode={isCashierSales} />
+      </div>
 
       {/* ===== TOP TRENDING FEATURE SECTION ===== */}
       <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(56px, 8vw, 96px) clamp(16px, 4vw, 24px)', overflow: 'hidden' }}>
@@ -1065,17 +1136,9 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                     }}
                   >
                     {nowShowing.slice(0, 10).map(movie => (
-                      <div 
-                        key={movie.movieId} 
-                        className="glass-card interactive" 
-                        style={{ 
-                          flex: '0 0 250px',
-                          borderRadius: 16, 
-                          overflow: 'hidden', 
-                          cursor: 'pointer', 
-                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                          scrollSnapAlign: 'start',
-                        }}
+                      <div
+                        key={movie.movieId}
+                        className="glass-card interactive home-movie-card"
                         onClick={() => handleMovieClick(movie.movieId)}
                       >
                         <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>
@@ -1285,17 +1348,9 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                     }}
                   >
                     {comingSoon.slice(0, 10).map(movie => (
-                      <div 
-                        key={movie.movieId} 
-                        className="glass-card interactive" 
-                        style={{ 
-                          flex: '0 0 250px',
-                          borderRadius: 16, 
-                          overflow: 'hidden', 
-                          cursor: 'pointer', 
-                          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                          scrollSnapAlign: 'start',
-                        }}
+                      <div
+                        key={movie.movieId}
+                        className="glass-card interactive home-movie-card"
                         onClick={() => handleMovieClick(movie.movieId)}
                       >
                         <div style={{ position: 'relative', width: '100%', paddingTop: '150%' }}>

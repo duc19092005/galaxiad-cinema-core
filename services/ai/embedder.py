@@ -2,14 +2,17 @@ import hashlib
 import time
 from typing import Dict, List, Tuple
 
+import httpx
 import numpy as np
 from loguru import logger
 from qdrant_client import QdrantClient, models as qdrant_models
-from sentence_transformers import SentenceTransformer
 
 from config import (
+    EMBEDDING_BACKEND,
     EMBEDDING_DIM,
     EMBEDDING_MODEL,
+    JINA_API_KEY,
+    QDRANT_API_KEY,
     QDRANT_COLLECTION,
     QDRANT_URL,
 )
@@ -17,22 +20,33 @@ from config import (
 
 class MovieEmbedder:
     """
-    Manages movie embeddings using a local SentenceTransformer model (e.g. BAAI/bge-m3)
-    for vector generation and Qdrant for persistent vector storage/search.
+    Manages movie embeddings for vector generation and Qdrant persistent storage.
+    Supports two backends:
+    - local: BAAI/bge-m3 via SentenceTransformer (development)
+    - cloud: Jina AI embeddings-v3 API (production)
     """
 
     def __init__(self):
         self.collection_name = QDRANT_COLLECTION
-        self.client = QdrantClient(url=QDRANT_URL)
+        self.client = QdrantClient(
+            url=QDRANT_URL,
+            api_key=QDRANT_API_KEY if QDRANT_API_KEY else None,
+        )
         self._initialized = False
-        
-        # Load local embedding model
-        logger.info("=" * 50)
-        logger.info("Initializing local SentenceTransformer model: {}", EMBEDDING_MODEL)
-        logger.info("This may take some time on the first run to download the model.")
-        self.model = SentenceTransformer(EMBEDDING_MODEL)
-        logger.info("Local SentenceTransformer model loaded successfully.")
-        logger.info("=" * 50)
+        self.model = None
+
+        if EMBEDDING_BACKEND == "cloud":
+            if not JINA_API_KEY:
+                raise ValueError("JINA_API_KEY is required when EMBEDDING_BACKEND=cloud")
+            logger.info("Embedding backend: cloud (Jina AI embeddings-v3)")
+        else:
+            from sentence_transformers import SentenceTransformer
+            logger.info("=" * 50)
+            logger.info("Initializing local SentenceTransformer model: {}", EMBEDDING_MODEL)
+            logger.info("This may take some time on the first run to download the model.")
+            self.model = SentenceTransformer(EMBEDDING_MODEL)
+            logger.info("Local SentenceTransformer model loaded successfully.")
+            logger.info("=" * 50)
 
     def ensure_collection(self, retries: int = 1, delay_seconds: float = 0.0) -> None:
         last_error: Exception | None = None
@@ -95,9 +109,40 @@ class MovieEmbedder:
             self.ensure_collection()
 
     def _embed_text(self, text: str) -> List[float]:
-        """Call local SentenceTransformer model and return L2-normalized vector."""
+        """Embed text using the configured backend (local or cloud)."""
+        if EMBEDDING_BACKEND == "cloud":
+            return self._embed_text_cloud(text)
+        return self._embed_text_local(text)
+
+    def _embed_text_local(self, text: str) -> List[float]:
+        """Embed via local SentenceTransformer model."""
         vector = self.model.encode(text, normalize_embeddings=True)
         return vector.astype(float).tolist()
+
+    def _embed_text_cloud(self, text: str) -> List[float]:
+        """Embed via Jina AI embeddings-v3 cloud API."""
+        response = httpx.post(
+            "https://api.jina.ai/v1/embeddings",
+            headers={
+                "Authorization": f"Bearer {JINA_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "jina-embeddings-v3",
+                "input": [text],
+                "dimensions": EMBEDDING_DIM,
+            },
+            timeout=30.0,
+        )
+        response.raise_for_status()
+        data = response.json()
+        embedding = data["data"][0]["embedding"]
+        # Normalize to unit vector (same as local model)
+        vec = np.array(embedding, dtype=float)
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec = vec / norm
+        return vec.tolist()
 
     @staticmethod
     def _content_hash(text: str) -> str:

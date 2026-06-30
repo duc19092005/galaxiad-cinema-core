@@ -1,17 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    User, Mail, Phone, Calendar, IdCard, 
+import {
+    User, Mail, Phone, Calendar, IdCard,
     History, ChevronLeft, Loader2, AlertCircle,
     Ticket, MapPin, Clock, CheckCircle2, Timer,
     ExternalLink, Lock, Edit2, Check, X,
-    Sun, Moon, Sparkles, ChevronDown
+    Sparkles
 } from 'lucide-react';
 import { bookingApi } from '../../api/bookingApi';
 import { authApi } from '../../api/authApi';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '../../contexts/ThemeContext';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import ChangePasswordModal from './components/ChangePasswordModal';
 import type { UserAccountInfo, BookingHistoryItem } from '../../types/booking.types';
@@ -27,11 +26,6 @@ const AccountPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-
-    // Theme state
-    const { theme, setTheme } = useTheme();
-    const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
-    const themeDropdownRef = useRef<HTMLDivElement>(null);
 
     // Inline Edit States
     const [editingField, setEditingField] = useState<string | null>(null);
@@ -61,16 +55,6 @@ const AccountPage: React.FC = () => {
     useEffect(() => {
         fetchAllData();
     }, [navigate]);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
-                setIsThemeDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const handleStartEdit = (field: string, initialValue: string) => {
         setEditingField(field);
@@ -228,7 +212,7 @@ const AccountPage: React.FC = () => {
             <header style={{
                 position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
                 height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '0 24px',
+                padding: '0 clamp(12px, 3vw, 24px)',
                 backgroundColor: 'var(--bg-surface)',
                 backdropFilter: 'blur(24px)',
                 borderBottom: '1px solid var(--border-color)',
@@ -244,67 +228,26 @@ const AccountPage: React.FC = () => {
                     <h2 style={{ fontWeight: 800, fontSize: 20 }}>{t('account.myAccount')}</h2>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <LanguageSwitcher />
-                    
-                    {/* Theme Dropdown */}
-                    <div style={{ position: 'relative' }} ref={themeDropdownRef}>
-                        <button 
-                            onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)} 
-                            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: 14 }}
-                            className="interactive"
-                        >
-                            {theme === 'dark' ? <Moon size={18} /> : theme === 'modern' ? <Sparkles size={18} /> : <Sun size={18} />}
-                            <span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{theme}</span>
-                            <ChevronDown size={16} style={{ transform: isThemeDropdownOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.3s ease' }} />
-                        </button>
-
-                        {isThemeDropdownOpen && (
-                            <div style={{
-                                position: 'absolute', right: 0, marginTop: '8px', width: 180,
-                                borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)',
-                                backgroundColor: 'var(--bg-elevated)', boxShadow: 'var(--shadow-xl)',
-                                overflow: 'hidden', zIndex: 100,
-                            }}>
-                                {(['light', 'dark', 'modern'] as const).map((tValue) => (
-                                    <button 
-                                        key={tValue} 
-                                        onClick={() => { setTheme(tValue); setIsThemeDropdownOpen(false); }} 
-                                        style={{
-                                            width: '100%', textAlign: 'left', padding: '12px 16px', fontSize: 14,
-                                            display: 'flex', alignItems: 'center', gap: '12px',
-                                            cursor: 'pointer', border: 'none',
-                                            backgroundColor: theme === tValue ? 'var(--bg-surface)' : 'transparent',
-                                            color: theme === tValue ? 'var(--accent)' : 'var(--text-secondary)',
-                                            transition: 'all 0.2s ease',
-                                            fontWeight: theme === tValue ? 600 : 400,
-                                        }}
-                                    >
-                                        {tValue === 'light' ? <Sun size={16} /> : tValue === 'dark' ? <Moon size={16} /> : <Sparkles size={16} />}
-                                        <span style={{ textTransform: 'capitalize' }}>{tValue}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </header>
 
-            <main style={{ paddingTop: 88, paddingBottom: '48px', maxWidth: 960, margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' }}>
+            <main style={{ paddingTop: 88, paddingBottom: '48px', maxWidth: 960, margin: '0 auto', paddingLeft: 'clamp(12px, 3vw, 24px)', paddingRight: 'clamp(12px, 3vw, 24px)' }}>
                 {/* User Hero */}
                 <div style={{
-                    padding: '32px', borderRadius: 'var(--radius-xl)', marginBottom: '32px',
-                    display: 'flex', alignItems: 'center', gap: '32px', flexWrap: 'wrap',
+                    padding: 'clamp(16px, 4vw, 32px)', borderRadius: 'var(--radius-xl)', marginBottom: '32px',
+                    display: 'flex', alignItems: 'center', gap: 'clamp(16px, 4vw, 32px)', flexWrap: 'wrap',
                     backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
                     boxShadow: 'var(--shadow-lg)',
                 }}>
                     <div style={{
-                        width: 96, height: 96, borderRadius: 'var(--radius-lg)', flexShrink: 0,
+                        width: 72, height: 72, borderRadius: 'var(--radius-lg)', flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'linear-gradient(135deg, var(--accent), var(--accent))',
                         boxShadow: '0 8px 32px rgba(255,138,0,0.3)',
                     }}>
-                        <User size={48} style={{ color: 'black' }} />
+                        <User size={36} style={{ color: 'black' }} />
                     </div>
                     
                     <div style={{ flex: 1, minWidth: 200 }}>
@@ -336,7 +279,7 @@ const AccountPage: React.FC = () => {
                             </div>
                         ) : (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0 }}>{accountInfo?.userName}</h1>
+                                <h1 style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 800, margin: 0 }}>{accountInfo?.userName}</h1>
                                 <button 
                                     onClick={() => handleStartEdit('userName', accountInfo?.userName || '')}
                                     className="glass-card interactive"
@@ -367,7 +310,7 @@ const AccountPage: React.FC = () => {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {activeTab === 'profile' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '24px' }}>
                                 <ProfileCard icon={<Mail size={20} />} label={t('account.email')} value={accountInfo?.email} />
                                 <EditableProfileCard 
                                     icon={<Phone size={20} />} 
@@ -442,12 +385,12 @@ const AccountPage: React.FC = () => {
                             ) : (
                                 history.map((item) => (
                                     <div key={item.orderId} style={{
-                                        padding: '24px', borderRadius: 'var(--radius-xl)',
+                                        padding: 'clamp(12px, 3vw, 24px)', borderRadius: 'var(--radius-xl)',
                                         backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border-color)',
                                         boxShadow: 'var(--shadow-md)', transition: 'all 0.3s ease',
                                     }} className="interactive">
-                                        <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-                                            <div style={{ width: 128, height: 176, flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
+                                        <div style={{ display: 'flex', gap: 'clamp(12px, 3vw, 24px)', flexWrap: 'wrap' }}>
+                                            <div style={{ width: 100, height: 140, flexShrink: 0, borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-lg)' }}>
                                                 <img 
                                                     src={item.movieImageUrl || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500'} 
                                                     alt={item.movieName} 
@@ -455,7 +398,7 @@ const AccountPage: React.FC = () => {
                                                 />
                                             </div>
 
-                                            <div style={{ flex: 1, minWidth: 250, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
                                                     <div>
                                                         <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 'var(--space-4)', wordBreak: 'break-word' }}>{item.movieName}</h3>
@@ -469,7 +412,7 @@ const AccountPage: React.FC = () => {
                                                     </div>
                                                 </div>
 
-                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(160px, 100%), 1fr))', gap: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
                                                     <div>
                                                         <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.bookingDate')}</p>
                                                         <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Clock size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.orderDate)}</p>

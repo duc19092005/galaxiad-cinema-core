@@ -247,8 +247,7 @@ const Header: React.FC<HeaderProps> = ({
                     <div
                       className="absolute right-0 mt-2 rounded-xl z-50 overflow-hidden"
                       style={{
-                        width: 340,
-                        maxWidth: 'calc(100vw - 24px)',
+                        width: 'min(340px, calc(100vw - 32px))',
                         background: 'var(--bg-elevated, #18181b)',
                         border: '1px solid var(--border-color, #27272a)',
                         boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
@@ -305,6 +304,7 @@ const Header: React.FC<HeaderProps> = ({
                     className="absolute right-0 mt-2 py-1 rounded-xl z-50"
                     style={{
                       minWidth: 220,
+                      maxWidth: 'calc(100vw - 32px)',
                       background: 'var(--bg-elevated, #18181b)',
                       border: '1px solid var(--border-color, #27272a)',
                       boxShadow: '0 8px 40px rgba(0,0,0,0.5)',

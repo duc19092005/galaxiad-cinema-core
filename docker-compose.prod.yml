@@ -16,8 +16,6 @@ services:
     depends_on:
       mssql:
         condition: service_healthy
-      redis:
-        condition: service_started
       ai:
         condition: service_healthy
     deploy:
@@ -29,6 +27,7 @@ services:
 
   # ─────────────────────────────────────────
   # Python AI Microservice (Production)
+  # Cloud embedding (Jina AI) + Cloud Qdrant
   # ─────────────────────────────────────────
   ai:
     build:
@@ -36,45 +35,21 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    volumes:
-      - hf_cache:/root/.cache/huggingface
     env_file:
       - path: ./services/ai/.env
         required: false
     environment:
+      - ENVIRONMENT=production
+      - EMBEDDING_BACKEND=cloud
       - HOST=0.0.0.0
       - PORT=8000
-      - EMBEDDING_MODEL=BAAI/bge-m3
       - EMBEDDING_DIM=1024
-      - QDRANT_URL=http://qdrant:6333
-      - QDRANT_COLLECTION=cinema_movies
-    depends_on:
-      - qdrant
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 300s
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-          cpus: "2.0"
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
-  # ─────────────────────────────────────────
-  # Qdrant Vector Database
-  # ─────────────────────────────────────────
-  qdrant:
-    image: qdrant/qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_storage:/qdrant/storage
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -88,7 +63,7 @@ services:
   # SQL Server 2022
   # ─────────────────────────────────────────
   mssql:
-    image: mcr.claude-opus-4.8/mssql/server:2022-latest
+    image: mcr.microsoft.com/mssql/server:2022-latest
     ports:
       - "1433:1433"
     volumes:
@@ -112,27 +87,9 @@ services:
     networks:
       - cinema-network
 
-  # ─────────────────────────────────────────
-  # Redis
-  # ─────────────────────────────────────────
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: "0.5"
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
 networks:
   cinema-network:
     driver: bridge
 
 volumes:
   sqlvolume:
-  qdrant_storage:
-  hf_cache:
