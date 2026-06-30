@@ -1,10 +1,11 @@
 // src/components/ChatBot.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, List, ChevronRight } from 'lucide-react';
+import { ArrowDownUp, MessageCircle, X, Send, Bot, User, List, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { identityAxios } from '../api/axiosClient';
+import { flushSync } from 'react-dom';
+import { API_BASE_URL, identityAxios } from '../api/axiosClient';
 
 interface ReferencedMovie {
   movieId: string;
@@ -23,21 +24,64 @@ interface ReferencedSchedule {
 interface ChatMessage {
   role: 'bot' | 'user';
   text: string;
+  createdAt: string;
+  clientId?: string;
   movies?: ReferencedMovie[];
   schedules?: ReferencedSchedule[];
 }
+
+type HistorySortOrder = 'newest' | 'oldest';
+
+interface ChatbotResponsePayload {
+  response?: string;
+  referencedMovies?: ReferencedMovie[];
+  referencedSchedules?: ReferencedSchedule[];
+}
+
+const CHAT_HISTORY_STORAGE_KEY = 'cinemapro_chat_messages';
+
+const makeGreetingMessage = (text: string): ChatMessage => ({
+  role: 'bot',
+  text,
+  createdAt: new Date().toISOString(),
+});
+
+const readStoredMessages = (fallbackText: string): ChatMessage[] => {
+  try {
+    const stored = localStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+    if (!stored) return [makeGreetingMessage(fallbackText)];
+
+    const parsed = JSON.parse(stored);
+    if (!Array.isArray(parsed)) return [makeGreetingMessage(fallbackText)];
+
+    const restored = parsed
+      .filter((msg) => msg && (msg.role === 'bot' || msg.role === 'user') && typeof msg.text === 'string')
+      .map((msg) => ({
+        ...msg,
+        role: msg.role as ChatMessage['role'],
+        text: msg.text,
+        createdAt: typeof msg.createdAt === 'string' ? msg.createdAt : new Date().toISOString(),
+      }));
+
+    return restored.length > 0 ? restored : [makeGreetingMessage(fallbackText)];
+  } catch {
+    return [makeGreetingMessage(fallbackText)];
+  }
+};
 
 const ChatBot: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'bot', text: t('chatbot.greeting') },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => readStoredMessages(t('chatbot.greeting')));
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [streamStatus, setStreamStatus] = useState('');
+  const [isStreamingResponseVisible, setIsStreamingResponseVisible] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [historySortOrder, setHistorySortOrder] = useState<HistorySortOrder>('newest');
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [isCompactHistory, setIsCompactHistory] = useState(() => window.matchMedia('(max-width: 520px)').matches);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +89,19 @@ const ChatBot: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const floatBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 520px)');
+    const handleChange = () => setIsCompactHistory(mediaQuery.matches);
+
+    handleChange();
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
+  }, [messages]);
 
   // Close on outside click
   useEffect(() => {
@@ -96,33 +153,193 @@ const ChatBot: React.FC = () => {
     setShowHistory(false);
   }, []);
 
+  const sendMessageWithSse = async (
+    text: string,
+    onToken: (streamedText: string) => void,
+    onStatus?: (statusText: string) => void
+  ): Promise<ChatbotResponsePayload> => {
+    const language = localStorage.getItem('language') || 'vi';
+    const response = await fetch(`${API_BASE_URL}/api/v1/chatbot/chat/stream`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Accept': 'text/event-stream',
+        'Content-Type': 'application/json',
+        'Accept-Language': language,
+        'X-Language': language,
+      },
+      body: JSON.stringify({ message: text }),
+    });
+
+    if (!response.ok || !response.body) {
+      throw new Error('Chat stream is not available');
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let finalPayload: ChatbotResponsePayload | null = null;
+    let streamError = '';
+    let streamedText = '';
+
+    const handleEventBlock = (block: string) => {
+      const lines = block.split(/\r?\n/);
+      const eventLine = lines.find(line => line.startsWith('event:'));
+      const dataLines = lines.filter(line => line.startsWith('data:'));
+      const eventName = eventLine?.replace(/^event:\s*/, '').trim() || 'message';
+      const dataText = dataLines.map(line => line.replace(/^data:\s?/, '')).join('\n');
+
+      if (!dataText) return;
+
+      const payload = JSON.parse(dataText);
+      if (eventName === 'status') {
+        const statusText = payload.message || 'Đang xử lý...';
+        setStreamStatus(statusText);
+        onStatus?.(statusText);
+      } else if (eventName === 'token') {
+        streamedText += payload.text || '';
+        onToken(streamedText);
+      } else if (eventName === 'metadata') {
+        finalPayload = {
+          ...finalPayload,
+          ...payload,
+          response: streamedText,
+        };
+      } else if (eventName === 'message') {
+        finalPayload = payload;
+      } else if (eventName === 'error') {
+        streamError = payload.message || 'Chatbot đang bận, bạn thử lại sau ít phút nhé.';
+      }
+    };
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const blocks = buffer.split(/\r?\n\r?\n/);
+      buffer = blocks.pop() || '';
+      for (const block of blocks) {
+        handleEventBlock(block);
+        if (block.includes('event: token')) {
+          await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+        }
+      }
+    }
+
+    if (buffer.trim()) {
+      handleEventBlock(buffer);
+    }
+
+    if (streamError) {
+      throw new Error(streamError);
+    }
+
+    if (!finalPayload && streamedText) {
+      finalPayload = { response: streamedText };
+    }
+
+    if (!finalPayload) {
+      throw new Error('Chat stream ended without a response');
+    }
+
+    return finalPayload;
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
     setInput('');
 
-    const userMsg: ChatMessage = { role: 'user', text };
-    setMessages(prev => [...prev, userMsg]);
-    setIsLoading(true);
+    const botClientId = `bot-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const initialStatus = 'Đang kết nối chatbot...';
+    const userMsg: ChatMessage = { role: 'user', text, createdAt: new Date().toISOString() };
+    const botMsg: ChatMessage = {
+      role: 'bot',
+      text: initialStatus,
+      createdAt: new Date().toISOString(),
+      clientId: botClientId,
+    };
+
+    flushSync(() => {
+      setMessages(prev => [...prev, userMsg, botMsg]);
+      setIsLoading(true);
+      setIsStreamingResponseVisible(true);
+      setStreamStatus(initialStatus);
+    });
 
     try {
-      const response = await identityAxios.post('/chatbot/chat', { message: text });
-      const reply = response.data?.data?.response || t('chatbot.replyDefault');
-      const referencedMovies = response.data?.data?.referencedMovies || [];
-      const referencedSchedules = response.data?.data?.referencedSchedules || [];
-      setMessages(prev => [...prev, { role: 'bot', text: reply, movies: referencedMovies, schedules: referencedSchedules }]);
+      let botData: ChatbotResponsePayload;
+
+      const upsertStreamingBotMessage = (streamedText: string, extra?: Partial<ChatMessage>) => {
+        flushSync(() => {
+          setIsStreamingResponseVisible(true);
+          setMessages(prev => {
+            const messageIndex = prev.findIndex(msg => msg.clientId === botClientId);
+            if (messageIndex === -1) return prev;
+
+            const next = [...prev];
+            next[messageIndex] = {
+              ...next[messageIndex],
+              role: 'bot',
+              text: streamedText,
+              ...extra,
+              clientId: botClientId,
+            };
+            return next;
+          });
+        });
+      };
+
+      try {
+        botData = await sendMessageWithSse(text, upsertStreamingBotMessage, upsertStreamingBotMessage);
+      } catch (streamError) {
+        console.warn('Chatbot stream fallback:', streamError);
+        const fallbackStatus = 'Đang dùng kết nối dự phòng...';
+        setStreamStatus(fallbackStatus);
+        upsertStreamingBotMessage(fallbackStatus);
+        const response = await identityAxios.post('/chatbot/chat', { message: text });
+        botData = response.data?.data || {};
+      }
+
+      const reply = botData.response || t('chatbot.replyDefault');
+      const referencedMovies = botData.referencedMovies || [];
+      const referencedSchedules = botData.referencedSchedules || [];
+      upsertStreamingBotMessage(reply, { movies: referencedMovies, schedules: referencedSchedules });
     } catch (error) {
       console.error('Chatbot error:', error);
-      setMessages(prev => [...prev, { role: 'bot', text: t('chatbot.replyDefault') }]);
+      upsertStreamingBotMessage(t('chatbot.replyDefault'));
     } finally {
+      setStreamStatus('');
+      setIsStreamingResponseVisible(false);
       setIsLoading(false);
     }
+  };
+
+  const formatChatTime = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    return date.toLocaleString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   // Extract user questions for history sidebar
   const userQuestions = messages
     .map((msg, index) => ({ msg, index }))
-    .filter(({ msg }) => msg.role === 'user');
+    .filter(({ msg }) => msg.role === 'user')
+    .sort((a, b) => {
+      const timeA = new Date(a.msg.createdAt).getTime();
+      const timeB = new Date(b.msg.createdAt).getTime();
+      return historySortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+    });
+
+  const historyWidth = isCompactHistory ? 126 : 150;
 
   return (
     <>
@@ -176,7 +393,7 @@ const ChatBot: React.FC = () => {
               {showHistory && (
                 <motion.div
                   initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 180, opacity: 1 }}
+                  animate={{ width: historyWidth, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
                   style={{
@@ -185,16 +402,60 @@ const ChatBot: React.FC = () => {
                     background: 'var(--bg-base)',
                     display: 'flex', flexDirection: 'column',
                     overflow: 'hidden',
+                    position: 'relative',
                   }}
                 >
+                  <button
+                    onClick={() => setShowHistory(false)}
+                    title="Đóng lịch sử"
+                    aria-label="Đóng lịch sử"
+                    style={{
+                      position: 'absolute',
+                      right: 6,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      zIndex: 4,
+                      width: 26,
+                      height: 44,
+                      borderRadius: 999,
+                      border: '1px solid rgba(255,255,255,0.16)',
+                      background: 'linear-gradient(135deg, var(--accent), var(--accent-hover))',
+                      color: '#fff',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: '0 8px 20px rgba(0,0,0,0.28)',
+                    }}
+                  >
+                    <X size={14} />
+                  </button>
                   <div style={{
-                    padding: '12px 14px',
+                    padding: '10px 10px',
                     borderBottom: '1px solid var(--border-color)',
-                    fontSize: 11, fontWeight: 700, color: 'var(--accent)',
+                    fontSize: 10, fontWeight: 700, color: 'var(--accent)',
                     textTransform: 'uppercase', letterSpacing: '0.08em',
                     whiteSpace: 'nowrap',
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
                   }}>
-                    Câu hỏi ({userQuestions.length})
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      Câu hỏi ({userQuestions.length})
+                    </span>
+                    <button
+                      onClick={() => setHistorySortOrder(prev => prev === 'newest' ? 'oldest' : 'newest')}
+                      title={historySortOrder === 'newest' ? 'Sắp xếp: mới nhất' : 'Sắp xếp: lâu nhất'}
+                      aria-label={historySortOrder === 'newest' ? 'Sắp xếp mới nhất' : 'Sắp xếp lâu nhất'}
+                      style={{
+                        width: 26, height: 26, borderRadius: 7,
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--accent)', cursor: 'pointer',
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ArrowDownUp size={13} />
+                    </button>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
                     {userQuestions.length === 0 ? (
@@ -202,13 +463,13 @@ const ChatBot: React.FC = () => {
                         Chưa có câu hỏi nào
                       </div>
                     ) : (
-                      userQuestions.map(({ msg, index }) => (
+                      userQuestions.map(({ msg, index }, position) => (
                         <button
                           key={index}
                           onClick={() => scrollToMessage(index)}
                           style={{
                             display: 'block', width: '100%',
-                            padding: '8px 14px', textAlign: 'left',
+                            padding: '8px 10px', textAlign: 'left',
                             background: 'transparent', border: 'none',
                             cursor: 'pointer', color: 'var(--text-primary)',
                             fontSize: 12, lineHeight: 1.4,
@@ -227,8 +488,17 @@ const ChatBot: React.FC = () => {
                               fontSize: 9, fontWeight: 600, color: 'var(--accent)',
                               opacity: 0.7, textTransform: 'uppercase',
                             }}>
-                              #{userQuestions.indexOf({ msg, index }) + 1}
+                              #{position + 1}
                             </span>
+                          </div>
+                          <div style={{
+                            fontSize: 9,
+                            lineHeight: 1.25,
+                            color: 'var(--text-secondary)',
+                            marginBottom: 4,
+                            opacity: 0.82,
+                          }}>
+                            {formatChatTime(msg.createdAt)}
                           </div>
                           <div style={{
                             overflow: 'hidden', textOverflow: 'ellipsis',
@@ -271,7 +541,7 @@ const ChatBot: React.FC = () => {
                       transition: 'background 0.2s', flexShrink: 0,
                     }}
                   >
-                    <List size={16} />
+                    {showHistory ? <X size={16} /> : <List size={16} />}
                   </button>
                 )}
               </div>
@@ -311,6 +581,9 @@ const ChatBot: React.FC = () => {
                         {msg.role === 'bot' ? <Bot size={12} /> : <User size={12} />}
                         <span style={{ fontSize: 10, opacity: 0.6 }}>
                           {msg.role === 'bot' ? 'AI' : t('chatbot.you')}
+                        </span>
+                        <span style={{ fontSize: 10, opacity: 0.45, marginLeft: 'auto' }}>
+                          {formatChatTime(msg.createdAt)}
                         </span>
                       </div>
                       {msg.text}
@@ -386,7 +659,7 @@ const ChatBot: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                {isLoading && (
+                {isLoading && !isStreamingResponseVisible && (
                   <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
                     <div style={{
                       maxWidth: '80%', padding: '10px 14px',
@@ -394,7 +667,7 @@ const ChatBot: React.FC = () => {
                       background: 'var(--bg-elevated)',
                       color: 'var(--text-primary)', fontSize: 13,
                     }}>
-                      <span style={{ opacity: 0.6 }}>CinemaPro AI đang nhập...</span>
+                      <span style={{ opacity: 0.75 }}>{streamStatus || 'CinemaPro AI đang xử lý...'}</span>
                     </div>
                   </div>
                 )}

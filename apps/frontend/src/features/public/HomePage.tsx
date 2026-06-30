@@ -486,12 +486,12 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         .home-trending-rank {
           position: absolute;
           left: 0;
-          top: 50%;
-          transform: translateY(-50%);
+          top: 0;
+          transform: none;
           z-index: 2;
           min-width: 58px;
           padding: 10px 14px;
-          border-radius: 0 16px 16px 0;
+          border-radius: 0 0 16px 0;
           background: var(--accent);
           color: #111;
           font-size: 30px;

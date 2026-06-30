@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Chatbot;
@@ -155,6 +157,152 @@ public class ChatbotOrchestrator
                 }
             };
         }
+    }
+
+    public async Task<BaseResponse<ChatbotResponseDto>> ExecuteStreamAsync(
+        ChatbotRequestDto requestDto,
+        Func<string, Task> onStatus,
+        Func<string, Task> onToken,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(requestDto.Message))
+        {
+            return new BaseResponse<ChatbotResponseDto>
+            {
+                IsSuccess = false,
+                Message = Messages.Chatbot.MessageRequired
+            };
+        }
+
+        try
+        {
+            await onStatus("Đang kiểm tra nội dung câu hỏi...");
+            var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
+            if (guardResult.IsBlocked)
+            {
+                await onToken(guardResult.Reason);
+                return new BaseResponse<ChatbotResponseDto>
+                {
+                    IsSuccess = true,
+                    Data = new ChatbotResponseDto
+                    {
+                        Response = guardResult.Reason,
+                        Intent = "Blocked",
+                        IsAuthorized = false
+                    }
+                };
+            }
+
+            await onStatus("Đang phân tích ý định...");
+            var classification = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
+            var intent = classification.Intent;
+
+            await onStatus("Đang kiểm tra quyền truy cập...");
+            var isAuthorized = await _policyService.IsAuthorizedAsync(intent);
+            if (!isAuthorized)
+            {
+                await onToken(ChatbotResponseMessages.Refusals.Unauthorized);
+                return new BaseResponse<ChatbotResponseDto>
+                {
+                    IsSuccess = true,
+                    Data = new ChatbotResponseDto
+                    {
+                        Response = ChatbotResponseMessages.Refusals.Unauthorized,
+                        Intent = intent,
+                        IsAuthorized = false
+                    }
+                };
+            }
+
+            await onStatus("Đang tìm dữ liệu phù hợp...");
+            string toolContext = string.Empty;
+            var tool = _toolRegistry.GetTool(intent);
+            if (tool != null)
+            {
+                try
+                {
+                    toolContext = await tool.ExecuteAsync(classification.Parameters);
+                }
+                catch (Exception ex)
+                {
+                    toolContext = $"[Error executing tool {intent}: {ex.Message}]";
+                }
+            }
+
+            var (userRoles, userId) = GetCurrentUserContext();
+            await onStatus("Đang soạn câu trả lời...");
+
+            var responseBuilder = new StringBuilder();
+            await foreach (var token in _llmClient.StreamChatRequestAsync(
+                requestDto.Message,
+                toolContext,
+                userRoles,
+                userId,
+                cancellationToken))
+            {
+                responseBuilder.Append(token);
+                await onToken(token);
+            }
+
+            var assistantResponse = responseBuilder.ToString();
+            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
+            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
+
+            return new BaseResponse<ChatbotResponseDto>
+            {
+                IsSuccess = true,
+                Data = new ChatbotResponseDto
+                {
+                    Response = assistantResponse,
+                    Intent = intent,
+                    IsAuthorized = true,
+                    ReferencedMovies = referencedMovies,
+                    ReferencedSchedules = referencedSchedules
+                }
+            };
+        }
+        catch
+        {
+            await onToken(ChatbotResponseMessages.Refusals.SystemError);
+            return new BaseResponse<ChatbotResponseDto>
+            {
+                IsSuccess = true,
+                Data = new ChatbotResponseDto
+                {
+                    Response = ChatbotResponseMessages.Refusals.SystemError,
+                    Intent = "Error",
+                    IsAuthorized = true
+                }
+            };
+        }
+    }
+
+    private (string UserRoles, string UserId) GetCurrentUserContext()
+    {
+        string userRoles = "Guest (Chưa đăng nhập)";
+        string userId = "N/A";
+        try
+        {
+            var guid = _userContextService.GetUserId();
+            if (guid != Guid.Empty)
+            {
+                userId = guid.ToString();
+                var roles = new List<string>();
+                if (_userContextService.IsInRole("Admin")) roles.Add("Admin");
+                if (_userContextService.IsInRole("TheaterManager")) roles.Add("TheaterManager");
+                if (_userContextService.IsInRole("FacilitiesManager")) roles.Add("FacilitiesManager");
+                if (_userContextService.IsInRole("MovieManager")) roles.Add("MovieManager");
+                if (_userContextService.IsInRole("Cashier")) roles.Add("Cashier");
+                if (roles.Count == 0) roles.Add("Customer");
+                userRoles = string.Join(", ", roles);
+            }
+        }
+        catch
+        {
+            // Guest user
+        }
+
+        return (userRoles, userId);
     }
 
     private List<ReferencedMovieDto> ExtractMoviesFromContext(string jsonContext, string llmResponse)
