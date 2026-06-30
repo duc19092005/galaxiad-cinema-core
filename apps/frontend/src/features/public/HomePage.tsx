@@ -1315,7 +1315,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                             </span>
                             {movie.startedDate && (
                               <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                {t('home.releaseDate', 'Release Date')}: {new Date(movie.startedDate).toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                {t('home.releaseDate', 'Release Date')}: {new Date(movie.startedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                               </span>
                             )}
                           </div>

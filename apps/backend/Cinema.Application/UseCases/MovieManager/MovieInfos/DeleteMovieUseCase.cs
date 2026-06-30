@@ -46,7 +46,7 @@ public class DeleteMovieUseCase
 
         if (movie.IsDeleted)
         {
-            throw new BadRequestException("This movie has already been deleted.", "D01");
+            throw new BadRequestException(Messages.Movie.AlreadyDeleted, "D01");
         }
 
         var hasSuccessfulBooking = await _adminRepository.HasSuccessfulBookingAsync(itemId);
@@ -102,7 +102,7 @@ public class DeleteMovieUseCase
 
         return new BaseResponse<string>()
         {
-            Message = "Movie deleted successfully.",
+            Message = Messages.Movie.DeletedSuccessfully,
             Data = null,
             IsSuccess = true
         };

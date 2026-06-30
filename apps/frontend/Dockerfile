@@ -4,12 +4,14 @@ EXPOSE 5173
 
 FROM base AS development
 COPY package*.json ./
+COPY scripts/ ./scripts/
 RUN npm install
 COPY . .
 CMD ["npm", "run", "dev", "--", "--host"]
 
 FROM base AS build
 COPY package*.json ./
+COPY scripts/ ./scripts/
 RUN npm install
 COPY . .
 RUN npm run build

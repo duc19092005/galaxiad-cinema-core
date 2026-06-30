@@ -332,11 +332,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       const defaultRoleId = normalizedTemplates?.[0]?.roleId ?? '';
       setNewSchedRoleId((current) => current || defaultRoleId);
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to load workspace data.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorLoadData')));
     } finally {
       setLoading(false);
     }
-  }, [cinemaId, statusFilter]);
+  }, [cinemaId, statusFilter, t]);
 
   // Load scheduled shifts for the scheduling tab
   const loadSchedules = useCallback(async () => {
@@ -375,9 +375,9 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       }));
       setSchedules(normalizedScheds);
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to load schedules.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorLoadSchedules')));
     }
-  }, [cinemaId, activeTab, selectedDeptId, scheduleStartDate, scheduleEndDate]);
+  }, [cinemaId, activeTab, selectedDeptId, scheduleStartDate, scheduleEndDate, t]);
 
   useEffect(() => {
     loadData();
@@ -436,17 +436,17 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     registration: ShiftRegistrationDto,
     action: 'approve' | 'reject' | 'cancel',
   ) => {
-    const note = window.prompt(`Notes for ${action}`, registration.notes || '');
+    const note = window.prompt(t('employeesShiftWorkspace.promptNotes', { action }), registration.notes || '');
     if (note === null) return;
     setActionLoading(`${action}-${registration.shiftRegistrationId}`);
     try {
       if (action === 'approve') await theaterShiftApi.approveShift(registration.shiftRegistrationId, { notes: note });
       if (action === 'reject') await theaterShiftApi.rejectShift(registration.shiftRegistrationId, { notes: note });
       if (action === 'cancel') await theaterShiftApi.cancelShift(registration.shiftRegistrationId, { notes: note });
-      showSuccess(`Shift ${action} completed.`);
+      showSuccess(t('employeesShiftWorkspace.shiftActionCompleted', { action }));
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, `Unable to ${action} shift.`));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorShiftAction', { action })));
     } finally {
       setActionLoading(null);
     }
@@ -454,7 +454,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
   const handleAssignShift = async () => {
     if (!assignStaffId || !assignTemplateId || !assignDate) {
-      showError('Select staff, shift template, and date.');
+      showError(t('employeesShiftWorkspace.selectStaffTemplateDate'));
       return;
     }
     setActionLoading('assign');
@@ -464,10 +464,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         shiftTemplateId: assignTemplateId,
         registrationDate: `${assignDate}T00:00:00Z`,
       });
-      showSuccess('Shift assigned.');
+      showSuccess(t('employeesShiftWorkspace.shiftAssigned'));
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to assign shift.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorAssignShift')));
     } finally {
       setActionLoading(null);
     }
@@ -475,7 +475,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
   const handleCalculatePayroll = async () => {
     if (!payrollStaffId || !payrollUpToDate) {
-      showError('Select staff and payroll date.');
+      showError(t('employeesShiftWorkspace.selectStaffPayrollDate'));
       return;
     }
     setActionLoading('calculate-payroll');
@@ -484,10 +484,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         staffId: payrollStaffId,
         upToDate: `${payrollUpToDate}T23:59:59Z`,
       });
-      showSuccess(response.message || 'Payroll calculated.');
+      showSuccess(response.message || t('employeesShiftWorkspace.payrollCalculated'));
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to calculate payroll.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorCalculatePayroll')));
     } finally {
       setActionLoading(null);
     }
@@ -497,10 +497,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     setActionLoading(`pay-${payroll.salaryTotalLoggerId}`);
     try {
       const response = await theaterShiftApi.payPayroll(payroll.salaryTotalLoggerId);
-      showSuccess(response.message || 'Payroll paid.');
+      showSuccess(response.message || t('employeesShiftWorkspace.payrollPaid'));
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to mark payroll as paid.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorMarkPaid')));
     } finally {
       setActionLoading(null);
     }
@@ -514,10 +514,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         isCinemaManager: profile.isCinemaManager,
         workingStatus: !profile.workingStatus,
       });
-      showSuccess('Staff status updated.');
+      showSuccess(t('employeesShiftWorkspace.staffStatusUpdated'));
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Unable to update staff status.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorUpdateStatus')));
     } finally {
       setActionLoading(null);
     }
@@ -529,11 +529,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     setActionLoading(`face-${faceStaff.userId}`);
     try {
       await staffShiftApi.registerFace(faceStaff.userId, { faceVector });
-      showSuccess(`Đã đăng ký khuôn mặt cho ${faceStaff.userName} thành công!`);
+      showSuccess(t('employeesShiftWorkspace.faceRegisteredSuccess', { name: faceStaff.userName }));
       setFaceStaff(null);
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Không thể đăng ký khuôn mặt. Thử lại.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorFaceRegister')));
     } finally {
       setActionLoading(null);
     }
@@ -543,7 +543,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
   const handleCreateSchedule = async () => {
     if (!cinemaId || !selectedDeptId) return;
     if (!newSchedDate || !newSchedName || !newSchedStart || !newSchedEnd || !newSchedRoleId) {
-      showError('Please fill in all shift details.');
+      showError(t('employeesShiftWorkspace.fillAllDetails'));
       return;
     }
 
@@ -555,7 +555,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     };
 
     if (!isValidTheaterHour(newSchedStart) || !isValidTheaterHour(newSchedEnd)) {
-      showError('Giờ làm việc của rạp chỉ hoạt động từ 6 giờ sáng (06:00) đến 2 giờ đêm hôm sau (02:00).');
+      showError(t('employeesShiftWorkspace.theaterHoursError'));
       return;
     }
 
@@ -579,13 +579,13 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
         repeatWeeksCount: repeatWeekly ? repeatWeeksCount : undefined,
       });
 
-      showSuccess('Lập lịch làm việc thành công!');
+      showSuccess(t('employeesShiftWorkspace.scheduleCreated'));
       setNewSchedName('');
       setPrefillTemplateId('');
       await loadSchedules();
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Lập lịch làm việc thất bại.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorCreateSchedule')));
     } finally {
       setActionLoading(null);
     }
@@ -593,27 +593,27 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
   // Delete scheduled shift
   const handleDeleteSchedule = async (id: string, hasRegistered: boolean) => {
-    const confirmMsg = hasRegistered 
-      ? 'Ca làm này đã có nhân viên đăng ký. Bạn có chắc muốn gửi yêu cầu hủy ca lên Admin?'
-      : 'Bạn có chắc muốn xóa ca làm này?';
+    const confirmMsg = hasRegistered
+      ? t('employeesShiftWorkspace.confirmDeleteHasRegistered')
+      : t('employeesShiftWorkspace.confirmDeleteNoRegistered');
     
     if (!window.confirm(confirmMsg)) return;
 
-    const reason = window.prompt('Nhập lý do hủy/xóa ca làm:', '');
+    const reason = window.prompt(t('employeesShiftWorkspace.promptReason'), '');
     if (reason === null) return;
     if (hasRegistered && !reason.trim()) {
-      showError('Bắt buộc phải nhập lý do khi hủy ca đã có nhân viên đăng ký.');
+      showError(t('employeesShiftWorkspace.reasonRequired'));
       return;
     }
 
     setActionLoading(`delete-sched-${id}`);
     try {
       const res = await theaterShiftApi.deleteShiftSchedule(id, { reason });
-      showSuccess(res.message || 'Thao tác thành công.');
+      showSuccess(res.message || t('employeesShiftWorkspace.actionSuccess'));
       await loadSchedules();
       await loadData();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Không thể xóa ca làm.'));
+      showError(getApiErrorMessage(error, t('employeesShiftWorkspace.errorDeleteSchedule')));
     } finally {
       setActionLoading(null);
     }
@@ -623,7 +623,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
     return (
       <div className="state-center glass-card" style={{ minHeight: 260, padding: 32 }}>
         <Users size={42} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Select a cinema before managing employees.</p>
+        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{t('employeesShiftWorkspace.selectCinemaPrompt')}</p>
       </div>
     );
   }
@@ -634,12 +634,12 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--text-primary)' }}>
-            {mode === 'staff-only' ? 'Quản lý nhân viên' : 'Duyệt ca & Lập lịch làm việc'}
+            {mode === 'staff-only' ? t('employeesShiftWorkspace.titleStaffOnly') : t('employeesShiftWorkspace.titleShiftManagement')}
           </h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
             {mode === 'staff-only'
-              ? 'Xem danh sách nhân viên, trạng thái khuôn mặt, và tài khoản quầy phòng ban.'
-              : 'Duyệt đăng ký ca, lập lịch phòng ban, tính lương và phân ca trực tiếp.'}
+              ? t('employeesShiftWorkspace.subtitleStaffOnly')
+              : t('employeesShiftWorkspace.subtitleShiftManagement')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -650,20 +650,20 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                 onClick={() => setActiveTab('management')}
               >
                 <CalendarPlus size={16} />
-                Duyệt ca
+                {t('employeesShiftWorkspace.tabApproveShifts')}
               </button>
               <button
                 className={`btn ${activeTab === 'scheduling' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setActiveTab('scheduling')}
               >
                 <Calendar size={16} />
-                Lập lịch
+                {t('employeesShiftWorkspace.tabCreateSchedule')}
               </button>
             </>
           )}
           <button className="btn btn-secondary" onClick={loadData} disabled={loading}>
             {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={16} />}
-            Làm mới
+            {t('employeesShiftWorkspace.refresh')}
           </button>
         </div>
       </div>
@@ -672,10 +672,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
       {(mode === 'staff-only' || activeTab === 'management') && (
         <>
           <div className="employee-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
-            <SummaryTile icon={<Users size={18} />} label="Nhân viên hoạt động" value={`${activeStaff.length}/${staff.length}`} />
-            <SummaryTile icon={<ScanFace size={18} />} label="Đã đăng ký khuôn mặt" value={`${faceReadyCount}/${staff.length}`} />
-            <SummaryTile icon={<CalendarPlus size={18} />} label="Đăng ký chờ duyệt" value={String(pendingRegistrations.length)} />
-            <SummaryTile icon={<Banknote size={18} />} label="Lương chờ thanh toán" value={String(pendingPayrolls.length)} />
+            <SummaryTile icon={<Users size={18} />} label={t('employeesShiftWorkspace.activeStaff')} value={`${activeStaff.length}/${staff.length}`} />
+            <SummaryTile icon={<ScanFace size={18} />} label={t('employeesShiftWorkspace.faceRegistered')} value={`${faceReadyCount}/${staff.length}`} />
+            <SummaryTile icon={<CalendarPlus size={18} />} label={t('employeesShiftWorkspace.pendingRegistrations')} value={String(pendingRegistrations.length)} />
+            <SummaryTile icon={<Banknote size={18} />} label={t('employeesShiftWorkspace.pendingPayrolls')} value={String(pendingPayrolls.length)} />
           </div>
 
           {/* Phần duyệt ca chỉ hiện ở mode shift-management */}
@@ -683,16 +683,16 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
           <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)', gap: 16 }}>
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Đăng ký ca làm việc</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.shiftRegistrations')}</h3>
                 <select className="input select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusFilters)[number])} style={{ width: 180 }}>
                   {statusFilters.map((status) => <option key={status} value={status}>{status}</option>)}
                 </select>
               </div>
 
               {loading ? (
-                <LoadingState label="Loading registrations..." />
+                <LoadingState label={t('employeesShiftWorkspace.loadingRegistrations')} />
               ) : registrations.length === 0 ? (
-                <EmptyState label="No shift registrations match this filter." />
+                <EmptyState label={t('employeesShiftWorkspace.noRegistrationsMatch')} />
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {groupedRegistrations.map((group) => (
@@ -715,18 +715,18 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           fontWeight: 700,
                           marginLeft: '8px'
                         }}>
-                          {group.items.length} đăng ký
+                          {group.items.length} {t('employeesShiftWorkspace.registrationsCount')}
                         </span>
                       </div>
                       <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
                         <table style={{ width: '100%' }}>
                           <thead>
                             <tr>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Staff</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Shift</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Status</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>Notes</th>
-                              <th style={{ textAlign: 'right', color: 'var(--text-primary)', opacity: 0.9 }}>Actions</th>
+                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colStaff')}</th>
+                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colShift')}</th>
+                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colStatus')}</th>
+                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colNotes')}</th>
+                              <th style={{ textAlign: 'right', color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colActions')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -737,7 +737,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                                 </td>
                                 <td>
                                   <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{registration.shiftName}</div>
-                                  <div style={{ fontSize: 11, color: 'var(--text-primary)', opacity: 0.8, marginTop: 2 }}>{registration.startTime} to {registration.endTime}</div>
+                                  <div style={{ fontSize: 11, color: 'var(--text-primary)', opacity: 0.8, marginTop: 2 }}>{registration.startTime} {t('employeesShiftWorkspace.timeTo')} {registration.endTime}</div>
                                 </td>
                                 <td><span className={statusBadgeClass(registration.status)}>{registration.status}</span></td>
                                 <td style={{ 
@@ -753,12 +753,12 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                                   <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                                     {registration.status === 'Pending' && (
                                       <>
-                                        <ActionButton label="Approve" tone="success" icon={<Check size={13} />} loading={actionLoading === `approve-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'approve')} />
-                                        <ActionButton label="Reject" tone="danger" icon={<X size={13} />} loading={actionLoading === `reject-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'reject')} />
+                                        <ActionButton label={t('employeesShiftWorkspace.approve')} tone="success" icon={<Check size={13} />} loading={actionLoading === `approve-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'approve')} />
+                                        <ActionButton label={t('employeesShiftWorkspace.reject')} tone="danger" icon={<X size={13} />} loading={actionLoading === `reject-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'reject')} />
                                       </>
                                     )}
                                     {registration.status === 'Approved' && (
-                                      <ActionButton label="Cancel" tone="danger" icon={<X size={13} />} loading={actionLoading === `cancel-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'cancel')} />
+                                      <ActionButton label={t('employeesShiftWorkspace.cancel')} tone="danger" icon={<X size={13} />} loading={actionLoading === `cancel-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'cancel')} />
                                     )}
                                   </div>
                                 </td>
@@ -774,53 +774,53 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             </div>
 
             <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-              <Panel title="Direct assignment" icon={<CalendarPlus size={18} />}>
-                <Field label="Staff">
+              <Panel title={t('employeesShiftWorkspace.directAssignment')} icon={<CalendarPlus size={18} />}>
+                <Field label={t('employeesShiftWorkspace.staff')}>
                   <select className="input select" value={assignStaffId} onChange={(event) => setAssignStaffId(event.target.value)}>
                     {staff.map((item) => <option key={item.userId} value={item.userId}>{item.userName}</option>)}
                   </select>
                 </Field>
-                <Field label="Shift template">
+                <Field label={t('employeesShiftWorkspace.shiftTemplate')}>
                   <select className="input select" value={assignTemplateId} onChange={(event) => setAssignTemplateId(event.target.value)}>
                     {templates.map((template) => <option key={template.shiftTemplateId} value={template.shiftTemplateId}>{template.shiftName} ({template.roleName})</option>)}
                   </select>
                 </Field>
-                <Field label="Date">
+                <Field label={t('employeesShiftWorkspace.date')}>
                   <input className="input" type="date" value={assignDate} onChange={(event) => setAssignDate(event.target.value)} />
                 </Field>
                 <button className="btn btn-primary" onClick={handleAssignShift} disabled={actionLoading === 'assign' || staff.length === 0 || templates.length === 0}>
                   {actionLoading === 'assign' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <CalendarPlus size={16} />}
-                  Assign shift
+                  {t('employeesShiftWorkspace.assignShift')}
                 </button>
               </Panel>
 
-              <Panel title="Payroll" icon={<CircleDollarSign size={18} />}>
-                <Field label="Staff">
+              <Panel title={t('employeesShiftWorkspace.payroll')} icon={<CircleDollarSign size={18} />}>
+                <Field label={t('employeesShiftWorkspace.staff')}>
                   <select className="input select" value={payrollStaffId} onChange={(event) => setPayrollStaffId(event.target.value)}>
                     {staff.map((item) => <option key={item.userId} value={item.userId}>{item.userName}</option>)}
                   </select>
                 </Field>
-                <Field label="Calculate up to">
+                <Field label={t('employeesShiftWorkspace.calculateUpTo')}>
                   <input className="input" type="date" value={payrollUpToDate} onChange={(event) => setPayrollUpToDate(event.target.value)} />
                 </Field>
                 <button className="btn btn-primary" onClick={handleCalculatePayroll} disabled={actionLoading === 'calculate-payroll' || staff.length === 0}>
                   {actionLoading === 'calculate-payroll' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Banknote size={16} />}
-                  Calculate payroll
+                  {t('employeesShiftWorkspace.calculatePayroll')}
                 </button>
               </Panel>
 
-              <Panel title="Lịch sử lương" icon={<Banknote size={18} />}>
+              <Panel title={t('employeesShiftWorkspace.payrollHistory')} icon={<Banknote size={18} />}>
                 {payrolls.length === 0 ? (
-                  <EmptyState label="Chưa có bản ghi lương nào." />
+                  <EmptyState label={t('employeesShiftWorkspace.noPayrollRecords')} />
                 ) : (
                   <div className="table-container">
                     <table>
                       <thead>
                         <tr>
-                          <th>Nhân viên</th>
-                          <th>Số tiền</th>
-                          <th>Trạng thái</th>
-                          <th>Thao tác</th>
+                          <th>{t('employeesShiftWorkspace.colPayrollStaff')}</th>
+                          <th>{t('employeesShiftWorkspace.colAmount')}</th>
+                          <th>{t('employeesShiftWorkspace.colStatus')}</th>
+                          <th>{t('employeesShiftWorkspace.colActions')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -834,9 +834,9 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                             <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
                             <td>
                               {payroll.paymentStatus === 'Pending' ? (
-                                <ActionButton label="Thanh toán" tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
+                                <ActionButton label={t('employeesShiftWorkspace.pay')} tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
                               ) : (
-                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || 'Đã đóng'}</span>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || t('employeesShiftWorkspace.paid')}</span>
                               )}
                             </td>
                           </tr>
@@ -856,26 +856,26 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <UserRound size={18} style={{ color: 'var(--accent)' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Nhân viên</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.staff')}</h3>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
                   background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent)',
                 }}>
-                  {staff.length} người
+                  {staff.length} {t('employeesShiftWorkspace.people')}
                 </span>
               </div>
               {staff.length === 0 ? (
-                <EmptyState label="Không tìm thấy nhân viên nào tại rạp này." />
+                <EmptyState label={t('employeesShiftWorkspace.noStaffFound')} />
               ) : (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Nhân viên</th>
-                        <th>Phòng ban</th>
-                        <th>Khuôn mặt</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th>{t('employeesShiftWorkspace.colStaffName')}</th>
+                        <th>{t('employeesShiftWorkspace.colDepartment')}</th>
+                        <th>{t('employeesShiftWorkspace.colFace')}</th>
+                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
+                        <th>{t('employeesShiftWorkspace.colActions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -892,22 +892,22 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           </td>
                           <td>
                             <span className="badge badge-default" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
-                              {profile.departmentName || 'Chưa phân'}
+                              {profile.departmentName || t('employeesShiftWorkspace.unassigned')}
                             </span>
                           </td>
                           <td>
                             <span className={profile.hasFaceRegistered ? 'badge badge-success' : 'badge badge-warning'}>
-                              {profile.hasFaceRegistered ? 'Đã đăng ký' : 'Chưa có'}
+                              {profile.hasFaceRegistered ? t('employeesShiftWorkspace.registered') : t('employeesShiftWorkspace.notYet')}
                             </span>
                           </td>
                           <td>
                             <span className={profile.workingStatus ? 'badge badge-success' : 'badge badge-default'}>
-                              {profile.workingStatus ? 'Đang làm' : 'Ngừng'}
+                              {profile.workingStatus ? t('employeesShiftWorkspace.active') : t('employeesShiftWorkspace.inactive')}
                             </span>
                           </td>
                           <td>
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <ActionButton label={profile.workingStatus ? 'Vô hiệu' : 'Kích hoạt'} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
+                              <ActionButton label={profile.workingStatus ? t('employeesShiftWorkspace.deactivate') : t('employeesShiftWorkspace.activate')} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
                             </div>
                           </td>
                         </tr>
@@ -922,25 +922,25 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <Users size={18} style={{ color: '#f59e0b' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Tài khoản quầy phòng ban</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.departmentAccounts')}</h3>
                 <span style={{
                   fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
                   background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.35)',
                 }}>
-                  {departments.length} phòng ban
+                  {departments.length} {t('employeesShiftWorkspace.departments')}
                 </span>
               </div>
               {departments.length === 0 ? (
-                <EmptyState label="Không có phòng ban nào tại rạp này." />
+                <EmptyState label={t('employeesShiftWorkspace.noDepartments')} />
               ) : (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Phòng ban</th>
-                        <th>Loại</th>
-                        <th>Email tài khoản POS</th>
-                        <th>Trạng thái</th>
+                        <th>{t('employeesShiftWorkspace.colDepartmentName')}</th>
+                        <th>{t('employeesShiftWorkspace.colType')}</th>
+                        <th>{t('employeesShiftWorkspace.colPOSEmail')}</th>
+                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -950,7 +950,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                         const type = dept.cashierType ?? dept.CashierType ?? dept.departmentType ?? dept.DepartmentType;
                         const email = dept.sharedUserEmail ?? dept.SharedUserEmail;
                         const isActive = dept.isActive ?? dept.IsActive;
-                        const typeLabel = type === 1 ? 'Quầy vé' : type === 2 ? 'Quầy bắp nước' : type === 3 ? 'Kho' : 'Phòng ban';
+                        const typeLabel = type === 1 ? t('employeesShiftWorkspace.typeTicketCounter') : type === 2 ? t('employeesShiftWorkspace.typeFoodCounter') : type === 3 ? t('employeesShiftWorkspace.typeWarehouse') : t('employeesShiftWorkspace.typeDepartment');
                         const typeTone = type === 1 ? '#3b82f6' : type === 2 ? '#f59e0b' : type === 3 ? '#8b5cf6' : '#6b7280';
                         const itemKey = (!id || id === '00000000-0000-0000-0000-000000000000') ? `dept-${index}` : id;
                         return (
@@ -971,15 +971,15 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                               {email ? (
                                 <div>
                                   <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{email}</div>
-                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>Tài khoản POS dùng chung</div>
+                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{t('employeesShiftWorkspace.sharedPOSAccount')}</div>
                                 </div>
                               ) : (
-                                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>Chưa cấu hình</span>
+                                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>{t('employeesShiftWorkspace.notConfigured')}</span>
                               )}
                             </td>
                             <td>
                               <span className={isActive ? 'badge badge-success' : 'badge badge-default'}>
-                                {isActive ? 'Hoạt động' : 'Tắt'}
+                                {isActive ? t('employeesShiftWorkspace.active') : t('employeesShiftWorkspace.off')}
                               </span>
                             </td>
                           </tr>
@@ -995,27 +995,27 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <Banknote size={18} style={{ color: '#22c55e' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Lịch sử lương</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.payrollHistory')}</h3>
                 {pendingPayrolls.length > 0 && (
                   <span style={{
                     fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
                     background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.35)',
                   }}>
-                    {pendingPayrolls.length} chờ thanh toán
+                    {pendingPayrolls.length} {t('employeesShiftWorkspace.awaitingPayment')}
                   </span>
                 )}
               </div>
               {payrolls.length === 0 ? (
-                <EmptyState label="Chưa có bản ghi lương nào." />
+                <EmptyState label={t('employeesShiftWorkspace.noPayrollRecords')} />
               ) : (
                 <div className="table-container">
                   <table>
                     <thead>
                       <tr>
-                        <th>Nhân viên</th>
-                        <th>Số tiền</th>
-                        <th>Trạng thái</th>
-                        <th>Thao tác</th>
+                        <th>{t('employeesShiftWorkspace.colPayrollStaff')}</th>
+                        <th>{t('employeesShiftWorkspace.colAmount')}</th>
+                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
+                        <th>{t('employeesShiftWorkspace.colActions')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1029,9 +1029,9 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
                           <td>
                             {payroll.paymentStatus === 'Pending' ? (
-                              <ActionButton label="Thanh toán" tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
+                              <ActionButton label={t('employeesShiftWorkspace.pay')} tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
                             ) : (
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || 'Đã đóng'}</span>
+                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || t('employeesShiftWorkspace.paid')}</span>
                             )}
                           </td>
                         </tr>
@@ -1053,13 +1053,13 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
           <div className="glass-card" style={{ padding: 20, display: 'grid', gap: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Lịch làm việc phòng ban</h3>
+                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.departmentSchedule')}</h3>
                 <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-                  Xem và xóa lịch làm việc theo phòng ban đã chọn.
+                  {t('employeesShiftWorkspace.departmentScheduleDesc')}
                 </p>
               </div>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span className="input-label" style={{ margin: 0, fontSize: 13 }}>Phòng ban:</span>
+                <span className="input-label" style={{ margin: 0, fontSize: 13 }}>{t('employeesShiftWorkspace.department')}:</span>
                 <select 
                   className="input select" 
                   value={selectedDeptId} 
@@ -1089,18 +1089,18 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
               border: '1px solid var(--border-color)',
               flexWrap: 'wrap'
             }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Từ ngày:</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{t('employeesShiftWorkspace.from')}:</span>
               <input type="date" className="input" value={scheduleStartDate} onChange={(e) => setScheduleStartDate(e.target.value)} style={{ width: 140 }} />
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Đến ngày:</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>{t('employeesShiftWorkspace.to')}:</span>
               <input type="date" className="input" value={scheduleEndDate} onChange={(e) => setScheduleEndDate(e.target.value)} style={{ width: 140 }} />
               <button className="btn btn-secondary" onClick={loadSchedules} style={{ marginLeft: 'auto' }}>
                 <RefreshCw size={14} />
-                Lọc
+                {t('employeesShiftWorkspace.filter')}
               </button>
             </div>
 
             {schedules.length === 0 ? (
-              <EmptyState label="Chưa có lịch làm việc được lập cho phòng ban này trong khoảng thời gian đã chọn." />
+              <EmptyState label={t('employeesShiftWorkspace.noSchedules')} />
             ) : (
               <div style={{ display: 'grid', gap: 16 }}>
                 {groupedSchedules.map((group) => (
@@ -1140,11 +1140,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                               )}
                             </div>
                             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                              Khung giờ: {s.startTime.slice(0, 5)} - {s.endTime.slice(0, 5)} | Tối đa: {s.maxStaff} nhân viên
+                              {t('employeesShiftWorkspace.timeSlot', { start: s.startTime.slice(0, 5), end: s.endTime.slice(0, 5), max: s.maxStaff })}
                             </div>
                             {s.registeredStaff.length > 0 && (
                               <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                                <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>Nhân viên:</span>
+                                <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>{t('employeesShiftWorkspace.staffLabel')}:</span>
                                 {s.registeredStaff.map((r) => (
                                   <span key={r.shiftRegistrationId} style={{ 
                                     fontSize: 10, 
@@ -1162,7 +1162,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <span style={{ fontSize: 13, fontWeight: 700, color: s.registeredCount >= s.maxStaff ? 'var(--success)' : 'var(--text-secondary)' }}>
-                              Đăng ký: {s.registeredCount}/{s.maxStaff}
+                              {t('employeesShiftWorkspace.registeredCount')}: {s.registeredCount}/{s.maxStaff}
                             </span>
                             {s.deletionStatus === 'Active' && (
                               <button 
@@ -1185,7 +1185,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                                 ) : (
                                   <Trash2 size={13} />
                                 )}
-                                Hủy ca
+                                {t('employeesShiftWorkspace.cancelShift')}
                               </button>
                             )}
                           </div>
@@ -1202,16 +1202,16 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
           <div className="glass-card" style={{ padding: 20, display: 'grid', gap: 16, alignContent: 'start' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid var(--border-color)', paddingBottom: '12px', marginBottom: '4px' }}>
               <CalendarPlus size={20} style={{ color: 'var(--accent)' }} />
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Tạo ca làm việc mới</h3>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.createNewShift')}</h3>
             </div>
 
-            <Field label="Chọn ngày">
+            <Field label={t('employeesShiftWorkspace.selectDate')}>
               <input className="input" type="date" value={newSchedDate} onChange={(e) => setNewSchedDate(e.target.value)} />
             </Field>
 
-            <Field label="Lấy thông tin từ ca mẫu (Optional)">
+            <Field label={t('employeesShiftWorkspace.prefillFromTemplate')}>
               <select className="input select" value={prefillTemplateId} onChange={(e) => handlePrefillTemplate(e.target.value)}>
-                <option value="">-- Chọn ca trực mẫu --</option>
+                <option value="">-- {t('employeesShiftWorkspace.selectTemplate')} --</option>
                 {templates.map((t) => (
                   <option key={t.shiftTemplateId} value={t.shiftTemplateId}>
                     {t.shiftName} ({t.startTime.slice(0, 5)}-{t.endTime.slice(0, 5)})
@@ -1222,24 +1222,24 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
               <div style={{ gridColumn: 'span 2' }}>
-                <Field label="Loại ca làm">
-                  <select 
-                    className="input select" 
-                    value={newSchedShiftType} 
+                <Field label={t('employeesShiftWorkspace.shiftType')}>
+                  <select
+                    className="input select"
+                    value={newSchedShiftType}
                     onChange={(e) => setNewSchedShiftType(Number(e.target.value) as 1 | 2 | 3)}
                   >
-                    <option value={1}>Full-time (8 tiếng - Cố định)</option>
-                    <option value={2}>Part-time (4 tiếng - Cố định)</option>
-                    <option value={3}>Ca xoay (Linh hoạt)</option>
+                    <option value={1}>{t('employeesShiftWorkspace.shiftTypeFulltime')}</option>
+                    <option value={2}>{t('employeesShiftWorkspace.shiftTypeParttime')}</option>
+                    <option value={3}>{t('employeesShiftWorkspace.shiftTypeFlexible')}</option>
                   </select>
                 </Field>
               </div>
               <div style={{ gridColumn: 'span 2' }}>
-                <Field label="Tên ca làm">
-                  <input className="input" type="text" value={newSchedName} onChange={(e) => setNewSchedName(e.target.value)} placeholder="Ví dụ: Ca sáng full time" />
+                <Field label={t('employeesShiftWorkspace.shiftName')}>
+                  <input className="input" type="text" value={newSchedName} onChange={(e) => setNewSchedName(e.target.value)} placeholder={t('employeesShiftWorkspace.shiftNamePlaceholder')} />
                 </Field>
               </div>
-              <Field label="Giờ bắt đầu">
+              <Field label={t('employeesShiftWorkspace.startTime')}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <select 
                     className="input select" 
@@ -1269,7 +1269,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                   </select>
                 </div>
               </Field>
-              <Field label="Giờ kết thúc (Khóa nếu ca cố định)">
+              <Field label={t('employeesShiftWorkspace.endTime')}>
                 <div style={{ display: 'flex', gap: 6 }}>
                   <select 
                     className="input select" 
@@ -1301,10 +1301,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                   </select>
                 </div>
               </Field>
-              <Field label="Số nhân viên tối đa">
+              <Field label={t('employeesShiftWorkspace.maxStaff')}>
                 <input className="input" type="number" min={1} value={newSchedMaxStaff} onChange={(e) => setNewSchedMaxStaff(Number(e.target.value))} />
               </Field>
-              <Field label="Vai trò">
+              <Field label={t('employeesShiftWorkspace.role')}>
                 <select className="input select" value={newSchedRoleId} onChange={(e) => setNewSchedRoleId(e.target.value)}>
                   {uniqueRoles.map((r) => (
                     <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
@@ -1325,12 +1325,12 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
             }}>
               <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
                 <input type="checkbox" checked={repeatWeekly} onChange={(e) => setRepeatWeekly(e.target.checked)} style={{ width: 16, height: 16 }} />
-                Tự động lặp lại hàng tuần
+                {t('employeesShiftWorkspace.autoRepeatWeekly')}
               </label>
 
               {repeatWeekly && (
                 <div style={{ display: 'grid', gap: 6, marginTop: 6 }}>
-                  <span className="input-label" style={{ margin: 0, fontSize: 12 }}>Áp dụng tới tuần số mấy?</span>
+                  <span className="input-label" style={{ margin: 0, fontSize: 12 }}>{t('employeesShiftWorkspace.repeatWeeksQuestion')}</span>
                   <select 
                     className="input select" 
                     value={repeatWeeksCount} 
@@ -1338,7 +1338,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
                   >
                     {repeatWeekChoices.map((choice) => (
                       <option key={choice.weeks} value={choice.weeks}>
-                        Tuần {choice.weeks} (đến ngày {choice.dateStr})
+                        {t('employeesShiftWorkspace.weekChoice', { weeks: choice.weeks, date: choice.dateStr })}
                       </option>
                     ))}
                   </select>
@@ -1357,7 +1357,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({ cinem
               ) : (
                 <CalendarPlus size={16} />
               )}
-              Lập lịch làm việc
+              {t('employeesShiftWorkspace.createSchedule')}
             </button>
           </div>
         </section>

@@ -74,7 +74,7 @@ public class UpdateMovieUseCase
 
                 if (hasSuccessfulBooking)
                 {
-                    throw new BadRequestException("Cannot edit movie when there are active showtimes or bookings.", "E03");
+                    throw new BadRequestException(Messages.Movie.CannotEditActiveShowtimes, "E03");
                 }
 
                 if (!string.IsNullOrEmpty(request.MovieName))

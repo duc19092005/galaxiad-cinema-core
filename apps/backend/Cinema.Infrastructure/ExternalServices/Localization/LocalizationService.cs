@@ -2,8 +2,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Text;
 using Microsoft.AspNetCore.Http;
+using Cinema.Domain.Localization;
 
-namespace Cinema.Domain.Localization;
+namespace Cinema.Infrastructure.ExternalServices.Localization;
 
 /// <summary>
 /// Handles translation of application messages using data loaded from vi.json and ru.json.

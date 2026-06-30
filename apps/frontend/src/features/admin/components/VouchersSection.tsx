@@ -5,8 +5,10 @@ import { voucherApi, type VoucherDto, type CreateVoucherDto, type UpdateVoucherD
 import { adminApi } from '../../../api/adminApi';
 import type { RoleDto } from '../../../types/admin.types';
 import { showSuccess, showError } from '../../../utils/ToastUtils';
+import { useTranslation } from 'react-i18next';
 
 export const VouchersSection: React.FC = () => {
+  const { t } = useTranslation();
   const [vouchers, setVouchers] = useState<VoucherDto[]>([]);
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ export const VouchersSection: React.FC = () => {
       if (rRes.isSuccess) setRoles(rRes.data || []);
     } catch (err) {
       console.error(err);
-      showError('Failed to fetch voucher management data.');
+      showError(t('vouchersSection.errorFetchData'));
     } finally {
       setLoading(false);
     }
@@ -83,37 +85,37 @@ export const VouchersSection: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this voucher? Users who redeemed it might still keep it.')) return;
+    if (!window.confirm(t('vouchersSection.deleteConfirm'))) return;
     try {
       const res = await voucherApi.deleteVoucher(id);
       if (res.isSuccess) {
-        showSuccess('Voucher deleted successfully.');
+        showSuccess(t('vouchersSection.deleted'));
         fetchData();
       } else {
-        showError('Delete failed.');
+        showError(t('vouchersSection.deleteFailed'));
       }
     } catch (err) {
       console.error(err);
-      showError('Delete failed due to connection error.');
+      showError(t('vouchersSection.deleteFailedConnection'));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.voucherName.trim() || !form.voucherDescription.trim()) {
-      showError('Please fill in Name and Description.');
+      showError(t('vouchersSection.errorFillNameDescription'));
       return;
     }
     if (form.voucherDiscountPercent <= 0 || form.voucherDiscountPercent > 100) {
-      showError('Discount must be between 1% and 100%.');
+      showError(t('vouchersSection.errorDiscountRange'));
       return;
     }
     if (form.voucherPointsCost < 0) {
-      showError('Points cost cannot be negative.');
+      showError(t('vouchersSection.errorPointsNegative'));
       return;
     }
     if (form.voucherQuantity <= 0) {
-      showError('Quantity must be greater than 0.');
+      showError(t('vouchersSection.errorQuantityZero'));
       return;
     }
 
@@ -128,25 +130,25 @@ export const VouchersSection: React.FC = () => {
       if (editingVoucher) {
         const res = await voucherApi.updateVoucher(editingVoucher.voucherId, payload as UpdateVoucherDto);
         if (res.isSuccess) {
-          showSuccess('Voucher updated successfully.');
+          showSuccess(t('vouchersSection.updated'));
           setIsModalOpen(false);
           fetchData();
         } else {
-          showError('Update failed.');
+          showError(t('vouchersSection.updateFailed'));
         }
       } else {
         const res = await voucherApi.createVoucher(payload as CreateVoucherDto);
         if (res.isSuccess) {
-          showSuccess('Voucher created successfully.');
+          showSuccess(t('vouchersSection.created'));
           setIsModalOpen(false);
           fetchData();
         } else {
-          showError('Create failed.');
+          showError(t('vouchersSection.createFailed'));
         }
       }
     } catch (err: any) {
       console.error(err);
-      const msg = err.response?.data?.message || 'Submit operation failed.';
+      const msg = err.response?.data?.message || t('vouchersSection.submitFailed');
       showError(msg);
     } finally {
       setSubmitting(false);
@@ -177,11 +179,11 @@ export const VouchersSection: React.FC = () => {
       {/* Header Panel */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Voucher Store Management</h2>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>Create, update, and manage public vouchers for the rewards system</p>
+          <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('vouchersSection.title')}</h2>
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('vouchersSection.description')}</p>
         </div>
         <button className="btn btn-primary" onClick={handleOpenCreate} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Plus size={16} /> New Voucher
+          <Plus size={16} /> {t('vouchersSection.newVoucher')}
         </button>
       </div>
 
@@ -191,24 +193,24 @@ export const VouchersSection: React.FC = () => {
           <div className="state-center" style={{ minHeight: '30vh' }}>
             <Loader2 size={32} className="animate-spin" style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
             <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
-              Loading vouchers...
+              {t('vouchersSection.loading')}
             </p>
           </div>
         ) : vouchers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-            No vouchers created yet. Click "New Voucher" to start.
+            {t('vouchersSection.noVouchers')} {t('vouchersSection.startCreating')}
           </div>
         ) : (
           <table>
             <thead>
               <tr>
-                <th>Voucher Name</th>
-                <th>Discount</th>
-                <th>Point Cost</th>
-                <th>Stock Left</th>
-                <th>Target Role</th>
-                <th>Validity Period</th>
-                <th style={{ width: 140 }}>Actions</th>
+                <th>{t('vouchersSection.voucherName')}</th>
+                <th>{t('vouchersSection.discount')}</th>
+                <th>{t('vouchersSection.pointCost')}</th>
+                <th>{t('vouchersSection.stockLeft')}</th>
+                <th>{t('vouchersSection.targetRole')}</th>
+                <th>{t('vouchersSection.validityPeriod')}</th>
+                <th style={{ width: 140 }}>{t('vouchersSection.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -228,7 +230,7 @@ export const VouchersSection: React.FC = () => {
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)' }}>
                       <ShoppingBag size={12} style={{ color: 'var(--accent)' }} />
-                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>{v.voucherPointsCost} pts</span>
+                      <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '12px' }}>{v.voucherPointsCost} {t('vouchersSection.pts')}</span>
                     </div>
                   </td>
                   <td>
@@ -241,8 +243,8 @@ export const VouchersSection: React.FC = () => {
                   </td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span>From: {v.validFrom ? new Date(v.validFrom).toLocaleDateString('vi-VN') : 'Immediate'}</span>
-                      <span>To: {v.validTo ? new Date(v.validTo).toLocaleDateString('vi-VN') : 'Unlimited'}</span>
+                      <span>{t('vouchersSection.validFrom')}: {v.validFrom ? new Date(v.validFrom).toLocaleDateString('vi-VN') : t('vouchersSection.immediate')}</span>
+                      <span>{t('vouchersSection.validTo')}: {v.validTo ? new Date(v.validTo).toLocaleDateString('vi-VN') : t('vouchersSection.unlimited')}</span>
                     </div>
                   </td>
                   <td>
@@ -318,7 +320,7 @@ export const VouchersSection: React.FC = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <Ticket size={20} style={{ color: 'var(--accent)' }} />
                 <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                  {editingVoucher ? 'Edit Voucher config' : 'Create new Voucher'}
+                  {editingVoucher ? t('vouchersSection.editTitle') : t('vouchersSection.createTitle')}
                 </h3>
               </div>
               <button
@@ -347,11 +349,11 @@ export const VouchersSection: React.FC = () => {
             <form id="voucher-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Name */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Voucher Name *</label>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('vouchersSection.nameLabel')}</label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Special Student discount voucher"
+                  placeholder={t('vouchersSection.namePlaceholder')}
                   value={form.voucherName}
                   onChange={(e) => setForm({ ...form, voucherName: e.target.value })}
                   className="input"
@@ -361,11 +363,11 @@ export const VouchersSection: React.FC = () => {
 
               {/* Description */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Description *</label>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('vouchersSection.descriptionLabel')}</label>
                 <textarea
                   required
                   rows={3}
-                  placeholder="Provide voucher usage terms, rules, and value info..."
+                  placeholder={t('vouchersSection.descriptionPlaceholder')}
                   value={form.voucherDescription}
                   onChange={(e) => setForm({ ...form, voucherDescription: e.target.value })}
                   className="input"
@@ -376,7 +378,7 @@ export const VouchersSection: React.FC = () => {
               {/* Group discount, cost, quantity */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>Discount (%) *</label>
+                  <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)' }}>{t('vouchersSection.discountPercentLabel')}</label>
                   <input
                     type="number"
                     min={1}

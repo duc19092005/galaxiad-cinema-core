@@ -1,4 +1,5 @@
 using Cinema.Application.UseCases.Admin;
+using Cinema.Application.Interfaces.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

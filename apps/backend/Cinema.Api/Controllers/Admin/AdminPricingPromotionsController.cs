@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Application.UseCases.PricingPromotions;
+using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

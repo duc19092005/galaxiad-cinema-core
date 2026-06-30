@@ -1,7 +1,7 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using Cinema.Application.UseCases.Vouchers;
+using Cinema.Application.UseCases.Admin.Vouchers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Application.Exceptions;

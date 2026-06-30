@@ -36,7 +36,7 @@ public class GetAvailableShiftsUseCase
             {
                 IsSuccess = true,
                 Data = new List<ResShiftTemplateDto>(),
-                Message = "Your account has not been assigned to any department yet."
+                Message = Messages.Staff.NoDepartmentAssigned
             };
         }
 

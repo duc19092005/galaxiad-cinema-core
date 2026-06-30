@@ -2,7 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.IThirdPersonServices;
-using Cinema.Application.UseCases.Comments;
+using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

@@ -58,13 +58,13 @@ public class ClockInUseCase
         {
             if (!sharedUserId.HasValue)
             {
-                throw new AppException("Vui lòng chọn nhân viên hoặc đăng nhập quầy POS để nhận diện tự động.", 400, "CLOCK_IN_ERR");
+                throw new AppException(Messages.Staff.SelectStaffOrLoginPos, 400, "CLOCK_IN_ERR");
             }
 
             var sharedProfile = await _repository.GetActiveStaffProfileAsync(sharedUserId.Value);
             if (sharedProfile == null)
             {
-                throw new AppException("Không tìm thấy thông tin cấu hình quầy POS.", 404, "CLOCK_IN_ERR");
+                throw new AppException(Messages.Staff.PosConfigNotFound, 404, "CLOCK_IN_ERR");
             }
 
             var candidates = await _repository.GetStaffProfilesByCinemaIdAsync(sharedProfile.CinemaId);
@@ -111,7 +111,7 @@ public class ClockInUseCase
 
             if (!bestCandidateId.HasValue || minDistance > 0.35)
             {
-                throw new AppException("Không tìm thấy nhân viên nào có khuôn mặt trùng khớp tại rạp này.", 400, "CLOCK_IN_ERR");
+                throw new AppException(Messages.Staff.NoFaceMatchFound, 400, "CLOCK_IN_ERR");
             }
 
             resolvedStaffId = bestCandidateId.Value;
@@ -222,7 +222,7 @@ public class ClockInUseCase
         }
         else
         {
-            throw new AppException("Không tìm thấy cấu hình thời gian ca làm việc trong lịch đăng ký.", 500, "CLOCK_IN_ERR");
+            throw new AppException(Messages.Staff.ShiftTimeConfigNotFound, 500, "CLOCK_IN_ERR");
         }
 
         // Kiểm tra khung thời gian ca làm việc (Cho phép điểm danh sớm tối đa 30 phút và trong suốt ca trực)
@@ -281,7 +281,7 @@ public class ClockInUseCase
                     StaffName = resumeUsername,
                     StaffId = resolvedStaffId
                 },
-                Message = $"Chào mừng bạn quay trở lại ca làm việc, {resumeUsername}!"
+                Message = string.Format(Messages.Staff.WelcomeBackToShift(resumeUsername))
             };
         }
 

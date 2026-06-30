@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.Interfaces.Catalog;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Customer.Catalog;
 
@@ -22,7 +23,7 @@ public class GetMovieDetailUseCase
         {
             Data = detail!,
             IsSuccess = true,
-            Message = "Response Here"
+            Message = Messages.Catalog.GetMovieDetailSuccess
         };
     }
 }

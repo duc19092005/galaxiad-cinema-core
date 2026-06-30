@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   Banknote,
@@ -66,12 +67,12 @@ const formatDate = (value?: string | null) => {
 };
 const formatMoney = (value: number) => `${value.toLocaleString('vi-VN')} VND`;
 
-const getApiErrorMessage = (error: unknown, fallback: string) => {
+const getApiErrorMessage = (error: unknown, fallback: string, t?: (key: string) => string) => {
   if (!axios.isAxiosError(error)) return fallback;
   const payload = error.response?.data as { message?: string; Message?: string; errorCode?: string } | undefined;
   const code = payload?.errorCode;
   if (error.response?.status === 409 || code === 'SHIFT_ERR')
-    return payload?.message ?? payload?.Message ?? 'Ca đăng ký bị xung đột. Thử lại sau.';
+    return payload?.message ?? payload?.Message ?? (t ? t('staffShiftSelf.shiftConflict') : 'Ca đăng ký bị xung đột. Thử lại sau.');
   return payload?.message ?? payload?.Message ?? fallback;
 };
 
@@ -139,6 +140,7 @@ const selectionKey = (shift: ShiftTemplateDto, dateValue: string) =>
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const StaffShiftSelfService: React.FC = () => {
+  const { t } = useTranslation();
   const [currentUser, setCurrentUser] = useState<{ roles?: string[]; isSharedPosAccount?: boolean } | null>(null);
   const [activeDate, setActiveDate] = useState(todayInput);
   const [dateWindowStart, setDateWindowStart] = useState(todayInput);
@@ -245,7 +247,7 @@ const StaffShiftSelfService: React.FC = () => {
       setCancelSelectIds([]);
       setIsCancelMode(false);
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Không thể tải dữ liệu ca làm.'));
+      showError(getApiErrorMessage(error, t('staffShiftSelf.errorLoadShifts'), t));
     } finally {
       setLoading(false);
     }
@@ -296,7 +298,7 @@ const StaffShiftSelfService: React.FC = () => {
         successCount++;
       } catch (error) {
         const label = `${shift.shiftName} (${formatDate(dateValue)})`;
-        errors.push(`${label}: ${getApiErrorMessage(error, 'Lỗi không xác định')}`);
+        errors.push(`${label}: ${getApiErrorMessage(error, t('staffShiftSelf.unknownError'), t)}`);
       }
     }
 
@@ -304,7 +306,7 @@ const StaffShiftSelfService: React.FC = () => {
     setSelectedShifts([]);
 
     if (successCount > 0) {
-      showSuccess(`Đã đăng ký thành công ${successCount} ca làm!`);
+      showSuccess(t('staffShiftSelf.registerSuccess', { count: successCount }));
       setNotes('');
     }
     if (errors.length > 0) {
@@ -316,14 +318,14 @@ const StaffShiftSelfService: React.FC = () => {
   // ── Cancel handlers ───────────────────────────────────────────────────────
 
   const handleCancelRegistration = async (registrationId: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đăng ký ca làm này?')) return;
+    if (!window.confirm(t('staffShiftSelf.confirmCancelSingle'))) return;
     try {
       setLoading(true);
       const res = await staffShiftApi.cancelRegistration(registrationId, isSharedPosAccount ? staffToken : undefined);
-      showSuccess(res.message ?? 'Hủy đăng ký ca làm thành công.');
+      showSuccess(res.message ?? t('staffShiftSelf.cancelSuccess'));
       await loadSelfService();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Không thể hủy ca làm.'));
+      showError(getApiErrorMessage(error, t('staffShiftSelf.errorCancelShift'), t));
     } finally {
       setLoading(false);
     }
@@ -331,15 +333,15 @@ const StaffShiftSelfService: React.FC = () => {
 
   const handleBulkCancel = async () => {
     if (cancelSelectIds.length === 0) return;
-    if (!window.confirm(`Bạn có chắc chắn muốn hủy ${cancelSelectIds.length} ca làm đã chọn?`)) return;
+    if (!window.confirm(t('staffShiftSelf.confirmBulkCancel', { count: cancelSelectIds.length }))) return;
     try {
       setLoading(true);
       const res = await staffShiftApi.cancelBulkRegistrations(cancelSelectIds, isSharedPosAccount ? staffToken : undefined);
-      showSuccess(res.message ?? 'Hủy các ca làm đã chọn thành công.');
+      showSuccess(res.message ?? t('staffShiftSelf.bulkCancelSuccess'));
       setCancelSelectIds([]);
       await loadSelfService();
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Không thể hủy các ca làm đã chọn.'));
+      showError(getApiErrorMessage(error, t('staffShiftSelf.errorBulkCancel'), t));
     } finally {
       setLoading(false);
     }
@@ -361,9 +363,9 @@ const StaffShiftSelfService: React.FC = () => {
           <Banknote size={24} />
         </div>
         <div>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Chưa có nhân viên trực ca</h3>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('staffShiftSelf.noStaffOnDuty')}</h3>
           <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)', maxWidth: 420, lineHeight: 1.6 }}>
-            Vui lòng quay lại POS terminal và thực hiện Clock-In trước khi truy cập hồ sơ ca làm.
+            {t('staffShiftSelf.clockInRequired')}
           </p>
         </div>
       </div>
@@ -379,11 +381,11 @@ const StaffShiftSelfService: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--accent)', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-            Cashier profile
+            {t('staffShiftSelf.cashierProfile')}
           </p>
-          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 850 }}>Đăng ký lịch làm việc</h2>
+          <h2 style={{ margin: 0, fontSize: 26, fontWeight: 850 }}>{t('staffShiftSelf.registerSchedule')}</h2>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
-            Chọn ca làm có sẵn trực tiếp trên lịch tuần để gửi yêu cầu cho quản lý rạp.
+            {t('staffShiftSelf.registerScheduleDesc')}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -392,7 +394,7 @@ const StaffShiftSelfService: React.FC = () => {
           </span>
           <button className="btn btn-secondary" onClick={() => loadSelfService()} disabled={loading}>
             {loading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <RefreshCw size={16} />}
-            Làm mới
+            {t('staffShiftSelf.refresh')}
           </button>
         </div>
       </div>
@@ -404,11 +406,11 @@ const StaffShiftSelfService: React.FC = () => {
         <div style={{ display: 'grid', gap: 18 }}>
 
           {/* Available shifts for selected day */}
-          <ListPanel title={`Ca có sẵn — ${formatDate(activeDate)}`}>
+          <ListPanel title={`${t('staffShiftSelf.availableShifts')} — ${formatDate(activeDate)}`}>
             {loading ? (
-              <EmptyLine label="Đang tải..." />
+              <EmptyLine label={t('staffShiftSelf.loading')} />
             ) : availableShifts.length === 0 ? (
-              <EmptyLine label="Không có ca làm nào trong ngày này." />
+              <EmptyLine label={t('staffShiftSelf.noShiftsForDay')} />
             ) : (
               <div style={{ display: 'grid', padding: '10px 12px', gap: 8 }}>
                 {availableShifts.map((shift) => {
@@ -433,12 +435,12 @@ const StaffShiftSelfService: React.FC = () => {
                         <div style={{ minWidth: 0 }}>
                           <p style={{ margin: 0, fontSize: 12, fontWeight: 750, color: 'var(--text-primary)' }}>{shift.shiftName}</p>
                           <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-secondary)' }}>
-                            {shift.startTime.slice(0, 5)} – {shift.endTime.slice(0, 5)} · {full ? 'Hết chỗ' : `Trống: ${remaining}/${shift.maxStaff}`}
+                            {shift.startTime.slice(0, 5)} – {shift.endTime.slice(0, 5)} · {full ? t('staffShiftSelf.full') : t('staffShiftSelf.remaining', { remaining, total: shift.maxStaff })}
                           </p>
                         </div>
                       </div>
                       <span style={{ fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 'var(--radius-sm)', background: full ? 'rgba(235,87,87,0.12)' : (isPart ? 'rgba(14,165,233,0.12)' : 'rgba(16,185,129,0.12)'), color: full ? 'var(--danger)' : iconColor, textTransform: 'uppercase', flexShrink: 0 }}>
-                        {full ? 'Hết' : isPart ? 'Part' : 'Full'}
+                        {full ? t('staffShiftSelf.fullShort') : isPart ? 'Part' : 'Full'}
                       </span>
                     </div>
                   );
@@ -448,25 +450,25 @@ const StaffShiftSelfService: React.FC = () => {
           </ListPanel>
 
           {/* Overview */}
-          <Panel title="Tổng quan">
+          <Panel title={t('staffShiftSelf.overview')}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <Metric icon={<ClipboardList size={17} />} label="Ca đã đăng ký" value={`${registrations.length}`} />
-              <Metric icon={<CalendarDays size={17} />} label="Ca được duyệt" value={`${approvedCount}`} />
-              <Metric icon={<Banknote size={17} />} label="Lương đã trả" value={formatMoney(totalPaid)} />
-              <Metric icon={<Banknote size={17} />} label="Lương chờ" value={formatMoney(totalPending)} />
-              <Metric icon={<TimerReset size={17} />} label="Giờ đã làm" value={`${workedHours.toLocaleString('vi-VN')}h`} />
-              <Metric icon={<CalendarPlus size={17} />} label="Ca có sẵn hôm nay" value={`${availableShifts.length}`} />
+              <Metric icon={<ClipboardList size={17} />} label={t('staffShiftSelf.registeredShifts')} value={`${registrations.length}`} />
+              <Metric icon={<CalendarDays size={17} />} label={t('staffShiftSelf.approvedShifts')} value={`${approvedCount}`} />
+              <Metric icon={<Banknote size={17} />} label={t('staffShiftSelf.paidSalary')} value={formatMoney(totalPaid)} />
+              <Metric icon={<Banknote size={17} />} label={t('staffShiftSelf.pendingSalary')} value={formatMoney(totalPending)} />
+              <Metric icon={<TimerReset size={17} />} label={t('staffShiftSelf.workedHours')} value={`${workedHours.toLocaleString('vi-VN')}h`} />
+              <Metric icon={<CalendarPlus size={17} />} label={t('staffShiftSelf.availableToday')} value={`${availableShifts.length}`} />
             </div>
           </Panel>
 
           {/* Notes */}
-          <Panel title="Ghi chú cho quản lý">
+          <Panel title={t('staffShiftSelf.notesForManager')}>
             <label style={{ display: 'grid', gap: 6 }}>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Lý do đăng ký, ghi chú ca làm… (áp dụng cho tất cả ca đã chọn)</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('staffShiftSelf.notesHint')}</span>
               <textarea
                 className="input"
                 rows={4}
-                placeholder="Ví dụ: Tôi muốn đăng ký ca sáng thứ 2 vì…"
+                placeholder={t('staffShiftSelf.notesPlaceholder')}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 style={{ resize: 'vertical' }}
@@ -485,19 +487,19 @@ const StaffShiftSelfService: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', padding: 14, borderBottom: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.02)' }}>
               <h3 style={{ margin: 0, fontSize: 13, fontWeight: 850, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'flex', gap: 8, alignItems: 'center' }}>
                 <CalendarDays size={16} />
-                Lịch tuần — {formatDate(dateCells[0])} – {formatDate(dateCells[dateCells.length - 1])}
+                {t('staffShiftSelf.weeklySchedule')} — {formatDate(dateCells[0])} – {formatDate(dateCells[dateCells.length - 1])}
               </h3>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {selectedShifts.length > 0 && (
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent)', background: 'rgba(255,138,0,0.1)', border: '1px solid rgba(255,138,0,0.3)', borderRadius: 'var(--radius-md)', padding: '4px 10px' }}>
-                    Đã chọn: {selectedShifts.length} ca
+                    {t('staffShiftSelf.selected', { count: selectedShifts.length })}
                   </span>
                 )}
                 <button className="btn btn-secondary" onClick={() => moveDateWindow(-7)} disabled={dateWindowStart <= today}>
-                  <ChevronLeft size={16} /> Tuần trước
+                  <ChevronLeft size={16} /> {t('staffShiftSelf.previousWeek')}
                 </button>
                 <button className="btn btn-secondary" onClick={() => moveDateWindow(7)}>
-                  Tuần sau <ChevronRight size={16} />
+                  {t('staffShiftSelf.nextWeek')} <ChevronRight size={16} />
                 </button>
               </div>
             </div>
@@ -662,7 +664,7 @@ const StaffShiftSelfService: React.FC = () => {
                                 background: isFull ? 'rgba(235,87,87,0.15)' : 'rgba(16,185,129,0.15)',
                                 color: isFull ? 'var(--danger)' : 'var(--success)',
                               }}>
-                                {isFull ? `Hết chỗ` : `Trống: ${remaining}/${shift.maxStaff}`}
+                                {isFull ? t('staffShiftSelf.full') : t('staffShiftSelf.remaining', { remaining, total: shift.maxStaff })}
                               </span>
                             </div>
                           );
@@ -671,7 +673,7 @@ const StaffShiftSelfService: React.FC = () => {
                         {/* ── Empty hint ── */}
                         {!isPast && dayRegistrations.length === 0 && dayAvailableShifts.length === 0 && (
                           <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: 'var(--text-muted)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', pointerEvents: 'none', opacity: 0.35, writingMode: 'vertical-rl' }}>
-                            Không có ca
+                            {t('staffShiftSelf.noShift')}
                           </div>
                         )}
 
@@ -704,7 +706,7 @@ const StaffShiftSelfService: React.FC = () => {
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); void handleCancelRegistration(registration.shiftRegistrationId); }}
                                   style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(235,87,87,0.1)', border: '1px solid rgba(235,87,87,0.2)', color: 'var(--danger)', cursor: 'pointer', borderRadius: '50%', width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 'bold', zIndex: 5 }}
-                                  title="Hủy đăng ký"
+                                  title={t('staffShiftSelf.cancelRegistration')}
                                 >
                                   ×
                                 </button>
@@ -737,7 +739,7 @@ const StaffShiftSelfService: React.FC = () => {
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 12, flexWrap: 'wrap' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span>Lịch làm của tôi</span>
+                  <span>{t('staffShiftSelf.mySchedule')}</span>
                   {!isCancelMode && pendingRegistrations.length > 0 && (
                     <button
                       type="button"
@@ -745,7 +747,7 @@ const StaffShiftSelfService: React.FC = () => {
                       style={{ background: 'transparent', border: 0, padding: 4, color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 'var(--radius-sm)', transition: 'color 160ms, background 160ms' }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.color = 'var(--danger)'; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-                      title="Chọn nhiều ca để hủy"
+                      title={t('staffShiftSelf.selectMultipleToCancel')}
                     >
                       <Trash2 size={15} />
                     </button>
@@ -753,20 +755,20 @@ const StaffShiftSelfService: React.FC = () => {
                 </span>
                 {isCancelMode && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 'bold' }}>Đã chọn: {cancelSelectIds.length}</span>
+                    <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 'bold' }}>{t('staffShiftSelf.selectedCount', { count: cancelSelectIds.length })}</span>
                     <button type="button" onClick={() => setCancelSelectIds(pendingRegistrations.map((r) => r.shiftRegistrationId))} className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24 }}>
-                      Chọn tất cả
+                      {t('staffShiftSelf.selectAll')}
                     </button>
                     <button type="button" onClick={() => setCancelSelectIds([])} className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24 }}>
-                      Bỏ chọn
+                      {t('staffShiftSelf.deselectAll')}
                     </button>
                     {cancelSelectIds.length > 0 && (
                       <button type="button" onClick={handleBulkCancel} className="btn btn-primary" style={{ padding: '3px 10px', fontSize: 11, height: 24, minHeight: 24, background: 'var(--danger)', borderColor: 'var(--danger)', color: '#fff', fontWeight: 'bold' }}>
-                        Hủy ({cancelSelectIds.length})
+                        {t('staffShiftSelf.cancelSelected', { count: cancelSelectIds.length })}
                       </button>
                     )}
                     <button type="button" onClick={() => { setIsCancelMode(false); setCancelSelectIds([]); }} className="btn btn-secondary" style={{ padding: '3px 8px', fontSize: 11, height: 24, minHeight: 24 }}>
-                      <X size={12} /> Thoát
+                      <X size={12} /> {t('staffShiftSelf.exit')}
                     </button>
                   </div>
                 )}
@@ -774,13 +776,13 @@ const StaffShiftSelfService: React.FC = () => {
             }
           >
             {groupedRegistrationsList.length === 0 ? (
-              <EmptyLine label="Chưa có đăng ký ca làm nào." />
+              <EmptyLine label={t('staffShiftSelf.noRegistrations')} />
             ) : (
               <div style={{ display: 'grid', gap: 14, padding: 14 }}>
                 {groupedRegistrationsList.slice(0, 10).map(([dateKey, dateItems]) => (
                   <div key={dateKey} style={{ display: 'grid', gap: 8 }}>
                     <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', color: 'var(--accent)', background: 'rgba(255,138,0,0.06)', padding: '5px 10px', borderRadius: 'var(--radius-sm)', width: 'fit-content', letterSpacing: '0.05em' }}>
-                      Ngày {formatDate(dateKey)}
+                      {t('staffShiftSelf.day')} {formatDate(dateKey)}
                     </div>
                     <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 8 }}>
                       {dateItems.map((item) => {
@@ -812,7 +814,7 @@ const StaffShiftSelfService: React.FC = () => {
                                 </div>
                                 <p style={{ margin: '3px 0 0', fontSize: 11, color: 'var(--text-secondary)' }}>
                                   {item.startTime.slice(0, 5)} – {item.endTime.slice(0, 5)}
-                                  {item.status === 'Rejected' && item.notes ? ` · Lý do: ${item.notes}` : ''}
+                                  {item.status === 'Rejected' && item.notes ? ` · ${t('staffShiftSelf.reason')}: ${item.notes}` : ''}
                                 </p>
                               </div>
                             </div>
@@ -825,7 +827,7 @@ const StaffShiftSelfService: React.FC = () => {
                                   className="btn btn-secondary"
                                   style={{ padding: '4px 8px', fontSize: 11, height: 24, minHeight: 24, color: 'var(--danger)', borderColor: 'rgba(235,87,87,0.2)', background: 'rgba(235,87,87,0.05)' }}
                                 >
-                                  Hủy
+                                  {t('staffShiftSelf.cancel')}
                                 </button>
                               )}
                             </div>
@@ -840,15 +842,15 @@ const StaffShiftSelfService: React.FC = () => {
           </ListPanel>
 
           {/* Working logs & payroll */}
-          <ListPanel title="Nhật ký làm việc gần đây">
+          <ListPanel title={t('staffShiftSelf.recentWorkLogs')}>
             {history.length === 0
-              ? <EmptyLine label="Chưa có nhật ký làm việc." />
+              ? <EmptyLine label={t('staffShiftSelf.noWorkLogs')} />
               : history.slice(0, 4).map((item) => (
                 <div key={item.staffWorkingLoggerId} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                   <Row title={formatMoney(item.totalReceived)} meta={`${formatDate(item.workingDate)} – ${item.workingHour}h @ ${formatMoney(item.salaryPerHour)}/h`} badge={item.endedShiftTime ? 'Closed' : 'Open'} />
                   {(item.sales?.length ?? 0) > 0 && (
                     <div style={{ display: 'grid', gap: 8, padding: '0 14px 12px 14px' }}>
-                      <p style={{ margin: 0, fontSize: 11, color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase' }}>Lich su ban ve trong ca</p>
+                      <p style={{ margin: 0, fontSize: 11, color: 'var(--accent)', fontWeight: 800, textTransform: 'uppercase' }}>{t('staffShiftSelf.ticketSalesHistory')}</p>
                       {item.sales!.map((sale) => (
                         <div key={sale.orderId} style={{ padding: 10, borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', display: 'grid', gap: 5 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -856,7 +858,7 @@ const StaffShiftSelfService: React.FC = () => {
                             <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 800 }}>{formatMoney(sale.totalPrice)}</span>
                           </div>
                           <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)' }}>
-                            {sale.bookingCode} · {sale.cinemaName} · {sale.auditoriumNumber} · Ghe {sale.seats.join(', ')}
+                            {sale.bookingCode} · {sale.cinemaName} · {sale.auditoriumNumber} · {t('staffShiftSelf.seats')} {sale.seats.join(', ')}
                           </p>
                           <span className={statusClass(sale.orderStatus)} style={{ width: 'fit-content' }}>{sale.orderStatus}</span>
                         </div>
@@ -867,11 +869,11 @@ const StaffShiftSelfService: React.FC = () => {
               ))}
           </ListPanel>
 
-          <ListPanel title="Bảng lương">
+          <ListPanel title={t('staffShiftSelf.payroll')}>
             {payrolls.length === 0
-              ? <EmptyLine label="Chưa có bảng lương." />
+              ? <EmptyLine label={t('staffShiftSelf.noPayroll')} />
               : payrolls.slice(0, 4).map((item) => (
-                <Row key={item.salaryTotalLoggerId} title={formatMoney(item.totalReceived)} meta={`${formatDate(item.receivedDay)} – ${item.paidByName ?? 'Chờ thanh toán'}`} badge={item.paymentStatus} />
+                <Row key={item.salaryTotalLoggerId} title={formatMoney(item.totalReceived)} meta={`${formatDate(item.receivedDay)} – ${item.paidByName ?? t('staffShiftSelf.pendingPayment')}`} badge={item.paymentStatus} />
               ))}
           </ListPanel>
         </div>
@@ -901,7 +903,7 @@ const StaffShiftSelfService: React.FC = () => {
         >
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: 13, fontWeight: 800, color: 'var(--text-primary)' }}>
-              Đã chọn {selectedShifts.length} ca làm
+              {t('staffShiftSelf.selectedShifts', { count: selectedShifts.length })}
             </p>
             <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-secondary)' }}>
               {selectedShifts.map(({ shift, dateValue }) => `${shift.shiftName} (${new Date(`${dateValue}T00:00:00`).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })})`).join(' · ')}
@@ -914,7 +916,7 @@ const StaffShiftSelfService: React.FC = () => {
             disabled={saving}
             style={{ padding: '8px 12px', fontSize: 12, flexShrink: 0 }}
           >
-            <X size={14} /> Bỏ chọn
+            <X size={14} /> {t('staffShiftSelf.deselect')}
           </button>
           <button
             type="button"
@@ -924,8 +926,8 @@ const StaffShiftSelfService: React.FC = () => {
             style={{ padding: '10px 20px', fontSize: 13, fontWeight: 800, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}
           >
             {saving
-              ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> Đang lưu…</>
-              : <><Save size={16} /> Lưu lịch làm ({selectedShifts.length})</>}
+              ? <><Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> {t('staffShiftSelf.saving')}</>
+              : <><Save size={16} /> {t('staffShiftSelf.saveSchedule', { count: selectedShifts.length })}</>}
           </button>
         </div>
       )}

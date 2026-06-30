@@ -140,7 +140,7 @@ const TransferRightsView: React.FC = () => {
       return;
     }
     if (selectedItems.size === 0) {
-      showError(t('toast.selectAssetsError', 'Please select at least one asset to transfer.'));
+      showError(t('transferRights.selectAssetsError'));
       return;
     }
     const apiSourceUserId = sourceUserId === 'unmanaged' ? null : sourceUserId;
@@ -149,7 +149,7 @@ const TransferRightsView: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(t('Are you sure you want to transfer the selected assets to the new manager?'))) return;
+    if (!window.confirm(t('transferRights.confirmTransfer'))) return;
 
     setExecuting(true);
     try {
@@ -225,10 +225,10 @@ const TransferRightsView: React.FC = () => {
       {/* Header Section */}
       <div className="mb-6">
         <h2 className="text-2xl md:text-3xl font-extrabold text-cinema-accent mb-1">
-          Chuyển Quyền Quản Lý
+          {t('transferRights.transferManagement')}
         </h2>
         <p className="text-cinema-text-muted text-sm max-w-2xl">
-          Bàn giao quyền quản lý Rạp, Cơ sở vật chất hoặc Phim từ nhân sự này sang nhân sự khác một cách an toàn và minh bạch.
+          {t('transferRights.transferDescription')}
         </p>
       </div>
 
@@ -238,17 +238,17 @@ const TransferRightsView: React.FC = () => {
         
         <div className="relative flex flex-col items-center gap-2 bg-cinema-bg px-4 z-10">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${getStepStyles(1).circle}`}>1</div>
-          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(1).text}`}>NGƯỜI CHUYỂN GIAO</span>
+          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(1).text}`}>{t('transferRights.transferor')}</span>
         </div>
         
         <div className="relative flex flex-col items-center gap-2 bg-cinema-bg px-4 z-10">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${getStepStyles(2).circle}`}>2</div>
-          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(2).text}`}>TÀI SẢN BÀN GIAO</span>
+          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(2).text}`}>{t('transferRights.transferredAssets')}</span>
         </div>
         
         <div className="relative flex flex-col items-center gap-2 bg-cinema-bg px-4 z-10">
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${getStepStyles(3).circle}`}>3</div>
-          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(3).text}`}>NGƯỜI NHẬN QUYỀN</span>
+          <span className={`text-[10px] font-mono tracking-wider transition-all duration-300 ${getStepStyles(3).text}`}>{t('transferRights.recipient')}</span>
         </div>
       </div>
 
@@ -261,18 +261,18 @@ const TransferRightsView: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center gap-3">
                 <ShieldAlert className="text-cinema-accent" size={20} />
-                <h3 className="text-base font-bold text-cinema-text">1. From Manager</h3>
+                <h3 className="text-base font-bold text-cinema-text">{t('transferRights.fromManager')}</h3>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-mono tracking-wider text-cinema-text-muted uppercase">CHỌN NHÂN SỰ</label>
+                <label className="text-[10px] font-mono tracking-wider text-cinema-text-muted uppercase">{t('transferRights.selectStaff')}</label>
                 <div className="relative">
                   <select
                     value={sourceUserId}
                     onChange={e => setSourceUserId(e.target.value)}
                     className="w-full bg-cinema-elevated border border-cinema-border/60 p-3 pr-10 rounded-xl text-sm appearance-none focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-colors text-cinema-text select cursor-pointer"
                   >
-                    <option value="" disabled className="bg-cinema-surface">{t('Chọn người chuyển giao...')}</option>
-                    <option value="unmanaged" className="bg-cinema-surface text-cinema-accent font-bold">--- Tài sản chưa có quản lý ---</option>
+                    <option value="" disabled className="bg-cinema-surface">{t('transferRights.selectTransferor')}</option>
+                    <option value="unmanaged" className="bg-cinema-surface text-cinema-accent font-bold">{t('transferRights.unmanagedAssets')}</option>
                     {managers.map(m => (
                       <option key={m.userId} value={m.userId} className="bg-cinema-surface">{m.userName} ({m.userEmail})</option>
                     ))}
@@ -284,26 +284,26 @@ const TransferRightsView: React.FC = () => {
               {/* Summary Card */}
               {sourceUserId && (
                 <div className="mt-4 p-4 bg-cinema-bg/60 rounded border border-cinema-border/30 space-y-2">
-                  <p className="text-[10px] font-mono tracking-wider text-cinema-accent mb-1 uppercase font-bold">TỔNG QUAN HIỆN TẠI</p>
+                  <p className="text-[10px] font-mono tracking-wider text-cinema-accent mb-1 uppercase font-bold">{t('transferRights.currentOverview')}</p>
                   <div className="space-y-1 text-xs">
                     <div className="flex justify-between">
-                      <span className="text-cinema-text-muted">Cơ sở (CSVC):</span>
-                      <span className="font-mono text-cinema-text font-semibold">{items1.length} Hạng mục</span>
+                      <span className="text-cinema-text-muted">{t('transferRights.facilities')}</span>
+                      <span className="font-mono text-cinema-text font-semibold">{items1.length} {t('transferRights.items')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cinema-text-muted">Vận hành:</span>
-                      <span className="font-mono text-cinema-text font-semibold">{items2.length} Quy trình</span>
+                      <span className="text-cinema-text-muted">{t('transferRights.operations')}</span>
+                      <span className="font-mono text-cinema-text font-semibold">{items2.length} {t('transferRights.processes')}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-cinema-text-muted">Phim:</span>
-                      <span className="font-mono text-cinema-text font-semibold">{items3.length} Suất chiếu</span>
+                      <span className="text-cinema-text-muted">{t('transferRights.movies')}</span>
+                      <span className="font-mono text-cinema-text font-semibold">{items3.length} {t('transferRights.showtimes')}</span>
                     </div>
                   </div>
                 </div>
               )}
             </div>
             <div className="mt-8 text-[11px] text-cinema-text-muted/50 leading-relaxed font-mono">
-              * Bàn giao quyền sở hữu các tài sản hệ thống từ quản lý hiện tại.
+              * {t('transferRights.transferOwnershipNote')}
             </div>
           </div>
         </section>
@@ -314,14 +314,14 @@ const TransferRightsView: React.FC = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Building2 className="text-cinema-accent" size={20} />
-                <h3 className="text-base font-bold text-cinema-text">2. Select Assets</h3>
+                <h3 className="text-base font-bold text-cinema-text">{t('transferRights.selectAssets')}</h3>
               </div>
               {sourceUserId && totalFilteredCount > 0 && (
                 <button
                   onClick={handleToggleSelectAll}
                   className="text-xs font-mono text-cinema-accent hover:underline uppercase tracking-wider font-bold"
                 >
-                  {isAllSelected ? t('Bỏ Chọn Tất Cả') : t('Chọn Tất Cả')}
+                  {isAllSelected ? t('transferRights.deselectAll') : t('transferRights.selectAll')}
                 </button>
               )}
             </div>
@@ -331,7 +331,7 @@ const TransferRightsView: React.FC = () => {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-cinema-text-muted" />
                 <input
                   type="text"
-                  placeholder={t('Tìm kiếm tài sản...')}
+                  placeholder={t('transferRights.searchAssets')}
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   className="w-full pl-9 pr-4 py-2 bg-cinema-elevated border border-cinema-border/60 rounded-full text-xs text-cinema-text focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-all"
@@ -344,13 +344,13 @@ const TransferRightsView: React.FC = () => {
                 {loadingItems ? (
                   <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-60">
                     <Loader2 size={24} className="animate-spin text-cinema-accent" />
-                    <span className="text-[10px] font-mono text-cinema-text-muted uppercase tracking-wider">{t('Loading Assets...')}</span>
+                    <span className="text-[10px] font-mono text-cinema-text-muted uppercase tracking-wider">{t('transferRights.loadingAssets')}</span>
                   </div>
                 ) : (
                   <>
                     {/* Category: CSVC */}
                     <div>
-                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">CƠ SỞ VẬT CHẤT (CSVC)</h4>
+                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">{t('transferRights.categoryFacilities')}</h4>
                       {filteredItems1.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {filteredItems1.map(item => {
@@ -374,13 +374,13 @@ const TransferRightsView: React.FC = () => {
                           })}
                         </div>
                       ) : (
-                        <p className="text-xs text-cinema-text-muted italic py-2">{t('Không có tài sản CSVC nào')}</p>
+                        <p className="text-xs text-cinema-text-muted italic py-2">{t('transferRights.noFacilitiesAssets')}</p>
                       )}
                     </div>
 
                     {/* Category: Operation */}
                     <div>
-                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">VẬN HÀNH</h4>
+                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">{t('transferRights.categoryOperations')}</h4>
                       {filteredItems2.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {filteredItems2.map(item => {
@@ -404,13 +404,13 @@ const TransferRightsView: React.FC = () => {
                           })}
                         </div>
                       ) : (
-                        <p className="text-xs text-cinema-text-muted italic py-2">{t('Không có quy trình vận hành nào')}</p>
+                        <p className="text-xs text-cinema-text-muted italic py-2">{t('transferRights.noOperationAssets')}</p>
                       )}
                     </div>
 
                     {/* Category: Movie */}
                     <div>
-                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">PHIM</h4>
+                      <h4 className="text-[10px] font-mono tracking-wider text-cinema-text-muted mb-3 border-b border-cinema-border/50 pb-1 uppercase font-bold">{t('transferRights.categoryMovies')}</h4>
                       {filteredItems3.length > 0 ? (
                         <div className="grid grid-cols-1 gap-3">
                           {filteredItems3.map(item => {
@@ -434,7 +434,7 @@ const TransferRightsView: React.FC = () => {
                           })}
                         </div>
                       ) : (
-                        <p className="text-xs text-cinema-text-muted italic py-2">{t('Không có suất chiếu phim nào')}</p>
+                        <p className="text-xs text-cinema-text-muted italic py-2">{t('transferRights.noMovieAssets')}</p>
                       )}
                     </div>
                   </>
@@ -444,7 +444,7 @@ const TransferRightsView: React.FC = () => {
               <div className="flex-1 flex flex-col items-center justify-center py-20 text-center opacity-45 border border-dashed border-cinema-border rounded-xl bg-cinema-elevated/30">
                 <Info size={36} className="mb-3 text-cinema-text-muted" />
                 <p className="text-xs font-semibold text-cinema-text-muted px-4 leading-relaxed">
-                  {t('Vui lòng chọn Quản lý bàn giao ở Bước 1 để hiển thị danh sách tài sản tương ứng.')}
+                  {t('transferRights.selectSourceFirst')}"
                 </p>
               </div>
             )}
@@ -457,10 +457,10 @@ const TransferRightsView: React.FC = () => {
             <div className="space-y-6 flex-grow">
               <div className="flex items-center gap-3">
                 <Users className="text-cinema-accent" size={20} />
-                <h3 className="text-base font-bold text-cinema-text">3. To Manager</h3>
+                <h3 className="text-base font-bold text-cinema-text">3. {t('transferRights.toManager')}</h3>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-mono tracking-wider text-cinema-text-muted uppercase">NGƯỜI TIẾP NHẬN</label>
+                <label className="text-[10px] font-mono tracking-wider text-cinema-text-muted uppercase">{t('transferRights.selectRecipient')}</label>
                 <div className="relative">
                   <select
                     value={targetUserId}
@@ -468,7 +468,7 @@ const TransferRightsView: React.FC = () => {
                     className="w-full bg-cinema-elevated border border-cinema-border/60 p-3 pr-10 rounded-xl text-sm appearance-none focus:border-cinema-accent focus:ring-1 focus:ring-cinema-accent/30 outline-none transition-colors text-cinema-text select cursor-pointer"
                     disabled={!sourceUserId}
                   >
-                    <option value="" disabled className="bg-cinema-surface">{t('Chọn người nhận quyền...')}</option>
+                    <option value="" disabled className="bg-cinema-surface">{t('transferRights.selectRecipientPlaceholder')}</option>
                     {managers
                       .filter(m => m.userId !== sourceUserId)
                       .map(m => (
@@ -483,7 +483,7 @@ const TransferRightsView: React.FC = () => {
               <div className="p-3 bg-cinema-accent/5 border border-cinema-accent/20 rounded mt-4">
                 <p className="text-xs text-cinema-text-muted flex gap-2 italic">
                   <Info size={14} className="text-cinema-accent shrink-0 mt-0.5" />
-                  {t('Người nhận sẽ có toàn quyền kiểm soát các tài sản đã chọn sau khi xác nhận.')}
+                  {t('transferRights.recipientInfoNote')}
                 </p>
               </div>
 
@@ -506,7 +506,7 @@ const TransferRightsView: React.FC = () => {
               disabled={!sourceUserId || !targetUserId || selectedItems.size === 0 || executing}
               className="mt-6 w-full bg-cinema-accent text-black py-3.5 rounded-xl font-bold hover:bg-cinema-accent-hover disabled:bg-cinema-accent/40 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2 shadow-lg shadow-cinema-accent/20 uppercase tracking-wider"
             >
-              <span>{executing ? t('ĐANG XỬ LÝ...') : t('BẮT ĐẦU CHUYỂN GIAO')}</span>
+              <span>{executing ? t('transferRights.executing') : t('transferRights.startTransfer')}</span>
               {executing ? (
                 <Loader2 size={16} className="animate-spin text-black" />
               ) : (
@@ -525,15 +525,15 @@ const TransferRightsView: React.FC = () => {
             <Info size={18} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-cinema-text mb-2">Hướng dẫn quy trình logic:</h4>
+            <h4 className="text-sm font-bold text-cinema-text mb-2">{t('transferRights.instructionTitle')}</h4>
             <div className="flex flex-wrap items-center gap-2 text-xs text-cinema-text-muted uppercase tracking-wider font-mono">
-              <span>1. Chọn quản lý bàn giao</span>
+              <span>{t('transferRights.instructionStep1')}</span>
               <ChevronRight size={12} className="text-cinema-text-muted/40" />
-              <span>2. Tích chọn các tài sản tại Cột 2</span>
+              <span>{t('transferRights.instructionStep2')}</span>
               <ChevronRight size={12} className="text-cinema-text-muted/40" />
-              <span>3. Chọn người tiếp nhận</span>
+              <span>{t('transferRights.instructionStep3')}</span>
               <ChevronRight size={12} className="text-cinema-text-muted/40" />
-              <span>4. Ấn Bắt đầu chuyển giao</span>
+              <span>{t('transferRights.instructionStep4')}</span>
             </div>
           </div>
         </div>

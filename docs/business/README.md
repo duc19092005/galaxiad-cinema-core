@@ -29,7 +29,7 @@
 | **Movie Manager** | Adds, edits, and removes movies in the system |
 | **Theater Manager** | Manages cinemas, auditoriums, staff shifts, and movie schedules |
 | **Facilities Manager** | Manages cinema facilities, auditorium layouts, and equipment |
-| **Admin** | Full access: manages users, roles, rights transfers, vouchers, and views audit logs |
+| **Admin** | Full access: manages users, roles, rights transfers, vouchers, promotion rules, and views audit logs |
 
 ---
 
@@ -91,13 +91,15 @@
 | **BS28** | No duplicate seats | The same seat cannot be selected twice in the same order. |
 | **BS29** | Unavailable seats | Seats that are already paid for or temporarily held by another customer cannot be selected. |
 | **BS30** | Isolated seat avoidance | Customers must not select seats in a way that leaves only **one single empty seat** between occupied seats in a row. |
-| **BS31** | Temporary seat holding | When a customer selects seats and starts checkout, those seats are held temporarily. If payment is not completed in time, the seats become available again. |
-| **BS32** | Payment method | Online payments are processed through **VNPay**. Counter sales can be processed in cash by a Cashier. |
-| **BS33** | Server-side pricing | The final ticket price is always calculated on the backend. The system does not trust the price sent from the browser. |
-| **BS34** | Pricing snapshot | Applied prices and promotions are saved as a snapshot on the order for historical reference. |
-| **BS35** | Booking confirmation | A booking is only valid after successful payment. The customer receives a booking code and can download a PDF ticket. |
-| **BS36** | Booking modification | Customers can modify or cancel a booking up to **2 hours before the showtime**. Cancellation fees may apply. |
-| **BS37** | Refund timeline | Refunds are processed to the original payment method within **5–7 business days**. |
+| **BS31** | Temporary seat holding (SSE) | When a customer selects seats and starts checkout, those seats are held temporarily via SSE + HTTP POST lock. If payment is not completed in **10 minutes**, the seats become available again. |
+| **BS32** | Auto-cancel pending orders | Orders that remain **Pending** (unpaid) for more than **10 minutes** are automatically cancelled by a Hangfire recurring job running every 5 minutes. Seats are released upon cancellation. |
+| **BS33** | Release seats on disconnect | If a client's SSE connection drops (closing browser, timeout), all seats locked by that client are automatically released. |
+| **BS34** | Payment method | Online payments are processed through **VNPay**. Counter sales can be processed in cash by a Cashier. |
+| **BS35** | Server-side pricing | The final ticket price is always calculated on the backend. The system does not trust the price sent from the browser. |
+| **BS36** | Pricing snapshot | Applied prices and promotions are saved as a snapshot on the order for historical reference. |
+| **BS37** | Booking confirmation | A booking is only valid after successful payment. The customer receives a booking code and can download a PDF ticket. |
+| **BS38** | Booking modification | Customers can modify or cancel a booking up to **2 hours before the showtime**. Cancellation fees may apply. |
+| **BS39** | Refund timeline | Refunds are processed to the original payment method within **5–7 business days**. |
 
 ### Order Statuses
 
@@ -115,25 +117,26 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS38** | Base price | Every movie format has a base ticket price. This is the starting point for all pricing calculations. |
-| **BS39** | Format discount | A cinema can set a discount percentage for specific movie formats. |
-| **BS40** | Format surcharge | A cinema can set a surcharge percentage for specific formats and customer segments. |
-| **BS41** | Promotion types | Promotions can be: **Fixed Ticket Price**, **Percent Discount**, **Fixed Discount**, or **Surcharge**. |
-| **BS42** | Promotion scope | A promotion rule can be scoped by format, cinema, auditorium, customer segment, date range, time range, and days of week. |
-| **BS43** | Promotion priority | When multiple promotions conflict, the one with the **highest priority** wins. |
-| **BS44** | Fixed price resolution | If multiple fixed-price rules match, only the one with the highest priority is used. If priority ties, the lowest price wins. |
-| **BS45** | Holiday exclusion | A promotion campaign can be configured to **not apply on public holidays**. |
-| **BS46** | Price floor | The final ticket price cannot go below zero. |
-| **BS47** | Public offers | Active promotions are shown publicly on the Offers page and are **applied automatically** during booking. No coupon code needed. |
+| **BS40** | Base price | Every movie format has a base ticket price. This is the starting point for all pricing calculations. |
+| **BS41** | Format discount | A cinema can set a discount percentage for specific movie formats. |
+| **BS42** | Format surcharge | A cinema can set a surcharge percentage for specific formats and customer segments. |
+| **BS43** | Promotion types | Promotions can be: **Fixed Ticket Price**, **Percent Discount**, **Fixed Discount**, or **Surcharge**. |
+| **BS44** | Promotion scope | A promotion rule can be scoped by format, cinema, auditorium, customer segment, date range, time range, and days of week. |
+| **BS45** | Promotion priority | When multiple promotions conflict, the one with the **highest priority** wins. |
+| **BS46** | Fixed price resolution | If multiple fixed-price rules match, only the one with the highest priority is used. If priority ties, the lowest price wins. |
+| **BS47** | Day-of-week promotion | Promotions can be configured to apply on specific days using a **7-bit bitmask** (bit 0 = Sunday, bit 1 = Monday, etc.). |
+| **BS48** | Holiday calendar exclusion | A promotion campaign can be configured to **not apply on public holidays** via a holiday calendar entity. |
+| **BS49** | Price floor | The final ticket price cannot go below zero. |
+| **BS50** | Public offers | Active promotions are shown publicly on the Offers page and are **applied automatically** during booking. No coupon code needed. |
 
 ### Special Customer Pricing
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS48** | Student pricing | Students may receive a fixed special ticket price when eligible. |
-| **BS49** | Senior discount | Senior citizens receive at least **20% discount** on ticket prices. |
-| **BS50** | Disabled discount | Severely disabled persons receive at least **50% discount**. |
-| **BS51** | Special assistance | Specially severely disabled persons receive **free tickets**. |
+| **BS51** | Student pricing | Students may receive a fixed special ticket price when eligible. |
+| **BS52** | Senior discount | Senior citizens receive at least **20% discount** on ticket prices. |
+| **BS53** | Disabled discount | Severely disabled persons receive at least **50% discount**. |
+| **BS54** | Special assistance | Specially severely disabled persons receive **free tickets**. |
 
 > Special pricing applies for direct purchases at the counter with valid identification.
 
@@ -143,13 +146,13 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS52** | Voucher creation | An Admin can create vouchers with a name, description, discount amount/percent, points cost, quantity, and validity dates. |
-| **BS53** | Voucher stock | Each voucher has a total quantity and a remaining quantity in stock. |
-| **BS54** | Voucher redemption | A customer can redeem a voucher using their loyalty reward points. |
-| **BS55** | Voucher out of stock | A voucher cannot be redeemed if its remaining quantity is zero. |
-| **BS56** | Voucher expiration | A voucher cannot be redeemed outside its valid date range. |
-| **BS57** | Insufficient points | A customer cannot redeem a voucher if they do not have enough reward points. |
-| **BS58** | Points deduction | Reward points are deducted immediately when a voucher is redeemed. |
+| **BS55** | Voucher creation | An Admin can create vouchers with a name, description, discount amount/percent, points cost, quantity, and validity dates. |
+| **BS56** | Voucher stock | Each voucher has a total quantity and a remaining quantity in stock. |
+| **BS57** | Voucher redemption | A customer can redeem a voucher using their loyalty reward points. |
+| **BS58** | Voucher out of stock | A voucher cannot be redeemed if its remaining quantity is zero. |
+| **BS59** | Voucher expiration | A voucher cannot be redeemed outside its valid date range. |
+| **BS60** | Insufficient points | A customer cannot redeem a voucher if they do not have enough reward points. |
+| **BS61** | Points deduction | Reward points are deducted immediately when a voucher is redeemed. |
 
 ---
 
@@ -157,20 +160,21 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS59** | Staff types | Staff members are classified as **Full-Time** or **Part-Time**. |
-| **BS60** | Full-time shift duration | Full-time shifts must last exactly **8 hours**. |
-| **BS61** | Part-time shift duration | Part-time shifts must last exactly **4 hours**. |
-| **BS62** | Rotating shift flexibility | Rotating shifts have no fixed duration — they can be any length. |
-| **BS63** | Part-time shift eligibility | Part-time staff can only register for part-time shifts (4h) or rotating shifts no longer than 4 hours. |
-| **BS64** | Full-time shift eligibility | Full-time staff who register for a shift shorter than 8 hours must provide a written reason. |
-| **BS65** | Cinema assignment | Staff can only register for shifts at the cinema they are assigned to. |
-| **BS66** | Shift within operating hours | All shifts must be within the cinema's operating hours (6:00 AM to 2:00 AM). |
-| **BS67** | No duplicate registration | A staff member cannot register for the same shift twice. |
-| **BS68** | Shift approval | Shift registrations start as **Pending** and require manager or Admin approval. |
-| **BS69** | Clock-in required | Staff must clock in at the start of their shift. |
-| **BS70** | Clock-out required | Staff must clock out at the end of their shift. |
-| **BS71** | Face registration | Staff can register their face for facial recognition-based clock-in. |
-| **BS72** | Payroll calculation | Pay is calculated based on logged working hours and the staff member's hourly rate. |
+| **BS62** | Staff types | Staff members are classified as **Full-Time** or **Part-Time**. |
+| **BS63** | Full-time shift duration | Full-time shifts must last exactly **8 hours**. |
+| **BS64** | Part-time shift duration | Part-time shifts must last exactly **4 hours**. |
+| **BS65** | Operating hours window | Shifts can only be assigned between **06:00 and 02:00 (next day)** (UTC+7). |
+| **BS66** | Part-time shift eligibility | Part-time staff can only register for part-time shifts (4h) or rotating shifts no longer than 4 hours. |
+| **BS67** | Full-time short shift reason | Full-time staff who register for a shift shorter than 8 hours must provide a written reason. |
+| **BS68** | Cinema assignment | Staff can only register for shifts at the cinema they are assigned to. |
+| **BS69** | Shift within operating hours | All shifts must be within the cinema's operating hours (6:00 AM to 2:00 AM). |
+| **BS70** | No duplicate registration | A staff member cannot register for the same shift twice. |
+| **BS71** | Shift approval | Shift registrations start as **Pending** and require manager or Admin approval. |
+| **BS72** | Clock-in required | Staff must clock in at the start of their shift. Clock-in is allowed only within the shift's time window. |
+| **BS73** | Clock-out required | Staff must clock out at the end of their shift. Clock-out time must be after clock-in time. |
+| **BS74** | Face recognition check-in | Staff can register their face (128-float vector encrypted in DB) for browser-based facial recognition clock-in/out. |
+| **BS75** | Payroll calculation | Pay is calculated based on logged working hours and the staff member's hourly rate. |
+| **BS76** | Payroll payment | Managers can calculate and pay payroll. Payroll can only be paid once. |
 
 ---
 
@@ -178,10 +182,10 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS73** | Comment moderation | Customer comments and reviews go through a **moderation** process before being published. |
-| **BS74** | Comment ownership | A customer can only **edit** or **delete** their own comments. |
-| **BS75** | Reply ownership | A customer can only **edit** or **delete** their own replies to comments. |
-| **BS76** | Comment eligibility | Only customers who have watched a movie can post comments and ratings on that movie. |
+| **BS77** | Comment moderation | Customer comments and reviews go through a **moderation** process before being published. |
+| **BS78** | Comment ownership | A customer can only **edit** or **delete** their own comments. |
+| **BS79** | Reply ownership | A customer can only **edit** or **delete** their own replies to comments. |
+| **BS80** | Comment eligibility | Only customers who have watched a movie (paid ticket, showtime ended) can post comments and ratings on that movie. One review per movie per customer. |
 
 ---
 
@@ -189,9 +193,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS77** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, cinema statistics, audit logs, and general FAQ. |
-| **BS78** | Role-based chatbot access | Some chatbot features require the user to be logged in and have the correct role. The chatbot declines unauthorized requests. |
-| **BS79** | Chatbot escalation | If the chatbot cannot understand the question, it directs the user to contact customer support. |
+| **BS81** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, cinema statistics, audit logs, and general FAQ. |
+| **BS82** | Role-based chatbot access | Guest users can only browse movies. Customers can book tickets. Managers can view schedules. Admin can manage everything. The chatbot declines unauthorized requests. |
+| **BS83** | 3-layer protection | The chatbot has 3 safety layers: (1) **Linguistic guard** — filters inappropriate language, (2) **Intent classification** — routes to correct tool, (3) **Tool registry** — each tool checks role permissions before executing. |
+| **BS84** | Chatbot escalation | If the chatbot cannot understand the question, it directs the user to contact customer support. |
+| **BS85** | Chatbot cannot create schedules | The LLM never directly creates showtime schedules. Managers must preview AI recommendations before applying. |
 
 ---
 
@@ -199,11 +205,12 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS80** | User management | Admin can view, add, block, or activate user accounts. |
-| **BS81** | Role assignment | Admin can assign or remove roles for any user. |
-| **BS82** | Rights transfer | Admin can transfer management rights from one person to another (e.g., transfer Theater Manager from staff A to staff B). |
-| **BS83** | Background job monitoring | Admin can view and monitor background job execution and status. |
-| **BS84** | Audit trail | All important actions are logged. Admin can view and search the audit log. |
+| **BS86** | User management | Admin can view, add, block, or activate user accounts. |
+| **BS87** | Role assignment | Admin can assign or remove roles for any user (7 available roles). |
+| **BS88** | Rights transfer | Admin can transfer management rights from one person to another (e.g., transfer Theater Manager from staff A to staff B). |
+| **BS89** | Background job monitoring | Admin can view and monitor background job execution and status (Hangfire dashboard). |
+| **BS90** | Audit trail | All important actions are logged. Admin can view and search the audit log. |
+| **BS91** | Shift deletion approval | When a manager deletes a shift that has staff registrations, an approval request is sent to Admin. |
 
 ---
 
@@ -211,11 +218,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS85** | Vietnam timezone | All times displayed to staff and customers use **Vietnam local time (UTC+7)**. |
-| **BS86** | Three-language support | The system supports **English** (default), **Vietnamese** (UTF-8 with diacritics), and **Russian** (Cyrillic alphabet). |
-| **BS87** | Data protection | Sensitive customer identity information must be protected before storage. |
-| **BS88** | User data rights | Users have the right to access, edit, and request deletion of their personal data. |
-| **BS89** | Cache freshness | Customer-facing data (movies, showtimes, etc.) must stay up to date after important business changes. |
+| **BS92** | Vietnam timezone | All times displayed to staff and customers use **Vietnam local time (UTC+7)**. Backend stores UTC, frontend auto-converts. |
+| **BS93** | Three-language support | The system supports **English** (default), **Vietnamese** (UTF-8 with diacritics), and **Russian** (Cyrillic alphabet). |
+| **BS94** | Data protection | Sensitive customer identity information must be protected before storage. |
+| **BS95** | User data rights | Users have the right to access, edit, and request deletion of their personal data. |
+| **BS96** | Cache freshness | Customer-facing data (movies, showtimes, etc.) must stay up to date after important business changes. Background services sync status every 10 minutes. |
 
 ---
 
@@ -223,17 +230,17 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS90** | Vietnamese film priority | Vietnamese film screenings are prioritized from **18:00 to 22:00**. |
-| **BS91** | Under-13 screening hours | Screenings for customers under 13 must end **before 22:00**. |
-| **BS92** | Under-16 screening hours | Screenings for customers under 16 must end **before 23:00**. |
-| **BS93** | No recording | Customers must not illegally record movies in the theater. |
-| **BS94** | No disruptive behavior | Customers must not cause disturbances or obstruct other customers. |
-| **BS95** | No smoking | Tobacco and e-cigarettes are not permitted in the theater. |
-| **BS96** | No weapons | Weapons, flammable materials, and toxic substances are prohibited. |
-| **BS97** | No pets | Pets are not allowed in the cinema (except service animals). |
-| **BS98** | No outside food | Outside food and drinks are not permitted without authorization. |
-| **BS99** | Privacy commitment | Customer personal data is not sold or transferred to third parties without consent. |
-| **BS100** | Cookie usage | The website uses cookies to improve user experience. Customers can manage cookie settings in their browser. |
+| **BS97** | Vietnamese film priority | Vietnamese film screenings are prioritized from **18:00 to 22:00**. |
+| **BS98** | Under-13 screening hours | Screenings for customers under 13 must end **before 22:00**. |
+| **BS99** | Under-16 screening hours | Screenings for customers under 16 must end **before 23:00**. |
+| **BS100** | No recording | Customers must not illegally record movies in the theater. |
+| **BS101** | No disruptive behavior | Customers must not cause disturbances or obstruct other customers. |
+| **BS102** | No smoking | Tobacco and e-cigarettes are not permitted in the theater. |
+| **BS103** | No weapons | Weapons, flammable materials, and toxic substances are prohibited. |
+| **BS104** | No pets | Pets are not allowed in the cinema (except service animals). |
+| **BS105** | No outside food | Outside food and drinks are not permitted without authorization. |
+| **BS106** | Privacy commitment | Customer personal data is not sold or transferred to third parties without consent. |
+| **BS107** | Cookie usage | The website uses cookies to improve user experience. Customers can manage cookie settings in their browser. |
 
 ---
 
@@ -241,11 +248,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS101** | Auditorium must have seats | An auditorium must contain at least one seat. |
-| **BS102** | Continuous rows | Seat rows must be filled continuously. A row cannot skip from position 1 to position 3 while position 2 is missing. |
-| **BS103** | Continuous columns | Seat columns must be filled continuously without gaps in the middle. |
-| **BS104** | No overlapping positions | Two seats cannot share the same grid position. |
-| **BS105** | No duplicate labels | Two seats cannot have the same seat label in the same auditorium. |
+| **BS108** | Auditorium must have seats | An auditorium must contain at least one seat. |
+| **BS109** | Continuous rows | Seat rows must be filled continuously. A row cannot skip from position 1 to position 3 while position 2 is missing. |
+| **BS110** | Continuous columns | Seat columns must be filled continuously without gaps in the middle. |
+| **BS111** | No overlapping positions | Two seats cannot share the same grid position. |
+| **BS112** | No duplicate labels | Two seats cannot have the same seat label in the same auditorium. |
 
 ---
 
@@ -253,6 +260,28 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS106** | Counter sales | A Cashier can sell tickets at the cinema counter by selecting movie, showtime, and seats on behalf of the customer. |
-| **BS107** | Customer lookup | A Cashier can look up a customer by email for counter sales. |
-| **BS108** | Department POS access | Cashiers log in using the department's shared account to access the POS system. |
+| **BS113** | Counter sales | A Cashier can sell tickets at the cinema counter by selecting movie, showtime, and seats on behalf of the customer. |
+| **BS114** | Customer lookup | A Cashier can look up a customer by email for counter sales. |
+| **BS115** | Department POS access | Cashiers log in using the department's shared account to access the POS system. |
+
+---
+
+## 16. Background Jobs & Automation
+
+| Code | Rule Name | Content |
+|:----:|:----------|:--------|
+| **BS116** | Auto-cancel pending orders | A Hangfire recurring job runs every 5 minutes to auto-cancel orders that are still **Pending** after 10 minutes, releasing locked seats. |
+| **BS117** | Auto-sync movie/schedule status | A background service runs every 10 minutes to update movie active status and schedule states (e.g., mark showtimes as "completed" after end time). |
+| **BS118** | Movie view buffer sync | Customer movie view events are buffered and synced in batches to reduce database writes. |
+| **BS119** | AI embedding sync on startup | When the AI service starts, it syncs movie data to generate and store vector embeddings in Qdrant for semantic search. |
+
+---
+
+## 17. Showtime AI Recommendations
+
+| Code | Rule Name | Content |
+|:----:|:----------|:--------|
+| **BS120** | AI only recommends, never creates | The AI generates recommendations but does not directly create showtimes. Managers must preview and apply. |
+| **BS121** | Preview before apply | Managers must preview recommendations before applying them to schedules. |
+| **BS122** | Apply re-validation | Apply always revalidates: movie authorization, format support, active date range, past time check, room conflicts, and cleaning gap (15 min). |
+| **BS123** | Action audit | All actions (applied, dismissed, failed validation, viewed) are stored for audit purposes. |

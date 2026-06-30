@@ -1,5 +1,6 @@
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.UseCases.TheaterManager;
+using Cinema.Application.UseCases.TheaterManager.ShiftManagement;
 using Cinema.Application.UseCases.TheaterManager.ShiftSchedules;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,6 +17,9 @@ namespace Cinema.Api.Controllers.Management.Theaters;
 public class TheaterManagerShiftController : ControllerBase
 {
     private readonly ApproveShiftRegistrationUseCase _approveShiftRegistrationUseCase;
+    private readonly RejectShiftRegistrationUseCase _rejectShiftRegistrationUseCase;
+    private readonly CancelShiftRegistrationUseCase _cancelShiftRegistrationUseCase;
+    private readonly AssignShiftDirectlyUseCase _assignShiftDirectlyUseCase;
     private readonly CalculatePayrollUseCase _calculatePayrollUseCase;
     private readonly PayPayrollUseCase _payPayrollUseCase;
     private readonly CreateShiftTemplateUseCase _createShiftTemplateUseCase;
@@ -31,6 +35,9 @@ public class TheaterManagerShiftController : ControllerBase
  
     public TheaterManagerShiftController(
         ApproveShiftRegistrationUseCase approveShiftRegistrationUseCase,
+        RejectShiftRegistrationUseCase rejectShiftRegistrationUseCase,
+        CancelShiftRegistrationUseCase cancelShiftRegistrationUseCase,
+        AssignShiftDirectlyUseCase assignShiftDirectlyUseCase,
         CalculatePayrollUseCase calculatePayrollUseCase,
         PayPayrollUseCase payPayrollUseCase,
         CreateShiftTemplateUseCase createShiftTemplateUseCase,
@@ -45,6 +52,9 @@ public class TheaterManagerShiftController : ControllerBase
         DeleteShiftScheduleUseCase deleteShiftScheduleUseCase)
     {
         _approveShiftRegistrationUseCase = approveShiftRegistrationUseCase;
+        _rejectShiftRegistrationUseCase = rejectShiftRegistrationUseCase;
+        _cancelShiftRegistrationUseCase = cancelShiftRegistrationUseCase;
+        _assignShiftDirectlyUseCase = assignShiftDirectlyUseCase;
         _calculatePayrollUseCase = calculatePayrollUseCase;
         _payPayrollUseCase = payPayrollUseCase;
         _createShiftTemplateUseCase = createShiftTemplateUseCase;
@@ -63,7 +73,7 @@ public class TheaterManagerShiftController : ControllerBase
     {
         var sid = User.FindFirstValue(ClaimTypes.Sid);
         if (string.IsNullOrEmpty(sid) || !Guid.TryParse(sid, out var userId))
-            throw new UnauthorizedAccessException("Cannot determine user identity.");
+            throw new UnauthorizedAccessException(Cinema.Domain.Localization.Messages.Auth.CannotDetermineIdentity);
         return userId;
     }
 
@@ -96,7 +106,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> ApproveShift(Guid id, [FromBody] ReqApproveShiftDto dto)
     {
         var managerId = GetCurrentUserId();
-        var result = await _approveShiftRegistrationUseCase.ApproveAsync(id, managerId, dto.Notes);
+        var result = await _approveShiftRegistrationUseCase.ExecuteAsync(id, managerId, dto.Notes);
         return Ok(result);
     }
 
@@ -105,7 +115,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> RejectShift(Guid id, [FromBody] ReqApproveShiftDto dto)
     {
         var managerId = GetCurrentUserId();
-        var result = await _approveShiftRegistrationUseCase.RejectAsync(id, managerId, dto.Notes);
+        var result = await _rejectShiftRegistrationUseCase.ExecuteAsync(id, managerId, dto.Notes);
         return Ok(result);
     }
 
@@ -114,7 +124,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> CancelShift(Guid id, [FromBody] ReqApproveShiftDto dto)
     {
         var managerId = GetCurrentUserId();
-        var result = await _approveShiftRegistrationUseCase.CancelApprovedAsync(id, managerId, dto.Notes);
+        var result = await _cancelShiftRegistrationUseCase.ExecuteAsync(id, managerId, dto.Notes);
         return Ok(result);
     }
 
@@ -123,7 +133,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> AssignShift([FromBody] ReqAssignShiftDto dto)
     {
         var managerId = GetCurrentUserId();
-        var result = await _approveShiftRegistrationUseCase.AssignDirectlyAsync(
+        var result = await _assignShiftDirectlyUseCase.ExecuteAsync(
             dto.StaffId, dto.ShiftTemplateId, dto.RegistrationDate, managerId);
         return Ok(result);
     }
@@ -141,7 +151,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> UpdateStaffProfile(Guid id, [FromBody] ReqUpdateStaffProfileDto dto)
     {
         var result = await _updateStaffProfileUseCase.ExecuteAsync(id, dto);
-        if (!result.IsSuccess && result.Message?.Contains("Không tìm thấy") == true)
+        if (!result.IsSuccess && result.Message?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
             return NotFound(result);
         return result.IsSuccess ? Ok(result) : Forbid();
     }
@@ -169,7 +179,7 @@ public class TheaterManagerShiftController : ControllerBase
     public async Task<IActionResult> GetStaffPayroll(Guid staffId)
     {
         var result = await _getStaffPayrollUseCase.ExecuteAsync(staffId);
-        if (!result.IsSuccess && result.Message?.Contains("Không tìm thấy") == true)
+        if (!result.IsSuccess && result.Message?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
             return NotFound(result);
         return result.IsSuccess ? Ok(result) : Forbid();
     }

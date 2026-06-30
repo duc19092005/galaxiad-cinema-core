@@ -36,10 +36,10 @@ public class UpdateDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("Department not found.", 404, "DEPT_ERR");
+            throw new AppException(Messages.Department.NotFound, 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("You do not have permission to modify this department.", 403, "DEPT_ERR");
+            throw new AppException(Messages.Department.NoPermissionManageCinema, 403, "DEPT_ERR");
 
         // 1. Check uniqueness of the name if renaming or reactivating the department
         bool nameChanging = request.DepartmentName != null && request.DepartmentName != department.DepartmentName;
@@ -50,7 +50,7 @@ public class UpdateDepartmentUseCase
             string targetName = request.DepartmentName ?? department.DepartmentName;
             var exists = await _departmentRepository.DepartmentExistsExcludeAsync(department.CinemaId, targetName, departmentId);
             if (exists)
-                throw new AppException($"Department '{targetName}' already exists in this cinema.", 400, "DEPT_ERR");
+                throw new AppException(Messages.Department.AlreadyExists(targetName), 400, "DEPT_ERR");
         }
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -87,14 +87,14 @@ public class UpdateDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Department updated successfully."
+                Message = Messages.Department.UpdatedSuccessfully
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Error updating department: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException(string.Format(Messages.Department.UpdateError(ex.Message)), 500, "DEPT_ERR");
         }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Comments;
-using Cinema.Application.UseCases.Comments;
+using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -61,7 +61,7 @@ public class GoogleLoginInitUseCase
         {
             IsSuccess = true,
             Data = new ResGoogleLoginInitDto { RedirectUrl = redirectUrl },
-            Message = "Google login URL generated successfully"
+            Message = Messages.Platform.GoogleLoginUrlGenerated
         };
     }
 
@@ -73,7 +73,7 @@ public class GoogleLoginInitUseCase
                      ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback",
             "mobile" => _configuration["Google:MobileCallbackUrl"]
                          ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback-mobile",
-            _ => throw new AppException("Invalid platform. Use 'web' or 'mobile'", 400, "G05")
+            _ => throw new AppException(Messages.Platform.InvalidPlatform, 400, "G05")
         };
     }
 }

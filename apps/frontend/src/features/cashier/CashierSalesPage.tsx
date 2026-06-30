@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Film, Calendar, Clock, Monitor, ShoppingCart, User, CreditCard,
   CheckCircle2, Printer, LogOut, Loader2, RefreshCw, Ticket, ChevronRight, Banknote
 } from 'lucide-react';
-import * as signalR from '@microsoft/signalr';
 import { publicApi } from '../../api/publicApi';
+import { useSeatSse } from '../../hooks/useSeatSse';
 import { bookingApi } from '../../api/bookingApi';
 import { staffShiftApi, CASHIER_SHIFT_SESSION_KEY, readCashierShiftSession } from '../../api/staffShiftApi';
 import { authApi } from '../../api/authApi';
@@ -13,9 +14,9 @@ import Cookies from 'js-cookie';
 import type { SearchScheduleResult, PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import type { CashierShiftSession } from '../../types/shift.types';
 import { showError, showSuccess } from '../../utils/ToastUtils';
-import { API_BASE_URL } from '../../api/axiosClient';
 
 const CashierSalesPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   // Cashier Shift Session
@@ -55,9 +56,8 @@ const CashierSalesPage: React.FC = () => {
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // SignalR
-  const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
-  const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
+  // SSE Seat Lock
+  const { lockedSeats, lockSeat, unlockSeat } = useSeatSse(selectedScheduleId);
 
   // Parse cinemaName from session
   useEffect(() => {
@@ -95,7 +95,7 @@ const CashierSalesPage: React.FC = () => {
       const response = await publicApi.searchSchedules(selectedDate, undefined, cinemaId);
       setSchedules(response.data || []);
     } catch (err) {
-      showError('Không thể tải danh sách suất chiếu ngày hôm nay.');
+      showError(t('cashierSales.errorLoadingSchedule'));
     } finally {
       setLoadingCatalog(false);
     }
@@ -104,61 +104,6 @@ const CashierSalesPage: React.FC = () => {
   useEffect(() => {
     fetchSchedulesCatalog();
   }, [fetchSchedulesCatalog]);
-
-  // SignalR Connection lifecycle
-  useEffect(() => {
-    if (!selectedScheduleId) {
-      if (hubConnection) {
-        hubConnection.stop();
-        setHubConnection(null);
-      }
-      return;
-    }
-
-    let wsUrl = API_BASE_URL
-      ? `${API_BASE_URL}/ws/seat`
-      : 'https://apicinestartplus.runasp.net/ws/seat';
-    wsUrl = wsUrl.replace(/([^:]\/)\/+/g, "$1");
-
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl(wsUrl, { withCredentials: true })
-      .withAutomaticReconnect()
-      .build();
-
-    const startConnection = async () => {
-      try {
-        connection.on("OnInitialLockedSeats", (initialLockedSeats: Record<string, string>) => {
-          setLockedSeats(initialLockedSeats);
-        });
-        connection.on("OnSeatSelected", (seatId: string, userName: string) => {
-          setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
-        });
-        connection.on("OnSeatUnselected", (seatId: string) => {
-          setLockedSeats(prev => {
-            const next = { ...prev };
-            delete next[seatId];
-            return next;
-          });
-        });
-
-        await connection.start();
-        await connection.invoke("JoinSchedule", selectedScheduleId);
-        setHubConnection(connection);
-      } catch (err) {
-        console.error("SignalR Connection Error:", err);
-      }
-    };
-
-    startConnection();
-
-    return () => {
-      if (connection.state === signalR.HubConnectionState.Connected) {
-        connection.invoke("LeaveSchedule", selectedScheduleId)
-          .then(() => connection.stop())
-          .catch(err => console.error("Error leaving schedule:", err));
-      }
-    };
-  }, [selectedScheduleId]);
 
   // Fetch Seat Map & Pricing
   const fetchSeatData = useCallback(async (scheduleId: string) => {
@@ -183,7 +128,7 @@ const CashierSalesPage: React.FC = () => {
         setSeatSegmentMap(initialSegments);
       }
     } catch (err) {
-      showError('Không thể tải sơ đồ ghế của suất chiếu này.');
+      showError(t('cashierSales.errorLoadingSeatMap'));
       setSeatMap(null);
       setPricing(null);
     } finally {
@@ -204,7 +149,7 @@ const CashierSalesPage: React.FC = () => {
   const handleCustomerLookup = async () => {
     const email = customerEmail.trim();
     if (!email) {
-      showError('Vui lòng nhập Email để tra cứu.');
+      showError(t('cashierSales.errorEnterEmail'));
       return;
     }
     setCustomerLookupStatus('loading');
@@ -214,14 +159,14 @@ const CashierSalesPage: React.FC = () => {
         setCustomerName(response.data.userName);
         setCustomerPhone(response.data.phoneNumber);
         setCustomerLookupStatus('found');
-        showSuccess(`Đã tìm thấy thành viên: ${response.data.userName}`);
+        showSuccess(t('cashierSales.memberFound', { userName: response.data.userName }));
       } else {
         setCustomerLookupStatus('not-found');
-        showError('Không tìm thấy tài khoản thành viên với email này.');
+        showError(t('cashierSales.memberNotFound'));
       }
     } catch {
       setCustomerLookupStatus('not-found');
-      showError('Lỗi tra cứu thông tin khách hàng.');
+      showError(t('cashierSales.errorLookupCustomer'));
     }
   };
 
@@ -236,26 +181,14 @@ const CashierSalesPage: React.FC = () => {
 
     if (isCurrentlySelected) {
       setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-      if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-        try {
-          await hubConnection.invoke("UnselectSeat", selectedScheduleId, seat.seatId);
-        } catch (err) {
-          console.error("Error unselecting seat", err);
-        }
-      }
+      await unlockSeat(seat.seatId);
     } else {
       if (selectedSeats.length >= 10) {
-        showError('Không thể chọn quá 10 vé trên một đơn hàng.');
+        showError(t('cashierSales.errorMaxSeats'));
         return;
       }
       setSelectedSeats(prev => [...prev, seat]);
-      if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-        try {
-          await hubConnection.invoke("SelectSeat", selectedScheduleId, seat.seatId, cashierName);
-        } catch (err) {
-          console.error("Error selecting seat", err);
-        }
-      }
+      await lockSeat(seat.seatId, cashierName);
     }
   };
 
@@ -272,14 +205,14 @@ const CashierSalesPage: React.FC = () => {
   const handleCheckout = async () => {
     if (!selectedScheduleId) return;
     if (selectedSeats.length === 0) {
-      showError('Vui lòng chọn ít nhất 1 ghế.');
+      showError(t('cashierSales.errorSelectAtLeastOneSeat'));
       return;
     }
 
     const name = customerName.trim();
     const phone = customerPhone.trim();
     if (!name || !phone) {
-      showError('Vui lòng nhập tên và số điện thoại khách hàng.');
+      showError(t('cashierSales.errorEnterCustomerInfo'));
       return;
     }
 
@@ -314,7 +247,7 @@ const CashierSalesPage: React.FC = () => {
           customerPhone: phone,
           orderDate: res.data.orderDate || new Date().toISOString()
         });
-        showSuccess('Đã thanh toán bằng Tiền mặt thành công!');
+        showSuccess(t('cashierSales.cashPaymentSuccess'));
         setShowSuccessModal(true);
 
         // Reset state
@@ -326,13 +259,13 @@ const CashierSalesPage: React.FC = () => {
         // VNPay payment setup
         if (res.data.paymentUrl) {
           window.open(res.data.paymentUrl, '_blank');
-          showSuccess('Đã mở liên kết cổng thanh toán VNPay.');
+          showSuccess(t('cashierSales.vnpayPaymentOpened'));
         } else {
-          showError('Không lấy được link thanh toán VNPay.');
+          showError(t('cashierSales.errorVnpayLink'));
         }
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Tạo đơn hàng thất bại. Vui lòng kiểm tra lại.';
+      const errorMsg = err.response?.data?.message || t('cashierSales.errorOrderCreation');
       showError(errorMsg);
     } finally {
       setBookingLoading(false);
@@ -341,14 +274,14 @@ const CashierSalesPage: React.FC = () => {
 
   // Clock Out
   const handleClockOut = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn kết thúc ca trực và bàn giao thiết bị?')) return;
+    if (!window.confirm(t('cashierSales.confirmEndShift'))) return;
     setBookingLoading(true);
     try {
       const staffToken = session?.accessToken;
       await staffShiftApi.clockOut({}, staffToken);
-      showSuccess('Đã đăng xuất ca trực thành công.');
+      showSuccess(t('cashierSales.shiftLogoutSuccess'));
     } catch (err) {
-      showError('Bàn giao ca thất bại ở máy chủ, nhưng ca trực cục bộ sẽ được dọn dẹp.');
+      showError(t('cashierSales.errorShiftHandover'));
     } finally {
       localStorage.removeItem(CASHIER_SHIFT_SESSION_KEY);
       setSession(null);
@@ -359,7 +292,7 @@ const CashierSalesPage: React.FC = () => {
 
   // Website logout (completely log out of the shared POS account)
   const handleWebsiteLogout = async () => {
-    if (!window.confirm('Bạn có chắc chắn muốn đăng xuất tài khoản POS khỏi trình duyệt này?')) return;
+    if (!window.confirm(t('cashierSales.confirmLogoutPos'))) return;
     setBookingLoading(true);
     try {
       if (session?.accessToken) {
@@ -376,7 +309,7 @@ const CashierSalesPage: React.FC = () => {
       Cookies.remove('X-Access-Token');
       setSession(null);
       setBookingLoading(false);
-      showSuccess('Đã đăng xuất tài khoản thành công.');
+      showSuccess(t('cashierSales.logoutSuccess'));
       navigate('/login', { replace: true });
     }
   };
@@ -466,7 +399,7 @@ const CashierSalesPage: React.FC = () => {
               <User className="text-[#ff8a00]" size={16} />
               <div className="text-left">
                 <p className="text-xs font-bold text-white leading-tight m-0">{session.staffName}</p>
-                <p className="text-[10px] text-zinc-400 m-0">Thu ngân đang hoạt động</p>
+                <p className="text-[10px] text-zinc-400 m-0">{t('cashierSales.cashierActive')}</p>
               </div>
             </div>
             
@@ -476,7 +409,7 @@ const CashierSalesPage: React.FC = () => {
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-red-400 bg-red-950/20 border border-red-900/30 hover:bg-red-950/40 hover:text-red-300 transition-colors"
             >
               <LogOut size={14} />
-              Bàn giao ca
+              {t('cashierSales.shiftHandover')}
             </button>
 
             <button
@@ -485,7 +418,7 @@ const CashierSalesPage: React.FC = () => {
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-zinc-400 bg-white/5 border border-white/10 hover:bg-white/10 hover:text-white transition-colors"
             >
               <LogOut size={14} />
-              Đăng xuất
+              {t('cashierSales.logout')}
             </button>
           </div>
         )}
@@ -501,7 +434,7 @@ const CashierSalesPage: React.FC = () => {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
               <input
                 type="text"
-                placeholder="Tìm phim, thể loại..."
+                placeholder={t('cashierSales.searchMovies')}
                 value={searchKeyword}
                 onChange={e => setSearchKeyword(e.target.value)}
                 className="w-full bg-[#161622] text-sm text-white pl-9 pr-4 py-2.5 rounded-xl border border-white/5 outline-none focus:border-[#ff8a00]/50 transition-colors"
@@ -509,7 +442,7 @@ const CashierSalesPage: React.FC = () => {
             </div>
             <div className="mt-3 flex items-center gap-2">
               <Calendar size={14} className="text-zinc-400" />
-              <span className="text-xs text-zinc-300 font-medium">Hôm nay ({new Date(selectedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })})</span>
+              <span className="text-xs text-zinc-300 font-medium">{t('cashierSales.today')} ({new Date(selectedDate).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })})</span>
             </div>
           </div>
 
@@ -517,12 +450,12 @@ const CashierSalesPage: React.FC = () => {
             {loadingCatalog ? (
               <div className="flex flex-col items-center justify-center py-20 gap-3">
                 <Loader2 className="animate-spin text-[#ff8a00]" size={32} />
-                <p className="text-xs text-zinc-400">Đang tải phim...</p>
+                <p className="text-xs text-zinc-400">{t('cashierSales.loadingMovies')}</p>
               </div>
             ) : filteredSchedules.length === 0 ? (
               <div className="text-center py-16 text-zinc-500">
                 <Film className="mx-auto text-zinc-700 mb-3" size={36} />
-                <p className="text-xs">Không tìm thấy phim nào chiếu hôm nay</p>
+                <p className="text-xs">{t('cashierSales.noMoviesFound')}</p>
               </div>
             ) : (
               filteredSchedules.map(movie => {
@@ -563,7 +496,7 @@ const CashierSalesPage: React.FC = () => {
                             {movie.movieRequiredAgeSymbol}
                           </span>
                           <span className="text-[10px] text-zinc-400 flex items-center gap-1 font-semibold">
-                            <Clock size={10} /> {movie.movieDuration} phút
+                            <Clock size={10} /> {movie.movieDuration} {t('cashierSales.minutes')}
                           </span>
                         </div>
                       </div>
@@ -572,7 +505,7 @@ const CashierSalesPage: React.FC = () => {
                     {/* Showtimes slots list if selected */}
                     {isSelected && (
                       <div className="px-3 pb-3 pt-2 border-t border-white/5 bg-black/10">
-                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Suất chiếu hôm nay:</p>
+                        <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">{t('cashierSales.todayShowtimes')}</p>
                         <div className="grid grid-cols-2 gap-2">
                           {movie.cinemas.flatMap(c => c.formatShowtimes).flatMap(fs => 
                             fs.showtimes.map(st => {
@@ -611,16 +544,16 @@ const CashierSalesPage: React.FC = () => {
           {loadingSeats ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
               <Loader2 className="animate-spin text-[#ff8a00]" size={36} />
-              <p className="text-sm text-zinc-400">Đang tải sơ đồ phòng chiếu...</p>
+              <p className="text-sm text-zinc-400">{t('cashierSales.loadingSeatMap')}</p>
             </div>
           ) : !selectedScheduleId || !seatMap ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
               <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center mb-4">
                 <Monitor className="text-zinc-600" size={32} />
               </div>
-              <h2 className="text-lg font-bold text-white mb-1">Màn hình phòng chiếu</h2>
+              <h2 className="text-lg font-bold text-white mb-1">{t('cashierSales.auditoriumScreen')}</h2>
               <p className="text-xs text-zinc-500 max-w-xs leading-relaxed">
-                Vui lòng chọn một bộ phim và suất chiếu ở cột bên trái để hiển thị sơ đồ phòng chiếu và chọn ghế ngồi.
+                {t('cashierSales.selectMovieAndShowtime')}
               </p>
             </div>
           ) : (
@@ -631,13 +564,13 @@ const CashierSalesPage: React.FC = () => {
                   <span className="text-[10px] uppercase font-extrabold tracking-widest text-[#ff8a00]">{seatMap.movieVisualFormatName}</span>
                   <h2 className="text-base font-extrabold text-white leading-tight mt-0.5 mb-1">{seatMap.movieName}</h2>
                   <p className="text-xs text-zinc-400 m-0">
-                    Phòng chiếu: <span className="text-white font-bold">{seatMap.auditoriumName}</span> • Giờ chiếu: <span className="text-white font-bold">{new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                    {t('cashierSales.room')}: <span className="text-white font-bold">{seatMap.auditoriumName}</span> • {t('cashierSales.showTime')}: <span className="text-white font-bold">{new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                   </p>
                 </div>
                 <button
                   onClick={() => selectedScheduleId && fetchSeatData(selectedScheduleId)}
                   className="btn-icon p-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-400 hover:text-white"
-                  title="Tải lại ghế"
+                  title={t('cashierSales.reloadSeats')}
                 >
                   <RefreshCw size={14} />
                 </button>
@@ -646,7 +579,7 @@ const CashierSalesPage: React.FC = () => {
               {/* Curve screen */}
               <div className="w-full flex flex-col items-center mb-12">
                 <div className="screen-curve"></div>
-                <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-500 mt-2.5">Màn hình chiếu</p>
+                <p className="text-[9px] tracking-[0.4em] uppercase text-zinc-500 mt-2.5">{t('cashierSales.screen')}</p>
               </div>
 
               {/* Seats Grid */}
@@ -690,7 +623,7 @@ const CashierSalesPage: React.FC = () => {
                             ? 'seat-selected'
                             : 'bg-[#181824] text-zinc-300 border-white/5 hover:bg-[#202030] hover:text-white cursor-pointer'
                         }`}
-                        title={isLockedByOther ? `Nhân viên khác đang chọn: ${lockedBy}` : seat.seatName}
+                        title={isLockedByOther ? `${t('cashierSales.lockedByOther')}: ${lockedBy}` : seat.seatName}
                       >
                         {seat.seatName}
                       </button>
@@ -703,19 +636,19 @@ const CashierSalesPage: React.FC = () => {
               <div className="flex items-center justify-center gap-6 px-4 py-3 rounded-xl bg-white/5 border border-white/5 text-xs text-zinc-400">
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded bg-[#181824] border border-white/5"></div>
-                  <span>Trống</span>
+                  <span>{t('cashierSales.available')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded bg-[#ff8a00] border border-[#ff8a00]"></div>
-                  <span>Đang chọn</span>
+                  <span>{t('cashierSales.selecting')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded bg-red-950/30 border border-red-900/50"></div>
-                  <span>Đang giữ chỗ</span>
+                  <span>{t('cashierSales.reserving')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-3.5 h-3.5 rounded bg-zinc-950/60 border border-zinc-900 opacity-30"></div>
-                  <span>Đã bán</span>
+                  <span>{t('cashierSales.sold')}</span>
                 </div>
               </div>
             </div>
@@ -726,7 +659,7 @@ const CashierSalesPage: React.FC = () => {
         <section className="col-span-4 border-l border-white/5 bg-[#0b0b0f] flex flex-col overflow-hidden">
           <div className="p-4 border-b border-white/5 bg-black/10 flex items-center gap-2">
             <ShoppingCart size={16} className="text-[#ff8a00]" />
-            <h2 className="text-sm font-bold text-white m-0">Chi tiết thanh toán</h2>
+            <h2 className="text-sm font-bold text-white m-0">{t('cashierSales.paymentDetails')}</h2>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scroll p-4 space-y-5">
@@ -734,17 +667,17 @@ const CashierSalesPage: React.FC = () => {
             {seatMap && (
               <div className="p-3 bg-white/5 border border-white/5 rounded-xl space-y-1.5 text-xs text-zinc-400">
                 <div className="flex justify-between">
-                  <span>Phim:</span>
+                  <span>{t('cashierSales.movie')}:</span>
                   <span className="font-bold text-white text-right">{seatMap.movieName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Khung giờ:</span>
+                  <span>{t('cashierSales.timeSlot')}:</span>
                   <span className="font-semibold text-white">
                     {new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ({new Date(seatMap.startTime).toLocaleDateString('vi-VN')})
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Phòng chiếu:</span>
+                  <span>{t('cashierSales.auditorium')}:</span>
                   <span className="font-semibold text-white">{seatMap.auditoriumName}</span>
                 </div>
               </div>
@@ -752,10 +685,10 @@ const CashierSalesPage: React.FC = () => {
 
             {/* Selected Seats Listing */}
             <div>
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">Ghế đã chọn ({selectedSeats.length})</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">{t('cashierSales.selectedSeatsCount', { count: selectedSeats.length })}</label>
               {selectedSeats.length === 0 ? (
                 <div className="text-center py-6 border border-dashed border-white/5 rounded-xl text-zinc-500 text-xs italic">
-                  Chưa có ghế nào được chọn
+                  {t('cashierSales.noSeatsSelected')}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -765,7 +698,7 @@ const CashierSalesPage: React.FC = () => {
                     return (
                       <div key={seat.seatId} className="p-3 bg-[#161622] border border-white/5 rounded-xl flex flex-col gap-2">
                         <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-[#ff8a00] text-sm">Ghế {seat.seatName}</span>
+                          <span className="font-bold text-[#ff8a00] text-sm">{t('cashierSales.seat')} {seat.seatName}</span>
                           <span className="font-extrabold text-white text-sm">
                             {(segment?.finalPrice || 0).toLocaleString('vi-VN')} đ
                           </span>
@@ -773,7 +706,7 @@ const CashierSalesPage: React.FC = () => {
                         
                         {/* Segment selector (Adult, student etc.) */}
                         <div className="flex gap-2 items-center">
-                          <span className="text-[10px] text-zinc-400">Loại vé:</span>
+                          <span className="text-[10px] text-zinc-400">{t('cashierSales.ticketType')}:</span>
                           <select
                             value={seatSegmentMap[seat.seatId] || ''}
                             onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
@@ -795,12 +728,12 @@ const CashierSalesPage: React.FC = () => {
 
             {/* Customer Lookup Info */}
             <div className="p-4 bg-[#161622]/45 border border-white/5 rounded-xl space-y-3.5">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Tài khoản thành viên (Tùy chọn)</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">{t('cashierSales.memberAccountOptional')}</label>
               
               <div className="flex gap-2">
                 <input
                   type="email"
-                  placeholder="Email thành viên..."
+                  placeholder={t('cashierSales.memberEmailPlaceholder')}
                   value={customerEmail}
                   onChange={e => setCustomerEmail(e.target.value)}
                   className="flex-1 bg-black/40 text-xs text-white px-3 py-2 rounded-lg border border-white/5 outline-none focus:border-[#ff8a00]/30"
@@ -810,35 +743,35 @@ const CashierSalesPage: React.FC = () => {
                   onClick={handleCustomerLookup}
                   className="px-3 py-2 rounded-lg bg-zinc-800 text-xs font-bold text-white border border-white/5 hover:bg-zinc-700 active:scale-95 transition-all"
                 >
-                  Tra cứu
+                  {t('cashierSales.lookup')}
                 </button>
               </div>
 
               {customerLookupStatus !== 'idle' && (
                 <p className="text-[10px] m-0 text-zinc-400">
-                  {customerLookupStatus === 'loading' && 'Đang tra cứu thành viên...'}
-                  {customerLookupStatus === 'found' && 'Đã tìm thấy tài khoản. Áp dụng giảm giá thành viên.'}
-                  {customerLookupStatus === 'not-found' && 'Không tìm thấy tài khoản. Đơn hàng sẽ lưu thông tin khách lẻ.'}
+                  {customerLookupStatus === 'loading' && t('cashierSales.lookupLoading')}
+                  {customerLookupStatus === 'found' && t('cashierSales.lookupFound')}
+                  {customerLookupStatus === 'not-found' && t('cashierSales.lookupNotFound')}
                 </p>
               )}
 
               {/* Guest / Lookup details fields */}
               <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-white/5">
                 <div>
-                  <label className="text-[9px] text-zinc-400 block mb-1">Tên khách hàng *</label>
+                  <label className="text-[9px] text-zinc-400 block mb-1">{t('cashierSales.customerName')} *</label>
                   <input
                     type="text"
-                    placeholder="Tên khách..."
+                    placeholder={t('cashierSales.customerNamePlaceholder')}
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
                     className="w-full bg-black/40 text-xs text-white px-2.5 py-2 rounded-lg border border-white/5 outline-none focus:border-[#ff8a00]/30"
                   />
                 </div>
                 <div>
-                  <label className="text-[9px] text-zinc-400 block mb-1">Số điện thoại *</label>
+                  <label className="text-[9px] text-zinc-400 block mb-1">{t('cashierSales.phoneNumber')} *</label>
                   <input
                     type="tel"
-                    placeholder="SĐT khách..."
+                    placeholder={t('cashierSales.phoneNumberPlaceholder')}
                     value={customerPhone}
                     onChange={e => setCustomerPhone(e.target.value)}
                     className="w-full bg-black/40 text-xs text-white px-2.5 py-2 rounded-lg border border-white/5 outline-none focus:border-[#ff8a00]/30"
@@ -849,7 +782,7 @@ const CashierSalesPage: React.FC = () => {
 
             {/* Payment Method Selector */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">Hình thức thanh toán</label>
+              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">{t('cashierSales.paymentMethod')}</label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
@@ -861,7 +794,7 @@ const CashierSalesPage: React.FC = () => {
                   }`}
                 >
                   <Banknote size={20} className="mb-1" />
-                  <span className="text-xs font-bold">Tiền mặt (CASH)</span>
+                  <span className="text-xs font-bold">{t('cashierSales.cashPayment')}</span>
                 </button>
 
                 <button
@@ -874,7 +807,7 @@ const CashierSalesPage: React.FC = () => {
                   }`}
                 >
                   <CreditCard size={20} className="mb-1" />
-                  <span className="text-xs font-bold">Chuyển khoản (VNPay)</span>
+                  <span className="text-xs font-bold">{t('cashierSales.vnpayPayment')}</span>
                 </button>
               </div>
             </div>
@@ -883,7 +816,7 @@ const CashierSalesPage: React.FC = () => {
           {/* Checkout footer block */}
           <div className="p-4 border-t border-white/5 bg-[#0f0f15]/90 space-y-3.5">
             <div className="flex justify-between items-center">
-              <span className="text-zinc-400 text-xs">Tổng tiền thanh toán:</span>
+              <span className="text-zinc-400 text-xs">{t('cashierSales.totalPayment')}:</span>
               <span className="text-xl font-extrabold text-[#ff8a00]">
                 {totalPrice.toLocaleString('vi-VN')} đ
               </span>
@@ -905,7 +838,7 @@ const CashierSalesPage: React.FC = () => {
               ) : (
                 <>
                   <CheckCircle2 size={18} />
-                  <span>Xác nhận &amp; In vé</span>
+                  <span>{t('cashierSales.confirmAndPrint')}</span>
                 </>
               )}
             </button>
@@ -922,8 +855,8 @@ const CashierSalesPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <h2 className="text-lg font-extrabold text-white">Thanh toán hoàn tất!</h2>
-              <p className="text-xs text-zinc-400">Đơn hàng tiền mặt đã được ghi nhận vào hệ thống.</p>
+              <h2 className="text-lg font-extrabold text-white">{t('cashierSales.paymentComplete')}</h2>
+              <p className="text-xs text-zinc-400">{t('cashierSales.cashOrderRecorded')}</p>
             </div>
 
             {/* Simulated ticket paper box style */}
@@ -935,21 +868,21 @@ const CashierSalesPage: React.FC = () => {
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <div><span className="opacity-70">Mã đơn:</span> <strong className="float-right text-sm">{completedOrder.bookingCode}</strong></div>
-                <div><span className="opacity-70">Phim:</span> <strong className="float-right text-right truncate max-w-[70%]">{completedOrder.movieName}</strong></div>
-                <div><span className="opacity-70">Phòng:</span> <strong className="float-right">{completedOrder.auditoriumName}</strong></div>
-                <div><span className="opacity-70">Suất:</span> <strong className="float-right">{new Date(completedOrder.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ({new Date(completedOrder.showTime).toLocaleDateString('vi-VN')})</strong></div>
-                <div><span className="opacity-70">Ghế:</span> <strong className="float-right">{completedOrder.seats}</strong></div>
+                <div><span className="opacity-70">{t('cashierSales.bookingCode')}:</span> <strong className="float-right text-sm">{completedOrder.bookingCode}</strong></div>
+                <div><span className="opacity-70">{t('cashierSales.movie')}:</span> <strong className="float-right text-right truncate max-w-[70%]">{completedOrder.movieName}</strong></div>
+                <div><span className="opacity-70">{t('cashierSales.room')}:</span> <strong className="float-right">{completedOrder.auditoriumName}</strong></div>
+                <div><span className="opacity-70">{t('cashierSales.showTime')}:</span> <strong className="float-right">{new Date(completedOrder.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} ({new Date(completedOrder.showTime).toLocaleDateString('vi-VN')})</strong></div>
+                <div><span className="opacity-70">{t('cashierSales.seats')}:</span> <strong className="float-right">{completedOrder.seats}</strong></div>
                 <div className="border-t border-dashed border-zinc-300 pt-2 font-bold text-sm mt-2">
-                  <span>Tổng tiền:</span>
+                  <span>{t('cashierSales.totalAmount')}:</span>
                   <span className="float-right">{(completedOrder.totalPrice).toLocaleString('vi-VN')} đ</span>
                 </div>
               </div>
 
               <div className="border-t border-dashed border-zinc-300 pt-2 space-y-1">
-                <div><span className="opacity-70">Khách:</span> <span className="float-right">{completedOrder.customerName}</span></div>
-                <div><span className="opacity-70">SĐT:</span> <span className="float-right">{completedOrder.customerPhone}</span></div>
-                <div><span className="opacity-70">Giờ in:</span> <span className="float-right">{new Date(completedOrder.orderDate).toLocaleTimeString('vi-VN')}</span></div>
+                <div><span className="opacity-70">{t('cashierSales.customer')}:</span> <span className="float-right">{completedOrder.customerName}</span></div>
+                <div><span className="opacity-70">{t('cashierSales.phone')}:</span> <span className="float-right">{completedOrder.customerPhone}</span></div>
+                <div><span className="opacity-70">{t('cashierSales.printTime')}:</span> <span className="float-right">{new Date(completedOrder.orderDate).toLocaleTimeString('vi-VN')}</span></div>
               </div>
             </div>
 
@@ -962,7 +895,7 @@ const CashierSalesPage: React.FC = () => {
                 className="w-full h-11 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-2 hover:bg-zinc-100 transition-all cursor-pointer border-none"
               >
                 <Printer size={16} />
-                <span>In hóa đơn</span>
+                <span>{t('cashierSales.printReceipt')}</span>
               </button>
 
               <button
@@ -970,7 +903,7 @@ const CashierSalesPage: React.FC = () => {
                 onClick={handleNewTransaction}
                 className="w-full h-11 rounded-xl bg-[#ff8a00] text-black font-bold flex items-center justify-center gap-2 hover:bg-[#ff8a00]/95 hover:shadow-lg hover:shadow-[#ff8a00]/10 transition-all cursor-pointer border-none"
               >
-                <span>Giao dịch mới</span>
+                <span>{t('cashierSales.newTransaction')}</span>
                 <ChevronRight size={16} />
               </button>
             </div>

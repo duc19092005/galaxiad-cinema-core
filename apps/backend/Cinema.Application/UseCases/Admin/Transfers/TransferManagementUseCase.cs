@@ -31,7 +31,7 @@ public class TransferManagementUseCase
         {
             if (!request.ItemId.HasValue && !request.SourceUserId.HasValue)
             {
-                throw new BadRequestException("Must provide ItemId or SourceUserId for authorization.", "MGT01");
+                throw new BadRequestException(Messages.Validation.MustProvideItemIdOrSourceUserId, "MGT01");
             }
 
             if (request.TransferType == TransferTypeEnum.Facilities)

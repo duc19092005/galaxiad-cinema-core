@@ -21,6 +21,7 @@ using Cinema.Infrastructure.BackgroundJobs;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Infrastructure.Services;
 using Cinema.Application.Abstractions.Security;
+using Cinema.Application.Infrastructure.Booking;
 
 var currentDir = Directory.GetCurrentDirectory();
 var envPath = Path.Combine(currentDir, ".env");
@@ -133,7 +134,7 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1-admin", new OpenApiInfo { Title = "Admin API", Version = "v1" });
 });
 
-// Hangfire & SignalR
+// Hangfire
 builder.Services.AddHangfire(config => config
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
@@ -152,8 +153,6 @@ builder.Services.AddScoped<PendingOrderCancellationJob>();
 builder.Services.AddScoped<Cinema.Application.Interfaces.Booking.IPendingOrderCancellationJob, PendingOrderCancellationJob>();
 builder.Services.AddScoped<Cinema.Application.Interfaces.Booking.ISeatLockerNotificationService, Cinema.Api.Hubs.SeatLockerNotificationService>();
 
-builder.Services.AddSignalR();
-
 var app = builder.Build();
 
 // Migrations & Seed Jobs
@@ -168,7 +167,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("web");
-app.UseWebSockets();
 
 app.UseLocalizationMiddleware();
 app.UseErrorMiddleware();
@@ -195,7 +193,6 @@ var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>(
 recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
 
 app.MapControllers();
-app.MapHub<SeatHub>("/ws/seat");
 
 app.Run();
 

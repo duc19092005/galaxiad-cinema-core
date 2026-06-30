@@ -917,14 +917,14 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
         }`}>
           <div>
             <h2 className={`text-xl font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-              {currentStep === 'format' ? t('createAuditorium.title') : editAuditoriumId ? 'Chỉnh Sửa Phòng Chiếu' : 'Tạo Phòng Chiếu'}
+              {currentStep === 'format' ? t('createAuditorium.title') : editAuditoriumId ? t('createAuditorium.editTitle') : t('createAuditorium.createTitle')}
             </h2>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-[11px] text-on-surface-variant/60">Cinema Complexes</span>
+              <span className="text-[11px] text-on-surface-variant/60">{t('createAuditorium.cinemaComplexes')}</span>
               <span className="text-[11px] text-on-surface-variant/60">›</span>
-              <span className="text-[11px] text-on-surface-variant/60">Quản Lý Cụm Rạp</span>
+              <span className="text-[11px] text-on-surface-variant/60">{t('createAuditorium.manageClusters')}</span>
               <span className="text-[11px] text-on-surface-variant/60">›</span>
-              <span className="text-[11px] text-primary">Tạo Phòng</span>
+              <span className="text-[11px] text-primary">{t('createAuditorium.createRoom')}</span>
             </div>
           </div>
           <button
@@ -943,7 +943,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           {createSuccess && (
             <div className="mb-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-              <span className="text-sm text-emerald-300 font-medium">Auditorium added successfully! Updating...</span>
+              <span className="text-sm text-emerald-300 font-medium">{t('createAuditorium.addedSuccess')}</span>
             </div>
           )}
           {createError && (
@@ -967,7 +967,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                 <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/10 flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-rose-400" />
                   <span className="text-sm text-rose-300">{formatsError}</span>
-                  <button className="ml-auto px-3 py-1.5 text-xs rounded-lg bg-cinema-elevated border border-cinema-border/30 text-cinema-text" onClick={fetchMovieFormats}>Retry</button>
+                  <button className="ml-auto px-3 py-1.5 text-xs rounded-lg bg-cinema-elevated border border-cinema-border/30 text-cinema-text" onClick={fetchMovieFormats}>{t('createAuditorium.retry')}</button>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1019,12 +1019,12 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                 }`}>
                   <h3 className={`font-bold text-base mb-5 flex items-center gap-2 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
                     <span className="w-2 h-2 rounded-full bg-primary-container inline-block" />
-                    Thông Tin Phòng Chiếu
+                    {t('createAuditorium.roomInfo')}
                   </h3>
                   <div className="space-y-4">
                     <div>
                       <label className={`block text-xs font-semibold mb-1.5 ${isDark || isModern ? 'text-on-surface-variant/80' : 'text-gray-600'}`}>
-                        Tên Phòng <span className="text-primary-container">*</span>
+                        {t('createAuditorium.roomName')} <span className="text-primary-container">*</span>
                       </label>
                       <input
                         type="text"
@@ -1038,7 +1038,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                               ? 'bg-surface-container-lowest border-outline-variant/50 text-white placeholder-on-surface-variant/50 focus:border-primary-container'
                               : 'bg-white border-gray-300 text-gray-900 focus:border-primary'
                         }`}
-                        placeholder="VD: Room 1, Room A, VIP Room 1..."
+                        placeholder={t('createAuditorium.roomNamePlaceholder')}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-3">

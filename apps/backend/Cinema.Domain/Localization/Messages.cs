@@ -48,6 +48,7 @@ public static class Messages
         public const string RoleNotFound = "User role not found.";
         public const string Unauthorized = "Unauthorized";
         public const string Forbidden = "You do not have permission to access this resource.";
+        public const string CannotDetermineIdentity = "Cannot determine user identity.";
         public const string InvalidUserType = "Invalid user type.";
         public const string UserInfoNotFound = "User information not found.";
         public const string OldPasswordNotMatch = "The old password is incorrect.";
@@ -146,6 +147,10 @@ public static class Messages
         public const string DescriptionAlreadyExists = "Movie Description already exists";
         public const string ImageUploadError = "Error uploading image to Cloudinary";
         public const string InvalidDuration = "Movie Duration Is Invalid Must be Higher than 0 and Lower than 500";
+        public const string AlreadyDeleted = "This movie has already been deleted.";
+        public const string DeletedSuccessfully = "Movie deleted successfully.";
+        public const string CannotEditActiveShowtimes = "Cannot edit movie when there are active showtimes or bookings.";
+        public const string BannerUploadError = "Failed to upload banner image";
 
         // Dynamic errors (with parameters)
         public static string NotFoundById(Guid id) =>
@@ -303,6 +308,16 @@ public static class Messages
         public const string NoPermissionBranchStaffOnly = "Can only manage staff in your cinema branch.";
         public const string NoPermissionFaceRegister = "No permission to register face for this staff.";
         public const string NoPermissionBranchFaceOnly = "Can only register face for staff in your cinema branch.";
+        public const string NoDepartmentAssigned = "Your account has not been assigned to any department yet.";
+        public const string SelectStaffOrLoginPos = "Please select a staff member or login to POS for auto-detection.";
+        public const string PosConfigNotFound = "POS configuration not found.";
+        public const string NoFaceMatchFound = "No staff member with a matching face was found at this cinema.";
+        public const string ShiftTimeConfigNotFound = "Shift time configuration not found in registration.";
+        public static string WelcomeBackToShift(string username) => $"Welcome back to your shift, {username}!";
+        public const string ApprovedShiftSuccessfully = "Approved shift successfully.";
+        public const string RejectedShiftSuccessfully = "Rejected shift successfully.";
+        public const string CancelledShiftSuccessfully = "Cancelled shift successfully.";
+        public const string InvalidShiftRegistrationStatus = "Invalid shift registration status.";
         public const string ClockInShiftTimeWindow = "Clock-in time is outside your shift window. Shift is {0} - {1}.";
         public const string ClockInSuccess = "Clock-in successful! Welcome {0} to your shift.";
         public const string ClockOutSuccess = "Clock-out successful! Hours: {0}h, Salary: {1:N0} VND.";
@@ -387,12 +402,32 @@ public static class Messages
     {
         public const string NoPermissionManageCinema = "You do not have permission to manage this cinema.";
         public const string GetListSuccess = "Department list retrieved successfully.";
+        public const string NotFound = "Department not found.";
+        public const string NoPermissionToDelete = "You do not have permission to delete this department.";
+        public const string DeactivatedSuccessfully = "Deactivated department successfully.";
+        public const string CreatedSuccessfully = "Department created successfully.";
+        public const string UpdatedSuccessfully = "Department updated successfully.";
+        public const string DeletedSuccessfully = "Department deleted successfully.";
+        public static string AlreadyExists(string name) => $"Department '{name}' already exists in this cinema.";
+        public static string DeleteError(string detail) => $"Error deleting department: {detail}";
+        public static string CreateError(string detail) => $"Error creating department: {detail}";
+        public static string UpdateError(string detail) => $"Error updating department: {detail}";
     }
 
     public static class Chatbot
     {
         public const string MessageRequired = "Message must not be empty.";
         public const string NoShowtimesForDate = "No showtimes are available for the requested date. Upcoming showtime dates are listed below.";
+        public const string NoPermissionForRole = "You do not have permission to perform this request with your current role.";
+        public const string LoginRequired = "Please login to perform this request.";
+        public const string SystemError = "System encountered an error processing your question. Please try again later.";
+        public const string ProvideMovieOrDate = "Please provide a movie name or screening date so I can check available seats.";
+        public const string NoMatchingSchedule = "No matching schedule found. You can ask \"When is movie ABC showing?\" to see the schedule.";
+        public const string MultipleSchedulesFound = "Multiple schedules found. Which show do you want to check seats for?";
+        public const string NoAuditoriumInfo = "Auditorium information not found.";
+        public const string NoActivePromotions = "There are currently no active promotions.";
+        public const string NoMatchingMovies = "No matching movies found.";
+        public const string NoMoviesFound = "No movies found.";
     }
 
     // =============================================================
@@ -420,6 +455,8 @@ public static class Messages
         public const string ShiftDeletionApproved = "Shift deletion request approved and related staff have been notified.";
         public const string ShiftDeletionRejected = "Shift deletion request rejected and the manager has been notified.";
         public static string UserStatusUpdated(string status) => $"User status updated to {status} successfully.";
+        public const string InvalidTransferType = "Invalid transfer type.";
+        public const string GetUsersByRoleSuccess = "Get users list by role successfully.";
     }
 
     // =============================================================
@@ -434,6 +471,13 @@ public static class Messages
         public const string InvalidUserType = "Invalid user type.";
         public const string InvalidCustomerType = "Invalid customer type.";
         public const string GuestBookingRequiresInfo = "Guest booking requires Customer Name and Email.";
+        public const string MustProvideItemIdOrSourceUserId = "Must provide ItemId or SourceUserId for authorization.";
+        public const string EmailRequired = "Email is required.";
+        public const string UserNameRequired = "User name is required.";
+        public const string PasswordsDoNotMatch = "Passwords do not match.";
+        public const string PasswordTooShort = "Password must be at least 8 characters.";
+        public const string IdentityCodeInvalid = "Identity code must be exactly 12 digits.";
+        public const string PhoneNumberInvalid = "Phone number must be exactly 10 digits.";
     }
 
     // =============================================================
@@ -456,6 +500,21 @@ public static class Messages
         public const string SurveyNotCompleted = "Survey not completed";
         public const string SurveyCompleted = "Survey completed";
         public const string SavedPreferences = "Saved recommendation preferences";
+    }
+
+    // =============================================================
+    //  PRICING PROMOTIONS
+    // =============================================================
+    public static class Promotion
+    {
+        public const string NotFound = "Pricing promotion not found.";
+        public const string NotFoundBySlug = "Pricing promotion not found by slug.";
+        public const string CreatedSuccessfully = "Pricing promotion created successfully.";
+        public const string UpdatedSuccessfully = "Pricing promotion updated successfully.";
+        public const string DeletedSuccessfully = "Pricing promotion deleted successfully.";
+        public const string ToggledSuccessfully = "Pricing promotion status toggled successfully.";
+        public const string InvalidDateRange = "End date must be after start date.";
+        public const string CannotDeleteActive = "Cannot delete an active promotion.";
     }
 
     // =============================================================

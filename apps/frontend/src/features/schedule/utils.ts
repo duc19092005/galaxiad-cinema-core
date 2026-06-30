@@ -62,5 +62,5 @@ export const calculateEndTime = (startDate: Date, durationMinutes: number, clean
 
 export const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
 };

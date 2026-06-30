@@ -1,0 +1,30 @@
+using System;
+using System.Threading.Tasks;
+using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Comments;
+using Cinema.Application.Interfaces.Comments;
+using Cinema.Domain.Localization;
+
+namespace Cinema.Application.UseCases.Customer.Engagement.Comments;
+
+public class GetMovieCommentsUseCase
+{
+    private readonly IMovieCommentRepository _commentRepository;
+
+    public GetMovieCommentsUseCase(IMovieCommentRepository commentRepository)
+    {
+        _commentRepository = commentRepository;
+    }
+
+    public async Task<BaseResponse<ResMovieCommentsSummaryDto>> ExecuteAsync(Guid movieId)
+    {
+        var summary = await _commentRepository.GetMovieCommentsSummaryAsync(movieId);
+
+        return new BaseResponse<ResMovieCommentsSummaryDto>
+        {
+            IsSuccess = true,
+            Message = Messages.Comment.GetListSuccess,
+            Data = summary
+        };
+    }
+}

@@ -2,6 +2,7 @@
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Admin;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.Audit;
 
@@ -47,7 +48,7 @@ public class GetRecentAuditLogsUseCase
                 return new BaseResponse<List<AuditLogDto>>
                 {
                     IsSuccess = true,
-                    Message = "Get audit logs successfully.",
+                    Message = Messages.Admin.GetAuditLogsSuccess,
                     Data = new List<AuditLogDto>()
                 };
             }

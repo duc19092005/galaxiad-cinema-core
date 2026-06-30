@@ -14,8 +14,11 @@ Thư mục này mô tả các thuật toán sản phẩm và thuật toán kỹ 
 | Chatbot theo vai trò | [role-aware-chatbot.md](../role-aware-chatbot.md) | [role-aware-chatbot.md](role-aware-chatbot.md) | [role-aware-chatbot.md](../ru/role-aware-chatbot.md) |
 | Chiến lược Redis Cache | [redis-cache-strategy.md](../redis-cache-strategy.md) | [redis-cache-strategy.md](redis-cache-strategy.md) | [redis-cache-strategy.md](../ru/redis-cache-strategy.md) |
 | Quy tắc xếp lịch ca làm | [shift-schedule-rules.md](../shift-schedule-rules.md) | [shift-schedule-rules.md](shift-schedule-rules.md) | [shift-schedule-rules.md](../ru/shift-schedule-rules.md) |
+| **Khóa ghế Real-time (SSE)** 🔥 | **[seat-locking.md](../seat-locking.md)** | **[seat-locking.md](seat-locking.md)** | **[seat-locking.md](../ru/seat-locking.md)** |
 
 ## AI Showtime Planner
+
+*(nội dung giữ nguyên...)*
 
 AI Showtime Planner hỗ trợ Quản lý rạp và Admin nhận gợi ý xếp lịch chiếu phim. Ở phiên bản V1, hệ thống không train model riêng. Backend chấm điểm bằng luật nghiệp vụ dựa trên dữ liệu thật, lưu lịch sử gợi ý và thao tác áp dụng, còn LLM chỉ dùng để giải thích bằng ngôn ngữ tự nhiên thông qua chatbot.
 

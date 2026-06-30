@@ -35,10 +35,10 @@ public class DeleteDepartmentUseCase
 
         var department = await _departmentRepository.FindDepartmentWithCinemaAndUserAsync(departmentId);
         if (department == null)
-            throw new AppException("Department not found.", 404, "DEPT_ERR");
+            throw new AppException(Messages.Department.NotFound, 404, "DEPT_ERR");
 
         if (!isAdmin && department.CinemaInfoEntity.FacilitiesManagerId != userId)
-            throw new AppException("You do not have permission to delete this department.", 403, "DEPT_ERR");
+            throw new AppException(Messages.Department.NoPermissionToDelete, 403, "DEPT_ERR");
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
@@ -66,14 +66,14 @@ public class DeleteDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = true,
-                Message = "Deactivated department successfully."
+                Message = Messages.Department.DeactivatedSuccessfully
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Error deleting department: {ex.Message}", 500, "DEPT_ERR");
+            throw new AppException(string.Format(Messages.Department.DeleteError(ex.Message)), 500, "DEPT_ERR");
         }
     }
 }

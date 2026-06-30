@@ -6,6 +6,7 @@ using Cinema.Infrastructure.Identity;
 using Cinema.Infrastructure.BackgroundJobs;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Infrastructure.ExternalServices.Localization;
 using StackExchange.Redis;
 using Microsoft.Extensions.Configuration;
 using Cinema.Application.UseCases.Staff;
@@ -13,8 +14,8 @@ using Cinema.Application.Interfaces.Staff;
 using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.UseCases.TheaterManager.ShiftSchedules;
 using Cinema.Application.Interfaces.Comments;
-using Cinema.Application.UseCases.Comments;
-using Cinema.Application.UseCases.Comments.Recommendation;
+using Cinema.Application.UseCases.Customer.Engagement.Comments;
+using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 using Cinema.Application.Interfaces.Catalog;
 using Cinema.Application.UseCases.Customer.Catalog;
 using Cinema.Application.Interfaces.Booking;
@@ -92,7 +93,11 @@ public static class CommonServicesBootstrap
 
         // Register Shift Use Cases
         services.AddScoped<RegisterShiftUseCase>();
+        services.AddScoped<Cinema.Application.UseCases.TheaterManager.ShiftManagement.ShiftRegistrationResolver>();
         services.AddScoped<ApproveShiftRegistrationUseCase>();
+        services.AddScoped<RejectShiftRegistrationUseCase>();
+        services.AddScoped<CancelShiftRegistrationUseCase>();
+        services.AddScoped<AssignShiftDirectlyUseCase>();
         services.AddScoped<RegisterFaceUseCase>();
         services.AddScoped<ClockInUseCase>();
         services.AddScoped<ClockOutUseCase>();

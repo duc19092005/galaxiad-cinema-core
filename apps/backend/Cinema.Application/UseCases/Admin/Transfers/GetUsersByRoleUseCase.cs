@@ -6,6 +6,7 @@ using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Domain.Constants;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces.Admin;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.Transfers;
 
@@ -25,7 +26,7 @@ public class GetUsersByRoleUseCase
             TransferTypeEnum.Facilities => userRoles.FacilitiesManager,
             TransferTypeEnum.Theater => userRoles.TheaterManager,
             TransferTypeEnum.Movie => userRoles.MovieManager,
-            _ => throw new BadRequestException("Invalid transfer type.", "B02")
+            _ => throw new BadRequestException(Messages.Admin.InvalidTransferType, "B02")
         };
 
         var users = await _adminRepository.GetUsersByRoleAsync(roleId);
@@ -34,7 +35,7 @@ public class GetUsersByRoleUseCase
         {
             IsSuccess = true,
             Data = users,
-            Message = $"Get users list with role '{transferType}' successfully."
+            Message = Messages.Admin.GetUsersByRoleSuccess
         };
     }
 }

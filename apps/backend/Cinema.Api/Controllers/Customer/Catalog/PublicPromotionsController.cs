@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using Cinema.Application.UseCases.PricingPromotions;
+using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Cinema.Api.Controllers.Customer.Catalog;

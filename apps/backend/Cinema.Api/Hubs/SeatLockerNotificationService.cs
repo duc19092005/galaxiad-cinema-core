@@ -1,5 +1,5 @@
+using Cinema.Application.Infrastructure.Booking;
 using Cinema.Application.Interfaces.Booking;
-using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -7,18 +7,16 @@ namespace Cinema.Api.Hubs;
 
 public class SeatLockerNotificationService : ISeatLockerNotificationService
 {
-    private readonly IHubContext<SeatHub> _hubContext;
+    private readonly SeatSseManager _seatSseManager;
 
-    public SeatLockerNotificationService(IHubContext<SeatHub> hubContext)
+    public SeatLockerNotificationService(SeatSseManager seatSseManager)
     {
-        _hubContext = hubContext;
+        _seatSseManager = seatSseManager;
     }
 
-    public async Task NotifySeatsReleasedAsync(string scheduleId, List<string> seatIds)
+    public Task NotifySeatsReleasedAsync(string scheduleId, List<string> seatIds)
     {
-        foreach (var seatId in seatIds)
-        {
-            await _hubContext.Clients.Group(scheduleId).SendAsync("OnSeatUnselected", seatId);
-        }
+        _seatSseManager.ReleaseSeatsForSchedule(scheduleId, seatIds);
+        return Task.CompletedTask;
     }
 }

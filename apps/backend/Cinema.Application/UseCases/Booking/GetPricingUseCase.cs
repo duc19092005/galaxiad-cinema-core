@@ -6,7 +6,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces;
-using Cinema.Application.UseCases.PricingPromotions;
+using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 

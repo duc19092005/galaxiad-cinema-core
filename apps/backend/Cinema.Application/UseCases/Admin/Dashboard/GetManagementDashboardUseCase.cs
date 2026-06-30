@@ -2,6 +2,7 @@
 using Cinema.Application.Dtos.Admin.Responses;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Admin;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.Dashboard;
 
@@ -114,7 +115,7 @@ public class GetManagementDashboardUseCase
         return new BaseResponse<ManagementDashboardDto>
         {
             IsSuccess = true,
-            Message = "Get management dashboard successfully.",
+            Message = Messages.Admin.GetDashboardSuccess,
             Data = new ManagementDashboardDto
             {
                 TicketsSoldToday = ticketsSoldToday,

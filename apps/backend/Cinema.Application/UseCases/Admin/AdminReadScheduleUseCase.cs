@@ -8,10 +8,6 @@ using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin;
 
-public interface IAdminReadScheduleBehavior
-{
-    Task<BaseResponse<List<ResponseScheduleJobGroupDto>>> ListScheduleJob();
-}
 public class AdminReadScheduleUseCase : IAdminReadScheduleBehavior
 {
     private readonly IAdminScheduleJobRepository _adminRepository;

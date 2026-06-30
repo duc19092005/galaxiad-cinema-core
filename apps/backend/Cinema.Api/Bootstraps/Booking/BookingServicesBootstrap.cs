@@ -3,8 +3,9 @@ using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Infrastructure.Booking;
 using Cinema.Application.UseCases.Booking;
-using Cinema.Application.UseCases.PricingPromotions;
-using Cinema.Application.UseCases.Vouchers;
+using Cinema.Application.UseCases.Booking.Services;
+using Cinema.Application.UseCases.Admin.PricingPromotions;
+using Cinema.Application.UseCases.Admin.Vouchers;
 using Cinema.Infrastructure.Repositories;
 using Cinema.Domain.Utils;
 
@@ -25,6 +26,7 @@ public static class BookingServicesBootstrap
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IPricingPromotionRepository, PricingPromotionRepository>();
         services.AddSingleton<SseConnectionManager>();
+        services.AddSingleton<SeatSseManager>();
         services.AddSingleton<VnPayHelper>();
 
         // Booking Use Cases
@@ -41,6 +43,8 @@ public static class BookingServicesBootstrap
         services.AddScoped<GetCinemaShowtimesUseCase>();
         services.AddScoped<GetSeatMapUseCase>();
         services.AddScoped<GetPricingUseCase>();
+        services.AddScoped<BookingPricingService>();
+        services.AddScoped<BookingVoucherService>();
         services.AddScoped<CreateBookingUseCase>();
         services.AddScoped<GetTicketDataUseCase>();
         services.AddScoped<ProcessVnPayCallbackUseCase>();

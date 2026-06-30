@@ -292,7 +292,7 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
       return d;
     });
 
-    const weekLabel = `${weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' })} - ${weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+    const weekLabel = `${weekDays[0].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric' })} - ${weekDays[6].toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}`;
 
     const filteredMovies = moviesList.filter(m =>
       !searchQuery || m.title.toLowerCase().includes(searchQuery.toLowerCase())

@@ -2,7 +2,7 @@ using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Public.Responses;
-using Cinema.Application.UseCases.Comments.Recommendation;
+using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

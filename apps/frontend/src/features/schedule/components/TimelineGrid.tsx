@@ -449,7 +449,7 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                 {/* Days Columns — width increased to 300px for comfortable scheduling */}
                 {activeAuditorium && weekDays.map((dateObj) => {
                     const aud = activeAuditorium;
-                    const dateString = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric' });
+                    const dateString = dateObj.toLocaleDateString('vi-VN', { weekday: 'short', month: 'numeric', day: 'numeric' });
                     const dateKey = toLocalDateKey(dateObj);
                     const columnId = `${aud.id}-${dateKey}`;
                     const isToday = dateKey === todayKey;

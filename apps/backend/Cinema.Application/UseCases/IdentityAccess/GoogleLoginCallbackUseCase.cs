@@ -75,13 +75,13 @@ public class GoogleLoginCallbackUseCase
             var tokenResponse = await ExchangeCodeForTokens(code, redirectUri);
             if (tokenResponse == null)
             {
-                throw new AppException("Failed to exchange Google authorization code", 400, "G02");
+                throw new AppException(Messages.Auth.GoogleTokenExchangeFailed, 400, "G02");
             }
 
             var googleUserInfo = await GetGoogleUserInfo(tokenResponse.AccessToken);
             if (googleUserInfo == null || string.IsNullOrEmpty(googleUserInfo.Email))
             {
-                throw new AppException("Failed to get Google user info", 400, "G03");
+                throw new AppException(Messages.Auth.GoogleUserInfoFailed, 400, "G03");
             }
 
             var existingUser = await _repository.FindUserByEmailAsync(googleUserInfo.Email);
@@ -245,7 +245,7 @@ public class GoogleLoginCallbackUseCase
                      ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback",
             "mobile" => _configuration["Google:MobileCallbackUrl"]
                          ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback-mobile",
-            _ => throw new AppException("Invalid platform. Use 'web' or 'mobile'", 400, "G05")
+            _ => throw new AppException(Messages.Platform.InvalidPlatform, 400, "G05")
         };
     }
 

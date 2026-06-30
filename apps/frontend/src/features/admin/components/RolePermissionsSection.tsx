@@ -2,6 +2,7 @@
 // Styled to match VouchersSection color scheme using cinema-* classes
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, Check, KeyRound, Loader2, RefreshCw, RotateCcw, Save, Search, ShieldCheck } from 'lucide-react';
 import { adminApi } from '../../../api/adminApi';
 import type { PermissionDto, RolePermissionsDto } from '../../../types/admin.types';
@@ -23,6 +24,7 @@ const getApiMessage = (error: unknown, fallback: string) => {
 };
 
 const RolePermissionsSection: React.FC = () => {
+  const { t } = useTranslation();
   const [roles, setRoles] = useState<RolePermissionsDto[]>([]);
   const [permissions, setPermissions] = useState<PermissionDto[]>([]);
   const [selectedRoleId, setSelectedRoleId] = useState('');
@@ -77,7 +79,7 @@ const RolePermissionsSection: React.FC = () => {
       setRoles(nextRoles);
       setSelectedRoleId((current) => current || nextRoles[0]?.roleId || '');
     } catch (err) {
-      const message = getApiMessage(err, 'Unable to load role permissions.');
+      const message = getApiMessage(err, t('rolePermissions.unableToLoad'));
       setError(message);
       showError(message);
     } finally {
@@ -95,7 +97,7 @@ const RolePermissionsSection: React.FC = () => {
 
   const handleSelectRole = (roleId: string) => {
     if (roleId === selectedRoleId) return;
-    if (hasUnsavedChanges && !window.confirm('Discard unsaved permission changes for this role?')) return;
+    if (hasUnsavedChanges && !window.confirm(t('rolePermissions.discardChanges'))) return;
     setSelectedRoleId(roleId);
   };
 
@@ -127,7 +129,7 @@ const RolePermissionsSection: React.FC = () => {
   const handleSave = async () => {
     if (!selectedRole) return;
     const confirmed = window.confirm(
-      `Update permissions for ${selectedRole.roleName}? Users with this role need to log in again to receive new JWT permission claims.`,
+      t('rolePermissions.confirmUpdate', { roleName: selectedRole.roleName }),
     );
     if (!confirmed) return;
 
@@ -141,9 +143,9 @@ const RolePermissionsSection: React.FC = () => {
           ? { ...role, permissions: permissions.filter((permission) => nextPermissionSet.has(permission.permissionId)) }
           : role
       )));
-      showSuccess(response.message || `Permissions updated for ${selectedRole.roleName}.`);
+      showSuccess(response.message || t('rolePermissions.permissionsUpdated', { roleName: selectedRole.roleName }));
     } catch (err) {
-      showError(getApiMessage(err, 'Unable to update role permissions.'));
+      showError(getApiMessage(err, t('rolePermissions.unableToUpdate')));
     } finally {
       setSaving(false);
     }
@@ -153,7 +155,7 @@ const RolePermissionsSection: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-16">
         <Loader2 size={28} className="text-cinema-accent animate-spin" />
-        <p className="text-sm text-cinema-text-muted mt-3 font-mono">Loading permissions...</p>
+        <p className="text-sm text-cinema-text-muted mt-3 font-mono">{t('rolePermissions.loadingPermissions')}</p>
       </div>
     );
   }
@@ -164,7 +166,7 @@ const RolePermissionsSection: React.FC = () => {
         <AlertCircle size={28} className="text-cinema-danger" />
         <p className="text-sm text-cinema-text-muted">{error}</p>
         <button className="px-4 py-2 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-surface transition-all flex items-center gap-2" onClick={loadData}>
-          <RefreshCw size={14} /> Retry
+          <RefreshCw size={14} /> {t('rolePermissions.retry')}
         </button>
       </div>
     );
@@ -178,17 +180,17 @@ const RolePermissionsSection: React.FC = () => {
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-cinema-accent tracking-tight">Role Permissions</h1>
-            <p className="text-sm text-cinema-text-muted mt-1">Configure permission claims for each role. Active users receive changes after their next login.</p>
+            <h1 className="text-2xl md:text-3xl font-extrabold text-cinema-accent tracking-tight">{t('rolePermissions.title')}</h1>
+            <p className="text-sm text-cinema-text-muted mt-1">{t('rolePermissions.description')}</p>
           </div>
           <div className="flex items-center gap-2">
             <button className="flex items-center justify-center gap-2 px-4 py-2 border border-cinema-border/50 bg-cinema-surface text-cinema-text hover:bg-cinema-elevated text-xs font-semibold rounded-xl transition-all" onClick={loadData} disabled={saving}>
               <RefreshCw size={14} />
-              Refresh
+              {t('rolePermissions.refresh')}
             </button>
             <button className="flex items-center justify-center gap-2 px-4 py-2 bg-cinema-accent hover:bg-cinema-accent-hover text-black font-bold text-xs rounded-xl transition-all disabled:opacity-50 active:scale-[0.98] shadow-lg shadow-cinema-accent/10" onClick={handleSave} disabled={!selectedRole || !hasUnsavedChanges || saving}>
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-              Save changes
+              {t('rolePermissions.saveChanges')}
             </button>
           </div>
         </div>
@@ -204,8 +206,8 @@ const RolePermissionsSection: React.FC = () => {
                   <ShieldCheck size={18} />
                 </span>
                 <div>
-                  <h3 className="text-sm font-bold text-cinema-text">Roles</h3>
-                  <p className="text-xs text-cinema-text-muted">{roles.length} configured</p>
+                  <h3 className="text-sm font-bold text-cinema-text">{t('rolePermissions.roles')}</h3>
+                  <p className="text-xs text-cinema-text-muted">{t('rolePermissions.configuredCount', { count: roles.length })}</p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -240,22 +242,22 @@ const RolePermissionsSection: React.FC = () => {
                     <div className="flex items-center gap-3 flex-wrap">
                       <h3 className="text-xl font-extrabold text-cinema-text">{selectedRole.roleName}</h3>
                       {hasUnsavedChanges && (
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">Unsaved changes</span>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">{t('rolePermissions.unsavedChanges')}</span>
                       )}
                     </div>
                     <p className="text-sm text-cinema-text-muted mt-0.5">
-                      {selectedPermissionIds.length} of {permissions.length} permissions selected.
+                      {t('rolePermissions.permissionsSelected', { selected: selectedPermissionIds.length, total: permissions.length })}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={() => updateVisiblePermissions(true)} disabled={filteredPermissions.length === 0}>
-                      <Check size={13} /> Select visible
+                      <Check size={13} /> {t('rolePermissions.selectVisible')}
                     </button>
                     <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={() => updateVisiblePermissions(false)} disabled={filteredPermissions.length === 0}>
-                      Clear visible
+                      {t('rolePermissions.clearVisible')}
                     </button>
                     <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cinema-elevated border border-cinema-border/30 text-cinema-text hover:bg-cinema-accent/5 hover:border-cinema-accent/20 transition-all flex items-center gap-1.5" onClick={handleReset} disabled={!hasUnsavedChanges}>
-                      <RotateCcw size={13} /> Reset
+                      <RotateCcw size={13} /> {t('rolePermissions.reset')}
                     </button>
                   </div>
                 </div>
@@ -267,7 +269,7 @@ const RolePermissionsSection: React.FC = () => {
                     className="w-full h-10 pl-9 pr-3 rounded-xl border bg-cinema-elevated border-cinema-border/50 text-sm text-cinema-text outline-none focus:border-cinema-accent/30 transition-all placeholder:text-cinema-text-muted/50"
                     value={searchTerm}
                     onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Search permission name..."
+                    placeholder={t('rolePermissions.searchPermissions')}
                   />
                 </div>
 
@@ -297,7 +299,7 @@ const RolePermissionsSection: React.FC = () => {
                           <p className="text-sm font-bold text-cinema-text leading-tight break-words">{permission.permissionInfo}</p>
                           <p className="text-[10px] text-cinema-text-muted font-mono mt-1 break-all opacity-70">{permission.permissionId}</p>
                           {isApproveShiftLocked && (
-                            <p className="text-[10px] text-cinema-text-muted mt-1">Only Admin and TheaterManager can approve shifts.</p>
+                            <p className="text-[10px] text-cinema-text-muted mt-1">{t('rolePermissions.approveShiftLocked')}</p>
                           )}
                         </div>
                       </label>
@@ -308,14 +310,14 @@ const RolePermissionsSection: React.FC = () => {
                 {filteredPermissions.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-12 border border-dashed border-cinema-border/50 rounded-xl">
                     <KeyRound size={28} className="text-cinema-text-muted opacity-40" />
-                    <p className="text-sm text-cinema-text-muted mt-2">No permissions match your search.</p>
+                    <p className="text-sm text-cinema-text-muted mt-2">{t('rolePermissions.noPermissionsMatchSearch')}</p>
                   </div>
                 )}
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-16">
                 <KeyRound size={32} className="text-cinema-text-muted opacity-30" />
-                <p className="text-sm text-cinema-text-muted mt-3">No roles found.</p>
+                <p className="text-sm text-cinema-text-muted mt-3">{t('rolePermissions.noRoles')}</p>
               </div>
             )}
           </section>

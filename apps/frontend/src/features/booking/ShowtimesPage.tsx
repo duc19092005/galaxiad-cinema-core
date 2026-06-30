@@ -1,6 +1,7 @@
 // src/features/booking/ShowtimesPage.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Film, MapPin, Search, Loader2, Sparkles, ChevronDown } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { ActiveCinema, ActiveMovie, SearchScheduleResult } from '../../types/public.types';
@@ -58,7 +59,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: '6px' }}>
           {icon} {label}
         </span>
-        <span style={{ fontSize: '14px' }}>Loading...</span>
+        <span style={{ fontSize: '14px' }}>{t('showtimesPage.findingShowtimes')}</span>
       </div>
     );
   }
@@ -138,6 +139,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
 export const ShowtimesPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const isPosMode = new URLSearchParams(window.location.search).get('pos') === '1';
 
   // Read initial parameters from URL or localStorage to prevent race conditions on mount
@@ -225,8 +227,8 @@ export const ShowtimesPage: React.FC = () => {
       const dateVal = String(d.getDate()).padStart(2, '0');
       const valueStr = `${year}-${month}-${dateVal}`;
       
-      let dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
-      if (i === 0) dayName = 'Today';
+      let dayName = d.toLocaleDateString('vi-VN', { weekday: 'short' });
+      if (i === 0) dayName = t('showtimesPage.today');
       
       dates.push({
         label: `${d.getDate()}/${d.getMonth() + 1}`,
@@ -262,7 +264,7 @@ export const ShowtimesPage: React.FC = () => {
         if (movieRes.isSuccess) setMovies(movieRes.data || []);
       } catch (err) {
         console.error(err);
-        showError('Error loading filter options.');
+        showError(t('showtimesPage.errorLoadingFilters'));
       } finally {
         setDataLoading(false);
       }
@@ -308,12 +310,12 @@ export const ShowtimesPage: React.FC = () => {
         if (res.isSuccess) {
           setScheduleResults(res.data || []);
         } else {
-          showError('Failed to fetch schedules.');
+          showError(t('showtimesPage.errorFetchingSchedules'));
         }
       } catch (err) {
         console.error(err);
         if (active) {
-          showError('Error loading schedules.');
+          showError(t('showtimesPage.errorLoadingSchedules'));
         }
       } finally {
         if (active) {
@@ -338,17 +340,17 @@ export const ShowtimesPage: React.FC = () => {
 
   // Cinema options list
   const cinemaOptions = [
-    { value: 'All', label: 'All Theaters' },
+    { value: 'All', label: t('showtimesPage.allTheaters') },
     ...cinemas.map((c) => ({ value: c.cinemaId, label: c.cinemaName })),
   ];
-  const selectedCinemaLabel = cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || 'All Theaters';
+  const selectedCinemaLabel = cinemas.find((c) => c.cinemaId === selectedCinemaId)?.cinemaName || t('showtimesPage.allTheaters');
 
   // Movie options list
   const movieOptions = [
-    { value: 'All', label: 'All Movies' },
+    { value: 'All', label: t('showtimesPage.allMovies') },
     ...movies.map((m) => ({ value: m.movieId, label: m.movieName })),
   ];
-  const selectedMovieLabel = movies.find((m) => m.movieId === selectedMovieId)?.movieName || 'All Movies';
+  const selectedMovieLabel = movies.find((m) => m.movieId === selectedMovieId)?.movieName || t('showtimesPage.allMovies');
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
@@ -370,10 +372,10 @@ export const ShowtimesPage: React.FC = () => {
             gap: '6px',
             marginBottom: '8px'
           }}>
-            <Sparkles size={14} /> Showtime Calendar
+            <Sparkles size={14} /> {t('showtimesPage.title')}
           </span>
           <h1 style={{ fontSize: '36px', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>
-            Book Your Session
+            {t('showtimesPage.bookSession')}
           </h1>
         </div>
 
@@ -446,7 +448,7 @@ export const ShowtimesPage: React.FC = () => {
         >
           {/* Cinema Filter */}
           <CustomSelect
-            label="Select Theater"
+            label={t('showtimesPage.selectTheater')}
             value={selectedCinemaId}
             displayValue={selectedCinemaLabel}
             options={cinemaOptions}
@@ -457,7 +459,7 @@ export const ShowtimesPage: React.FC = () => {
 
           {/* Movie Filter */}
           <CustomSelect
-            label="Select Movie"
+            label={t('showtimesPage.selectMovie')}
             value={selectedMovieId}
             displayValue={selectedMovieLabel}
             options={movieOptions}
@@ -471,14 +473,14 @@ export const ShowtimesPage: React.FC = () => {
         {loading ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 0' }}>
             <Loader2 size={40} className="animate-spin" style={{ color: 'var(--primary)', animation: 'spin 1s linear infinite', marginBottom: '16px' }} />
-            <span style={{ color: 'var(--text-secondary)' }}>Finding available showtimes...</span>
+            <span style={{ color: 'var(--text-secondary)' }}>{t('showtimesPage.findingShowtimes')}</span>
           </div>
         ) : scheduleResults.length === 0 ? (
           <div className="glass-card" style={{ padding: '60px', textAlign: 'center', borderRadius: 'var(--radius-xl)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <Search size={48} style={{ color: 'var(--text-secondary)', opacity: 0.2, margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>No Showtimes Found</h3>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>{t('showtimesPage.noShowtimesFound')}</h3>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', maxWidth: '400px', margin: '0 auto' }}>
-              We couldn't find any scheduled sessions for the selected criteria. Try changing the date or theater filters.
+              {t('showtimesPage.noShowtimesDesc')}
             </p>
           </div>
         ) : (
@@ -520,7 +522,7 @@ export const ShowtimesPage: React.FC = () => {
                         {result.movieRequiredAgeSymbol || 'T16'}
                       </span>
                       <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
-                        {result.movieDuration} mins
+                        {result.movieDuration} {t('showtimesPage.minutes')}
                       </span>
                     </div>
                     
@@ -599,7 +601,7 @@ export const ShowtimesPage: React.FC = () => {
                                 >
                                   {formatTime(showtime.startTime)}
                                   <div style={{ fontSize: '9px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>
-                                    Room {showtime.auditoriumNumber}
+                                    {t('showtimesPage.room')} {showtime.auditoriumNumber}
                                   </div>
                                 </button>
                               ))}

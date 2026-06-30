@@ -118,7 +118,7 @@ const MovieDetailPage: React.FC = () => {
     };
 
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr).toLocaleDateString('vi-VN', {
             day: '2-digit', month: 'short', year: 'numeric'
         });
     };

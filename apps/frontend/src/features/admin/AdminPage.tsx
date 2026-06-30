@@ -217,6 +217,7 @@ const AdminRevenueChart: React.FC<{ data?: ManagementDashboardDto | null }> = ({
 };
 
 const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ data }) => {
+  const { t } = useTranslation();
   const topMovie = data?.hotMovies?.[0];
   const latestTransaction = data?.recentTransactions?.[0];
   const latestCinema = data?.recentCinemas?.[0];
@@ -225,10 +226,10 @@ const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ dat
   <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
     <div className="admin-dashboard-card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16, borderLeft: '4px solid var(--accent)' }}>
       <div style={{ flex: 1 }}>
-        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Top Movie</p>
-        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{topMovie?.movieName || 'No ticket data'}</h4>
+        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('adminPerformanceDashboard.topMovie')}</p>
+        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{topMovie?.movieName || t('adminPerformanceDashboard.noTicketData')}</h4>
         <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {formatCompactNumber(topMovie?.ticketsSold)} tickets sold
+          {t('adminPerformanceDashboard.ticketsSold', { count: topMovie?.ticketsSold })}
         </p>
       </div>
       <Film size={34} style={{ color: 'var(--accent)' }} />
@@ -236,10 +237,10 @@ const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ dat
 
     <div className="admin-dashboard-card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 16, borderLeft: '4px solid var(--success)' }}>
       <div style={{ flex: 1 }}>
-        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Latest Booking</p>
-        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{latestTransaction?.movieName || 'No recent booking'}</h4>
+        <p style={{ margin: '0 0 6px', fontSize: 11, color: 'var(--text-secondary)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{t('adminPerformanceDashboard.latestBooking')}</p>
+        <h4 style={{ margin: 0, fontSize: 22, fontWeight: 850 }}>{latestTransaction?.movieName || t('adminPerformanceDashboard.noRecentBooking')}</h4>
         <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {latestTransaction ? formatVnd(latestTransaction.totalPrice) : 'Waiting for paid orders'}
+          {latestTransaction ? formatVnd(latestTransaction.totalPrice) : t('adminPerformanceDashboard.waitingForPaidOrders')}
         </p>
       </div>
       <CheckCircle size={36} style={{ color: 'var(--success)' }} />
@@ -255,13 +256,13 @@ const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ dat
       background: 'linear-gradient(120deg, rgba(255,138,0,0.16), rgba(255,255,255,0.035))',
     }}>
       <div>
-        <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent)', fontWeight: 800 }}>Latest Branch</p>
-        <h4 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{latestCinema?.cinemaName || 'No cinema activity yet'}</h4>
+        <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent)', fontWeight: 800 }}>{t('adminPerformanceDashboard.latestBranch')}</p>
+        <h4 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{latestCinema?.cinemaName || t('adminPerformanceDashboard.noCinemaActivity')}</h4>
         <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {latestCinema?.cinemaLocation || `${formatCompactNumber(data?.totalCinemas)} cinemas in the system`}
+          {latestCinema?.cinemaLocation || t('adminPerformanceDashboard.cinemasInSystem', { count: formatCompactNumber(data?.totalCinemas) })}
         </p>
       </div>
-      <button className="btn btn-primary" style={{ minWidth: 132 }}>View branches</button>
+      <button className="btn btn-primary" style={{ minWidth: 132 }}>{t('adminPerformanceDashboard.viewBranches')}</button>
     </div>
   </section>
   );

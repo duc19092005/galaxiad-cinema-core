@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import {
   BadgeCheck,
@@ -72,41 +73,42 @@ const formatShiftDate = (value: Date) => value.toLocaleDateString('vi-VN', {
 
 const getMinutesUntil = (value: Date) => Math.round((value.getTime() - Date.now()) / 60000);
 
-const getReminderCopy = (minutesUntil: number) => {
+const getReminderCopy = (minutesUntil: number, t: (key: string, options?: Record<string, unknown>) => string) => {
   if (minutesUntil <= 0) return {
-    badge: 'Đến giờ vào ca',
-    title: 'Ca làm của bạn đã tới giờ',
-    detail: 'Hãy clock-in ngay khi đã sẵn sàng nhận quầy.',
+    badge: t('cashierPage.shiftTimeNow'),
+    title: t('cashierPage.shiftReady'),
+    detail: t('cashierPage.clockInNowDetail'),
     tone: 'danger',
   };
   if (minutesUntil <= 30) return {
-    badge: `Còn ${minutesUntil} phút`,
-    title: 'Bạn sắp tới ca làm rồi',
-    detail: 'Chuẩn bị đồng phục, bảng tên và kiểm tra khu vực quầy trước khi clock-in.',
+    badge: t('cashierPage.minutesLeft', { minutes: minutesUntil }),
+    title: t('cashierPage.upcomingSoon'),
+    detail: t('cashierPage.prepareDetail'),
     tone: 'warning',
   };
   if (minutesUntil <= 120) return {
-    badge: `Còn ${Math.round(minutesUntil / 60 * 10) / 10} giờ`,
-    title: 'Sắp tới ca làm',
-    detail: 'Nên có mặt sớm 10-15 phút để bàn giao quầy gọn gàng.',
+    badge: t('cashierPage.hoursLeft', { hours: Math.round(minutesUntil / 60 * 10) / 10 }),
+    title: t('cashierPage.shiftApproaching'),
+    detail: t('cashierPage.earlyArrivalDetail'),
     tone: 'accent',
   };
   return {
-    badge: 'Đã lên lịch',
-    title: 'Ca làm tiếp theo',
-    detail: 'Theo dõi giờ vào ca và chuẩn bị trước khi tới rạp.',
+    badge: t('cashierPage.scheduled'),
+    title: t('cashierPage.nextShift'),
+    detail: t('cashierPage.trackAndPrepare'),
     tone: 'default',
   };
 };
 
-const shiftPreparationNotes = [
-  'Mặc đúng đồng phục, đeo bảng tên và giữ tác phong gọn gàng.',
-  'Có mặt sớm 10-15 phút để nhận bàn giao, kiểm tra máy POS và máy in vé.',
-  'Kiểm tra tiền lẻ, hóa đơn, vé in thử và báo quản lý nếu thiết bị có lỗi.',
-  'Không dùng tài khoản cá nhân của người khác; clock-in bằng đúng Staff ID của mình.',
+const getShiftPreparationNotes = (t: (key: string) => string) => [
+  t('cashierPage.noteUniform'),
+  t('cashierPage.noteEarlyArrival'),
+  t('cashierPage.noteCheckEquipment'),
+  t('cashierPage.noteStaffId'),
 ];
 
 const CashierPage: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { activeCinemaId, activeCinemaName } = useCinema();
   const [session, setSession] = useState<CashierShiftSession | null>(() => readCashierShiftSession());
@@ -176,7 +178,7 @@ const CashierPage: React.FC = () => {
       }
     } catch {
       setRegistrations([]);
-      setReminderError('Chưa tải được lịch ca của nhân viên. Hãy chọn lại hoặc refresh.');
+      setReminderError(t('cashierPage.loadScheduleError'));
     } finally {
       setReminderLoading(false);
     }
@@ -200,7 +202,7 @@ const CashierPage: React.FC = () => {
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0] || null;
   }, [registrations]);
 
-  const reminderCopy = upcomingShift ? getReminderCopy(getMinutesUntil(upcomingShift.startsAt)) : null;
+  const reminderCopy = upcomingShift ? getReminderCopy(getMinutesUntil(upcomingShift.startsAt), t) : null;
 
   const handleClockIn = async (faceVector: number[]) => {
     setShowFaceScan(false);
@@ -219,10 +221,10 @@ const CashierPage: React.FC = () => {
       };
       localStorage.setItem(CASHIER_SHIFT_SESSION_KEY, JSON.stringify(nextSession));
       setSession(nextSession);
-      showSuccess(response.message || `Chào mừng ${response.data.staffName} vào ca!`);
+      showSuccess(response.message || t('cashierPage.welcomeMessage', { name: response.data.staffName }));
       navigate('/cashier/sales');
     } catch (error) {
-      showError(getApiErrorMessage(error, 'Điểm danh thất bại. Thử lại.'));
+      showError(getApiErrorMessage(error, t('cashierPage.clockInError')));
     } finally {
       setSubmitting(false);
     }

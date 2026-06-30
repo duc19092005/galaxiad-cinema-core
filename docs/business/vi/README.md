@@ -256,3 +256,29 @@
 | **BS106** | Bán tại quầy | Thu ngân có thể bán vé tại quầy bằng cách chọn phim, suất chiếu và ghế thay mặt khách hàng. |
 | **BS107** | Tra cứu khách hàng | Thu ngân có thể tra cứu khách hàng qua email để bán tại quầy. |
 | **BS108** | Truy cập POS khoa/phòng | Thu ngân đăng nhập bằng tài khoản dùng chung của khoa/phòng để truy cập hệ thống POS. |
+
+---
+
+## 16. Công việc nền & Tự động hóa
+
+| Mã | Tên Quy Định | Nội Dung |
+|:--:|:-------------|:---------|
+| **BS116** | Tự động hủy đơn hàng chờ | Một công việc định kỳ Hangfire chạy mỗi 5 phút để tự động hủy các đơn hàng còn **Pending** sau 10 phút, giải phóng ghế đã khóa. |
+| **BS117** | Đồng bộ trạng thái phim/lịch chiếu tự động | Một dịch vụ nền chạy mỗi 10 phút để cập nhật trạng thái hoạt động của phim và lịch chiếu (vd: đánh dấu suất chiếu đã kết thúc). |
+| **BS118** | Đồng bộ lượt xem phim dạng đệm | Lượt xem phim của khách hàng được lưu tạm và đồng bộ theo lô để giảm ghi database. |
+| **BS119** | Đồng bộ AI embedding khi khởi động | Khi dịch vụ AI khởi động, nó đồng bộ dữ liệu phim để tạo và lưu vector embeddings trong Qdrant cho tìm kiếm ngữ nghĩa. |
+
+---
+
+## 17. Đề xuất lịch chiếu bằng AI
+
+| Mã | Tên Quy Định | Nội Dung |
+|:--:|:-------------|:---------|
+| **BS120** | AI chỉ đề xuất, không tạo trực tiếp | AI tạo ra các đề xuất nhưng không trực tiếp tạo lịch chiếu. Quản lý phải xem trước và áp dụng. |
+| **BS121** | Xem trước trước khi áp dụng | Quản lý phải xem trước các đề xuất trước khi áp dụng vào lịch chiếu. |
+| **BS122** | Kiểm tra lại khi áp dụng | Khi áp dụng, hệ thống luôn kiểm tra lại: quyền chiếu phim, hỗ trợ định dạng, khoảng thời gian hiệu lực, kiểm tra thời gian quá khứ, xung đột phòng chiếu và khoảng dọn phòng (15 phút). |
+| **BS123** | Lưu vết thao tác | Tất cả thao tác (đã áp dụng, đã bỏ qua, lỗi kiểm tra, đã xem) đều được lưu để phục vụ kiểm toán. |
+
+---
+
+

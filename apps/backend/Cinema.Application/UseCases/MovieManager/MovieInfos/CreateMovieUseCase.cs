@@ -107,7 +107,7 @@ public class CreateMovieUseCase
                 bannerUploadStatus = await _imageStorageService.PostImageAsync(request.MovieBanner);
                 if (!bannerUploadStatus.Success)
                 {
-                    throw new AppException("Failed to upload banner image", 400, "E01");
+                    throw new AppException(Messages.Movie.BannerUploadError, 400, "E01");
                 }
             }
 

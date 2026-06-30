@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Admin;
 using Cinema.Application.Interfaces.Admin;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.UserManagement;
 
@@ -24,7 +25,7 @@ public class GetAllUsersUseCase
         {
             IsSuccess = true,
             Data = users,
-            Message = "Get all users successfully."
+            Message = Messages.Admin.GetAllUsersSuccess
         };
     }
 }

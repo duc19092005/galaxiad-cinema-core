@@ -56,6 +56,31 @@ export const bookingApi = {
     /** Get ticket download URL */
     getTicketDownloadUrl: (orderId: string): string => {
         return `${API_BASE_URL}/api/v1/booking/ticket/${orderId}/download`;
+    },
+
+    /** SSE Seat Events URL */
+    getSeatEventsUrl: (scheduleId: string): string => {
+        return `${API_BASE_URL}/api/v1/booking/seats/events/${scheduleId}`;
+    },
+
+    /** Lock a seat via HTTP POST */
+    lockSeat: async (scheduleId: string, seatId: string, userName: string): Promise<boolean> => {
+        try {
+            const response = await bookingAxios.post('/seats/lock', { scheduleId, seatId, userName });
+            return response.data?.success ?? true;
+        } catch {
+            return false;
+        }
+    },
+
+    /** Unlock a seat via HTTP POST */
+    unlockSeat: async (scheduleId: string, seatId: string): Promise<boolean> => {
+        try {
+            const response = await bookingAxios.post('/seats/unlock', { scheduleId, seatId });
+            return response.data?.success ?? true;
+        } catch {
+            return false;
+        }
     }
 };
 

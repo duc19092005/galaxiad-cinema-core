@@ -1,5 +1,6 @@
 using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.UseCases.TheaterManager.MovieSchedules;
+using Cinema.Application.UseCases.TheaterManager.ShiftManagement;
 using Cinema.Application.UseCases.TheaterManager.ShowtimeRecommendations;
 using Cinema.Application.Services.TheaterManager.ShowtimeRecommendations;
 

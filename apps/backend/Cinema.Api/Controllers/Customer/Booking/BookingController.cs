@@ -22,6 +22,7 @@ public class BookingController : ControllerBase
     private readonly GetUserBookingHistoryUseCase _getUserBookingHistoryUseCase;
     private readonly GetBookingCustomerByEmailUseCase _getBookingCustomerByEmailUseCase;
     private readonly SseConnectionManager _sseManager;
+    private readonly SeatSseManager _seatSseManager;
     private readonly ILogger<BookingController> _logger;
     private readonly IConfiguration _configuration;
 
@@ -33,6 +34,7 @@ public class BookingController : ControllerBase
         GetUserBookingHistoryUseCase getUserBookingHistoryUseCase,
         GetBookingCustomerByEmailUseCase getBookingCustomerByEmailUseCase,
         SseConnectionManager sseManager,
+        SeatSseManager seatSseManager,
         ILogger<BookingController> logger,
         IConfiguration configuration)
     {
@@ -43,6 +45,7 @@ public class BookingController : ControllerBase
         _getUserBookingHistoryUseCase = getUserBookingHistoryUseCase;
         _getBookingCustomerByEmailUseCase = getBookingCustomerByEmailUseCase;
         _sseManager = sseManager;
+        _seatSseManager = seatSseManager;
         _logger = logger;
         _configuration = configuration;
     }
@@ -170,6 +173,100 @@ public class BookingController : ControllerBase
         finally
         {
             _sseManager.Unregister(orderId);
+        }
+    }
+
+    [HttpPost("seats/lock")]
+    public IActionResult LockSeat([FromBody] ReqLockSeatDto request)
+    {
+        var clientId = HttpContext.Connection.Id;
+        var (success, message, lockedSeats) = _seatSseManager.LockSeat(
+            request.ScheduleId, request.SeatId, request.UserName, clientId);
+
+        if (!success)
+            return Conflict(new ResSeatLockDto { Success = false, Message = message, LockedSeats = lockedSeats });
+
+        return Ok(new ResSeatLockDto { Success = true, Message = message, LockedSeats = lockedSeats });
+    }
+
+    [HttpPost("seats/unlock")]
+    public IActionResult UnlockSeat([FromBody] ReqUnlockSeatDto request)
+    {
+        var clientId = HttpContext.Connection.Id;
+        var (success, message, lockedSeats) = _seatSseManager.UnlockSeat(
+            request.ScheduleId, request.SeatId, clientId);
+
+        return Ok(new ResSeatLockDto { Success = success, Message = message, LockedSeats = lockedSeats });
+    }
+
+    [HttpGet("seats/events/{scheduleId}")]
+    public async Task SeatEvents(string scheduleId, CancellationToken cancellationToken)
+    {
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("Connection", "keep-alive");
+        Response.Headers.Append("X-Accel-Buffering", "no");
+
+        var subscriberId = Guid.NewGuid().ToString();
+        var clientId = HttpContext.Connection.Id;
+        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        // Subscribe and get initial state
+        var initialLockedSeats = _seatSseManager.Subscribe(scheduleId, subscriberId, async (data, eventId) =>
+        {
+            try
+            {
+                await Response.WriteAsync($"id: {eventId}\ndata: {data}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+            catch
+            {
+                tcs.TrySetResult();
+            }
+        });
+
+        // Send initial state
+        var initData = JsonSerializer.Serialize(new
+        {
+            type = "initial-state",
+            lockedSeats = initialLockedSeats
+        });
+        await Response.WriteAsync($"id: 0\nevent: initial-state\ndata: {initData}\n\n", cancellationToken);
+        await Response.Body.FlushAsync(cancellationToken);
+
+        // Heartbeat loop
+        _ = Task.Run(async () =>
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await Task.Delay(15000, cancellationToken);
+                    await Response.WriteAsync(": heartbeat\n\n", cancellationToken);
+                    await Response.Body.FlushAsync(cancellationToken);
+                }
+                catch
+                {
+                    break;
+                }
+            }
+        }, cancellationToken);
+
+        // Cleanup on disconnect
+        using var registration = cancellationToken.Register(() =>
+        {
+            _seatSseManager.Unsubscribe(scheduleId, subscriberId);
+            _seatSseManager.ReleaseSeatsByClient(clientId);
+            tcs.TrySetResult();
+        });
+
+        try
+        {
+            await tcs.Task.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Connection closed
         }
     }
 

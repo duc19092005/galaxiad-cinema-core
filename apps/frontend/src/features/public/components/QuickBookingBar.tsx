@@ -228,7 +228,7 @@ const QuickBookingBar: React.FC<QuickBookingBarProps> = ({ selectedCity, onCinem
       const dateVal = String(d.getDate()).padStart(2, '0');
       const valueStr = `${year}-${month}-${dateVal}`;
 
-      let dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      let dayName = d.toLocaleDateString('vi-VN', { weekday: 'short' });
       if (i === 0) dayName = 'Today';
 
       dates.push({

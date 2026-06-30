@@ -1,9 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.UseCases.Chatbot;
-using Cinema.Application.UseCases.Chatbot.Policy;
-using Cinema.Application.UseCases.Chatbot.Registry;
-using Cinema.Application.UseCases.Chatbot.Tools;
+using Cinema.Infrastructure.Chatbot.Policy;
+using Cinema.Infrastructure.Chatbot.Registry;
+using Cinema.Infrastructure.Chatbot.Tools;
 using Cinema.Infrastructure.Services;
 
 namespace Cinema.Api.Bootstraps.Chatbot;

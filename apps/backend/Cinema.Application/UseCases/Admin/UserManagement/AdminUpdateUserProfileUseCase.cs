@@ -48,7 +48,7 @@ public class AdminUpdateUserProfileUseCase
                 var age = today.Year - dto.DateOfBirth.Value.Year;
                 if (dto.DateOfBirth.Value.Date > today.AddYears(-age)) age--;
                 if (age < 16 || age > 80)
-                    throw new AppException("Tuổi nhân viên phải từ 16 đến 80.", 400, "PROFILE_ERR");
+                    throw new AppException(Messages.Validation.AgeMustBeBetween16And80, 400, "PROFILE_ERR");
                 user.DateOfBirth = dto.DateOfBirth.Value;
             }
 
@@ -57,7 +57,7 @@ public class AdminUpdateUserProfileUseCase
             return new BaseResponse<string>
             {
                 IsSuccess = true,
-                Message = "Cập nhật thông tin nhân viên thành công."
+                Message = Messages.Validation.UpdateProfileSuccess
             };
         }
         catch (AppException)

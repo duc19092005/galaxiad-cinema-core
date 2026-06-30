@@ -1,0 +1,36 @@
+﻿using System;
+using System.Threading.Tasks;
+using Cinema.Application.Interfaces.PricingPromotions;
+using Cinema.Application.Exceptions;
+using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
+
+namespace Cinema.Application.UseCases.Admin.PricingPromotions;
+
+public class DeletePricingPromotionUseCase
+{
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IPricingPromotionRepository _repository;
+
+    public DeletePricingPromotionUseCase(IPricingPromotionRepository repository,
+        IUnitOfWork unitOfWork)
+    {
+        _unitOfWork = unitOfWork;
+        _repository = repository;
+    }
+
+    public async Task ExecuteAsync(Guid id)
+    {
+        var promotion = await _repository.GetPromotionByIdAsync(id);
+
+        if (promotion == null)
+        {
+            throw new NotFoundException(Messages.Promotion.NotFound);
+        }
+
+        _repository.RemovePromotionRulesRange(promotion.Rules);
+        _repository.RemovePromotion(promotion);
+        await _unitOfWork.SaveChangesAsync();
+    }
+}
+

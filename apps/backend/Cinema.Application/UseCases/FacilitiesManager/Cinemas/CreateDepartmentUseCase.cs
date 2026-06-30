@@ -48,12 +48,12 @@ public class CreateDepartmentUseCase
 
         // Check permission
         if (!isAdmin && cinema.FacilitiesManagerId != userId)
-            throw new AppException("You do not have permission to create departments for this cinema.", 403, "DEPT_ERR");
+            throw new AppException(Messages.Department.NoPermissionManageCinema, 403, "DEPT_ERR");
 
         // Check unique name per cinema
         var exists = await _departmentRepository.DepartmentExistsAsync(request.CinemaId, request.DepartmentName);
         if (exists)
-            throw new AppException($"Department '{request.DepartmentName}' already exists in this cinema.", 400, "DEPT_ERR");
+            throw new AppException(Messages.Department.AlreadyExists(request.DepartmentName), 400, "DEPT_ERR");
 
         var departmentId = Guid.NewGuid();
         var sharedUserId = Guid.NewGuid();
@@ -115,14 +115,14 @@ public class CreateDepartmentUseCase
             {
                 IsSuccess = true,
                 Data = departmentId,
-                Message = $"Created department '{request.DepartmentName}' successfully. Counter account: {email} / Password: {defaultPassword}"
+                Message = Messages.Department.CreatedSuccessfully
             };
         }
         catch (AppException) { await transaction.RollbackAsync(); throw; }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            throw new AppException($"Error creating department: {ex.Message}", 500, "S01");
+            throw new AppException(string.Format(Messages.Department.CreateError(ex.Message)), 500, "S01");
         }
     }
 }

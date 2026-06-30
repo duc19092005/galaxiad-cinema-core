@@ -1,6 +1,7 @@
 // src/features/booking/OffersPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Ticket, Sparkles, ShoppingBag, Wallet, Coins, Clock, ShieldAlert, Loader2 } from 'lucide-react';
 import { voucherApi, type VoucherDto, type UserVoucherDto } from '../../api/voucherApi';
 import { bookingApi } from '../../api/bookingApi';
@@ -21,6 +22,7 @@ const getVoucherImage = (name: string) => {
 
 export const OffersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'offers' | 'store' | 'wallet'>('offers');
   
   // Auth state
@@ -111,7 +113,7 @@ export const OffersPage: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      showError('Failed to load voucher store listing.');
+      showError(t('offersPage.errorLoadingStore'));
     } finally {
       setLoadingStore(false);
     }
@@ -126,7 +128,7 @@ export const OffersPage: React.FC = () => {
       }
     } catch (err) {
       console.error(err);
-      showError('Failed to load your voucher wallet.');
+      showError(t('offersPage.errorLoadingWallet'));
     } finally {
       setLoadingWallet(false);
     }
@@ -134,7 +136,7 @@ export const OffersPage: React.FC = () => {
 
   const handleRedeem = async (voucherId: string, cost: number, name: string) => {
     if (userPoints < cost) {
-      showError('Insufficient reward points to redeem this voucher.');
+      showError(t('offersPage.insufficientPoints'));
       return;
     }
 
@@ -142,17 +144,18 @@ export const OffersPage: React.FC = () => {
     try {
       const res = await voucherApi.redeemVoucher(voucherId);
       if (res.isSuccess) {
-        showSuccess(`Successfully redeemed: ${name}!`);
+        showSuccess(t('offersPage.redeemSuccess', { name: name }));
         // Deduct points locally
         setUserPoints((prev) => Math.max(0, prev - cost));
         // Refresh listings
         fetchStoreVouchers();
       } else {
-        showError('Redemption failed. Please try again.');
+        showError(t('offersPage.redeemFailed'));
       }
     } catch (err: any) {
       console.error(err);
-      const msg = err.response?.data?.message || 'Error redeeming voucher.';
+      const fallbackMsg = t('offersPage.errorRedeeming');
+      const msg = err.response?.data?.message || fallbackMsg;
       showError(msg);
     } finally {
       setRedeemingId(null);
@@ -187,10 +190,10 @@ export const OffersPage: React.FC = () => {
             gap: '6px',
             marginBottom: '8px'
           }}>
-            <Sparkles size={14} /> Rewards & Promotions
+            <Sparkles size={14} /> {t('offersPage.title')}
           </span>
           <h1 style={{ fontSize: '36px', fontWeight: 900, margin: 0, letterSpacing: '-0.02em' }}>
-            Offers & Vouchers
+            {t('offersPage.offersAndVouchers')}
           </h1>
         </div>
 
@@ -222,7 +225,7 @@ export const OffersPage: React.FC = () => {
               transition: 'all 0.3s',
             }}
           >
-            <Ticket size={16} /> Deals & Offers
+            <Ticket size={16} /> {t('offersPage.dealsAndOffers')}
           </button>
 
           <button
@@ -243,7 +246,7 @@ export const OffersPage: React.FC = () => {
               transition: 'all 0.3s',
             }}
           >
-            <ShoppingBag size={16} /> Points Store
+            <ShoppingBag size={16} /> {t('offersPage.pointsStore')}
           </button>
 
           <button
@@ -264,7 +267,7 @@ export const OffersPage: React.FC = () => {
               transition: 'all 0.3s',
             }}
           >
-            <Wallet size={16} /> My Wallet
+            <Wallet size={16} /> {t('offersPage.myWallet')}
           </button>
         </div>
 
@@ -277,7 +280,7 @@ export const OffersPage: React.FC = () => {
               </div>
             ) : promotions.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
-                No active promotions or deals available at the moment.
+                {t('offersPage.noPromotions')}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px' }}>
@@ -310,7 +313,7 @@ export const OffersPage: React.FC = () => {
                         color: 'black',
                         textTransform: 'uppercase'
                       }}>
-                        AUTO APPLIED
+                        {t('offersPage.autoApplied')}
                       </span>
                     </div>
 
@@ -318,22 +321,22 @@ export const OffersPage: React.FC = () => {
                     <div style={{ padding: '20px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
                         <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          {promo.excludeHolidays ? 'Excludes holidays' : 'Available on holidays'}
+                          {promo.excludeHolidays ? t('offersPage.excludesHolidays') : t('offersPage.availableOnHolidays')}
                         </span>
                         <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 8px 0' }}>{promo.title}</h3>
                         <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 16px 0' }}>
-                          {promo.shortDescription || promo.description || 'Automatic pricing offer available for eligible sessions.'}
+                          {promo.shortDescription || promo.description || t('offersPage.defaultPromoDescription')}
                         </p>
                       </div>
                       
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                          {promo.startDate ? new Date(promo.startDate).toLocaleDateString('vi-VN') : 'Now'}
+                          {promo.startDate ? new Date(promo.startDate).toLocaleDateString('vi-VN') : t('offersPage.now')}
                           {' - '}
-                          {promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : 'No end date'}
+                          {promo.endDate ? new Date(promo.endDate).toLocaleDateString('vi-VN') : t('offersPage.noEndDate')}
                         </span>
                         <span style={{ fontSize: '13px', fontWeight: 800, color: 'var(--primary, #ff8a00)', letterSpacing: '0.03em' }}>
-                          {promo.rules.length} rule{promo.rules.length === 1 ? '' : 's'}
+                          {t('offersPage.rulesCount', { count: promo.rules.length })}
                         </span>
                       </div>
                       {promo.termsAndConditions && (
@@ -373,12 +376,12 @@ export const OffersPage: React.FC = () => {
                   <Coins size={24} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Reward Points</h3>
+                  <h3 style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('offersPage.yourRewardPoints')}</h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '28px', fontWeight: 900, color: 'var(--text-primary)' }}>
                       {isLoggedIn ? userPoints : '0'}
                     </span>
-                    <span style={{ fontSize: '14px', color: 'var(--primary, #ff8a00)', fontWeight: 600 }}>PTS</span>
+                    <span style={{ fontSize: '14px', color: 'var(--primary, #ff8a00)', fontWeight: 600 }}>{t('offersPage.pts')}</span>
                   </div>
                 </div>
               </div>
@@ -397,11 +400,11 @@ export const OffersPage: React.FC = () => {
                     fontSize: '13px'
                   }}
                 >
-                  Sign In to Redeem
+                  {t('offersPage.signInToRedeem')}
                 </button>
               ) : (
                 <div style={{ fontSize: '13px', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                  Loyalty Tier: <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{userRole}</span>
+                  {t('offersPage.loyaltyTier')} <span style={{ color: 'var(--primary)', fontWeight: 700 }}>{userRole}</span>
                 </div>
               )}
             </div>
@@ -410,11 +413,11 @@ export const OffersPage: React.FC = () => {
             {!isLoggedIn ? (
               <div className="glass-card" style={{ padding: '48px', textAlign: 'center', borderRadius: 'var(--radius-xl)' }}>
                 <ShieldAlert size={40} style={{ color: 'var(--text-secondary)', opacity: 0.2, margin: '0 auto 16px' }} />
-                <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '8px' }}>Login Required</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '8px' }}>{t('offersPage.loginRequired')}</h3>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: '0 0 16px 0' }}>
-                  Please sign in to access the voucher point exchange store.
+                  {t('offersPage.signInForStore')}
                 </p>
-                <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '8px 20px', height: 'auto' }}>Sign In Now</button>
+                <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '8px 20px', height: 'auto' }}>{t('offersPage.signInNow')}</button>
               </div>
             ) : loadingStore ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '40px 0' }}>
@@ -422,7 +425,7 @@ export const OffersPage: React.FC = () => {
               </div>
             ) : activeVouchers.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
-                No active vouchers available for redemption at this time.
+                {t('offersPage.noVouchersAvailable')}
               </div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
@@ -449,11 +452,11 @@ export const OffersPage: React.FC = () => {
                         {/* Title & discount amount */}
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
                           <div>
-                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Voucher Offer</span>
+                            <span style={{ fontSize: '10px', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('offersPage.voucherOffer')}</span>
                             <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '2px 0 0 0' }}>{v.voucherName}</h3>
                           </div>
                           <div style={{ fontSize: '24px', fontWeight: 900, color: 'var(--primary, #ff8a00)' }}>
-                            {v.voucherDiscountPercent}% <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>OFF</span>
+                            {v.voucherDiscountPercent}% <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text-secondary)' }}>{t('offersPage.off')}</span>
                           </div>
                         </div>
 
@@ -463,8 +466,8 @@ export const OffersPage: React.FC = () => {
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '20px', background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Available stock:</span>
-                            <span style={{ fontWeight: 700 }}>{v.remainingQuantity} / {v.voucherQuantity} left</span>
+                            <span>{t('offersPage.availableStock')}</span>
+                            <span style={{ fontWeight: 700 }}>{v.remainingQuantity} / {v.voucherQuantity} {t('offersPage.left')}</span>
                           </div>
                           {v.validTo && (
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -59,17 +59,17 @@ public class CreateUserUseCase
             var userRepository = _unitOfWork.Repository<UserInfoEntity>();
 
             if (string.IsNullOrWhiteSpace(dto.UserEmail))
-                validationErrors.Add("Email is required.");
+                validationErrors.Add(Messages.Validation.EmailRequired);
             if (string.IsNullOrWhiteSpace(dto.UserName))
-                validationErrors.Add("User name is required.");
+                validationErrors.Add(Messages.Validation.UserNameRequired);
             if (dto.UserPassword != dto.UserRepassword)
-                validationErrors.Add("Passwords do not match.");
+                validationErrors.Add(Messages.Validation.PasswordsDoNotMatch);
             if (dto.UserPassword.Length < 8)
-                validationErrors.Add("Password must be at least 8 characters.");
+                validationErrors.Add(Messages.Validation.PasswordTooShort);
             if (!System.Text.RegularExpressions.Regex.IsMatch(dto.IdentityCode, "^\\d{12}$"))
-                validationErrors.Add("Identity code must be exactly 12 digits.");
+                validationErrors.Add(Messages.Validation.IdentityCodeInvalid);
             if (!System.Text.RegularExpressions.Regex.IsMatch(dto.PhoneNumber, "^\\d{10}$"))
-                validationErrors.Add("Phone number must be exactly 10 digits.");
+                validationErrors.Add(Messages.Validation.PhoneNumberInvalid);
 
             if (await _adminUserRepository.EmailExistsAsync(dto.UserEmail))
                 validationErrors.Add(Messages.Auth.EmailAlreadyExists);
@@ -127,7 +127,7 @@ public class CreateUserUseCase
             {
                 IsSuccess = true,
                 Data = new AdminCreateUserResponseDto { UserId = userId },
-                Message = "User account created successfully."
+                Message = Messages.Admin.UserAccountCreated
             };
         }
         catch (AppException)

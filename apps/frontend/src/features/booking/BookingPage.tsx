@@ -3,13 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Loader2, AlertCircle
 } from 'lucide-react';
-import * as signalR from '@microsoft/signalr';
+import { useSeatSse } from '../../hooks/useSeatSse';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
-import { API_BASE_URL } from '../../api/axiosClient';
 import Header from '../../components/Header';
 import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
 
@@ -34,15 +33,14 @@ const BookingPage: React.FC = () => {
     const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
     const [customerLookupStatus, setCustomerLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
 
-    const [hubConnection, setHubConnection] = useState<signalR.HubConnection | null>(null);
-    const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
+    const { lockedSeats, lockSeat, unlockSeat } = useSeatSse(scheduleId || null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
         if (storedUser) {
             const user = JSON.parse(storedUser);
             setUserName(user.username || user.userName || 'Guest');
-            
+
             const roles: string[] = user.roles || [];
             const isCashier = roles.includes('Cashier');
             setIsCashierMode(isCashier);
@@ -56,45 +54,6 @@ const BookingPage: React.FC = () => {
 
         if (scheduleId) {
             fetchData();
-            let wsUrl = API_BASE_URL
-                ? `${API_BASE_URL}/ws/seat`
-                : 'https://apicinestartplus.runasp.net/ws/seat';
-            // Normalize double slashes if any (except the http:// or https:// protocol separator)
-            wsUrl = wsUrl.replace(/([^:]\/)\/+/g, "$1");
-
-            const connection = new signalR.HubConnectionBuilder()
-                .withUrl(wsUrl, {
-                    withCredentials: true
-                })
-                .withAutomaticReconnect()
-                .build();
-
-            const startConnection = async () => {
-                try {
-                    // Register handlers BEFORE start
-                    connection.on("OnInitialLockedSeats", (initialLockedSeats: Record<string, string>) => {
-                        setLockedSeats(initialLockedSeats);
-                    });
-                    connection.on("OnSeatSelected", (seatId: string, userName: string) => {
-                        setLockedSeats(prev => ({ ...prev, [seatId]: userName }));
-                    });
-                    connection.on("OnSeatUnselected", (seatId: string) => {
-                        setLockedSeats(prev => { const next = { ...prev }; delete next[seatId]; return next; });
-                    });
-
-                    await connection.start();
-                    await connection.invoke("JoinSchedule", scheduleId);
-                    setHubConnection(connection);
-                } catch (err) { console.error("SignalR Connection Error:", err); }
-            };
-            startConnection();
-            return () => {
-                if (connection.state === signalR.HubConnectionState.Connected) {
-                    connection.invoke("LeaveSchedule", scheduleId)
-                        .then(() => connection.stop())
-                        .catch(err => console.error("Error leaving schedule:", err));
-                }
-            };
         }
     }, [scheduleId]);
 
@@ -177,20 +136,14 @@ const BookingPage: React.FC = () => {
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
             setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
-            if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try { await hubConnection.invoke("UnselectSeat", scheduleId, seat.seatId); }
-                catch (err) { console.error("Error unselecting seat", err); }
-            }
+            await unlockSeat(seat.seatId);
         } else {
             if (selectedSeats.length >= 10) { showError(t('toast.maxSeats', 'You can select up to 10 tickets per order.')); return; }
             setSelectedSeats(prev => [...prev, seat]);
             if (pricing && pricing.segmentPrices.length > 0) {
                 setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
             }
-            if (hubConnection && hubConnection.state === signalR.HubConnectionState.Connected) {
-                try { await hubConnection.invoke("SelectSeat", scheduleId, seat.seatId, userName); }
-                catch (err) { console.error("Error selecting seat", err); }
-            }
+            await lockSeat(seat.seatId, userName);
         }
     };
 
@@ -339,7 +292,7 @@ const BookingPage: React.FC = () => {
                         <div className="flex flex-wrap items-center gap-4 text-[#ddc1ae] text-sm font-semibold">
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">movie</span> {seatMap.auditoriumName}</span>
                             <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
-                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">calendar_today</span> {new Date(seatMap.startTime).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                            <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">calendar_today</span> {new Date(seatMap.startTime).toLocaleDateString('vi-VN', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                             <span className="w-1.5 h-1.5 rounded-full bg-white/20"></span>
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">schedule</span> {new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>

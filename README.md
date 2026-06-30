@@ -1,168 +1,182 @@
-# Galaxiad Cinema Core
+# 🎬 Galaxiad Cinema Core
 
-Galaxiad Cinema Core is a high-performance cinema booking and management platform built with modern architectural patterns. The platform features an ASP.NET Core backend, a React customer & management portal, and a Python FastAPI AI assistant and recommendation engine.
-
----
-
-## 🌌 System Scope & Core Features
-
-Galaxiad Cinema Core covers the complete lifecycle of cinema operations:
-
-1. **Customer Ticketing Flow**: Interactive seat selection maps, real-time checkout, ticket reservation holding, and secure checkout integration.
-2. **Dynamic Pricing & Promotion Engine**: Auto-applied discount rules, flat-rate pricing adjustments, and priority-based price calculation with automated Cartesian product expansion for multi-format and multi-cinema applicability.
-3. **Staff Scheduling & Payroll**: Shift pattern registration, automatic contract constraint validation (full-time vs. part-time hours checks), manager approval workflows, and cashier/manager payroll generation.
-4. **Personalized Recommendations**: User behavioral profile synthesis (clicks, bookings, ratings) mapped to Google Gemini semantic embeddings and retrieved via Qdrant persistent vector search.
-5. **Role-Aware AI Assistant**: Natural language query routing using FastAPI intent classification, secure C# Tool Registry execution, and centralized system prompt/safety guardrails managed inside the AI service.
+> Nền tảng quản lý rạp chiếu phim toàn diện — quản lý phòng chiếu, lịch phim, vé, khuyến mãi, nhân viên và AI hỗ trợ — tất cả trên một giao diện duy nhất.
 
 ---
 
-## 🛠️ Technology Stack
+## 🚀 Sứ mệnh dự án
 
-| Layer | Technology | Key Libraries / Ecosystem |
-| --- | --- | --- |
-| **Frontend** | React 18 (Vite + TypeScript) | Vanilla CSS, Lucide Icons, SignalR Client, React Router |
-| **Backend** | ASP.NET Core 8 | Entity Framework Core, Dapper, SignalR Hubs, BCrypt, JWT |
-| **AI Service** | FastAPI (Python 3.10+) | Uvicorn, Loguru, Google Generative AI (Gemini), httpx |
-| **Databases** | SQL Server (MSSQL 2022) | Primary source of truth for transactions, users, and metadata |
-| | Redis (Cache & PubSub) | Key-value store for session locking, cached catalogs, and invalidation |
-| | Qdrant | Vector database storing persistent 768-dimensional movie embeddings |
+**Galaxiad Cinema Core** là một nền tảng quản lý rạp chiếu phim hiện đại, giúp chủ rạp và đội ngũ vận hành quản lý toàn bộ hoạt động kinh doanh — từ đặt vé online, quản lý phòng chiếu, lịch chiếu phim, khuyến mãi, nhân viên, đến chấm công và báo cáo doanh thu — tất cả trên một hệ thống duy nhất.
+
+Hệ thống tích hợp AI để đề xuất lịch chiếu thông minh, chatbot hỗ trợ khách hàng 24/7, và gợi ý phim cá nhân hóa dựa trên hành vi người dùng.
 
 ---
 
-## 🏛️ System Architecture
-
-The following diagram illustrates the interaction between services, data flow, and runtime storage roles:
+## 🏛️ Kiến trúc tổng quan
 
 ```mermaid
 flowchart TD
-    subgraph Client ["Client Layer"]
-        FE["React Frontend (Vite)"]
+    subgraph Client["Giao diện người dùng"]
+        FE["React Frontend (Vite + TypeScript)"]
+        POS["Giao diện POS tại quầy"]
     end
 
-    subgraph Backend ["Backend Layer"]
-        API["ASP.NET Core 8 API"]
+    subgraph Backend["Backend (.NET)"]
+        API["ASP.NET Core API"]
         UC["Use Cases & Tool Registry"]
+        Hubs["SSE Events & Background Jobs"]
         API --- UC
+        API --- Hubs
     end
 
-    subgraph AI ["AI Layer"]
-        FastAPI["FastAPI Python Service"]
-        Embedder["Gemini Embedder"]
+    subgraph AI["Dịch vụ AI"]
+        FastAPI["Python FastAPI"]
+        Gemini["Google Gemini LLM"]
+        Embedder["Vector Embeddings"]
+        FastAPI --- Gemini
         FastAPI --- Embedder
     end
 
-    subgraph Storage ["Storage & Infrastructure"]
-        SQL["SQL Server (Source of Truth)"]
-        Redis["Redis (Cache & Concurrency Lock)"]
-        Qdrant["Qdrant (Vector Database)"]
+    subgraph Storage["Lưu trữ"]
+        SQL[("SQL Server
+    
+    Dữ liệu chính")]
+        Redis[("Redis
+    
+    Cache & Lock")]
+        Qdrant[("Qdrant
+    
+    Vector Database")]
     end
 
-    %% Client Interactions
-    FE <-->|REST API / SignalR| API
-
-    %% Backend Interactions
-    API <-->|SQL Queries| SQL
-    API <-->|Cache-Aside / Redis Lock| Redis
-    API <-->|Intent / Chat API| FastAPI
-
-    %% AI Service Interactions
-    FastAPI <-->|Vector Search / Upserts| Qdrant
-    Embedder <-->|Generate Embeddings| Gemini["Google Gemini API"]
+    FE <-->|"REST API + SSE"| API
+    API <-->|"SQL Queries"| SQL
+    API <-->|"Cache"| Redis
+    API <-->|"AI Request"| FastAPI
+    FastAPI <-->|"Vector Search"| Qdrant
+    Embedder <-->|"Embeddings"| Gemini
 ```
+
+**Giải thích đơn giản:** Giao diện web (React) nói chuyện với backend (.NET) qua REST API và SSE (Server-Sent Events — cơ chế server tự đẩy dữ liệu tới trình duyệt mà không cần hỏi đi hỏi lại). Backend lưu dữ liệu vào SQL Server, dùng Redis để nhớ nhanh (cache) và khóa trùng lặp, và gọi Python AI Service để phân tích hành vi khách hàng, gợi ý phim và hỗ trợ chatbot.
 
 ---
 
-## 📂 Repository Layout
+## ✨ Tính năng chính (theo vai trò)
 
-```text
-galaxiad-cinema-core/
-├── apps/
-│   ├── backend/                # ASP.NET Core 8 Clean Architecture Solution
-│   │   ├── Cinema.Api/         # Controllers, Middlewares, Hubs, Bootstrapping
-│   │   ├── Cinema.Application/ # Use Cases, DTOs, Application Interfaces
-│   │   ├── Cinema.Infrastructure/# EF Core, Repositories, Redis, External Services
-│   │   └── Cinema.Domain/      # Business Entities, Enums, Rules, Policy Interfaces
-│   └── frontend/               # React Client (Vite + TypeScript)
-│       └── src/
-│           ├── components/     # Shared layout, Auth guards, modals
-│           ├── features/       # Feature modules (Admin, Customer, Staff, Cashier)
-│           └── api/            # API client services & DTO mappings
-├── services/
-│   └── ai/                     # Python FastAPI service for intent, RAG, and recommendations
-└── docs/                       # System documentation and business policies
-    ├── algorithms/             # Tech specifications (Pricing, Cache, AI Planner)
-    └── business/               # Documented business rules reference
-```
+### 👤 Khách hàng (Customer)
+- **Đặt vé online**: Chọn phim, chọn ghế real-time (ghế được khóa tạm thời khi có người chọn), thanh toán qua VNPay
+- **Chatbot AI**: Hỏi đáp thông minh — tìm phim, xem lịch chiếu, giải đáp thắc mắc
+- **Lịch sử & thông báo**: Xem lịch sử đặt vé, nhận thông báo khuyến mãi
+
+### 💵 Thu ngân (Cashier / POS)
+- **Bán vé tại quầy**: Tìm khách hàng bằng email, chọn ghế, thanh toán tiền mặt hoặc VNPay
+- **Quản lý ca làm việc**: Đăng ký ca, chấm công bằng khuôn mặt (facial recognition)
+
+### 🏢 Quản lý rạp (Facilities Manager)
+- **Quản lý cinema & phòng chiếu**: Thêm/sửa rạp, phòng chiếu (auditorium), ghế ngồi
+- **Phân khúc giá**: Quản lý giá vé theo đối tượng (Học sinh, Người lớn, VIP...)
+
+### 🎬 Quản lý phim (Movie Manager)
+- **Quản lý thông tin phim**: Thêm/sửa phim, lịch chiếu, phân loại độ tuổi (P, K, T13, T16, T18, C)
+
+### 📋 Quản lý rạp (Theater Manager)
+- **Quản lý ca nhân viên**: Duyệt ca, xem bảng chấm công
+- **Báo cáo doanh thu**: Xem doanh thu, thống kê
+
+### 🔧 Admin
+- **Quản lý người dùng & phân quyền**: Tạo tài khoản, gán vai trò, chuyển giao quyền
+- **Khuyến mãi & Voucher**: Tạo và quản lý chương trình khuyến mãi, voucher điểm thưởng
+- **Audit Log**: Xem nhật ký hoạt động toàn hệ thống
+- **Dashboard tổng quan**: Biểu đồ doanh thu, vé bán ra, hoạt động gần đây
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ Công nghệ sử dụng
 
-### Prerequisites
+| Layer | Công nghệ | Vai trò |
+|-------|-----------|---------|
+| **Frontend** | React + TypeScript + Vite | Giao diện người dùng (Web) |
+| **Backend** | ASP.NET Core 8 | Xử lý nghiệp vụ, REST API, SSE |
+| **AI Service** | Python FastAPI + Google Gemini | Chatbot, gợi ý phim, phân tích |
+| **Database** | SQL Server (MSSQL) | Lưu trữ dữ liệu chính (giao dịch, người dùng, metadata) |
+| **Cache** | Redis | Cache nhanh, khóa phân tán (distributed lock) |
+| **Vector DB** | Qdrant | Lưu trữ vector embeddings cho gợi ý phim |
+| **Real-time** | SSE (Server-Sent Events) | Cập nhật trạng thái ghế real-time, thông báo |
+
+---
+
+## 🚀 Cách chạy dự án
+
+### Yêu cầu
 - Docker & Docker Compose
-- .NET 8.0 SDK (for local backend development)
-- Node.js 18+ (for local frontend development)
-- Python 3.10+ (for local AI service development)
+- .NET 8.0 SDK (cho backend)
+- Node.js 18+ (cho frontend)
+- Python 3.10+ (cho AI Service)
 
 ### Quick Start (Docker Compose)
-To spin up the entire stack (SQL Server, Redis, Qdrant, Frontend, Backend, and AI Service):
+```bash
+# 1. Clone dự án
+git clone <repository-url>
+cd galaxiad-cinema-core
 
-1. Create a `.env` file inside `services/ai/` and add your Google Gemini API key:
-   ```env
-   GOOGLE_API_KEY=your-gemini-api-key
-   ```
-2. Start the services:
-   ```bash
-   docker compose up --build
-   ```
+# 2. Tạo file .env cho AI service
+echo "GOOGLE_API_KEY=your-gemini-api-key" > services/ai/.env
 
-### Individual Service Setup
+# 3. Chạy toàn bộ hệ thống
+docker compose up --build
+```
 
-#### Local Backend
+Truy cập: `http://localhost:5173`
+
+### Chạy từng phần riêng lẻ
+
+**Backend:**
 ```bash
 cd apps/backend
 dotnet run --project Cinema.Api
 ```
 
-#### Local Frontend
+**Frontend:**
 ```bash
 cd apps/frontend
 npm install
 npm run dev
 ```
 
-#### Local AI Service
-1. Install dependencies:
-   ```bash
-   cd services/ai
-   pip install -r requirements.txt
-   ```
-2. Set environment variables (or create a `.env` file):
-   ```env
-   GOOGLE_API_KEY=your-gemini-api-key
-   DEEPSEEK_API_KEY=your-deepseek-api-key
-   ```
-3. Run the service:
-   ```bash
-   python main.py
-   ```
+**AI Service:**
+```bash
+cd services/ai
+pip install -r requirements.txt
+# Tạo .env: GOOGLE_API_KEY=your-key
+python main.py
+```
 
 ---
 
-## 🗺️ Documentation Directory
+## 📚 Tài liệu chi tiết
 
-Detailed specifications are organized by language to keep documentation clean:
+### Thuật toán & Kỹ thuật
+- [Tổng quan thuật toán](docs/algorithms/README.md)
+  - [Tìm kiếm phim](docs/algorithms/movie-search.md)
+  - [Gợi ý phim](docs/algorithms/movie-recommendation.md)
+  - [Khuyến mãi giá động](docs/algorithms/pricing-promotions.md)
+  - [Chatbot theo vai trò](docs/algorithms/role-aware-chatbot.md)
+  - [Redis Cache Strategy](docs/algorithms/redis-cache-strategy.md)
+  - [Quy tắc xếp lịch ca](docs/algorithms/shift-schedule-rules.md)
+  - [Khóa ghế Real-time (SSE)](docs/algorithms/seat-locking.md) 🔥 Mới
 
-### Technical Algorithms
-- [Algorithms Overview](docs/algorithms/README.md)
-  - [Movie Search Algorithm](docs/algorithms/movie-search.md)
-  - [Movie Recommendation Algorithm](docs/algorithms/movie-recommendation.md)
-  - [Dynamic Pricing Promotion Engine](docs/algorithms/pricing-promotions.md)
-  - [Role-Aware Chatbot Implementation](docs/algorithms/role-aware-chatbot.md)
-  - [Redis Caching Strategy](docs/algorithms/redis-cache-strategy.md)
-  - [Shift Scheduling Rules](docs/algorithms/shift-schedule-rules.md)
-- Translations: [Tiếng Việt](docs/algorithms/vi/README.md) | [Русский](docs/algorithms/ru/README.md)
-
-### Business Rules
+### Quy tắc Kinh doanh
 - [Business Rules Reference](docs/business/README.md)
-- Translations: [Tiếng Việt](docs/business/vi/README.md) | [Русский](docs/business/ru/README.md)
+
+### Phát triển (Backend)
+- [Full System API Docs](apps/backend/docs/dev/full_system_api_docs.md)
+- [API Integration Guide (FE)](apps/backend/docs/dev/api_integration_guide_fe.md)
+- [Seat Locking Architecture](apps/backend/docs/dev/seat-locking-architecture.md) 🔥 Mới
+
+### Dịch thuật
+- Tài liệu kỹ thuật: [Tiếng Việt](docs/algorithms/vi/README.md) | [Русский](docs/algorithms/ru/README.md)
+- Quy tắc kinh doanh: [Tiếng Việt](docs/business/vi/README.md) | [Русский](docs/business/ru/README.md)
+
+---
+
+> ⚡ Galaxiad Cinema Core — Built with ❤️ by the Galaxiad Team

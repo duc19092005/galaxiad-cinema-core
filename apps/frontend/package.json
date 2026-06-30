@@ -11,7 +11,6 @@
     "postinstall": "node ./scripts/strip-face-api-sourcemaps.cjs"
   },
   "dependencies": {
-    "@microsoft/signalr": "^10.0.0",
     "@tailwindcss/postcss": "^4.1.18",
     "axios": "^1.13.2",
     "face-api.js": "^0.22.2",

@@ -18,7 +18,7 @@ const Section: React.FC<{ title: string; body: string }> = ({ title, body }) => 
 const TermsOfServicePage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const currentDate = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const currentDate = new Date().toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' });
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
