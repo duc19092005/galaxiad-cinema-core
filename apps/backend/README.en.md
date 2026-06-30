@@ -22,7 +22,7 @@ This platform translates complex cinema operations into robust backend workflows
 ### 1. Seamless Booking & Payment Experience
 *   **Multi-Auth Integration:** Supports traditional secure login via JWT (AccessToken & RefreshToken) alongside convenient **Google OAuth 2.0** authentication.
 *   **Intuitive Movie Browsing:** APIs to retrieve "Now-Showing" and "Coming-Soon" movie catalogs, filtered by specific theaters, dates, and times.
-*   **Real-time Seat Locking (SignalR):** When a user selects a seat and initiates payment, the system **locks the seat temporarily for 10 minutes** using SignalR. The seat status changes in real-time on all other active users' screens, preventing **double bookings**. If payment is not completed within 10 minutes, a Hangfire background job automatically releases the hold.
+*   **Real-time Seat Locking (SSE + HTTP POST):** When a user selects a seat and initiates payment, the system **locks the seat temporarily for 10 minutes** using SSE (Server-Sent Events). The seat status changes in real-time on all other active users' screens, preventing **double bookings**. If payment is not completed within 10 minutes, a Hangfire background job automatically releases the hold.
 *   **E-Payment Gateway:** Fully integrated with the **VNPay sandbox**, ensuring secure, verified, and automated transaction updates via secure webhook callbacks.
 
 ### 2. Conflict-Free Movie Scheduling (Breakdown Time Algorithm)
@@ -101,7 +101,7 @@ High-quality development standards have been applied to ensure performance, secu
 ### 1. Technology Catalog
 *   **Language & Framework:** C# / .NET 8, ASP.NET Core Web API
 *   **Database & ORM:** MS SQL Server, Entity Framework Core 8
-*   **Real-time Broadcast:** SignalR Hubs
+*   **Real-time Broadcast:** SSE (Server-Sent Events)
 *   **Background Jobs:** Hangfire (managing automatic release of expired seat holds)
 *   **Third-Party Services:**
     *   **VNPay:** Electronic payment gateway.
@@ -114,7 +114,7 @@ The backend is structured into 4 clean layers:
 *   **`Cinema.Domain`**: Pure business core containing Entities, Enums, Custom Exceptions, Repository/UnitOfWork Interfaces, Constants, and Utils. It has zero external dependencies.
 *   **`Cinema.Application`**: Application-specific logic containing Use Cases, DTOs, Application Interfaces, and Validators.
 *   **`Cinema.Infrastructure`**: DB Context, Migrations, Seed Data, Repositories implementations, and integration adapters (VNPay, Cloudinary, Redis, DeepSeek AI).
-*   **`Cinema.Api`**: API Presentation layer containing controllers, middlewares, bootstrapper DI configurations, SignalR hubs, and Program.cs.
+*   **`Cinema.Api`**: API Presentation layer containing controllers, middlewares, bootstrapper DI configurations, SSE services, and Program.cs.
 
 ### 3. Engineering Highlights
 *   **Unit of Work & Repository Pattern:** Ensures all operations inside a booking session (creating orders, locking seats, deducting customer points) execute inside a single database transaction. This prevents data inconsistency.

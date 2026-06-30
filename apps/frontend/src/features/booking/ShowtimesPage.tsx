@@ -16,6 +16,7 @@ interface CustomSelectProps {
   onChange: (val: string) => void;
   icon: React.ReactNode;
   disabled?: boolean;
+  placeholder?: string;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({
@@ -26,6 +27,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   onChange,
   icon,
   disabled,
+  placeholder,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -59,7 +61,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4, display: 'flex', alignItems: 'center', gap: '6px' }}>
           {icon} {label}
         </span>
-        <span style={{ fontSize: '14px' }}>{t('showtimesPage.findingShowtimes')}</span>
+        <span style={{ fontSize: '14px' }}>{placeholder}</span>
       </div>
     );
   }
@@ -455,6 +457,7 @@ export const ShowtimesPage: React.FC = () => {
             onChange={setSelectedCinemaId}
             icon={<MapPin size={14} style={{ color: 'var(--primary)' }} />}
             disabled={dataLoading}
+            placeholder={t('showtimesPage.findingShowtimes')}
           />
 
           {/* Movie Filter */}
@@ -466,6 +469,7 @@ export const ShowtimesPage: React.FC = () => {
             onChange={setSelectedMovieId}
             icon={<Film size={14} style={{ color: 'var(--primary)' }} />}
             disabled={dataLoading}
+            placeholder={t('showtimesPage.findingShowtimes')}
           />
         </div>
 

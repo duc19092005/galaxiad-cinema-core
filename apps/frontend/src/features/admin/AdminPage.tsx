@@ -259,7 +259,7 @@ const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ dat
         <p style={{ margin: '0 0 6px', fontSize: 12, color: 'var(--accent)', fontWeight: 800 }}>{t('adminPerformanceDashboard.latestBranch')}</p>
         <h4 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{latestCinema?.cinemaName || t('adminPerformanceDashboard.noCinemaActivity')}</h4>
         <p style={{ margin: '6px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-          {latestCinema?.cinemaLocation || t('adminPerformanceDashboard.cinemasInSystem', { count: formatCompactNumber(data?.totalCinemas) })}
+          {latestCinema?.cinemaLocation || t('adminPerformanceDashboard.cinemasInSystem', { count: data?.totalCinemas ?? 0 })}
         </p>
       </div>
       <button className="btn btn-primary" style={{ minWidth: 132 }}>{t('adminPerformanceDashboard.viewBranches')}</button>

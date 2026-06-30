@@ -1,67 +1,39 @@
 services:
   # ─────────────────────────────────────────
-  # C# ASP.NET Core API
+  # C# ASP.NET Core API (Production)
   # ─────────────────────────────────────────
   api:
-    image: cinema-api
     build:
       context: ./apps/backend
       dockerfile: Cinema.Api/Dockerfile
-      target: development
+      target: final
     ports:
       - "8080:8080"
-      - "8081:8081"
-    volumes:
-      - ./apps/backend:/src
-      - /src/Cinema.Api/bin
-      - /src/Cinema.Api/obj
-      - /src/Cinema.Application/bin
-      - /src/Cinema.Application/obj
-      - /src/Cinema.Domain/bin
-      - /src/Cinema.Domain/obj
-      - /src/Cinema.Infrastructure/bin
-      - /src/Cinema.Infrastructure/obj
     environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=false
-      - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_ENVIRONMENT=Production
     networks:
       - cinema-network
     depends_on:
-      - mssql
-      - redis
-      - ai
+      mssql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      ai:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
+    restart: unless-stopped
 
   # ─────────────────────────────────────────
-  # React Frontend (Vite)
-  # ─────────────────────────────────────────
-  frontend:
-    image: cinema-frontend
-    build:
-      context: ./apps/frontend
-      dockerfile: Dockerfile
-      target: development
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./apps/frontend:/app
-      - /app/node_modules
-    environment:
-      - VITE_API_BASE_URL=http://localhost:8080
-      - CHOKIDAR_USEPOLLING=true
-    networks:
-      - cinema-network
-    depends_on:
-      - api
-
-  # ─────────────────────────────────────────
-  # Python AI Microservice (Recommendation)
+  # Python AI Microservice (Production)
   # ─────────────────────────────────────────
   ai:
     build:
       context: ./services/ai
       dockerfile: Dockerfile
-    image: cinema-ai
-    container_name: cinema-ai-service
     ports:
       - "8000:8000"
     volumes:
@@ -84,6 +56,30 @@ services:
       timeout: 10s
       retries: 3
       start_period: 300s
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: "2.0"
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  # ─────────────────────────────────────────
+  # Qdrant Vector Database
+  # ─────────────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1.0"
     restart: unless-stopped
     networks:
       - cinema-network
@@ -91,29 +87,28 @@ services:
   # ─────────────────────────────────────────
   # SQL Server 2022
   # ─────────────────────────────────────────
-  qdrant:
-    image: qdrant/qdrant
-    container_name: cinema-qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_storage:/qdrant/storage
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
   mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
+    image: mcr.claude-opus-4.8/mssql/server:2022-latest
     ports:
       - "1433:1433"
     volumes:
       - sqlvolume:/var/opt/mssql
-    environment:
-      - ACCEPT_EULA=Y
     env_file:
       - .env
-
+    environment:
+      - ACCEPT_EULA=Y
+    healthcheck:
+      test: /opt/mssql-tools*/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G
+          cpus: "2.0"
+    restart: unless-stopped
     networks:
       - cinema-network
 
@@ -124,6 +119,12 @@ services:
     image: redis:alpine
     ports:
       - "6379:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.5"
+    restart: unless-stopped
     networks:
       - cinema-network
 

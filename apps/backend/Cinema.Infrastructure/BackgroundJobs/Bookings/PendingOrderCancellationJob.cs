@@ -66,7 +66,7 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
     }
 
     /// <summary>
-    /// Forcefully cancels a specific order if it is still Pending, and notifies clients via SignalR to release the seats.
+    /// Forcefully cancels a specific order if it is still Pending, and notifies clients via SSE to release the seats.
     /// </summary>
     public async Task ExecuteForOrderAsync(Guid orderId)
     {
@@ -106,7 +106,7 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "PendingOrderCancellationJob: Failed to send SignalR notification for released seats of order {OrderId}", order.OrderId);
+                _logger.LogWarning(ex, "PendingOrderCancellationJob: Failed to send SSE notification for released seats of order {OrderId}", order.OrderId);
             }
         }
     }

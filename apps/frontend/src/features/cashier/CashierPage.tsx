@@ -100,7 +100,7 @@ const getReminderCopy = (minutesUntil: number, t: (key: string, options?: Record
   };
 };
 
-const getShiftPreparationNotes = (t: (key: string) => string) => [
+const getShiftPreparationNotes = (t: (key: string) => string): string[] => [
   t('cashierPage.noteUniform'),
   t('cashierPage.noteEarlyArrival'),
   t('cashierPage.noteCheckEquipment'),
@@ -517,7 +517,7 @@ const CashierPage: React.FC = () => {
                 <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>Dặn dò trước ca</h3>
               </div>
               <div style={{ display: 'grid', gap: 10 }}>
-                {shiftPreparationNotes.map((note) => (
+                {getShiftPreparationNotes(t).map((note: string) => (
                   <div key={note} style={{ display: 'grid', gridTemplateColumns: '18px 1fr', gap: 8, alignItems: 'start' }}>
                     <BadgeCheck size={15} style={{ color: 'var(--success)', marginTop: 2 }} />
                     <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55 }}>{note}</p>

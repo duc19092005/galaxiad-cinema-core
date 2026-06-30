@@ -1,10 +1,5 @@
 {
   "rewrites": [
-
-    {
-      "source": "/ws/:path*",
-      "destination": "http://apicinestartplus.runasp.net/ws/:path*"
-    },
     {
       "source": "/api/:path*",
       "destination": "http://apicinestartplus.runasp.net/api/:path*"

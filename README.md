@@ -179,4 +179,22 @@ python main.py
 
 ---
 
+## Deployment Evidence
+
+| Item | Status | Link |
+|------|--------|------|
+| CI/CD | GitHub Actions (build + type check) | `.github/workflows/build.yml` |
+| Frontend Demo | Live on Vercel | https://renewcinemaprojectfrontend.vercel.app |
+| API Swagger | Live | https://apicinestartplus.runasp.net/swagger |
+| Seed Data | Included | 5 movies, 3 cinemas, 6 auditoriums, sample pricing |
+| Deployment Guide | [DEPLOYMENT.md](DEPLOYMENT.md) | VPS setup + Docker production config |
+
+### Production Architecture
+- **Frontend**: Vercel (auto-deploy from `main` branch)
+- **Backend**: runasp.net (ASP.NET Core hosting)
+- **AI Service**: Self-hosted with BAAI/bge-m3 local embedding model
+- **Database**: SQL Server 2022 + Redis + Qdrant
+
+---
+
 > ⚡ Galaxiad Cinema Core — Built with ❤️ by the Galaxiad Team
