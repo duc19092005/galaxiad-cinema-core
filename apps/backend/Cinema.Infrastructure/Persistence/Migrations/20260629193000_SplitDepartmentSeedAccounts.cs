@@ -34,6 +34,8 @@ namespace Cinema.Infrastructure.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM [UserInfoEntity] WHERE [UserId] = 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11')
+BEGIN
 INSERT INTO [UserInfoEntity] ([UserId], [AccountStatus], [DateOfBirth], [IdentityCode], [LockoutReason], [Password], [PhoneNumber], [PortraitImageUrl], [RefreshToken], [RegisterMethod], [RewardPoints], [SubId], [UserEmail], [UserName])
 VALUES 
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11', 1, '1990-01-01 00:00:00', 'POS-GALAXY-TICKET', NULL, '$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu', '0999000011', NULL, NULL, 0, 0, NULL, 'quay.ve.galaxy.cinema.nguyen.du@cinema.com', N'Quay ve - Galaxy Cinema Nguyen Du'),
@@ -42,9 +44,12 @@ VALUES
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22', 1, '1990-01-01 00:00:00', 'POS-LOTTE-FOOD', NULL, '$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu', '0999000022', NULL, NULL, 0, 0, NULL, 'quay.bap.nuoc.lotte.cinema.west.lake@cinema.com', N'Quay bap nuoc - Lotte Cinema West Lake'),
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31', 1, '1990-01-01 00:00:00', 'POS-BHD-TICKET', NULL, '$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu', '0999000031', NULL, NULL, 0, 0, NULL, 'quay.ve.bhd.star.bitexco@cinema.com', N'Quay ve - BHD Star Bitexco'),
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32', 1, '1990-01-01 00:00:00', 'POS-BHD-FOOD', NULL, '$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu', '0999000032', NULL, NULL, 0, 0, NULL, 'quay.bap.nuoc.bhd.star.bitexco@cinema.com', N'Quay bap nuoc - BHD Star Bitexco');
+END
 ");
 
             migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM [UserRoleInfoEntity] WHERE [RoleId] = '1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c' AND [UserId] = 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11')
+BEGIN
 INSERT INTO [UserRoleInfoEntity] ([RoleId], [UserId])
 VALUES 
 ('1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11'),
@@ -53,9 +58,12 @@ VALUES
 ('1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22'),
 ('1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31'),
 ('1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32');
+END
 ");
 
             migrationBuilder.Sql(@"
+IF NOT EXISTS (SELECT 1 FROM [StaffProfileEntity] WHERE [UserId] = 'f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11')
+BEGIN
 INSERT INTO [StaffProfileEntity] ([UserId], [CinemaId], [DepartmentId], [EmployeeType], [FaceVector], [IsCinemaManager], [WorkingStatus])
 VALUES 
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11', '11111111-1111-1111-1111-111111111111', 'd1111111-1111-1111-1111-111111111111', 1, NULL, 0, 1),
@@ -64,6 +72,7 @@ VALUES
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22', '22222222-2222-2222-2222-222222222222', 'd2222222-2222-2222-2222-222222222222', 1, NULL, 0, 1),
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'dbbbbbbb-bbbb-bbbb-bbbb-111111111111', 1, NULL, 0, 1),
 ('f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'dbbbbbbb-bbbb-bbbb-bbbb-222222222222', 1, NULL, 0, 1);
+END
 ");
 
             migrationBuilder.Sql(@"

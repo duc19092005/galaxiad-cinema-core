@@ -42,6 +42,47 @@ namespace Cinema.Infrastructure.Persistence.Migrations
 
 
             migrationBuilder.UpdateData(
+                table: "UserInfoEntity",
+                keyColumn: "UserId",
+                keyValue: new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
+                column: "UserType",
+                value: 0);
+
+            migrationBuilder.UpdateData(
+                table: "UserInfoEntity",
+                keyColumn: "UserId",
+                keyValue: new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
+                column: "UserType",
+                value: 0);
+
+            migrationBuilder.UpdateData(
+                table: "UserInfoEntity",
+                keyColumn: "UserId",
+                keyValue: new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                column: "UserType",
+                value: 0);
+
+            migrationBuilder.UpdateData(
+                table: "UserInfoEntity",
+                keyColumn: "UserId",
+                keyValue: new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
+                column: "UserType",
+                value: 0);
+
+            migrationBuilder.InsertData(
+                table: "UserInfoEntity",
+                columns: new[] { "UserId", "AccountStatus", "DateOfBirth", "IdentityCode", "LockoutReason", "Password", "PhoneNumber", "PortraitImageUrl", "RefreshToken", "RegisterMethod", "RewardPoints", "SubId", "UserEmail", "UserName", "UserType" },
+                values: new object[,]
+                {
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_GALAXY_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000011", null, null, 0, 0L, null, "quay.ve.galaxy.cinema.nguyen.du@cinema.com", "Quay ve - Galaxy Cinema Nguyen Du", 0 },
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a12"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_GALAXY_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000012", null, null, 0, 0L, null, "quay.bap.nuoc.galaxy.cinema.nguyen.du@cinema.com", "Quay bap nuoc - Galaxy Cinema Nguyen Du", 0 },
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a21"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_LOTTE_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000021", null, null, 0, 0L, null, "quay.ve.lotte.cinema.west.lake@cinema.com", "Quay ve - Lotte Cinema West Lake", 0 },
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_LOTTE_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000022", null, null, 0, 0L, null, "quay.bap.nuoc.lotte.cinema.west.lake@cinema.com", "Quay bap nuoc - Lotte Cinema West Lake", 0 },
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_BHD_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000031", null, null, 0, 0L, null, "quay.ve.bhd.star.bitexco@cinema.com", "Quay ve - BHD Star Bitexco", 0 },
+                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_BHD_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000032", null, null, 0, 0L, null, "quay.bap.nuoc.bhd.star.bitexco@cinema.com", "Quay bap nuoc - BHD Star Bitexco", 0 }
+                });
+
+            migrationBuilder.UpdateData(
                 table: "DepartmentEntity",
                 keyColumn: "DepartmentId",
                 keyValue: new Guid("d1111111-1111-1111-1111-111111111111"),
@@ -82,47 +123,6 @@ namespace Cinema.Infrastructure.Persistence.Migrations
                 keyValue: new Guid("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
                 column: "SharedUserId",
                 value: new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"));
-
-            migrationBuilder.UpdateData(
-                table: "UserInfoEntity",
-                keyColumn: "UserId",
-                keyValue: new Guid("7b5d2c1e-9f8a-3e7b-c1d2-a0e9f8c7b6a5"),
-                column: "UserType",
-                value: 0);
-
-            migrationBuilder.UpdateData(
-                table: "UserInfoEntity",
-                keyColumn: "UserId",
-                keyValue: new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
-                column: "UserType",
-                value: 0);
-
-            migrationBuilder.UpdateData(
-                table: "UserInfoEntity",
-                keyColumn: "UserId",
-                keyValue: new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
-                column: "UserType",
-                value: 0);
-
-            migrationBuilder.UpdateData(
-                table: "UserInfoEntity",
-                keyColumn: "UserId",
-                keyValue: new Guid("f1a0e9b8-d7c6-5e4f-a3b2-1d0c9b8a7f6e"),
-                column: "UserType",
-                value: 0);
-
-            migrationBuilder.InsertData(
-                table: "UserInfoEntity",
-                columns: new[] { "UserId", "AccountStatus", "DateOfBirth", "IdentityCode", "LockoutReason", "Password", "PhoneNumber", "PortraitImageUrl", "RefreshToken", "RegisterMethod", "RewardPoints", "SubId", "UserEmail", "UserName", "UserType" },
-                values: new object[,]
-                {
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a11"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_GALAXY_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000011", null, null, 0, 0L, null, "quay.ve.galaxy.cinema.nguyen.du@cinema.com", "Quay ve - Galaxy Cinema Nguyen Du", 0 },
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a12"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_GALAXY_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000012", null, null, 0, 0L, null, "quay.bap.nuoc.galaxy.cinema.nguyen.du@cinema.com", "Quay bap nuoc - Galaxy Cinema Nguyen Du", 0 },
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a21"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_LOTTE_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000021", null, null, 0, 0L, null, "quay.ve.lotte.cinema.west.lake@cinema.com", "Quay ve - Lotte Cinema West Lake", 0 },
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_LOTTE_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000022", null, null, 0, 0L, null, "quay.bap.nuoc.lotte.cinema.west.lake@cinema.com", "Quay bap nuoc - Lotte Cinema West Lake", 0 },
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_BHD_TICKET", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000031", null, null, 0, 0L, null, "quay.ve.bhd.star.bitexco@cinema.com", "Quay ve - BHD Star Bitexco", 0 },
-                    { new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"), 1, new DateTime(1990, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), "POS_BHD_FOOD", null, "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu", "0999000032", null, null, 0, 0L, null, "quay.bap.nuoc.bhd.star.bitexco@cinema.com", "Quay bap nuoc - BHD Star Bitexco", 0 }
-                });
 
             migrationBuilder.InsertData(
                 table: "StaffProfileEntity",

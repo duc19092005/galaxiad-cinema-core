@@ -22,7 +22,7 @@ services:
       - /src/Cinema.Infrastructure/bin
       - /src/Cinema.Infrastructure/obj
     environment:
-      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      - DOTNET_USE_POLLING_FILE_WATCHER=false
       - ASPNETCORE_ENVIRONMENT=Docker
     networks:
       - cinema-network

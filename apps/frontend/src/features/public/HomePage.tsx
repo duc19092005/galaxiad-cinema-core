@@ -1,5 +1,5 @@
 // src/features/public/HomePage.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, AlertCircle, Loader2,
@@ -73,6 +73,8 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
   const comingSoonRef = useRef<HTMLDivElement>(null);
 
   const [trendingTab, setTrendingTab] = useState<'system' | 'local'>('system');
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const [activeTrendingIndex, setActiveTrendingIndex] = useState(0);
 
   // ── Personalised Recommendation State ──
   const [showSurvey, setShowSurvey] = useState(false);
@@ -172,13 +174,43 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
     loadRecommendations();
   };
 
+  const heroMovies = useMemo(() => trendingMovies.slice(0, 5), [trendingMovies]);
+
+  const activeHeroMovie = heroMovies[activeHeroIndex] ?? heroMovies[0];
+  const activeHeroImage = activeHeroMovie?.movieBannerUrl || activeHeroMovie?.movieImageUrl || PLACEHOLDER_POSTER;
+  const activeTrendingMovie = trendingMovies[activeTrendingIndex] ?? trendingMovies[0];
+
+  useEffect(() => {
+    if (activeHeroIndex >= heroMovies.length) {
+      setActiveHeroIndex(0);
+    }
+  }, [activeHeroIndex, heroMovies.length]);
+
+  useEffect(() => {
+    if (activeTrendingIndex >= trendingMovies.length) {
+      setActiveTrendingIndex(0);
+    }
+  }, [activeTrendingIndex, trendingMovies.length]);
+
+  const changeHeroSlide = (direction: 'prev' | 'next') => {
+    if (heroMovies.length === 0) return;
+
+    setActiveHeroIndex((current) => {
+      if (direction === 'prev') {
+        return current === 0 ? heroMovies.length - 1 : current - 1;
+      }
+
+      return (current + 1) % heroMovies.length;
+    });
+  };
+
 
   const fetchTrendingMovies = async () => {
     setLoadingTrending(true);
     try {
       const params: any = {
         days: 30,
-        take: 3
+        take: 5
       };
       if (trendingTab === 'local') {
         if (selectedCity) {
@@ -212,12 +244,449 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
         }
+        @keyframes homeBgSlide {
+          from { opacity: 0.45; transform: translate3d(26px, 0, 0) scale(1.045); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1.02); }
+        }
+        @keyframes homeCopySlide {
+          from { opacity: 0; transform: translate3d(-22px, 0, 0); }
+          to { opacity: 1; transform: translate3d(0, 0, 0); }
+        }
+        @keyframes homeFeatureSlide {
+          from { opacity: 0; transform: translate3d(24px, 0, 0) scale(0.985); }
+          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+        }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
         .hide-scrollbar {
           -ms-overflow-style: none;
           scrollbar-width: none;
+        }
+        .home-hero-shell {
+          position: relative;
+          min-height: min(760px, 96dvh);
+          display: flex;
+          align-items: stretch;
+          overflow: visible;
+          isolation: isolate;
+        }
+        .home-hero-bg {
+          position: absolute;
+          inset: 0;
+          z-index: 0;
+          overflow: hidden;
+          background: var(--bg-base);
+        }
+        .home-hero-bg img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: saturate(1.05) brightness(0.72);
+          transform: scale(1.02);
+          transition: opacity 0.35s ease, transform 0.6s ease;
+          animation: homeBgSlide 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+        }
+        .home-hero-bg::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background:
+            linear-gradient(90deg, rgba(19,19,22,0.96) 0%, rgba(19,19,22,0.64) 46%, rgba(19,19,22,0.86) 100%),
+            linear-gradient(0deg, var(--bg-base) 0%, rgba(19,19,22,0) 34%, rgba(19,19,22,0.34) 100%);
+        }
+        .home-hero-content {
+          position: relative;
+          z-index: 2;
+          width: 100%;
+          max-width: 1280px;
+          margin: 0 auto;
+          padding: clamp(96px, 12vw, 132px) clamp(16px, 4vw, 24px) clamp(88px, 12vw, 124px);
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) 150px;
+          gap: clamp(24px, 6vw, 72px);
+          align-items: center;
+        }
+        .home-hero-main {
+          max-width: 720px;
+        }
+        .home-slide-copy {
+          animation: homeCopySlide 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+          will-change: transform, opacity;
+        }
+        .home-hero-kicker {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 7px 12px;
+          border-radius: 999px;
+          color: var(--accent);
+          background: rgba(255,138,0,0.12);
+          border: 1px solid rgba(255,138,0,0.24);
+          font-size: 11px;
+          font-weight: 800;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .home-hero-title {
+          margin: 18px 0 0;
+          color: #fff;
+          font-family: 'Montserrat', sans-serif;
+          font-size: clamp(2.35rem, 7vw, 5.25rem);
+          line-height: 1.02;
+          font-weight: 800;
+          letter-spacing: 0;
+          text-transform: uppercase;
+          text-wrap: balance;
+        }
+        .home-hero-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 20px;
+        }
+        .home-hero-chip {
+          padding: 7px 11px;
+          border-radius: 999px;
+          color: rgba(255,255,255,0.82);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.1);
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .home-hero-copy {
+          margin: 22px 0 0;
+          max-width: 620px;
+          color: rgba(255,255,255,0.74);
+          font-size: clamp(14px, 2vw, 16px);
+          line-height: 1.75;
+        }
+        .home-hero-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 30px;
+        }
+        .home-hero-secondary {
+          min-height: 48px;
+          padding: 12px 22px;
+          border-radius: var(--radius-full);
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(255,255,255,0.07);
+          color: white;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 800;
+          cursor: pointer;
+          transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .home-hero-secondary:hover {
+          background: rgba(255,255,255,0.12);
+        }
+        .home-hero-secondary:active {
+          transform: translateY(1px);
+        }
+        .home-hero-thumbs {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+        }
+        .home-hero-thumb-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          max-height: 420px;
+          overflow: auto;
+          padding: 2px;
+        }
+        .home-hero-thumb-list::-webkit-scrollbar {
+          width: 0;
+          height: 0;
+        }
+        .home-hero-thumb {
+          width: 126px;
+          aspect-ratio: 16 / 10;
+          border-radius: var(--radius-md);
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(255,255,255,0.06);
+          opacity: 0.58;
+          cursor: pointer;
+          padding: 0;
+          transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .home-hero-thumb img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .home-hero-thumb:hover,
+        .home-hero-thumb.is-active {
+          opacity: 1;
+          transform: scale(1.04);
+          border-color: rgba(255,138,0,0.9);
+          box-shadow: 0 0 0 3px rgba(255,138,0,0.18);
+        }
+        .home-hero-nav {
+          width: 44px;
+          height: 44px;
+          border-radius: 999px;
+          border: 1px solid rgba(255,138,0,0.26);
+          background: rgba(20,20,20,0.68);
+          color: var(--accent);
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: transform 0.2s ease, background 0.2s ease;
+        }
+        .home-hero-nav:hover {
+          background: rgba(255,138,0,0.12);
+          transform: scale(1.04);
+        }
+        .home-hero-booking {
+          position: absolute;
+          z-index: 4;
+          left: 50%;
+          bottom: 0;
+          width: min(100% - 32px, 1000px);
+          transform: translate(-50%, 50%);
+        }
+        .home-trending-stage {
+          display: grid;
+          grid-template-columns: minmax(0, 2fr) minmax(300px, 0.95fr);
+          gap: clamp(20px, 4vw, 44px);
+          align-items: stretch;
+        }
+        .home-trending-feature {
+          position: relative;
+          min-height: 620px;
+          border-radius: 24px;
+          overflow: hidden;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.04);
+          box-shadow: 0 28px 70px rgba(0,0,0,0.36);
+          cursor: pointer;
+          animation: homeFeatureSlide 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+          will-change: transform, opacity;
+        }
+        .home-trending-feature img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform 0.45s ease;
+        }
+        .home-trending-feature:hover img {
+          transform: scale(1.035);
+        }
+        .home-trending-feature::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0,0,0,0.94) 0%, rgba(0,0,0,0.52) 48%, rgba(0,0,0,0.08) 100%);
+          pointer-events: none;
+        }
+        .home-trending-rank {
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 2;
+          min-width: 58px;
+          padding: 10px 14px;
+          border-radius: 0 16px 16px 0;
+          background: var(--accent);
+          color: #111;
+          font-size: 30px;
+          font-weight: 900;
+          text-align: center;
+          box-shadow: 0 18px 40px rgba(255,138,0,0.24);
+        }
+        .home-trending-feature-content {
+          position: absolute;
+          z-index: 2;
+          left: clamp(20px, 4vw, 48px);
+          right: clamp(20px, 4vw, 48px);
+          bottom: clamp(22px, 4vw, 46px);
+        }
+        .home-trending-meta {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 14px;
+        }
+        .home-trending-rating {
+          padding: 6px 10px;
+          border-radius: 10px;
+          background: var(--accent);
+          color: #111;
+          font-size: 12px;
+          font-weight: 900;
+        }
+        .home-trending-genre {
+          color: rgba(255,255,255,0.7);
+          font-size: 12px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+        }
+        .home-trending-title {
+          margin: 0 0 14px;
+          color: white;
+          font-family: 'Montserrat', sans-serif;
+          font-size: clamp(1.9rem, 5vw, 4.2rem);
+          line-height: 1.05;
+          font-weight: 800;
+          letter-spacing: 0;
+          text-transform: uppercase;
+        }
+        .home-trending-desc {
+          margin: 0;
+          max-width: 640px;
+          color: rgba(255,255,255,0.76);
+          line-height: 1.7;
+          font-size: clamp(13px, 2vw, 16px);
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
+        .home-trending-actions {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-top: 24px;
+        }
+        .home-trending-list {
+          border-radius: 24px;
+          padding: 18px;
+          min-height: 620px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015));
+          border: 1px solid rgba(255,255,255,0.08);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .home-trending-list-title {
+          margin: 0 0 16px;
+          color: var(--accent);
+          font-size: 12px;
+          font-weight: 900;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+        }
+        .home-trending-row {
+          width: 100%;
+          display: flex;
+          gap: 14px;
+          align-items: center;
+          padding: 10px;
+          border-radius: 18px;
+          border: 1px solid transparent;
+          background: transparent;
+          color: inherit;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+        }
+        .home-trending-row + .home-trending-row {
+          margin-top: 8px;
+        }
+        .home-trending-row:hover,
+        .home-trending-row.is-active {
+          background: rgba(255,138,0,0.1);
+          border-color: rgba(255,138,0,0.22);
+        }
+        .home-trending-row:active {
+          transform: translateY(1px);
+        }
+        .home-trending-row img {
+          width: 72px;
+          aspect-ratio: 5 / 7;
+          border-radius: 12px;
+          object-fit: cover;
+          flex: 0 0 auto;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+        }
+        .home-trending-row-title {
+          margin: 0;
+          color: white;
+          font-size: 14px;
+          font-weight: 800;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .home-trending-row-desc {
+          margin: 5px 0 8px;
+          color: var(--text-secondary);
+          font-size: 12px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        .home-trending-row-stats {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          color: #ffb77f;
+          font-size: 11px;
+          font-weight: 800;
+        }
+        @media (max-width: 900px) {
+          .home-hero-shell {
+            min-height: auto;
+          }
+          .home-hero-content {
+            grid-template-columns: 1fr;
+            padding-top: 96px;
+            padding-bottom: 132px;
+          }
+          .home-hero-thumbs {
+            align-items: stretch;
+          }
+          .home-hero-nav {
+            display: none;
+          }
+          .home-hero-thumb-list {
+            flex-direction: row;
+            max-height: none;
+            overflow-x: auto;
+            padding-bottom: 4px;
+          }
+          .home-hero-thumb {
+            width: min(34vw, 142px);
+            flex: 0 0 auto;
+          }
+        }
+        @media (max-width: 980px) {
+          .home-trending-stage {
+            grid-template-columns: 1fr;
+          }
+          .home-trending-feature,
+          .home-trending-list {
+            min-height: auto;
+          }
+          .home-trending-feature {
+            aspect-ratio: 16 / 12;
+          }
+        }
+        @media (max-width: 640px) {
+          .home-trending-feature {
+            aspect-ratio: 3 / 4;
+          }
+          .home-trending-rank {
+            top: 18px;
+            transform: none;
+            font-size: 22px;
+          }
+          .home-trending-row img {
+            width: 62px;
+          }
         }
       `}</style>
       <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)', overflowX: 'hidden' }}>
@@ -228,89 +697,154 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
 
 
       {/* ===== HERO SECTION ===== */}
-      <section style={{
-        position: 'relative', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        paddingTop: 80, paddingLeft: 'clamp(12px, 4vw, 24px)',
-        paddingRight: 'clamp(12px, 4vw, 24px)',
-        minHeight: 'min(600px, 90vh)',
-        overflow: 'visible'
-      }}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-          <img alt="Cinema theater" src={HERO_IMG} style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'brightness(0.3)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, var(--bg-base) 0%, rgba(5,20,36,0.4) 40%, rgba(5,20,36,0.8) 100%)' }} />
+      <section className="home-hero-shell">
+        <div className="home-hero-bg">
+          {activeHeroMovie ? (
+            <img
+              key={activeHeroMovie.movieId}
+              alt={activeHeroMovie.movieName}
+              src={activeHeroImage}
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = PLACEHOLDER_POSTER;
+              }}
+            />
+          ) : (
+            <img alt="Cinema theater" src={HERO_IMG} />
+          )}
         </div>
-        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', width: '100%', maxWidth: 900, margin: '0 auto', paddingTop: 'clamp(24px, 6vw, 60px)' }}>
-          <span style={{ fontSize: 'clamp(10px, 2vw, 11px)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--accent)', fontWeight: 700, display: 'block', marginBottom: 'clamp(12px, 3vw, 24px)' }}>
-            {t('home.experienceBadge')}
-          </span>
-          <h1 style={{
-            fontFamily: "'Montserrat', sans-serif",
-            fontSize: 'clamp(1.75rem, 8vw, 4rem)',
-            fontWeight: 800, lineHeight: 1.1, letterSpacing: '-0.02em',
-            color: 'white', maxWidth: '100%', overflowWrap: 'break-word',
-            margin: '0 auto',
-          }}>
-            {t('home.cinematic')}<br />
-            <span style={{ color: 'var(--accent)' }}>{t('home.adventure')}</span>
-          </h1>
-          <p style={{
-            fontSize: 'clamp(14px, 2.5vw, 16px)',
-            lineHeight: 1.7, color: 'rgba(255,255,255,0.65)',
-            maxWidth: 600, margin: 'clamp(12px, 3vw, 24px) auto',
-            padding: '0 8px', overflowWrap: 'break-word',
-          }}>
-            {t('home.heroDesc')}
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 'clamp(8px, 2vw, 16px)', flexWrap: 'wrap', flexDirection: 'row' }}>
-            <button className="btn-primary cta-glow" style={{
-              padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 40px)',
-              fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
-              whiteSpace: 'nowrap', minHeight: 48,
-              borderRadius: 9999,
-            }}>
-              {t('home.exploreNow')}
-            </button>
-            <button className="glass-card" style={{
-              padding: 'clamp(12px, 2vw, 16px) clamp(24px, 4vw, 40px)',
-              color: 'white', fontWeight: 700, fontSize: 'clamp(13px, 2vw, 14px)',
-              border: 'none', borderRadius: 16, cursor: 'pointer',
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              transition: 'all 0.3s ease', background: 'rgba(255,255,255,0.05)',
-              whiteSpace: 'nowrap', minHeight: 48,
-            }}>
-              <Play size={16} fill="white" /> {t('home.watchTrailer')}
-            </button>
+
+        <div className="home-hero-content">
+          <div className="home-hero-main">
+            {loadingTrending ? (
+              <div className="glass-card" style={{ width: 'min(100%, 620px)', minHeight: 260, padding: 28 }}>
+                <Loader2 size={28} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite', marginBottom: 18 }} />
+                <div style={{ width: '68%', height: 22, borderRadius: 999, background: 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
+                <div style={{ width: '92%', height: 64, borderRadius: 16, background: 'rgba(255,255,255,0.06)' }} />
+              </div>
+            ) : activeHeroMovie ? (
+              <div key={activeHeroMovie.movieId} className="home-slide-copy">
+                <span className="home-hero-kicker">
+                  <Sparkles size={14} />
+                  {t('home.topTrending')}
+                </span>
+                <h1 className="home-hero-title">{activeHeroMovie.movieName}</h1>
+                <div className="home-hero-meta">
+                  {activeHeroMovie.movieRequiredAgeSymbol && (
+                    <span className="home-hero-chip">{activeHeroMovie.movieRequiredAgeSymbol}</span>
+                  )}
+                  {activeHeroMovie.movieDuration > 0 && (
+                    <span className="home-hero-chip">{activeHeroMovie.movieDuration} min</span>
+                  )}
+                  <span className="home-hero-chip">{Number(activeHeroMovie.averageRating || 0).toFixed(1)} rating</span>
+                  <span className="home-hero-chip">{activeHeroMovie.viewCount} views</span>
+                </div>
+                <p className="home-hero-copy">
+                  {activeHeroMovie.movieDescription || `${activeHeroMovie.paidTicketCount} tickets, ${activeHeroMovie.viewCount} views`}
+                </p>
+                <div className="home-hero-actions">
+                  <button
+                    className="btn-primary cta-glow"
+                    style={{
+                      minHeight: 48,
+                      padding: '12px 24px',
+                      borderRadius: 'var(--radius-full)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => handleMovieClick(activeHeroMovie.movieId)}
+                  >
+                    <Ticket size={16} /> {t('home.bookNowBadge')}
+                  </button>
+                  <button
+                    className="home-hero-secondary"
+                    onClick={() => handleMovieClick(activeHeroMovie.movieId)}
+                  >
+                    <Play size={16} fill="white" /> {t('home.watchTrailer')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="glass-card" style={{ width: 'min(100%, 620px)', padding: 28 }}>
+                <Sparkles size={28} style={{ color: 'var(--accent)', marginBottom: 14 }} />
+                <p style={{ color: 'white', fontWeight: 800, margin: 0 }}>{t('home.noTrendingData')}</p>
+              </div>
+            )}
           </div>
+
+          {heroMovies.length > 1 && (
+            <div className="home-hero-thumbs" aria-label="Trending movie list">
+              <button
+                className="home-hero-nav"
+                type="button"
+                onClick={() => changeHeroSlide('prev')}
+                aria-label="Previous trending movie"
+              >
+                <ChevronLeft size={20} style={{ transform: 'rotate(90deg)' }} />
+              </button>
+              <div className="home-hero-thumb-list">
+                {heroMovies.map((movie, index) => {
+                  const thumb = movie.movieImageUrl || movie.movieBannerUrl || PLACEHOLDER_POSTER;
+
+                  return (
+                    <button
+                      key={movie.movieId}
+                      type="button"
+                      className={`home-hero-thumb${index === activeHeroIndex ? ' is-active' : ''}`}
+                      onClick={() => setActiveHeroIndex(index)}
+                      aria-label={movie.movieName}
+                    >
+                      <img
+                        src={thumb}
+                        alt={movie.movieName}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        onError={(event) => {
+                          event.currentTarget.onerror = null;
+                          event.currentTarget.src = PLACEHOLDER_POSTER;
+                        }}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                className="home-hero-nav"
+                type="button"
+                onClick={() => changeHeroSlide('next')}
+                aria-label="Next trending movie"
+              >
+                <ChevronRight size={20} style={{ transform: 'rotate(90deg)' }} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Quick Booking Bar */}
-        <div style={{
-          position: 'relative', zIndex: 20, width: '100%',
-          maxWidth: 1000, marginTop: 'clamp(32px, 6vw, 64px)',
-          paddingLeft: 'clamp(8px, 2vw, 20px)',
-          paddingRight: 'clamp(8px, 2vw, 20px)',
-        }}>
+        <div className="home-hero-booking">
           <QuickBookingBar selectedCity={selectedCity} onCinemaChange={(cinemaId) => {
             setSelectedCinemaId(cinemaId);
           }} posMode={isCashierSales} />
         </div>
       </section>
 
-      {/* ===== TOP TRENDING SECTION ===== */}
-      <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(40px, 8vw, 80px) clamp(16px, 4vw, 24px)', overflow: 'hidden' }}>
+      {/* ===== TOP TRENDING FEATURE SECTION ===== */}
+      <section style={{ width: '100%', maxWidth: 1280, margin: '0 auto', padding: 'clamp(56px, 8vw, 96px) clamp(16px, 4vw, 24px)', overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'clamp(24px, 5vw, 48px)', flexWrap: 'wrap', gap: 16 }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
               <Sparkles size={16} style={{ color: 'var(--accent)' }} />
-              <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600 }}>{t('home.weeklyLeaders')}</span>
+              <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700 }}>{t('home.weeklyLeaders')}</span>
             </div>
-            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
+            <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.5rem, 4vw, 2.6rem)', fontWeight: 800, margin: 0 }}>
               {t('home.topTrending')}
             </h2>
           </div>
 
-          {/* Trending Tab Switcher */}
           <div style={{ display: 'flex', gap: 6, padding: 4, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
             <button
               onClick={() => setTrendingTab('system')}
@@ -318,7 +852,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                 padding: '8px 16px',
                 borderRadius: 8,
                 fontSize: 13,
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
                 background: trendingTab === 'system' ? 'rgba(255,138,0,0.15)' : 'transparent',
@@ -334,7 +868,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                 padding: '8px 16px',
                 borderRadius: 8,
                 fontSize: 13,
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: 'pointer',
                 border: 'none',
                 background: trendingTab === 'local' ? 'rgba(255,138,0,0.15)' : 'transparent',
@@ -347,102 +881,129 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           </div>
         </div>
 
-        <div className="trending-carousel-wrapper" style={{ position: 'relative' }}>
-          {/* Prev Arrow */}
-          <button
-            onClick={() => { const el = document.querySelector('.trending-carousel'); if (el) el.scrollBy({ left: -320, behavior: 'smooth' }); }}
-            className="carousel-nav carousel-nav-prev"
-            aria-label="Previous"
-          >
-            <ChevronLeft size={20} />
-          </button>
-
-          {loadingTrending ? (
+        {loadingTrending ? (
+          <div className="home-trending-stage">
+            <div style={{ minHeight: 620, borderRadius: 24, background: 'linear-gradient(110deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1), rgba(255,255,255,0.04))', border: '1px solid rgba(255,255,255,0.08)' }} />
+            <div className="home-trending-list">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} style={{ height: 94, borderRadius: 18, marginBottom: 8, background: 'rgba(255,255,255,0.06)' }} />
+              ))}
+            </div>
+          </div>
+        ) : trendingMovies.length === 0 || !activeTrendingMovie ? (
+          <div className="glass-card" style={{ minHeight: 180, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
+            <div>
+              <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
+              <p style={{ color: 'white', fontWeight: 700, margin: 0 }}>{t('home.noTrendingData')}</p>
+              <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>{t('home.noTrendingDesc')}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="home-trending-stage">
             <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-                gap: 'clamp(16px, 4vw, 40px)',
+              key={activeTrendingMovie.movieId}
+              className="home-trending-feature"
+              role="button"
+              tabIndex={0}
+              onClick={() => handleMovieClick(activeTrendingMovie.movieId)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  handleMovieClick(activeTrendingMovie.movieId);
+                }
               }}
             >
-              {[1, 2, 3].map((item) => (
-                <div key={item} style={{ aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <div style={{ height: '100%', width: '100%', background: 'linear-gradient(110deg, rgba(255,255,255,0.04), rgba(255,255,255,0.1), rgba(255,255,255,0.04))' }} />
+              <img
+                src={activeTrendingMovie.movieBannerUrl || activeTrendingMovie.movieImageUrl || PLACEHOLDER_POSTER}
+                alt={activeTrendingMovie.movieName}
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = PLACEHOLDER_POSTER;
+                }}
+              />
+              <div className="home-trending-rank">{activeTrendingIndex + 1}</div>
+              <div className="home-trending-feature-content">
+                <div className="home-trending-meta">
+                  <span className="home-trending-rating">{Number(activeTrendingMovie.averageRating || 0).toFixed(1)} rating</span>
+                  {activeTrendingMovie.movieRequiredAgeSymbol && (
+                    <span className="home-trending-genre">{activeTrendingMovie.movieRequiredAgeSymbol}</span>
+                  )}
+                  <span className="home-trending-genre">{activeTrendingMovie.viewCount} views</span>
                 </div>
-              ))}
-            </div>
-          ) : trendingMovies.length === 0 ? (
-            <div className="glass-card" style={{ minHeight: 180, borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
-              <div>
-                <Sparkles size={28} style={{ color: 'var(--accent)', margin: '0 auto 12px' }} />
-                <p style={{ color: 'white', fontWeight: 700, margin: 0 }}>{t('home.noTrendingData')}</p>
-                <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 8 }}>{t('home.noTrendingDesc')}</p>
+                <h3 className="home-trending-title">{activeTrendingMovie.movieName}</h3>
+                <p className="home-trending-desc">
+                  {activeTrendingMovie.movieDescription || `${activeTrendingMovie.paidTicketCount} tickets, ${activeTrendingMovie.viewCount} views`}
+                </p>
+                <div className="home-trending-actions">
+                  <button
+                    className="btn-primary cta-glow"
+                    style={{
+                      minHeight: 48,
+                      padding: '12px 24px',
+                      borderRadius: 'var(--radius-full)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      fontSize: 13,
+                      fontWeight: 800,
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMovieClick(activeTrendingMovie.movieId);
+                    }}
+                  >
+                    <Ticket size={16} /> {t('home.bookNowBadge')}
+                  </button>
+                  <button
+                    className="home-hero-secondary"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleMovieClick(activeTrendingMovie.movieId);
+                    }}
+                  >
+                    <Play size={16} fill="white" /> {t('home.watchTrailer')}
+                  </button>
+                </div>
               </div>
             </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 320px), 1fr))',
-              gap: 'clamp(16px, 4vw, 40px)',
-            }}
-              className="trending-carousel"
-            >
-              {trendingMovies.map((item, i) => (
-                <div key={item.movieId} style={{ display: 'flex', flexDirection: 'column' }}>
-                  <div
-                    onClick={() => handleMovieClick(item.movieId)}
-                    style={{ position: 'relative', aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.08)' }}
-                  >
-                    <img
-                      src={item.movieImageUrl || PLACEHOLDER_POSTER}
-                      alt={item.movieName}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s ease' }}
-                      loading={i === 0 ? 'eager' : 'lazy'}
-                      onError={(event) => {
-                        event.currentTarget.onerror = null;
-                        event.currentTarget.src = PLACEHOLDER_POSTER;
-                      }}
-                    />
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.45) 52%, rgba(0,0,0,0.08) 100%)' }} />
-                    <div style={{ position: 'absolute', top: 16, left: 16, minWidth: 44, height: 44, borderRadius: 14, background: 'rgba(255,138,0,0.92)', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 18 }}>
-                      {i + 1}
-                    </div>
-                    <div style={{ position: 'absolute', bottom: 'clamp(12px, 3vw, 24px)', left: 'clamp(12px, 3vw, 24px)', right: 'clamp(12px, 3vw, 24px)' }}>
-                      <h3 style={{ fontSize: 'clamp(16px, 3vw, 20px)', fontWeight: 700, color: 'white', marginBottom: 8, lineHeight: 1.25 }}>{item.movieName}</h3>
-                      <p style={{ fontSize: 'clamp(12px, 2vw, 13px)', color: 'rgba(255,255,255,0.72)', lineHeight: 1.6, minHeight: 42, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {item.movieDescription || 'This movie is generating buzz this month.'}
-                      </p>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.paidTicketCount} vé</span>
-                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.viewCount} lượt xem</span>
-                        <span style={{ padding: '5px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.08)', color: '#ffb77f', fontSize: 11, fontWeight: 700, border: '1px solid rgba(255,255,255,0.1)' }}>{item.averageRating.toFixed(1)} sao</span>
-                      </div>
-                      <button
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          handleMovieClick(item.movieId);
-                        }}
-                        className="btn-primary cta-glow"
-                        style={{ marginTop: 16, padding: '10px 24px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 8, border: 'none', cursor: 'pointer' }}
-                      >
-                        <Ticket size={14} /> {t('home.bookNowBadge')}
-                      </button>
+
+            <aside className="home-trending-list" aria-label="Trending ranking list">
+              <h3 className="home-trending-list-title">Ranking</h3>
+              {trendingMovies.map((item, index) => (
+                <button
+                  key={item.movieId}
+                  type="button"
+                  className={`home-trending-row${index === activeTrendingIndex ? ' is-active' : ''}`}
+                  onClick={() => setActiveTrendingIndex(index)}
+                  aria-label={item.movieName}
+                >
+                  <img
+                    src={item.movieImageUrl || item.movieBannerUrl || PLACEHOLDER_POSTER}
+                    alt={item.movieName}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = PLACEHOLDER_POSTER;
+                    }}
+                  />
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <p className="home-trending-row-title">{item.movieName}</p>
+                    <p className="home-trending-row-desc">
+                      {item.movieDescription || `${item.paidTicketCount} tickets, ${item.viewCount} views`}
+                    </p>
+                    <div className="home-trending-row-stats">
+                      <span>#{index + 1}</span>
+                      <span>{Number(item.averageRating || 0).toFixed(1)} rating</span>
+                      <span>{item.viewCount} views</span>
                     </div>
                   </div>
-                </div>
+                </button>
               ))}
-            </div>
-          )}
-
-          {/* Next Arrow */}
-          <button
-            onClick={() => { const el = document.querySelector('.trending-carousel'); if (el) el.scrollBy({ left: 320, behavior: 'smooth' }); }}
-            className="carousel-nav carousel-nav-next"
-            aria-label="Next"
-          >
-            <ChevronRight size={20} />
-          </button>
-        </div>
+            </aside>
+          </div>
+        )}
       </section>
 
       {/* ===== MOVIES SECTION ===== */}
