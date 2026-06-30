@@ -44,4 +44,9 @@ public class PaymentCallbackRepository : IPaymentCallbackRepository
         return await _dbContext.Set<UserVoucherEntity>()
             .FirstOrDefaultAsync(uv => uv.VoucherId == voucherId && uv.UserId == userId && !uv.IsUsed);
     }
+
+    public async Task AddOrderAsync(OrderInfoEntity order)
+    {
+        await _dbContext.Set<OrderInfoEntity>().AddAsync(order);
+    }
 }

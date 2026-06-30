@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Net.WebSockets;
+using System.Text;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Infrastructure.Booking;
@@ -21,10 +23,17 @@ public class BookingController : ControllerBase
     private readonly GetUserAccountInfoUseCase _getUserAccountInfoUseCase;
     private readonly GetUserBookingHistoryUseCase _getUserBookingHistoryUseCase;
     private readonly GetBookingCustomerByEmailUseCase _getBookingCustomerByEmailUseCase;
-    private readonly SseConnectionManager _sseManager;
-    private readonly SeatSseManager _seatSseManager;
+    private readonly PaymentWsManager _paymentWsManager;
+    private readonly SeatLockManager _seatLockManager;
+    private readonly SeatWsManager _seatWsManager;
     private readonly ILogger<BookingController> _logger;
     private readonly IConfiguration _configuration;
+
+    private static readonly JsonSerializerOptions _jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+    };
 
     public BookingController(
         CreateBookingUseCase createBookingUseCase,
@@ -33,8 +42,9 @@ public class BookingController : ControllerBase
         GetUserAccountInfoUseCase getUserAccountInfoUseCase,
         GetUserBookingHistoryUseCase getUserBookingHistoryUseCase,
         GetBookingCustomerByEmailUseCase getBookingCustomerByEmailUseCase,
-        SseConnectionManager sseManager,
-        SeatSseManager seatSseManager,
+        PaymentWsManager paymentWsManager,
+        SeatLockManager seatLockManager,
+        SeatWsManager seatWsManager,
         ILogger<BookingController> logger,
         IConfiguration configuration)
     {
@@ -44,8 +54,9 @@ public class BookingController : ControllerBase
         _getUserAccountInfoUseCase = getUserAccountInfoUseCase;
         _getUserBookingHistoryUseCase = getUserBookingHistoryUseCase;
         _getBookingCustomerByEmailUseCase = getBookingCustomerByEmailUseCase;
-        _sseManager = sseManager;
-        _seatSseManager = seatSseManager;
+        _paymentWsManager = paymentWsManager;
+        _seatLockManager = seatLockManager;
+        _seatWsManager = seatWsManager;
         _logger = logger;
         _configuration = configuration;
     }
@@ -97,7 +108,19 @@ public class BookingController : ControllerBase
             _logger.LogInformation("VNPay callback received with {ParamCount} params: {Params}",
                 vnpParams.Count, string.Join(", ", vnpParams.Select(p => $"{p.Key}={p.Value}")));
 
-            var (success, orderId) = await _processVnPayCallbackUseCase.ExecuteAsync(vnpParams);
+            var (success, orderId, groupCode) = await _processVnPayCallbackUseCase.ExecuteAsync(vnpParams);
+
+            if (!string.IsNullOrEmpty(groupCode))
+            {
+                var groupFrontendUrl = success
+                    ? $"{frontendBaseUrl}/group-booking/{groupCode}"
+                    : $"{frontendBaseUrl}/group-booking/{groupCode}";
+
+                _logger.LogInformation("Group VNPay callback processed. Success={Success}, GroupCode={GroupCode}. Redirecting to {Url}",
+                    success, groupCode, groupFrontendUrl);
+
+                return Redirect(groupFrontendUrl);
+            }
 
             var paymentEvent = new PaymentStatusEvent
             {
@@ -107,7 +130,7 @@ public class BookingController : ControllerBase
                 TransactionId = vnpParams.TryGetValue("vnp_TransactionNo", out var txnNo) ? txnNo : null
             };
 
-            _sseManager.NotifyPaymentResult(orderId, paymentEvent);
+            _paymentWsManager.NotifyPaymentResult(orderId, paymentEvent);
 
             var frontendUrl = success
                 ? $"{frontendBaseUrl}/booking/success?orderId={orderId}"
@@ -129,58 +152,48 @@ public class BookingController : ControllerBase
     }
 
     [Authorize]
-    [HttpGet("payment-status/{orderId}")]
-    public async Task PaymentStatusSse(Guid orderId, CancellationToken cancellationToken)
+    [HttpGet("payment/ws/{orderId}")]
+    public async Task PaymentStatusWs(Guid orderId)
     {
-        Response.Headers.Append("Content-Type", "text/event-stream");
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("Connection", "keep-alive");
-        Response.Headers.Append("X-Accel-Buffering", "no");
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
+        {
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
 
-        var tcs = _sseManager.Register(orderId);
+        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        var connectionId = Guid.NewGuid().ToString();
+        _paymentWsManager.AddConnection(orderId, connectionId, webSocket);
 
         try
         {
-            _ = Task.Run(async () =>
+            var buffer = new byte[1024 * 4];
+            while (webSocket.State == WebSocketState.Open)
             {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    try
-                    {
-                        await Response.WriteAsync(": heartbeat\n\n", cancellationToken);
-                        await Response.Body.FlushAsync(cancellationToken);
-                        await Task.Delay(15000, cancellationToken);
-                    }
-                    catch
-                    {
-                        break;
-                    }
-                }
-            }, cancellationToken);
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromMinutes(15));
-
-            var result = await tcs.Task.WaitAsync(cts.Token);
-            var eventData = JsonSerializer.Serialize(result);
-            await Response.WriteAsync($"event: payment-result\ndata: {eventData}\n\n", cancellationToken);
-            await Response.Body.FlushAsync(cancellationToken);
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if (result.MessageType == WebSocketMessageType.Close)
+                    break;
+            }
         }
-        catch (OperationCanceledException)
-        {
-            _logger.LogInformation("SSE connection cancelled for order {OrderId}", orderId);
-        }
+        catch { }
         finally
         {
-            _sseManager.Unregister(orderId);
+            _paymentWsManager.RemoveConnection(orderId, connectionId);
+            if (webSocket.State != WebSocketState.Closed && webSocket.State != WebSocketState.Aborted)
+            {
+                try { await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None); }
+                catch { }
+            }
         }
     }
 
     [HttpPost("seats/lock")]
     public IActionResult LockSeat([FromBody] ReqLockSeatDto request)
     {
-        var clientId = HttpContext.Connection.Id;
-        var (success, message, lockedSeats) = _seatSseManager.LockSeat(
+        var clientId = string.IsNullOrWhiteSpace(request.ClientId)
+            ? HttpContext.Connection.Id
+            : request.ClientId;
+        var (success, message, lockedSeats) = _seatLockManager.LockSeat(
             request.ScheduleId, request.SeatId, request.UserName, clientId);
 
         if (!success)
@@ -192,81 +205,56 @@ public class BookingController : ControllerBase
     [HttpPost("seats/unlock")]
     public IActionResult UnlockSeat([FromBody] ReqUnlockSeatDto request)
     {
-        var clientId = HttpContext.Connection.Id;
-        var (success, message, lockedSeats) = _seatSseManager.UnlockSeat(
+        var clientId = string.IsNullOrWhiteSpace(request.ClientId)
+            ? HttpContext.Connection.Id
+            : request.ClientId;
+        var (success, message, lockedSeats) = _seatLockManager.UnlockSeat(
             request.ScheduleId, request.SeatId, clientId);
 
         return Ok(new ResSeatLockDto { Success = success, Message = message, LockedSeats = lockedSeats });
     }
 
-    [HttpGet("seats/events/{scheduleId}")]
-    public async Task SeatEvents(string scheduleId, CancellationToken cancellationToken)
+    [AllowAnonymous]
+    [HttpGet("seats/ws/{scheduleId}")]
+    public async Task GetSeatWebSocket(string scheduleId)
     {
-        Response.Headers.Append("Content-Type", "text/event-stream");
-        Response.Headers.Append("Cache-Control", "no-cache");
-        Response.Headers.Append("Connection", "keep-alive");
-        Response.Headers.Append("X-Accel-Buffering", "no");
-
-        var subscriberId = Guid.NewGuid().ToString();
-        var clientId = HttpContext.Connection.Id;
-        var tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-
-        // Subscribe and get initial state
-        var initialLockedSeats = _seatSseManager.Subscribe(scheduleId, subscriberId, async (data, eventId) =>
+        if (!HttpContext.WebSockets.IsWebSocketRequest)
         {
-            try
-            {
-                await Response.WriteAsync($"id: {eventId}\ndata: {data}\n\n", cancellationToken);
-                await Response.Body.FlushAsync(cancellationToken);
-            }
-            catch
-            {
-                tcs.TrySetResult();
-            }
-        });
+            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+            return;
+        }
 
-        // Send initial state
-        var initData = JsonSerializer.Serialize(new
-        {
-            type = "initial-state",
-            lockedSeats = initialLockedSeats
-        });
-        await Response.WriteAsync($"id: 0\nevent: initial-state\ndata: {initData}\n\n", cancellationToken);
-        await Response.Body.FlushAsync(cancellationToken);
+        using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
+        var connectionId = Guid.NewGuid().ToString();
+        var clientId = Request.Query.TryGetValue("clientId", out var queryClientId) && !string.IsNullOrWhiteSpace(queryClientId)
+            ? queryClientId.ToString()
+            : HttpContext.Connection.Id;
+        _seatWsManager.AddConnection(scheduleId, connectionId, webSocket);
 
-        // Heartbeat loop
-        _ = Task.Run(async () =>
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(15000, cancellationToken);
-                    await Response.WriteAsync(": heartbeat\n\n", cancellationToken);
-                    await Response.Body.FlushAsync(cancellationToken);
-                }
-                catch
-                {
-                    break;
-                }
-            }
-        }, cancellationToken);
+        var initialLockedSeats = _seatLockManager.GetCurrentLockedSeats(scheduleId);
+        var initData = JsonSerializer.Serialize(new { type = "initial-state", lockedSeats = initialLockedSeats }, _jsonOptions);
+        var bytes = Encoding.UTF8.GetBytes(initData);
+        await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
 
-        // Cleanup on disconnect
-        using var registration = cancellationToken.Register(() =>
-        {
-            _seatSseManager.Unsubscribe(scheduleId, subscriberId);
-            _seatSseManager.ReleaseSeatsByClient(clientId);
-            tcs.TrySetResult();
-        });
-
+        var buffer = new byte[1024 * 4];
         try
         {
-            await tcs.Task.WaitAsync(cancellationToken);
+            while (webSocket.State == WebSocketState.Open)
+            {
+                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                if (result.MessageType == WebSocketMessageType.Close) break;
+            }
         }
-        catch (OperationCanceledException)
+        catch { }
+        finally
         {
-            // Connection closed
+            _seatWsManager.RemoveConnection(scheduleId, connectionId);
+            _seatLockManager.ReleaseSeatsByClient(clientId);
+            if (webSocket.State != WebSocketState.Closed && webSocket.State != WebSocketState.Aborted)
+            {
+                try { await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None); }
+                catch { }
+            }
         }
     }
 

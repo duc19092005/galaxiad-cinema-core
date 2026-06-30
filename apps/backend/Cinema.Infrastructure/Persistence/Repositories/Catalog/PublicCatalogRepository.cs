@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
-using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Application.Interfaces.Catalog;
+using Cinema.Domain.Entities.MovieInfos;
+using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Infrastructure.Repositories;
 
@@ -37,7 +33,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             {
                 MovieRequiredAgeSymbolId = x.MovieRequiredAgeId,
                 MovieRequiredAgeDescription = x.MovieRequiredAgeDescription,
-                MovieRequiredAgeSymbol = x.MovieRequiredAgeSymbol.TrimEnd().TrimStart()
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeSymbol.Trim()
             })
             .ToListAsync();
     }
@@ -80,7 +76,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             MovieDuration = x.MovieDuration,
             MoviePosterURL = x.MovieImageUrl,
             MovieBannerURL = x.MovieBannerUrl,
-            MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
+            MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
             MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
             MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),
             IsCommingSoon = x.IsCommingSoon,
@@ -100,7 +96,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 MovieDescription = x.MovieDescription,
                 MoviePosterURL = x.MovieImageUrl,
                 MovieBannerURL = x.MovieBannerUrl,
-                MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.TrimEnd().TrimStart(),
+                MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
                 MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
                 IsCommingSoon = x.IsCommingSoon,
                 MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),

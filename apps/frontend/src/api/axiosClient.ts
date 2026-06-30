@@ -3,7 +3,7 @@ import Cookies from 'js-cookie';
 
 // In Production (Vercel): empty string → requests go to same-origin /api/... → proxied by vercel.json rewrites
 // In Development: fallback to localhost:5032
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 /**
  * Axios instance for Identity Access APIs

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-    Loader2, AlertCircle
+    Loader2, AlertCircle, Users
 } from 'lucide-react';
-import { useSeatSse } from '../../hooks/useSeatSse';
+import { useSeatWs } from '../../hooks/useSeatWs';
 import { publicApi } from '../../api/publicApi';
 import { bookingApi } from '../../api/bookingApi';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import Header from '../../components/Header';
 import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
+import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -33,7 +34,10 @@ const BookingPage: React.FC = () => {
     const [customerInfo, setCustomerInfo] = useState({ name: '', email: '', phone: '', address: '' });
     const [customerLookupStatus, setCustomerLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not-found'>('idle');
 
-    const { lockedSeats, lockSeat, unlockSeat } = useSeatSse(scheduleId || null);
+    // Group Booking Modal
+    const [showGroupModal, setShowGroupModal] = useState(false);
+
+    const { lockedSeats, lockSeat, unlockSeat } = useSeatWs(scheduleId || null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
@@ -131,7 +135,7 @@ const BookingPage: React.FC = () => {
     const toggleSeat = async (seat: PublicSeat) => {
         if (seat.isBooked) return;
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
-        if (!isCurrentlySelected && lockedSeats[seat.seatId]) return;
+        if (!isCurrentlySelected && lockedSeats[seat.seatId.toLowerCase()]) return;
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
@@ -143,7 +147,12 @@ const BookingPage: React.FC = () => {
             if (pricing && pricing.segmentPrices.length > 0) {
                 setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
             }
-            await lockSeat(seat.seatId, userName);
+            const success = await lockSeat(seat.seatId, userName);
+            if (!success) {
+                setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+                setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
+                showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
+            }
         }
     };
 
@@ -297,10 +306,19 @@ const BookingPage: React.FC = () => {
                             <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[18px]">schedule</span> {new Date(seatMap.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                     </div>
-                    <button className="flex items-center gap-2 text-[#ff8a00] hover:gap-4 transition-all duration-300 bg-transparent border-none cursor-pointer font-bold" onClick={() => navigate(-1)}>
-                        <span className="material-symbols-outlined">arrow_back</span>
-                        Change Session
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setShowGroupModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/10 text-white/80 hover:bg-[#ff8a00]/20 hover:border-[#ff8a00]/30 hover:text-[#ff8a00] transition-all duration-200 cursor-pointer font-semibold text-sm"
+                        >
+                            <Users size={16} />
+                            {t('socialBooking.groupBookingBtn', 'Đặt vé nhóm')}
+                        </button>
+                        <button className="flex items-center gap-2 text-[#ff8a00] hover:gap-4 transition-all duration-300 bg-transparent border-none cursor-pointer font-bold" onClick={() => navigate(-1)}>
+                            <span className="material-symbols-outlined">arrow_back</span>
+                            Change Session
+                        </button>
+                    </div>
                 </div>
 
                 {/* Seat and Summary Area */}
@@ -328,7 +346,7 @@ const BookingPage: React.FC = () => {
                         }} className="mb-16">
                             {seatMap.seatMap?.map((seat) => {
                                 const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
-                                const lockedBy = lockedSeats[seat.seatId];
+                                const lockedBy = lockedSeats[seat.seatId.toLowerCase()];
                                 const isLockedByOther = lockedBy && !isSelected;
 
                                 return (
@@ -635,6 +653,12 @@ const BookingPage: React.FC = () => {
                     </div>
                 </div>
             </footer>
+
+            <CreateGroupBookingModal
+                isOpen={showGroupModal}
+                onClose={() => setShowGroupModal(false)}
+                scheduleId={scheduleId || ''}
+            />
         </div>
     );
 };

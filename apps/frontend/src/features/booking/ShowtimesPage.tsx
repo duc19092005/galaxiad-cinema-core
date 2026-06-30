@@ -2,11 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Film, MapPin, Search, Loader2, Sparkles, ChevronDown } from 'lucide-react';
+import { Film, MapPin, Search, Loader2, Sparkles, ChevronDown, Users } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { ActiveCinema, ActiveMovie, SearchScheduleResult } from '../../types/public.types';
 import Header from '../../components/Header';
 import { showError } from '../../utils/ToastUtils';
+import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
 
 interface CustomSelectProps {
   label: string;
@@ -188,6 +189,10 @@ export const ShowtimesPage: React.FC = () => {
   const [scheduleResults, setScheduleResults] = useState<SearchScheduleResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
+
+  // Group Booking Modal
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [selectedGroupScheduleId, setSelectedGroupScheduleId] = useState<string>('');
 
   // Generate next 7 days for the quick horizontal picker
   const [dateList, setDateList] = useState<{ label: string; value: string; dayName: string }[]>([]);
@@ -578,36 +583,69 @@ export const ShowtimesPage: React.FC = () => {
                             {/* Showtime bubbles */}
                             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', flex: 1 }}>
                               {format.showtimes.map((showtime) => (
-                                <button
-                                  key={showtime.scheduleId}
-                                  onClick={() => navigate(isPosMode ? `/booking/${showtime.scheduleId}?pos=1` : `/booking/${showtime.scheduleId}`)}
-                                  style={{
-                                    padding: '8px 16px',
-                                    borderRadius: 'var(--radius-sm, 6px)',
-                                    background: 'rgba(255,255,255,0.03)',
-                                    border: '1px solid rgba(255,255,255,0.08)',
-                                    color: 'var(--text-primary)',
-                                    fontWeight: 700,
-                                    fontSize: '13px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s',
-                                  }}
-                                  onMouseOver={(e) => {
-                                    e.currentTarget.style.background = 'var(--primary-soft)';
-                                    e.currentTarget.style.borderColor = 'var(--primary)';
-                                    e.currentTarget.style.color = 'var(--primary)';
-                                  }}
-                                  onMouseOut={(e) => {
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-                                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                                    e.currentTarget.style.color = 'var(--text-primary)';
-                                  }}
-                                >
-                                  {formatTime(showtime.startTime)}
-                                  <div style={{ fontSize: '9px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>
-                                    {t('showtimesPage.room')} {showtime.auditoriumNumber}
-                                  </div>
-                                </button>
+                                <div key={showtime.scheduleId} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <button
+                                    onClick={() => navigate(isPosMode ? `/booking/${showtime.scheduleId}?pos=1` : `/booking/${showtime.scheduleId}`)}
+                                    style={{
+                                      padding: '8px 16px',
+                                      borderRadius: 'var(--radius-sm, 6px)',
+                                      background: 'rgba(255,255,255,0.03)',
+                                      border: '1px solid rgba(255,255,255,0.08)',
+                                      color: 'var(--text-primary)',
+                                      fontWeight: 700,
+                                      fontSize: '13px',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                    }}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.background = 'var(--primary-soft)';
+                                      e.currentTarget.style.borderColor = 'var(--primary)';
+                                      e.currentTarget.style.color = 'var(--primary)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                                      e.currentTarget.style.color = 'var(--text-primary)';
+                                    }}
+                                  >
+                                    {formatTime(showtime.startTime)}
+                                    <div style={{ fontSize: '9px', fontWeight: 400, opacity: 0.6, marginTop: '2px' }}>
+                                      {t('showtimesPage.room')} {showtime.auditoriumNumber}
+                                    </div>
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedGroupScheduleId(showtime.scheduleId);
+                                      setShowGroupModal(true);
+                                    }}
+                                    title={t('socialBooking.groupBookingBtn', 'Đặt vé nhóm')}
+                                    style={{
+                                      padding: '6px',
+                                      borderRadius: 'var(--radius-sm, 6px)',
+                                      background: 'rgba(255,138,0,0.1)',
+                                      border: '1px solid rgba(255,138,0,0.2)',
+                                      color: '#ff8a00',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.2s',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                    }}
+                                    onMouseOver={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255,138,0,0.25)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,138,0,0.5)';
+                                      e.currentTarget.style.boxShadow = '0 0 12px rgba(255,138,0,0.3)';
+                                    }}
+                                    onMouseOut={(e) => {
+                                      e.currentTarget.style.background = 'rgba(255,138,0,0.1)';
+                                      e.currentTarget.style.borderColor = 'rgba(255,138,0,0.2)';
+                                      e.currentTarget.style.boxShadow = 'none';
+                                    }}
+                                  >
+                                    <Users size={14} />
+                                  </button>
+                                </div>
                               ))}
                             </div>
                           </div>
@@ -621,6 +659,12 @@ export const ShowtimesPage: React.FC = () => {
           </div>
         )}
       </main>
+
+      <CreateGroupBookingModal
+        isOpen={showGroupModal}
+        onClose={() => setShowGroupModal(false)}
+        scheduleId={selectedGroupScheduleId}
+      />
     </div>
   );
 };

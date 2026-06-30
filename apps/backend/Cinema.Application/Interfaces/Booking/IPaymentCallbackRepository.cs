@@ -10,4 +10,5 @@ public interface IPaymentCallbackRepository
     Task<int> CountOrderDetailsAsync(Guid orderId);
     Task<UserInfoEntity?> FindUserByIdAsync(Guid userId);
     Task<UserVoucherEntity?> GetUserVoucherForUsageAsync(Guid voucherId, Guid userId);
+    Task AddOrderAsync(OrderInfoEntity order);
 }

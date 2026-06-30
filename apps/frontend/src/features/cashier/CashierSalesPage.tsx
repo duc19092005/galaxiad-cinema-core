@@ -6,7 +6,7 @@ import {
   CheckCircle2, Printer, LogOut, Loader2, RefreshCw, Ticket, ChevronRight, Banknote
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
-import { useSeatSse } from '../../hooks/useSeatSse';
+import { useSeatWs } from '../../hooks/useSeatWs';
 import { bookingApi } from '../../api/bookingApi';
 import { staffShiftApi, CASHIER_SHIFT_SESSION_KEY, readCashierShiftSession } from '../../api/staffShiftApi';
 import { authApi } from '../../api/authApi';
@@ -56,8 +56,8 @@ const CashierSalesPage: React.FC = () => {
   const [completedOrder, setCompletedOrder] = useState<any | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // SSE Seat Lock
-  const { lockedSeats, lockSeat, unlockSeat } = useSeatSse(selectedScheduleId);
+  // WS Seat Lock
+  const { lockedSeats, lockSeat, unlockSeat } = useSeatWs(selectedScheduleId);
 
   // Parse cinemaName from session
   useEffect(() => {
@@ -188,7 +188,11 @@ const CashierSalesPage: React.FC = () => {
         return;
       }
       setSelectedSeats(prev => [...prev, seat]);
-      await lockSeat(seat.seatId, cashierName);
+      const success = await lockSeat(seat.seatId, cashierName);
+      if (!success) {
+        setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+        showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
+      }
     }
   };
 

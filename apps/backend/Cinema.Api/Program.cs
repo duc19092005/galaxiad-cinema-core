@@ -181,6 +181,7 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
 });
 
+app.UseWebSockets();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();

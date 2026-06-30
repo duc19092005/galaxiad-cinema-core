@@ -64,7 +64,7 @@ cp services/ai/.env.cloud.example services/ai/.env
 #   JINA_API_KEY (from jina.ai)
 #   QDRANT_URL (from cloud.qdrant.io)
 #   QDRANT_API_KEY (from cloud.qdrant.io)
-#   claude-opus-4.8 (LLM)
+#   DEEPSEEK
 
 # 4. Start production services
 docker compose -f docker-compose.prod.yml up -d --build

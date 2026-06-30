@@ -4,6 +4,7 @@ using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Application.Infrastructure.Booking;
 using Cinema.Application.UseCases.Booking;
 using Cinema.Application.UseCases.Booking.Services;
+using Cinema.Application.UseCases.Booking.SocialBooking;
 using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Cinema.Application.UseCases.Admin.Vouchers;
 using Cinema.Infrastructure.Repositories;
@@ -25,9 +26,25 @@ public static class BookingServicesBootstrap
         services.AddScoped<IPaymentCallbackRepository, PaymentCallbackRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IPricingPromotionRepository, PricingPromotionRepository>();
-        services.AddSingleton<SseConnectionManager>();
-        services.AddSingleton<SeatSseManager>();
+        services.AddSingleton<PaymentWsManager>();
+        services.AddSingleton<SeatLockManager>();
+        services.AddSingleton<SeatWsManager>();
+        services.AddSingleton<GroupBookingWsManager>();
         services.AddSingleton<VnPayHelper>();
+
+        // Social Booking
+        services.AddScoped<IGroupBookingRepository, GroupBookingRepository>();
+        services.AddScoped<CreateGroupBookingUseCase>();
+        services.AddScoped<JoinGroupBookingUseCase>();
+        services.AddScoped<GetGroupBookingStateUseCase>();
+        services.AddScoped<SelectGroupSeatsUseCase>();
+        services.AddScoped<ConfirmGroupMemberSeatsUseCase>();
+        services.AddScoped<PayGroupBookingUseCase>();
+        services.AddScoped<SendGroupChatMessageUseCase>();
+        services.AddScoped<GetGroupChatMessagesUseCase>();
+        services.AddScoped<VoteMovieUseCase>();
+        services.AddScoped<HandleGroupPaymentFailureUseCase>();
+        services.AddScoped<LeaveGroupBookingUseCase>();
 
         // Booking Use Cases
         services.AddScoped<GetNowShowingMoviesUseCase>();

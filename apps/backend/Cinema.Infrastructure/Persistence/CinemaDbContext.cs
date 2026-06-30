@@ -5,6 +5,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Domain.Entities.ScheduleJob;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Infrastructure.RelationshipKeys.MovieInfos;
 using Cinema.Infrastructure.SeedData;
@@ -117,6 +118,16 @@ public class CinemaDbContext : DbContext
     public DbSet<PricingPromotionRuleEntity> PricingPromotionRuleEntity { get; set; }
 
     public DbSet<HolidayCalendarEntity> HolidayCalendarEntity { get; set; }
+
+    // Group Booking (Social)
+
+    public DbSet<GroupBookingSessionEntity> GroupBookingSessionEntity { get; set; }
+
+    public DbSet<GroupBookingMemberEntity> GroupBookingMemberEntity { get; set; }
+
+    public DbSet<GroupBookingSeatEntity> GroupBookingSeatEntity { get; set; }
+
+    public DbSet<GroupChatMessageEntity> GroupChatMessageEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -618,6 +629,76 @@ public class CinemaDbContext : DbContext
 
         // Seeds Vouchers
         VoucherSeedData.AddVoucherSeedData(modelBuilder);
+
+        // Group Booking (Social)
+
+        modelBuilder.Entity<GroupBookingSessionEntity>(entity =>
+        {
+            entity.HasKey(x => x.GroupSessionId);
+            entity.HasIndex(x => x.GroupCode).IsUnique();
+            entity.HasIndex(x => x.CreatedByUserId);
+            entity.HasIndex(x => x.MovieScheduleId);
+            entity.HasIndex(x => x.Status);
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.MovieScheduleInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.MovieScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<GroupBookingMemberEntity>(entity =>
+        {
+            entity.HasKey(x => x.MemberId);
+            entity.HasIndex(x => new { x.GroupSessionId, x.UserId }).IsUnique();
+            entity.HasIndex(x => x.UserId);
+
+            entity.HasOne(x => x.GroupBookingSession)
+                .WithMany(x => x.Members)
+                .HasForeignKey(x => x.GroupSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<GroupBookingSeatEntity>(entity =>
+        {
+            entity.HasKey(x => x.GroupSeatId);
+            entity.HasIndex(x => new { x.MemberId, x.SeatId }).IsUnique();
+
+            entity.HasOne(x => x.GroupBookingMember)
+                .WithMany(x => x.SelectedSeats)
+                .HasForeignKey(x => x.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.SeatsInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.SeatId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<GroupChatMessageEntity>(entity =>
+        {
+            entity.HasKey(x => x.MessageId);
+            entity.HasIndex(x => new { x.GroupSessionId, x.CreatedAt });
+
+            entity.HasOne(x => x.GroupBookingSession)
+                .WithMany(x => x.ChatMessages)
+                .HasForeignKey(x => x.GroupSessionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(x => x.UserInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.SenderId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
     }
     
 }

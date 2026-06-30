@@ -268,28 +268,28 @@ const ChatBot: React.FC = () => {
       setStreamStatus(initialStatus);
     });
 
+    const upsertStreamingBotMessage = (streamedText: string, extra?: Partial<ChatMessage>) => {
+      flushSync(() => {
+        setIsStreamingResponseVisible(true);
+        setMessages(prev => {
+          const messageIndex = prev.findIndex(msg => msg.clientId === botClientId);
+          if (messageIndex === -1) return prev;
+
+          const next = [...prev];
+          next[messageIndex] = {
+            ...next[messageIndex],
+            role: 'bot',
+            text: streamedText,
+            ...extra,
+            clientId: botClientId,
+          };
+          return next;
+        });
+      });
+    };
+
     try {
       let botData: ChatbotResponsePayload;
-
-      const upsertStreamingBotMessage = (streamedText: string, extra?: Partial<ChatMessage>) => {
-        flushSync(() => {
-          setIsStreamingResponseVisible(true);
-          setMessages(prev => {
-            const messageIndex = prev.findIndex(msg => msg.clientId === botClientId);
-            if (messageIndex === -1) return prev;
-
-            const next = [...prev];
-            next[messageIndex] = {
-              ...next[messageIndex],
-              role: 'bot',
-              text: streamedText,
-              ...extra,
-              clientId: botClientId,
-            };
-            return next;
-          });
-        });
-      };
 
       try {
         botData = await sendMessageWithSse(text, upsertStreamingBotMessage, upsertStreamingBotMessage);

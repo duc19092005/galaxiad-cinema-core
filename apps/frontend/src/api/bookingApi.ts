@@ -40,11 +40,6 @@ export const bookingApi = {
         return normalizeSuccessResponse<BookingCustomerLookup | null>(response);
     },
 
-    /** SSE Realtime Payment Status setup URL helper */
-    getPaymentStatusUrl: (orderId: string): string => {
-        return `${API_BASE_URL}/api/v1/booking/payment-status/${orderId}`;
-    },
-
     /** Get ticket info */
     getTicketInfo: async (orderId: string): Promise<ApiSuccessResponse<TicketInfo>> => {
         const response = await bookingAxios.get<ApiSuccessResponse<TicketInfo>>(
@@ -58,15 +53,18 @@ export const bookingApi = {
         return `${API_BASE_URL}/api/v1/booking/ticket/${orderId}/download`;
     },
 
-    /** SSE Seat Events URL */
-    getSeatEventsUrl: (scheduleId: string): string => {
-        return `${API_BASE_URL}/api/v1/booking/seats/events/${scheduleId}`;
+    /** WebSocket Seat Events URL */
+    getSeatWsUrl: (scheduleId: string, clientId?: string): string => {
+        const base = API_BASE_URL || window.location.origin;
+        const wsBase = base.replace(/^http/, 'ws');
+        const query = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
+        return `${wsBase}/api/v1/booking/seats/ws/${scheduleId}${query}`;
     },
 
     /** Lock a seat via HTTP POST */
-    lockSeat: async (scheduleId: string, seatId: string, userName: string): Promise<boolean> => {
+    lockSeat: async (scheduleId: string, seatId: string, userName: string, clientId?: string): Promise<boolean> => {
         try {
-            const response = await bookingAxios.post('/seats/lock', { scheduleId, seatId, userName });
+            const response = await bookingAxios.post('/seats/lock', { scheduleId, seatId, userName, clientId });
             return response.data?.success ?? true;
         } catch {
             return false;
@@ -74,9 +72,9 @@ export const bookingApi = {
     },
 
     /** Unlock a seat via HTTP POST */
-    unlockSeat: async (scheduleId: string, seatId: string): Promise<boolean> => {
+    unlockSeat: async (scheduleId: string, seatId: string, clientId?: string): Promise<boolean> => {
         try {
-            const response = await bookingAxios.post('/seats/unlock', { scheduleId, seatId });
+            const response = await bookingAxios.post('/seats/unlock', { scheduleId, seatId, clientId });
             return response.data?.success ?? true;
         } catch {
             return false;

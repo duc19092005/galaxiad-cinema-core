@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
@@ -74,13 +75,20 @@ public class BookingOrderRepository : IBookingOrderRepository
 
     public async Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
     {
-        return await _dbContext.Set<OrderDetailsInfo>()
+        var individualBookedSeats = await _dbContext.Set<OrderDetailsInfo>()
             .Where(od => od.MovieScheduleId == scheduleId
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
             .Select(od => od.SeatId)
-            .Distinct()
             .ToListAsync();
+
+        var groupBookedSeats = await _dbContext.Set<GroupBookingSeatEntity>()
+            .Where(gs => gs.GroupBookingMember.GroupBookingSession.MovieScheduleId == scheduleId
+                         && gs.GroupBookingMember.GroupBookingSession.Status != GroupBookingStatusEnum.Cancelled)
+            .Select(gs => gs.SeatId)
+            .ToListAsync();
+
+        return individualBookedSeats.Concat(groupBookedSeats).Distinct().ToList();
     }
 
     public async Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid userId)

@@ -1,6 +1,5 @@
 import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
 import { notificationApi } from '../api/commentApi';
 import { showError, showSuccess } from '../utils/ToastUtils';
 
@@ -13,7 +12,6 @@ interface RealtimeNotification {
 
 const ShiftNotificationListener = () => {
   const { t } = useTranslation();
-  const location = useLocation();
 
   const notificationTitle = useCallback((event: RealtimeNotification) => {
     if (event.title) return event.title;
@@ -60,7 +58,7 @@ const ShiftNotificationListener = () => {
     };
 
     return () => source.close();
-  }, [location.pathname, showRealtimeNotification]);
+  }, []);
 
   return null;
 };

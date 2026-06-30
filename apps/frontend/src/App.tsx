@@ -29,6 +29,7 @@ import { OffersPage } from './features/booking/OffersPage';
 import CashierPage from './features/cashier/CashierPage';
 import CashierSalesPage from './features/cashier/CashierSalesPage';
 import StaffPortalPage from './features/staff/StaffPortalPage';
+import SocialBookingPage from './features/socialBooking/SocialBookingPage';
 import ServicesPage from './features/public/ServicesPage';
 import HelpPage from './features/public/HelpPage';
 import CareerDetailPage from './features/public/CareerDetailPage';
@@ -81,6 +82,7 @@ function AppRoutes() {
         <Route path="/booking/:scheduleId" element={<PageTransition><BookingPage /></PageTransition>} />
         <Route path="/booking/success" element={<PageTransition><BookingSuccessPage /></PageTransition>} />
         <Route path="/booking/failed" element={<PageTransition><BookingFailedPage /></PageTransition>} />
+        <Route path="/group-booking/:groupCode" element={<PageTransition><SocialBookingPage /></PageTransition>} />
         <Route path="/account" element={<ProtectedRoute><PageTransition><AccountPage /></PageTransition></ProtectedRoute>} />
         <Route path="/services" element={<PageTransition><ServicesPage /></PageTransition>} />
         <Route path="/help" element={<PageTransition><HelpPage /></PageTransition>} />

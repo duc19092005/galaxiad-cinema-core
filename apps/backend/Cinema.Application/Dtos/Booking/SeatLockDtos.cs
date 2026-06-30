@@ -12,6 +12,9 @@ public class ReqLockSeatDto
 
     [JsonPropertyName("userName")]
     public string UserName { get; set; } = string.Empty;
+
+    [JsonPropertyName("clientId")]
+    public string? ClientId { get; set; }
 }
 
 public class ReqUnlockSeatDto
@@ -21,6 +24,9 @@ public class ReqUnlockSeatDto
 
     [JsonPropertyName("seatId")]
     public string SeatId { get; set; } = string.Empty;
+
+    [JsonPropertyName("clientId")]
+    public string? ClientId { get; set; }
 }
 
 public class ResSeatLockDto

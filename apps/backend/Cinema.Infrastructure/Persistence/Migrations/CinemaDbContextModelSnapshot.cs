@@ -2539,6 +2539,175 @@ namespace Cinema.Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
+                {
+                    b.Property<Guid>("MemberId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AmountToPay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CoverPaymentTransactionId")
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<Guid>("GroupSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsHost")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("VnPayTransactionId")
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("MemberId");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("GroupSessionId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("GroupBookingMemberEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSeatEntity", b =>
+                {
+                    b.Property<Guid>("GroupSeatId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MemberId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("PriceEach")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SeatId")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<DateTime>("SelectedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("GroupSeatId");
+
+                    b.HasIndex("SeatId");
+
+                    b.HasIndex("MemberId", "SeatId")
+                        .IsUnique();
+
+                    b.ToTable("GroupBookingSeatEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", b =>
+                {
+                    b.Property<Guid>("GroupSessionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CollectedAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GroupCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(12)");
+
+                    b.Property<string>("GroupName")
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("MaxMembers")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("MovieScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("PaymentDeadlineAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalGroupAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("VoteMovieScheduleId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("VotingOptionsJson")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("GroupSessionId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("GroupCode")
+                        .IsUnique();
+
+                    b.HasIndex("MovieScheduleId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("GroupBookingSessionEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupChatMessageEntity", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("GroupSessionId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("MessageType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("SenderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MessageId");
+
+                    b.HasIndex("SenderId");
+
+                    b.HasIndex("GroupSessionId", "CreatedAt");
+
+                    b.ToTable("GroupChatMessageEntity");
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCinemaEntity", b =>
                 {
                     b.Property<Guid>("MovieId")
@@ -5271,6 +5440,81 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("AuditoriumInfoEntities");
                 });
 
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", "GroupBookingSession")
+                        .WithMany("Members")
+                        .HasForeignKey("GroupSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "UserInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GroupBookingSession");
+
+                    b.Navigation("UserInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSeatEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", "GroupBookingMember")
+                        .WithMany("SelectedSeats")
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.SeatsInfoEntity", "SeatsInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("SeatId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("GroupBookingMember");
+
+                    b.Navigation("SeatsInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "UserInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.MovieInfos.MovieScheduleInfoEntity", "MovieScheduleInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("MovieScheduleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("MovieScheduleInfoEntity");
+
+                    b.Navigation("UserInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupChatMessageEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", "GroupBookingSession")
+                        .WithMany("ChatMessages")
+                        .HasForeignKey("GroupSessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "UserInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("GroupBookingSession");
+
+                    b.Navigation("UserInfoEntity");
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCinemaEntity", b =>
                 {
                     b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
@@ -5886,6 +6130,18 @@ namespace Cinema.Infrastructure.Migrations
             modelBuilder.Entity("Cinema.Domain.Entities.CinemaInfos.SeatsInfoEntity", b =>
                 {
                     b.Navigation("OrderDetailsInfo");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
+                {
+                    b.Navigation("SelectedSeats");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", b =>
+                {
+                    b.Navigation("ChatMessages");
+
+                    b.Navigation("Members");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCommentEntity", b =>
