@@ -43,10 +43,11 @@ public class JoinGroupBookingUseCase
         if (session == null)
             throw new NotFoundException("Group booking session not found");
 
-        if (session.Status == GroupBookingStatusEnum.Cancelled || session.Status == GroupBookingStatusEnum.Completed)
+        if (session.Status == GroupBookingStatusEnum.Cancelled)
             throw new BadRequestException("This group booking session is no longer active", "GBK11");
 
-        if (session.ExpiresAt.HasValue && session.ExpiresAt.Value < DateTime.UtcNow)
+        if (session.ExpiresAt.HasValue && session.ExpiresAt.Value < DateTime.UtcNow
+            && session.Status != GroupBookingStatusEnum.Completed)
             throw new BadRequestException("This group booking session has expired", "GBK12");
 
         var existingMember = await _groupBookingRepository.GetMemberAsync(session.GroupSessionId, userId);
@@ -68,6 +69,9 @@ public class JoinGroupBookingUseCase
                 Message = "Already a member of this group"
             };
         }
+
+        if (session.Status == GroupBookingStatusEnum.Completed)
+            throw new BadRequestException("This group booking session is no longer active", "GBK11");
 
         var memberCount = await _groupBookingRepository.GetMemberCountAsync(session.GroupSessionId);
         if (memberCount >= session.MaxMembers)

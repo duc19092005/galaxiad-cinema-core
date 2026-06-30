@@ -720,6 +720,16 @@ tr:hover td {
   animation: slideInRight 0.25s ease-out;
 }
 
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
 @keyframes fadeInOverlay {
   from { opacity: 0; }
   to   { opacity: 1; }

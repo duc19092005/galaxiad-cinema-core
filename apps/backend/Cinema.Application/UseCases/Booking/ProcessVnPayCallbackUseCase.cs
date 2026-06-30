@@ -20,6 +20,7 @@ public class ProcessVnPayCallbackUseCase
     private readonly IMovieCacheService _cacheService;
     private readonly IGroupBookingRepository _groupBookingRepo;
     private readonly ISeatLockerNotificationService _notificationService;
+    private readonly SocialBooking.GetGroupBookingStateUseCase _getGroupStateUseCase;
 
     public ProcessVnPayCallbackUseCase(
         IPaymentCallbackRepository repo,
@@ -28,7 +29,8 @@ public class ProcessVnPayCallbackUseCase
         IUnitOfWork unitOfWork,
         IMovieCacheService cacheService,
         IGroupBookingRepository groupBookingRepo,
-        ISeatLockerNotificationService notificationService)
+        ISeatLockerNotificationService notificationService,
+        SocialBooking.GetGroupBookingStateUseCase getGroupStateUseCase)
     {
         _unitOfWork = unitOfWork;
         _repo = repo;
@@ -37,6 +39,7 @@ public class ProcessVnPayCallbackUseCase
         _cacheService = cacheService;
         _groupBookingRepo = groupBookingRepo;
         _notificationService = notificationService;
+        _getGroupStateUseCase = getGroupStateUseCase;
     }
 
     public async Task<(bool success, Guid orderId, string? groupCode)> ExecuteAsync(IDictionary<string, string> vnpParams)
@@ -275,6 +278,13 @@ public class ProcessVnPayCallbackUseCase
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        // Broadcast updated state to all connected WebSocket clients
+        var updatedState = await _getGroupStateUseCase.ExecuteAsync(session.GroupSessionId);
+        if (updatedState.IsSuccess && updatedState.Data != null)
+        {
+            await _notificationService.NotifyGroupUpdateAsync(session.GroupSessionId, updatedState.Data);
+        }
 
         return (isSuccess, session.GroupSessionId, session.GroupCode);
     }

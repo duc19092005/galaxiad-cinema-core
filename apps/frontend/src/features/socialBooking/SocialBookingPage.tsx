@@ -3,10 +3,12 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { socialBookingApi } from '../../api/socialBookingApi';
 import { verifyAuthAndGetUser } from '../../utils/authHelpers';
 import { showSuccess, showError } from '../../utils/ToastUtils';
-import { Loader2, MessageCircle, ThumbsUp, Copy, Check, QrCode, LogOut, CreditCard, LayoutGrid } from 'lucide-react';
+import { Loader2, MessageCircle, ThumbsUp, Copy, Check, QrCode, LogOut, CreditCard, LayoutGrid, Armchair, ChevronRight } from 'lucide-react';
 import type { GroupBookingState, ChatMessage, MovieVoteState, GroupPaymentActionResponse } from '../../types/socialBooking.types';
 import GroupChatPanel from './GroupChatPanel';
 import GroupSeatGrid from './GroupSeatGrid';
+import GroupCheckoutView from './GroupCheckoutView';
+import GroupSuccessView from './GroupSuccessView';
 import GroupPaymentModal from './GroupPaymentModal';
 import GroupMovieVote from './GroupMovieVote';
 import GroupMemberList from './GroupMemberList';
@@ -305,65 +307,66 @@ export default function SocialBookingPage() {
             </div>
           </div>
 
-          {/* Seats Tab (visible on mobile when tab is seats, always on desktop) */}
-          <div className={`w-full max-w-2xl ${mobileTab !== 'seats' ? 'hidden md:block' : ''}`}>
-            <GroupSeatGrid
-              groupState={groupState}
-              scheduleId={groupState.scheduleId}
-              onRefresh={refreshGroupState}
-            />
-          </div>
+          {/* Stage 1: Seat Selection */}
+          {(groupState.status === 'Open' || groupState.status === 'SeatsSelected') && (
+            <>
+              {/* Stepper for Seat Selection */}
+              <div className="w-full max-w-2xl mb-4 flex items-center justify-center bg-[#1a1b1f]/60 rounded-xl p-2 gap-2">
+                <div className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#ff9500] text-[#4b2800] text-[11px] font-bold uppercase tracking-wider">
+                  <Armchair className="w-4 h-4" />
+                  <span>Chon ghe</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-[#554334]" />
+                <div className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#343539]/60 text-[#dbc2ad]/50 text-[11px] font-bold uppercase tracking-wider">
+                  <CreditCard className="w-4 h-4" />
+                  <span>Thanh toan</span>
+                </div>
+              </div>
 
-          {/* Vote Tab (visible on mobile when tab is vote, hidden on desktop) */}
-          {mobileTab === 'vote' && (
-            <div className="w-full max-w-2xl md:hidden">
-              <GroupMovieVote
-                voteState={voteState}
-                groupState={groupState}
-                onVote={handleVote}
-                isHost={!!isHost}
-              />
-            </div>
+              <div className={`w-full max-w-2xl ${mobileTab !== 'seats' ? 'hidden md:block' : ''}`}>
+                <GroupSeatGrid
+                  groupState={groupState}
+                  scheduleId={groupState.scheduleId}
+                  onRefresh={refreshGroupState}
+                />
+              </div>
+
+              {mobileTab === 'vote' && (
+                <div className="w-full max-w-2xl md:hidden mt-4">
+                  <GroupMovieVote
+                    voteState={voteState}
+                    groupState={groupState}
+                    onVote={handleVote}
+                    isHost={!!isHost}
+                  />
+                </div>
+              )}
+
+              <div className="hidden md:block w-full max-w-2xl mt-6">
+                <GroupMovieVote
+                  voteState={voteState}
+                  groupState={groupState}
+                  onVote={handleVote}
+                  isHost={!!isHost}
+                />
+              </div>
+            </>
           )}
 
-          {/* Desktop: Vote below seats */}
-          <div className="hidden md:block w-full max-w-2xl mt-6">
-            <GroupMovieVote
-              voteState={voteState}
+          {/* Stage 2 & 3: Checkout / Payment */}
+          {(groupState.status === 'Confirming' || groupState.status === 'Paying' || groupState.status === 'PaymentFailed') && (
+            <GroupCheckoutView
               groupState={groupState}
-              onVote={handleVote}
+              scheduleId={groupState.scheduleId}
               isHost={!!isHost}
+              onPay={handlePayGroup}
+              isPaying={isProcessingPayment}
             />
-          </div>
+          )}
 
-          {/* Payment Summary (when Confirming) */}
-          {groupState.status === 'Confirming' && isHost && (
-            <div className="w-full max-w-2xl mt-6 bg-[#1a1b1f]/60 backdrop-blur-xl border border-[#554334]/20 rounded-2xl p-6 border-l-[3px] border-l-[#ff9500]">
-              <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div className="flex gap-8">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">Thanh vien</span>
-                    <span className="text-[20px] font-semibold text-[#ffbd7f]">{groupState.members?.filter(m => m.status !== 'Removed').length}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">So ghe</span>
-                    <span className="text-[20px] font-semibold text-[#ffbd7f]">{groupState.allGroupSeats?.length || 0}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">Tong cong</span>
-                    <span className="text-[20px] font-semibold text-[#e3e2e7]">{groupState.totalGroupAmount.toLocaleString()}d</span>
-                  </div>
-                </div>
-                <button
-                  onClick={handlePayGroup}
-                  disabled={isProcessingPayment}
-                  className="w-full md:w-auto px-8 py-3.5 bg-[#ff9500] text-[#4b2800] rounded-full font-bold text-sm flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#ff9500]/20 disabled:opacity-60"
-                >
-                  {isProcessingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                  <span>Thanh toan tat ca</span>
-                </button>
-              </div>
-            </div>
+          {/* Stage 3: Success */}
+          {groupState.status === 'Completed' && (
+            <GroupSuccessView groupState={groupState} />
           )}
         </div>
 
