@@ -182,7 +182,7 @@ python main.py
 | Item | Status | Link |
 |------|--------|------|
 | CI/CD | GitHub Actions (build + type check) | `.github/workflows/build.yml` |
-| Frontend Demo | Live on Vercel | https://renewcinemaprojectfrontend.vercel.app |
+| Frontend Demo | Live on Vercel | https://galaxiad-cinema-core-gamma.vercel.app/ |
 | API Swagger | Live | https://apicinestartplus.runasp.net/swagger |
 | Seed Data | Included | 5 movies, 3 cinemas, 6 auditoriums, sample pricing |
 | Deployment Guide | [DEPLOYMENT.md](DEPLOYMENT.md) | VPS setup + Docker production config |
