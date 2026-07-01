@@ -267,7 +267,7 @@ public class ProcessVnPayCallbackUseCase
             _voteTimeoutScheduler.Cancel(session.GroupSessionId);
         }
 
-        // Broadcast updated state to all connected WebSocket clients
+        // Broadcast updated state to all connected SignalR clients
         var updatedState = await _getGroupStateUseCase.ExecuteAsync(session.GroupSessionId);
         if (updatedState.IsSuccess && updatedState.Data != null)
         {

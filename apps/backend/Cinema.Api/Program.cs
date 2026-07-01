@@ -81,6 +81,9 @@ builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
 builder.Services.AddBookingServices();
 
+// SignalR for real-time notifications
+builder.Services.AddSignalR();
+
 // Background safety net for orphaned vote timers (polls every 15s)
 builder.Services.AddHostedService<VoteTimerBackgroundService>();
 builder.Services.AddIdentityFactories();
@@ -184,7 +187,6 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
 });
 
-app.UseWebSockets();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
@@ -197,6 +199,7 @@ var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>(
 recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
 
 app.MapControllers();
+app.MapHub<CinemaHub>("/hubs/cinema");
 
 app.Run();
 

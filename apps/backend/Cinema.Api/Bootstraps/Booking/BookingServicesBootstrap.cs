@@ -26,10 +26,14 @@ public static class BookingServicesBootstrap
         services.AddScoped<IPaymentCallbackRepository, PaymentCallbackRepository>();
         services.AddScoped<IVoucherRepository, VoucherRepository>();
         services.AddScoped<IPricingPromotionRepository, PricingPromotionRepository>();
-        services.AddSingleton<PaymentWsManager>();
         services.AddSingleton<SeatLockManager>();
-        services.AddSingleton<SeatWsManager>();
         services.AddSingleton<GroupBookingWsManager>();
+
+        // SignalR broadcasters (implementations of Application-layer interfaces)
+        services.AddSingleton<Cinema.Api.Hubs.SignalRSeatBroadcaster>();
+        services.AddSingleton<Cinema.Api.Hubs.SignalRGroupBroadcaster>();
+        services.AddSingleton<Cinema.Application.Interfaces.Booking.ISeatBroadcaster>(sp => sp.GetRequiredService<Cinema.Api.Hubs.SignalRSeatBroadcaster>());
+        services.AddSingleton<Cinema.Application.Interfaces.Booking.IGroupBroadcaster>(sp => sp.GetRequiredService<Cinema.Api.Hubs.SignalRGroupBroadcaster>());
         services.AddSingleton<VnPayHelper>();
 
         // Social Booking

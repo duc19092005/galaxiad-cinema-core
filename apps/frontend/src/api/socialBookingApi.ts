@@ -1,4 +1,4 @@
-import { bookingAxios, API_BASE_URL } from './axiosClient';
+import { bookingAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
   CreateGroupBookingRequest,
@@ -85,12 +85,6 @@ export const socialBookingApi = {
     const url = failedMemberId ? `/group/pay/${groupSessionId}?failedMemberId=${failedMemberId}` : `/group/pay/${groupSessionId}`;
     const response = await bookingAxios.post(url);
     return normalizeSuccessResponse<PayGroupBookingResponse>(response);
-  },
-
-  getGroupWsUrl: (groupSessionId: string): string => {
-    const base = API_BASE_URL || window.location.origin;
-    const wsBase = base.replace(/^http/, 'ws');
-    return `${wsBase}/api/v1/booking/group/ws/${groupSessionId}`;
   },
 
   // Payment Method Voting

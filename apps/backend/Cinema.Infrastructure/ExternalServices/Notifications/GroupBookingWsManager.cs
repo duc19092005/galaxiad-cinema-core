@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
-using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -9,13 +8,23 @@ using System.Threading.Tasks;
 
 using System.Collections.Generic;
 using Cinema.Application.Dtos.Booking;
+using Cinema.Application.Interfaces.Booking;
 
 namespace Cinema.Application.Infrastructure.Booking;
 
+/// <summary>
+/// Manages group booking chat history and broadcasts events via SignalR.
+/// Connection management is handled by CinemaHub (SignalR).
+/// </summary>
 public class GroupBookingWsManager
 {
-    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, WebSocket>> _connections = new();
+    private readonly IGroupBroadcaster _broadcaster;
     private readonly ConcurrentDictionary<Guid, ConcurrentQueue<ResGroupChatMessageDto>> _chatHistories = new();
+
+    public GroupBookingWsManager(IGroupBroadcaster broadcaster)
+    {
+        _broadcaster = broadcaster;
+    }
 
     public void AddChatMessage(Guid groupSessionId, ResGroupChatMessageDto message)
     {
@@ -38,52 +47,28 @@ public class GroupBookingWsManager
         return new List<ResGroupChatMessageDto>();
     }
 
-    public void AddConnection(Guid groupSessionId, string connectionId, WebSocket webSocket)
-    {
-        var groupConns = _connections.GetOrAdd(groupSessionId, _ => new());
-        groupConns[connectionId] = webSocket;
-    }
-
-    public void RemoveConnection(Guid groupSessionId, string connectionId)
-    {
-        if (_connections.TryGetValue(groupSessionId, out var groupConns))
-        {
-            groupConns.TryRemove(connectionId, out _);
-            if (groupConns.IsEmpty)
-            {
-                _connections.TryRemove(groupSessionId, out _);
-            }
-        }
-    }
-
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-    };
-
+    /// <summary>
+    /// Broadcast a payload to all clients in a group.
+    /// The payload must include a "type" field (e.g. "group-update", "chat-message").
+    /// This method extracts the type and uses it as the SignalR method name.
+    /// </summary>
     public async Task BroadcastAsync(Guid groupSessionId, object payload)
     {
-        if (!_connections.TryGetValue(groupSessionId, out var groupConns)) return;
+        // Extract "type" field from anonymous object using reflection/serialization
+        var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+        });
 
-        var json = JsonSerializer.Serialize(payload, _jsonOptions);
-        var bytes = Encoding.UTF8.GetBytes(json);
-        var segment = new ArraySegment<byte>(bytes);
+        var doc = JsonDocument.Parse(json);
+        var root = doc.RootElement;
 
-        var tasks = groupConns.Values
-            .Where(ws => ws.State == WebSocketState.Open)
-            .Select(async ws =>
-            {
-                try
-                {
-                    await ws.SendAsync(segment, WebSocketMessageType.Text, true, CancellationToken.None);
-                }
-                catch
-                {
-                    // Ignore send failures
-                }
-            });
+        var eventType = root.TryGetProperty("type", out var typeProp)
+            ? typeProp.GetString() ?? "message"
+            : "message";
 
-        await Task.WhenAll(tasks);
+        // Send via SignalR: Clients.Group().SendAsync(eventType, payload)
+        await _broadcaster.BroadcastAsync(groupSessionId, eventType, root);
     }
 }

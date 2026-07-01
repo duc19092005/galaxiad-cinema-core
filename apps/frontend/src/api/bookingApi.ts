@@ -53,14 +53,6 @@ export const bookingApi = {
         return `${API_BASE_URL}/api/v1/booking/ticket/${orderId}/download`;
     },
 
-    /** WebSocket Seat Events URL */
-    getSeatWsUrl: (scheduleId: string, clientId?: string): string => {
-        const base = API_BASE_URL || window.location.origin;
-        const wsBase = base.replace(/^http/, 'ws');
-        const query = clientId ? `?clientId=${encodeURIComponent(clientId)}` : '';
-        return `${wsBase}/api/v1/booking/seats/ws/${scheduleId}${query}`;
-    },
-
     /** Lock a seat via HTTP POST */
     lockSeat: async (scheduleId: string, seatId: string, userName: string, clientId?: string): Promise<boolean> => {
         try {

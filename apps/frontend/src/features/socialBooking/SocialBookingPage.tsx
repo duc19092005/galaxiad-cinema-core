@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { socialBookingApi } from '../../api/socialBookingApi';
+import { signalrClient, stopConnection } from '../../api/signalrClient';
 import { verifyAuthAndGetUser } from '../../utils/authHelpers';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { Loader2, MessageCircle, ThumbsUp, Copy, Check, QrCode, LogOut, CreditCard, LayoutGrid, Armchair, ChevronRight, Send } from 'lucide-react';
@@ -19,6 +20,7 @@ import PairRequestModal from './PairRequestModal';
 import PairsSummaryView from './PairsSummaryView';
 import PaymentFailureVoteModal from './PaymentFailureVoteModal';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import type { HubConnection } from '@microsoft/signalr';
 
 type MobileTab = 'seats' | 'chat' | 'vote';
 
@@ -38,7 +40,7 @@ export default function SocialBookingPage() {
   const [showQrModal, setShowQrModal] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [mobileTab, setMobileTab] = useState<MobileTab>('seats');
-  const wsRef = useRef<WebSocket | null>(null);
+  const connectionRef = useRef<HubConnection | null>(null);
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const [mobileChatInput, setMobileChatInput] = useState('');
   const [paymentMethodVoteState, setPaymentMethodVoteState] = useState<PaymentMethodVoteState | null>(null);
@@ -68,59 +70,86 @@ export default function SocialBookingPage() {
 
   useEffect(() => {
     if (!groupState?.groupSessionId) return;
-    const wsUrl = socialBookingApi.getGroupWsUrl(groupState.groupSessionId);
-    const ws = new WebSocket(wsUrl);
+    let cancelled = false;
+    const connection = signalrClient.createGroupConnection(groupState.groupSessionId);
+    connectionRef.current = connection;
 
-    ws.onopen = () => console.log('[WS] Connected to', wsUrl);
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'initial-state' || data.type === 'group-update') {
-          if (data.state) {
-            setGroupState(data.state);
-            // Bug3: Sync failureVoteState từ group state (backend tự build khi status = PaymentFailed/Partial)
-            if (data.state.failureVoteState) {
-              setFailureVoteState(data.state.failureVoteState);
-            }
-          }
-        } else if (data.type === 'chat-message') {
-          if (data.chatMessage) {
-            setChatMessages(prev => {
-              if (prev.some(m => m.messageId === data.chatMessage.messageId)) return prev;
-              return [...prev.filter(m => !m.messageId.startsWith('temp-')), data.chatMessage];
-            });
-          }
-        } else if (data.type === 'vote-update') {
-          if (data.voteState) setVoteState(data.voteState);
-        } else if (data.type === 'payment-action') {
-          if (data.paymentAction) {
-            setPaymentAction(data.paymentAction);
-            setShowPaymentModal(true);
-          }
-        } else if (data.type === 'payment-method-vote-update') {
-          if (data.voteState) setPaymentMethodVoteState(data.voteState);
-        } else if (data.type === 'pair-update') {
-          // Refresh group state to get updated pairs
-          refreshGroupState();
-        } else if (data.type === 'payment-failure-vote-update') {
-          if (data.failureVoteState) setFailureVoteState(data.failureVoteState);
-        } else if (data.type === 'raise-hand-update') {
-          // Update failure vote state with new raise hands
-          if (data.raiseHands) {
-            setFailureVoteState(prev => prev ? { ...prev, raiseHands: data.raiseHands } : null);
-          }
+    const handleGroupState = (data: any) => {
+      if (data?.state) {
+        setGroupState(data.state);
+        if (data.state.failureVoteState) {
+          setFailureVoteState(data.state.failureVoteState);
         }
-      } catch (err) {
-        console.error('[WS] Failed to parse message', err);
       }
     };
 
-    ws.onerror = (err) => console.error('[WS] Connection error', err);
-    ws.onclose = () => console.log('[WS] Connection closed');
-    wsRef.current = ws;
+    const handleChatMessage = (data: any) => {
+      if (data?.chatMessage) {
+        setChatMessages(prev => {
+          if (prev.some(m => m.messageId === data.chatMessage.messageId)) return prev;
+          return [...prev.filter(m => !m.messageId.startsWith('temp-')), data.chatMessage];
+        });
+      }
+    };
 
-    return () => { ws.close(); wsRef.current = null; };
+    const handleVoteUpdate = (data: any) => {
+      if (data?.voteState) setVoteState(data.voteState);
+    };
+
+    const handlePaymentAction = (data: any) => {
+      if (data?.paymentAction) {
+        setPaymentAction(data.paymentAction);
+        setShowPaymentModal(true);
+      }
+    };
+
+    const handlePaymentMethodVoteUpdate = (data: any) => {
+      if (data?.voteState) setPaymentMethodVoteState(data.voteState);
+      if (data?.paymentMethodVoteState) setPaymentMethodVoteState(data.paymentMethodVoteState);
+    };
+
+    const handlePairUpdate = () => refreshGroupState();
+
+    const handlePaymentFailureVoteUpdate = (data: any) => {
+      if (data?.failureVoteState) setFailureVoteState(data.failureVoteState);
+    };
+
+    const handleRaiseHandUpdate = (data: any) => {
+      if (data?.raiseHands) {
+        setFailureVoteState(prev => prev ? { ...prev, raiseHands: data.raiseHands } : null);
+      }
+    };
+
+    connection.on('initial-state', handleGroupState);
+    connection.on('group-update', handleGroupState);
+    connection.on('chat-message', handleChatMessage);
+    connection.on('vote-update', handleVoteUpdate);
+    connection.on('payment-action', handlePaymentAction);
+    connection.on('payment-method-vote-update', handlePaymentMethodVoteUpdate);
+    connection.on('pair-update', handlePairUpdate);
+    connection.on('payment-failure-vote-update', handlePaymentFailureVoteUpdate);
+    connection.on('raise-hand-update', handleRaiseHandUpdate);
+
+    connection.start().catch((err) => {
+      if (!cancelled) console.error('[Group SignalR] Connection error', err);
+    });
+
+    return () => {
+      cancelled = true;
+      connection.off('initial-state', handleGroupState);
+      connection.off('group-update', handleGroupState);
+      connection.off('chat-message', handleChatMessage);
+      connection.off('vote-update', handleVoteUpdate);
+      connection.off('payment-action', handlePaymentAction);
+      connection.off('payment-method-vote-update', handlePaymentMethodVoteUpdate);
+      connection.off('pair-update', handlePairUpdate);
+      connection.off('payment-failure-vote-update', handlePaymentFailureVoteUpdate);
+      connection.off('raise-hand-update', handleRaiseHandUpdate);
+      stopConnection(connection).catch(() => {});
+      if (connectionRef.current === connection) {
+        connectionRef.current = null;
+      }
+    };
   }, [groupState?.groupSessionId]);
 
   useEffect(() => {

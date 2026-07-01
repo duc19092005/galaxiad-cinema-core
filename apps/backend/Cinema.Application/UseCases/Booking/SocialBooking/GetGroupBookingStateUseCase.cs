@@ -263,7 +263,7 @@ public class GetGroupBookingStateUseCase
             }
         }
 
-        // Nếu auto-cancel vừa xảy ra, broadcast state mới cho tất cả WebSocket clients
+        // Nếu auto-cancel vừa xảy ra, broadcast state mới cho tất cả SignalR clients
         if (autoCancelled)
         {
             await _notificationService.NotifyGroupUpdateAsync(groupSessionId, stateDto);

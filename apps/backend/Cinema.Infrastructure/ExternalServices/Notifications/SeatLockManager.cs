@@ -1,10 +1,11 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
+using Cinema.Application.Interfaces.Booking;
 
 namespace Cinema.Application.Infrastructure.Booking;
 
 /// <summary>
-/// Manages seat lock state per schedule and broadcasts events via WebSocket.
+/// Manages seat lock state per schedule and broadcasts events via SignalR.
 /// </summary>
 public class SeatLockManager
 {
@@ -14,11 +15,11 @@ public class SeatLockManager
     // scheduleId -> { seatId -> (groupSessionId, memberId, memberName) }
     private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)>> _groupSeatSelections = new();
 
-    private readonly SeatWsManager _seatWsManager;
+    private readonly ISeatBroadcaster _broadcaster;
 
-    public SeatLockManager(SeatWsManager seatWsManager)
+    public SeatLockManager(ISeatBroadcaster broadcaster)
     {
-        _seatWsManager = seatWsManager;
+        _broadcaster = broadcaster;
     }
 
     /// <summary>
@@ -175,7 +176,7 @@ public class SeatLockManager
 
     private void BroadcastEvent(string scheduleId, string eventType, object data)
     {
-        _ = _seatWsManager.BroadcastAsync(scheduleId, new { type = eventType, data });
+        _ = _broadcaster.BroadcastAsync(scheduleId, eventType, new { type = eventType, data });
     }
 
     public Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)> GetGroupSelectionsForSchedule(string scheduleId)

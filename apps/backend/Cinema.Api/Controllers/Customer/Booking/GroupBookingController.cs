@@ -1,13 +1,9 @@
 using System.Text.Json;
-using System.Net.WebSockets;
-using System.Text;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Infrastructure.Booking;
 using Cinema.Application.UseCases.Booking.SocialBooking;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
+using Cinema.Api.Hubs;
 
 namespace Cinema.Api.Controllers.Customer.Booking;
 
@@ -38,12 +34,6 @@ public class GroupBookingController : ControllerBase
     private readonly RaiseHandUseCase _raiseHandUseCase;
     private readonly GroupBookingWsManager _wsManager;
     private readonly ILogger<GroupBookingController> _logger;
-
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-    };
 
     public GroupBookingController(
         CreateGroupBookingUseCase createGroupBookingUseCase,
@@ -113,7 +103,6 @@ public class GroupBookingController : ControllerBase
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to fetch/broadcast group state after join for {GroupSessionId}", result.Data.GroupSessionId);
-                // Join succeeded — don't fail the entire request
             }
         }
         return Ok(result);
@@ -233,10 +222,6 @@ public class GroupBookingController : ControllerBase
         return Ok(result);
     }
 
-    // ==========================================
-    // PAYMENT METHOD VOTING
-    // ==========================================
-
     [HttpPost("vote-payment-method/{groupSessionId}")]
     public async Task<IActionResult> VotePaymentMethod(Guid groupSessionId, [FromBody] ReqVotePaymentMethodDto request)
     {
@@ -266,10 +251,6 @@ public class GroupBookingController : ControllerBase
         return Ok(result);
     }
 
-    // ==========================================
-    // PAIR SYSTEM
-    // ==========================================
-
     [HttpPost("pair/{groupSessionId}")]
     public async Task<IActionResult> CreatePair(Guid groupSessionId, [FromBody] ReqCreatePairDto request)
     {
@@ -278,7 +259,6 @@ public class GroupBookingController : ControllerBase
         {
             try
             {
-                // Broadcast pair request to all members (frontend will filter for involved parties)
                 await _wsManager.BroadcastAsync(groupSessionId, new { type = "pair-update", pair = result.Data });
             }
             catch (Exception ex)
@@ -319,10 +299,6 @@ public class GroupBookingController : ControllerBase
         return Ok(result);
     }
 
-    // ==========================================
-    // PAYMENT FAILURE VOTING
-    // ==========================================
-
     [HttpPost("vote-payment-failure/{groupSessionId}")]
     public async Task<IActionResult> VotePaymentFailure(Guid groupSessionId, [FromBody] ReqVotePaymentFailureDto request)
     {
@@ -349,7 +325,7 @@ public class GroupBookingController : ControllerBase
         {
             try
             {
-                await _wsManager.BroadcastAsync(groupSessionId, new { type = "payment-failure-vote-update", failureVoteState = result.Data });
+                await _wsManager.BroadcastAsync(groupSessionId, new { type = "raise-hand-update", raiseHands = result.Data });
             }
             catch (Exception ex)
             {
@@ -364,58 +340,5 @@ public class GroupBookingController : ControllerBase
     {
         var result = await _votePaymentFailureUseCase.VoteFailureOptionAsync(groupSessionId, request);
         return Ok(result);
-    }
-
-    [AllowAnonymous]
-    [HttpGet("ws/{groupSessionId}")]
-    public async Task GetWebSocket(Guid groupSessionId)
-    {
-        if (HttpContext.WebSockets.IsWebSocketRequest)
-        {
-            using var webSocket = await HttpContext.WebSockets.AcceptWebSocketAsync();
-            var connectionId = Guid.NewGuid().ToString();
-            _wsManager.AddConnection(groupSessionId, connectionId, webSocket);
-
-            var state = await _getGroupBookingStateUseCase.ExecuteAsync(groupSessionId);
-            if (state.IsSuccess && state.Data != null)
-            {
-                var payload = JsonSerializer.Serialize(new { type = "initial-state", state = state.Data }, _jsonOptions);
-                var bytes = Encoding.UTF8.GetBytes(payload);
-                await webSocket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
-            }
-
-            var buffer = new byte[1024 * 4];
-            try
-            {
-                while (webSocket.State == WebSocketState.Open)
-                {
-                    var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                    if (result.MessageType == WebSocketMessageType.Close)
-                    {
-                        break;
-                    }
-                }
-            }
-            catch
-            {
-                // Ignore connection drops
-            }
-            finally
-            {
-                _wsManager.RemoveConnection(groupSessionId, connectionId);
-                if (webSocket.State != WebSocketState.Closed && webSocket.State != WebSocketState.Aborted)
-                {
-                    try
-                    {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed by server", CancellationToken.None);
-                    }
-                    catch { }
-                }
-            }
-        }
-        else
-        {
-            HttpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-        }
     }
 }
