@@ -9,31 +9,31 @@
 ### 👤 Customer
 | Feature | File | Description |
 |---|---|---|
-| [Authentication](./en/authentication.md) | `authentication.md` | Registration, login, Google OAuth, JWT, profile management |
-| [Individual Booking](./en/booking.md) | `booking.md` | Real-time seat selection (WebSocket), VNPay payment, PDF ticket download |
-| [Movie Catalog](./en/movie-catalog.md) | `movie-catalog.md` | Now showing, coming soon, movie detail, similar movies (vector search) |
-| [Comments & Reviews](./en/comments-reviews.md) | `comments-reviews.md` | Write reviews, reply system, AI moderation, trending movies |
-| [Group Booking (Social)](./en/social-booking.md) | `social-booking.md` | Create groups, vote movies, pair system, group chat, group payment |
+| [Authentication](./en/authentication.md) | `authentication.md` | 8 endpoints (Registration, Login, Google OAuth, Profile) |
+| [Individual Booking](./en/booking.md) | `booking.md` | 11 endpoints (Seat selection, VNPay, PDF) |
+| [Movie Catalog](./en/movie-catalog.md) | `movie-catalog.md` | 17 endpoints (Now showing, Coming soon, Details, Search) |
+| [Comments & Reviews](./en/comments-reviews.md) | `comments-reviews.md` | 8 endpoints (Write reviews, Reply, Moderation, Trending) |
+| [Group Booking (Social)](./en/social-booking.md) | `social-booking.md` | 20 endpoints (Groups, Pairs, Voting, Chat, Payment) |
 
 ### 🤖 AI
 | Feature | File | Description |
 |---|---|---|
-| [AI Chatbot](./en/ai-chatbot.md) | `ai-chatbot.md` | Movie assistant, schedule lookup, booking support (SSE streaming) |
-| [AI Recommendations](./en/ai-recommendations.md) | `ai-recommendations.md` | Preference survey, personalized movie suggestions (vector embedding) |
+| [AI Chatbot](./en/ai-chatbot.md) | `ai-chatbot.md` | 2 endpoints (Chat, Stream) |
+| [AI Recommendations](./en/ai-recommendations.md) | `ai-recommendations.md` | 4 endpoints (Survey, Suggestions) |
 
 ### 💰 Business Operations
 | Feature | File | Description |
 |---|---|---|
-| [Cashier POS](./en/cashier-pos.md) | `cashier-pos.md` | Counter ticket sales, face recognition, QR scanning |
-| [Staff Portal](./en/staff-portal.md) | `staff-portal.md` | Shift registration, clock in/out, working history, payroll |
+| [Cashier POS](./en/cashier-pos.md) | `cashier-pos.md` | TBD (Counter sales — shared with Booking + Department) |
+| [Staff Portal](./en/staff-portal.md) | `staff-portal.md` | 11 endpoints (Shifts, Clock in/out, Payroll) |
 
 ### 🏢 Administration
 | Feature | File | Description |
 |---|---|---|
-| [Admin Panel](./en/admin.md) | `admin.md` | Users, RBAC, dashboard, audit, vouchers, pricing, promotions |
-| [Facilities Management](./en/facilities.md) | `facilities.md` | Cinema, auditorium, seat layout, department management |
-| [Movie Management](./en/movie-manager.md) | `movie-manager.md` | Movie CRUD, formats, genres, age ratings |
-| [Theater Management](./en/theater-manager.md) | `theater-manager.md` | Schedule CRUD, AI showtime recommendations, shifts, payroll |
+| [Admin Panel](./en/admin.md) | `admin.md` | 30+ endpoints (Users, Roles, Vouchers, Pricing, Promotions, Audit, Dashboard, Jobs) |
+| [Facilities Management](./en/facilities.md) | `facilities.md` | 13 endpoints (Cinemas, Auditoriums, Departments) |
+| [Movie Management](./en/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Formats, Age ratings) |
+| [Theater Management](./en/theater-manager.md) | `theater-manager.md` | 27 endpoints (Schedules, AI Recommendations, Shifts, Dashboard) |
 
 ---
 
@@ -42,9 +42,10 @@
 | Category | Count |
 |---|---|
 | Total Features | 13 |
-| Frontend Routes | 30+ |
 | API Controllers | 29 |
-| Use Cases | 181 |
+| API Endpoints | ~164 |
+| Use Cases (Backend) | 167 |
+| Frontend Route Modules | 12 |
 | i18n Languages | 3 (EN/VI/RU) |
 
 ---
@@ -53,4 +54,4 @@
 
 - [Algorithms](../algorithms/README.en.md) — Algorithm documentation
 - [Business Rules](../business/README.en.md) — Business rules reference
-- [API Guide](../../apps/backend/docs/dev/) — API integration guide
+<!-- API endpoints are listed in each feature file below -->

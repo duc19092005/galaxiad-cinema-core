@@ -9,31 +9,31 @@
 ### 👤 Khách Hàng
 | Tính Năng | File | Mô Tả |
 |---|---|---|
-| [Đăng ký/Đăng nhập](./vi/authentication.md) | `authentication.md` | Đăng ký, đăng nhập, Google OAuth, JWT, quản lý hồ sơ |
-| [Đặt vé cá nhân](./vi/booking.md) | `booking.md` | Chọn ghế real-time (WebSocket), thanh toán VNPay, tải vé PDF |
-| [Danh sách phim](./vi/movie-catalog.md) | `movie-catalog.md` | Phim đang chiếu, sắp chiếu, chi tiết, phim tương tự (vector search) |
-| [Bình luận & Đánh giá](./vi/comments-reviews.md) | `comments-reviews.md` | Viết review, reply, AI moderation, trending |
-| [Đặt vé nhóm](./vi/social-booking.md) | `social-booking.md` | Tạo nhóm, vote phim, ghép đôi, chat, thanh toán nhóm |
+| [Đăng ký/Đăng nhập](./vi/authentication.md) | `authentication.md` | 8 endpoints (Đăng ký, Đăng nhập, Google OAuth, Profile) |
+| [Đặt vé cá nhân](./vi/booking.md) | `booking.md` | 11 endpoints (Chọn ghế real-time, VNPay, PDF) |
+| [Danh sách phim](./vi/movie-catalog.md) | `movie-catalog.md` | 17 endpoints (Đang chiếu, Sắp chiếu, Chi tiết, Search) |
+| [Bình luận & Đánh giá](./vi/comments-reviews.md) | `comments-reviews.md` | 8 endpoints (Viết review, Reply, Moderation, Trending) |
+| [Đặt vé nhóm](./vi/social-booking.md) | `social-booking.md` | 20 endpoints (Nhóm, Ghép đôi, Voting, Chat, Payment) |
 
 ### 🤖 AI
 | Tính Năng | File | Mô Tả |
 |---|---|---|
-| [Chatbot AI](./vi/ai-chatbot.md) | `ai-chatbot.md` | Tư vấn phim, tra cứu lịch chiếu, hỗ trợ đặt vé (SSE streaming) |
-| [Gợi ý phim AI](./vi/ai-recommendations.md) | `ai-recommendations.md` | Khảo sát sở thích, gợi ý cá nhân hóa (vector embedding) |
+| [Chatbot AI](./vi/ai-chatbot.md) | `ai-chatbot.md` | 2 endpoints (Chat, Stream) |
+| [Gợi ý phim AI](./vi/ai-recommendations.md) | `ai-recommendations.md` | 4 endpoints (Khảo sát, Gợi ý) |
 
 ### 💰 Quản Lý Kinh Doanh
 | Tính Năng | File | Mô Tả |
 |---|---|---|
-| [Bán vé tại quầy](./vi/cashier-pos.md) | `cashier-pos.md` | POS bán vé, nhận diện khuôn mặt, QR code |
-| [Portal nhân viên](./vi/staff-portal.md) | `staff-portal.md` | Đăng ký ca, chấm công, lịch sử, lương |
+| [Bán vé tại quầy](./vi/cashier-pos.md) | `cashier-pos.md` | TBD (POS — dùng chung Booking + Department) |
+| [Portal nhân viên](./vi/staff-portal.md) | `staff-portal.md` | 11 endpoints (Ca làm, Chấm công, Lương) |
 
 ### 🏢 Quản Trị
 | Tính Năng | File | Mô Tả |
 |---|---|---|
-| [Quản trị hệ thống](./vi/admin.md) | `admin.md` | Users, RBAC, dashboard, audit, voucher, giá vé, khuyến mãi |
-| [Quản lý cơ sở](./vi/facilities.md) | `facilities.md` | Rạp, phòng chiếu, sơ đồ ghế, phòng ban |
-| [Quản lý phim](./vi/movie-manager.md) | `movie-manager.md` | CRUD phim, định dạng, thể loại |
-| [Quản lý lịch chiếu](./vi/theater-manager.md) | `theater-manager.md` | Lịch chiếu, AI gợi ý, ca làm, lương |
+| [Quản trị hệ thống](./vi/admin.md) | `admin.md` | 30+ endpoints (Users, Roles, Vouchers, Pricing, Audit, Jobs) |
+| [Quản lý cơ sở](./vi/facilities.md) | `facilities.md` | 13 endpoints (Rạp, Phòng, Ghế) |
+| [Quản lý phim](./vi/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Định dạng, Thể loại) |
+| [Quản lý lịch chiếu](./vi/theater-manager.md) | `theater-manager.md` | 27 endpoints (Lịch chiếu, AI Gợi ý, Ca làm, Dashboard) |
 
 ---
 
@@ -42,9 +42,9 @@
 | Hạng Mục | Số Lượng |
 |---|---|
 | Tổng tính năng | 13 |
-| Frontend routes | 30+ |
 | API Controllers | 29 |
-| Use Cases | 181 |
+| API Endpoints | ~164 |
+| Use Cases | 167 |
 | i18n languages | 3 (EN/VI/RU) |
 
 ---
@@ -53,4 +53,3 @@
 
 - [Thuật toán](../algorithms/README.vi.md) — Chi tiết thuật toán
 - [Quy tắc kinh doanh](../business/README.vi.md) — Quy tắc nghiệp vụ
-- [API Guide](../../apps/backend/docs/dev/) — Hướng dẫn tích hợp API

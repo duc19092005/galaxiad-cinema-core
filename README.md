@@ -169,9 +169,7 @@ python main.py
 - [Business Rules Reference](docs/business/README.en.md)
 
 ### Phát triển (Backend)
-- [Full System API Docs](apps/backend/docs/dev/full_system_api_docs.md)
-- [API Integration Guide (FE)](apps/backend/docs/dev/api_integration_guide_fe.md)
-- [Seat Locking Architecture](apps/backend/docs/dev/seat-locking-architecture.md) 🔥 Mới
+<!-- xem endpoints trong docs/features/ -->
 
 ### Dịch thuật
 - Tài liệu kỹ thuật: [Tiếng Việt](docs/algorithms/vi/README.md) | [Русский](docs/algorithms/ru/README.md)
@@ -208,10 +206,8 @@ python main.py
 | Tài Liệu | Mô Tả |
 |---|---|
 | [docs/features/](docs/features/) | Tài liệu chi tiết từng tính năng |
-| [docs/features/social-booking.md](docs/features/social-booking.md) | Đặt vé nhóm (Social Booking) |
 | [docs/algorithms/](docs/algorithms/) | Thuật toán (tìm phim, giá vé, khóa ghế, cache) |
 | [docs/business/](docs/business/) | Quy tắc kinh doanh |
-| [apps/backend/docs/dev/](apps/backend/docs/dev/) | Hướng dẫn tích hợp API |
 | [DEPLOYMENT.md](DEPLOYMENT.md) | Hướng dẫn triển khai production |
 
 ---

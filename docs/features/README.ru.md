@@ -9,31 +9,31 @@
 ### 👤 Пользователь
 | Функция | Файл | Описание |
 |---|---|---|
-| [Аутентификация](./ru/authentication.md) | `authentication.md` | Регистрация, вход, Google OAuth, JWT, управление профилем |
-| [Индивидуальное бронирование](./ru/booking.md) | `booking.md` | Выбор мест в реальном времени (WebSocket), оплата VNPay, PDF билет |
-| [Каталог фильмов](./ru/movie-catalog.md) | `movie-catalog.md` | Сейчас идёт, скоро, детали, похожие фильмы (векторный поиск) |
-| [Комментарии и отзывы](./ru/comments-reviews.md) | `comments-reviews.md` | Отзывы, ответы, AI-модерация, тренды |
-| [Групповое бронирование](./ru/social-booking.md) | `social-booking.md` | Создание групп, голосование, пары, чат, групповая оплата |
+| [Аутентификация](./ru/authentication.md) | `authentication.md` | 8 endpoints (Регистрация, Вход, Google OAuth, Профиль) |
+| [Индивидуальное бронирование](./ru/booking.md) | `booking.md` | 11 endpoints (Выбор мест, VNPay, PDF) |
+| [Каталог фильмов](./ru/movie-catalog.md) | `movie-catalog.md` | 17 endpoints (Сейчас, Скоро, Детали, Поиск) |
+| [Комментарии и отзывы](./ru/comments-reviews.md) | `comments-reviews.md` | 8 endpoints (Отзывы, Ответы, AI-модерация, Тренды) |
+| [Групповое бронирование](./ru/social-booking.md) | `social-booking.md` | 20 endpoints (Группы, Пары, Голосование, Чат, Оплата) |
 
 ### 🤖 ИИ
 | Функция | Файл | Описание |
 |---|---|---|
-| [AI Чат-бот](./ru/ai-chatbot.md) | `ai-chatbot.md` | Помощник по фильмам, расписание, поддержка бронирования (SSE) |
-| [AI Рекомендации](./ru/ai-recommendations.md) | `ai-recommendations.md` | Опрос предпочтений, персонализированные рекомендации (векторные эмбеддинги) |
+| [AI Чат-бот](./ru/ai-chatbot.md) | `ai-chatbot.md` | 2 endpoints (Чат, Стрим) |
+| [AI Рекомендации](./ru/ai-recommendations.md) | `ai-recommendations.md` | 4 endpoints (Опрос, Рекомендации) |
 
 ### 💰 Бизнес-операции
 | Функция | Файл | Описание |
 |---|---|---|
-| [POS Касса](./ru/cashier-pos.md) | `cashier-pos.md` | Продажа билетов, распознавание лиц, QR-сканирование |
-| [Портал сотрудника](./ru/staff-portal.md) | `staff-portal.md` | Регистрация смен, чек-ин/аут, история, зарплата |
+| [POS Касса](./ru/cashier-pos.md) | `cashier-pos.md` | TBD (POS — общие Booking + Department) |
+| [Портал сотрудника](./ru/staff-portal.md) | `staff-portal.md` | 11 endpoints (Смены, Чек-ин/аут, Зарплата) |
 
 ### 🏢 Администрирование
 | Функция | Файл | Описание |
 |---|---|---|
-| [Панель администратора](./ru/admin.md) | `admin.md` | Пользователи, RBAC, дашборд, аудит, ваучеры, цены, акции |
-| [Управление объектами](./ru/facilities.md) | `facilities.md` | Кинотеатры, залы, схема мест, отделы |
-| [Управление фильмами](./ru/movie-manager.md) | `movie-manager.md` | CRUD фильмов, форматы, жанры, возрастные рейтинги |
-| [Управление театром](./ru/theater-manager.md) | `theater-manager.md` | Расписание, AI-рекомендации, смены, зарплата |
+| [Панель администратора](./ru/admin.md) | `admin.md` | 30+ endpoints (Пользователи, RBAC, Ваучеры, Цены, Аудит, Jobs) |
+| [Управление объектами](./ru/facilities.md) | `facilities.md` | 13 endpoints (Кинотеатры, Залы, Места) |
+| [Управление фильмами](./ru/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Форматы, Жанры) |
+| [Управление театром](./ru/theater-manager.md) | `theater-manager.md` | 27 endpoints (Расписание, AI Рекомендации, Смены, Дашборд) |
 
 ---
 
@@ -42,9 +42,9 @@
 | Категория | Количество |
 |---|---|
 | Всего функций | 13 |
-| Маршрутов Frontend | 30+ |
 | API Контроллеров | 29 |
-| Use Cases | 181 |
+| API Endpoints | ~164 |
+| Use Cases | 167 |
 | Языки i18n | 3 (EN/VI/RU) |
 
 ---
@@ -53,4 +53,3 @@
 
 - [Алгоритмы](../algorithms/README.ru.md) — Документация алгоритмов
 - [Бизнес-правила](../business/README.ru.md) — Справочник бизнес-правил
-- [Руководство API](../../apps/backend/docs/dev/) — Интеграция API

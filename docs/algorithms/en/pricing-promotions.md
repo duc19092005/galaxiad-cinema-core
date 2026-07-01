@@ -92,7 +92,7 @@ Flow:
 4. Use the Vietnam local clock time to check `TimeFrom` and `TimeTo`.
 5. Use the Vietnam local date to check holidays and weekday bitmask.
 
-This follows `apps/backend/docs/dev/timezone_rules.md`.
+This follows the Vietnam timezone rules (UTC+7) defined in the business rules.
 
 ## Matching Flow
 
