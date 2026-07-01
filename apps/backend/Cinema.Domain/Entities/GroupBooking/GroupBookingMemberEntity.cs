@@ -32,6 +32,8 @@ public class GroupBookingMemberEntity
 
     public DateTime? PaidAt { get; set; }
 
+    public Guid? PairId { get; set; }
+
     public GroupBookingSessionEntity GroupBookingSession { get; set; } = null!;
 
     public UserInfoEntity UserInfoEntity { get; set; } = null!;

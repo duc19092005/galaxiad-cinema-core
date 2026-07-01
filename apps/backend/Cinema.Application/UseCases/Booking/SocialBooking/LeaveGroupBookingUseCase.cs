@@ -21,6 +21,8 @@ public class LeaveGroupBookingUseCase
     private readonly IUnitOfWork _unitOfWork;
     private readonly ISeatLockerNotificationService _notificationService;
     private readonly GetGroupBookingStateUseCase _getGroupBookingStateUseCase;
+    private readonly IGroupBookingCacheService _cache;
+    private readonly IVoteTimeoutScheduler _voteTimeoutScheduler;
 
     public LeaveGroupBookingUseCase(
         IGroupBookingRepository groupBookingRepository,
@@ -28,7 +30,9 @@ public class LeaveGroupBookingUseCase
         ILogger<LeaveGroupBookingUseCase> logger,
         IUnitOfWork unitOfWork,
         ISeatLockerNotificationService notificationService,
-        GetGroupBookingStateUseCase getGroupBookingStateUseCase)
+        GetGroupBookingStateUseCase getGroupBookingStateUseCase,
+        IGroupBookingCacheService cache,
+        IVoteTimeoutScheduler voteTimeoutScheduler)
     {
         _groupBookingRepository = groupBookingRepository;
         _userContextService = userContextService;
@@ -36,6 +40,8 @@ public class LeaveGroupBookingUseCase
         _unitOfWork = unitOfWork;
         _notificationService = notificationService;
         _getGroupBookingStateUseCase = getGroupBookingStateUseCase;
+        _cache = cache;
+        _voteTimeoutScheduler = voteTimeoutScheduler;
     }
 
     public async Task<BaseResponse<bool>> ExecuteAsync(Guid groupSessionId)
@@ -98,6 +104,12 @@ public class LeaveGroupBookingUseCase
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        if (member.IsHost)
+        {
+            await _cache.ClearAllGroupDataAsync(groupSessionId);
+            _voteTimeoutScheduler.Cancel(groupSessionId);
+        }
 
         // Broadcast updated group state via SSE
         var updatedState = await _getGroupBookingStateUseCase.ExecuteAsync(groupSessionId);

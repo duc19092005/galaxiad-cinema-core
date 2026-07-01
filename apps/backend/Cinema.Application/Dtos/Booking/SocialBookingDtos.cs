@@ -92,8 +92,13 @@ public class ResGroupBookingStateDto
     public DateTime? PaymentDeadlineAt { get; set; }
     public decimal TotalGroupAmount { get; set; }
     public decimal CollectedAmount { get; set; }
+    public GroupBookingPaymentMethodEnum? PaymentMethod { get; set; }
+    public GroupBookingVoteStatusEnum VoteStatus { get; set; }
+    public DateTime? VoteExpiresAt { get; set; }
     public List<GroupMemberDto> Members { get; set; } = [];
     public List<GroupSeatDto> AllGroupSeats { get; set; } = [];
+    public List<ResGroupPairDto> Pairs { get; set; } = [];
+    public ResPaymentFailureVoteStateDto? FailureVoteState { get; set; }
 }
 
 public class GroupMemberDto
@@ -106,6 +111,7 @@ public class GroupMemberDto
     public GroupMemberStatusEnum Status { get; set; }
     public decimal AmountToPay { get; set; }
     public decimal AmountPaid { get; set; }
+    public Guid? PairId { get; set; }
     public List<GroupSeatDto> SelectedSeats { get; set; } = [];
 }
 
@@ -251,4 +257,139 @@ public class GroupBookingSseEventDto
     public decimal? TotalGroupAmount { get; set; }
     public decimal? CollectedAmount { get; set; }
     public DateTime? PaymentDeadlineAt { get; set; }
+}
+
+// ==========================================
+// PAYMENT METHOD VOTING
+// ==========================================
+
+public class ReqVotePaymentMethodDto
+{
+    [Required(ErrorMessage = "Payment method is required")]
+    public GroupBookingPaymentMethodEnum PaymentMethod { get; set; }
+}
+
+public class ResPaymentMethodVoteDto
+{
+    public Guid UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+    public GroupBookingPaymentMethodEnum PaymentMethod { get; set; }
+    public DateTime VotedAt { get; set; }
+}
+
+public class ResPaymentMethodVoteStateDto
+{
+    public GroupBookingVoteStatusEnum VoteStatus { get; set; }
+    public GroupBookingPaymentMethodEnum? ResultMethod { get; set; }
+    public List<ResPaymentMethodVoteDto> Votes { get; set; } = [];
+    public int TotalMembers { get; set; }
+    public int VotedCount { get; set; }
+    public bool HasVoted { get; set; }
+    public Dictionary<GroupBookingPaymentMethodEnum, int> VoteCounts { get; set; } = [];
+    public DateTime? VoteExpiresAt { get; set; }
+}
+
+// ==========================================
+// PAIR SYSTEM
+// ==========================================
+
+public class ReqCreatePairDto
+{
+    [Required(ErrorMessage = "Target member is required")]
+    public Guid TargetMemberId { get; set; }
+}
+
+public class ReqRespondPairDto
+{
+    [Required]
+    public bool Accept { get; set; }
+}
+
+public class ResGroupPairDto
+{
+    public Guid PairId { get; set; }
+    public GroupMemberDto Member1 { get; set; } = null!;
+    public GroupMemberDto Member2 { get; set; } = null!;
+    public GroupPairRequestStatusEnum Status { get; set; }
+    public decimal TotalAmount { get; set; }
+    public int SeatCount { get; set; }
+}
+
+// ==========================================
+// PAYMENT FAILURE VOTING
+// ==========================================
+
+public class ReqVotePaymentFailureDto
+{
+    [Required]
+    public Guid FailedMemberId { get; set; }
+
+    [Required]
+    public GroupPaymentFailureVoteActionEnum Action { get; set; }
+}
+
+public class ReqRaiseHandDto
+{
+    [Required]
+    public Guid FailedMemberId { get; set; }
+
+    [Required]
+    public bool IsRaiseHand { get; set; }
+}
+
+public class ResPaymentFailureVoteDto
+{
+    public Guid VoterUserId { get; set; }
+    public string VoterUserName { get; set; } = string.Empty;
+    public GroupPaymentFailureVoteActionEnum Action { get; set; }
+    public bool IsRaiseHand { get; set; }
+    public DateTime VotedAt { get; set; }
+}
+
+public class ResPaymentFailureVoteStateDto
+{
+    public string Phase { get; set; } = "Selection"; // "Selection", "Discussion", "Completed"
+    public DateTime? ExpiresAt { get; set; }
+    public List<FailedMemberVolunteersDto> FailedMembers { get; set; } = [];
+    public List<GroupFailureOptionVoteDto> OptionVotes { get; set; } = [];
+    public string? ResolutionAction { get; set; } // "VolunteerToPay", "CancelOrder", "ProceedWithoutUnsponsored"
+
+    // Old properties for backward compatibility
+    public Guid FailedMemberId { get; set; }
+    public string FailedMemberName { get; set; } = string.Empty;
+    public decimal FailedAmount { get; set; }
+    public List<ResPaymentFailureVoteDto> Votes { get; set; } = [];
+    public List<ResPaymentFailureVoteDto> RaiseHands { get; set; } = [];
+    public int TotalMembers { get; set; }
+    public int VotedCount { get; set; }
+    public GroupPaymentFailureVoteActionEnum? ResultAction { get; set; }
+    public string? VolunteerWinnerName { get; set; }
+}
+
+public class FailedMemberVolunteersDto
+{
+    public Guid FailedMemberId { get; set; }
+    public string FailedMemberName { get; set; } = string.Empty;
+    public decimal FailedAmount { get; set; }
+    public List<VolunteerDto> Volunteers { get; set; } = [];
+}
+
+public class VolunteerDto
+{
+    public Guid UserId { get; set; }
+    public string UserName { get; set; } = string.Empty;
+}
+
+public class GroupFailureOptionVoteDto
+{
+    public Guid VoterUserId { get; set; }
+    public string VoterUserName { get; set; } = string.Empty;
+    public int Option { get; set; } // 1, 2, or 3
+}
+
+public class ReqVoteFailureOptionDto
+{
+    [Required]
+    [Range(1, 3, ErrorMessage = "Option must be 1, 2 or 3")]
+    public int Option { get; set; }
 }

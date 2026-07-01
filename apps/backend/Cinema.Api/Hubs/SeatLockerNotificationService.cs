@@ -37,6 +37,16 @@ public class SeatLockerNotificationService : ISeatLockerNotificationService
         await _groupBookingWsManager.BroadcastAsync(groupSessionId, new { type = "group-update", state });
     }
 
+    public async Task NotifyPaymentMethodVoteUpdateAsync(Guid groupSessionId, object voteState)
+    {
+        await _groupBookingWsManager.BroadcastAsync(groupSessionId, new { type = "payment-method-vote-update", voteState });
+    }
+
+    public async Task NotifyPaymentFailureVoteUpdateAsync(Guid groupSessionId, object failureVoteState)
+    {
+        await _groupBookingWsManager.BroadcastAsync(groupSessionId, new { type = "payment-failure-vote-update", failureVoteState });
+    }
+
     public Dictionary<string, string> GetCurrentLockedSeats(string scheduleId)
     {
         return _seatLockManager.GetCurrentLockedSeats(scheduleId);

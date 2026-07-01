@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Send, X } from 'lucide-react';
 import type { ChatMessage, GroupMemberDto } from '../../types/socialBooking.types';
 
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function GroupChatPanel({ messages, onSend, isOpen, onClose }: Props) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export default function GroupChatPanel({ messages, onSend, isOpen, onClose }: Pr
             <div className="w-8 h-8 rounded-full bg-[#ff9500]/20 flex items-center justify-center">
               <Send className="w-4 h-4 text-[#ff9500]" />
             </div>
-            <h3 className="font-semibold text-[#e3e2e7] text-sm">Nhom Chat</h3>
+            <h3 className="font-semibold text-[#e3e2e7] text-sm">{t('socialBooking.chat.title', 'Nhóm Chat')}</h3>
           </div>
           <button
             onClick={onClose}
@@ -75,7 +77,7 @@ export default function GroupChatPanel({ messages, onSend, isOpen, onClose }: Pr
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           {messages.length === 0 && (
             <div className="text-center text-[#dbc2ad]/40 py-8 text-sm">
-              Chua co tin nhan. Bat dau chat nhe!
+              {t('socialBooking.chat.empty', 'Chưa có tin nhắn. Bắt đầu chat nào!')}
             </div>
           )}
           {messages.map((msg) => {
@@ -130,7 +132,7 @@ export default function GroupChatPanel({ messages, onSend, isOpen, onClose }: Pr
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Nhap tin nhan..."
+              placeholder={t('socialBooking.chat.placeholder', 'Nhập tin nhắn...')}
               className="flex-1 bg-[#343539]/60 border border-[#554334]/30 rounded-xl px-4 py-2.5 text-[#e3e2e7] text-sm placeholder-[#dbc2ad]/30 focus:outline-none focus:border-[#ff9500]/50 transition-colors"
             />
             <button

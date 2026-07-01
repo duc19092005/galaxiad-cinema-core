@@ -4,7 +4,6 @@ import type {
   CreateGroupBookingRequest,
   CreateGroupBookingResponse,
   JoinGroupBookingRequest,
-  JoinGroupBookingResponse,
   GroupBookingState,
   SelectGroupSeatsRequest,
   SendChatRequest,
@@ -15,6 +14,14 @@ import type {
   GroupPaymentActionResponse,
   ConfirmGroupSeatsResponse,
   PayGroupBookingResponse,
+  VotePaymentMethodRequest,
+  PaymentMethodVoteState,
+  CreatePairRequest,
+  RespondPairRequest,
+  GroupPairDto,
+  VotePaymentFailureRequest,
+  PaymentFailureVoteState,
+  RaiseHandRequest,
 } from '../types/socialBooking.types';
 
 const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
@@ -29,9 +36,9 @@ export const socialBookingApi = {
     return normalizeSuccessResponse<CreateGroupBookingResponse>(response);
   },
 
-  joinGroup: async (data: JoinGroupBookingRequest): Promise<ApiSuccessResponse<JoinGroupBookingResponse>> => {
+  joinGroup: async (data: JoinGroupBookingRequest): Promise<ApiSuccessResponse<GroupBookingState>> => {
     const response = await bookingAxios.post('/group/join', data);
-    return normalizeSuccessResponse<JoinGroupBookingResponse>(response);
+    return normalizeSuccessResponse<GroupBookingState>(response);
   },
 
   getGroupState: async (groupSessionId: string): Promise<ApiSuccessResponse<GroupBookingState>> => {
@@ -74,8 +81,9 @@ export const socialBookingApi = {
     return normalizeSuccessResponse<ConfirmGroupSeatsResponse>(response);
   },
 
-  payGroup: async (groupSessionId: string): Promise<ApiSuccessResponse<PayGroupBookingResponse>> => {
-    const response = await bookingAxios.post(`/group/pay/${groupSessionId}`);
+  payGroup: async (groupSessionId: string, failedMemberId?: string): Promise<ApiSuccessResponse<PayGroupBookingResponse>> => {
+    const url = failedMemberId ? `/group/pay/${groupSessionId}?failedMemberId=${failedMemberId}` : `/group/pay/${groupSessionId}`;
+    const response = await bookingAxios.post(url);
     return normalizeSuccessResponse<PayGroupBookingResponse>(response);
   },
 
@@ -83,5 +91,48 @@ export const socialBookingApi = {
     const base = API_BASE_URL || window.location.origin;
     const wsBase = base.replace(/^http/, 'ws');
     return `${wsBase}/api/v1/booking/group/ws/${groupSessionId}`;
+  },
+
+  // Payment Method Voting
+  votePaymentMethod: async (groupSessionId: string, data: VotePaymentMethodRequest): Promise<ApiSuccessResponse<PaymentMethodVoteState>> => {
+    const response = await bookingAxios.post(`/group/vote-payment-method/${groupSessionId}`, data);
+    return normalizeSuccessResponse<PaymentMethodVoteState>(response);
+  },
+
+  getPaymentMethodVoteState: async (groupSessionId: string): Promise<ApiSuccessResponse<PaymentMethodVoteState>> => {
+    const response = await bookingAxios.get(`/group/payment-method-vote/${groupSessionId}`);
+    return normalizeSuccessResponse<PaymentMethodVoteState>(response);
+  },
+
+  // Pair System
+  createPair: async (groupSessionId: string, data: CreatePairRequest): Promise<ApiSuccessResponse<boolean>> => {
+    const response = await bookingAxios.post(`/group/pair/${groupSessionId}`, data);
+    return normalizeSuccessResponse<boolean>(response);
+  },
+
+  respondPair: async (groupSessionId: string, pairId: string, data: RespondPairRequest): Promise<ApiSuccessResponse<boolean>> => {
+    const response = await bookingAxios.post(`/group/pair/${groupSessionId}/respond/${pairId}`, data);
+    return normalizeSuccessResponse<boolean>(response);
+  },
+
+  getGroupPairs: async (groupSessionId: string): Promise<ApiSuccessResponse<GroupPairDto[]>> => {
+    const response = await bookingAxios.get(`/group/pairs/${groupSessionId}`);
+    return normalizeSuccessResponse<GroupPairDto[]>(response);
+  },
+
+  // Payment Failure Voting
+  votePaymentFailure: async (groupSessionId: string, data: VotePaymentFailureRequest): Promise<ApiSuccessResponse<PaymentFailureVoteState>> => {
+    const response = await bookingAxios.post(`/group/vote-payment-failure/${groupSessionId}`, data);
+    return normalizeSuccessResponse<PaymentFailureVoteState>(response);
+  },
+
+  raiseHand: async (groupSessionId: string, data: RaiseHandRequest): Promise<ApiSuccessResponse<PaymentFailureVoteState>> => {
+    const response = await bookingAxios.post(`/group/raise-hand/${groupSessionId}`, data);
+    return normalizeSuccessResponse<PaymentFailureVoteState>(response);
+  },
+
+  voteFailureOption: async (groupSessionId: string, data: { option: number }): Promise<ApiSuccessResponse<PaymentFailureVoteState>> => {
+    const response = await bookingAxios.post(`/group/vote-failure-option/${groupSessionId}`, data);
+    return normalizeSuccessResponse<PaymentFailureVoteState>(response);
   },
 };

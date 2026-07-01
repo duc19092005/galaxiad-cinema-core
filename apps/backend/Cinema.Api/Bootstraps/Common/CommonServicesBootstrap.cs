@@ -19,6 +19,7 @@ using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 using Cinema.Application.Interfaces.Catalog;
 using Cinema.Application.UseCases.Customer.Catalog;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Infrastructure.ExternalServices.Cache;
 using Cinema.Infrastructure.Persistence.Validation;
 using Cinema.Application.UseCases.Admin;
 using Cinema.Application.UseCases.Admin.ShiftSchedules;
@@ -66,6 +67,8 @@ public static class CommonServicesBootstrap
 
         services.AddScoped<IRedisLockService, RedisLockService>();
         services.AddScoped<IMovieCacheService, MovieCacheService>();
+        services.AddScoped<IGroupBookingCacheService, GroupBookingCacheService>();
+        services.AddSingleton<IVoteTimeoutScheduler, VoteTimeoutScheduler>();
         services.AddSingleton<ISseNotificationService, SseNotificationService>();
         services.AddScoped<ICommentModerationService, DeepSeekModerationService>();
         services.AddScoped<IMovieCommentRepository, MovieCommentRepository>();

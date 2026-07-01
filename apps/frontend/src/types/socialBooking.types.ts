@@ -55,6 +55,7 @@ export interface GroupMemberDto {
   status: string;
   amountToPay: number;
   amountPaid: number;
+  pairId?: string;
   selectedSeats: GroupSeatDto[];
 }
 
@@ -87,8 +88,13 @@ export interface GroupBookingState {
   paymentDeadlineAt?: string;
   totalGroupAmount: number;
   collectedAmount: number;
+  paymentMethod?: string;
+  voteStatus?: string;
+  voteExpiresAt?: string;
   members: GroupMemberDto[];
   allGroupSeats: GroupSeatDto[];
+  pairs: GroupPairDto[];
+  failureVoteState?: PaymentFailureVoteState;
 }
 
 export interface SelectGroupSeatsRequest {
@@ -163,4 +169,101 @@ export interface ConfirmGroupSeatsResponse {
 export interface PayGroupBookingResponse {
   paymentUrl: string;
   amount: number;
+}
+
+// ==========================================
+// PAYMENT METHOD VOTING
+// ==========================================
+
+export type PaymentMethodType = 'HostPayAll' | 'IndividualPay' | 'PairPay';
+
+export interface VotePaymentMethodRequest {
+  paymentMethod: PaymentMethodType;
+}
+
+export interface PaymentMethodVoteDto {
+  userId: string;
+  userName: string;
+  paymentMethod: PaymentMethodType;
+  votedAt: string;
+}
+
+export interface PaymentMethodVoteState {
+  voteStatus: string;
+  resultMethod?: PaymentMethodType;
+  votes: PaymentMethodVoteDto[];
+  totalMembers: number;
+  votedCount: number;
+  hasVoted: boolean;
+  voteCounts: Record<PaymentMethodType, number>;
+  voteExpiresAt?: string;
+}
+
+// ==========================================
+// PAIR SYSTEM
+// ==========================================
+
+export interface CreatePairRequest {
+  targetMemberId: string;
+}
+
+export interface RespondPairRequest {
+  accept: boolean;
+}
+
+export interface GroupPairDto {
+  pairId: string;
+  member1: GroupMemberDto;
+  member2: GroupMemberDto;
+  status: string;
+  totalAmount: number;
+  seatCount: number;
+}
+
+// ==========================================
+// PAYMENT FAILURE VOTING
+// ==========================================
+
+export type FailureVoteAction = 'CancelFailedOrder' | 'VolunteerToPay' | 'CancelFailMemberOrder';
+
+export interface VotePaymentFailureRequest {
+  failedMemberId: string;
+  action: FailureVoteAction;
+}
+
+export interface FailedMemberVolunteersDto {
+  failedMemberId: string;
+  failedMemberName: string;
+  failedAmount: number;
+  volunteers: { userId: string; userName: string }[];
+}
+
+export interface GroupFailureOptionVoteDto {
+  voterUserId: string;
+  voterUserName: string;
+  option: number;
+}
+
+export interface PaymentFailureVoteState {
+  phase: string; // 'Selection' | 'Discussion' | 'Completed'
+  expiresAt?: string;
+  failedMembers: FailedMemberVolunteersDto[];
+  optionVotes: GroupFailureOptionVoteDto[];
+  resolutionAction?: string; // 'VolunteerToPay' | 'CancelOrder' | 'ProceedWithoutUnsponsored'
+  
+  // For backward compatibility
+  failedMemberId?: string;
+  failedMemberName?: string;
+  failedAmount?: number;
+  votedCount?: number;
+  totalMembers?: number;
+  raiseHands?: any[];
+  votes?: any[];
+  resultAction?: FailureVoteAction | null;
+  volunteerWinnerName?: string | null;
+}
+
+export interface RaiseHandRequest {
+  failedMemberId: string;
+  isRaiseHand: boolean;
 }

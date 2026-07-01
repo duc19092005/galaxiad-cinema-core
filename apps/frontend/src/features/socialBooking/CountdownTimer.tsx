@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Clock } from 'lucide-react';
 
 interface Props {
   expiresAt?: string;
+  onExpire?: () => void;
 }
 
-export default function CountdownTimer({ expiresAt }: Props) {
+export default function CountdownTimer({ expiresAt, onExpire }: Props) {
   const [timeLeft, setTimeLeft] = useState<string>('');
+  const hasExpiredRef = useRef(false);
 
   useEffect(() => {
     if (!expiresAt) return;
+    hasExpiredRef.current = false;
 
     const interval = setInterval(() => {
       const now = new Date().getTime();
@@ -19,6 +22,11 @@ export default function CountdownTimer({ expiresAt }: Props) {
       if (diff <= 0) {
         setTimeLeft('00:00');
         clearInterval(interval);
+        // Gọi onExpire chỉ 1 lần
+        if (!hasExpiredRef.current) {
+          hasExpiredRef.current = true;
+          onExpire?.();
+        }
         return;
       }
 
@@ -28,7 +36,7 @@ export default function CountdownTimer({ expiresAt }: Props) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiresAt]);
+  }, [expiresAt, onExpire]);
 
   if (!expiresAt) return null;
 

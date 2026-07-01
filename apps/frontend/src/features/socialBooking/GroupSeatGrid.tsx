@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import { socialBookingApi } from '../../api/socialBookingApi';
 import { publicApi } from '../../api/publicApi';
@@ -19,6 +20,7 @@ const memberColors = [
 ];
 
 export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Props) {
+  const { t } = useTranslation();
   const [submitting, setSubmitting] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
@@ -71,12 +73,12 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
 
     const isLockedByOther = lockedSeats[seat.seatId.toLowerCase()] && !isCurrentlySelected && !groupSeat;
     if (isLockedByOther) {
-      showError('Ghe nay dang duoc giu boi nguoi khac.');
+      showError(t('socialBooking.seat.lockedByOther', 'Ghế này đang được giữ bởi người khác.'));
       return;
     }
 
     if (groupSeat && groupSeat.memberId && groupSeat.memberId.toLowerCase() !== myMember?.memberId?.toLowerCase()) {
-      showError('Ghe nay da duoc dong doi trong nhom chon.');
+      showError(t('socialBooking.seat.selectedByTeammate', 'Ghế này đã được đồng đội trong nhóm chọn.'));
       return;
     }
 
@@ -86,7 +88,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
       setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
     } else {
       if (myConfirmedSeats.length >= 10) {
-        showError('Ban co the chon toi da 10 ghe.');
+        showError(t('socialBooking.seat.maxReached', 'Bạn có thể chọn tối đa 10 ghế.'));
         return;
       }
       newSeatIds = [...myConfirmedSeats, seat.seatId];
@@ -106,7 +108,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
       if (result.isSuccess) {
         onRefresh();
       } else {
-        showError(result.message || 'Khong the cap nhat chon ghe');
+        showError(result.message || t('socialBooking.seat.errorUpdate', 'Không thể cập nhật chọn ghế'));
       }
     } catch (err: any) {
       showError(err?.response?.data?.message || 'Khong the cap nhat chon ghe');
@@ -121,10 +123,10 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
     try {
       const result = await socialBookingApi.confirmSeats(groupState.groupSessionId, myConfirmedSeats);
       if (result.isSuccess) {
-        showSuccess(result.message || 'Da xac nhan ghe thanh cong!');
+        showSuccess(result.message || t('socialBooking.seat.confirmSuccess', 'Đã xác nhận ghế thành công!'));
         onRefresh();
       } else {
-        showError(result.message || 'Khong the xac nhan ghe');
+        showError(result.message || t('socialBooking.seat.errorConfirm', 'Không thể xác nhận ghế'));
       }
     } catch (err: any) {
       showError(err?.response?.data?.message || 'Khong the xac nhan ghe');
@@ -144,7 +146,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
   if (!seatMap) {
     return (
       <div className="bg-[#1a1b1f]/60 backdrop-blur-xl border border-[#554334]/20 rounded-2xl p-6 text-center py-20">
-        <p className="text-[#dbc2ad]/50">Khong the tai ban do ghe</p>
+        <p className="text-[#dbc2ad]/50">{t('socialBooking.seat.errorLoadMap', 'Không thể tải bản đồ ghế')}</p>
       </div>
     );
   }
@@ -159,7 +161,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
       <div className="w-full max-w-xl mx-auto mb-10 relative">
         <div className="h-[3px] w-full bg-[#ff9500]/40 rounded-full"></div>
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4/5 h-10 bg-[#ff9500]/10 rounded-full blur-2xl"></div>
-        <p className="text-center mt-3 text-[#dbc2ad]/40 text-[9px] font-bold tracking-[0.4em] uppercase">Man Hinh / Screen</p>
+        <p className="text-center mt-3 text-[#dbc2ad]/40 text-[9px] font-bold tracking-[0.4em] uppercase">{t('socialBooking.seat.screenLabel', 'Màn Hình / Screen')}</p>
       </div>
 
       {/* Seat Grid */}
@@ -217,10 +219,10 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
                 style={extraStyle}
                 className={`w-[30px] h-[30px] md:w-[34px] md:h-[34px] rounded-lg flex items-center justify-center font-bold text-[9px] transition-all duration-200 border ${bgColor} ${cursorClass}`}
                 title={
-                  isBooked && !hasGroupOwner ? 'Da co nguoi mua'
-                  : isTeammateSeat ? `Duoc chon boi ${groupSeat?.memberName ?? 'thanh vien'}`
-                  : isLockedByOther ? 'Dang duoc giu boi nguoi khac'
-                  : isSelected ? 'Ghe cua ban'
+                  isBooked && !hasGroupOwner ? t('socialBooking.seat.booked', 'Đã có người mua')
+                  : isTeammateSeat ? t('socialBooking.seat.selectedBy', 'Được chọn bởi {{name}}').replace('{{name}}', groupSeat?.memberName ?? 'thành viên')
+                  : isLockedByOther ? t('socialBooking.seat.lockedByOtherShort', 'Đang được giữ bởi người khác')
+                  : isSelected ? t('socialBooking.seat.yourSeat', 'Ghế của bạn')
                   : seat.seatName
                 }
               >
@@ -235,28 +237,28 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
       <div className="mt-8 flex flex-wrap justify-center gap-5 py-3 px-4 rounded-xl bg-[#0d0e12]/40 border border-[#554334]/10">
         <div className="flex items-center gap-2">
           <div className="w-3.5 h-3.5 rounded bg-[#343539]/60 border border-[#554334]/30" />
-          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Trong</span>
+          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.seat.legendEmpty', 'Trống')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3.5 h-3.5 rounded bg-[#ff9500]" />
-          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Ban Chon</span>
+          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.seat.legendYourChoice', 'Bạn Chọn')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3.5 h-3.5 rounded bg-[#34C759]" />
-          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Da Xac Nhan</span>
+          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.seat.legendConfirmed', 'Đã Xác Nhận')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3.5 h-3.5 rounded bg-red-500/20 border border-red-500/30" />
-          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Nguoi le giu</span>
+          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.seat.legendLocked', 'Người lạ giữ')}</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3.5 h-3.5 rounded bg-[#343539]/30 opacity-30" />
-          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Da ban</span>
+          <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.seat.legendSold', 'Đã bán')}</span>
         </div>
         {groupState.members?.map((m, i) => (
           <div key={m.memberId} className="flex items-center gap-2">
             <div className="w-3.5 h-3.5 rounded" style={{ backgroundColor: memberColors[i % memberColors.length] }} />
-            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{m.userName}{m.userId === currentUserId && ' (Ban)'}</span>
+            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{m.userName}{m.userId === currentUserId && ` ${t('socialBooking.seat.you', '(Bạn)')}`}</span>
           </div>
         ))}
       </div>
@@ -264,7 +266,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
       {/* Segment Selector for Selected Seats */}
       {isMember && myConfirmedSeats.length > 0 && !isMyStatusConfirmed && pricing && pricing.segmentPrices.length > 1 && (
         <div className="mt-5 bg-[#0d0e12]/40 border border-[#554334]/10 rounded-xl p-4">
-          <p className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider mb-3">Chon danh doi cho tung ghe</p>
+          <p className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider mb-3">{t('socialBooking.seat.selectSegment', 'Chọn danh đối cho từng ghế')}</p>
           <div className="flex flex-col gap-2">
             {myConfirmedSeats.map(seatId => {
               const groupSeat = getGroupSeatForMember(seatId);
@@ -307,7 +309,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
             ) : isMyStatusConfirmed ? (
               <CheckCircle2 className="w-4 h-4" />
             ) : null}
-            {isMyStatusConfirmed ? 'Da xac nhan ghe' : confirming ? 'Dang xac nhan...' : 'Xac nhan ghe'}
+            {isMyStatusConfirmed ? t('socialBooking.seat.confirmed', 'Đã xác nhận ghế') : confirming ? t('socialBooking.seat.confirming', 'Đang xác nhận...') : t('socialBooking.seat.confirmSeats', 'Xác nhận ghế')}
           </button>
         </div>
       )}

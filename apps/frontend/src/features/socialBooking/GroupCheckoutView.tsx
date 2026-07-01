@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Loader2, CreditCard, ChevronRight, Armchair, CheckCircle2 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { GroupBookingState } from '../../types/socialBooking.types';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPay, isPaying }: Props) {
+  const { t } = useTranslation();
   const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -70,13 +72,13 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
       <div className="flex items-center justify-center bg-[#1a1b1f]/60 rounded-xl p-2 gap-2 w-full">
         <div className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#343539]/60 text-[#dbc2ad]/50 text-[11px] font-bold uppercase tracking-wider">
           <Armchair className="w-4 h-4" />
-          <span>Chon ghe</span>
+          <span>{t('socialBooking.stepper.selectSeats', 'Chọn ghế')}</span>
           <CheckCircle2 className="w-3.5 h-3.5 text-[#34C759]" />
         </div>
         <ChevronRight className="w-4 h-4 text-[#554334]" />
         <div className="flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#ff9500] text-[#4b2800] text-[11px] font-bold uppercase tracking-wider">
           <CreditCard className="w-4 h-4" />
-          <span>Thanh toan</span>
+          <span>{t('socialBooking.stepper.payment', 'Thanh toán')}</span>
         </div>
       </div>
 
@@ -86,7 +88,7 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
         <div className="w-full max-w-xl mx-auto mb-8 relative">
           <div className="h-[3px] w-full bg-[#ff9500]/40 rounded-full"></div>
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4/5 h-10 bg-[#ff9500]/10 rounded-full blur-2xl"></div>
-          <p className="text-center mt-3 text-[#dbc2ad]/40 text-[9px] font-bold tracking-[0.4em] uppercase">Man Hinh / Screen</p>
+          <p className="text-center mt-3 text-[#dbc2ad]/40 text-[9px] font-bold tracking-[0.4em] uppercase">{t('socialBooking.seat.screenLabel', 'Màn Hình / Screen')}</p>
         </div>
 
         {/* Seat Grid */}
@@ -147,11 +149,11 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
         <div className="mt-8 flex flex-wrap justify-center gap-5 py-3 px-4 rounded-xl bg-[#0d0e12]/40 border border-[#554334]/10">
           <div className="flex items-center gap-2">
             <div className="w-3.5 h-3.5 rounded bg-[#34C759]" />
-            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Da xac nhan (Nhom)</span>
+            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.checkout.legendConfirmedGroup', 'Đã xác nhận (Nhóm)')}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3.5 h-3.5 rounded bg-[#343539]/60 border border-[#554334]/30 opacity-40" />
-            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">Ghe trong</span>
+            <span className="text-[11px] text-[#dbc2ad]/60 font-medium">{t('socialBooking.checkout.legendEmptySeat', 'Ghế trống')}</span>
           </div>
           {groupState.members?.filter(m => m.status !== 'Removed').map((m, i) => (
             <div key={m.memberId} className="flex items-center gap-2">
@@ -167,15 +169,15 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex gap-8">
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">Thanh vien</span>
+              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">{t('socialBooking.checkout.members', 'Thành viên')}</span>
               <span className="text-[20px] font-semibold text-[#ffbd7f]">{activeMembers.length}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">So ghe</span>
+              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">{t('socialBooking.checkout.seatCount', 'Số ghế')}</span>
               <span className="text-[20px] font-semibold text-[#ffbd7f]">{totalSeats}</span>
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">Tong cong</span>
+              <span className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">{t('socialBooking.checkout.totalAmount', 'Tổng cộng')}</span>
               <span className="text-[20px] font-semibold text-[#e3e2e7]">{groupState.totalGroupAmount.toLocaleString()}d</span>
             </div>
           </div>
@@ -187,8 +189,8 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
               className="w-full md:w-auto px-8 py-4 bg-[#ff9500] text-[#4b2800] rounded-full font-bold flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-[#ff9500]/20 disabled:opacity-50 disabled:cursor-not-allowed group"
             >
               <div className="flex flex-col items-start leading-tight text-left">
-                <span className="text-[10px] font-bold uppercase opacity-80">Thanh toan tong cong</span>
-                <span className="text-[15px] font-semibold">Tiep tuc voi VNPay</span>
+                <span className="text-[10px] font-bold uppercase opacity-80">{t('socialBooking.checkout.payTotal', 'Thanh toán tổng cộng')}</span>
+                <span className="text-[15px] font-semibold">{t('socialBooking.checkout.continueWithVNPay', 'Tiếp tục với VNPay')}</span>
               </div>
               {isPaying ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -199,7 +201,7 @@ export default function GroupCheckoutView({ groupState, scheduleId, isHost, onPa
           ) : (
             <div className="flex items-center gap-3 px-6 py-4 bg-[#343539]/40 rounded-xl border border-[#554334]/20">
               <Loader2 className="w-4 h-4 animate-spin text-[#ffbd7f]" />
-              <span className="text-[13px] text-[#dbc2ad]">Dang cho chu phong thanh toan...</span>
+              <span className="text-[13px] text-[#dbc2ad]">{t('socialBooking.checkout.waitingForHost', 'Đang chờ chủ phòng thanh toán...')}</span>
             </div>
           )}
         </div>

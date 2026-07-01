@@ -8,5 +8,11 @@ public enum GroupBookingStatusEnum
     Paying = 4,
     PaymentFailed = 5,
     Completed = 6,
-    Cancelled = 7
+    Cancelled = 7,
+    VotingPaymentMethod = 8,
+    Pairing = 9,
+    PayingAll = 10,
+    PayingIndividual = 11,
+    PayingPair = 12,
+    PaymentFailedPartial = 13
 }

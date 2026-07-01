@@ -32,4 +32,7 @@ public interface IGroupBookingRepository
     Task<int> GetMemberCountAsync(Guid groupSessionId);
     Task<GroupBookingSessionEntity?> FindSessionByPartialIdAsync(string partialId);
     Task<List<GroupBookingSeatEntity>> GetAllGroupSeatsWithInfoAsync(Guid groupSessionId);
+
+    // Voting sessions query for Background Service
+    Task<List<GroupBookingSessionEntity>> GetVotingSessionsAsync();
 }

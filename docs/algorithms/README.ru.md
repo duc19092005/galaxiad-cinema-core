@@ -1,6 +1,6 @@
 # Обзор алгоритмов
 
-Языки: [English](../README.md) | [Tiếng Việt](../vi/README.md) | [Русский](README.md)
+Языки: [English](README.en.md) | [Tiếng Việt](README.vi.md) | [Русский](README.ru.md)
 
 Эта папка содержит описания продуктовых и технических алгоритмов, используемых в Galaxiad Cinema.
 
@@ -8,17 +8,15 @@
 
 | Документ | English | Vietnamese | Russian |
 | --- | --- | --- | --- |
-| Алгоритм поиска фильмов | [movie-search.md](../movie-search.md) | [movie-search.md](../vi/movie-search.md) | [movie-search.md](movie-search.md) |
-| Алгоритм рекомендации фильмов | [movie-recommendation.md](../movie-recommendation.md) | [movie-recommendation.md](../vi/movie-recommendation.md) | [movie-recommendation.md](movie-recommendation.md) |
-| Динамическое ценообразование | [pricing-promotions.md](../pricing-promotions.md) | [pricing-promotions.md](../vi/pricing-promotions.md) | [pricing-promotions.md](pricing-promotions.md) |
-| Чат-бот с ролевым доступом | [role-aware-chatbot.md](../role-aware-chatbot.md) | [role-aware-chatbot.md](../vi/role-aware-chatbot.md) | [role-aware-chatbot.md](role-aware-chatbot.md) |
-| Стратегия кэширования Redis | [redis-cache-strategy.md](../redis-cache-strategy.md) | [redis-cache-strategy.md](../vi/redis-cache-strategy.md) | [redis-cache-strategy.md](redis-cache-strategy.md) |
-| Правила составления смен | [shift-schedule-rules.md](../shift-schedule-rules.md) | [shift-schedule-rules.md](../vi/shift-schedule-rules.md) | [shift-schedule-rules.md](shift-schedule-rules.md) |
-| **Блокировка мест Real-time (SSE)** 🔥 | **[seat-locking.md](../seat-locking.md)** | **[seat-locking.md](../vi/seat-locking.md)** | **[seat-locking.md](seat-locking.md)** |
+| Алгоритм поиска фильмов | [movie-search.md](en/movie-search.md) | [movie-search.md](vi/movie-search.md) | [movie-search.md](ru/movie-search.md) |
+| Алгоритм рекомендации фильмов | [movie-recommendation.md](en/movie-recommendation.md) | [movie-recommendation.md](vi/movie-recommendation.md) | [movie-recommendation.md](ru/movie-recommendation.md) |
+| Динамическое ценообразование | [pricing-promotions.md](en/pricing-promotions.md) | [pricing-promotions.md](vi/pricing-promotions.md) | [pricing-promotions.md](ru/pricing-promotions.md) |
+| Чат-бот с ролевым доступом | [role-aware-chatbot.md](en/role-aware-chatbot.md) | [role-aware-chatbot.md](vi/role-aware-chatbot.md) | [role-aware-chatbot.md](ru/role-aware-chatbot.md) |
+| Стратегия кэширования Redis | [redis-cache-strategy.md](en/redis-cache-strategy.md) | [redis-cache-strategy.md](vi/redis-cache-strategy.md) | [redis-cache-strategy.md](ru/redis-cache-strategy.md) |
+| Правила составления смен | [shift-schedule-rules.md](en/shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
+| **Блокировка мест Real-time (WebSocket)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
 
 ## AI Showtime Planner
-
-*(содержание сохранено...)*
 
 AI Showtime Planner помогает менеджерам и администраторам получать рекомендации по расписанию показов. В версии V1 система не обучает собственную модель. Бэкенд оценивает реальные бизнес-данные с помощью детерминированных правил, сохраняет историю рекомендаций и действий, а LLM используется только для объяснений на естественном языке через чат-бота.
 

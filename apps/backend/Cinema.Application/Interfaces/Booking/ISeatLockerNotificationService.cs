@@ -9,6 +9,8 @@ public interface ISeatLockerNotificationService
     Task NotifySeatsReleasedAsync(string scheduleId, List<string> seatIds);
     Task NotifyGroupSeatStateChangedAsync(string scheduleId, string seatId, string? userName, bool isLocked);
     Task NotifyGroupUpdateAsync(Guid groupSessionId, object state);
+    Task NotifyPaymentMethodVoteUpdateAsync(Guid groupSessionId, object voteState);
+    Task NotifyPaymentFailureVoteUpdateAsync(Guid groupSessionId, object failureVoteState);
     Dictionary<string, string> GetCurrentLockedSeats(string scheduleId);
     Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)> GetGroupSelectionsForSchedule(string scheduleId);
     List<string> GetGroupSelectedSeats(string scheduleId, Guid groupSessionId);

@@ -40,6 +40,13 @@ public class GroupBookingSessionEntity
     [Column(TypeName = "nvarchar(500)")]
     public string? VotingOptionsJson { get; set; }
 
+    public GroupBookingPaymentMethodEnum? PaymentMethod { get; set; }
+
+    public GroupBookingVoteStatusEnum VoteStatus { get; set; } = GroupBookingVoteStatusEnum.None;
+
+    [Column(TypeName = "nvarchar(2000)")]
+    public string? PaymentMethodVoteResultJson { get; set; }
+
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
 
     public MovieInfos.MovieScheduleInfoEntity MovieScheduleInfoEntity { get; set; } = null!;

@@ -1,9 +1,9 @@
 # Galaxiad Cinema — Business Rules Reference
 
 > **Document Versions:**
-> - [English (this file)](README.md)
-> - [Tiếng Việt](vi/README.md)
-> - [Русский](ru/README.md)
+> - [English (this file)](README.en.md)
+> - [Tiếng Việt](README.vi.md)
+> - [Русский](README.ru.md)
 
 ---
 
@@ -91,9 +91,9 @@
 | **BS28** | No duplicate seats | The same seat cannot be selected twice in the same order. |
 | **BS29** | Unavailable seats | Seats that are already paid for or temporarily held by another customer cannot be selected. |
 | **BS30** | Isolated seat avoidance | Customers must not select seats in a way that leaves only **one single empty seat** between occupied seats in a row. |
-| **BS31** | Temporary seat holding (SSE) | When a customer selects seats and starts checkout, those seats are held temporarily via SSE + HTTP POST lock. If payment is not completed in **10 minutes**, the seats become available again. |
+| **BS31** | Temporary seat holding (WebSocket) | When a customer selects seats and starts checkout, those seats are held temporarily via raw WebSocket + HTTP POST lock. If payment is not completed in **10 minutes**, the seats become available again. |
 | **BS32** | Auto-cancel pending orders | Orders that remain **Pending** (unpaid) for more than **10 minutes** are automatically cancelled by a Hangfire recurring job running every 5 minutes. Seats are released upon cancellation. |
-| **BS33** | Release seats on disconnect | If a client's SSE connection drops (closing browser, timeout), all seats locked by that client are automatically released. |
+| **BS33** | Release seats on disconnect | If a client's WebSocket connection drops (closing browser, timeout), all seats locked by that client are automatically released. |
 | **BS34** | Payment method | Online payments are processed through **VNPay**. Counter sales can be processed in cash by a Cashier. |
 | **BS35** | Server-side pricing | The final ticket price is always calculated on the backend. The system does not trust the price sent from the browser. |
 | **BS36** | Pricing snapshot | Applied prices and promotions are saved as a snapshot on the order for historical reference. |
@@ -169,12 +169,13 @@
 | **BS68** | Cinema assignment | Staff can only register for shifts at the cinema they are assigned to. |
 | **BS69** | Shift within operating hours | All shifts must be within the cinema's operating hours (6:00 AM to 2:00 AM). |
 | **BS70** | No duplicate registration | A staff member cannot register for the same shift twice. |
-| **BS71** | Shift approval | Shift registrations start as **Pending** and require manager or Admin approval. |
-| **BS72** | Clock-in required | Staff must clock in at the start of their shift. Clock-in is allowed only within the shift's time window. |
-| **BS73** | Clock-out required | Staff must clock out at the end of their shift. Clock-out time must be after clock-in time. |
-| **BS74** | Face recognition check-in | Staff can register their face (128-float vector encrypted in DB) for browser-based facial recognition clock-in/out. |
-| **BS75** | Payroll calculation | Pay is calculated based on logged working hours and the staff member's hourly rate. |
-| **BS76** | Payroll payment | Managers can calculate and pay payroll. Payroll can only be paid once. |
+| **BS71** | Rotating shift flexibility | Rotating shifts have no fixed duration — they can be any length. |
+| **BS72** | Shift approval | Shift registrations start as **Pending** and require manager or Admin approval. |
+| **BS73** | Clock-in required | Staff must clock in at the start of their shift. Clock-in is allowed only within the shift's time window. |
+| **BS74** | Clock-out required | Staff must clock out at the end of their shift. Clock-out time must be after clock-in time. |
+| **BS75** | Face recognition check-in | Staff can register their face (128-float vector encrypted in DB) for browser-based facial recognition clock-in/out. |
+| **BS76** | Payroll calculation | Pay is calculated based on logged working hours and the staff member's hourly rate. |
+| **BS77** | Payroll payment | Managers can calculate and pay payroll. Payroll can only be paid once. |
 
 ---
 
@@ -182,10 +183,10 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS77** | Comment moderation | Customer comments and reviews go through a **moderation** process before being published. |
-| **BS78** | Comment ownership | A customer can only **edit** or **delete** their own comments. |
-| **BS79** | Reply ownership | A customer can only **edit** or **delete** their own replies to comments. |
-| **BS80** | Comment eligibility | Only customers who have watched a movie (paid ticket, showtime ended) can post comments and ratings on that movie. One review per movie per customer. |
+| **BS78** | Comment moderation | Customer comments and reviews go through a **moderation** process before being published. |
+| **BS79** | Comment ownership | A customer can only **edit** or **delete** their own comments. |
+| **BS80** | Reply ownership | A customer can only **edit** or **delete** their own replies to comments. |
+| **BS81** | Comment eligibility | Only customers who have watched a movie (paid ticket, showtime ended) can post comments and ratings on that movie. One review per movie per customer. |
 
 ---
 
@@ -193,11 +194,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS81** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, cinema statistics, audit logs, and general FAQ. |
-| **BS82** | Role-based chatbot access | Guest users can only browse movies. Customers can book tickets. Managers can view schedules. Admin can manage everything. The chatbot declines unauthorized requests. |
-| **BS83** | 3-layer protection | The chatbot has 3 safety layers: (1) **Linguistic guard** — filters inappropriate language, (2) **Intent classification** — routes to correct tool, (3) **Tool registry** — each tool checks role permissions before executing. |
-| **BS84** | Chatbot escalation | If the chatbot cannot understand the question, it directs the user to contact customer support. |
-| **BS85** | Chatbot cannot create schedules | The LLM never directly creates showtime schedules. Managers must preview AI recommendations before applying. |
+| **BS82** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, cinema statistics, audit logs, and general FAQ. |
+| **BS83** | Role-based chatbot access | Guest users can only browse movies. Customers can book tickets. Managers can view schedules. Admin can manage everything. The chatbot declines unauthorized requests. |
+| **BS84** | 3-layer protection | The chatbot has 3 safety layers: (1) **Linguistic guard** — filters inappropriate language, (2) **Intent classification** — routes to correct tool, (3) **Tool registry** — each tool checks role permissions before executing. |
+| **BS85** | Chatbot escalation | If the chatbot cannot understand the question, it directs the user to contact customer support. |
+| **BS86** | Chatbot cannot create schedules | The LLM never directly creates showtime schedules. Managers must preview AI recommendations before applying. |
 
 ---
 
@@ -205,12 +206,12 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS86** | User management | Admin can view, add, block, or activate user accounts. |
-| **BS87** | Role assignment | Admin can assign or remove roles for any user (7 available roles). |
-| **BS88** | Rights transfer | Admin can transfer management rights from one person to another (e.g., transfer Theater Manager from staff A to staff B). |
-| **BS89** | Background job monitoring | Admin can view and monitor background job execution and status (Hangfire dashboard). |
-| **BS90** | Audit trail | All important actions are logged. Admin can view and search the audit log. |
-| **BS91** | Shift deletion approval | When a manager deletes a shift that has staff registrations, an approval request is sent to Admin. |
+| **BS87** | User management | Admin can view, add, block, or activate user accounts. |
+| **BS88** | Role assignment | Admin can assign or remove roles for any user (7 available roles). |
+| **BS89** | Rights transfer | Admin can transfer management rights from one person to another (e.g., transfer Theater Manager from staff A to staff B). |
+| **BS90** | Background job monitoring | Admin can view and monitor background job execution and status (Hangfire dashboard). |
+| **BS91** | Audit trail | All important actions are logged. Admin can view and search the audit log. |
+| **BS92** | Shift deletion approval | When a manager deletes a shift that has staff registrations, an approval request is sent to Admin. |
 
 ---
 
@@ -218,11 +219,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS92** | Vietnam timezone | All times displayed to staff and customers use **Vietnam local time (UTC+7)**. Backend stores UTC, frontend auto-converts. |
-| **BS93** | Three-language support | The system supports **English** (default), **Vietnamese** (UTF-8 with diacritics), and **Russian** (Cyrillic alphabet). |
-| **BS94** | Data protection | Sensitive customer identity information must be protected before storage. |
-| **BS95** | User data rights | Users have the right to access, edit, and request deletion of their personal data. |
-| **BS96** | Cache freshness | Customer-facing data (movies, showtimes, etc.) must stay up to date after important business changes. Background services sync status every 10 minutes. |
+| **BS93** | Vietnam timezone | All times displayed to staff and customers use **Vietnam local time (UTC+7)**. Backend stores UTC, frontend auto-converts. |
+| **BS94** | Three-language support | The system supports **English** (default), **Vietnamese** (UTF-8 with diacritics), and **Russian** (Cyrillic alphabet). |
+| **BS95** | Data protection | Sensitive customer identity information must be protected before storage. |
+| **BS96** | User data rights | Users have the right to access, edit, and request deletion of their personal data. |
+| **BS97** | Cache freshness | Customer-facing data (movies, showtimes, etc.) must stay up to date after important business changes. Background services sync status every 10 minutes. |
 
 ---
 
@@ -230,17 +231,17 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS97** | Vietnamese film priority | Vietnamese film screenings are prioritized from **18:00 to 22:00**. |
-| **BS98** | Under-13 screening hours | Screenings for customers under 13 must end **before 22:00**. |
-| **BS99** | Under-16 screening hours | Screenings for customers under 16 must end **before 23:00**. |
-| **BS100** | No recording | Customers must not illegally record movies in the theater. |
-| **BS101** | No disruptive behavior | Customers must not cause disturbances or obstruct other customers. |
-| **BS102** | No smoking | Tobacco and e-cigarettes are not permitted in the theater. |
-| **BS103** | No weapons | Weapons, flammable materials, and toxic substances are prohibited. |
-| **BS104** | No pets | Pets are not allowed in the cinema (except service animals). |
-| **BS105** | No outside food | Outside food and drinks are not permitted without authorization. |
-| **BS106** | Privacy commitment | Customer personal data is not sold or transferred to third parties without consent. |
-| **BS107** | Cookie usage | The website uses cookies to improve user experience. Customers can manage cookie settings in their browser. |
+| **BS98** | Vietnamese film priority | Vietnamese film screenings are prioritized from **18:00 to 22:00**. |
+| **BS99** | Under-13 screening hours | Screenings for customers under 13 must end **before 22:00**. |
+| **BS100** | Under-16 screening hours | Screenings for customers under 16 must end **before 23:00**. |
+| **BS101** | No recording | Customers must not illegally record movies in the theater. |
+| **BS102** | No disruptive behavior | Customers must not cause disturbances or obstruct other customers. |
+| **BS103** | No smoking | Tobacco and e-cigarettes are not permitted in the theater. |
+| **BS104** | No weapons | Weapons, flammable materials, and toxic substances are prohibited. |
+| **BS105** | No pets | Pets are not allowed in the cinema (except service animals). |
+| **BS106** | No outside food | Outside food and drinks are not permitted without authorization. |
+| **BS107** | Privacy commitment | Customer personal data is not sold or transferred to third parties without consent. |
+| **BS108** | Cookie usage | The website uses cookies to improve user experience. Customers can manage cookie settings in their browser. |
 
 ---
 
@@ -248,11 +249,11 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS108** | Auditorium must have seats | An auditorium must contain at least one seat. |
-| **BS109** | Continuous rows | Seat rows must be filled continuously. A row cannot skip from position 1 to position 3 while position 2 is missing. |
-| **BS110** | Continuous columns | Seat columns must be filled continuously without gaps in the middle. |
-| **BS111** | No overlapping positions | Two seats cannot share the same grid position. |
-| **BS112** | No duplicate labels | Two seats cannot have the same seat label in the same auditorium. |
+| **BS109** | Auditorium must have seats | An auditorium must contain at least one seat. |
+| **BS110** | Continuous rows | Seat rows must be filled continuously. A row cannot skip from position 1 to position 3 while position 2 is missing. |
+| **BS111** | Continuous columns | Seat columns must be filled continuously without gaps in the middle. |
+| **BS112** | No overlapping positions | Two seats cannot share the same grid position. |
+| **BS113** | No duplicate labels | Two seats cannot have the same seat label in the same auditorium. |
 
 ---
 
@@ -260,9 +261,9 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS113** | Counter sales | A Cashier can sell tickets at the cinema counter by selecting movie, showtime, and seats on behalf of the customer. |
-| **BS114** | Customer lookup | A Cashier can look up a customer by email for counter sales. |
-| **BS115** | Department POS access | Cashiers log in using the department's shared account to access the POS system. |
+| **BS114** | Counter sales | A Cashier can sell tickets at the cinema counter by selecting movie, showtime, and seats on behalf of the customer. |
+| **BS115** | Customer lookup | A Cashier can look up a customer by email for counter sales. |
+| **BS116** | Department POS access | Cashiers log in using the department's shared account to access the POS system. |
 
 ---
 
@@ -270,10 +271,10 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS116** | Auto-cancel pending orders | A Hangfire recurring job runs every 5 minutes to auto-cancel orders that are still **Pending** after 10 minutes, releasing locked seats. |
-| **BS117** | Auto-sync movie/schedule status | A background service runs every 10 minutes to update movie active status and schedule states (e.g., mark showtimes as "completed" after end time). |
-| **BS118** | Movie view buffer sync | Customer movie view events are buffered and synced in batches to reduce database writes. |
-| **BS119** | AI embedding sync on startup | When the AI service starts, it syncs movie data to generate and store vector embeddings in Qdrant for semantic search. |
+| **BS117** | Auto-cancel pending orders | A Hangfire recurring job runs every 5 minutes to auto-cancel orders that are still **Pending** after 10 minutes, releasing locked seats. |
+| **BS118** | Auto-sync movie/schedule status | A background service runs every 10 minutes to update movie active status and schedule states (e.g., mark showtimes as "completed" after end time). |
+| **BS119** | Movie view buffer sync | Customer movie view events are buffered and synced in batches to reduce database writes. |
+| **BS120** | AI embedding sync on startup | When the AI service starts, it syncs movie data to generate and store vector embeddings in Qdrant for semantic search. |
 
 ---
 
@@ -281,7 +282,7 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS120** | AI only recommends, never creates | The AI generates recommendations but does not directly create showtimes. Managers must preview and apply. |
-| **BS121** | Preview before apply | Managers must preview recommendations before applying them to schedules. |
-| **BS122** | Apply re-validation | Apply always revalidates: movie authorization, format support, active date range, past time check, room conflicts, and cleaning gap (15 min). |
-| **BS123** | Action audit | All actions (applied, dismissed, failed validation, viewed) are stored for audit purposes. |
+| **BS121** | AI only recommends, never creates | The AI generates recommendations but does not directly create showtimes. Managers must preview and apply. |
+| **BS122** | Preview before apply | Managers must preview recommendations before applying them to schedules. |
+| **BS123** | Apply re-validation | Apply always revalidates: movie authorization, format support, active date range, past time check, room conflicts, and cleaning gap (15 min). |
+| **BS124** | Action audit | All actions (applied, dismissed, failed validation, viewed) are stored for audit purposes. |

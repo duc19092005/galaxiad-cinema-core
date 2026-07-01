@@ -80,6 +80,9 @@ builder.Services.AddIdentityServices();
 builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
 builder.Services.AddBookingServices();
+
+// Background safety net for orphaned vote timers (polls every 15s)
+builder.Services.AddHostedService<VoteTimerBackgroundService>();
 builder.Services.AddIdentityFactories();
 builder.Services.AddFacilitiesFactories();
 builder.Services.AddMovieFactories();

@@ -197,4 +197,23 @@ python main.py
 
 ---
 
+## 🌐 Ngôn ngữ / Languages
+
+- 🇻🇳 [Tiếng Việt](readme.vi.md)
+- 🇬🇧 [English](readme.en.md)
+- 🇷🇺 [Русский](readme.ru.md)
+
+## 📚 Tài Liệu Chi Tiết
+
+| Tài Liệu | Mô Tả |
+|---|---|
+| [docs/features/](docs/features/) | Tài liệu chi tiết từng tính năng |
+| [docs/features/social-booking.md](docs/features/social-booking.md) | Đặt vé nhóm (Social Booking) |
+| [docs/algorithms/](docs/algorithms/) | Thuật toán (tìm phim, giá vé, khóa ghế, cache) |
+| [docs/business/](docs/business/) | Quy tắc kinh doanh |
+| [apps/backend/docs/dev/](apps/backend/docs/dev/) | Hướng dẫn tích hợp API |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Hướng dẫn triển khai production |
+
+---
+
 > ⚡ Galaxiad Cinema Core — Built with ❤️ by the Galaxiad Team

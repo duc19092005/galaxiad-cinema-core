@@ -45,6 +45,13 @@ public static class BookingServicesBootstrap
         services.AddScoped<VoteMovieUseCase>();
         services.AddScoped<HandleGroupPaymentFailureUseCase>();
         services.AddScoped<LeaveGroupBookingUseCase>();
+        services.AddScoped<VotePaymentMethodUseCase>();
+        services.AddScoped<GetPaymentMethodVoteStateUseCase>();
+        services.AddScoped<CreatePairUseCase>();
+        services.AddScoped<RespondPairUseCase>();
+        services.AddScoped<GetGroupPairsUseCase>();
+        services.AddScoped<VotePaymentFailureUseCase>();
+        services.AddScoped<RaiseHandUseCase>();
 
         // Booking Use Cases
         services.AddScoped<GetNowShowingMoviesUseCase>();

@@ -214,4 +214,12 @@ public class GroupBookingRepository : IGroupBookingRepository
             .Include(gs => gs.GroupBookingMember)
             .ToListAsync();
     }
+
+    public async Task<List<GroupBookingSessionEntity>> GetVotingSessionsAsync()
+    {
+        return await _dbContext.Set<GroupBookingSessionEntity>()
+            .Where(s => s.Status == GroupBookingStatusEnum.VotingPaymentMethod
+                     || s.Status == GroupBookingStatusEnum.VotingPaymentMethod)
+            .ToListAsync();
+    }
 }

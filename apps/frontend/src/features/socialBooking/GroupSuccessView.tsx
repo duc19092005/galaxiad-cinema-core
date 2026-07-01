@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Home, Share2, CheckCircle2, Calendar, MapPin, Film } from 'lucide-react';
 import type { GroupBookingState } from '../../types/socialBooking.types';
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function GroupSuccessView({ groupState }: Props) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const activeMembers = groupState.members?.filter(m => m.status !== 'Removed') || [];
@@ -78,10 +80,10 @@ export default function GroupSuccessView({ groupState }: Props) {
           </div>
         </div>
         <h1 className="text-[24px] md:text-[32px] font-semibold text-[#e3e2e7] mb-3">
-          Thanh toan thanh cong!
+          {t('socialBooking.success.heading', 'Thanh toán thành công!')}
         </h1>
         <p className="text-[16px] text-[#dbc2ad] max-w-md mx-auto">
-          Ve da duoc gui toi tung thanh vien. Hay chuan bi bap rang bo cho buoi chieu toi nay!
+          {t('socialBooking.success.subtitle', 'Vé đã được gửi tới từng thành viên. Hãy chuẩn bị bắp rang bò cho buổi chiều tối nay!')}
         </p>
       </section>
 
@@ -164,7 +166,7 @@ export default function GroupSuccessView({ groupState }: Props) {
               </div>
 
               <p className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider">
-                Nhom: #{groupState.groupCode}
+                {t('socialBooking.success.groupLabel', 'Nhóm: #')}{groupState.groupCode}
               </p>
             </div>
           );
@@ -178,7 +180,7 @@ export default function GroupSuccessView({ groupState }: Props) {
           className="px-8 py-3 rounded-full border border-[#554334]/40 text-[#e3e2e7] text-[12px] font-bold uppercase tracking-wider hover:bg-[#343539]/40 transition-colors flex items-center justify-center gap-2"
         >
           <Share2 className="w-4 h-4" />
-          Chia se nhom
+          {t('socialBooking.success.shareGroup', 'Chia sẻ nhóm')}
         </button>
         <button
           onClick={() => window.location.href = '/'}
@@ -186,7 +188,7 @@ export default function GroupSuccessView({ groupState }: Props) {
           style={{ boxShadow: '0 0 30px rgba(52,199,89,0.2)' }}
         >
           <Home className="w-4 h-4" />
-          Ve trang chu
+          {t('socialBooking.common.backToHome', 'Về trang chủ')}
         </button>
       </div>
     </div>

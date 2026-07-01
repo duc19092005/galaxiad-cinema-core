@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Check, X, UserPlus } from 'lucide-react';
 import type { GroupMemberDto } from '../../types/socialBooking.types';
 
@@ -7,24 +8,25 @@ interface Props {
   onInvite?: () => void;
 }
 
-const statusConfig: Record<string, { color: string; bgColor: string; borderColor: string; label: string; pulse?: boolean }> = {
-  Invited: { color: 'text-yellow-400', bgColor: 'bg-yellow-400/10', borderColor: 'border-yellow-400/30', label: 'Da moi' },
-  Joined: { color: 'text-[#ffbd7f]', bgColor: 'bg-[#ff9500]/10', borderColor: 'border-[#ff9500]/30', label: 'Dang chon ghe', pulse: true },
-  SeatsSelected: { color: 'text-[#ffbd7f]', bgColor: 'bg-[#ff9500]/10', borderColor: 'border-[#ff9500]/30', label: 'Dang chon ghe', pulse: true },
-  Confirmed: { color: 'text-[#34C759]', bgColor: 'bg-[#34C759]/10', borderColor: 'border-[#34C759]/30', label: 'Confirmed' },
-  Paid: { color: 'text-[#34C759]', bgColor: 'bg-[#34C759]/10', borderColor: 'border-[#34C759]/30', label: 'Da thanh toan' },
-  PaymentFailed: { color: 'text-red-400', bgColor: 'bg-red-400/10', borderColor: 'border-red-400/30', label: 'Thanh toan that bai' },
-  Covered: { color: 'text-purple-400', bgColor: 'bg-purple-400/10', borderColor: 'border-purple-400/30', label: 'Chu phong thanh toan' },
-};
-
 export default function GroupMemberList({ members = [], maxMembers, onInvite }: Props) {
+  const { t } = useTranslation();
   const currentUserId = JSON.parse(localStorage.getItem('user_info') || '{}').userId;
+
+  const statusConfig: Record<string, { color: string; bgColor: string; borderColor: string; label: string; pulse?: boolean }> = {
+    Invited: { color: 'text-yellow-400', bgColor: 'bg-yellow-400/10', borderColor: 'border-yellow-400/30', label: t('socialBooking.memberStatus.invited', 'Đã mời') },
+    Joined: { color: 'text-[#ffbd7f]', bgColor: 'bg-[#ff9500]/10', borderColor: 'border-[#ff9500]/30', label: t('socialBooking.memberStatus.selectingSeats', 'Đang chọn ghế'), pulse: true },
+    SeatsSelected: { color: 'text-[#ffbd7f]', bgColor: 'bg-[#ff9500]/10', borderColor: 'border-[#ff9500]/30', label: t('socialBooking.memberStatus.seatsSelected', 'Đã chọn ghế'), pulse: true },
+    Confirmed: { color: 'text-[#34C759]', bgColor: 'bg-[#34C759]/10', borderColor: 'border-[#34C759]/30', label: t('socialBooking.memberStatus.confirmed', 'Đã xác nhận') },
+    Paid: { color: 'text-[#34C759]', bgColor: 'bg-[#34C759]/10', borderColor: 'border-[#34C759]/30', label: t('socialBooking.memberStatus.paid', 'Đã thanh toán') },
+    PaymentFailed: { color: 'text-red-400', bgColor: 'bg-red-400/10', borderColor: 'border-red-400/30', label: t('socialBooking.memberStatus.paymentFailed', 'Thanh toán thất bại') },
+    Covered: { color: 'text-purple-400', bgColor: 'bg-purple-400/10', borderColor: 'border-purple-400/30', label: t('socialBooking.memberStatus.covered', 'Được chủ nhóm trả hộ') },
+  };
 
   return (
     <div className="flex flex-col gap-3">
       {/* Header */}
       <div className="flex items-center justify-between px-1">
-        <h2 className="text-[15px] font-semibold text-[#e3e2e7]">Members</h2>
+        <h2 className="text-[15px] font-semibold text-[#e3e2e7]">{t('socialBooking.members', 'Thành viên')}</h2>
         <span className="text-[11px] font-bold text-[#ffbd7f] bg-[#343539]/80 px-2.5 py-1 rounded-md">
           {members.length}/{maxMembers}
         </span>
@@ -78,7 +80,7 @@ export default function GroupMemberList({ members = [], maxMembers, onInvite }: 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="text-[13px] font-semibold text-[#e3e2e7] truncate">
-                      {member.userName}{isMe ? ' (Ban)' : ''}
+                      {member.userName}{isMe ? ` ${t('socialBooking.memberList.you', '(Bạn)')}` : ''}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 mt-0.5">
@@ -88,7 +90,7 @@ export default function GroupMemberList({ members = [], maxMembers, onInvite }: 
                   </div>
                   {member.selectedSeats.length > 0 && (
                     <p className="text-[11px] text-[#dbc2ad]/50 mt-1">
-                      Ghế: {member.selectedSeats.map(s => s.seatNumber).join(', ')}
+                      {t('socialBooking.memberList.seats', 'Ghế: ')}{member.selectedSeats.map(s => s.seatNumber).join(', ')}
                     </p>
                   )}
                 </div>
@@ -115,7 +117,7 @@ export default function GroupMemberList({ members = [], maxMembers, onInvite }: 
             className="border-2 border-dashed border-[#554334]/20 p-4 rounded-xl flex items-center justify-center gap-2.5 opacity-40"
           >
             <UserPlus className="w-4 h-4 text-[#dbc2ad]" />
-            <span className="text-[11px] font-bold text-[#dbc2ad] uppercase tracking-wider">Dang cho thanh vien...</span>
+            <span className="text-[11px] font-bold text-[#dbc2ad] uppercase tracking-wider">{t('socialBooking.memberList.waitingForMembers', 'Đang chờ thành viên...')}</span>
           </div>
         ))}
       </div>
@@ -127,7 +129,7 @@ export default function GroupMemberList({ members = [], maxMembers, onInvite }: 
           className="mt-1 w-full py-3 rounded-xl border border-dashed border-[#554334]/40 text-[#dbc2ad] text-[11px] font-bold uppercase tracking-wider hover:bg-[#343539]/40 transition-colors flex items-center justify-center gap-2"
         >
           <UserPlus className="w-4 h-4" />
-          Moi Ban Be
+          {t('socialBooking.memberList.inviteFriends', 'Mời Bạn Bè')}
         </button>
       )}
     </div>

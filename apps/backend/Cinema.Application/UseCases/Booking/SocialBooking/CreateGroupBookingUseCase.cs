@@ -57,7 +57,9 @@ public class CreateGroupBookingUseCase
             GroupCode = groupCode,
             CreatedByUserId = userId,
             MovieScheduleId = request.ScheduleId,
-            GroupName = request.GroupName.Trim(),
+            GroupName = string.IsNullOrWhiteSpace(request.GroupName)
+                ? $"{userName}'s group"
+                : request.GroupName.Trim(),
             Status = GroupBookingStatusEnum.Open,
             MaxMembers = Math.Clamp(request.MaxMembers, 2, 8),
             CreatedAt = DateTime.UtcNow,

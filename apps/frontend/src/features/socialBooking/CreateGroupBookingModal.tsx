@@ -61,7 +61,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
 
   const handleConfirmSchedule = () => {
     if (!scheduleDate || !scheduleTime) {
-      showError('Vui lòng chọn ngày và giờ lên lịch.');
+      showError(t('socialBooking.schedule.errorSelectDateTime', 'Vui lòng chọn ngày và giờ lên lịch.'));
       return;
     }
     setStep('schedule_success');
@@ -82,10 +82,10 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
               <Users className="w-4.5 h-4.5 text-[#ff8a00]" />
             </div>
             <h2 className="text-base font-bold text-white tracking-wide">
-              {step === 'choice' && 'Tùy Chọn Đặt Vé Nhóm'}
-              {step === 'form' && 'Tạo Phòng Đặt Chung'}
-              {step === 'schedule' && 'Lên Lịch Đặt Vé Chung'}
-              {step === 'schedule_success' && 'Lên Lịch Thành Công'}
+              {step === 'choice' && t('socialBooking.create.choiceTitle', 'Tùy Chọn Đặt Vé Nhóm')}
+              {step === 'form' && t('socialBooking.create.formTitle', 'Tạo Phòng Đặt Chung')}
+              {step === 'schedule' && t('socialBooking.create.scheduleTitle', 'Lên Lịch Đặt Vé Chung')}
+              {step === 'schedule_success' && t('socialBooking.create.scheduleSuccessTitle', 'Lên Lịch Thành Công')}
             </h2>
           </div>
           <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-white/50 hover:text-white">
@@ -98,7 +98,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
           {step === 'choice' && (
             <div className="space-y-4">
               <p className="text-white/60 text-sm text-center mb-2">
-                Hãy lựa chọn phương thức hoạt động cho nhóm đặt vé chung của bạn:
+                {t('socialBooking.create.choiceDescription', 'Hãy lựa chọn phương thức hoạt động cho nhóm đặt vé chung của bạn:')}
               </p>
               
               {/* Option: Create Now */}
@@ -110,9 +110,9 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                   <Sparkles className="w-5 h-5 text-[#ff8a00]" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm">Đặt vé chung ngay bây giờ</h4>
+                  <h4 className="font-bold text-white text-sm">{t('socialBooking.create.bookNow', 'Đặt vé chung ngay bây giờ')}</h4>
                   <p className="text-xs text-white/40 mt-1">
-                    Tạo phòng ngay lập tức, hiển thị mã QR mời bạn bè và vào phòng đặt ghế trực tiếp.
+                    {t('socialBooking.create.bookNowDesc', 'Tạo phòng ngay lập tức, hiển thị mã QR mời bạn bè và vào phòng đặt ghế trực tiếp.')}
                   </p>
                 </div>
               </button>
@@ -126,9 +126,9 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                   <Calendar className="w-5 h-5 text-blue-400" />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white text-sm">Lên lịch đặt vé chung</h4>
+                  <h4 className="font-bold text-white text-sm">{t('socialBooking.create.scheduleOption', 'Lên lịch đặt vé chung')}</h4>
                   <p className="text-xs text-white/40 mt-1">
-                    Hẹn giờ lên lịch cùng nhau chọn ghế, hệ thống sẽ gửi thông báo nhắc nhở khi đến giờ. (Demo)
+                    {t('socialBooking.create.scheduleOptionDesc', 'Hẹn giờ lên lịch cùng nhau chọn ghế, hệ thống sẽ gửi thông báo nhắc nhở khi đến giờ. (Demo)')}
                   </p>
                 </div>
               </button>
@@ -139,12 +139,12 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
             <div className="space-y-5">
               {/* Group Name */}
               <div>
-                <label className="block text-sm font-semibold text-white/70 mb-2">Tên Nhóm</label>
+                <label className="block text-sm font-semibold text-white/70 mb-2">{t('socialBooking.create.groupNameLabel', 'Tên Nhóm')}</label>
                 <input
                   type="text"
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
-                  placeholder="Ví dụ: Nhóm bạn thân, Gia đình..."
+                  placeholder={t('socialBooking.create.groupNamePlaceholder', 'Ví dụ: Nhóm bạn thân, Gia đình...')}
                   maxLength={150}
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-[#ff8a00]/50 focus:ring-1 focus:ring-[#ff8a00]/30 transition-colors text-sm"
                 />
@@ -152,7 +152,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
 
               {/* Max Members */}
               <div>
-                <label className="block text-sm font-semibold text-white/70 mb-2">Số Thành Viên Tối Đa</label>
+                <label className="block text-sm font-semibold text-white/70 mb-2">{t('socialBooking.create.maxMembersLabel', 'Số Thành Viên Tối Đa')}</label>
                 <div className="flex gap-2">
                   {[2, 3, 4, 5, 6, 7, 8].map((n) => (
                     <button
@@ -176,12 +176,12 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
             <div className="space-y-4">
               {/* Group Name */}
               <div>
-                <label className="block text-sm font-semibold text-white/70 mb-2">Tên Nhóm Lên Lịch</label>
+                <label className="block text-sm font-semibold text-white/70 mb-2">{t('socialBooking.create.scheduleGroupNameLabel', 'Tên Nhóm Lên Lịch')}</label>
                 <input
                   type="text"
                   value={groupName}
                   onChange={(e) => setGroupName(e.target.value)}
-                  placeholder="Ví dụ: Lên lịch coi phim cuối tuần..."
+                  placeholder={t('socialBooking.create.scheduleGroupNamePlaceholder', 'Ví dụ: Lên lịch coi phim cuối tuần...')}
                   maxLength={150}
                   className="w-full px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/30 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-colors text-sm"
                 />
@@ -190,7 +190,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
               <div className="grid grid-cols-2 gap-3">
                 {/* Date Picker */}
                 <div>
-                  <label className="block text-xs font-semibold text-white/70 mb-2">Chọn Ngày</label>
+                  <label className="block text-xs font-semibold text-white/70 mb-2">{t('socialBooking.create.selectDate', 'Chọn Ngày')}</label>
                   <input
                     type="date"
                     value={scheduleDate}
@@ -200,7 +200,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                 </div>
                 {/* Time Picker */}
                 <div>
-                  <label className="block text-xs font-semibold text-white/70 mb-2">Chọn Giờ</label>
+                  <label className="block text-xs font-semibold text-white/70 mb-2">{t('socialBooking.create.selectTime', 'Chọn Giờ')}</label>
                   <input
                     type="time"
                     value={scheduleTime}
@@ -212,7 +212,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
 
               {/* Max Members */}
               <div>
-                <label className="block text-sm font-semibold text-white/70 mb-2">Số Thành Viên Dự Kiến</label>
+                <label className="block text-sm font-semibold text-white/70 mb-2">{t('socialBooking.create.estimatedMembers', 'Số Thành Viên Dự Kiến')}</label>
                 <div className="flex gap-2">
                   {[2, 3, 4, 5, 6, 7, 8].map((n) => (
                     <button
@@ -236,14 +236,14 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
             <div className="flex flex-col items-center text-center p-6 space-y-4">
               <CheckCircle2 className="w-16 h-16 text-emerald-400 animate-bounce" />
               <div className="space-y-2">
-                <h3 className="text-lg font-bold text-white">Lên Lịch Thành Công!</h3>
+                <h3 className="text-lg font-bold text-white">{t('socialBooking.create.scheduleSuccessHeading', 'Lên Lịch Thành Công!')}</h3>
                 <p className="text-xs text-white/50 leading-relaxed">
-                  Phòng đặt chung cho nhóm <strong className="text-white">{groupName || 'Tên nhóm'}</strong> đã được lên lịch vào lúc{' '}
-                  <span className="text-blue-400 font-semibold">{scheduleTime}</span> ngày{' '}
+                  {t('socialBooking.create.scheduleSuccessBody', 'Phòng đặt chung cho nhóm')} <strong className="text-white">{groupName || t('socialBooking.create.defaultGroupName', 'Tên nhóm')}</strong> {t('socialBooking.create.scheduleSuccessBodyMiddle', 'đã được lên lịch vào lúc')}{' '}
+                  <span className="text-blue-400 font-semibold">{scheduleTime}</span> {t('socialBooking.create.scheduleSuccessBodyDate', 'ngày')}{' '}
                   <span className="text-blue-400 font-semibold">{scheduleDate}</span>.
                 </p>
                 <p className="text-[10px] text-white/35">
-                  (Phiên bản Demo - Hệ thống sẽ tự động gửi thông báo đến các thành viên trong thời gian thực)
+                  {t('socialBooking.create.demoNote', '(Phiên bản Demo - Hệ thống sẽ tự động gửi thông báo đến các thành viên trong thời gian thực)')}
                 </p>
               </div>
             </div>
@@ -257,7 +257,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
               onClick={handleClose}
               className="w-full py-2.5 rounded-xl bg-white/5 text-white/70 font-semibold text-sm hover:bg-white/10 transition-colors"
             >
-              Đóng
+              {t('socialBooking.common.close', 'Đóng')}
             </button>
           )}
 
@@ -267,7 +267,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                 onClick={() => setStep('choice')}
                 className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/70 font-semibold text-sm hover:bg-white/10 transition-colors"
               >
-                Quay lại
+                {t('socialBooking.common.goBack', 'Quay lại')}
               </button>
               <button
                 onClick={handleCreateImmediate}
@@ -275,7 +275,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                 className="flex-1 py-2.5 rounded-xl bg-[#ff8a00] text-black font-bold text-sm hover:bg-[#e17600] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                Tạo Ngay
+                {t('socialBooking.create.createNow', 'Tạo Ngay')}
               </button>
             </>
           )}
@@ -286,13 +286,13 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
                 onClick={() => setStep('choice')}
                 className="flex-1 py-2.5 rounded-xl bg-white/5 text-white/70 font-semibold text-sm hover:bg-white/10 transition-colors"
               >
-                Quay lại
+                {t('socialBooking.common.goBack', 'Quay lại')}
               </button>
               <button
                 onClick={handleConfirmSchedule}
                 className="flex-1 py-2.5 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-colors"
               >
-                Xác nhận
+                {t('socialBooking.common.confirm', 'Xác nhận')}
               </button>
             </>
           )}
@@ -302,7 +302,7 @@ export default function CreateGroupBookingModal({ isOpen, onClose, scheduleId }:
               onClick={handleClose}
               className="w-full py-2.5 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition-colors"
             >
-              Hoàn tất
+              {t('socialBooking.common.done', 'Hoàn tất')}
             </button>
           )}
         </div>
