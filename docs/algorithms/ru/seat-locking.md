@@ -12,23 +12,22 @@
 
 ---
 
-## Техническая архитектура: SSE + HTTP POST
+## Техническая архитектура: Raw WebSocket + HTTP POST
 
-Мы выбрали **SSE (Server-Sent Events)** вместо WebSocket (SignalR). Вот почему:
+Мы выбрали **raw WebSocket** вместо SignalR. Вот почему:
 
-- **SSE** — односторонний канал от сервера к клиенту. Сервер отправляет данные в реальном времени без повторных запросов клиента.
-- **HTTP POST** — используется для действий клиент → сервер (блокировка/разблокировка мест). SSE не может отправлять данные от клиента к серверу, поэтому мы используем обычные REST API вызовы.
-- **Хранение в памяти:** Данные о блокировке хранятся в оперативной памяти (RAM) сервера, а не в базе данных. Если сервер перезагружается, блокировки теряются — но это приемлемо, поскольку блокировки действуют максимум 10 минут. Когда клиенты переподключаются, они получают актуальное состояние.
+- **WebSocket** — двустороннее постоянное соединение между сервером и клиентом. Сервер отправляет обновления состояния мест в реальном времени без повторных запросов клиента.
+- **HTTP POST** — используется для действий клиент → сервер (блокировка/разблокировка мест). WebSocket-соединение в основном обрабатывает **сервер → клиент** broadcast (уведомления об изменении состояния).
+- **Хранение в памяти:** Данные о блокировке хранятся в `ConcurrentDictionary` в оперативной памяти (RAM) сервера, а не в базе данных. Если сервер перезагружается, блокировки теряются — но это приемлемо, поскольку блокировки действуют максимум 10 минут. Когда клиенты переподключаются, они получают актуальное состояние.
 
-### Почему SSE вместо WebSocket (SignalR)?
+### Почему raw WebSocket вместо SignalR?
 
-| Критерий | SSE + HTTP POST | SignalR / WebSocket |
-|----------|----------------|-------------------|
-| Сложность | Простой — использует встроенный `EventSource` браузера | Сложный — требуется согласование WebSocket, резервные транспорты |
-| Авто-переподключение | Встроено (браузер обрабатывает) | Требуется ручная реализация |
-| Совместимость с CDN | Работает (например, Cloudflare) | Некоторые прокси блокируют WebSocket |
-| Масштабирование | Не требуется sticky session | Нужен Redis backplane |
-| Двусторонность | Нет (используется HTTP POST) | Да (встроено) |
+| Критерий | Raw WebSocket + HTTP POST | SignalR |
+|----------|---------------------------|---------|
+| Сложность | Минимальная — использует `System.Net.WebSockets` напрямую | Выше — согласование Hub, слой абстракции протокола |
+| Зависимости | Не требует дополнительных NuGet пакетов | Требует `Microsoft.AspNetCore.SignalR` |
+| Двусторонность | Да (мы используем только сервер→клиент) | Да (встроено) |
+| Резервные транспорты | Нет (только WebSocket) | Авто-переключение на SSE, long polling |
 | **Наш выбор** | ✅ **Выбран** | ❌ Отклонен |
 
 ---
@@ -43,39 +42,40 @@ sequenceDiagram
 
     Note over A: Открывает страницу выбора мест
 
-    A->>Server: GET /seats/events/{scheduleId}<br/>(SSE подключение)
-    Server-->>A: event: initial-state<br/>{ lockedSeats: {...} }
+    A->>Server: WebSocket connect /seats/ws/{scheduleId}
+    Server-->>A: { type: "initial-state", lockedSeats: {...} }
     
     Note over A: Клиент A выбирает место A1
 
     A->>Server: POST /seats/lock<br/>{ scheduleId, seatId: "A1" }
-    Server->>Server: LockSeat() → сохранить в RAM
+    Server->>Server: LockSeat() → memory
     Server-->>A: 200 OK { success: true, lockedSeats }
-    Server-->>B: SSE event: seat-locked<br/>{ seatId: "A1", lockedSeats }
+    Server-->>B: WebSocket message: { type: "seat-locked", data: { seatId: "A1", ... } }
     
     Note over B: Место A1 теперь КРАСНОЕ (заблокировано)
 
     A->>Server: POST /seats/unlock<br/>{ scheduleId, seatId: "A1" }
-    Server->>Server: UnlockSeat() → удалить из RAM
+    Server->>Server: UnlockSeat() → memory
     Server-->>A: 200 OK
-    Server-->>B: SSE event: seat-unlocked<br/>{ seatId: "A1", lockedSeats }
+    Server-->>B: WebSocket message: { type: "seat-unlocked", data: { seatId: "A1", ... } }
     
-    Note over B: Место A1 снова ДОСТУПНО
+    Note over B: Место A1 теперь СВОБОДНО
     
-    Note over A: Клиент A закрывает вкладку → SSE отключается
+    Note over A: Клиент A закрывает вкладку → WebSocket disconnect
     Server->>Server: Авто-освобождение всех мест клиента
-    Server-->>B: SSE event: seat-unlocked<br/>{ seatId: "A1", lockedSeats }
+    Server-->>B: WebSocket message: { type: "seat-released", data: { seatId: "A1", ... } }
 ```
 
 ---
 
 ## API Endpoints
 
-| Метод | Endpoint | Описание |
-|-------|----------|---------|
+| Method | Endpoint | Описание |
+|--------|----------|---------|
 | `POST` | `/api/v1/booking/seats/lock` | Временно заблокировать место |
 | `POST` | `/api/v1/booking/seats/unlock` | Освободить заблокированное место |
-| `GET` | `/api/v1/booking/seats/events/{scheduleId}` | SSE поток — получать обновления в реальном времени (без аутентификации) |
+| `GET` | `/api/v1/booking/seats/ws/{scheduleId}` | WebSocket endpoint — получать обновления в реальном времени (без аутентификации) |
+| `GET` | `/api/v1/booking/seats/state/{scheduleId}` | HTTP fallback — получить текущее состояние блокировок |
 
 ### POST /api/v1/booking/seats/lock
 
@@ -84,7 +84,8 @@ sequenceDiagram
 {
   "scheduleId": "guid",
   "seatId": "A1",
-  "userName": "Nguyen Van A"
+  "userName": "Nguyen Van A",
+  "clientId": "seat-client-uuid"
 }
 ```
 
@@ -112,7 +113,8 @@ sequenceDiagram
 ```json
 {
   "scheduleId": "guid",
-  "seatId": "A1"
+  "seatId": "A1",
+  "clientId": "seat-client-uuid"
 }
 ```
 
@@ -125,71 +127,77 @@ sequenceDiagram
 }
 ```
 
-### GET /api/v1/booking/seats/events/{scheduleId}
+### GET /api/v1/booking/seats/ws/{scheduleId}
 
-SSE endpoint (text/event-stream). Открывает длительное соединение. Аутентификация не требуется.
+Endpoint WebSocket. Открывает долгоживущее постоянное соединение. Без аутентификации.
 
 **Поддерживает:**
-- Авто-переподключение через `Last-Event-ID`
-- Heartbeat каждые 15 секунд (`: heartbeat`)
+- Параметр запроса `clientId` для идентификации клиента при переподключении
+- Автоматическая очистка при отключении (все места клиента освобождаются)
 
 ---
 
-## SSE события
+## Сообщения WebSocket
 
-| Тип события | Когда отправляется | Данные |
-|------------|-------------------|--------|
-| `initial-state` | Клиент только что подключился | `{ event: "initial-state", lockedSeats: { "A1": "User" } }` |
-| `seat-locked` | Кто-то заблокировал место | `{ event: "seat-locked", seatId: "A1", userName: "User", lockedSeats: {...} }` |
-| `seat-unlocked` | Кто-то освободил место | `{ event: "seat-unlocked", seatId: "A1", lockedSeats: {...} }` |
+WebSocket отправляет JSON **от сервера к клиенту**:
+
+| Тип сообщения | Когда отправляется | Данные |
+|--------------|-------------------|--------|
+| `initial-state` | Клиент только что подключился | `{ type: "initial-state", lockedSeats: { "a1": "User" } }` |
+| `seat-locked` | Кто-то заблокировал место | `{ type: "seat-locked", data: { seatId: "A1", userName: "User", lockedSeats: {...} } }` |
+| `seat-unlocked` | Кто-то освободил место | `{ type: "seat-unlocked", data: { seatId: "A1", lockedSeats: {...} } }` |
+| `seat-released` | Очистка при отключении клиента | `{ type: "seat-released", data: { seatId: "A1", lockedSeats: {...} } }` |
 
 ---
 
 ## Автоматическая очистка
 
-| Ситуация | Обработка | Механизм |
-|---------|----------|---------|
-| **Нет оплаты в течение 10 мин** | Pending заказ отменяется, места освобождаются | Hangfire recurring job (каждые 5 мин) |
-| **Закрытие вкладки браузера** | Все места этого клиента освобождаются | SSE отключение → `ReleaseSeatsByClient()` |
-| **Перезагрузка сервера** | Потеря всех блокировок в RAM → клиенты переподключаются | `EventSource` авто-переподключение → получение нового состояния |
+| Ситуация | Что происходит | Механизм |
+|----------|---------------|----------|
+| **Нет оплаты через 10 мин** | Pending заказ отменяется, места освобождаются | Hangfire recurring job (каждые 5 мин) |
+| **Закрытие вкладки браузера** | Все места клиента освобождаются | WebSocket disconnect → `RemoveConnection()` + `ReleaseSeatsByClient()` |
+| **Перезагрузка сервера** | Все блокировки в памяти теряются → клиенты переподключаются | Клиент обнаруживает `onclose` → может автоматически переподключиться |
 
 ---
 
-## Основные технические компоненты
+## Ключевые компоненты
 
 | Компонент | Расположение | Роль |
 |-----------|-------------|------|
-| `SeatSseManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Управление блокировками мест + подписчиками SSE |
-| `BookingController` | `Cinema.Api/Controllers/Customer/Booking/` | API endpoints lock/unlock/events |
-| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Мост между Hangfire job и `SeatSseManager` |
+| `SeatWsManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Управление блокировками мест + WebSocket подписчики (`ConcurrentDictionary<string, ConcurrentDictionary<string, WebSocket>>`) |
+| `SeatLockManager` | `Cinema.Infrastructure/ExternalServices/Notifications/` | Атомарное управление состоянием блокировок (`ConcurrentDictionary<string, LockEntry>`) |
+| `BookingController.GetSeatWebSocket` | `Cinema.Api/Controllers/Customer/Booking/` | WebSocket accept + начальное состояние + цикл чтения |
+| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Мост между Hangfire job и `SeatWsManager` |
 | `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Авто-отмена Pending заказов > 10 мин |
-| `useSeatSse` hook | `apps/frontend/src/hooks/` | React хук для SSE + lock/unlock |
+| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook для WebSocket + lock/unlock API |
 
-### Интеграция с Frontend
+### Frontend Integration (React)
 
-Хук `useSeatSse` предоставляет всё необходимое:
+Хук `useSeatWs` предоставляет всё необходимое:
 
 ```typescript
-import { useSeatSse } from '../../hooks/useSeatSse';
+import { useSeatWs } from '../../hooks/useSeatWs';
 
 function SeatMap({ scheduleId }: { scheduleId: string }) {
-  const { lockedSeats, lockSeat, unlockSeat, isConnected } = useSeatSse(scheduleId);
+  const { lockedSeats, lockSeat, unlockSeat, isConnected } = useSeatWs(scheduleId);
   
-  // lockedSeats: Record<string, string> — { "A1": "UserName", ... }
+  // lockedSeats: Record<string, string> — { "a1": "UserName", ... }
   // lockSeat(seatId, userName) → Promise<boolean>
   // unlockSeat(seatId) → Promise<boolean>
-  // isConnected: boolean — статус SSE подключения
+  // isConnected: boolean — статус WebSocket подключения
 }
 ```
+
+**Важно:** Хук нормализует все seatId в нижний регистр для единообразного сравнения ключей.
 
 ---
 
 ## Обработка ошибок
 
 | Сценарий | Поведение |
-|---------|----------|
-| **Потеря сети** | SSE авто-переподключается через встроенный `EventSource` браузера |
+|----------|----------|
+| **Потеря сети** | WebSocket вызывает `onclose` → `isConnected = false`; компонент может попытаться переподключиться |
 | **Перезагрузка сервера** | Все блокировки теряются; клиенты переподключаются и получают свежее состояние через `initial-state` |
-| **Состояние гонки (2 пользователя блокируют одно место)** | Атомарный `TryAdd` — только 1 успевает, второй получает `409 Conflict` |
-| **Несколько вкладок** | Каждая вкладка имеет свой `clientId`. Блокировка одного места из разных вкладок считается "другим пользователем" |
-| **Забытая вкладка** | SSE соединение истекает → сервер освобождает все места этого клиента |
+| **Race condition (2 пользователя блокируют одно место)** | Атомарный `TryAdd` в `SeatLockManager` — только 1 успевает, другой получает `409 Conflict` |
+| **Несколько вкладок** | У каждой вкладки свой `clientId`. Блокировка одного места из разных вкладок считается как "другой пользователь" |
+| **Вкладка забыта (idle)** | WebSocket соединение истекает → `ReceiveAsync` выбрасывает исключение → очистка освобождает все места клиента |

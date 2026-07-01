@@ -49,7 +49,7 @@ flowchart TD
     Vector Database")]
     end
 
-    FE <-->|"REST API + SSE"| API
+    FE <-->|"REST API + WebSocket"| API
     API <-->|"SQL Queries"| SQL
     API <-->|"Cache"| Redis
     API <-->|"AI Request"| FastAPI
@@ -57,7 +57,7 @@ flowchart TD
     Embedder <-->|"Embeddings"| Gemini
 ```
 
-**Giải thích đơn giản:** Giao diện web (React) nói chuyện với backend (.NET) qua REST API và SSE (Server-Sent Events — cơ chế server tự đẩy dữ liệu tới trình duyệt mà không cần hỏi đi hỏi lại). Backend lưu dữ liệu vào SQL Server, dùng Redis để nhớ nhanh (cache) và khóa trùng lặp, và gọi Python AI Service để phân tích hành vi khách hàng, gợi ý phim và hỗ trợ chatbot.
+**Giải thích đơn giản:** Giao diện web (React) nói chuyện với backend (.NET) qua REST API và WebSocket (kết nối bền vững hai chiều cho cập nhật real-time). Backend lưu dữ liệu vào SQL Server, dùng Redis để nhớ nhanh (cache) và khóa trùng lặp, và gọi Python AI Service để phân tích hành vi khách hàng, gợi ý phim và hỗ trợ chatbot.
 
 ---
 
@@ -96,12 +96,12 @@ flowchart TD
 | Layer | Công nghệ | Vai trò |
 |-------|-----------|---------|
 | **Frontend** | React + TypeScript + Vite | Giao diện người dùng (Web) |
-| **Backend** | ASP.NET Core 8 | Xử lý nghiệp vụ, REST API, SSE |
+| **Backend** | ASP.NET Core 8 | Xử lý nghiệp vụ, REST API, WebSocket |
 | **AI Service** | Python FastAPI + Google Gemini | Chatbot, gợi ý phim, phân tích |
 | **Database** | SQL Server (MSSQL) | Lưu trữ dữ liệu chính (giao dịch, người dùng, metadata) |
 | **Cache** | Redis | Cache nhanh, khóa phân tán (distributed lock) |
 | **Vector DB** | Qdrant | Lưu trữ vector embeddings cho gợi ý phim |
-| **Real-time** | SSE (Server-Sent Events) | Cập nhật trạng thái ghế real-time, thông báo |
+| **Real-time** | WebSocket (raw) | Cập nhật trạng thái ghế real-time, thông báo |
 
 ---
 
@@ -156,17 +156,17 @@ python main.py
 ## 📚 Tài liệu chi tiết
 
 ### Thuật toán & Kỹ thuật
-- [Tổng quan thuật toán](docs/algorithms/README.md)
-  - [Tìm kiếm phim](docs/algorithms/movie-search.md)
-  - [Gợi ý phim](docs/algorithms/movie-recommendation.md)
-  - [Khuyến mãi giá động](docs/algorithms/pricing-promotions.md)
-  - [Chatbot theo vai trò](docs/algorithms/role-aware-chatbot.md)
-  - [Redis Cache Strategy](docs/algorithms/redis-cache-strategy.md)
-  - [Quy tắc xếp lịch ca](docs/algorithms/shift-schedule-rules.md)
-  - [Khóa ghế Real-time (SSE)](docs/algorithms/seat-locking.md) 🔥 Mới
+- [Tổng quan thuật toán](docs/algorithms/README.en.md)
+  - [Tìm kiếm phim](docs/algorithms/en/movie-search.md)
+  - [Gợi ý phim](docs/algorithms/en/movie-recommendation.md)
+  - [Khuyến mãi giá động](docs/algorithms/en/pricing-promotions.md)
+  - [Chatbot theo vai trò](docs/algorithms/en/role-aware-chatbot.md)
+  - [Redis Cache Strategy](docs/algorithms/en/redis-cache-strategy.md)
+  - [Quy tắc xếp lịch ca](docs/algorithms/en/shift-schedule-rules.md)
+  - [Khóa ghế Real-time (WebSocket)](docs/algorithms/en/seat-locking.md)
 
 ### Quy tắc Kinh doanh
-- [Business Rules Reference](docs/business/README.md)
+- [Business Rules Reference](docs/business/README.en.md)
 
 ### Phát triển (Backend)
 - [Full System API Docs](apps/backend/docs/dev/full_system_api_docs.md)

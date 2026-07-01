@@ -12,23 +12,22 @@ Khi **bạn** chọn một ghế trên màn hình, hệ thống ngay lập tức
 
 ---
 
-## Kiến trúc kỹ thuật: SSE + HTTP POST
+## Kiến trúc kỹ thuật: Raw WebSocket + HTTP POST
 
-Chúng tôi chọn **SSE (Server-Sent Events)** thay vì WebSocket (SignalR). Lý do:
+Chúng tôi chọn **raw WebSocket** thay vì SignalR. Lý do:
 
-- **SSE** — kênh một chiều từ server đến client. Server tự động đẩy dữ liệu real-time mà client không cần hỏi đi hỏi lại.
-- **HTTP POST** — dùng cho hành động client → server (khóa/mở khóa ghế). SSE không gửi được dữ liệu từ client lên server, nên chúng tôi dùng REST API riêng cho việc đó.
-- **Lưu trong bộ nhớ RAM (in-memory):** Dữ liệu khóa ghế được lưu trong RAM của server, không phải database. Nếu server khởi động lại, các khóa bị mất — nhưng điều này chấp nhận được vì khóa chỉ tồn tại tối đa 10 phút. Khi client kết nối lại, chúng nhận được trạng thái mới nhất.
+- **WebSocket** là kết nối bền vững hai chiều giữa server và client. Server đẩy thông tin trạng thái ghế real-time mà client không cần hỏi đi hỏi lại.
+- **HTTP POST** — dùng cho hành động client → server (khóa/mở khóa ghế). Kết nối WebSocket chủ yếu xử lý **server → client** broadcast (thông báo thay đổi trạng thái).
+- **Lưu trong bộ nhớ RAM (in-memory):** Dữ liệu khóa ghế được lưu trong `ConcurrentDictionary` trên RAM của server, không phải database. Nếu server khởi động lại, các khóa bị mất — nhưng điều này chấp nhận được vì khóa chỉ tồn tại tối đa 10 phút. Khi client kết nối lại, chúng nhận được trạng thái mới nhất.
 
-### Tại sao SSE thay vì SignalR WebSocket?
+### Tại sao raw WebSocket thay vì SignalR?
 
-| Tiêu chí | SSE + HTTP POST | SignalR / WebSocket |
-|----------|----------------|-------------------|
-| Độ phức tạp | Đơn giản — dùng `EventSource` có sẵn trong trình duyệt | Phức tạp — cần đàm phán WebSocket, fallback transports |
-| Tự động kết nối lại | Có sẵn (trình duyệt tự xử lý) | Phải tự code |
-| Tương thích CDN | Hoạt động tốt (ví dụ Cloudflare) | Một số proxy chặn WebSocket |
-| Scale nhiều instance | Không cần sticky session | Cần Redis backplane |
-| Hai chiều | Không (dùng POST riêng) | Có (built-in) |
+| Tiêu chí | Raw WebSocket + HTTP POST | SignalR |
+|----------|---------------------------|---------|
+| Độ phức tạp | Tối thiểu — dùng `System.Net.WebSockets` trực tiếp | Cao hơn — đàm phán Hub, lớp trừu tượng giao thức |
+| Phụ thuộc | Không cần NuGet package thêm | Yêu cầu `Microsoft.AspNetCore.SignalR` |
+| Hai chiều | Có (chúng tôi chỉ dùng server→client) | Có (built-in) |
+| Fallback transport | Không (chỉ WebSocket) | Tự động fallback xuống SSE, long polling |
 | **Lựa chọn của chúng tôi** | ✅ **Đã chọn** | ❌ Không dùng |
 
 ---
@@ -43,39 +42,40 @@ sequenceDiagram
 
     Note over A: Mở trang chọn ghế
 
-    A->>Server: GET /seats/events/{scheduleId}<br/>(kết nối SSE)
-    Server-->>A: event: initial-state<br/>{ lockedSeats: {...} }
+    A->>Server: WebSocket connect /seats/ws/{scheduleId}
+    Server-->>A: { type: "initial-state", lockedSeats: {...} }
     
     Note over A: Khách A chọn ghế A1
 
     A->>Server: POST /seats/lock<br/>{ scheduleId, seatId: "A1" }
-    Server->>Server: LockSeat() → lưu vào RAM
+    Server->>Server: LockSeat() → memory
     Server-->>A: 200 OK { success: true, lockedSeats }
-    Server-->>B: SSE event: seat-locked<br/>{ seatId: "A1", lockedSeats }
+    Server-->>B: WebSocket message: { type: "seat-locked", data: { seatId: "A1", ... } }
     
     Note over B: Ghế A1 hiện màu ĐỎ (đã khóa)
 
     A->>Server: POST /seats/unlock<br/>{ scheduleId, seatId: "A1" }
-    Server->>Server: UnlockSeat() → xóa khỏi RAM
+    Server->>Server: UnlockSeat() → memory
     Server-->>A: 200 OK
-    Server-->>B: SSE event: seat-unlocked<br/>{ seatId: "A1", lockedSeats }
+    Server-->>B: WebSocket message: { type: "seat-unlocked", data: { seatId: "A1", ... } }
     
     Note over B: Ghế A1 hiện CÓ SẴN trở lại
     
-    Note over A: Khách A đóng tab → SSE ngắt kết nối
-    Server->>Server: Tự động giải phóng tất cả ghế của client
-    Server-->>B: SSE event: seat-unlocked<br/>{ seatId: "A1", lockedSeats }
+    Note over A: Khách A đóng tab → WebSocket disconnect
+    Server->>Server: Tự động giải phóng ghế của client
+    Server-->>B: WebSocket message: { type: "seat-released", data: { seatId: "A1", ... } }
 ```
 
 ---
 
 ## API Endpoints
 
-| Phương thức | Endpoint | Mô tả |
-|------------|----------|-------|
+| Method | Endpoint | Mô tả |
+|--------|----------|-------|
 | `POST` | `/api/v1/booking/seats/lock` | Khóa ghế tạm thời |
 | `POST` | `/api/v1/booking/seats/unlock` | Giải phóng ghế đã khóa |
-| `GET` | `/api/v1/booking/seats/events/{scheduleId}` | SSE stream — nhận cập nhật real-time (không cần đăng nhập) |
+| `GET` | `/api/v1/booking/seats/ws/{scheduleId}` | WebSocket endpoint — nhận cập nhật real-time (không cần đăng nhập) |
+| `GET` | `/api/v1/booking/seats/state/{scheduleId}` | HTTP fallback — lấy trạng thái khóa hiện tại |
 
 ### POST /api/v1/booking/seats/lock
 
@@ -84,7 +84,8 @@ sequenceDiagram
 {
   "scheduleId": "guid",
   "seatId": "A1",
-  "userName": "Nguyen Van A"
+  "userName": "Nguyen Van A",
+  "clientId": "seat-client-uuid"
 }
 ```
 
@@ -112,7 +113,8 @@ sequenceDiagram
 ```json
 {
   "scheduleId": "guid",
-  "seatId": "A1"
+  "seatId": "A1",
+  "clientId": "seat-client-uuid"
 }
 ```
 
@@ -125,71 +127,77 @@ sequenceDiagram
 }
 ```
 
-### GET /api/v1/booking/seats/events/{scheduleId}
+### GET /api/v1/booking/seats/ws/{scheduleId}
 
-Endpoint SSE (text/event-stream). Mở kết nối dài. Không yêu cầu xác thực.
+Endpoint WebSocket. Mở kết nối bền vững dài. Không yêu cầu xác thực.
 
 **Hỗ trợ:**
-- Tự động kết nối lại qua `Last-Event-ID`
-- Heartbeat mỗi 15 giây (`: heartbeat`)
+- Query parameter `clientId` để nhận diện client khi kết nối lại
+- Tự động dọn dẹp khi ngắt kết nối (tất cả ghế của client được giải phóng)
 
 ---
 
-## Sự kiện SSE
+## Tin nhắn WebSocket
 
-| Loại sự kiện | Khi nào gửi | Dữ liệu |
-|-------------|------------|---------|
-| `initial-state` | Client vừa kết nối | `{ event: "initial-state", lockedSeats: { "A1": "User" } }` |
-| `seat-locked` | Có người vừa khóa ghế | `{ event: "seat-locked", seatId: "A1", userName: "User", lockedSeats: {...} }` |
-| `seat-unlocked` | Có người vừa mở khóa ghế | `{ event: "seat-unlocked", seatId: "A1", lockedSeats: {...} }` |
+WebSocket gửi JSON từ **server đến client**:
+
+| Loại tin nhắn | Khi nào gửi | Dữ liệu |
+|--------------|-------------|---------|
+| `initial-state` | Client vừa kết nối | `{ type: "initial-state", lockedSeats: { "a1": "User" } }` |
+| `seat-locked` | Ai đó khóa ghế | `{ type: "seat-locked", data: { seatId: "A1", userName: "User", lockedSeats: {...} } }` |
+| `seat-unlocked` | Ai đó giải phóng ghế | `{ type: "seat-unlocked", data: { seatId: "A1", lockedSeats: {...} } }` |
+| `seat-released` | Cleanup khi client ngắt kết nối | `{ type: "seat-released", data: { seatId: "A1", lockedSeats: {...} } }` |
 
 ---
 
-## Dọn dẹp tự động
+## Tự động dọn dẹp
 
 | Tình huống | Xử lý | Cơ chế |
-|-----------|-------|--------|
-| **Không thanh toán sau 10 phút** | Order Pending tự hủy, ghế được release | Hangfire recurring job (chạy mỗi 5 phút) |
-| **Đóng tab trình duyệt** | Tất cả ghế của client đó được release | SSE ngắt kết nối → `ReleaseSeatsByClient()` |
-| **Server restart** | Mất toàn bộ lock trong RAM → client kết nối lại | `EventSource` tự động reconnect → nhận state mới nhất |
+|------------|-------|--------|
+| **Không thanh toán sau 10 phút** | Đơn hàng Pending bị hủy, ghế được giải phóng | Hangfire recurring job (chạy mỗi 5 phút) |
+| **Đóng tab trình duyệt** | Tất cả ghế của client đó được release | WebSocket disconnect → `RemoveConnection()` + `ReleaseSeatsByClient()` |
+| **Server restart** | Toàn bộ lock trong memory mất → client kết nối lại | Client phát hiện `onclose` → có thể tự động kết nối lại |
 
 ---
 
-## Các thành phần kỹ thuật chính
+## Các thành phần chính
 
-| Thành phần | Vị trí | Vai trò |
+| Component | Vị trí | Vai trò |
 |-----------|--------|---------|
-| `SeatSseManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Quản lý lock ghế + subscriber SSE |
-| `BookingController` | `Cinema.Api/Controllers/Customer/Booking/` | API endpoints lock/unlock/events |
-| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Cầu nối giữa Hangfire job và `SeatSseManager` |
-| `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Tự động hủy order Pending > 10 phút |
-| `useSeatSse` hook | `apps/frontend/src/hooks/` | React hook cho SSE + lock/unlock |
+| `SeatWsManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Quản lý lock ghế + WebSocket subscriber (`ConcurrentDictionary<string, ConcurrentDictionary<string, WebSocket>>`) |
+| `SeatLockManager` | `Cinema.Infrastructure/ExternalServices/Notifications/` | Quản lý trạng thái khóa ghế nguyên tử (`ConcurrentDictionary<string, LockEntry>`) |
+| `BookingController.GetSeatWebSocket` | `Cinema.Api/Controllers/Customer/Booking/` | WebSocket accept + trạng thái ban đầu + vòng đọc |
+| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Cầu nối giữa Hangfire job và `SeatWsManager` |
+| `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Tự động hủy đơn hàng Pending > 10 phút |
+| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook cho WebSocket + lock/unlock API |
 
-### Tích hợp Frontend
+### Frontend Integration (React)
 
-Hook `useSeatSse` cung cấp mọi thứ bạn cần:
+Hook `useSeatWs` cung cấp mọi thứ bạn cần:
 
 ```typescript
-import { useSeatSse } from '../../hooks/useSeatSse';
+import { useSeatWs } from '../../hooks/useSeatWs';
 
 function SeatMap({ scheduleId }: { scheduleId: string }) {
-  const { lockedSeats, lockSeat, unlockSeat, isConnected } = useSeatSse(scheduleId);
+  const { lockedSeats, lockSeat, unlockSeat, isConnected } = useSeatWs(scheduleId);
   
-  // lockedSeats: Record<string, string> — { "A1": "UserName", ... }
+  // lockedSeats: Record<string, string> — { "a1": "UserName", ... }
   // lockSeat(seatId, userName) → Promise<boolean>
   // unlockSeat(seatId) → Promise<boolean>
-  // isConnected: boolean — trạng thái kết nối SSE
+  // isConnected: boolean — trạng thái kết nối WebSocket
 }
 ```
+
+**Lưu ý:** Hook chuẩn hóa tất cả seatId về lowercase để so khóa nhất quán.
 
 ---
 
 ## Xử lý lỗi
 
-| Tình huống | Cách xử lý |
-|-----------|-----------|
-| **Mất mạng** | SSE tự động kết nối lại (trình duyệt xử lý sẵn) |
-| **Server restart** | Mất toàn bộ lock; client reconnect → nhận state mới nhất qua `initial-state` |
-| **2 người lock cùng lúc** | `TryAdd` nguyên tử — chỉ 1 người thành công, người kia nhận `409 Conflict` |
-| **Mở nhiều tab** | Mỗi tab có `clientId` riêng. Lock cùng ghế từ tab khác = "người khác" |
-| **Quên tab** | Kết nối SSE timeout → server giải phóng toàn bộ ghế |
+| Tình huống | Xử lý |
+|------------|-------|
+| **Mất mạng** | WebSocket fire `onclose` → `isConnected = false`; component có thể thử kết nối lại |
+| **Server restart** | Mất hết lock; client kết nối lại nhận trạng thái mới qua `initial-state` |
+| **Race condition (2 người cùng khóa 1 ghế)** | `TryAdd` nguyên tử trong `SeatLockManager` — chỉ 1 người thành công, người kia nhận `409 Conflict` |
+| **Mở nhiều tab** | Mỗi tab có `clientId` riêng. Khóa cùng ghế từ tab khác được tính là "người khác" |
+| **Quên tab (idle)** | Kết nối WebSocket timeout → `ReceiveAsync` throw → cleanup giải phóng toàn bộ ghế |
