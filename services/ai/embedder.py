@@ -162,22 +162,23 @@ class MovieEmbedder:
         points: List[qdrant_models.PointStruct] = []
         for movie_id, text in movies:
             try:
+                movie_id_lower = movie_id.lower()
                 content_hash = self._content_hash(text)
-                if existing_hashes.get(movie_id) == content_hash:
-                    logger.info("Skipped unchanged movie {}", movie_id)
+                if existing_hashes.get(movie_id_lower) == content_hash:
+                    logger.info("Skipped unchanged movie {}", movie_id_lower)
                     continue
 
                 points.append(
                     qdrant_models.PointStruct(
-                        id=movie_id,
+                        id=movie_id_lower,
                         vector=self._embed_text(text),
                         payload={
-                            "movie_id": movie_id,
+                            "movie_id": movie_id_lower,
                             "content_hash": content_hash,
                         },
                     )
                 )
-                logger.info("Embedded movie {}", movie_id)
+                logger.info("Embedded movie {}", movie_id_lower)
             except Exception as exc:
                 logger.error("Failed to embed movie {}: {}", movie_id, exc)
 
@@ -200,16 +201,17 @@ class MovieEmbedder:
         self._ensure_ready()
 
         existing_hashes = self._load_existing_hashes()
-        active_ids = {movie_id for movie_id, _ in movies}
+        active_ids = {movie_id.lower() for movie_id, _ in movies}
         to_embed: List[Tuple[str, str]] = []
         skipped_count = 0
 
         for movie_id, text in movies:
+            movie_id_lower = movie_id.lower()
             content_hash = self._content_hash(text)
-            if existing_hashes.get(movie_id) == content_hash:
+            if existing_hashes.get(movie_id_lower) == content_hash:
                 skipped_count += 1
                 continue
-            to_embed.append((movie_id, text))
+            to_embed.append((movie_id_lower, text))
 
         embedded_count = self.embed_movies(to_embed) if to_embed else 0
 
@@ -219,20 +221,21 @@ class MovieEmbedder:
         return embedded_count, deleted_count, skipped_count
 
     def delete_movie(self, movie_id: str) -> bool:
-        return self.delete_movies([movie_id]) > 0
+        return self.delete_movies([movie_id.lower()]) > 0
 
     def delete_movies(self, movie_ids: List[str]) -> int:
         self._ensure_ready()
         if not movie_ids:
             return 0
 
+        lower_ids = [m.lower() for m in movie_ids]
         self.client.delete(
             collection_name=self.collection_name,
             wait=True,
-            points_selector=qdrant_models.PointIdsList(points=movie_ids),
+            points_selector=qdrant_models.PointIdsList(points=lower_ids),
         )
-        logger.info("Deleted {} movie vectors from Qdrant", len(movie_ids))
-        return len(movie_ids)
+        logger.info("Deleted {} movie vectors from Qdrant", len(lower_ids))
+        return len(lower_ids)
 
     def search(self, user_text: str, top_k: int = 5) -> List[Tuple[str, float]]:
         self._ensure_ready()
@@ -250,7 +253,7 @@ class MovieEmbedder:
 
         return [
             (
-                str(point.payload.get("movie_id", point.id) if point.payload else point.id),
+                str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower()),
                 float(1.0 - point.score),
             )
             for point in search_result
@@ -271,7 +274,7 @@ class MovieEmbedder:
 
             for point in points:
                 payload = point.payload or {}
-                movie_id = str(payload.get("movie_id", point.id))
+                movie_id = str(payload.get("movie_id", point.id)).lower()
                 content_hash = payload.get("content_hash")
                 hashes[movie_id] = str(content_hash) if content_hash else ""
 

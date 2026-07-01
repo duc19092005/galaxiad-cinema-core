@@ -163,7 +163,7 @@ public class RecommendationRepository : IRecommendationRepository
     {
         var now = DateTime.UtcNow;
         return await _dbContext.Set<MovieInfoEntity>()
-            .Where(m => movieIds.Contains(m.MovieId) && !m.IsDeleted && m.ActiveAt <= now && now <= m.EndedDate)
+            .Where(m => movieIds.Contains(m.MovieId) && !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && m.ActiveAt <= now && now <= m.EndedDate)
             .Select(m => new RecommendedMovieRes
             {
                 MovieId = m.MovieId,
@@ -192,6 +192,7 @@ public class RecommendationRepository : IRecommendationRepository
         var now = DateTime.UtcNow;
         var movies = await _dbContext.Set<MovieInfoEntity>()
             .Where(m => !m.IsDeleted
+                        && (m.IsActive || m.IsCommingSoon)
                         && m.ActiveAt <= now
                         && now <= m.EndedDate
                         && !excludedIds.Contains(m.MovieId))

@@ -291,14 +291,34 @@ Return JSON exactly like:
 @app.post("/classify-intent", response_model=ClassifyIntentResponse)
 async def classify_intent(request: ClassifyIntentRequest):
     """Classify user message into predefined Cinema intents and extract variables."""
-    today_str = datetime.now().strftime("%Y-%m-%d")
+    from datetime import date, timedelta
+    today = date.today()
+    today_str = today.strftime("%Y-%m-%d")
+    # Compute this-week range (Monday–Sunday)
+    week_start = today - timedelta(days=today.weekday())  # Monday
+    week_end = week_start + timedelta(days=6)             # Sunday
+    next_week_start = week_start + timedelta(days=7)
+    next_week_end = next_week_start + timedelta(days=6)
+    weekend_start = week_start + timedelta(days=5)        # Saturday
+    weekend_end = week_end                                 # Sunday
+
     system_prompt = f"""You are an intent classifier for Galaxiad Cinema chatbot.
 Return only one valid JSON object. Do not explain.
+
+Today is {today_str}. Use this to resolve relative dates:
+- "hôm nay" / "today" → date = "{today_str}"
+- "ngày mai" / "tomorrow" → date = "{(today + timedelta(days=1)).strftime('%Y-%m-%d')}"
+- "tuần này" / "this week" / "trong tuần" → fromDate = "{week_start.strftime('%Y-%m-%d')}", toDate = "{week_end.strftime('%Y-%m-%d')}"
+- "tuần sau" / "next week" → fromDate = "{next_week_start.strftime('%Y-%m-%d')}", toDate = "{next_week_end.strftime('%Y-%m-%d')}"
+- "cuối tuần" / "weekend" → fromDate = "{weekend_start.strftime('%Y-%m-%d')}", toDate = "{weekend_end.strftime('%Y-%m-%d')}"
+- Specific date like "ngày 7 tháng 3" → parse it as the nearest future occurrence: date = that date in yyyy-MM-dd format.
 
 Supported intents:
 1. "GetMovies": customer asks for movies, now showing, coming soon, or movie discovery.
 2. "GetShowtimes": customer asks for showtimes, schedules, screening dates, cinema, city, or movie schedule.
-   Parameters: movieId, cinemaId, date, city.
+   Parameters: movieId, cinemaId, date (single day), fromDate, toDate (date range), city.
+   IMPORTANT: If the user asks about a week or date range, set fromDate + toDate and leave date empty.
+   If the user asks about a specific single day, set date and leave fromDate/toDate empty.
 3. "GetMyBookings": logged-in customer asks for purchased tickets, booking history, or their transactions.
 4. "GetCinemaStatistics": manager/admin asks for cinema reports, revenue, tickets sold, active users, or active movies.
 5. "GetShowtimeRecommendations": TheaterManager/Admin asks AI to suggest showtimes, prime-time slots, hot movies to schedule, or weekend schedule plans.

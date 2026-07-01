@@ -1711,6 +1711,7 @@
     "noShift": "No shifts",
     "cancelRegistration": "Cancel registration",
     "mySchedule": "My schedule",
+    "canceledSchedule": "Canceled Schedule",
     "selectMultipleToCancel": "Select multiple shifts to cancel",
     "selectedCount": "Selected: {{count}}",
     "selectAll": "Select all",

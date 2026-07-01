@@ -56,11 +56,14 @@ public class SearchMoviesSemanticTool : IChatTool
         // Step 2: Fetch từ DB theo danh sách ID từ Qdrant
         var movies = await _catalogRepo.GetMoviesByIdsAsync(orderedIds);
 
-        // Step 3: Áp dụng filter theo status nếu có
+        // Baseline filter: Chỉ hiển thị phim chưa xóa, đang hoạt động hoặc sắp chiếu, và chưa hết hạn chiếu
         var now = DateTime.UtcNow;
+        movies = movies.Where(m => !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && now <= m.EndedDate).ToList();
+
+        // Step 3: Áp dụng filter theo status nếu có
         movies = status?.ToLower() switch
         {
-            "now_showing"  => movies.Where(m => !m.IsCommingSoon && m.EndedDate >= now).ToList(),
+            "now_showing"  => movies.Where(m => !m.IsCommingSoon && m.ActiveAt <= now).ToList(),
             "coming_soon"  => movies.Where(m => m.IsCommingSoon || now < m.ActiveAt).ToList(),
             _              => movies
         };

@@ -1781,6 +1781,7 @@
     "noShift": "Нет смен",
     "cancelRegistration": "Отменить регистрацию",
     "mySchedule": "Мой график",
+    "canceledSchedule": "Отмененное расписание",
     "selectMultipleToCancel": "Выбрать несколько смен для отмены",
     "selectedCount": "Выбрано: {{count}}",
     "selectAll": "Выбрать все",
