@@ -237,27 +237,103 @@ class MovieEmbedder:
         logger.info("Deleted {} movie vectors from Qdrant", len(lower_ids))
         return len(lower_ids)
 
-    def search(self, user_text: str, top_k: int = 5) -> List[Tuple[str, float]]:
+    def search(self, user_text: str, top_k: int = 5, exclude_ids: list[str] | None = None) -> List[Tuple[str, float]]:
         self._ensure_ready()
         if self.movie_count == 0:
             logger.warning("No movies embedded yet")
             return []
 
         query_vector = self._embed_text(user_text)
+
+        exclude = exclude_ids or []
         search_result = self.client.query_points(
             collection_name=self.collection_name,
             query=query_vector,
-            limit=top_k,
+            limit=top_k + len(exclude),  # fetch extra to account for excludes
             with_payload=True,
         ).points
 
-        return [
-            (
-                str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower()),
-                float(1.0 - point.score),
-            )
-            for point in search_result
-        ]
+        results: List[Tuple[str, float]] = []
+        exclude_lower = [e.lower() for e in exclude]
+        for point in search_result:
+            movie_id = str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower())
+            if movie_id in exclude_lower:
+                continue
+            # Qdrant score = cosine similarity (1 = identical, 0 = orthogonal)
+            similarity = float(point.score)
+            results.append((movie_id, similarity))
+            if len(results) >= top_k:
+                break
+
+        return results
+
+    def search_by_id(self, movie_id: str, top_k: int = 5, exclude_ids: list[str] | None = None) -> List[Tuple[str, float]]:
+        """
+        Find movies similar to a given movie by using its OWN vector from Qdrant.
+        This is the CORRECT way to do movie-to-movie similarity — no manual mapping needed.
+
+        Flow:
+        1. Fetch the movie's point (with vector) from Qdrant by movie_id
+        2. Use that vector as query to find nearest neighbors
+        3. Return top-k results (excluding the source movie_id)
+        """
+        self._ensure_ready()
+        if self.movie_count == 0:
+            logger.warning("No movies embedded yet")
+            return []
+
+        movie_id_lower = movie_id.lower()
+
+        # Step 1: Fetch the movie's point with its vector
+        points, _ = self.client.scroll(
+            collection_name=self.collection_name,
+            limit=1,
+            with_payload=False,
+            with_vectors=True,
+            scroll_filter=qdrant_models.Filter(
+                must=[
+                    qdrant_models.FieldCondition(
+                        key="movie_id",
+                        match=qdrant_models.MatchValue(value=movie_id_lower),
+                    )
+                ]
+            ),
+        )
+
+        if not points or len(points) == 0:
+            logger.warning(f"Movie {movie_id_lower} not found in Qdrant")
+            return []
+
+        movie_vector = points[0].vector
+        if not movie_vector:
+            logger.warning(f"Movie {movie_id_lower} has no vector in Qdrant")
+            return []
+
+        # Step 2: Use the movie's own vector to find similar movies
+        exclude = [movie_id_lower]
+        if exclude_ids:
+            exclude.extend([e.lower() for e in exclude_ids])
+        exclude = list(set(exclude))
+
+        search_result = self.client.query_points(
+            collection_name=self.collection_name,
+            query=movie_vector,
+            limit=top_k + len(exclude),  # fetch extra to account for excludes
+            with_payload=True,
+        ).points
+
+        results: List[Tuple[str, float]] = []
+        for point in search_result:
+            point_id = str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower())
+            if point_id in exclude:
+                continue
+            # Qdrant score = cosine similarity (1 = identical, 0 = orthogonal)
+            similarity = float(point.score)
+            results.append((point_id, similarity))
+            if len(results) >= top_k:
+                break
+
+        return results
 
     def _load_existing_hashes(self) -> Dict[str, str]:
         hashes: Dict[str, str] = {}

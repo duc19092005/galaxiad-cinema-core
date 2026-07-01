@@ -1,6 +1,6 @@
 # Chatbot AI
 
-> Trợ lý ảo thông minh tích hợp Claude Opus, hỗ trợ tư vấn phim và tra cứu thông tin.
+> Trợ lý ảo thông minh tích hợp DeepSeek Chat, hỗ trợ tư vấn phim và tra cứu thông tin.
 
 ## Tổng quan
 
@@ -60,13 +60,13 @@ Intent Classifier (phân loại mục đích) →
   - "cinema_stats" → SQL query thống kê
   - "audit_log" → Admin only SQL query
   - "faq" → FAQ lookup
-  - "general" → Claude Opus trực tiếp
+  - "general" → DeepSeek Chat trực tiếp
 → Tool Registry (kiểm tra quyền role) →
   - Guest: chỉ browse movies
   - Customer: browse movies + booking
   - Manager: schedule + stats
   - Admin: full access
-→ LLM Response (Claude Opus) → Format → SSE stream → Frontend
+→ LLM Response (DeepSeek Chat) → Format → SSE stream → Frontend
 ```
 
 ### Domain Entities
@@ -87,6 +87,6 @@ Intent Classifier (phân loại mục đích) →
 > Chatbot sử dụng **SSE** (Server-Sent Events) cho streaming response, **không phải WebSocket**.
 
 > [!NOTE]
-> - LLM (Claude Opus) **không bao giờ trực tiếp tạo lịch chiếu**
+> - LLM (DeepSeek Chat) **không bao giờ trực tiếp tạo lịch chiếu**
 > - Backend sở hữu: authorization, SQL execution, vector search, data trimming, scope filtering
 > - LLM chỉ: classify intent, viết explanation

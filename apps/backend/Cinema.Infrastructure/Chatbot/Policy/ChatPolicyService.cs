@@ -27,6 +27,7 @@ public class ChatPolicyService : IChatPolicyService
             case ChatbotConstants.Intents.GetCinemaLocations:
             case ChatbotConstants.Intents.GetAvailableSeats:
             case ChatbotConstants.Intents.SearchMoviesSemantic:
+            case ChatbotConstants.Intents.GetTrendingMovies:
                 return Task.FromResult(true);
 
             // Phải đăng nhập

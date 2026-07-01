@@ -9,7 +9,9 @@ namespace Cinema.Application.Interfaces.Chatbot;
 /// </summary>
 public interface IAiSemanticSearchClient
 {
-    Task<List<AiMovieScore>> RecommendAsync(string queryText, int topK = 10);
+    Task<List<AiMovieScore>> RecommendAsync(string queryText, int topK = 10, List<string>? excludeIds = null);
+
+    Task<List<AiMovieScore>> RecommendByIdAsync(string movieId, int topK = 5, List<string>? excludeIds = null);
 }
 
 public record AiMovieScore(string MovieId, double Distance);

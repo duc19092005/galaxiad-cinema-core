@@ -12,23 +12,31 @@ When **you** select a seat on the screen, the system immediately tells **everyon
 
 ---
 
-## Technical Architecture: Raw WebSocket + HTTP POST
+## Technical Architecture: SignalR Hub
 
-We chose **raw WebSocket** over SignalR. Here's why:
+We chose **SignalR** for all real-time communication. It provides a unified bidirectional channel with automatic reconnection, group management, and transport fallback.
 
-- **WebSocket** is a bidirectional persistent connection between server and client. The server pushes real-time seat state changes without the client asking repeatedly.
-- **HTTP POST** is used for client → server actions (lock/unlock a seat). The WebSocket connection primarily handles **server → client** broadcasts (state change notifications).
-- **In-memory storage:** Lock data is stored in the server's RAM (`ConcurrentDictionary`), not in a database. If the server restarts, locks are lost — but this is acceptable because locks only last a maximum of 10 minutes. When clients reconnect, they receive the latest state.
+### Why SignalR?
 
-### Why raw WebSocket instead of SignalR?
+| Aspect | SignalR (Selected) | Raw WebSocket (Previous) |
+|--------|-------------------|--------------------------|
+| Reconnect | ✅ Built-in (`withAutomaticReconnect`) | ❌ Manual implementation |
+| Group management | ✅ Built-in (`Groups.AddToGroupAsync`) | ❌ Manual `ConcurrentDictionary` |
+| Transport | WebSocket + SSE + Long Polling (auto-fallback) | WebSocket only |
+| Scaling (multi-instance) | ✅ Redis Backplane support | ❌ Requires custom solution |
+| Client library | ✅ `@microsoft/signalr` (npm) | ❌ Native WebSocket API |
+| Hub negotiation | ✅ Automatic protocol negotiation | ❌ N/A |
+| **Our use case** | **Unified Hub for seats, payment, and group booking** | Was simpler but missing reconnect/group features |
 
-| Aspect | Raw WebSocket + HTTP POST | SignalR |
-|--------|---------------------------|---------|
-| Complexity | Minimal — uses `System.Net.WebSockets` directly | Higher — hub negotiation, protocol abstraction |
-| Dependency | No extra NuGet package | Requires `Microsoft.AspNetCore.SignalR` |
-| Bidirectional | Yes (we only use server→client) | Yes (built-in) |
-| Transport fallback | None (WebSocket only) | Auto-fallback to SSE, long polling |
-| **Our choice** | ✅ **Selected** | ❌ Avoided for simplicity |
+### Three Channel Types
+
+The system uses a single **unified Hub** (`/hubs/cinema`) with query-based routing:
+
+| Channel | `groupType` | Purpose |
+|---------|-------------|---------|
+| **Seats** | `seats` | Real-time seat state broadcast per `scheduleId` |
+| **Payment** | `payment` | Payment result notification per `orderId` |
+| **Group** | `group` | Group booking state/vote/chat broadcast per `groupSessionId` |
 
 ---
 
@@ -42,28 +50,28 @@ sequenceDiagram
 
     Note over A: Opens seat selection page
 
-    A->>Server: WebSocket connect /seats/ws/{scheduleId}
+    A->>Server: SignalR connect /hubs/cinema<br/>?groupType=seats&scheduleId=...
     Server-->>A: { type: "initial-state", lockedSeats: {...} }
     
     Note over A: Customer A selects seat A1
 
-    A->>Server: POST /seats/lock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/lock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: LockSeat() → memory
     Server-->>A: 200 OK { success: true, lockedSeats }
-    Server-->>B: WebSocket message: { type: "seat-locked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-locked": { seatId: "A1", userName: "User A" }
     
     Note over B: Seat A1 now shown as RED (locked)
 
-    A->>Server: POST /seats/unlock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/unlock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: UnlockSeat() → memory
     Server-->>A: 200 OK
-    Server-->>B: WebSocket message: { type: "seat-unlocked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-unlocked": { seatId: "A1" }
     
     Note over B: Seat A1 now shown as AVAILABLE again
     
-    Note over A: Customer A closes tab → WebSocket disconnect
+    Note over A: Customer A closes tab → SignalR disconnect
     Server->>Server: Auto-release all seats held by client
-    Server-->>B: WebSocket message: { type: "seat-released", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-released": { seatId: "A1" }
 ```
 
 ---
@@ -74,8 +82,7 @@ sequenceDiagram
 |--------|----------|-------------|
 | `POST` | `/api/v1/booking/seats/lock` | Lock a seat temporarily |
 | `POST` | `/api/v1/booking/seats/unlock` | Release a locked seat |
-| `GET` | `/api/v1/booking/seats/ws/{scheduleId}` | WebSocket endpoint — receive real-time updates (no auth required) |
-| `GET` | `/api/v1/booking/seats/state/{scheduleId}` | HTTP fallback — get current locked state (for polling or initial load) |
+| `GET` | `/hubs/cinema` | **SignalR Hub** — real-time updates (query params: `groupType=seats&scheduleId=...`) |
 
 ### POST /api/v1/booking/seats/lock
 
@@ -127,26 +134,33 @@ sequenceDiagram
 }
 ```
 
-### GET /api/v1/booking/seats/ws/{scheduleId}
+### SignalR Hub at `/hubs/cinema`
 
-This is a raw WebSocket endpoint. Opens a long-lived persistent connection. No authentication required.
+The Hub replaces the old raw WebSocket endpoint (`GET /seats/ws/{scheduleId}`, which is now **removed**).
 
-**Supports:**
+**Connection:**
+```
+/hubs/cinema?groupType=seats&scheduleId={scheduleId}&clientId={clientId}
+```
+
+**Features:**
+- Built-in automatic reconnection (retry delays: 0s, 2s, 5s, 10s, 30s)
+- No authentication required for seat connections
 - `clientId` query parameter for identifying the client across reconnects
-- Automatic cleanup on disconnect (all seats held by the client are released)
+- Automatic cleanup on disconnect: all seats held by the client are released
 
 ---
 
-## WebSocket Messages
+## SignalR Events (Server → Client)
 
-The WebSocket sends JSON messages **from server to client**:
+| Event Name | When It Fires | Data |
+|------------|--------------|------|
+| `initial-state` | Client first connects | `{ lockedSeats: { "a1": "User" } }` |
+| `seat-locked` | Someone locked a seat | `{ seatId: "A1", userName: "User", lockedSeats: {...} }` |
+| `seat-unlocked` | Someone released a seat | `{ seatId: "A1", lockedSeats: {...} }` |
+| `seat-released` | Client disconnect cleanup | `{ seatId: "A1", lockedSeats: {...} }` |
 
-| Message Type | When It Fires | Data |
-|-------------|--------------|------|
-| `initial-state` | Client first connects | `{ type: "initial-state", lockedSeats: { "A1": "User" } }` |
-| `seat-locked` | Someone locked a seat | `{ type: "seat-locked", data: { seatId: "A1", userName: "User", lockedSeats: {...} } }` |
-| `seat-unlocked` | Someone released a seat | `{ type: "seat-unlocked", data: { seatId: "A1", lockedSeats: {...} } }` |
-| `seat-released` | Client disconnect cleanup | `{ type: "seat-released", data: { seatId: "A1", lockedSeats: {...} } }` |
+> **Note:** Unlike raw WebSocket which wrapped all messages in a `{ type: "...", data: ... }` envelope, SignalR events are **named events** (`connection.on('seat-locked', ...)`). The event name IS the type.
 
 ---
 
@@ -155,8 +169,8 @@ The WebSocket sends JSON messages **from server to client**:
 | Situation | What Happens | Mechanism |
 |-----------|-------------|-----------|
 | **No payment in 10 min** | Pending order auto-cancelled, seats released | Hangfire recurring job (runs every 5 min) |
-| **Client tab closes** | All seats held by that client released | WebSocket disconnect → `RemoveConnection()` + `ReleaseSeatsByClient()` |
-| **Server restart** | All in-memory locks lost → clients reconnect | Clients detect disconnect via `onclose` → browser can auto-reconnect |
+| **Client tab closes** | All seats held by that client released | SignalR `OnDisconnectedAsync` → `ReleaseSeatsByClient()` |
+| **Server restart** | Clients auto-reconnect via SignalR built-in retry | SignalR client detects disconnect → retry with backoff |
 
 ---
 
@@ -164,16 +178,18 @@ The WebSocket sends JSON messages **from server to client**:
 
 | Component | Location | Role |
 |-----------|----------|------|
-| `SeatWsManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | In-memory seat lock state + WebSocket subscriber management (`ConcurrentDictionary<string, ConcurrentDictionary<string, WebSocket>>`) |
+| `CinemaHub` (Hub) | `Cinema.Api/Hubs/` | **Single unified SignalR Hub** — handles seat/payment/group connections, `OnConnectedAsync` routing, `OnDisconnectedAsync` cleanup |
+| `SignalRSeatBroadcaster` | `Cinema.Api/Hubs/` | SignalR implementation of `ISeatBroadcaster` — broadcasts seat events to a SignalR group (`seats-{scheduleId}`) |
+| `SignalRGroupBroadcaster` | `Cinema.Api/Hubs/` | SignalR implementation of `IGroupBroadcaster` — broadcasts group events to a SignalR group (`group-{groupSessionId}`) |
 | `SeatLockManager` | `Cinema.Infrastructure/ExternalServices/Notifications/` | Atomic seat lock state management (`ConcurrentDictionary<string, LockEntry>`) |
-| `BookingController.GetSeatWebSocket` | `Cinema.Api/Controllers/Customer/Booking/` | WebSocket accept + initial state + read loop |
-| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Bridge between Hangfire job and `SeatWsManager` |
+| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Bridge between Hangfire background job and SignalR broadcasters |
 | `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Auto-cancels orders > 10 min pending |
-| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook wrapping WebSocket + lock/unlock API |
+| `signalrClient` factory | `apps/frontend/src/api/signalrClient.ts` | Creates `HubConnection` instances for seats, payment, and group channels |
+| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook wrapping SignalR + lock/unlock API |
 
 ### Frontend Integration (React)
 
-The `useSeatWs` hook provides everything you need:
+The `useSeatWs` hook uses `@microsoft/signalr` under the hood:
 
 ```typescript
 import { useSeatWs } from '../../hooks/useSeatWs';
@@ -184,7 +200,7 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
   // lockedSeats: Record<string, string> — { "a1": "UserName", ... }
   // lockSeat(seatId, userName) → Promise<boolean>
   // unlockSeat(seatId) → Promise<boolean>
-  // isConnected: boolean — WebSocket connection status
+  // isConnected: boolean — SignalR connection status
 }
 ```
 
@@ -196,8 +212,8 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
 
 | Scenario | Behavior |
 |----------|----------|
-| **Network loss** | WebSocket fires `onclose` → `isConnected` becomes `false`; component can attempt reconnect |
-| **Server restart** | All locks lost; clients reconnect and get fresh state via `initial-state` message |
+| **Network loss** | SignalR fires `onreconnecting` → `isConnected` becomes `false`; auto-reconnect retries (0s, 2s, 5s, 10s, 30s) |
+| **Server restart** | SignalR fails to reconnect → `onclose` fires; `useSeatWs` cleanup releases all client's seats via HTTP unlock |
 | **Race condition (2 users lock same seat)** | Atomic `TryAdd` in `SeatLockManager` — only 1 succeeds, the other gets `409 Conflict` |
 | **User opens multiple tabs** | Each tab has its own `clientId`. Locking the same seat from different tabs counts as "another user" |
-| **Tab forgotten (idle)** | WebSocket connection times out → server `ReceiveAsync` throws → cleanup releases all seats for that client |
+| **Tab forgotten (idle)** | SignalR connection times out → `OnDisconnectedAsync` → cleanup releases all seats for that client |

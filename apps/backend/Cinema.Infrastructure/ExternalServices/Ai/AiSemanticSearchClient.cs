@@ -28,13 +28,13 @@ public class AiSemanticSearchClient : IAiSemanticSearchClient
         _logger        = logger;
     }
 
-    public async Task<List<AiMovieScore>> RecommendAsync(string queryText, int topK = 10)
+    public async Task<List<AiMovieScore>> RecommendAsync(string queryText, int topK = 10, List<string>? excludeIds = null)
     {
         var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
 
         try
         {
-            var payload = new RecommendRequest { UserText = queryText, TopK = topK };
+            var payload = new RecommendRequest { UserText = queryText, TopK = topK, ExcludeIds = excludeIds };
             var content = new StringContent(
                 JsonSerializer.Serialize(payload),
                 Encoding.UTF8,
@@ -63,6 +63,41 @@ public class AiSemanticSearchClient : IAiSemanticSearchClient
         }
     }
 
+    public async Task<List<AiMovieScore>> RecommendByIdAsync(string movieId, int topK = 5, List<string>? excludeIds = null)
+    {
+        var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
+
+        try
+        {
+            var payload = new RecommendByIdRequest { MovieId = movieId, TopK = topK, ExcludeIds = excludeIds };
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            using var response = await HttpClient.PostAsync($"{aiServiceUrl}/recommend-by-id", content);
+            response.EnsureSuccessStatusCode();
+
+            var responseText = await response.Content.ReadAsStringAsync();
+            var result = JsonSerializer.Deserialize<RecommendResponse>(
+                responseText,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            if (result?.Results == null || result.Results.Count == 0)
+                return [];
+
+            return result.Results
+                .Select(r => new AiMovieScore(r.MovieId, r.Distance))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to call Python AI service /recommend-by-id. Returning empty results.");
+            return [];
+        }
+    }
+
     private sealed class RecommendRequest
     {
         [JsonPropertyName("user_text")]
@@ -70,6 +105,21 @@ public class AiSemanticSearchClient : IAiSemanticSearchClient
 
         [JsonPropertyName("top_k")]
         public int TopK { get; init; } = 10;
+
+        [JsonPropertyName("exclude_ids")]
+        public List<string>? ExcludeIds { get; init; }
+    }
+
+    private sealed class RecommendByIdRequest
+    {
+        [JsonPropertyName("movie_id")]
+        public string MovieId { get; init; } = string.Empty;
+
+        [JsonPropertyName("top_k")]
+        public int TopK { get; init; } = 5;
+
+        [JsonPropertyName("exclude_ids")]
+        public List<string>? ExcludeIds { get; init; }
     }
 
     private sealed class RecommendResponse

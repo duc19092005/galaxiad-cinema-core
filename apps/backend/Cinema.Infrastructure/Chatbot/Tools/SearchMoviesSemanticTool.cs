@@ -1,17 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Catalog;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 
 namespace Cinema.Infrastructure.Chatbot.Tools;
 
@@ -40,27 +35,56 @@ public class SearchMoviesSemanticTool : IChatTool
             return JsonSerializer.Serialize(new { Error = "Không hiểu yêu cầu tìm kiếm. Bạn có thể mô tả rõ hơn không?" });
         }
 
-        // Step 1: Semantic search qua Python AI Service /recommend (Qdrant cosine similarity)
-        var semanticResults = await _aiSearchClient.RecommendAsync(semanticQuery, topK: 10);
+        // ==========================================================
+        // TWO-STEP EMBEDDING APPROACH
+        // ==========================================================
+        // Step 1: Text query → tìm phim user đang nhắc đến (e.g. "BatMan" → "The Batman")
+        // Step 2: Dùng vector của phim đó → tìm phim thực sự giống về nội dung
+        // ==========================================================
 
-        if (semanticResults.Count == 0)
+        // Step 1: Text-based search — find the referenced movie
+        var step1Results = await _aiSearchClient.RecommendAsync(semanticQuery, topK: 3);
+
+        if (step1Results.Count == 0)
         {
             return JsonSerializer.Serialize(new { Message = Messages.Chatbot.NoMatchingMovies });
         }
 
-        var orderedIds = semanticResults
+        // Take the top result as the movie user is referencing
+        var referencedMovieId = step1Results[0].MovieId;
+        var referencedDistance = step1Results[0].Distance;
+
+        // Step 2: Vector-to-vector search — find movies truly similar to the referenced movie
+        // Exclude the referenced movie itself from results
+        var step2Results = await _aiSearchClient.RecommendByIdAsync(referencedMovieId, topK: 5);
+
+        if (step2Results.Count == 0)
+        {
+            // Fallback: các phim khác từ step 1 (trừ chính nó)
+            var fallbackMovies = step1Results
+                .Skip(1)  // bỏ phim đầu (referenced movie)
+                .Select(r => new AiMovieScore(r.MovieId, r.Distance))
+                .ToList();
+
+            if (fallbackMovies.Count == 0)
+                return JsonSerializer.Serialize(new { Message = Messages.Chatbot.NoMatchingMovies });
+
+            step2Results = fallbackMovies;
+        }
+
+        // Fetch movie details from DB
+        var allIds = step2Results
             .Select(r => Guid.TryParse(r.MovieId, out var id) ? id : Guid.Empty)
             .Where(id => id != Guid.Empty)
             .ToList();
 
-        // Step 2: Fetch từ DB theo danh sách ID từ Qdrant
-        var movies = await _catalogRepo.GetMoviesByIdsAsync(orderedIds);
+        var movies = await _catalogRepo.GetMoviesByIdsAsync(allIds);
 
-        // Baseline filter: Chỉ hiển thị phim chưa xóa, đang hoạt động hoặc sắp chiếu, và chưa hết hạn chiếu
+        // Filter: chỉ hiển thị phim chưa xóa, đang hoạt động hoặc sắp chiếu, chưa hết hạn
         var now = DateTime.UtcNow;
         movies = movies.Where(m => !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && now <= m.EndedDate).ToList();
 
-        // Step 3: Áp dụng filter theo status nếu có
+        // Filter theo status nếu có
         movies = status?.ToLower() switch
         {
             "now_showing"  => movies.Where(m => !m.IsCommingSoon && m.ActiveAt <= now).ToList(),
@@ -73,13 +97,13 @@ public class SearchMoviesSemanticTool : IChatTool
             return JsonSerializer.Serialize(new { Message = Messages.Chatbot.NoMoviesFound });
         }
 
-        // Step 4: Giữ thứ tự similarity từ Qdrant (distance nhỏ = tương đồng cao hơn)
-        var scoreMap = semanticResults.ToDictionary(
+        // Giữ thứ tự similarity từ Qdrant
+        var scoreMap = step2Results.ToDictionary(
             r => r.MovieId,
             r => r.Distance);
 
         var sortedMovies = movies
-            .OrderBy(m => scoreMap.GetValueOrDefault(m.MovieId.ToString(), 1.0))
+            .OrderByDescending(m => scoreMap.GetValueOrDefault(m.MovieId.ToString(), 0.0))
             .Take(5)
             .ToList();
 
@@ -93,7 +117,7 @@ public class SearchMoviesSemanticTool : IChatTool
                               .ToList(),
             IsNowShowing   = !m.IsCommingSoon && m.EndedDate >= now,
             IsComingSoon   = m.IsCommingSoon,
-            SimilarityPct  = (int)Math.Round((1.0 - scoreMap.GetValueOrDefault(m.MovieId.ToString(), 1.0)) * 100)
+            SimilarityPct  = (int)Math.Round(scoreMap.GetValueOrDefault(m.MovieId.ToString(), 0.0) * 100)
         }));
     }
 }

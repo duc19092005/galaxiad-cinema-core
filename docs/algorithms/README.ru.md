@@ -14,7 +14,7 @@
 | Чат-бот с ролевым доступом | [role-aware-chatbot.md](en/role-aware-chatbot.md) | [role-aware-chatbot.md](vi/role-aware-chatbot.md) | [role-aware-chatbot.md](ru/role-aware-chatbot.md) |
 | Стратегия кэширования Redis | [redis-cache-strategy.md](en/redis-cache-strategy.md) | [redis-cache-strategy.md](vi/redis-cache-strategy.md) | [redis-cache-strategy.md](ru/redis-cache-strategy.md) |
 | Правила составления смен | [shift-schedule-rules.md](en/shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
-| **Блокировка мест Real-time (WebSocket)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
+| **Блокировка мест Real-time (SignalR)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
 
 ## AI Showtime Planner
 

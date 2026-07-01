@@ -12,23 +12,30 @@ Khi **bạn** chọn một ghế trên màn hình, hệ thống ngay lập tức
 
 ---
 
-## Kiến trúc kỹ thuật: Raw WebSocket + HTTP POST
+## Kiến trúc kỹ thuật: SignalR Hub
 
-Chúng tôi chọn **raw WebSocket** thay vì SignalR. Lý do:
+Chúng tôi chọn **SignalR** cho toàn bộ giao tiếp real-time. Nó cung cấp kênh hai chiều thống nhất với tự động kết nối lại, quản lý nhóm và fallback transport.
 
-- **WebSocket** là kết nối bền vững hai chiều giữa server và client. Server đẩy thông tin trạng thái ghế real-time mà client không cần hỏi đi hỏi lại.
-- **HTTP POST** — dùng cho hành động client → server (khóa/mở khóa ghế). Kết nối WebSocket chủ yếu xử lý **server → client** broadcast (thông báo thay đổi trạng thái).
-- **Lưu trong bộ nhớ RAM (in-memory):** Dữ liệu khóa ghế được lưu trong `ConcurrentDictionary` trên RAM của server, không phải database. Nếu server khởi động lại, các khóa bị mất — nhưng điều này chấp nhận được vì khóa chỉ tồn tại tối đa 10 phút. Khi client kết nối lại, chúng nhận được trạng thái mới nhất.
+### Tại sao SignalR?
 
-### Tại sao raw WebSocket thay vì SignalR?
+| Tiêu chí | SignalR (Đã chọn) | Raw WebSocket (Trước đây) |
+|----------|-------------------|---------------------------|
+| Tự động reconnect | ✅ Built-in (`withAutomaticReconnect`) | ❌ Phải tự code |
+| Quản lý group | ✅ Built-in (`Groups.AddToGroupAsync`) | ❌ Phải tự `ConcurrentDictionary` |
+| Transport | WebSocket + SSE + Long Polling (tự động fallback) | Chỉ WebSocket |
+| Scale nhiều instance | ✅ Hỗ trợ Redis Backplane | ❌ Phải tự xử lý |
+| Client library | ✅ `@microsoft/signalr` (npm) | ❌ Native WebSocket API |
+| **Use case của chúng tôi** | **Hub thống nhất cho ghế, thanh toán, nhóm** | Đơn giản hơn nhưng thiếu reconnect/group |
 
-| Tiêu chí | Raw WebSocket + HTTP POST | SignalR |
-|----------|---------------------------|---------|
-| Độ phức tạp | Tối thiểu — dùng `System.Net.WebSockets` trực tiếp | Cao hơn — đàm phán Hub, lớp trừu tượng giao thức |
-| Phụ thuộc | Không cần NuGet package thêm | Yêu cầu `Microsoft.AspNetCore.SignalR` |
-| Hai chiều | Có (chúng tôi chỉ dùng server→client) | Có (built-in) |
-| Fallback transport | Không (chỉ WebSocket) | Tự động fallback xuống SSE, long polling |
-| **Lựa chọn của chúng tôi** | ✅ **Đã chọn** | ❌ Không dùng |
+### Ba kênh kết nối
+
+Hệ thống dùng một **Hub duy nhất** (`/hubs/cinema`) với routing dựa trên query param:
+
+| Kênh | `groupType` | Mục đích |
+|------|-------------|----------|
+| **Ghế** | `seats` | Broadcast trạng thái ghế real-time theo `scheduleId` |
+| **Thanh toán** | `payment` | Thông báo kết quả thanh toán theo `orderId` |
+| **Nhóm** | `group` | Broadcast trạng thái nhóm/vote/chat theo `groupSessionId` |
 
 ---
 
@@ -42,28 +49,28 @@ sequenceDiagram
 
     Note over A: Mở trang chọn ghế
 
-    A->>Server: WebSocket connect /seats/ws/{scheduleId}
+    A->>Server: SignalR connect /hubs/cinema<br/>?groupType=seats&scheduleId=...
     Server-->>A: { type: "initial-state", lockedSeats: {...} }
     
     Note over A: Khách A chọn ghế A1
 
-    A->>Server: POST /seats/lock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/lock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: LockSeat() → memory
     Server-->>A: 200 OK { success: true, lockedSeats }
-    Server-->>B: WebSocket message: { type: "seat-locked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-locked": { seatId: "A1", userName: "User A" }
     
     Note over B: Ghế A1 hiện màu ĐỎ (đã khóa)
 
-    A->>Server: POST /seats/unlock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/unlock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: UnlockSeat() → memory
     Server-->>A: 200 OK
-    Server-->>B: WebSocket message: { type: "seat-unlocked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-unlocked": { seatId: "A1" }
     
     Note over B: Ghế A1 hiện CÓ SẴN trở lại
     
-    Note over A: Khách A đóng tab → WebSocket disconnect
+    Note over A: Khách A đóng tab → SignalR disconnect
     Server->>Server: Tự động giải phóng ghế của client
-    Server-->>B: WebSocket message: { type: "seat-released", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-released": { seatId: "A1" }
 ```
 
 ---
@@ -74,8 +81,7 @@ sequenceDiagram
 |--------|----------|-------|
 | `POST` | `/api/v1/booking/seats/lock` | Khóa ghế tạm thời |
 | `POST` | `/api/v1/booking/seats/unlock` | Giải phóng ghế đã khóa |
-| `GET` | `/api/v1/booking/seats/ws/{scheduleId}` | WebSocket endpoint — nhận cập nhật real-time (không cần đăng nhập) |
-| `GET` | `/api/v1/booking/seats/state/{scheduleId}` | HTTP fallback — lấy trạng thái khóa hiện tại |
+| `GET` | `/hubs/cinema` | **SignalR Hub** — cập nhật real-time (query: `groupType=seats&scheduleId=...`) |
 
 ### POST /api/v1/booking/seats/lock
 
@@ -127,26 +133,33 @@ sequenceDiagram
 }
 ```
 
-### GET /api/v1/booking/seats/ws/{scheduleId}
+### SignalR Hub tại `/hubs/cinema`
 
-Endpoint WebSocket. Mở kết nối bền vững dài. Không yêu cầu xác thực.
+Hub thay thế endpoint raw WebSocket cũ (`GET /seats/ws/{scheduleId}`, đã bị **xoá**).
 
-**Hỗ trợ:**
-- Query parameter `clientId` để nhận diện client khi kết nối lại
-- Tự động dọn dẹp khi ngắt kết nối (tất cả ghế của client được giải phóng)
+**Kết nối:**
+```
+/hubs/cinema?groupType=seats&scheduleId={scheduleId}&clientId={clientId}
+```
+
+**Tính năng:**
+- Tự động kết nối lại (retry: 0s, 2s, 5s, 10s, 30s)
+- Không cần xác thực cho kết nối ghế
+- `clientId` để nhận diện client khi kết nối lại
+- Tự động dọn dẹp khi ngắt kết nối
 
 ---
 
-## Tin nhắn WebSocket
+## SignalR Events (Server → Client)
 
-WebSocket gửi JSON từ **server đến client**:
+| Event Name | Khi nào gửi | Dữ liệu |
+|------------|-------------|---------|
+| `initial-state` | Client vừa kết nối | `{ lockedSeats: { "a1": "User" } }` |
+| `seat-locked` | Ai đó khóa ghế | `{ seatId: "A1", userName: "User", lockedSeats: {...} }` |
+| `seat-unlocked` | Ai đó giải phóng ghế | `{ seatId: "A1", lockedSeats: {...} }` |
+| `seat-released` | Cleanup khi client ngắt kết nối | `{ seatId: "A1", lockedSeats: {...} }` |
 
-| Loại tin nhắn | Khi nào gửi | Dữ liệu |
-|--------------|-------------|---------|
-| `initial-state` | Client vừa kết nối | `{ type: "initial-state", lockedSeats: { "a1": "User" } }` |
-| `seat-locked` | Ai đó khóa ghế | `{ type: "seat-locked", data: { seatId: "A1", userName: "User", lockedSeats: {...} } }` |
-| `seat-unlocked` | Ai đó giải phóng ghế | `{ type: "seat-unlocked", data: { seatId: "A1", lockedSeats: {...} } }` |
-| `seat-released` | Cleanup khi client ngắt kết nối | `{ type: "seat-released", data: { seatId: "A1", lockedSeats: {...} } }` |
+> **Note:** Khác với raw WebSocket (bọc trong `{ type, data }`), SignalR dùng **named events** — tên event chính là type.
 
 ---
 
@@ -155,8 +168,8 @@ WebSocket gửi JSON từ **server đến client**:
 | Tình huống | Xử lý | Cơ chế |
 |------------|-------|--------|
 | **Không thanh toán sau 10 phút** | Đơn hàng Pending bị hủy, ghế được giải phóng | Hangfire recurring job (chạy mỗi 5 phút) |
-| **Đóng tab trình duyệt** | Tất cả ghế của client đó được release | WebSocket disconnect → `RemoveConnection()` + `ReleaseSeatsByClient()` |
-| **Server restart** | Toàn bộ lock trong memory mất → client kết nối lại | Client phát hiện `onclose` → có thể tự động kết nối lại |
+| **Đóng tab trình duyệt** | Tất cả ghế của client đó được release | SignalR `OnDisconnectedAsync` → `ReleaseSeatsByClient()` |
+| **Server restart** | Client tự động kết nối lại | SignalR client retry với backoff |
 
 ---
 
@@ -164,16 +177,18 @@ WebSocket gửi JSON từ **server đến client**:
 
 | Component | Vị trí | Vai trò |
 |-----------|--------|---------|
-| `SeatWsManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Quản lý lock ghế + WebSocket subscriber (`ConcurrentDictionary<string, ConcurrentDictionary<string, WebSocket>>`) |
+| `CinemaHub` (Hub) | `Cinema.Api/Hubs/` | **SignalR Hub duy nhất** — xử lý seat/payment/group connections, `OnConnectedAsync`, `OnDisconnectedAsync` |
+| `SignalRSeatBroadcaster` | `Cinema.Api/Hubs/` | Implement `ISeatBroadcaster` — broadcast sự kiện ghế tới SignalR group (`seats-{scheduleId}`) |
+| `SignalRGroupBroadcaster` | `Cinema.Api/Hubs/` | Implement `IGroupBroadcaster` — broadcast sự kiện nhóm tới SignalR group (`group-{groupSessionId}`) |
 | `SeatLockManager` | `Cinema.Infrastructure/ExternalServices/Notifications/` | Quản lý trạng thái khóa ghế nguyên tử (`ConcurrentDictionary<string, LockEntry>`) |
-| `BookingController.GetSeatWebSocket` | `Cinema.Api/Controllers/Customer/Booking/` | WebSocket accept + trạng thái ban đầu + vòng đọc |
-| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Cầu nối giữa Hangfire job và `SeatWsManager` |
+| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Cầu nối giữa Hangfire job và SignalR broadcasters |
 | `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Tự động hủy đơn hàng Pending > 10 phút |
-| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook cho WebSocket + lock/unlock API |
+| `signalrClient` factory | `apps/frontend/src/api/signalrClient.ts` | Tạo `HubConnection` cho seats/payment/group |
+| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook bọc SignalR + lock/unlock API |
 
 ### Frontend Integration (React)
 
-Hook `useSeatWs` cung cấp mọi thứ bạn cần:
+Hook `useSeatWs` dùng `@microsoft/signalr` bên dưới:
 
 ```typescript
 import { useSeatWs } from '../../hooks/useSeatWs';
@@ -184,7 +199,7 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
   // lockedSeats: Record<string, string> — { "a1": "UserName", ... }
   // lockSeat(seatId, userName) → Promise<boolean>
   // unlockSeat(seatId) → Promise<boolean>
-  // isConnected: boolean — trạng thái kết nối WebSocket
+  // isConnected: boolean — trạng thái SignalR connection
 }
 ```
 
@@ -196,8 +211,8 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
 
 | Tình huống | Xử lý |
 |------------|-------|
-| **Mất mạng** | WebSocket fire `onclose` → `isConnected = false`; component có thể thử kết nối lại |
-| **Server restart** | Mất hết lock; client kết nối lại nhận trạng thái mới qua `initial-state` |
+| **Mất mạng** | SignalR fire `onreconnecting` → `isConnected = false`; tự động retry (0s, 2s, 5s, 10s, 30s) |
+| **Server restart** | SignalR retry thất bại → `onclose`; hook giải phóng ghế của client qua HTTP unlock |
 | **Race condition (2 người cùng khóa 1 ghế)** | `TryAdd` nguyên tử trong `SeatLockManager` — chỉ 1 người thành công, người kia nhận `409 Conflict` |
 | **Mở nhiều tab** | Mỗi tab có `clientId` riêng. Khóa cùng ghế từ tab khác được tính là "người khác" |
-| **Quên tab (idle)** | Kết nối WebSocket timeout → `ReceiveAsync` throw → cleanup giải phóng toàn bộ ghế |
+| **Quên tab (idle)** | SignalR connection timeout → `OnDisconnectedAsync` → cleanup giải phóng toàn bộ ghế |

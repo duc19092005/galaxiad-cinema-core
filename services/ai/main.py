@@ -12,7 +12,7 @@ from datetime import datetime
 from config import HOST, PORT, GOOGLE_API_KEY, EMBEDDING_MODEL, DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
 from models import (
     EmbedMoviesRequest, EmbedMoviesResponse,
-    RecommendRequest, RecommendResponse, MovieScore,
+    RecommendRequest, RecommendByIdRequest, RecommendResponse, MovieScore,
     HealthResponse, ClassifyIntentRequest, ClassifyIntentResponse,
     ChatLlmRequest, ChatLlmResponse, ModerationRequest, ModerationResponse,
     GuardRequest, GuardResponse
@@ -136,13 +136,12 @@ async def sync_movies(request: EmbedMoviesRequest):
 async def recommend(request: RecommendRequest):
     """
     Given user preference text, find top-k most similar movies.
-    Uses L2-normalized Euclidean distance search.
+    Uses cosine similarity via Qdrant vector search.
 
     Flow:
     1. Embed user_text using Google Gemini
-    2. L2 normalize the vector
-    3. Compute Euclidean distance to all movie vectors
-    4. Return top-k closest movies (smallest distance = most similar)
+    2. Search Qdrant for nearest neighbors (cosine similarity)
+    3. Return top-k closest movies (higher score = more similar)
     """
     if embedder.movie_count == 0:
         logger.warning("No movies embedded yet. Returning empty results.")
@@ -154,7 +153,7 @@ async def recommend(request: RecommendRequest):
     logger.info(f"Finding top {request.top_k} movies for: {request.user_text[:80]}...")
 
     try:
-        results = embedder.search(request.user_text, top_k=request.top_k)
+        results = embedder.search(request.user_text, top_k=request.top_k, exclude_ids=request.exclude_ids)
         movie_scores = [
             MovieScore(movie_id=movie_id, distance=distance)
             for movie_id, distance in results
@@ -164,6 +163,46 @@ async def recommend(request: RecommendRequest):
     except Exception as e:
         logger.error(f"Error during recommendation: {e}")
         raise HTTPException(status_code=500, detail=f"Recommendation failed: {str(e)}")
+
+
+@app.post("/recommend-by-id", response_model=RecommendResponse)
+async def recommend_by_id(request: RecommendByIdRequest):
+    """
+    Find movies similar to a given movie by using its OWN vector from Qdrant.
+    This is the CORRECT way to do 'find similar movies' — no manual mapping needed.
+
+    Flow:
+    1. Look up the movie's vector in Qdrant by movie_id
+    2. Use that vector as query to find nearest neighbors
+    3. Return top-k similar movies (excluding the original movie_id)
+    """
+    if embedder.movie_count == 0:
+        logger.warning("No movies embedded yet. Returning empty results.")
+        return RecommendResponse(results=[])
+
+    if not request.movie_id:
+        raise HTTPException(status_code=400, detail="movie_id is required")
+
+    movie_id_lower = request.movie_id.lower()
+    logger.info(f"Finding movies similar to movie_id={movie_id_lower}, top_k={request.top_k}")
+
+    try:
+        # Build exclude list — always exclude the source movie itself
+        exclude = [movie_id_lower]
+        if request.exclude_ids:
+            exclude.extend([e.lower() for e in request.exclude_ids])
+        exclude = list(set(exclude))
+
+        results = embedder.search_by_id(movie_id_lower, top_k=request.top_k, exclude_ids=exclude)
+        movie_scores = [
+            MovieScore(movie_id=movie_id, distance=distance)
+            for movie_id, distance in results
+        ]
+        logger.info(f"Returning {len(movie_scores)} movies similar to {movie_id_lower}")
+        return RecommendResponse(results=movie_scores)
+    except Exception as e:
+        logger.error(f"Error during recommend-by-id: {e}")
+        raise HTTPException(status_code=500, detail=f"Recommend by ID failed: {str(e)}")
 
 
 async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float = 0.2) -> str:
@@ -317,8 +356,9 @@ Supported intents:
 1. "GetMovies": customer asks for movies, now showing, coming soon, or movie discovery.
 2. "GetShowtimes": customer asks for showtimes, schedules, screening dates, cinema, city, or movie schedule.
    Parameters: movieId, cinemaId, date (single day), fromDate, toDate (date range), city.
-   IMPORTANT: If the user asks about a week or date range, set fromDate + toDate and leave date empty.
-   If the user asks about a specific single day, set date and leave fromDate/toDate empty.
+   ⚠️ CRITICAL: date and (fromDate+toDate) are MUTUALLY EXCLUSIVE. Never set both.
+   - Week/range query → set fromDate + toDate, leave date = ""
+   - Single day query → set date, leave fromDate = "" and toDate = ""
 3. "GetMyBookings": logged-in customer asks for purchased tickets, booking history, or their transactions.
 4. "GetCinemaStatistics": manager/admin asks for cinema reports, revenue, tickets sold, active users, or active movies.
 5. "GetShowtimeRecommendations": TheaterManager/Admin asks AI to suggest showtimes, prime-time slots, hot movies to schedule, or weekend schedule plans.
@@ -337,14 +377,18 @@ Supported intents:
 12. "SearchMoviesSemantic": customer asks to find movies by theme, content, emotion, or description — NOT by a specific genre label.
     Examples: "phim ve vu tru", "phim buon ve gia dinh", "phim hanh dong dinh cao".
     Parameters: semantic_query (rephrase the user request in more descriptive terms), status ("now_showing"|"coming_soon"|"" for all).
+13. "GetTrendingMovies": customer asks for trending, popular, hot, top, or most-watched movies. Based on real booking and view data.
+    Parameters: days (default 30), take (default 10).
 
-Return JSON exactly like:
+📌 EXAMPLES of correct JSON output:
+
+Example 1 — Single day: "có suất chiếu phim Joker ngày mai không?"
 {{
-  "Intent": "GetMovies",
+  "Intent": "GetShowtimes",
   "Parameters": {{
-    "movieId": "",
+    "movieId": "joker-movie-id",
     "cinemaId": "",
-    "date": "{today_str}",
+    "date": "{(today + timedelta(days=1)).strftime('%Y-%m-%d')}",
     "fromDate": "",
     "toDate": "",
     "auditoriumId": "",
@@ -358,6 +402,74 @@ Return JSON exactly like:
     "status": ""
   }}
 }}
+
+Example 2 — Week range: "suất chiếu tuần này"
+{{
+  "Intent": "GetShowtimes",
+  "Parameters": {{
+    "movieId": "",
+    "cinemaId": "",
+    "date": "",
+    "fromDate": "{week_start.strftime('%Y-%m-%d')}",
+    "toDate": "{week_end.strftime('%Y-%m-%d')}",
+    "auditoriumId": "",
+    "maxSuggestions": "",
+    "city": "",
+    "limit": "",
+    "bookingCode": "",
+    "movieName": "",
+    "time": "",
+    "semantic_query": "",
+    "status": ""
+  }}
+}}
+
+Example 3 — Movie discovery: "cho tôi xem phim gì đó về tình cảm gia đình"
+{{
+  "Intent": "SearchMoviesSemantic",
+  "Parameters": {{
+    "movieId": "",
+    "cinemaId": "",
+    "date": "",
+    "fromDate": "",
+    "toDate": "",
+    "auditoriumId": "",
+    "maxSuggestions": "",
+    "city": "",
+    "limit": "",
+    "bookingCode": "",
+    "movieName": "",
+    "time": "",
+    "semantic_query": "phim về tình cảm gia đình sâu sắc, cảm động",
+    "status": "now_showing"
+  }}
+}}
+
+Example 4 — Greeting: "xin chào"
+{{
+  "Intent": "GeneralFAQ",
+  "Parameters": {{
+    "movieId": "",
+    "cinemaId": "",
+    "date": "",
+    "fromDate": "",
+    "toDate": "",
+    "auditoriumId": "",
+    "maxSuggestions": "",
+    "city": "",
+    "limit": "",
+    "bookingCode": "",
+    "movieName": "",
+    "time": "",
+    "semantic_query": "",
+    "status": ""
+  }}
+}}
+
+Reminders:
+- date and (fromDate/toDate) are MUTUALLY EXCLUSIVE. Never set both at the same time.
+- The default value for ALL fields is "" (empty string).
+- If the intent does not need date info (GeneralFAQ, GetPromotions, etc.), leave ALL date fields empty.
 Use yyyy-MM-dd for date/fromDate/toDate. Leave unknown parameters as empty strings.
 """
 
@@ -384,7 +496,8 @@ Use yyyy-MM-dd for date/fromDate/toDate. Leave unknown parameters as empty strin
             "GetSystemAuditLogs", "GeneralFAQ",
             # New intents
             "GetPromotions", "GetBookingStatus", "GetCinemaLocations",
-            "GetAvailableSeats", "SearchMoviesSemantic"
+            "GetAvailableSeats", "SearchMoviesSemantic",
+            "GetTrendingMovies"
         }
         if intent not in valid_intents:
             intent = "GeneralFAQ"

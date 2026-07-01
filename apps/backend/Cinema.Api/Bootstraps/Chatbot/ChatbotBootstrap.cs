@@ -33,6 +33,7 @@ public static class ChatbotBootstrap
         services.AddScoped<IChatTool, GetCinemaLocationsTool>();
         services.AddScoped<IChatTool, GetAvailableSeatsTool>();
         services.AddScoped<IChatTool, SearchMoviesSemanticTool>();
+        services.AddScoped<IChatTool, GetTrendingMoviesTool>();
 
         // AI Semantic Search Client (for SearchMoviesSemanticTool → Python /recommend)
         services.AddScoped<IAiSemanticSearchClient, AiSemanticSearchClient>();

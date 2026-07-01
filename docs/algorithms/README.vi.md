@@ -14,7 +14,7 @@ Thư mục này mô tả các thuật toán sản phẩm và thuật toán kỹ 
 | Chatbot theo vai trò | [role-aware-chatbot.md](en/role-aware-chatbot.md) | [role-aware-chatbot.md](vi/role-aware-chatbot.md) | [role-aware-chatbot.md](ru/role-aware-chatbot.md) |
 | Chiến lược Redis Cache | [redis-cache-strategy.md](en/redis-cache-strategy.md) | [redis-cache-strategy.md](vi/redis-cache-strategy.md) | [redis-cache-strategy.md](ru/redis-cache-strategy.md) |
 | Quy tắc xếp lịch ca làm | [shift-schedule-rules.md](en/shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
-| **Khóa ghế Real-time (WebSocket)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
+| **Khóa ghế Real-time (SignalR)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
 
 ## AI Showtime Planner
 

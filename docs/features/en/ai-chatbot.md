@@ -1,6 +1,6 @@
 # AI Chatbot
 
-> Intelligent virtual assistant integrated with Claude Opus. Global component on all pages.
+> Intelligent virtual assistant integrated with DeepSeek Chat. Global component on all pages.
 
 ## Overview
 
@@ -47,13 +47,13 @@ Intent Classifier →
   - "cinema_stats" → SQL stats query
   - "audit_log" → Admin-only SQL query
   - "faq" → FAQ lookup
-  - "general" → Claude Opus directly
+  - "general" → DeepSeek Chat directly
 → Tool Registry (check role permissions) →
   - Guest: browse movies only
   - Customer: movies + booking
   - Manager: schedules + stats
   - Admin: full access
-→ LLM Response (Claude Opus) → Format → SSE stream → Frontend
+→ LLM Response (DeepSeek Chat) → Format → SSE stream → Frontend
 ```
 
 ### Domain Entities
@@ -72,4 +72,4 @@ Intent Classifier →
 > Uses **SSE** (Server-Sent Events) for streaming — **NOT WebSocket**.
 
 > [!NOTE]
-> LLM (Claude Opus) **never directly creates showtime schedules**. Backend owns: authorization, SQL execution, vector search, data trimming, scope filtering. LLM only: classify intent, write explanation.
+> LLM (DeepSeek Chat) **never directly creates showtime schedules**. Backend owns: authorization, SQL execution, vector search, data trimming, scope filtering. LLM only: classify intent, write explanation.

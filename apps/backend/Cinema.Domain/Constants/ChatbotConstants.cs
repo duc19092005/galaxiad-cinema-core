@@ -17,5 +17,6 @@ public static class ChatbotConstants
         public const string GetCinemaLocations   = "GetCinemaLocations";
         public const string GetAvailableSeats    = "GetAvailableSeats";
         public const string SearchMoviesSemantic = "SearchMoviesSemantic";
+        public const string GetTrendingMovies    = "GetTrendingMovies";
     }
 }

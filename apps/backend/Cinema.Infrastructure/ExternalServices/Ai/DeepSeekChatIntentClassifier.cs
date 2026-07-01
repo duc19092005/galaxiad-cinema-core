@@ -66,6 +66,7 @@ public class DeepSeekChatIntentClassifier : IChatIntentClassifier
                 ChatbotConstants.Intents.GetCinemaLocations,
                 ChatbotConstants.Intents.GetAvailableSeats,
                 ChatbotConstants.Intents.SearchMoviesSemantic,
+                ChatbotConstants.Intents.GetTrendingMovies,
             };
 
             if (!validIntents.Contains(intent))

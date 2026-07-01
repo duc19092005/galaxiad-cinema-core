@@ -22,6 +22,13 @@ class EmbedMoviesResponse(BaseModel):
 class RecommendRequest(BaseModel):
     user_text: str  # "Người dùng thích thể loại: Hành động, Sci-Fi. Thích phim phức tạp"
     top_k: int = 5
+    exclude_ids: Optional[List[str]] = None  # Movie IDs to exclude from results
+
+
+class RecommendByIdRequest(BaseModel):
+    movie_id: str  # Find movies similar to this movie
+    top_k: int = 5
+    exclude_ids: Optional[List[str]] = None  # Additional IDs to exclude
 
 
 class MovieScore(BaseModel):

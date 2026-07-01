@@ -12,23 +12,30 @@
 
 ---
 
-## Техническая архитектура: Raw WebSocket + HTTP POST
+## Техническая архитектура: SignalR Hub
 
-Мы выбрали **raw WebSocket** вместо SignalR. Вот почему:
+Мы выбрали **SignalR** для всей коммуникации в реальном времени. Он предоставляет единый двунаправленный канал с автоматическим переподключением, управлением группами и резервными транспортами.
 
-- **WebSocket** — двустороннее постоянное соединение между сервером и клиентом. Сервер отправляет обновления состояния мест в реальном времени без повторных запросов клиента.
-- **HTTP POST** — используется для действий клиент → сервер (блокировка/разблокировка мест). WebSocket-соединение в основном обрабатывает **сервер → клиент** broadcast (уведомления об изменении состояния).
-- **Хранение в памяти:** Данные о блокировке хранятся в `ConcurrentDictionary` в оперативной памяти (RAM) сервера, а не в базе данных. Если сервер перезагружается, блокировки теряются — но это приемлемо, поскольку блокировки действуют максимум 10 минут. Когда клиенты переподключаются, они получают актуальное состояние.
+### Почему SignalR?
 
-### Почему raw WebSocket вместо SignalR?
+| Критерий | SignalR (Выбран) | Raw WebSocket (Ранее) |
+|----------|------------------|------------------------|
+| Авто-переподключение | ✅ Built-in (`withAutomaticReconnect`) | ❌ Ручная реализация |
+| Управление группами | ✅ Built-in (`Groups.AddToGroupAsync`) | ❌ Ручной `ConcurrentDictionary` |
+| Транспорт | WebSocket + SSE + Long Polling (авто-фолбэк) | Только WebSocket |
+| Масштабирование | ✅ Redis Backplane | ❌ Требует кастомного решения |
+| Клиентская библиотека | ✅ `@microsoft/signalr` (npm) | ❌ Native WebSocket API |
+| **Наш сценарий** | **Единый Hub для мест, оплаты и групп** | Был проще, но без переподключения/групп |
 
-| Критерий | Raw WebSocket + HTTP POST | SignalR |
-|----------|---------------------------|---------|
-| Сложность | Минимальная — использует `System.Net.WebSockets` напрямую | Выше — согласование Hub, слой абстракции протокола |
-| Зависимости | Не требует дополнительных NuGet пакетов | Требует `Microsoft.AspNetCore.SignalR` |
-| Двусторонность | Да (мы используем только сервер→клиент) | Да (встроено) |
-| Резервные транспорты | Нет (только WebSocket) | Авто-переключение на SSE, long polling |
-| **Наш выбор** | ✅ **Выбран** | ❌ Отклонен |
+### Три канала
+
+Система использует **один Hub** (`/hubs/cinema`) с маршрутизацией через query-параметр:
+
+| Канал | `groupType` | Назначение |
+|-------|-------------|------------|
+| **Места** | `seats` | Трансляция статуса мест по `scheduleId` |
+| **Оплата** | `payment` | Уведомление о результате оплаты по `orderId` |
+| **Группа** | `group` | Трансляция статуса группы/голосования/чата по `groupSessionId` |
 
 ---
 
@@ -42,28 +49,28 @@ sequenceDiagram
 
     Note over A: Открывает страницу выбора мест
 
-    A->>Server: WebSocket connect /seats/ws/{scheduleId}
+    A->>Server: SignalR connect /hubs/cinema<br/>?groupType=seats&scheduleId=...
     Server-->>A: { type: "initial-state", lockedSeats: {...} }
     
     Note over A: Клиент A выбирает место A1
 
-    A->>Server: POST /seats/lock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/lock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: LockSeat() → memory
     Server-->>A: 200 OK { success: true, lockedSeats }
-    Server-->>B: WebSocket message: { type: "seat-locked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-locked": { seatId: "A1", userName: "User A" }
     
     Note over B: Место A1 теперь КРАСНОЕ (заблокировано)
 
-    A->>Server: POST /seats/unlock<br/>{ scheduleId, seatId: "A1" }
+    A->>Server: POST /api/v1/booking/seats/unlock<br/>{ scheduleId, seatId: "A1" }
     Server->>Server: UnlockSeat() → memory
     Server-->>A: 200 OK
-    Server-->>B: WebSocket message: { type: "seat-unlocked", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-unlocked": { seatId: "A1" }
     
     Note over B: Место A1 теперь СВОБОДНО
     
-    Note over A: Клиент A закрывает вкладку → WebSocket disconnect
+    Note over A: Клиент A закрывает вкладку → SignalR disconnect
     Server->>Server: Авто-освобождение всех мест клиента
-    Server-->>B: WebSocket message: { type: "seat-released", data: { seatId: "A1", ... } }
+    Server-->>B: SignalR event "seat-released": { seatId: "A1" }
 ```
 
 ---
@@ -74,8 +81,7 @@ sequenceDiagram
 |--------|----------|---------|
 | `POST` | `/api/v1/booking/seats/lock` | Временно заблокировать место |
 | `POST` | `/api/v1/booking/seats/unlock` | Освободить заблокированное место |
-| `GET` | `/api/v1/booking/seats/ws/{scheduleId}` | WebSocket endpoint — получать обновления в реальном времени (без аутентификации) |
-| `GET` | `/api/v1/booking/seats/state/{scheduleId}` | HTTP fallback — получить текущее состояние блокировок |
+| `GET` | `/hubs/cinema` | **SignalR Hub** — обновления в реальном времени (query: `groupType=seats&scheduleId=...`) |
 
 ### POST /api/v1/booking/seats/lock
 
@@ -127,26 +133,33 @@ sequenceDiagram
 }
 ```
 
-### GET /api/v1/booking/seats/ws/{scheduleId}
+### SignalR Hub по адресу `/hubs/cinema`
 
-Endpoint WebSocket. Открывает долгоживущее постоянное соединение. Без аутентификации.
+Hub заменяет старый raw WebSocket endpoint (`GET /seats/ws/{scheduleId}`, который **удалён**).
 
-**Поддерживает:**
-- Параметр запроса `clientId` для идентификации клиента при переподключении
-- Автоматическая очистка при отключении (все места клиента освобождаются)
+**Подключение:**
+```
+/hubs/cinema?groupType=seats&scheduleId={scheduleId}&clientId={clientId}
+```
+
+**Возможности:**
+- Встроенное автоматическое переподключение (задержки: 0с, 2с, 5с, 10с, 30с)
+- Аутентификация не требуется для подключения мест
+- `clientId` для идентификации клиента при переподключении
+- Автоматическая очистка при отключении
 
 ---
 
-## Сообщения WebSocket
+## SignalR Events (Сервер → Клиент)
 
-WebSocket отправляет JSON **от сервера к клиенту**:
+| Event Name | Когда отправляется | Данные |
+|------------|-------------------|--------|
+| `initial-state` | Клиент только что подключился | `{ lockedSeats: { "a1": "User" } }` |
+| `seat-locked` | Кто-то заблокировал место | `{ seatId: "A1", userName: "User", lockedSeats: {...} }` |
+| `seat-unlocked` | Кто-то освободил место | `{ seatId: "A1", lockedSeats: {...} }` |
+| `seat-released` | Очистка при отключении клиента | `{ seatId: "A1", lockedSeats: {...} }` |
 
-| Тип сообщения | Когда отправляется | Данные |
-|--------------|-------------------|--------|
-| `initial-state` | Клиент только что подключился | `{ type: "initial-state", lockedSeats: { "a1": "User" } }` |
-| `seat-locked` | Кто-то заблокировал место | `{ type: "seat-locked", data: { seatId: "A1", userName: "User", lockedSeats: {...} } }` |
-| `seat-unlocked` | Кто-то освободил место | `{ type: "seat-unlocked", data: { seatId: "A1", lockedSeats: {...} } }` |
-| `seat-released` | Очистка при отключении клиента | `{ type: "seat-released", data: { seatId: "A1", lockedSeats: {...} } }` |
+> **Примечание:** В отличие от raw WebSocket (обёртка в `{ type, data }`), SignalR использует **именованные события** (`connection.on('seat-locked', ...)`). Имя события и есть тип.
 
 ---
 
@@ -155,8 +168,8 @@ WebSocket отправляет JSON **от сервера к клиенту**:
 | Ситуация | Что происходит | Механизм |
 |----------|---------------|----------|
 | **Нет оплаты через 10 мин** | Pending заказ отменяется, места освобождаются | Hangfire recurring job (каждые 5 мин) |
-| **Закрытие вкладки браузера** | Все места клиента освобождаются | WebSocket disconnect → `RemoveConnection()` + `ReleaseSeatsByClient()` |
-| **Перезагрузка сервера** | Все блокировки в памяти теряются → клиенты переподключаются | Клиент обнаруживает `onclose` → может автоматически переподключиться |
+| **Закрытие вкладки браузера** | Все места клиента освобождаются | SignalR `OnDisconnectedAsync` → `ReleaseSeatsByClient()` |
+| **Перезагрузка сервера** | Клиенты автоматически переподключаются | SignalR клиент retry с backoff |
 
 ---
 
@@ -164,16 +177,18 @@ WebSocket отправляет JSON **от сервера к клиенту**:
 
 | Компонент | Расположение | Роль |
 |-----------|-------------|------|
-| `SeatWsManager` (Singleton) | `Cinema.Infrastructure/ExternalServices/Notifications/` | Управление блокировками мест + WebSocket подписчики (`ConcurrentDictionary<string, ConcurrentDictionary<string, WebSocket>>`) |
+| `CinemaHub` (Hub) | `Cinema.Api/Hubs/` | **Единый SignalR Hub** — обработка seat/payment/group подключений, `OnConnectedAsync`, `OnDisconnectedAsync` |
+| `SignalRSeatBroadcaster` | `Cinema.Api/Hubs/` | Реализация `ISeatBroadcaster` — трансляция событий мест в SignalR группу (`seats-{scheduleId}`) |
+| `SignalRGroupBroadcaster` | `Cinema.Api/Hubs/` | Реализация `IGroupBroadcaster` — трансляция групповых событий в SignalR группу (`group-{groupSessionId}`) |
 | `SeatLockManager` | `Cinema.Infrastructure/ExternalServices/Notifications/` | Атомарное управление состоянием блокировок (`ConcurrentDictionary<string, LockEntry>`) |
-| `BookingController.GetSeatWebSocket` | `Cinema.Api/Controllers/Customer/Booking/` | WebSocket accept + начальное состояние + цикл чтения |
-| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Мост между Hangfire job и `SeatWsManager` |
+| `SeatLockerNotificationService` | `Cinema.Api/Hubs/` | Мост между Hangfire job и SignalR broadcasters |
 | `PendingOrderCancellationJob` | `Cinema.Infrastructure/BackgroundJobs/` | Авто-отмена Pending заказов > 10 мин |
-| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook для WebSocket + lock/unlock API |
+| `signalrClient` factory | `apps/frontend/src/api/signalrClient.ts` | Создание `HubConnection` для seats/payment/group |
+| `useSeatWs` hook | `apps/frontend/src/hooks/useSeatWs.ts` | React hook, оборачивающий SignalR + lock/unlock API |
 
 ### Frontend Integration (React)
 
-Хук `useSeatWs` предоставляет всё необходимое:
+Хук `useSeatWs` использует `@microsoft/signalr` внутри:
 
 ```typescript
 import { useSeatWs } from '../../hooks/useSeatWs';
@@ -184,7 +199,7 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
   // lockedSeats: Record<string, string> — { "a1": "UserName", ... }
   // lockSeat(seatId, userName) → Promise<boolean>
   // unlockSeat(seatId) → Promise<boolean>
-  // isConnected: boolean — статус WebSocket подключения
+  // isConnected: boolean — статус SignalR подключения
 }
 ```
 
@@ -196,8 +211,8 @@ function SeatMap({ scheduleId }: { scheduleId: string }) {
 
 | Сценарий | Поведение |
 |----------|----------|
-| **Потеря сети** | WebSocket вызывает `onclose` → `isConnected = false`; компонент может попытаться переподключиться |
-| **Перезагрузка сервера** | Все блокировки теряются; клиенты переподключаются и получают свежее состояние через `initial-state` |
+| **Потеря сети** | SignalR вызывает `onreconnecting` → `isConnected = false`; авто-повтор (0с, 2с, 5с, 10с, 30с) |
+| **Перезагрузка сервера** | SignalR retry не удаётся → `onclose`; хук освобождает места клиента через HTTP unlock |
 | **Race condition (2 пользователя блокируют одно место)** | Атомарный `TryAdd` в `SeatLockManager` — только 1 успевает, другой получает `409 Conflict` |
 | **Несколько вкладок** | У каждой вкладки свой `clientId`. Блокировка одного места из разных вкладок считается как "другой пользователь" |
-| **Вкладка забыта (idle)** | WebSocket соединение истекает → `ReceiveAsync` выбрасывает исключение → очистка освобождает все места клиента |
+| **Вкладка забыта (idle)** | SignalR connection timeout → `OnDisconnectedAsync` → очистка освобождает все места клиента |
