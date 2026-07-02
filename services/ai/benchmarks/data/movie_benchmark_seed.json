@@ -1,1702 +1,2839 @@
 {
-"movies": [
-{
-"movieId": "00000000-0000-0000-0000-000000000001",
-"movieName": "Báo Thù Đêm Khuya",
-"genres": ["Action", "Thriller"],
-"description": "Một cựu đặc vụ truy lùng băng đảng ác ôn đã hại gia đình mình. Những trận chiến nghẹt thở diễn ra trong bóng đêm thành phố.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Lý Hải"],
-"tags": ["revenge", "fast-paced", "dark"],
-"ageRating": "T18",
-"durationMinutes": 110,
-"communityRating": 4.5,
-"bookingCount30d": 1200,
-"viewCount30d": 4500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000002",
-"movieName": "Nợ Máu Trả Bằng Máu",
-"genres": ["Action"],
-"description": "Sát thủ giải nghệ bắt buộc phải tái xuất khi người thân duy nhất bị sát hại. Hành trình đòi lại công lý bằng nắm đấm và súng đạn.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Lý Hải", "Ngô Thanh Vân"],
-"tags": ["revenge", "justice", "brutal"],
-"ageRating": "T18",
-"durationMinutes": 105,
-"communityRating": 4.2,
-"bookingCount30d": 950,
-"viewCount30d": 3800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000003",
-"movieName": "Ranh Giới Sinh Tử",
-"genres": ["Action", "Thriller"],
-"description": "Cuộc truy đuổi nghẹt thở giữa cảnh sát hình sự và tên trùm ma túy xuyên quốc gia để trả thù cho đồng đội đã hy sinh.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Nguyễn Hồng Đăng", "Ninh Dương Lan Ngọc", "Trần Bảo Sơn"],
-"tags": ["revenge", "fast-paced", "police"],
-"ageRating": "T16",
-"durationMinutes": 115,
-"communityRating": 4.4,
-"bookingCount30d": 1500,
-"viewCount30d": 5000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000004",
-"movieName": "Kế Hoạch Sát Thủ",
-"genres": ["Action"],
-"description": "Một nữ sát thủ tìm cách thoát khỏi tổ chức phản bội mình. Lối thoát duy nhất là tiêu diệt toàn bộ kẻ đứng sau.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Ngô Thanh Vân", "Lý Hải"],
-"tags": ["revenge", "assassin", "betrayal"],
-"ageRating": "T16",
-"durationMinutes": 98,
-"communityRating": 4.0,
-"bookingCount30d": 800,
-"viewCount30d": 3200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000005",
-"movieName": "Săn Lùng Tội Phạm",
-"genres": ["Action", "Thriller"],
-"description": "Người cha điên cuồng tìm kiếm kẻ đã bắt cóc con gái mình trong vô vọng. Anh sẵn sàng lật tung cả thành phố để trả thù.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Kiều Minh Tuấn", "Nguyễn Hồng Đăng"],
-"tags": ["revenge", "family", "fast-paced"],
-"ageRating": "T16",
-"durationMinutes": 102,
-"communityRating": 4.6,
-"bookingCount30d": 1800,
-"viewCount30d": 6200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000006",
-"movieName": "Đòn Trừng Phạt Cuối",
-"genres": ["Action"],
-"description": "Kẻ phản bội phải trả giá đắt khi người anh em năm xưa quay lại đòi món nợ cũ. Những pha võ thuật đối kháng đỉnh cao và kịch tính.",
-"director": "Trần Văn Nam",
-"actors": ["Kiều Minh Tuấn", "Lý Hải", "Nguyễn Hồng Đăng"],
-"tags": ["revenge", "betrayal", "fight"],
-"ageRating": "T18",
-"durationMinutes": 112,
-"communityRating": 4.1,
-"bookingCount30d": 700,
-"viewCount30d": 2900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000007",
-"movieName": "Công Lý Khốc Liệt",
-"genres": ["Action", "Thriller"],
-"description": "Khi luật pháp bất lực, một cựu thẩm phán tự mình thực thi công lý. Hành trình săn lùng những kẻ tội phạm trốn tội trong bóng tối.",
-"director": "Phạm Minh Đức",
-"actors": ["Nguyễn Hồng Đăng", "Lý Hải", "Trần Bảo Sơn"],
-"tags": ["revenge", "justice", "vigilante"],
-"ageRating": "T18",
-"durationMinutes": 120,
-"communityRating": 4.3,
-"bookingCount30d": 1100,
-"viewCount30d": 4100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000008",
-"movieName": "Vết Thương Sâu Thẳm",
-"genres": ["Action", "Drama"],
-"description": "Một bộ phim hành động kịch tính xoay quanh nỗi đau mất mát và hành trình báo thù của một người lính biệt kích.",
-"director": "Lê Thị Lan",
-"actors": ["Trần Bảo Sơn", "Ngô Thanh Vân", "Kiều Minh Tuấn"],
-"tags": ["revenge", "dark", "military"],
-"ageRating": "T16",
-"durationMinutes": 108,
-"communityRating": 4.2,
-"bookingCount30d": 900,
-"viewCount30d": 3500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000009",
-"movieName": "Điệp Viên Hài Hước",
-"genres": ["Action", "Comedy"],
-"description": "Hành trình dở khóc dở cười của anh chàng điệp viên tập sự đi phá án phá hoại. Phim hành động đầy tiếng cười giải trí nhẹ nhàng.",
-"director": "Phạm Minh Đức",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["funny", "spy", "laugh"],
-"ageRating": "K",
-"durationMinutes": 95,
-"communityRating": 3.9,
-"bookingCount30d": 2500,
-"viewCount30d": 9000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000010",
-"movieName": "Gia Đình Đặc Nhiệm",
-"genres": ["Action", "Comedy"],
-"description": "Cả nhà cùng làm điệp viên bí mật tham gia vào nhiệm vụ bảo vệ thế giới. Sự kết hợp hoàn hảo giữa hành động gay cấn và tình cảm gia đình.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Ninh Dương Lan Ngọc", "Kiều Minh Tuấn"],
-"tags": ["family", "funny", "spy"],
-"ageRating": "P",
-"durationMinutes": 100,
-"communityRating": 4.3,
-"bookingCount30d": 3000,
-"viewCount30d": 11000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000011",
-"movieName": "Kỷ Nguyên Không Gian",
-"genres": ["Sci-Fi", "Adventure"],
-"description": "Chuyến du hành xuyên qua lỗ đen vũ trụ tìm kiếm hành tinh sống mới cho nhân loại. Đối mặt với sự cô độc giữa không gian vô tận.",
-"director": "Phạm Minh Đức",
-"actors": ["Trần Bảo Sơn", "Lý Hải", "Ngô Thanh Vân"],
-"tags": ["space", "future", "galaxy"],
-"ageRating": "P",
-"durationMinutes": 140,
-"communityRating": 4.7,
-"bookingCount30d": 2100,
-"viewCount30d": 8500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000012",
-"movieName": "Vùng Trời Vô Tận",
-"genres": ["Sci-Fi", "Adventure"],
-"description": "Đoàn thám hiểm không gian bị lạc vào một thiên hà xa xôi đầy rẫy hiểm họa bí ẩn. Hành trình tìm đường về nhà đầy gian nan.",
-"director": "Phạm Minh Đức",
-"actors": ["Nguyễn Hồng Đăng", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["space", "journey", "galaxy"],
-"ageRating": "K",
-"durationMinutes": 125,
-"communityRating": 4.3,
-"bookingCount30d": 1300,
-"viewCount30d": 5200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000013",
-"movieName": "Trạm Không Gian Bí Ẩn",
-"genres": ["Sci-Fi", "Thriller"],
-"description": "Những hiện tượng lạ kỳ liên tiếp xảy ra tại trạm vũ trụ quốc tế khiến các phi hành gia hoảng loạn. Một thế lực vô hình đang đe dọa họ.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Ngô Thanh Vân"],
-"tags": ["space", "alien", "mystery"],
-"ageRating": "T13",
-"durationMinutes": 110,
-"communityRating": 4.1,
-"bookingCount30d": 1050,
-"viewCount30d": 4100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000014",
-"movieName": "Tình Yêu Giữa Các Vì Sao",
-"genres": ["Sci-Fi", "Romance"],
-"description": "Mối tình vượt không gian và thời gian của hai phi hành gia thuộc hai thế hệ khác nhau bị kẹt trong hố sâu vũ trụ.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Nguyễn Hồng Đăng", "Trần Bảo Sơn"],
-"tags": ["space", "love", "romance"],
-"ageRating": "T13",
-"durationMinutes": 118,
-"communityRating": 4.0,
-"bookingCount30d": 850,
-"viewCount30d": 3300
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000015",
-"movieName": "Hành Tinh Lạ",
-"genres": ["Sci-Fi", "Adventure"],
-"description": "Khám phá hệ sinh thái kỳ vĩ và nguy hiểm trên một hành tinh mới được phát hiện ở rìa vũ trụ.",
-"director": "Trần Văn Nam",
-"actors": ["Lý Hải", "Kiều Minh Tuấn", "Ngô Thanh Vân"],
-"tags": ["space", "alien", "exploration"],
-"ageRating": "P",
-"durationMinutes": 122,
-"communityRating": 4.4,
-"bookingCount30d": 1400,
-"viewCount30d": 5900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000016",
-"movieName": "Vũ Trụ Bao La",
-"genres": ["Sci-Fi", "Drama"],
-"description": "Một phi hành gia cố gắng liên lạc với con gái nhỏ ở Trái Đất từ khoảng cách hàng triệu năm ánh sáng đầy xúc động.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Ninh Dương Lan Ngọc", "Trấn Thành"],
-"tags": ["space", "family", "tears"],
-"ageRating": "P",
-"durationMinutes": 135,
-"communityRating": 4.8,
-"bookingCount30d": 2500,
-"viewCount30d": 9500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000017",
-"movieName": "Kẻ Độc Hành Không Gian",
-"genres": ["Sci-Fi"],
-"description": "Một mình sống sót trên phi thuyền hỏng giữa vũ trụ bao la, người kỹ sư phải tìm mọi cách sửa chữa để sống sót trở về.",
-"director": "Lê Thị Lan",
-"actors": ["Nguyễn Hồng Đăng", "Lý Hải", "Trần Bảo Sơn"],
-"tags": ["space", "survival", "future"],
-"ageRating": "K",
-"durationMinutes": 102,
-"communityRating": 4.2,
-"bookingCount30d": 900,
-"viewCount30d": 3700
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000018",
-"movieName": "Ký Ức Đánh Mất",
-"genres": ["Sci-Fi", "Drama"],
-"description": "Trong tương lai khi ký ức có thể mua bán, một người đàn ông tìm lại tình yêu đã mất của mình qua những mảnh ký ức giả lập.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Trần Bảo Sơn"],
-"tags": ["future", "love", "cyberpunk"],
-"ageRating": "T16",
-"durationMinutes": 112,
-"communityRating": 4.3,
-"bookingCount30d": 1150,
-"viewCount30d": 4600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000019",
-"movieName": "Quái Vật Vô Hình",
-"genres": ["Sci-Fi", "Horror"],
-"description": "Sinh vật ngoài hành tinh khát máu lọt vào tàu không gian và săn lùng từng thành viên phi hành đoàn trong bóng tối kịch tính.",
-"director": "Trần Văn Nam",
-"actors": ["Ngô Thanh Vân", "Lý Hải", "Nguyễn Hồng Đăng"],
-"tags": ["space", "alien", "horror"],
-"ageRating": "T18",
-"durationMinutes": 106,
-"communityRating": 3.9,
-"bookingCount30d": 1300,
-"viewCount30d": 4900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000020",
-"movieName": "Người Máy Và Gia Đình",
-"genres": ["Sci-Fi", "Family"],
-"description": "Chú robot thông minh giúp một gia đình nhỏ vượt qua khủng hoảng tâm lý sau mất mát lớn. Câu chuyện ấm áp về tương lai.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Ninh Dương Lan Ngọc", "Kiều Minh Tuấn"],
-"tags": ["future", "family", "robot"],
-"ageRating": "P",
-"durationMinutes": 100,
-"communityRating": 4.5,
-"bookingCount30d": 2800,
-"viewCount30d": 10200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000021",
-"movieName": "Tiếng Gọi Oan Hồn",
-"genres": ["Horror"],
-"description": "Ngôi nhà cổ bị ám bởi những oan hồn từ quá khứ đòi mạng những kẻ mới đến định cư. Sự căng thẳng nghẹt thở bao trùm.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Ninh Dương Lan Ngọc", "Nguyễn Hồng Đăng", "Lý Hải"],
-"tags": ["ghost", "haunted", "supernatural"],
-"ageRating": "T18",
-"durationMinutes": 95,
-"communityRating": 4.4,
-"bookingCount30d": 1600,
-"viewCount30d": 6400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000022",
-"movieName": "Lời Nguyền Gia Tộc",
-"genres": ["Horror", "Mystery"],
-"description": "Bi kịch kinh hoàng xảy ra với một dòng họ khi lời nguyền cổ xưa trăm năm bất ngờ thức giấc. Không một ai có thể trốn thoát.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Ngô Thanh Vân", "Kiều Minh Tuấn"],
-"tags": ["curse", "haunted", "supernatural"],
-"ageRating": "T16",
-"durationMinutes": 100,
-"communityRating": 4.1,
-"bookingCount30d": 1100,
-"viewCount30d": 4300
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000023",
-"movieName": "Bóng Ma Trong Gương",
-"genres": ["Horror"],
-"description": "Một cô gái trẻ phát hiện ra chiếc gương cũ trong nhà ẩn chứa một thực thể quỷ quyệt bí ẩn luôn theo dõi tâm lý cô.",
-"director": "Trần Văn Nam",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Ngô Thanh Vân"],
-"tags": ["ghost", "supernatural", "psychological"],
-"ageRating": "T16",
-"durationMinutes": 92,
-"communityRating": 4.0,
-"bookingCount30d": 950,
-"viewCount30d": 3900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000024",
-"movieName": "Ngôi Nhà Oan Khuất",
-"genres": ["Horror"],
-"description": "Gia đình nhỏ dọn đến biệt thự vùng ven và liên tục gặp các hiện tượng siêu nhiên kỳ bí rùng rợn vào lúc nửa đêm.",
-"director": "Lê Thị Lan",
-"actors": ["Nguyễn Hồng Đăng", "Lý Hải", "Trấn Thành"],
-"tags": ["haunted", "family", "supernatural"],
-"ageRating": "T16",
-"durationMinutes": 97,
-"communityRating": 4.2,
-"bookingCount30d": 1200,
-"viewCount30d": 4800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000025",
-"movieName": "Ký Ức Kinh Hoàng",
-"genres": ["Horror", "Thriller"],
-"description": "Phim kinh dị tâm lý siêu nhiên căng thẳng, ít cảnh máu me nhưng khiến người xem ám ảnh bởi nỗi sợ vô hình tột độ.",
-"director": "Phạm Minh Đức",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Ngô Thanh Vân"],
-"tags": ["supernatural", "psychological", "tension"],
-"ageRating": "T16",
-"durationMinutes": 105,
-"communityRating": 4.5,
-"bookingCount30d": 1750,
-"viewCount30d": 7000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000026",
-"movieName": "Búp Bê Của Quỷ",
-"genres": ["Horror"],
-"description": "Món quà sinh nhật là con búp bê cổ mang theo linh hồn tà ác reo rắc nỗi kinh hoàng cho cả khu phố.",
-"director": "Phạm Minh Đức",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Lý Hải"],
-"tags": ["ghost", "curse", "supernatural"],
-"ageRating": "T16",
-"durationMinutes": 90,
-"communityRating": 3.8,
-"bookingCount30d": 800,
-"viewCount30d": 3100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000027",
-"movieName": "Nghi Lễ Hiến Tế",
-"genres": ["Horror", "Mystery"],
-"description": "Một giáo phái bí ẩn thực hiện các nghi thức siêu nhiên quỷ dị trong khu rừng hẻo lánh nhằm triệu hồi tà thần.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Lý Hải"],
-"tags": ["curse", "supernatural", "dark"],
-"ageRating": "T18",
-"durationMinutes": 108,
-"communityRating": 4.0,
-"bookingCount30d": 900,
-"viewCount30d": 3600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000028",
-"movieName": "Ma Cà Rồng Học Đường",
-"genres": ["Horror", "Comedy"],
-"description": "Những tình huống dở khóc dở cười khi một ma cà rồng chính hiệu phải trà trộn vào trường cấp ba để học tập.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["funny", "vampire", "laugh"],
-"ageRating": "T13",
-"durationMinutes": 100,
-"communityRating": 4.2,
-"bookingCount30d": 2400,
-"viewCount30d": 8900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000029",
-"movieName": "Trò Chơi Tâm Trí",
-"genres": ["Thriller", "Horror"],
-"description": "Bác sĩ tâm thần bị cuốn vào trò chơi tâm lý quỷ quyệt của một bệnh nhân hoang tưởng có khả năng ngoại cảm bí ẩn.",
-"director": "Phạm Minh Đức",
-"actors": ["Trần Bảo Sơn", "Kiều Minh Tuấn", "Ngô Thanh Vân"],
-"tags": ["psychological", "mindgame", "tension"],
-"ageRating": "T16",
-"durationMinutes": 110,
-"communityRating": 4.3,
-"bookingCount30d": 1250,
-"viewCount30d": 5100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000030",
-"movieName": "Đêm Đẫm Máu",
-"genres": ["Horror", "Thriller"],
-"description": "Tên sát nhân cuồng loạn truy sát nhóm bạn trẻ cắm trại trong rừng sâu bằng những vũ khí tàn bạo đầy máu me.",
-"director": "Trần Văn Nam",
-"actors": ["Lý Hải", "Nguyễn Hồng Đăng", "Kiều Minh Tuấn"],
-"tags": ["brutal", "slasher", "survival"],
-"ageRating": "T18",
-"durationMinutes": 94,
-"communityRating": 3.7,
-"bookingCount30d": 1400,
-"viewCount30d": 5500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000031",
-"movieName": "Nước Mắt Muộn Màng",
-"genres": ["Drama", "Romance"],
-"description": "Câu chuyện tình yêu đầy trắc trở và hy sinh của một cặp đôi trẻ vượt qua rào cản địa vị xã hội đầy xúc động.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Nguyễn Hồng Đăng", "Trấn Thành"],
-"tags": ["love", "tears", "relationship"],
-"ageRating": "T13",
-"durationMinutes": 115,
-"communityRating": 4.4,
-"bookingCount30d": 1500,
-"viewCount30d": 5800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000032",
-"movieName": "Lời Hứa Của Cha",
-"genres": ["Drama", "Family"],
-"description": "Người cha già nghèo khổ lặn lội kiếm sống để nuôi dạy đứa con bị bệnh tật bẩm sinh nên người. Lấy đi nhiều nước mắt.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["family", "tears", "relationship"],
-"ageRating": "P",
-"durationMinutes": 120,
-"communityRating": 4.9,
-"bookingCount30d": 4500,
-"viewCount30d": 18000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000033",
-"movieName": "Mái Nhà Bình Yên",
-"genres": ["Drama", "Family"],
-"description": "Sự thấu hiểu và sẻ chia giữa các thế hệ trong một gia đình truyền thống Việt Nam trước những sóng gió cuộc đời.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Lý Hải", "Ninh Dương Lan Ngọc"],
-"tags": ["family", "daily", "relationship"],
-"ageRating": "P",
-"durationMinutes": 110,
-"communityRating": 4.6,
-"bookingCount30d": 3200,
-"viewCount30d": 12500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000034",
-"movieName": "Tình Yêu Sét Đánh",
-"genres": ["Romance", "Comedy"],
-"description": "Cuộc gặp gỡ định mệnh lãng mạn và hài hước giữa cô nàng kiêu kỳ và anh chàng kiến trúc sư nghèo vui tính.",
-"director": "Phạm Minh Đức",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Trấn Thành"],
-"tags": ["love", "funny", "romance"],
-"ageRating": "T13",
-"durationMinutes": 98,
-"communityRating": 4.3,
-"bookingCount30d": 2100,
-"viewCount30d": 8000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000035",
-"movieName": "Ký Ức Mùa Hè",
-"genres": ["Romance"],
-"description": "Mối tình đầu trong trẻo và ngây ngô thời học sinh đầy hoài niệm dưới mái trường phượng vĩ đỏ rực.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Nguyễn Hồng Đăng", "Kiều Minh Tuấn"],
-"tags": ["love", "school", "youth"],
-"ageRating": "P",
-"durationMinutes": 105,
-"communityRating": 4.2,
-"bookingCount30d": 1100,
-"viewCount30d": 4200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000036",
-"movieName": "Nơi Bình Yên Nhất",
-"genres": ["Drama", "Family"],
-"description": "Hành trình trở về quê hương của đứa con xa xứ sau nhiều năm bôn ba để tìm lại tình cảm gia đình ấm áp.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Lý Hải", "Nguyễn Hồng Đăng"],
-"tags": ["family", "tears", "journey"],
-"ageRating": "P",
-"durationMinutes": 118,
-"communityRating": 4.5,
-"bookingCount30d": 1400,
-"viewCount30d": 5300
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000037",
-"movieName": "Tháng Năm Rực Rỡ",
-"genres": ["Drama", "Romance"],
-"description": "Tình bạn và tình yêu tuổi trẻ đầy nhiệt huyết của nhóm bạn thân vượt qua thăng trầm thời gian và cuộc sống.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Ngô Thanh Vân"],
-"tags": ["love", "friendship", "youth"],
-"ageRating": "T13",
-"durationMinutes": 112,
-"communityRating": 4.4,
-"bookingCount30d": 1800,
-"viewCount30d": 6900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000038",
-"movieName": "Mặt Tối Gia Đình",
-"genres": ["Drama", "Thriller"],
-"description": "Đằng sau vỏ bọc hạnh phúc của một gia đình giàu có là những âm mưu chiếm đoạt tài sản và ngoại tình ghê rợn.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Ngô Thanh Vân", "Nguyễn Hồng Đăng"],
-"tags": ["family", "betrayal", "dark"],
-"ageRating": "T16",
-"durationMinutes": 106,
-"communityRating": 4.0,
-"bookingCount30d": 850,
-"viewCount30d": 3400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000039",
-"movieName": "Hẹn Hò Giả Tạo",
-"genres": ["Romance", "Comedy"],
-"description": "Hợp đồng hôn nhân bất đắc dĩ dẫn đến những tình huống trớ trêu nhưng lại nảy sinh tình cảm thật ngọt ngào.",
-"director": "Phạm Minh Đức",
-"actors": ["Kiều Minh Tuấn", "Ninh Dương Lan Ngọc", "Lý Hải"],
-"tags": ["love", "funny", "marriage"],
-"ageRating": "T13",
-"durationMinutes": 100,
-"communityRating": 4.1,
-"bookingCount30d": 1600,
-"viewCount30d": 6100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000040",
-"movieName": "Vương Triều Sóng Gió",
-"genres": ["Drama"],
-"description": "Phim cổ trang chính kịch tái hiện những cuộc chiến tranh giành quyền lực tàn khốc chốn cung đình xưa.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn", "Ngô Thanh Vân", "Lý Hải"],
-"tags": ["history", "betrayal", "dark"],
-"ageRating": "T16",
-"durationMinutes": 130,
-"communityRating": 4.2,
-"bookingCount30d": 1000,
-"viewCount30d": 4000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000041",
-"movieName": "Hành Trình Kỳ Diệu",
-"genres": ["Animation", "Adventure"],
-"description": "Chú bé nhỏ tuổi lạc vào thế giới phép thuật huyền bí và phải tìm kiếm linh vật thần kỳ để giải cứu muông thú.",
-"director": "Phạm Minh Đức",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["magic", "journey", "kids"],
-"ageRating": "P",
-"durationMinutes": 90,
-"communityRating": 4.6,
-"bookingCount30d": 3500,
-"viewCount30d": 14000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000042",
-"movieName": "Vương Quốc Thần Tiên",
-"genres": ["Animation", "Family"],
-"description": "Chuyến phiêu lưu đầy tiếng cười và bài học ý nghĩa của hai chị em tại vùng đất của những sinh vật huyền thoại.",
-"director": "Phạm Minh Đức",
-"actors": ["Ninh Dương Lan Ngọc", "Trấn Thành", "Lý Hải"],
-"tags": ["magic", "friendship", "kids"],
-"ageRating": "P",
-"durationMinutes": 88,
-"communityRating": 4.4,
-"bookingCount30d": 2900,
-"viewCount30d": 11500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000043",
-"movieName": "Chú Chó Dũng Cảm",
-"genres": ["Animation", "Adventure"],
-"description": "Hành trình vượt ngàn dặm xa xôi của chú chó nhỏ đi tìm lại người chủ đi lạc giữa bão tuyết trắng xóa sinh tồn.",
-"director": "Lê Thị Lan",
-"actors": ["Lý Hải", "Kiều Minh Tuấn", "Nguyễn Hồng Đăng"],
-"tags": ["journey", "friendship", "animals"],
-"ageRating": "P",
-"durationMinutes": 92,
-"communityRating": 4.5,
-"bookingCount30d": 2600,
-"viewCount30d": 9800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000044",
-"movieName": "Đội Cứu Hộ Nhí",
-"genres": ["Animation", "Family"],
-"description": "Những người bạn động vật nhỏ tuổi lập đội cứu hộ để bảo vệ khu rừng xanh tươi khỏi bàn tay lâm tặc tàn phá thiên nhiên.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["journey", "animals", "kids"],
-"ageRating": "P",
-"durationMinutes": 85,
-"communityRating": 4.3,
-"bookingCount30d": 2200,
-"viewCount30d": 8700
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000045",
-"movieName": "Đảo Huyền Bí",
-"genres": ["Animation", "Adventure"],
-"description": "Bản đồ kho báu cổ dẫn dắt nhóm bạn trẻ bước vào chuyến hải trình thám hiểm hòn đảo chưa ai từng biết đến.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Lý Hải"],
-"tags": ["journey", "magic", "exploration"],
-"ageRating": "P",
-"durationMinutes": 95,
-"communityRating": 4.2,
-"bookingCount30d": 1900,
-"viewCount30d": 7500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000046",
-"movieName": "Thành Phố Tương Lai",
-"genres": ["Animation", "Sci-Fi"],
-"description": "Cậu bé thiên tài chế tạo robot cùng nhóm bạn ngăn chặn âm mưu phá hủy thành phố công nghệ cao của thế lực xấu.",
-"director": "Phạm Minh Đức",
-"actors": ["Trấn Thành", "Nguyễn Hồng Đăng", "Ngô Thanh Vân"],
-"tags": ["future", "robot", "kids"],
-"ageRating": "P",
-"durationMinutes": 96,
-"communityRating": 4.5,
-"bookingCount30d": 3100,
-"viewCount30d": 12000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000047",
-"movieName": "Giai Điệu Rừng Xanh",
-"genres": ["Animation", "Family"],
-"description": "Bộ phim hoạt hình âm nhạc ngập tràn sắc màu kể về muông thú cùng nhau tổ chức lễ hội âm nhạc lớn nhất năm.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trấn Thành", "Ninh Dương Lan Ngọc", "Kiều Minh Tuấn"],
-"tags": ["music", "animals", "funny"],
-"ageRating": "P",
-"durationMinutes": 87,
-"communityRating": 4.4,
-"bookingCount30d": 2400,
-"viewCount30d": 9100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000048",
-"movieName": "Chiến Binh Cyberpunk",
-"genres": ["Animation", "Sci-Fi"],
-"description": "Hoạt hình khoa học viễn tưởng đen tối bối cảnh tương lai xa xôi nơi con người đối đầu với AI nổi loạn.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Ngô Thanh Vân", "Nguyễn Hồng Đăng"],
-"tags": ["future", "cyberpunk", "dark"],
-"ageRating": "T16",
-"durationMinutes": 105,
-"communityRating": 4.1,
-"bookingCount30d": 1200,
-"viewCount30d": 4600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000049",
-"movieName": "Đêm Hội Ma Quái",
-"genres": ["Animation", "Horror"],
-"description": "Phim hoạt hình phong cách kinh dị rùng rợn vui nhộn dành cho trẻ em vào đêm Halloween kỳ bí và quái dị.",
-"director": "Lê Thị Lan",
-"actors": ["Kiều Minh Tuấn", "Trấn Thành", "Ninh Dương Lan Ngọc"],
-"tags": ["ghost", "funny", "kids"],
-"ageRating": "K",
-"durationMinutes": 88,
-"communityRating": 4.0,
-"bookingCount30d": 1500,
-"viewCount30d": 5400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000050",
-"movieName": "Đường Đua Rực Lửa",
-"genres": ["Animation", "Comedy"],
-"description": "Chú ốc sên mơ ước trở thành nhà vô địch đua xe tốc độ cao vượt qua mọi sự giễu cợt của đồng loại trên đường đua giải trí.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Lý Hải"],
-"tags": ["funny", "sports", "journey"],
-"ageRating": "P",
-"durationMinutes": 90,
-"communityRating": 4.3,
-"bookingCount30d": 2000,
-"viewCount30d": 7800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000051",
-"movieName": "Thám Tử Lừng Danh",
-"genres": ["Thriller", "Mystery"],
-"description": "Vụ án mạng phòng kín bí ẩn thách thức bộ óc thiên tài của vị thám tử lão luyện tìm ra manh mối hung thủ.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Nguyễn Hồng Đăng", "Trần Bảo Sơn", "Ngô Thanh Vân"],
-"tags": ["detective", "murder", "mystery"],
-"ageRating": "T16",
-"durationMinutes": 118,
-"communityRating": 4.5,
-"bookingCount30d": 1400,
-"viewCount30d": 5600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000052",
-"movieName": "Manh Mối Vô Hình",
-"genres": ["Thriller", "Drama"],
-"description": "Cảnh sát hình sự lần theo những dấu vết mong manh đấu trí để lật tẩy kẻ giết người hàng loạt giấu mặt tinh vi.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Nguyễn Hồng Đăng", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["detective", "murder", "mindgame"],
-"ageRating": "T16",
-"durationMinutes": 112,
-"communityRating": 4.3,
-"bookingCount30d": 1250,
-"viewCount30d": 4900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000053",
-"movieName": "Trò Chơi Cân Não",
-"genres": ["Thriller", "Mystery"],
-"description": "Cuộc đấu trí đỉnh cao đầy kịch tính giữa một điều tra viên xuất sắc và tên tội phạm có chỉ số IQ thiên tài.",
-"director": "Trần Văn Nam",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Lý Hải"],
-"tags": ["detective", "mindgame", "mystery"],
-"ageRating": "T16",
-"durationMinutes": 110,
-"communityRating": 4.4,
-"bookingCount30d": 1350,
-"viewCount30d": 5300
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000054",
-"movieName": "Bí Mật Sau Tội Ác",
-"genres": ["Thriller"],
-"description": "Luật sư bào chữa phát hiện ra những sự thật đen tối ẩn giấu đằng sau một vụ án mạng tưởng chừng đơn giản tại tòa án.",
-"director": "Lê Thị Lan",
-"actors": ["Kiều Minh Tuấn", "Ngô Thanh Vân", "Trần Bảo Sơn"],
-"tags": ["detective", "murder", "court"],
-"ageRating": "T16",
-"durationMinutes": 105,
-"communityRating": 4.1,
-"bookingCount30d": 900,
-"viewCount30d": 3500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000055",
-"movieName": "Nhật Ký Tội Phạm",
-"genres": ["Thriller", "Drama"],
-"description": "Cuốn nhật ký cũ hé lộ hành trình phạm tội của một kẻ sát nhân đen tối và nỗ lực điều tra phá án vô vọng của cảnh sát năm xưa.",
-"director": "Phạm Minh Đức",
-"actors": ["Trần Bảo Sơn", "Nguyễn Hồng Đăng", "Ngô Thanh Vân"],
-"tags": ["detective", "mystery", "dark"],
-"ageRating": "T16",
-"durationMinutes": 108,
-"communityRating": 4.2,
-"bookingCount30d": 980,
-"viewCount30d": 3800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000056",
-"movieName": "Nhân Chứng Mù",
-"genres": ["Thriller", "Mystery"],
-"description": "Cô gái khiếm thị là nhân chứng duy nhất của vụ tai nạn thảm khốc bị tên hung thủ điên cuồng săn lùng bịt đầu mối căng thẳng.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Trần Bảo Sơn"],
-"tags": ["detective", "survival", "tension"],
-"ageRating": "T16",
-"durationMinutes": 102,
-"communityRating": 4.5,
-"bookingCount30d": 1600,
-"viewCount30d": 6200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000057",
-"movieName": "Đấu Trí Tội Phạm",
-"genres": ["Thriller"],
-"description": "Đội đặc nhiệm hình sự phá giải các mật mã phức tạp để ngăn chặn vụ đánh bom kinh hoàng kịch tính tại trung tâm thành phố.",
-"director": "Trần Văn Nam",
-"actors": ["Nguyễn Hồng Đăng", "Lý Hải", "Kiều Minh Tuấn"],
-"tags": ["detective", "mindgame", "fast-paced"],
-"ageRating": "T16",
-"durationMinutes": 115,
-"communityRating": 4.3,
-"bookingCount30d": 1100,
-"viewCount30d": 4400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000058",
-"movieName": "Thám Tử Tập Sự",
-"genres": ["Comedy", "Thriller"],
-"description": "Hai anh chàng hậu đậu mở văn phòng thám tử tư và vô tình vướng vào một đại án hình sự xuyên quốc gia đầy hài hước giải trí.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["detective", "funny", "laugh"],
-"ageRating": "T13",
-"durationMinutes": 102,
-"communityRating": 4.4,
-"bookingCount30d": 2700,
-"viewCount30d": 9800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000059",
-"movieName": "Cảnh Sát Nằm",
-"genres": ["Action", "Thriller"],
-"description": "Chiến sĩ cảnh sát chìm thâm nhập vào băng đảng khét tiếng phải đối mặt với lựa chọn điều tra sinh tử giữa nhiệm vụ và tình nghĩa.",
-"director": "Trần Văn Nam",
-"actors": ["Lý Hải", "Trần Bảo Sơn", "Nguyễn Hồng Đăng"],
-"tags": ["detective", "police", "fight"],
-"ageRating": "T18",
-"durationMinutes": 114,
-"communityRating": 4.2,
-"bookingCount30d": 1050,
-"viewCount30d": 4100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000060",
-"movieName": "Ngoại Phạm Hoàn Hảo",
-"genres": ["Thriller", "Drama"],
-"description": "Một người chồng dàn dựng chứng cứ ngoại phạm hoàn hảo bằng các trò chơi tâm trí sau khi trừng trị kẻ phá hoại gia đình mình.",
-"director": "Lê Thị Lan",
-"actors": ["Nguyễn Hồng Đăng", "Ngô Thanh Vân", "Kiều Minh Tuấn"],
-"tags": ["mindgame", "murder", "dark"],
-"ageRating": "T16",
-"durationMinutes": 108,
-"communityRating": 4.1,
-"bookingCount30d": 870,
-"viewCount30d": 3300
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000061",
-"movieName": "Hành Tinh Xanh",
-"genres": ["Documentary"],
-"description": "Thước phim tư liệu chân thực và sống động về cuộc sống hoang dã của muông thú thiên nhiên khắp các đại dương và rừng sâu.",
-"director": "Phạm Minh Đức",
-"actors": ["Trấn Thành"],
-"tags": ["nature", "animals", "real-life"],
-"ageRating": "P",
-"durationMinutes": 90,
-"communityRating": 4.8,
-"bookingCount30d": 1800,
-"viewCount30d": 7200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000062",
-"movieName": "Sự Sống Hoang Dã",
-"genres": ["Documentary"],
-"description": "Khám phá cuộc chiến sinh tồn khốc liệt của các loài động vật thiên nhiên ăn thịt tại vùng hoang mạc rộng lớn.",
-"director": "Phạm Minh Đức",
-"actors": ["Lý Hải"],
-"tags": ["nature", "animals", "survival"],
-"ageRating": "P",
-"durationMinutes": 85,
-"communityRating": 4.6,
-"bookingCount30d": 1400,
-"viewCount30d": 5500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000063",
-"movieName": "Bí Ẩn Đại Dương",
-"genres": ["Documentary"],
-"description": "Lặn sâu xuống những vùng biển tối tăm chưa từng có dấu chân người để giải mã thế giới sinh vật thiên nhiên kỳ bí và khám phá.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Trần Bảo Sơn"],
-"tags": ["nature", "exploration", "real-life"],
-"ageRating": "P",
-"durationMinutes": 88,
-"communityRating": 4.7,
-"bookingCount30d": 1650,
-"viewCount30d": 6400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000064",
-"movieName": "Lịch Sử Nhân Loại",
-"genres": ["Documentary", "Drama"],
-"description": "Tái hiện những cột mốc lịch sử vĩ đại và các nền văn minh cổ xưa xã hội đã thay đổi hoàn toàn hành tinh Trái Đất.",
-"director": "Lê Thị Lan",
-"actors": ["Nguyễn Hồng Đăng"],
-"tags": ["history", "real-life", "society"],
-"ageRating": "K",
-"durationMinutes": 120,
-"communityRating": 4.4,
-"bookingCount30d": 950,
-"viewCount30d": 3800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000065",
-"movieName": "Tiếng Kêu Của Trái Đất",
-"genres": ["Documentary"],
-"description": "Phim tài liệu phản ánh sâu sắc về thực trạng biến đổi khí hậu môi trường toàn cầu và sự tác động xã hội tiêu cực đến thiên nhiên.",
-"director": "Phạm Minh Đức",
-"actors": ["Ngô Thanh Vân"],
-"tags": ["nature", "society", "environment"],
-"ageRating": "P",
-"durationMinutes": 95,
-"communityRating": 4.6,
-"bookingCount30d": 1300,
-"viewCount30d": 5100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000066",
-"movieName": "Đời Đời Nhớ Ơn",
-"genres": ["Documentary"],
-"description": "Những câu chuyện có thật chưa kể về những anh hùng thầm lặng của xã hội trong cuộc chiến lịch sử bảo vệ tự do dân tộc.",
-"director": "Lê Thị Lan",
-"actors": ["Lý Hải"],
-"tags": ["history", "society", "real-life"],
-"ageRating": "P",
-"durationMinutes": 100,
-"communityRating": 4.3,
-"bookingCount30d": 800,
-"viewCount30d": 3100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000067",
-"movieName": "Thành Phố Ngầm",
-"genres": ["Documentary"],
-"description": "Cuộc sống chân thực xã hội của những người lao động nghèo khổ dưới các khu hầm tối tăm tại các siêu đô thị hiện đại.",
-"director": "Trần Văn Nam",
-"actors": ["Kiều Minh Tuấn"],
-"tags": ["society", "real-life", "dark"],
-"ageRating": "T13",
-"durationMinutes": 92,
-"communityRating": 4.2,
-"bookingCount30d": 750,
-"viewCount30d": 2900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000068",
-"movieName": "Siêu Sao Giả Tưởng",
-"genres": ["Documentary", "Comedy"],
-"description": "Phim tài liệu giả tưởng (mockumentary) hài hước về cuộc sống của một ngôi sao nhạc pop hết thời giải trí cố gắng nổi tiếng lại.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn"],
-"tags": ["funny", "music", "laugh"],
-"ageRating": "T13",
-"durationMinutes": 98,
-"communityRating": 4.1,
-"bookingCount30d": 1900,
-"viewCount30d": 7000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000069",
-"movieName": "Tương Lai Nhân Tạo",
-"genres": ["Documentary", "Sci-Fi"],
-"description": "Góc nhìn chuyên gia xã hội và khoa học viễn tưởng về sự phát triển thần tốc của trí tuệ nhân tạo tương lai.",
-"director": "Nguyễn Hoàng Vũ",
-"actors": ["Ngô Thanh Vân"],
-"tags": ["future", "technology", "real-life"],
-"ageRating": "K",
-"durationMinutes": 104,
-"communityRating": 4.5,
-"bookingCount30d": 1500,
-"viewCount30d": 5900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000070",
-"movieName": "Hồ Sơ Vụ Án Thật",
-"genres": ["Documentary", "Thriller"],
-"description": "Phân tích chi tiết hình sự những vụ án mạng giết người có thật rúng động lịch sử qua lời kể xã hội của điều tra viên.",
-"director": "Trần Văn Nam",
-"actors": ["Nguyễn Hồng Đăng"],
-"tags": ["murder", "mystery", "real-life"],
-"ageRating": "T16",
-"durationMinutes": 110,
-"communityRating": 4.4,
-"bookingCount30d": 1200,
-"viewCount30d": 4600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000071",
-"movieName": "Chuyện Đời Thường",
-"genres": ["Comedy"],
-"description": "Những tình huống dở khóc dở cười giải trí xoay quanh cuộc sống sinh hoạt hàng ngày vui nhộn của một khu tập thể cũ.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["funny", "daily", "laugh"],
-"ageRating": "P",
-"durationMinutes": 95,
-"communityRating": 4.5,
-"bookingCount30d": 3800,
-"viewCount30d": 15000
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000072",
-"movieName": "Xóm Trọ Vui Nhộn",
-"genres": ["Comedy", "Family"],
-"description": "Tình bạn, tình yêu tuổi trẻ và những trò nghịch ngợm đáng yêu của nhóm sinh viên nghèo sống chung dưới một mái nhà trọ hài hước.",
-"director": "Trấn Thành",
-"actors": ["Kiều Minh Tuấn", "Ninh Dương Lan Ngọc", "Trấn Thành"],
-"tags": ["funny", "daily", "friendship"],
-"ageRating": "P",
-"durationMinutes": 100,
-"communityRating": 4.4,
-"bookingCount30d": 3100,
-"viewCount30d": 11800
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000073",
-"movieName": "Gia Đình Là Số Một",
-"genres": ["Comedy", "Family"],
-"description": "Bộ phim hài gia đình mang lại tiếng cười sảng khoái giải trí và bài học nhân văn sâu sắc về mối quan hệ tình thân.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Ninh Dương Lan Ngọc", "Kiều Minh Tuấn"],
-"tags": ["funny", "family", "laugh"],
-"ageRating": "P",
-"durationMinutes": 105,
-"communityRating": 4.7,
-"bookingCount30d": 4800,
-"viewCount30d": 19500
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000074",
-"movieName": "Bạn Thân Hóa Người Yêu",
-"genres": ["Comedy", "Romance"],
-"description": "Cặp bạn thân từ thuở nhỏ bỗng một ngày nhận ra tình cảm dành cho đối phương vượt mức bạn bè tạo nên nhiều chuyện hài hước.",
-"director": "Phạm Minh Đức",
-"actors": ["Kiều Minh Tuấn", "Ninh Dương Lan Ngọc", "Trấn Thành"],
-"tags": ["funny", "love", "friendship"],
-"ageRating": "T13",
-"durationMinutes": 98,
-"communityRating": 4.3,
-"bookingCount30d": 2500,
-"viewCount30d": 9200
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000075",
-"movieName": "Sếp Già Khó Tính",
-"genres": ["Comedy"],
-"description": "Nhân viên văn phòng công sở tìm mọi cách để đối phó với vị sếp già độc đoán gắt gỏng tạo nên những trận cười ra nước mắt.",
-"director": "Phạm Minh Đức",
-"actors": ["Kiều Minh Tuấn", "Lý Hải", "Ninh Dương Lan Ngọc"],
-"tags": ["funny", "daily", "office"],
-"ageRating": "P",
-"durationMinutes": 92,
-"communityRating": 4.0,
-"bookingCount30d": 1500,
-"viewCount30d": 5600
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000076",
-"movieName": "Chuyến Đi Nhớ Đời",
-"genres": ["Comedy", "Adventure"],
-"description": "Hành trình phượt từ nam ra bắc của ba ông bạn già với vô số rắc rối hài hước hành trình nảy sinh dọc đường đi phượt.",
-"director": "Trần Văn Nam",
-"actors": ["Lý Hải", "Kiều Minh Tuấn", "Trấn Thành"],
-"tags": ["funny", "journey", "friendship"],
-"ageRating": "K",
-"durationMinutes": 102,
-"communityRating": 4.2,
-"bookingCount30d": 1800,
-"viewCount30d": 6700
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000077",
-"movieName": "Oan Gia Ngõ Hẹp",
-"genres": ["Comedy", "Romance"],
-"description": "Hai người ghét cay ghét đắng nhau bỗng xui rủi trở thành hàng xóm sát vách, ngày ngày chạm mặt đấu khẩu hài hước tình cảm.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Nguyễn Hồng Đăng"],
-"tags": ["funny", "love", "daily"],
-"ageRating": "T13",
-"durationMinutes": 96,
-"communityRating": 4.1,
-"bookingCount30d": 1400,
-"viewCount30d": 5100
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000078",
-"movieName": "Võ Sư Bất Đắc Dĩ",
-"genres": ["Action", "Comedy"],
-"description": "Anh chàng nhút nhát vô tình bị nhầm là cao thủ võ lâm và phải gánh vác trách nhiệm bảo vệ võ đường bằng những trận đấu hài hước.",
-"director": "Trần Văn Nam",
-"actors": ["Lý Hải", "Kiều Minh Tuấn", "Nguyễn Hồng Đăng"],
-"tags": ["funny", "fight", "laugh"],
-"ageRating": "K",
-"durationMinutes": 98,
-"communityRating": 4.2,
-"bookingCount30d": 2100,
-"viewCount30d": 7900
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000079",
-"movieName": "Yêu Nhầm Bạn Thân",
-"genres": ["Romance", "Comedy"],
-"description": "Hành trình thoát khỏi kiếp bạn thân đầy gian nan và hài hước lãng mạn của một chàng trai si tình khờ khạo tuổi trẻ.",
-"director": "Lê Thị Lan",
-"actors": ["Ninh Dương Lan Ngọc", "Kiều Minh Tuấn", "Trấn Thành"],
-"tags": ["funny", "love", "friendship"],
-"ageRating": "P",
-"durationMinutes": 100,
-"communityRating": 4.3,
-"bookingCount30d": 2200,
-"viewCount30d": 8400
-},
-{
-"movieId": "00000000-0000-0000-0000-000000000080",
-"movieName": "Cưới Hỏi Gặp Nạn",
-"genres": ["Comedy"],
-"description": "Đám cưới miệt vườn ngập tràn tiếng cười bỗng biến thành một bãi chiến trường hài hước giải trí vì những sự cố đám cưới hy hữu.",
-"director": "Trấn Thành",
-"actors": ["Trấn Thành", "Kiều Minh Tuấn", "Ninh Dương Lan Ngọc"],
-"tags": ["funny", "marriage", "laugh"],
-"ageRating": "P",
-"durationMinutes": 94,
-"communityRating": 4.4,
-"bookingCount30d": 3300,
-"viewCount30d": 13000
-}
-],
-"benchmarkQueries": [
-{
-"queryId": "q001",
-"queryText": "Tôi muốn xem phim hành động kịch tính gay cấn",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000001",
-"00000000-0000-0000-0000-000000000003",
-"00000000-0000-0000-0000-000000000005"
-],
-"expectedGenres": ["Action"],
-"expectedTags": ["fast-paced"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000009",
-"00000000-0000-0000-0000-000000000010"
-],
-"notes": "Tìm kiếm thể loại hành động nguyên bản, loại bỏ hành động hài hước/gia đình."
-},
-{
-"queryId": "q002",
-"queryText": "Tìm phim kinh dị rùng rợn siêu nhiên có ma ám",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000021",
-"00000000-0000-0000-0000-000000000023",
-"00000000-0000-0000-0000-000000000024"
-],
-"expectedGenres": ["Horror"],
-"expectedTags": ["ghost", "haunted", "supernatural"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000028"],
-"notes": "Phim ma siêu nhiên thuần túy, loại trừ kinh dị hài học đường."
-},
-{
-"queryId": "q003",
-"queryText": "Có phim hoạt hình nào cho trẻ em phiêu lưu không",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000041",
-"00000000-0000-0000-0000-000000000043",
-"00000000-0000-0000-0000-000000000045"
-],
-"expectedGenres": ["Animation", "Adventure"],
-"expectedTags": ["kids", "journey"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000048"],
-"notes": "Hoạt hình phiêu lưu thiếu nhi, loại trừ hoạt hình cyberpunk bạo lực mác T16."
-},
-{
-"queryId": "q004",
-"queryText": "Muốn xem phim tài liệu về thiên nhiên hoang dã",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000061",
-"00000000-0000-0000-0000-000000000062",
-"00000000-0000-0000-0000-000000000063"
-],
-"expectedGenres": ["Documentary"],
-"expectedTags": ["nature", "animals"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000068"],
-"notes": "Phim tài liệu khoa học tự nhiên, loại trừ phim tài liệu hài giả tưởng (mockumentary)."
-},
-{
-"queryId": "q005",
-"queryText": "Phim tâm lý tình cảm lãng mạn nhẹ nhàng tuổi trẻ",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000031",
-"00000000-0000-0000-0000-000000000035",
-"00000000-0000-0000-0000-000000000037"
-],
-"expectedGenres": ["Romance", "Drama"],
-"expectedTags": ["love", "youth"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000038"],
-"notes": "Tình cảm lãng mạn nhẹ nhàng hoài niệm, loại trừ tâm lý giật gân ngoại tình đen tối."
-},
-{
-"queryId": "q006",
-"queryText": "Tìm phim hài hước giải trí gia đình cười ra nước mắt",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000071",
-"00000000-0000-0000-0000-000000000072",
-"00000000-0000-0000-0000-000000000073"
-],
-"expectedGenres": ["Comedy"],
-"expectedTags": ["funny", "laugh", "daily"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000028"],
-"notes": "Phim hài đời sống giải trí, không lấy phim kinh dị hài."
-},
-{
-"queryId": "00000000-0000-0000-0000-000000000007",
-"queryText": "Phim hình sự trinh thám đấu trí phá án vụ án mạng vụ phòng kín",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000051",
-"00000000-0000-0000-0000-000000000053",
-"00000000-0000-0000-0000-000000000055"
-],
-"expectedGenres": ["Thriller", "Mystery"],
-"expectedTags": ["detective", "murder", "mystery"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000058"],
-"notes": "Phim hình sự trinh thám cân não nghiêm túc, loại trừ thám tử tập sự hài hước."
-},
-{
-"queryId": "q008",
-"queryText": "Phim khoa học viễn tưởng du hành vũ trụ thiên hà không gian",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000011",
-"00000000-0000-0000-0000-000000000012",
-"00000000-0000-0000-0000-000000000015"
-],
-"expectedGenres": ["Sci-Fi"],
-"expectedTags": ["space", "galaxy"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000048"],
-"notes": "Phim khoa học viễn tưởng vũ trụ người đóng, loại trừ hoạt hình cyberpunk."
-},
-{
-"queryId": "q009",
-"queryText": "Phim cổ trang lịch sử cung đình nội chiến quyền lực",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000040",
-"00000000-0000-0000-0000-000000000064",
-"00000000-0000-0000-0000-000000000066"
-],
-"expectedGenres": ["Drama", "Documentary"],
-"expectedTags": ["history", "betrayal"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000038"],
-"notes": "Phim bối cảnh lịch sử cổ xưa hoặc tài liệu lịch sử, loại bỏ phim tâm lý hiện đại."
-},
-{
-"queryId": "q010",
-"queryText": "Phim giật gân hồi hộp căng thẳng tột độ",
-"intentType": "genre_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000025",
-"00000000-0000-0000-0000-000000000056",
-"00000000-0000-0000-0000-000000000057"
-],
-"expectedGenres": ["Thriller"],
-"expectedTags": ["tension"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000009"],
-"notes": "Phim hồi hộp giật gân, loại bỏ hành động điệp viên giải trí hài hước."
-},
-{
-"queryId": "q011",
-"queryText": "Tôi muốn xem phim hành động trả thù tiết tấu nhanh sát thủ bắn súng",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000001",
-"00000000-0000-0000-0000-000000000002",
-"00000000-0000-0000-0000-000000000004"
-],
-"expectedGenres": ["Action"],
-"expectedTags": ["revenge", "fast-paced"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000009",
-"00000000-0000-0000-0000-000000000010"
-],
-"notes": "Khớp chủ đề trả thù (revenge) và hành động bạo lực bám sát mô tả."
-},
-{
-"queryId": "q012",
-"queryText": "Có phim nào về du hành vũ trụ nhưng cảm xúc gia đình cha con không?",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000016",
-"00000000-0000-0000-0000-000000000020"
-],
-"expectedGenres": ["Sci-Fi"],
-"expectedTags": ["space", "family"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000011",
-"00000000-0000-0000-0000-000000000012"
-],
-"notes": "Kiểm tra khả năng tìm kiếm ngữ nghĩa kết hợp giữa không gian (space) và gia đình (family). Các phim không gian thuần túy là hard negative."
-},
-{
-"queryId": "q013",
-"queryText": "Gợi ý phim kinh dị siêu nhiên ít máu me nhưng tâm lý căng thẳng ám ảnh",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000025",
-"00000000-0000-0000-0000-000000000029"
-],
-"expectedGenres": ["Horror", "Thriller"],
-"expectedTags": ["supernatural", "psychological", "tension"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000030"],
-"notes": "Tìm kiếm kinh dị tâm lý siêu nhiên, phim chặt chém máu me (slasher/brutal) là lỗi false positive."
-},
-{
-"queryId": "q014",
-"queryText": "Phim về thế giới tương lai trí tuệ nhân tạo người máy công nghệ cao",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000020",
-"00000000-0000-0000-0000-000000000046",
-"00000000-0000-0000-0000-000000000069"
-],
-"expectedGenres": ["Sci-Fi", "Animation", "Documentary"],
-"expectedTags": ["future", "robot"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000011"],
-"notes": "Khớp ngữ nghĩa chủ đề robot/AI bất kể thể loại phim truyện, hoạt hình hay tài liệu."
-},
-{
-"queryId": "q015",
-"queryText": "Phim tâm lý gia đình cảm động lấy nước mắt người xem tình thân",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000032",
-"00000000-0000-0000-0000-000000000033",
-"00000000-0000-0000-0000-000000000036"
-],
-"expectedGenres": ["Drama", "Family"],
-"expectedTags": ["family", "tears"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000038"],
-"notes": "Phim gia đình cảm động khóc, loại bỏ phim gia đình đấu đá đen tối bạo lực."
-},
-{
-"queryId": "q016",
-"queryText": "Phim phiêu lưu thám hiểm tìm kiếm kho báu hòn đảo bí ẩn khám phá",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000015",
-"00000000-0000-0000-0000-000000000045",
-"00000000-0000-0000-0000-000000000063"
-],
-"expectedGenres": ["Adventure", "Animation", "Documentary"],
-"expectedTags": ["exploration", "journey"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000076"],
-"notes": "Khớp từ khóa thám hiểm hòn đảo/vùng đất lạ, loại bỏ phượt roadtrip hài hước."
-},
-{
-"queryId": "q017",
-"queryText": "Phim đấu trí cân não tâm lý tội phạm thiên tài IQ cao lập mưu",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000053",
-"00000000-0000-0000-0000-000000000057",
-"00000000-0000-0000-0000-000000000060"
-],
-"expectedGenres": ["Thriller"],
-"expectedTags": ["mindgame", "detective"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000058"],
-"notes": "Tập trung vào yếu tố đấu trí tính toán tinh vi, loại bỏ yếu tố phá án hài hước."
-},
-{
-"queryId": "q018",
-"queryText": "Phim hài hước về đời sống văn phòng công sở sếp và nhân viên",
-"intentType": "theme_search",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000075"],
-"expectedGenres": ["Comedy"],
-"expectedTags": ["funny", "office"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000071"],
-"notes": "Phải khớp chính xác bối cảnh văn phòng công sở trong mô tả."
-},
-{
-"queryId": "q019",
-"queryText": "Phim về đề tài thảm họa biến đổi khí hậu môi trường sinh thái tàn phá",
-"intentType": "theme_search",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000065"],
-"expectedGenres": ["Documentary"],
-"expectedTags": ["nature", "environment"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000061"],
-"notes": "Chủ đề môi trường khí hậu khốc liệt, tài liệu động vật đơn thuần là negative."
-},
-{
-"queryId": "q020",
-"queryText": "Phim về cuộc chiến sinh tồn khắc nghiệt hoang dã rừng sâu hoang mạc",
-"intentType": "theme_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000030",
-"00000000-0000-0000-0000-000000000043",
-"00000000-0000-0000-0000-000000000062"
-],
-"expectedGenres": ["Horror", "Animation", "Documentary"],
-"expectedTags": ["survival"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000044"],
-"notes": "Khớp thẻ sinh tồn khắc nghiệt bất chấp sự khác biệt về thể loại phim."
-},
-{
-"queryId": "q021",
-"queryText": "Tìm tất cả phim có diễn viên Trần Bảo Sơn đóng hình sự hoặc hành động",
-"intentType": "actor_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000001",
-"00000000-0000-0000-0000-000000000002",
-"00000000-0000-0000-0000-000000000005",
-"00000000-0000-0000-0000-000000000053"
-],
-"expectedGenres": ["Action", "Thriller"],
-"expectedTags": [],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000011"],
-"notes": "Tìm tên diễn viên Trần Bảo Sơn kết hợp lọc thể loại hành động/hình sự, loại phim viễn tưởng."
-},
-{
-"queryId": "q022",
-"queryText": "Xem phim của Kiều Minh Tuấn hài hước vui nhộn giải trí xả stress",
-"intentType": "actor_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000009",
-"00000000-0000-0000-0000-000000000034",
-"00000000-0000-0000-0000-000000000071",
-"00000000-0000-0000-0000-000000000072"
-],
-"expectedGenres": ["Comedy"],
-"expectedTags": ["funny", "laugh"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000005"],
-"notes": "Tìm Kiều Minh Tuấn phim hài, loại bỏ phim hành động bạo lực anh ấy đóng phụ."
-},
-{
-"queryId": "q023",
-"queryText": "Phim của Ninh Dương Lan Ngọc đóng chính tình cảm lãng mạn tình yêu",
-"intentType": "actor_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000031",
-"00000000-0000-0000-0000-000000000034",
-"00000000-0000-0000-0000-000000000074"
-],
-"expectedGenres": ["Romance", "Comedy"],
-"expectedTags": ["love"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000004"],
-"notes": "Tìm Ninh Dương Lan Ngọc đóng phim yêu đương lãng mạn, loại trừ phim cô ấy đóng vai sát thủ."
-},
-{
-"queryId": "q024",
-"queryText": "Phim nào có Trấn Thành đạo diễn hoặc đóng chính thể loại hài gia đình",
-"intentType": "actor_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000010",
-"00000000-0000-0000-0000-000000000032",
-"00000000-0000-0000-0000-000000000033",
-"00000000-0000-0000-0000-000000000073"
-],
-"expectedGenres": ["Comedy", "Family", "Drama"],
-"expectedTags": ["family", "funny"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000050"],
-"notes": "Tìm Trấn Thành gắn với chủ đề gia đình, loại bỏ phim hoạt hình đua xe anh ấy lồng tiếng."
-},
-{
-"queryId": "q025",
-"queryText": "Phim hình sự trinh thám điều tra có sự tham gia của Nguyễn Hồng Đăng",
-"intentType": "actor_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000051",
-"00000000-0000-0000-0000-000000000052",
-"00000000-0000-0000-0000-000000000057"
-],
-"expectedGenres": ["Thriller"],
-"expectedTags": ["detective"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000012"],
-"notes": "Nguyễn Hồng Đăng đóng phim thám tử hình sự, loại bỏ phim vũ trụ viễn tưởng."
-},
-{
-"queryId": "q026",
-"queryText": "Phim hành động kịch tính võ thuật đối kháng do đạo diễn Trần Văn Nam thực hiện",
-"intentType": "director_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000001",
-"00000000-0000-0000-0000-000000000002",
-"00000000-0000-0000-0000-000000000006"
-],
-"expectedGenres": ["Action"],
-"expectedTags": [],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000015",
-"00000000-0000-0000-0000-000000000023"
-],
-"notes": "Tìm phim của Trần Văn Nam nhưng giới hạn thể loại hành động võ thuật, loại phim ma và viễn tưởng."
-},
-{
-"queryId": "q027",
-"queryText": "Phim kinh dị siêu nhiên ám ảnh ma quỷ của đạo diễn Nguyễn Hoàng Vũ",
-"intentType": "director_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000021",
-"00000000-0000-0000-0000-000000000022"
-],
-"expectedGenres": ["Horror"],
-"expectedTags": ["supernatural"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000003",
-"00000000-0000-0000-0000-000000000051"
-],
-"notes": "Tìm đạo diễn Nguyễn Hoàng Vũ phim kinh dị, loại trừ phim hành động ma túy và hình sự phá án."
-},
-{
-"queryId": "q028",
-"queryText": "Tuyển tập phim tâm lý xã hội tình cảm tuổi trẻ lãng mạn của đạo diễn Lê Thị Lan",
-"intentType": "director_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000031",
-"00000000-0000-0000-0000-000000000035",
-"00000000-0000-0000-0000-000000000037"
-],
-"expectedGenres": ["Drama", "Romance"],
-"expectedTags": ["love", "youth"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000004"],
-"notes": "Lọc phim tình cảm lãng mạn của Lê Thị Lan, loại phim hành động sát thủ."
-},
-{
-"queryId": "q029",
-"queryText": "Các phim hoạt hình ý nghĩa phép thuật kỳ diệu dành cho thiếu nhi của đạo diễn Phạm Minh Đức",
-"intentType": "director_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000041",
-"00000000-0000-0000-0000-000000000042",
-"00000000-0000-0000-0000-000000000046"
-],
-"expectedGenres": ["Animation"],
-"expectedTags": ["kids", "magic"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000025",
-"00000000-0000-0000-0000-000000000055"
-],
-"notes": "Hoạt hình thiếu nhi của Phạm Minh Đức, loại bỏ phim tài liệu hoang dã hoặc kinh dị siêu nhiên anh ấy đạo diễn."
-},
-{
-"queryId": "q030",
-"queryText": "Phim hài hước đời sống hoặc cảm động gia đình của đạo diễn Trấn Thành",
-"intentType": "director_search",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000032",
-"00000000-0000-0000-0000-000000000033",
-"00000000-0000-0000-0000-000000000073"
-],
-"expectedGenres": ["Comedy", "Drama", "Family"],
-"expectedTags": ["family"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000050"],
-"notes": "Khớp chính xác thương hiệu phim gia đình đặc trưng của đạo diễn Trấn Thành."
-},
-{
-"queryId": "q031",
-"queryText": "Tôi thích phim Báo Thù Đêm Khuya, có phim nào tương tự hành động trả thù đấm đá như vậy không",
-"intentType": "movie_to_movie",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000002",
-"00000000-0000-0000-0000-000000000003",
-"00000000-0000-0000-0000-000000000006"
-],
-"expectedGenres": ["Action"],
-"expectedTags": ["revenge"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000009"],
-"notes": "Tìm phim tương đồng với ID phim 0001 (Hành động trả thù đen tối), loại bỏ phim điệp viên hài."
-},
-{
-"queryId": "q032",
-"queryText": "Gợi ý phim khoa học viễn tưởng giống Kỷ Nguyên Không Gian du hành hố đen lỗ đen vũ trụ kỳ bí bao la",
-"intentType": "movie_to_movie",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000012",
-"00000000-0000-0000-0000-000000000013",
-"00000000-0000-0000-0000-000000000017"
-],
-"expectedGenres": ["Sci-Fi"],
-"expectedTags": ["space", "galaxy"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000018"],
-"notes": "Tìm phim tương đồng ID 0011 (Viễn tưởng vũ trụ không gian), loại bỏ phim viễn tưởng cyberpunk đô thị tương lai."
-},
-{
-"queryId": "q033",
-"queryText": "Muốn xem phim ma rùng rợn tâm linh ám ảnh giống Tiếng Gọi Oan Hồn nhà cổ bị ám",
-"intentType": "movie_to_movie",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000022",
-"00000000-0000-0000-0000-000000000024",
-"00000000-0000-0000-0000-000000000026"
-],
-"expectedGenres": ["Horror"],
-"expectedTags": ["ghost", "haunted", "supernatural"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000029"],
-"notes": "Tìm phim ma ám siêu nhiên tương tự ID 0021, loại trừ phim thriller tâm lý bệnh nhân hoang tưởng."
-},
-{
-"queryId": "q034",
-"queryText": "Tìm phim hoạt hình phép thuật phiêu lưu thế giới huyền bí giống Hành Trình Kỳ Diệu thiếu nhi",
-"intentType": "movie_to_movie",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000042",
-"00000000-0000-0000-0000-000000000045"
-],
-"expectedGenres": ["Animation"],
-"expectedTags": ["magic", "kids", "journey"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000048"],
-"notes": "Tìm phim tương tự hoạt hình kỳ ảo ID 0041, loại trừ phim hoạt hình khoa học viễn tưởng AI nổi loạn."
-},
-{
-"queryId": "q035",
-"queryText": "Gợi ý phim hình sự phá án phòng kín kịch tính cân não đấu trí tinh vi như Thám Tử Lừng Danh",
-"intentType": "movie_to_movie",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000052",
-"00000000-0000-0000-0000-000000000053",
-"00000000-0000-0000-0000-000000000055"
-],
-"expectedGenres": ["Thriller"],
-"expectedTags": ["detective", "mystery", "murder"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000058"],
-"notes": "Tìm kiếm phim trinh thám hình sự tương tự ID 0051, loại trừ phim thám tử hài hước."
-},
-{
-"queryId": "q036",
-"queryText": "Phim hành động kịch tính gay cấn của Trần Bảo Sơn đóng nhưng phải có yếu tố tình cảm gia đình cảm động",
-"intentType": "mixed_preference",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000005"],
-"expectedGenres": ["Action", "Thriller"],
-"expectedTags": ["revenge", "family"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000001",
-"00000000-0000-0000-0000-000000000002"
-],
-"notes": "Yêu cầu kết hợp phức tạp: Diễn viên Trần Bảo Sơn + Thể loại Hành động + Thẻ gia đình cảm động. Các phim hành động thuần túy của anh ấy là hard negative."
-},
-{
-"queryId": "q037",
-"queryText": "Phim hoạt hình khoa học viễn tưởng thế giới tương lai đen tối cyberpunk không dành cho trẻ em mác T16",
-"intentType": "mixed_preference",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000048"],
-"expectedGenres": ["Animation", "Sci-Fi"],
-"expectedTags": ["future", "cyberpunk", "dark"],
-"hardNegativeMovieIds": ["00000000-0000-0000-0000-000000000046"],
-"notes": "Tìm hoạt hình viễn tưởng người lớn đen tối, hoạt hình tương lai dành cho thiếu nhi là hard negative."
-},
-{
-"queryId": "q038",
-"queryText": "Phim kinh dị quỷ dị búp bê oóc oan hồn nhưng phải hài hước giải trí vui nhộn không đáng sợ",
-"intentType": "mixed_preference",
-"expectedMovieIds": [
-"00000000-0000-0000-0000-000000000028",
-"00000000-0000-0000-0000-000000000049"
-],
-"expectedGenres": ["Horror", "Comedy", "Animation"],
-"expectedTags": ["funny", "ghost"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000021",
-"00000000-0000-0000-0000-000000000026"
-],
-"notes": "Sự kết hợp chéo giữa kinh dị siêu nhiên và yếu tố hài hước vui vẻ. Kinh dị thuần túy là hard negative."
-},
-{
-"queryId": "q039",
-"queryText": "Phim tài liệu khoa học xã hội nhưng có kết hợp yếu tố khoa học viễn tưởng công nghệ tương lai trí tuệ nhân tạo",
-"intentType": "mixed_preference",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000069"],
-"expectedGenres": ["Documentary", "Sci-Fi"],
-"expectedTags": ["future", "technology", "real-life"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000011",
-"00000000-0000-0000-0000-000000000065"
-],
-"notes": "Sự kết hợp độc đáo giữa phim tài liệu và công nghệ khoa học viễn tưởng tương lai."
-},
-{
-"queryId": "q040",
-"queryText": "Phim hình sự trinh thám thám tử phá án nhưng lồng ghép nhiều tình huống hài hước cười ra nước mắt giải trí sảng khoái",
-"intentType": "mixed_preference",
-"expectedMovieIds": ["00000000-0000-0000-0000-000000000058"],
-"expectedGenres": ["Comedy", "Thriller"],
-"expectedTags": ["detective", "funny", "laugh"],
-"hardNegativeMovieIds": [
-"00000000-0000-0000-0000-000000000051",
-"00000000-0000-0000-0000-000000000052"
-],
-"notes": "Tìm kiếm thể loại chéo trinh thám hình sự kết hợp hài hước. Các phim hình sự nghiêm túc phá án phòng kín là hard negative."
-}
-],
-"scoringRules": {
-"hitAtK": [1, 3, 5],
-"weights": {
-"expectedMovieHit": 1.0,
-"genreMatch": 0.35,
-"tagMatch": 0.45,
-"directorMatch": 0.25,
-"actorMatch": 0.25,
-"hardNegativePenalty": -0.8
-},
-"primaryMetric": "semantic_score@5"
-}
+  "movies": [
+    {
+      "movieId": "00000000-0000-0000-0000-000000000001",
+      "movieName": "Báo Thù Đêm Khuya",
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
+      "description": "Một cựu đặc vụ truy lùng băng đảng ác ôn đã hại gia đình mình. Những trận chiến nghẹt thở diễn ra trong bóng đêm thành phố.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Lý Hải"
+      ],
+      "tags": [
+        "revenge",
+        "fast-paced",
+        "dark"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 110,
+      "communityRating": 4.5,
+      "bookingCount30d": 1200,
+      "viewCount30d": 4500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000002",
+      "movieName": "Nợ Máu Trả Bằng Máu",
+      "genres": [
+        "Action"
+      ],
+      "description": "Sát thủ giải nghệ bắt buộc phải tái xuất khi người thân duy nhất bị sát hại. Hành trình đòi lại công lý bằng nắm đấm và súng đạn.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Lý Hải",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "revenge",
+        "justice",
+        "brutal"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 105,
+      "communityRating": 4.2,
+      "bookingCount30d": 950,
+      "viewCount30d": 3800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000003",
+      "movieName": "Ranh Giới Sinh Tử",
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
+      "description": "Cuộc truy đuổi nghẹt thở giữa cảnh sát hình sự và tên trùm ma túy xuyên quốc gia để trả thù cho đồng đội đã hy sinh.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Ninh Dương Lan Ngọc",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "revenge",
+        "fast-paced",
+        "police"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 115,
+      "communityRating": 4.4,
+      "bookingCount30d": 1500,
+      "viewCount30d": 5000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000004",
+      "movieName": "Kế Hoạch Sát Thủ",
+      "genres": [
+        "Action"
+      ],
+      "description": "Một nữ sát thủ tìm cách thoát khỏi tổ chức phản bội mình. Lối thoát duy nhất là tiêu diệt toàn bộ kẻ đứng sau.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Ngô Thanh Vân",
+        "Lý Hải"
+      ],
+      "tags": [
+        "revenge",
+        "assassin",
+        "betrayal"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 98,
+      "communityRating": 4.0,
+      "bookingCount30d": 800,
+      "viewCount30d": 3200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000005",
+      "movieName": "Săn Lùng Tội Phạm",
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
+      "description": "Người cha điên cuồng tìm kiếm kẻ đã bắt cóc con gái mình trong vô vọng. Anh sẵn sàng lật tung cả thành phố để trả thù.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Kiều Minh Tuấn",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "revenge",
+        "family",
+        "fast-paced"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 102,
+      "communityRating": 4.6,
+      "bookingCount30d": 1800,
+      "viewCount30d": 6200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000006",
+      "movieName": "Đòn Trừng Phạt Cuối",
+      "genres": [
+        "Action"
+      ],
+      "description": "Kẻ phản bội phải trả giá đắt khi người anh em năm xưa quay lại đòi món nợ cũ. Những pha võ thuật đối kháng đỉnh cao và kịch tính.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Lý Hải",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "revenge",
+        "betrayal",
+        "fight"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 112,
+      "communityRating": 4.1,
+      "bookingCount30d": 700,
+      "viewCount30d": 2900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000007",
+      "movieName": "Công Lý Khốc Liệt",
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
+      "description": "Khi luật pháp bất lực, một cựu thẩm phán tự mình thực thi công lý. Hành trình săn lùng những kẻ tội phạm trốn tội trong bóng tối.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Lý Hải",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "revenge",
+        "justice",
+        "vigilante"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 120,
+      "communityRating": 4.3,
+      "bookingCount30d": 1100,
+      "viewCount30d": 4100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000008",
+      "movieName": "Vết Thương Sâu Thẳm",
+      "genres": [
+        "Action",
+        "Drama"
+      ],
+      "description": "Một bộ phim hành động kịch tính xoay quanh nỗi đau mất mát và hành trình báo thù của một người lính biệt kích.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "revenge",
+        "dark",
+        "military"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 108,
+      "communityRating": 4.2,
+      "bookingCount30d": 900,
+      "viewCount30d": 3500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000009",
+      "movieName": "Điệp Viên Hài Hước",
+      "genres": [
+        "Action",
+        "Comedy"
+      ],
+      "description": "Hành trình dở khóc dở cười của anh chàng điệp viên tập sự đi phá án phá hoại. Phim hành động đầy tiếng cười giải trí nhẹ nhàng.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "funny",
+        "spy",
+        "laugh"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 95,
+      "communityRating": 3.9,
+      "bookingCount30d": 2500,
+      "viewCount30d": 9000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000010",
+      "movieName": "Gia Đình Đặc Nhiệm",
+      "genres": [
+        "Action",
+        "Comedy"
+      ],
+      "description": "Cả nhà cùng làm điệp viên bí mật tham gia vào nhiệm vụ bảo vệ thế giới. Sự kết hợp hoàn hảo giữa hành động gay cấn và tình cảm gia đình.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "family",
+        "funny",
+        "spy"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 100,
+      "communityRating": 4.3,
+      "bookingCount30d": 3000,
+      "viewCount30d": 11000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000011",
+      "movieName": "Kỷ Nguyên Không Gian",
+      "genres": [
+        "Sci-Fi",
+        "Adventure"
+      ],
+      "description": "Chuyến du hành xuyên qua lỗ đen vũ trụ tìm kiếm hành tinh sống mới cho nhân loại. Đối mặt với sự cô độc giữa không gian vô tận.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Lý Hải",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "space",
+        "future",
+        "galaxy"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 140,
+      "communityRating": 4.7,
+      "bookingCount30d": 2100,
+      "viewCount30d": 8500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000012",
+      "movieName": "Vùng Trời Vô Tận",
+      "genres": [
+        "Sci-Fi",
+        "Adventure"
+      ],
+      "description": "Đoàn thám hiểm không gian bị lạc vào một thiên hà xa xôi đầy rẫy hiểm họa bí ẩn. Hành trình tìm đường về nhà đầy gian nan.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "space",
+        "journey",
+        "galaxy"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 125,
+      "communityRating": 4.3,
+      "bookingCount30d": 1300,
+      "viewCount30d": 5200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000013",
+      "movieName": "Trạm Không Gian Bí Ẩn",
+      "genres": [
+        "Sci-Fi",
+        "Thriller"
+      ],
+      "description": "Những hiện tượng lạ kỳ liên tiếp xảy ra tại trạm vũ trụ quốc tế khiến các phi hành gia hoảng loạn. Một thế lực vô hình đang đe dọa họ.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "space",
+        "alien",
+        "mystery"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 110,
+      "communityRating": 4.1,
+      "bookingCount30d": 1050,
+      "viewCount30d": 4100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000014",
+      "movieName": "Tình Yêu Giữa Các Vì Sao",
+      "genres": [
+        "Sci-Fi",
+        "Romance"
+      ],
+      "description": "Mối tình vượt không gian và thời gian của hai phi hành gia thuộc hai thế hệ khác nhau bị kẹt trong hố sâu vũ trụ.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Nguyễn Hồng Đăng",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "space",
+        "love",
+        "romance"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 118,
+      "communityRating": 4.0,
+      "bookingCount30d": 850,
+      "viewCount30d": 3300
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000015",
+      "movieName": "Hành Tinh Lạ",
+      "genres": [
+        "Sci-Fi",
+        "Adventure"
+      ],
+      "description": "Khám phá hệ sinh thái kỳ vĩ và nguy hiểm trên một hành tinh mới được phát hiện ở rìa vũ trụ.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Lý Hải",
+        "Kiều Minh Tuấn",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "space",
+        "alien",
+        "exploration"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 122,
+      "communityRating": 4.4,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000016",
+      "movieName": "Vũ Trụ Bao La",
+      "genres": [
+        "Sci-Fi",
+        "Drama"
+      ],
+      "description": "Một phi hành gia cố gắng liên lạc với con gái nhỏ ở Trái Đất từ khoảng cách hàng triệu năm ánh sáng đầy xúc động.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ninh Dương Lan Ngọc",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "space",
+        "family",
+        "tears"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 135,
+      "communityRating": 4.8,
+      "bookingCount30d": 2500,
+      "viewCount30d": 9500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000017",
+      "movieName": "Kẻ Độc Hành Không Gian",
+      "genres": [
+        "Sci-Fi"
+      ],
+      "description": "Một mình sống sót trên phi thuyền hỏng giữa vũ trụ bao la, người kỹ sư phải tìm mọi cách sửa chữa để sống sót trở về.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Lý Hải",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "space",
+        "survival",
+        "future"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 102,
+      "communityRating": 4.2,
+      "bookingCount30d": 900,
+      "viewCount30d": 3700
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000018",
+      "movieName": "Ký Ức Đánh Mất",
+      "genres": [
+        "Sci-Fi",
+        "Drama"
+      ],
+      "description": "Trong tương lai khi ký ức có thể mua bán, một người đàn ông tìm lại tình yêu đã mất của mình qua những mảnh ký ức giả lập.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "future",
+        "love",
+        "cyberpunk"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 112,
+      "communityRating": 4.3,
+      "bookingCount30d": 1150,
+      "viewCount30d": 4600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000019",
+      "movieName": "Quái Vật Vô Hình",
+      "genres": [
+        "Sci-Fi",
+        "Horror"
+      ],
+      "description": "Sinh vật ngoài hành tinh khát máu lọt vào tàu không gian và săn lùng từng thành viên phi hành đoàn trong bóng tối kịch tính.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Ngô Thanh Vân",
+        "Lý Hải",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "space",
+        "alien",
+        "horror"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 106,
+      "communityRating": 3.9,
+      "bookingCount30d": 1300,
+      "viewCount30d": 4900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000020",
+      "movieName": "Người Máy Và Gia Đình",
+      "genres": [
+        "Sci-Fi",
+        "Family"
+      ],
+      "description": "Chú robot thông minh giúp một gia đình nhỏ vượt qua khủng hoảng tâm lý sau mất mát lớn. Câu chuyện ấm áp về tương lai.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "future",
+        "family",
+        "robot"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 100,
+      "communityRating": 4.5,
+      "bookingCount30d": 2800,
+      "viewCount30d": 10200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000021",
+      "movieName": "Tiếng Gọi Oan Hồn",
+      "genres": [
+        "Horror"
+      ],
+      "description": "Ngôi nhà cổ bị ám bởi những oan hồn từ quá khứ đòi mạng những kẻ mới đến định cư. Sự căng thẳng nghẹt thở bao trùm.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Nguyễn Hồng Đăng",
+        "Lý Hải"
+      ],
+      "tags": [
+        "ghost",
+        "haunted",
+        "supernatural"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 95,
+      "communityRating": 4.4,
+      "bookingCount30d": 1600,
+      "viewCount30d": 6400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000022",
+      "movieName": "Lời Nguyền Gia Tộc",
+      "genres": [
+        "Horror",
+        "Mystery"
+      ],
+      "description": "Bi kịch kinh hoàng xảy ra với một dòng họ khi lời nguyền cổ xưa trăm năm bất ngờ thức giấc. Không một ai có thể trốn thoát.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "curse",
+        "haunted",
+        "supernatural"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 100,
+      "communityRating": 4.1,
+      "bookingCount30d": 1100,
+      "viewCount30d": 4300
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000023",
+      "movieName": "Bóng Ma Trong Gương",
+      "genres": [
+        "Horror"
+      ],
+      "description": "Một cô gái trẻ phát hiện ra chiếc gương cũ trong nhà ẩn chứa một thực thể quỷ quyệt bí ẩn luôn theo dõi tâm lý cô.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "ghost",
+        "supernatural",
+        "psychological"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 92,
+      "communityRating": 4.0,
+      "bookingCount30d": 950,
+      "viewCount30d": 3900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000024",
+      "movieName": "Ngôi Nhà Oan Khuất",
+      "genres": [
+        "Horror"
+      ],
+      "description": "Gia đình nhỏ dọn đến biệt thự vùng ven và liên tục gặp các hiện tượng siêu nhiên kỳ bí rùng rợn vào lúc nửa đêm.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Lý Hải",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "haunted",
+        "family",
+        "supernatural"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 97,
+      "communityRating": 4.2,
+      "bookingCount30d": 1200,
+      "viewCount30d": 4800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000025",
+      "movieName": "Ký Ức Kinh Hoàng",
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
+      "description": "Phim kinh dị tâm lý siêu nhiên căng thẳng, ít cảnh máu me nhưng khiến người xem ám ảnh bởi nỗi sợ vô hình tột độ.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "supernatural",
+        "psychological",
+        "tension"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 105,
+      "communityRating": 4.5,
+      "bookingCount30d": 1750,
+      "viewCount30d": 7000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000026",
+      "movieName": "Búp Bê Của Quỷ",
+      "genres": [
+        "Horror"
+      ],
+      "description": "Món quà sinh nhật là con búp bê cổ mang theo linh hồn tà ác reo rắc nỗi kinh hoàng cho cả khu phố.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Lý Hải"
+      ],
+      "tags": [
+        "ghost",
+        "curse",
+        "supernatural"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 90,
+      "communityRating": 3.8,
+      "bookingCount30d": 800,
+      "viewCount30d": 3100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000027",
+      "movieName": "Nghi Lễ Hiến Tế",
+      "genres": [
+        "Horror",
+        "Mystery"
+      ],
+      "description": "Một giáo phái bí ẩn thực hiện các nghi thức siêu nhiên quỷ dị trong khu rừng hẻo lánh nhằm triệu hồi tà thần.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Lý Hải"
+      ],
+      "tags": [
+        "curse",
+        "supernatural",
+        "dark"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 108,
+      "communityRating": 4.0,
+      "bookingCount30d": 900,
+      "viewCount30d": 3600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000028",
+      "movieName": "Ma Cà Rồng Học Đường",
+      "genres": [
+        "Horror",
+        "Comedy"
+      ],
+      "description": "Những tình huống dở khóc dở cười khi một ma cà rồng chính hiệu phải trà trộn vào trường cấp ba để học tập.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "funny",
+        "vampire",
+        "laugh"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 100,
+      "communityRating": 4.2,
+      "bookingCount30d": 2400,
+      "viewCount30d": 8900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000029",
+      "movieName": "Trò Chơi Tâm Trí",
+      "genres": [
+        "Thriller",
+        "Horror"
+      ],
+      "description": "Bác sĩ tâm thần bị cuốn vào trò chơi tâm lý quỷ quyệt của một bệnh nhân hoang tưởng có khả năng ngoại cảm bí ẩn.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Kiều Minh Tuấn",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "psychological",
+        "mindgame",
+        "tension"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 110,
+      "communityRating": 4.3,
+      "bookingCount30d": 1250,
+      "viewCount30d": 5100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000030",
+      "movieName": "Đêm Đẫm Máu",
+      "genres": [
+        "Horror",
+        "Thriller"
+      ],
+      "description": "Tên sát nhân cuồng loạn truy sát nhóm bạn trẻ cắm trại trong rừng sâu bằng những vũ khí tàn bạo đầy máu me.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Lý Hải",
+        "Nguyễn Hồng Đăng",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "brutal",
+        "slasher",
+        "survival"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 94,
+      "communityRating": 3.7,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000031",
+      "movieName": "Nước Mắt Muộn Màng",
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "description": "Câu chuyện tình yêu đầy trắc trở và hy sinh của một cặp đôi trẻ vượt qua rào cản địa vị xã hội đầy xúc động.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Nguyễn Hồng Đăng",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "love",
+        "tears",
+        "relationship"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 115,
+      "communityRating": 4.4,
+      "bookingCount30d": 1500,
+      "viewCount30d": 5800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000032",
+      "movieName": "Lời Hứa Của Cha",
+      "genres": [
+        "Drama",
+        "Family"
+      ],
+      "description": "Người cha già nghèo khổ lặn lội kiếm sống để nuôi dạy đứa con bị bệnh tật bẩm sinh nên người. Lấy đi nhiều nước mắt.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "family",
+        "tears",
+        "relationship"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 120,
+      "communityRating": 4.9,
+      "bookingCount30d": 4500,
+      "viewCount30d": 18000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000033",
+      "movieName": "Mái Nhà Bình Yên",
+      "genres": [
+        "Drama",
+        "Family"
+      ],
+      "description": "Sự thấu hiểu và sẻ chia giữa các thế hệ trong một gia đình truyền thống Việt Nam trước những sóng gió cuộc đời.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Lý Hải",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "family",
+        "daily",
+        "relationship"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 110,
+      "communityRating": 4.6,
+      "bookingCount30d": 3200,
+      "viewCount30d": 12500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000034",
+      "movieName": "Tình Yêu Sét Đánh",
+      "genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "description": "Cuộc gặp gỡ định mệnh lãng mạn và hài hước giữa cô nàng kiêu kỳ và anh chàng kiến trúc sư nghèo vui tính.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "love",
+        "funny",
+        "romance"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 98,
+      "communityRating": 4.3,
+      "bookingCount30d": 2100,
+      "viewCount30d": 8000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000035",
+      "movieName": "Ký Ức Mùa Hè",
+      "genres": [
+        "Romance"
+      ],
+      "description": "Mối tình đầu trong trẻo và ngây ngô thời học sinh đầy hoài niệm dưới mái trường phượng vĩ đỏ rực.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Nguyễn Hồng Đăng",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "love",
+        "school",
+        "youth"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 105,
+      "communityRating": 4.2,
+      "bookingCount30d": 1100,
+      "viewCount30d": 4200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000036",
+      "movieName": "Nơi Bình Yên Nhất",
+      "genres": [
+        "Drama",
+        "Family"
+      ],
+      "description": "Hành trình trở về quê hương của đứa con xa xứ sau nhiều năm bôn ba để tìm lại tình cảm gia đình ấm áp.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Lý Hải",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "family",
+        "tears",
+        "journey"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 118,
+      "communityRating": 4.5,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5300
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000037",
+      "movieName": "Tháng Năm Rực Rỡ",
+      "genres": [
+        "Drama",
+        "Romance"
+      ],
+      "description": "Tình bạn và tình yêu tuổi trẻ đầy nhiệt huyết của nhóm bạn thân vượt qua thăng trầm thời gian và cuộc sống.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "love",
+        "friendship",
+        "youth"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 112,
+      "communityRating": 4.4,
+      "bookingCount30d": 1800,
+      "viewCount30d": 6900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000038",
+      "movieName": "Mặt Tối Gia Đình",
+      "genres": [
+        "Drama",
+        "Thriller"
+      ],
+      "description": "Đằng sau vỏ bọc hạnh phúc của một gia đình giàu có là những âm mưu chiếm đoạt tài sản và ngoại tình ghê rợn.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "family",
+        "betrayal",
+        "dark"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 106,
+      "communityRating": 4.0,
+      "bookingCount30d": 850,
+      "viewCount30d": 3400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000039",
+      "movieName": "Hẹn Hò Giả Tạo",
+      "genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "description": "Hợp đồng hôn nhân bất đắc dĩ dẫn đến những tình huống trớ trêu nhưng lại nảy sinh tình cảm thật ngọt ngào.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc",
+        "Lý Hải"
+      ],
+      "tags": [
+        "love",
+        "funny",
+        "marriage"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 100,
+      "communityRating": 4.1,
+      "bookingCount30d": 1600,
+      "viewCount30d": 6100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000040",
+      "movieName": "Vương Triều Sóng Gió",
+      "genres": [
+        "Drama"
+      ],
+      "description": "Phim cổ trang chính kịch tái hiện những cuộc chiến tranh giành quyền lực tàn khốc chốn cung đình xưa.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân",
+        "Lý Hải"
+      ],
+      "tags": [
+        "history",
+        "betrayal",
+        "dark"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 130,
+      "communityRating": 4.2,
+      "bookingCount30d": 1000,
+      "viewCount30d": 4000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000041",
+      "movieName": "Hành Trình Kỳ Diệu",
+      "genres": [
+        "Animation",
+        "Adventure"
+      ],
+      "description": "Chú bé nhỏ tuổi lạc vào thế giới phép thuật huyền bí và phải tìm kiếm linh vật thần kỳ để giải cứu muông thú.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "magic",
+        "journey",
+        "kids"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 90,
+      "communityRating": 4.6,
+      "bookingCount30d": 3500,
+      "viewCount30d": 14000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000042",
+      "movieName": "Vương Quốc Thần Tiên",
+      "genres": [
+        "Animation",
+        "Family"
+      ],
+      "description": "Chuyến phiêu lưu đầy tiếng cười và bài học ý nghĩa của hai chị em tại vùng đất của những sinh vật huyền thoại.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Trấn Thành",
+        "Lý Hải"
+      ],
+      "tags": [
+        "magic",
+        "friendship",
+        "kids"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 88,
+      "communityRating": 4.4,
+      "bookingCount30d": 2900,
+      "viewCount30d": 11500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000043",
+      "movieName": "Chú Chó Dũng Cảm",
+      "genres": [
+        "Animation",
+        "Adventure"
+      ],
+      "description": "Hành trình vượt ngàn dặm xa xôi của chú chó nhỏ đi tìm lại người chủ đi lạc giữa bão tuyết trắng xóa sinh tồn.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Lý Hải",
+        "Kiều Minh Tuấn",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "journey",
+        "friendship",
+        "animals"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 92,
+      "communityRating": 4.5,
+      "bookingCount30d": 2600,
+      "viewCount30d": 9800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000044",
+      "movieName": "Đội Cứu Hộ Nhí",
+      "genres": [
+        "Animation",
+        "Family"
+      ],
+      "description": "Những người bạn động vật nhỏ tuổi lập đội cứu hộ để bảo vệ khu rừng xanh tươi khỏi bàn tay lâm tặc tàn phá thiên nhiên.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "journey",
+        "animals",
+        "kids"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 85,
+      "communityRating": 4.3,
+      "bookingCount30d": 2200,
+      "viewCount30d": 8700
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000045",
+      "movieName": "Đảo Huyền Bí",
+      "genres": [
+        "Animation",
+        "Adventure"
+      ],
+      "description": "Bản đồ kho báu cổ dẫn dắt nhóm bạn trẻ bước vào chuyến hải trình thám hiểm hòn đảo chưa ai từng biết đến.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Lý Hải"
+      ],
+      "tags": [
+        "journey",
+        "magic",
+        "exploration"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 95,
+      "communityRating": 4.2,
+      "bookingCount30d": 1900,
+      "viewCount30d": 7500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000046",
+      "movieName": "Thành Phố Tương Lai",
+      "genres": [
+        "Animation",
+        "Sci-Fi"
+      ],
+      "description": "Cậu bé thiên tài chế tạo robot cùng nhóm bạn ngăn chặn âm mưu phá hủy thành phố công nghệ cao của thế lực xấu.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trấn Thành",
+        "Nguyễn Hồng Đăng",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "future",
+        "robot",
+        "kids"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 96,
+      "communityRating": 4.5,
+      "bookingCount30d": 3100,
+      "viewCount30d": 12000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000047",
+      "movieName": "Giai Điệu Rừng Xanh",
+      "genres": [
+        "Animation",
+        "Family"
+      ],
+      "description": "Bộ phim hoạt hình âm nhạc ngập tràn sắc màu kể về muông thú cùng nhau tổ chức lễ hội âm nhạc lớn nhất năm.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trấn Thành",
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "music",
+        "animals",
+        "funny"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 87,
+      "communityRating": 4.4,
+      "bookingCount30d": 2400,
+      "viewCount30d": 9100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000048",
+      "movieName": "Chiến Binh Cyberpunk",
+      "genres": [
+        "Animation",
+        "Sci-Fi"
+      ],
+      "description": "Hoạt hình khoa học viễn tưởng đen tối bối cảnh tương lai xa xôi nơi con người đối đầu với AI nổi loạn.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "future",
+        "cyberpunk",
+        "dark"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 105,
+      "communityRating": 4.1,
+      "bookingCount30d": 1200,
+      "viewCount30d": 4600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000049",
+      "movieName": "Đêm Hội Ma Quái",
+      "genres": [
+        "Animation",
+        "Horror"
+      ],
+      "description": "Phim hoạt hình phong cách kinh dị rùng rợn vui nhộn dành cho trẻ em vào đêm Halloween kỳ bí và quái dị.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Trấn Thành",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "ghost",
+        "funny",
+        "kids"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 88,
+      "communityRating": 4.0,
+      "bookingCount30d": 1500,
+      "viewCount30d": 5400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000050",
+      "movieName": "Đường Đua Rực Lửa",
+      "genres": [
+        "Animation",
+        "Comedy"
+      ],
+      "description": "Chú ốc sên mơ ước trở thành nhà vô địch đua xe tốc độ cao vượt qua mọi sự giễu cợt của đồng loại trên đường đua giải trí.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Lý Hải"
+      ],
+      "tags": [
+        "funny",
+        "sports",
+        "journey"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 90,
+      "communityRating": 4.3,
+      "bookingCount30d": 2000,
+      "viewCount30d": 7800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000051",
+      "movieName": "Thám Tử Lừng Danh",
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
+      "description": "Vụ án mạng phòng kín bí ẩn thách thức bộ óc thiên tài của vị thám tử lão luyện tìm ra manh mối hung thủ.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Trần Bảo Sơn",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "detective",
+        "murder",
+        "mystery"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 118,
+      "communityRating": 4.5,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000052",
+      "movieName": "Manh Mối Vô Hình",
+      "genres": [
+        "Thriller",
+        "Drama"
+      ],
+      "description": "Cảnh sát hình sự lần theo những dấu vết mong manh đấu trí để lật tẩy kẻ giết người hàng loạt giấu mặt tinh vi.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "detective",
+        "murder",
+        "mindgame"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 112,
+      "communityRating": 4.3,
+      "bookingCount30d": 1250,
+      "viewCount30d": 4900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000053",
+      "movieName": "Trò Chơi Cân Não",
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
+      "description": "Cuộc đấu trí đỉnh cao đầy kịch tính giữa một điều tra viên xuất sắc và tên tội phạm có chỉ số IQ thiên tài.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Lý Hải"
+      ],
+      "tags": [
+        "detective",
+        "mindgame",
+        "mystery"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 110,
+      "communityRating": 4.4,
+      "bookingCount30d": 1350,
+      "viewCount30d": 5300
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000054",
+      "movieName": "Bí Mật Sau Tội Ác",
+      "genres": [
+        "Thriller"
+      ],
+      "description": "Luật sư bào chữa phát hiện ra những sự thật đen tối ẩn giấu đằng sau một vụ án mạng tưởng chừng đơn giản tại tòa án.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Ngô Thanh Vân",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "detective",
+        "murder",
+        "court"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 105,
+      "communityRating": 4.1,
+      "bookingCount30d": 900,
+      "viewCount30d": 3500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000055",
+      "movieName": "Nhật Ký Tội Phạm",
+      "genres": [
+        "Thriller",
+        "Drama"
+      ],
+      "description": "Cuốn nhật ký cũ hé lộ hành trình phạm tội của một kẻ sát nhân đen tối và nỗ lực điều tra phá án vô vọng của cảnh sát năm xưa.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng",
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "detective",
+        "mystery",
+        "dark"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 108,
+      "communityRating": 4.2,
+      "bookingCount30d": 980,
+      "viewCount30d": 3800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000056",
+      "movieName": "Nhân Chứng Mù",
+      "genres": [
+        "Thriller",
+        "Mystery"
+      ],
+      "description": "Cô gái khiếm thị là nhân chứng duy nhất của vụ tai nạn thảm khốc bị tên hung thủ điên cuồng săn lùng bịt đầu mối căng thẳng.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "detective",
+        "survival",
+        "tension"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 102,
+      "communityRating": 4.5,
+      "bookingCount30d": 1600,
+      "viewCount30d": 6200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000057",
+      "movieName": "Đấu Trí Tội Phạm",
+      "genres": [
+        "Thriller"
+      ],
+      "description": "Đội đặc nhiệm hình sự phá giải các mật mã phức tạp để ngăn chặn vụ đánh bom kinh hoàng kịch tính tại trung tâm thành phố.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Lý Hải",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "detective",
+        "mindgame",
+        "fast-paced"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 115,
+      "communityRating": 4.3,
+      "bookingCount30d": 1100,
+      "viewCount30d": 4400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000058",
+      "movieName": "Thám Tử Tập Sự",
+      "genres": [
+        "Comedy",
+        "Thriller"
+      ],
+      "description": "Hai anh chàng hậu đậu mở văn phòng thám tử tư và vô tình vướng vào một đại án hình sự xuyên quốc gia đầy hài hước giải trí.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "detective",
+        "funny",
+        "laugh"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 102,
+      "communityRating": 4.4,
+      "bookingCount30d": 2700,
+      "viewCount30d": 9800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000059",
+      "movieName": "Cảnh Sát Nằm",
+      "genres": [
+        "Action",
+        "Thriller"
+      ],
+      "description": "Chiến sĩ cảnh sát chìm thâm nhập vào băng đảng khét tiếng phải đối mặt với lựa chọn điều tra sinh tử giữa nhiệm vụ và tình nghĩa.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Lý Hải",
+        "Trần Bảo Sơn",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "detective",
+        "police",
+        "fight"
+      ],
+      "ageRating": "T18",
+      "durationMinutes": 114,
+      "communityRating": 4.2,
+      "bookingCount30d": 1050,
+      "viewCount30d": 4100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000060",
+      "movieName": "Ngoại Phạm Hoàn Hảo",
+      "genres": [
+        "Thriller",
+        "Drama"
+      ],
+      "description": "Một người chồng dàn dựng chứng cứ ngoại phạm hoàn hảo bằng các trò chơi tâm trí sau khi trừng trị kẻ phá hoại gia đình mình.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Nguyễn Hồng Đăng",
+        "Ngô Thanh Vân",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "mindgame",
+        "murder",
+        "dark"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 108,
+      "communityRating": 4.1,
+      "bookingCount30d": 870,
+      "viewCount30d": 3300
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000061",
+      "movieName": "Hành Tinh Xanh",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Thước phim tư liệu chân thực và sống động về cuộc sống hoang dã của muông thú thiên nhiên khắp các đại dương và rừng sâu.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Trấn Thành"
+      ],
+      "tags": [
+        "nature",
+        "animals",
+        "real-life"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 90,
+      "communityRating": 4.8,
+      "bookingCount30d": 1800,
+      "viewCount30d": 7200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000062",
+      "movieName": "Sự Sống Hoang Dã",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Khám phá cuộc chiến sinh tồn khốc liệt của các loài động vật thiên nhiên ăn thịt tại vùng hoang mạc rộng lớn.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Lý Hải"
+      ],
+      "tags": [
+        "nature",
+        "animals",
+        "survival"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 85,
+      "communityRating": 4.6,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000063",
+      "movieName": "Bí Ẩn Đại Dương",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Lặn sâu xuống những vùng biển tối tăm chưa từng có dấu chân người để giải mã thế giới sinh vật thiên nhiên kỳ bí và khám phá.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Trần Bảo Sơn"
+      ],
+      "tags": [
+        "nature",
+        "exploration",
+        "real-life"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 88,
+      "communityRating": 4.7,
+      "bookingCount30d": 1650,
+      "viewCount30d": 6400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000064",
+      "movieName": "Lịch Sử Nhân Loại",
+      "genres": [
+        "Documentary",
+        "Drama"
+      ],
+      "description": "Tái hiện những cột mốc lịch sử vĩ đại và các nền văn minh cổ xưa xã hội đã thay đổi hoàn toàn hành tinh Trái Đất.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "history",
+        "real-life",
+        "society"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 120,
+      "communityRating": 4.4,
+      "bookingCount30d": 950,
+      "viewCount30d": 3800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000065",
+      "movieName": "Tiếng Kêu Của Trái Đất",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Phim tài liệu phản ánh sâu sắc về thực trạng biến đổi khí hậu môi trường toàn cầu và sự tác động xã hội tiêu cực đến thiên nhiên.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "nature",
+        "society",
+        "environment"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 95,
+      "communityRating": 4.6,
+      "bookingCount30d": 1300,
+      "viewCount30d": 5100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000066",
+      "movieName": "Đời Đời Nhớ Ơn",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Những câu chuyện có thật chưa kể về những anh hùng thầm lặng của xã hội trong cuộc chiến lịch sử bảo vệ tự do dân tộc.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Lý Hải"
+      ],
+      "tags": [
+        "history",
+        "society",
+        "real-life"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 100,
+      "communityRating": 4.3,
+      "bookingCount30d": 800,
+      "viewCount30d": 3100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000067",
+      "movieName": "Thành Phố Ngầm",
+      "genres": [
+        "Documentary"
+      ],
+      "description": "Cuộc sống chân thực xã hội của những người lao động nghèo khổ dưới các khu hầm tối tăm tại các siêu đô thị hiện đại.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "society",
+        "real-life",
+        "dark"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 92,
+      "communityRating": 4.2,
+      "bookingCount30d": 750,
+      "viewCount30d": 2900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000068",
+      "movieName": "Siêu Sao Giả Tưởng",
+      "genres": [
+        "Documentary",
+        "Comedy"
+      ],
+      "description": "Phim tài liệu giả tưởng (mockumentary) hài hước về cuộc sống của một ngôi sao nhạc pop hết thời giải trí cố gắng nổi tiếng lại.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "funny",
+        "music",
+        "laugh"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 98,
+      "communityRating": 4.1,
+      "bookingCount30d": 1900,
+      "viewCount30d": 7000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000069",
+      "movieName": "Tương Lai Nhân Tạo",
+      "genres": [
+        "Documentary",
+        "Sci-Fi"
+      ],
+      "description": "Góc nhìn chuyên gia xã hội và khoa học viễn tưởng về sự phát triển thần tốc của trí tuệ nhân tạo tương lai.",
+      "director": "Nguyễn Hoàng Vũ",
+      "actors": [
+        "Ngô Thanh Vân"
+      ],
+      "tags": [
+        "future",
+        "technology",
+        "real-life"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 104,
+      "communityRating": 4.5,
+      "bookingCount30d": 1500,
+      "viewCount30d": 5900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000070",
+      "movieName": "Hồ Sơ Vụ Án Thật",
+      "genres": [
+        "Documentary",
+        "Thriller"
+      ],
+      "description": "Phân tích chi tiết hình sự những vụ án mạng giết người có thật rúng động lịch sử qua lời kể xã hội của điều tra viên.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "murder",
+        "mystery",
+        "real-life"
+      ],
+      "ageRating": "T16",
+      "durationMinutes": 110,
+      "communityRating": 4.4,
+      "bookingCount30d": 1200,
+      "viewCount30d": 4600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000071",
+      "movieName": "Chuyện Đời Thường",
+      "genres": [
+        "Comedy"
+      ],
+      "description": "Những tình huống dở khóc dở cười giải trí xoay quanh cuộc sống sinh hoạt hàng ngày vui nhộn của một khu tập thể cũ.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "funny",
+        "daily",
+        "laugh"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 95,
+      "communityRating": 4.5,
+      "bookingCount30d": 3800,
+      "viewCount30d": 15000
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000072",
+      "movieName": "Xóm Trọ Vui Nhộn",
+      "genres": [
+        "Comedy",
+        "Family"
+      ],
+      "description": "Tình bạn, tình yêu tuổi trẻ và những trò nghịch ngợm đáng yêu của nhóm sinh viên nghèo sống chung dưới một mái nhà trọ hài hước.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "funny",
+        "daily",
+        "friendship"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 100,
+      "communityRating": 4.4,
+      "bookingCount30d": 3100,
+      "viewCount30d": 11800
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000073",
+      "movieName": "Gia Đình Là Số Một",
+      "genres": [
+        "Comedy",
+        "Family"
+      ],
+      "description": "Bộ phim hài gia đình mang lại tiếng cười sảng khoái giải trí và bài học nhân văn sâu sắc về mối quan hệ tình thân.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn"
+      ],
+      "tags": [
+        "funny",
+        "family",
+        "laugh"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 105,
+      "communityRating": 4.7,
+      "bookingCount30d": 4800,
+      "viewCount30d": 19500
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000074",
+      "movieName": "Bạn Thân Hóa Người Yêu",
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
+      "description": "Cặp bạn thân từ thuở nhỏ bỗng một ngày nhận ra tình cảm dành cho đối phương vượt mức bạn bè tạo nên nhiều chuyện hài hước.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "funny",
+        "love",
+        "friendship"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 98,
+      "communityRating": 4.3,
+      "bookingCount30d": 2500,
+      "viewCount30d": 9200
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000075",
+      "movieName": "Sếp Già Khó Tính",
+      "genres": [
+        "Comedy"
+      ],
+      "description": "Nhân viên văn phòng công sở tìm mọi cách để đối phó với vị sếp già độc đoán gắt gỏng tạo nên những trận cười ra nước mắt.",
+      "director": "Phạm Minh Đức",
+      "actors": [
+        "Kiều Minh Tuấn",
+        "Lý Hải",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "funny",
+        "daily",
+        "office"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 92,
+      "communityRating": 4.0,
+      "bookingCount30d": 1500,
+      "viewCount30d": 5600
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000076",
+      "movieName": "Chuyến Đi Nhớ Đời",
+      "genres": [
+        "Comedy",
+        "Adventure"
+      ],
+      "description": "Hành trình phượt từ nam ra bắc của ba ông bạn già với vô số rắc rối hài hước hành trình nảy sinh dọc đường đi phượt.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Lý Hải",
+        "Kiều Minh Tuấn",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "funny",
+        "journey",
+        "friendship"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 102,
+      "communityRating": 4.2,
+      "bookingCount30d": 1800,
+      "viewCount30d": 6700
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000077",
+      "movieName": "Oan Gia Ngõ Hẹp",
+      "genres": [
+        "Comedy",
+        "Romance"
+      ],
+      "description": "Hai người ghét cay ghét đắng nhau bỗng xui rủi trở thành hàng xóm sát vách, ngày ngày chạm mặt đấu khẩu hài hước tình cảm.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "funny",
+        "love",
+        "daily"
+      ],
+      "ageRating": "T13",
+      "durationMinutes": 96,
+      "communityRating": 4.1,
+      "bookingCount30d": 1400,
+      "viewCount30d": 5100
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000078",
+      "movieName": "Võ Sư Bất Đắc Dĩ",
+      "genres": [
+        "Action",
+        "Comedy"
+      ],
+      "description": "Anh chàng nhút nhát vô tình bị nhầm là cao thủ võ lâm và phải gánh vác trách nhiệm bảo vệ võ đường bằng những trận đấu hài hước.",
+      "director": "Trần Văn Nam",
+      "actors": [
+        "Lý Hải",
+        "Kiều Minh Tuấn",
+        "Nguyễn Hồng Đăng"
+      ],
+      "tags": [
+        "funny",
+        "fight",
+        "laugh"
+      ],
+      "ageRating": "K",
+      "durationMinutes": 98,
+      "communityRating": 4.2,
+      "bookingCount30d": 2100,
+      "viewCount30d": 7900
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000079",
+      "movieName": "Yêu Nhầm Bạn Thân",
+      "genres": [
+        "Romance",
+        "Comedy"
+      ],
+      "description": "Hành trình thoát khỏi kiếp bạn thân đầy gian nan và hài hước lãng mạn của một chàng trai si tình khờ khạo tuổi trẻ.",
+      "director": "Lê Thị Lan",
+      "actors": [
+        "Ninh Dương Lan Ngọc",
+        "Kiều Minh Tuấn",
+        "Trấn Thành"
+      ],
+      "tags": [
+        "funny",
+        "love",
+        "friendship"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 100,
+      "communityRating": 4.3,
+      "bookingCount30d": 2200,
+      "viewCount30d": 8400
+    },
+    {
+      "movieId": "00000000-0000-0000-0000-000000000080",
+      "movieName": "Cưới Hỏi Gặp Nạn",
+      "genres": [
+        "Comedy"
+      ],
+      "description": "Đám cưới miệt vườn ngập tràn tiếng cười bỗng biến thành một bãi chiến trường hài hước giải trí vì những sự cố đám cưới hy hữu.",
+      "director": "Trấn Thành",
+      "actors": [
+        "Trấn Thành",
+        "Kiều Minh Tuấn",
+        "Ninh Dương Lan Ngọc"
+      ],
+      "tags": [
+        "funny",
+        "marriage",
+        "laugh"
+      ],
+      "ageRating": "P",
+      "durationMinutes": 94,
+      "communityRating": 4.4,
+      "bookingCount30d": 3300,
+      "viewCount30d": 13000
+    }
+  ],
+  "benchmarkQueries": [
+    {
+      "queryId": "q001",
+      "queryText": "Tôi muốn xem phim hành động kịch tính gay cấn",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000003",
+        "00000000-0000-0000-0000-000000000005"
+      ],
+      "expectedGenres": [
+        "Action"
+      ],
+      "expectedTags": [
+        "fast-paced"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000009",
+        "00000000-0000-0000-0000-000000000010"
+      ],
+      "notes": "Tìm kiếm thể loại hành động nguyên bản, loại bỏ hành động hài hước/gia đình."
+    },
+    {
+      "queryId": "q002",
+      "queryText": "Tìm phim kinh dị rùng rợn siêu nhiên có ma ám",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000021",
+        "00000000-0000-0000-0000-000000000023",
+        "00000000-0000-0000-0000-000000000024"
+      ],
+      "expectedGenres": [
+        "Horror"
+      ],
+      "expectedTags": [
+        "ghost",
+        "haunted",
+        "supernatural"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000028"
+      ],
+      "notes": "Phim ma siêu nhiên thuần túy, loại trừ kinh dị hài học đường."
+    },
+    {
+      "queryId": "q003",
+      "queryText": "Có phim hoạt hình nào cho trẻ em phiêu lưu không",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000041",
+        "00000000-0000-0000-0000-000000000043",
+        "00000000-0000-0000-0000-000000000045"
+      ],
+      "expectedGenres": [
+        "Animation",
+        "Adventure"
+      ],
+      "expectedTags": [
+        "kids",
+        "journey"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000048"
+      ],
+      "notes": "Hoạt hình phiêu lưu thiếu nhi, loại trừ hoạt hình cyberpunk bạo lực mác T16."
+    },
+    {
+      "queryId": "q004",
+      "queryText": "Muốn xem phim tài liệu về thiên nhiên hoang dã",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000061",
+        "00000000-0000-0000-0000-000000000062",
+        "00000000-0000-0000-0000-000000000063"
+      ],
+      "expectedGenres": [
+        "Documentary"
+      ],
+      "expectedTags": [
+        "nature",
+        "animals"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000068"
+      ],
+      "notes": "Phim tài liệu khoa học tự nhiên, loại trừ phim tài liệu hài giả tưởng (mockumentary)."
+    },
+    {
+      "queryId": "q005",
+      "queryText": "Phim tâm lý tình cảm lãng mạn nhẹ nhàng tuổi trẻ",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000035",
+        "00000000-0000-0000-0000-000000000037"
+      ],
+      "expectedGenres": [
+        "Romance",
+        "Drama"
+      ],
+      "expectedTags": [
+        "love",
+        "youth"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000038"
+      ],
+      "notes": "Tình cảm lãng mạn nhẹ nhàng hoài niệm, loại trừ tâm lý giật gân ngoại tình đen tối."
+    },
+    {
+      "queryId": "q006",
+      "queryText": "Tìm phim hài hước giải trí gia đình cười ra nước mắt",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000071",
+        "00000000-0000-0000-0000-000000000072",
+        "00000000-0000-0000-0000-000000000073"
+      ],
+      "expectedGenres": [
+        "Comedy"
+      ],
+      "expectedTags": [
+        "funny",
+        "laugh",
+        "daily"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000028"
+      ],
+      "notes": "Phim hài đời sống giải trí, không lấy phim kinh dị hài."
+    },
+    {
+      "queryId": "00000000-0000-0000-0000-000000000007",
+      "queryText": "Phim hình sự trinh thám đấu trí phá án vụ án mạng vụ phòng kín",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000051",
+        "00000000-0000-0000-0000-000000000053",
+        "00000000-0000-0000-0000-000000000055"
+      ],
+      "expectedGenres": [
+        "Thriller",
+        "Mystery"
+      ],
+      "expectedTags": [
+        "detective",
+        "murder",
+        "mystery"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000058"
+      ],
+      "notes": "Phim hình sự trinh thám cân não nghiêm túc, loại trừ thám tử tập sự hài hước."
+    },
+    {
+      "queryId": "q008",
+      "queryText": "Phim khoa học viễn tưởng du hành vũ trụ thiên hà không gian",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000011",
+        "00000000-0000-0000-0000-000000000012",
+        "00000000-0000-0000-0000-000000000015"
+      ],
+      "expectedGenres": [
+        "Sci-Fi"
+      ],
+      "expectedTags": [
+        "space",
+        "galaxy"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000048"
+      ],
+      "notes": "Phim khoa học viễn tưởng vũ trụ người đóng, loại trừ hoạt hình cyberpunk."
+    },
+    {
+      "queryId": "q009",
+      "queryText": "Phim cổ trang lịch sử cung đình nội chiến quyền lực",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000040",
+        "00000000-0000-0000-0000-000000000064",
+        "00000000-0000-0000-0000-000000000066"
+      ],
+      "expectedGenres": [
+        "Drama",
+        "Documentary"
+      ],
+      "expectedTags": [
+        "history",
+        "betrayal"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000038"
+      ],
+      "notes": "Phim bối cảnh lịch sử cổ xưa hoặc tài liệu lịch sử, loại bỏ phim tâm lý hiện đại."
+    },
+    {
+      "queryId": "q010",
+      "queryText": "Phim giật gân hồi hộp căng thẳng tột độ",
+      "intentType": "genre_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000025",
+        "00000000-0000-0000-0000-000000000056",
+        "00000000-0000-0000-0000-000000000057"
+      ],
+      "expectedGenres": [
+        "Thriller"
+      ],
+      "expectedTags": [
+        "tension"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000009"
+      ],
+      "notes": "Phim hồi hộp giật gân, loại bỏ hành động điệp viên giải trí hài hước."
+    },
+    {
+      "queryId": "q011",
+      "queryText": "Tôi muốn xem phim hành động trả thù tiết tấu nhanh sát thủ bắn súng",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000004"
+      ],
+      "expectedGenres": [
+        "Action"
+      ],
+      "expectedTags": [
+        "revenge",
+        "fast-paced"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000009",
+        "00000000-0000-0000-0000-000000000010"
+      ],
+      "notes": "Khớp chủ đề trả thù (revenge) và hành động bạo lực bám sát mô tả."
+    },
+    {
+      "queryId": "q012",
+      "queryText": "Có phim nào về du hành vũ trụ nhưng cảm xúc gia đình cha con không?",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000016",
+        "00000000-0000-0000-0000-000000000020"
+      ],
+      "expectedGenres": [
+        "Sci-Fi"
+      ],
+      "expectedTags": [
+        "space",
+        "family"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000011",
+        "00000000-0000-0000-0000-000000000012"
+      ],
+      "notes": "Kiểm tra khả năng tìm kiếm ngữ nghĩa kết hợp giữa không gian (space) và gia đình (family). Các phim không gian thuần túy là hard negative."
+    },
+    {
+      "queryId": "q013",
+      "queryText": "Gợi ý phim kinh dị siêu nhiên ít máu me nhưng tâm lý căng thẳng ám ảnh",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000025",
+        "00000000-0000-0000-0000-000000000029"
+      ],
+      "expectedGenres": [
+        "Horror",
+        "Thriller"
+      ],
+      "expectedTags": [
+        "supernatural",
+        "psychological",
+        "tension"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000030"
+      ],
+      "notes": "Tìm kiếm kinh dị tâm lý siêu nhiên, phim chặt chém máu me (slasher/brutal) là lỗi false positive."
+    },
+    {
+      "queryId": "q014",
+      "queryText": "Phim về thế giới tương lai trí tuệ nhân tạo người máy công nghệ cao",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000020",
+        "00000000-0000-0000-0000-000000000046",
+        "00000000-0000-0000-0000-000000000069"
+      ],
+      "expectedGenres": [
+        "Sci-Fi",
+        "Animation",
+        "Documentary"
+      ],
+      "expectedTags": [
+        "future",
+        "robot"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000011"
+      ],
+      "notes": "Khớp ngữ nghĩa chủ đề robot/AI bất kể thể loại phim truyện, hoạt hình hay tài liệu."
+    },
+    {
+      "queryId": "q015",
+      "queryText": "Phim tâm lý gia đình cảm động lấy nước mắt người xem tình thân",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000033",
+        "00000000-0000-0000-0000-000000000036"
+      ],
+      "expectedGenres": [
+        "Drama",
+        "Family"
+      ],
+      "expectedTags": [
+        "family",
+        "tears"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000038"
+      ],
+      "notes": "Phim gia đình cảm động khóc, loại bỏ phim gia đình đấu đá đen tối bạo lực."
+    },
+    {
+      "queryId": "q016",
+      "queryText": "Phim phiêu lưu thám hiểm tìm kiếm kho báu hòn đảo bí ẩn khám phá",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000015",
+        "00000000-0000-0000-0000-000000000045",
+        "00000000-0000-0000-0000-000000000063"
+      ],
+      "expectedGenres": [
+        "Adventure",
+        "Animation",
+        "Documentary"
+      ],
+      "expectedTags": [
+        "exploration",
+        "journey"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000076"
+      ],
+      "notes": "Khớp từ khóa thám hiểm hòn đảo/vùng đất lạ, loại bỏ phượt roadtrip hài hước."
+    },
+    {
+      "queryId": "q017",
+      "queryText": "Phim đấu trí cân não tâm lý tội phạm thiên tài IQ cao lập mưu",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000053",
+        "00000000-0000-0000-0000-000000000057",
+        "00000000-0000-0000-0000-000000000060"
+      ],
+      "expectedGenres": [
+        "Thriller"
+      ],
+      "expectedTags": [
+        "mindgame",
+        "detective"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000058"
+      ],
+      "notes": "Tập trung vào yếu tố đấu trí tính toán tinh vi, loại bỏ yếu tố phá án hài hước."
+    },
+    {
+      "queryId": "q018",
+      "queryText": "Phim hài hước về đời sống văn phòng công sở sếp và nhân viên",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000075"
+      ],
+      "expectedGenres": [
+        "Comedy"
+      ],
+      "expectedTags": [
+        "funny",
+        "office"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000071"
+      ],
+      "notes": "Phải khớp chính xác bối cảnh văn phòng công sở trong mô tả."
+    },
+    {
+      "queryId": "q019",
+      "queryText": "Phim về đề tài thảm họa biến đổi khí hậu môi trường sinh thái tàn phá",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000065"
+      ],
+      "expectedGenres": [
+        "Documentary"
+      ],
+      "expectedTags": [
+        "nature",
+        "environment"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000061"
+      ],
+      "notes": "Chủ đề môi trường khí hậu khốc liệt, tài liệu động vật đơn thuần là negative."
+    },
+    {
+      "queryId": "q020",
+      "queryText": "Phim về cuộc chiến sinh tồn khắc nghiệt hoang dã rừng sâu hoang mạc",
+      "intentType": "theme_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000030",
+        "00000000-0000-0000-0000-000000000043",
+        "00000000-0000-0000-0000-000000000062"
+      ],
+      "expectedGenres": [
+        "Horror",
+        "Animation",
+        "Documentary"
+      ],
+      "expectedTags": [
+        "survival"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000044"
+      ],
+      "notes": "Khớp thẻ sinh tồn khắc nghiệt bất chấp sự khác biệt về thể loại phim."
+    },
+    {
+      "queryId": "q021",
+      "queryText": "Tìm tất cả phim có diễn viên Trần Bảo Sơn đóng hình sự hoặc hành động",
+      "intentType": "actor_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000005",
+        "00000000-0000-0000-0000-000000000053"
+      ],
+      "expectedGenres": [
+        "Action",
+        "Thriller"
+      ],
+      "expectedTags": [],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000011"
+      ],
+      "notes": "Tìm tên diễn viên Trần Bảo Sơn kết hợp lọc thể loại hành động/hình sự, loại phim viễn tưởng."
+    },
+    {
+      "queryId": "q022",
+      "queryText": "Xem phim của Kiều Minh Tuấn hài hước vui nhộn giải trí xả stress",
+      "intentType": "actor_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000009",
+        "00000000-0000-0000-0000-000000000034",
+        "00000000-0000-0000-0000-000000000071",
+        "00000000-0000-0000-0000-000000000072"
+      ],
+      "expectedGenres": [
+        "Comedy"
+      ],
+      "expectedTags": [
+        "funny",
+        "laugh"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000005"
+      ],
+      "notes": "Tìm Kiều Minh Tuấn phim hài, loại bỏ phim hành động bạo lực anh ấy đóng phụ."
+    },
+    {
+      "queryId": "q023",
+      "queryText": "Phim của Ninh Dương Lan Ngọc đóng chính tình cảm lãng mạn tình yêu",
+      "intentType": "actor_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000034",
+        "00000000-0000-0000-0000-000000000074"
+      ],
+      "expectedGenres": [
+        "Romance",
+        "Comedy"
+      ],
+      "expectedTags": [
+        "love"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000004"
+      ],
+      "notes": "Tìm Ninh Dương Lan Ngọc đóng phim yêu đương lãng mạn, loại trừ phim cô ấy đóng vai sát thủ."
+    },
+    {
+      "queryId": "q024",
+      "queryText": "Phim nào có Trấn Thành đạo diễn hoặc đóng chính thể loại hài gia đình",
+      "intentType": "actor_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000010",
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000033",
+        "00000000-0000-0000-0000-000000000073"
+      ],
+      "expectedGenres": [
+        "Comedy",
+        "Family",
+        "Drama"
+      ],
+      "expectedTags": [
+        "family",
+        "funny"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000050"
+      ],
+      "notes": "Tìm Trấn Thành gắn với chủ đề gia đình, loại bỏ phim hoạt hình đua xe anh ấy lồng tiếng."
+    },
+    {
+      "queryId": "q025",
+      "queryText": "Phim hình sự trinh thám điều tra có sự tham gia của Nguyễn Hồng Đăng",
+      "intentType": "actor_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000051",
+        "00000000-0000-0000-0000-000000000052",
+        "00000000-0000-0000-0000-000000000057"
+      ],
+      "expectedGenres": [
+        "Thriller"
+      ],
+      "expectedTags": [
+        "detective"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000012"
+      ],
+      "notes": "Nguyễn Hồng Đăng đóng phim thám tử hình sự, loại bỏ phim vũ trụ viễn tưởng."
+    },
+    {
+      "queryId": "q026",
+      "queryText": "Phim hành động kịch tính võ thuật đối kháng do đạo diễn Trần Văn Nam thực hiện",
+      "intentType": "director_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000006"
+      ],
+      "expectedGenres": [
+        "Action"
+      ],
+      "expectedTags": [],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000015",
+        "00000000-0000-0000-0000-000000000023"
+      ],
+      "notes": "Tìm phim của Trần Văn Nam nhưng giới hạn thể loại hành động võ thuật, loại phim ma và viễn tưởng."
+    },
+    {
+      "queryId": "q027",
+      "queryText": "Phim kinh dị siêu nhiên ám ảnh ma quỷ của đạo diễn Nguyễn Hoàng Vũ",
+      "intentType": "director_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000021",
+        "00000000-0000-0000-0000-000000000022"
+      ],
+      "expectedGenres": [
+        "Horror"
+      ],
+      "expectedTags": [
+        "supernatural"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000003",
+        "00000000-0000-0000-0000-000000000051"
+      ],
+      "notes": "Tìm đạo diễn Nguyễn Hoàng Vũ phim kinh dị, loại trừ phim hành động ma túy và hình sự phá án."
+    },
+    {
+      "queryId": "q028",
+      "queryText": "Tuyển tập phim tâm lý xã hội tình cảm tuổi trẻ lãng mạn của đạo diễn Lê Thị Lan",
+      "intentType": "director_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000031",
+        "00000000-0000-0000-0000-000000000035",
+        "00000000-0000-0000-0000-000000000037"
+      ],
+      "expectedGenres": [
+        "Drama",
+        "Romance"
+      ],
+      "expectedTags": [
+        "love",
+        "youth"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000004"
+      ],
+      "notes": "Lọc phim tình cảm lãng mạn của Lê Thị Lan, loại phim hành động sát thủ."
+    },
+    {
+      "queryId": "q029",
+      "queryText": "Các phim hoạt hình ý nghĩa phép thuật kỳ diệu dành cho thiếu nhi của đạo diễn Phạm Minh Đức",
+      "intentType": "director_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000041",
+        "00000000-0000-0000-0000-000000000042",
+        "00000000-0000-0000-0000-000000000046"
+      ],
+      "expectedGenres": [
+        "Animation"
+      ],
+      "expectedTags": [
+        "kids",
+        "magic"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000025",
+        "00000000-0000-0000-0000-000000000055"
+      ],
+      "notes": "Hoạt hình thiếu nhi của Phạm Minh Đức, loại bỏ phim tài liệu hoang dã hoặc kinh dị siêu nhiên anh ấy đạo diễn."
+    },
+    {
+      "queryId": "q030",
+      "queryText": "Phim hài hước đời sống hoặc cảm động gia đình của đạo diễn Trấn Thành",
+      "intentType": "director_search",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000032",
+        "00000000-0000-0000-0000-000000000033",
+        "00000000-0000-0000-0000-000000000073"
+      ],
+      "expectedGenres": [
+        "Comedy",
+        "Drama",
+        "Family"
+      ],
+      "expectedTags": [
+        "family"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000050"
+      ],
+      "notes": "Khớp chính xác thương hiệu phim gia đình đặc trưng của đạo diễn Trấn Thành."
+    },
+    {
+      "queryId": "q031",
+      "queryText": "Tôi thích phim Báo Thù Đêm Khuya, có phim nào tương tự hành động trả thù đấm đá như vậy không",
+      "intentType": "movie_to_movie",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000002",
+        "00000000-0000-0000-0000-000000000003",
+        "00000000-0000-0000-0000-000000000006"
+      ],
+      "expectedGenres": [
+        "Action"
+      ],
+      "expectedTags": [
+        "revenge"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000009"
+      ],
+      "notes": "Tìm phim tương đồng với ID phim 0001 (Hành động trả thù đen tối), loại bỏ phim điệp viên hài."
+    },
+    {
+      "queryId": "q032",
+      "queryText": "Gợi ý phim khoa học viễn tưởng giống Kỷ Nguyên Không Gian du hành hố đen lỗ đen vũ trụ kỳ bí bao la",
+      "intentType": "movie_to_movie",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000012",
+        "00000000-0000-0000-0000-000000000013",
+        "00000000-0000-0000-0000-000000000017"
+      ],
+      "expectedGenres": [
+        "Sci-Fi"
+      ],
+      "expectedTags": [
+        "space",
+        "galaxy"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000018"
+      ],
+      "notes": "Tìm phim tương đồng ID 0011 (Viễn tưởng vũ trụ không gian), loại bỏ phim viễn tưởng cyberpunk đô thị tương lai."
+    },
+    {
+      "queryId": "q033",
+      "queryText": "Muốn xem phim ma rùng rợn tâm linh ám ảnh giống Tiếng Gọi Oan Hồn nhà cổ bị ám",
+      "intentType": "movie_to_movie",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000022",
+        "00000000-0000-0000-0000-000000000024",
+        "00000000-0000-0000-0000-000000000026"
+      ],
+      "expectedGenres": [
+        "Horror"
+      ],
+      "expectedTags": [
+        "ghost",
+        "haunted",
+        "supernatural"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000029"
+      ],
+      "notes": "Tìm phim ma ám siêu nhiên tương tự ID 0021, loại trừ phim thriller tâm lý bệnh nhân hoang tưởng."
+    },
+    {
+      "queryId": "q034",
+      "queryText": "Tìm phim hoạt hình phép thuật phiêu lưu thế giới huyền bí giống Hành Trình Kỳ Diệu thiếu nhi",
+      "intentType": "movie_to_movie",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000042",
+        "00000000-0000-0000-0000-000000000045"
+      ],
+      "expectedGenres": [
+        "Animation"
+      ],
+      "expectedTags": [
+        "magic",
+        "kids",
+        "journey"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000048"
+      ],
+      "notes": "Tìm phim tương tự hoạt hình kỳ ảo ID 0041, loại trừ phim hoạt hình khoa học viễn tưởng AI nổi loạn."
+    },
+    {
+      "queryId": "q035",
+      "queryText": "Gợi ý phim hình sự phá án phòng kín kịch tính cân não đấu trí tinh vi như Thám Tử Lừng Danh",
+      "intentType": "movie_to_movie",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000052",
+        "00000000-0000-0000-0000-000000000053",
+        "00000000-0000-0000-0000-000000000055"
+      ],
+      "expectedGenres": [
+        "Thriller"
+      ],
+      "expectedTags": [
+        "detective",
+        "mystery",
+        "murder"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000058"
+      ],
+      "notes": "Tìm kiếm phim trinh thám hình sự tương tự ID 0051, loại trừ phim thám tử hài hước."
+    },
+    {
+      "queryId": "q036",
+      "queryText": "Phim hành động kịch tính gay cấn của Trần Bảo Sơn đóng nhưng phải có yếu tố tình cảm gia đình cảm động",
+      "intentType": "mixed_preference",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000005"
+      ],
+      "expectedGenres": [
+        "Action",
+        "Thriller"
+      ],
+      "expectedTags": [
+        "revenge",
+        "family"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000001",
+        "00000000-0000-0000-0000-000000000002"
+      ],
+      "notes": "Yêu cầu kết hợp phức tạp: Diễn viên Trần Bảo Sơn + Thể loại Hành động + Thẻ gia đình cảm động. Các phim hành động thuần túy của anh ấy là hard negative."
+    },
+    {
+      "queryId": "q037",
+      "queryText": "Phim hoạt hình khoa học viễn tưởng thế giới tương lai đen tối cyberpunk không dành cho trẻ em mác T16",
+      "intentType": "mixed_preference",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000048"
+      ],
+      "expectedGenres": [
+        "Animation",
+        "Sci-Fi"
+      ],
+      "expectedTags": [
+        "future",
+        "cyberpunk",
+        "dark"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000046"
+      ],
+      "notes": "Tìm hoạt hình viễn tưởng người lớn đen tối, hoạt hình tương lai dành cho thiếu nhi là hard negative."
+    },
+    {
+      "queryId": "q038",
+      "queryText": "Phim kinh dị quỷ dị búp bê oóc oan hồn nhưng phải hài hước giải trí vui nhộn không đáng sợ",
+      "intentType": "mixed_preference",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000028",
+        "00000000-0000-0000-0000-000000000049"
+      ],
+      "expectedGenres": [
+        "Horror",
+        "Comedy",
+        "Animation"
+      ],
+      "expectedTags": [
+        "funny",
+        "ghost"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000021",
+        "00000000-0000-0000-0000-000000000026"
+      ],
+      "notes": "Sự kết hợp chéo giữa kinh dị siêu nhiên và yếu tố hài hước vui vẻ. Kinh dị thuần túy là hard negative."
+    },
+    {
+      "queryId": "q039",
+      "queryText": "Phim tài liệu khoa học xã hội nhưng có kết hợp yếu tố khoa học viễn tưởng công nghệ tương lai trí tuệ nhân tạo",
+      "intentType": "mixed_preference",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000069"
+      ],
+      "expectedGenres": [
+        "Documentary",
+        "Sci-Fi"
+      ],
+      "expectedTags": [
+        "future",
+        "technology",
+        "real-life"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000011",
+        "00000000-0000-0000-0000-000000000065"
+      ],
+      "notes": "Sự kết hợp độc đáo giữa phim tài liệu và công nghệ khoa học viễn tưởng tương lai."
+    },
+    {
+      "queryId": "q040",
+      "queryText": "Phim hình sự trinh thám thám tử phá án nhưng lồng ghép nhiều tình huống hài hước cười ra nước mắt giải trí sảng khoái",
+      "intentType": "mixed_preference",
+      "expectedMovieIds": [
+        "00000000-0000-0000-0000-000000000058"
+      ],
+      "expectedGenres": [
+        "Comedy",
+        "Thriller"
+      ],
+      "expectedTags": [
+        "detective",
+        "funny",
+        "laugh"
+      ],
+      "hardNegativeMovieIds": [
+        "00000000-0000-0000-0000-000000000051",
+        "00000000-0000-0000-0000-000000000052"
+      ],
+      "notes": "Tìm kiếm thể loại chéo trinh thám hình sự kết hợp hài hước. Các phim hình sự nghiêm túc phá án phòng kín là hard negative."
+    }
+  ],
+  "scoringRules": {
+    "hitAtK": [
+      1,
+      3,
+      5
+    ],
+    "weights": {
+      "expectedMovieHit": 1.0,
+      "genreMatch": 0.35,
+      "tagMatch": 0.45,
+      "directorMatch": 0.25,
+      "actorMatch": 0.25,
+      "hardNegativePenalty": -0.8
+    },
+    "primaryMetric": "semantic_score@5"
+  }
 }
