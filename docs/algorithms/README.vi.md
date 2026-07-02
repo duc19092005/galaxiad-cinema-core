@@ -16,6 +16,10 @@ Thư mục này mô tả các thuật toán sản phẩm và thuật toán kỹ 
 | Quy tắc xếp lịch ca làm | [shift-schedule-rules.md](en/shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
 | **Khóa ghế Real-time (SignalR)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
 
+## Benchmark
+
+- [Embedding Dimension Benchmark](../benchmarks/embedding-dimension-benchmark.md)
+
 ## AI Showtime Planner
 
 AI Showtime Planner hỗ trợ Quản lý rạp và Admin nhận gợi ý xếp lịch chiếu phim. Ở phiên bản V1, hệ thống không train model riêng. Backend chấm điểm bằng luật nghiệp vụ dựa trên dữ liệu thật, lưu lịch sử gợi ý và thao tác áp dụng, còn LLM chỉ dùng để giải thích bằng ngôn ngữ tự nhiên thông qua chatbot.

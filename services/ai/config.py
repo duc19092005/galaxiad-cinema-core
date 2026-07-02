@@ -10,7 +10,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
 # Embedding config
 EMBEDDING_BACKEND = os.getenv("EMBEDDING_BACKEND", "local")  # "local" | "cloud"
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-m3")
-EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "1024"))
+EMBEDDING_DIM = int(os.getenv("EMBEDDING_DIM", "768"))
 
 # Cloud embedding config (Jina AI)
 JINA_API_KEY = os.getenv("JINA_API_KEY", "")

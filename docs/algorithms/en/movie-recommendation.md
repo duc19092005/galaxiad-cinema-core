@@ -20,7 +20,7 @@ SQL Server is the source of truth. Qdrant stores persistent movie vectors only. 
 Hệ thống gợi ý phim hoạt động linh hoạt theo hai cơ chế tùy thuộc vào trạng thái cấu hình của hệ thống AI:
 
 ### 1. Khi có Embedding (Local BAAI/bge-m3 Model)
-Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả (được tổng hợp từ khảo sát, lịch sử xem, lịch sử đặt vé, đánh giá) và chuyển thành vector 1024 chiều thông qua mô hình local `BAAI/bge-m3` được nhúng chạy trực tiếp trong container AI service. Sau đó, hệ thống sử dụng cơ sở dữ liệu vector Qdrant để tính khoảng cách Cosine và tìm các bộ phim có nội dung tương đồng ngữ nghĩa nhất.
+Hệ thống hiểu ngữ nghĩa sở thích của người dùng bằng cách phân tích văn bản mô tả và chuyển thành vector 768 chiều thông qua mô hình local `BAAI/bge-m3` được nhúng chạy trực tiếp trong container AI service. Mốc 768 được chọn sau benchmark nội bộ: `semantic_score@5 = 1.4037`, `hit@5 = 0.975`, hard-negative giữ ở `0.04`, latency trung bình `3.96ms`, trong khi giảm khoảng 25% bộ nhớ vector so với 1024 chiều. Sau đó, hệ thống sử dụng Qdrant để tính cosine similarity và tìm các bộ phim tương đồng ngữ nghĩa nhất.
 
 Điểm `SimilarityScore` lúc này là khoảng cách Cosine (distance): nhỏ hơn = khớp hơn.  
 Để hiển thị `MatchPercentage` trực quan (% cao = phù hợp nhiều), backend đảo ngược chiều:

@@ -1,0 +1,6 @@
+dimension,collection_name,movie_count,query_count,embedding_time_sec,upsert_time_sec,avg_search_ms,p50_search_ms,p95_search_ms,genre_precision@5,hard_negative_rate@5,semantic_score@5,estimated_vector_memory_mb,hit@1,hit@3,hit@5
+1024,cinema_movies_bench_1024,80,40,40.6622,0.0639,4.5846,3.6294,4.7552,0.895,0.04,1.4277,0.3125,0.6,0.95,1.0
+768,cinema_movies_bench_768,80,40,35.657,0.0389,3.9554,3.631,4.8845,0.875,0.04,1.4037,0.2344,0.65,0.925,0.975
+512,cinema_movies_bench_512,80,40,33.4372,0.0323,3.4146,3.1745,4.4294,0.84,0.045,1.3797,0.1562,0.55,0.925,0.95
+256,cinema_movies_bench_256,80,40,33.3661,0.0177,3.4864,3.3094,4.7169,0.84,0.06,1.3035,0.0781,0.575,0.9,1.0
+128,cinema_movies_bench_128,80,40,33.7171,0.0136,3.1183,3.0113,4.0973,0.775,0.03,1.1885,0.0391,0.525,0.775,0.875

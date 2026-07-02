@@ -9,6 +9,7 @@ using Cinema.Domain.Entities.UserInfos;
 namespace Cinema.Application.Interfaces.Comments;
 
 public record MovieBehaviorSignal(Guid MovieId, int Count, DateTime LastAt);
+public record GenrePreferenceSignal(string GenreName, double Weight);
 
 public class RedisMovieViewDto
 {
@@ -26,6 +27,9 @@ public interface IRecommendationRepository
     Task<List<MovieBehaviorSignal>> GetViewedMovieSignalsAsync(Guid userId, int take);
     Task<List<MovieBehaviorSignal>> GetBookedMovieSignalsAsync(Guid userId, int take);
     Task<List<MovieBehaviorSignal>> GetPositiveRatingSignalsAsync(Guid userId, int take);
+    Task<List<MovieBehaviorSignal>> GetRecentPositiveRatingSignalsAsync(Guid userId, DateTime since, int take);
+    Task<List<MovieBehaviorSignal>> GetHighQualityInteractionSignalsAsync(Guid userId, double minAverageRating, int take);
+    Task<List<GenrePreferenceSignal>> GetDominantGenreSignalsAsync(Guid userId, double majorityThreshold, int take);
     Task<List<string>> LoadMoviePreferenceSnippetsAsync(IEnumerable<Guid> movieIds);
     Task<List<RecommendedMovieRes>> LoadRecommendedMoviesAsync(List<Guid> movieIds);
     Task<List<RecommendedMovieRes>> GetFallbackRecommendationsAsync(HashSet<Guid> excludedMovieIds, int take);

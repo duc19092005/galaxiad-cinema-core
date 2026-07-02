@@ -139,6 +139,112 @@ public class RecommendationRepository : IRecommendationRepository
         return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
     }
 
+    public async Task<List<MovieBehaviorSignal>> GetRecentPositiveRatingSignalsAsync(Guid userId, DateTime since, int take)
+    {
+        var raw = await _dbContext.Set<MovieCommentEntity>()
+            .Where(x => x.UserId == userId
+                        && x.ParentCommentId == null
+                        && x.Rating.HasValue
+                        && x.Rating.Value >= 4
+                        && x.CreatedAt >= since
+                        && x.Status != MovieCommentStatusEnum.Deleted
+                        && x.Status != MovieCommentStatusEnum.Rejected)
+            .GroupBy(x => x.MovieId)
+            .Select(x => new { MovieId = x.Key, Count = x.Count(), LastAt = x.Max(c => c.CreatedAt) })
+            .OrderByDescending(x => x.LastAt)
+            .ThenByDescending(x => x.Count)
+            .Take(take)
+            .ToListAsync();
+
+        return raw.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
+    }
+
+    public async Task<List<MovieBehaviorSignal>> GetHighQualityInteractionSignalsAsync(Guid userId, double minAverageRating, int take)
+    {
+        var interacted = (await GetBookedMovieSignalsAsync(userId, 20))
+            .Concat(await GetViewedMovieSignalsAsync(userId, 20))
+            .Concat(await GetPositiveRatingSignalsAsync(userId, 20))
+            .GroupBy(x => x.MovieId)
+            .Select(g => new MovieBehaviorSignal(
+                g.Key,
+                g.Sum(x => x.Count),
+                g.Max(x => x.LastAt)))
+            .ToList();
+
+        if (interacted.Count == 0)
+        {
+            return [];
+        }
+
+        var interactedIds = interacted.Select(x => x.MovieId).ToList();
+        var communityRatings = await _dbContext.Set<MovieCommentEntity>()
+            .Where(x => interactedIds.Contains(x.MovieId)
+                        && x.ParentCommentId == null
+                        && x.Rating.HasValue
+                        && x.Status == MovieCommentStatusEnum.Visible)
+            .GroupBy(x => x.MovieId)
+            .Select(x => new { MovieId = x.Key, Average = x.Average(c => c.Rating!.Value), Count = x.Count() })
+            .ToDictionaryAsync(x => x.MovieId, x => new { x.Average, x.Count });
+
+        return interacted
+            .Where(x => communityRatings.TryGetValue(x.MovieId, out var rating)
+                        && rating.Average >= minAverageRating)
+            .OrderByDescending(x => communityRatings[x.MovieId].Average)
+            .ThenByDescending(x => x.Count)
+            .ThenByDescending(x => x.LastAt)
+            .Take(take)
+            .ToList();
+    }
+
+    public async Task<List<GenrePreferenceSignal>> GetDominantGenreSignalsAsync(Guid userId, double majorityThreshold, int take)
+    {
+        var behaviorSignals = (await GetBookedMovieSignalsAsync(userId, 30))
+            .Select(x => new MovieBehaviorSignal(x.MovieId, x.Count * 3, x.LastAt))
+            .Concat(await GetViewedMovieSignalsAsync(userId, 30))
+            .GroupBy(x => x.MovieId)
+            .Select(g => new MovieBehaviorSignal(
+                g.Key,
+                g.Sum(x => x.Count),
+                g.Max(x => x.LastAt)))
+            .ToList();
+
+        if (behaviorSignals.Count == 0)
+        {
+            return [];
+        }
+
+        var scoreByMovieId = behaviorSignals.ToDictionary(x => x.MovieId, x => (double)x.Count);
+        var movieIds = scoreByMovieId.Keys.ToList();
+        var movies = await _dbContext.Set<MovieInfoEntity>()
+            .Include(m => m.MovieGenreMovieInfoEntity)
+            .ThenInclude(g => g.MovieGenreInfoEntity)
+            .AsNoTracking()
+            .Where(m => movieIds.Contains(m.MovieId) && !m.IsDeleted)
+            .ToListAsync();
+
+        var genreScores = movies
+            .SelectMany(movie => movie.MovieGenreMovieInfoEntity.Select(genre => new
+            {
+                GenreName = genre.MovieGenreInfoEntity.MovieGenreName,
+                Score = scoreByMovieId.GetValueOrDefault(movie.MovieId)
+            }))
+            .GroupBy(x => x.GenreName)
+            .Select(g => new GenrePreferenceSignal(g.Key, g.Sum(x => x.Score)))
+            .OrderByDescending(x => x.Weight)
+            .ToList();
+
+        if (genreScores.Count == 0)
+        {
+            return [];
+        }
+
+        var maxScore = genreScores[0].Weight;
+        return genreScores
+            .Where(x => maxScore <= 0 || x.Weight >= maxScore * majorityThreshold)
+            .Take(take)
+            .ToList();
+    }
+
     public async Task<List<string>> LoadMoviePreferenceSnippetsAsync(IEnumerable<Guid> movieIds)
     {
         var ids = movieIds.Distinct().ToList();

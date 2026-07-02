@@ -16,6 +16,10 @@ This folder contains the product and technical algorithms used by Galaxiad Cinem
 | Shift Scheduling Rules | [shift-schedule-rules.md](en/shift-schedule-rules.md) | [shift-schedule-rules.md](vi/shift-schedule-rules.md) | [shift-schedule-rules.md](ru/shift-schedule-rules.md) |
 | **Seat Locking Real-time (SignalR)** 🔥 | **[seat-locking.md](en/seat-locking.md)** | **[seat-locking.md](vi/seat-locking.md)** | **[seat-locking.md](ru/seat-locking.md)** |
 
+## Benchmarks
+
+- [Embedding Dimension Benchmark](../benchmarks/embedding-dimension-benchmark.md)
+
 ## AI Showtime Planner
 
 The AI Showtime Planner recommends movie schedules for Theater Managers and Admins. It does not train a custom model in V1. The backend scores real business data with deterministic rules, stores recommendation and apply history, and only uses the LLM for natural-language explanation through chatbot integration.

@@ -115,9 +115,18 @@ class MovieEmbedder:
         return self._embed_text_local(text)
 
     def _embed_text_local(self, text: str) -> List[float]:
-        """Embed via local SentenceTransformer model."""
+        """Embed via local SentenceTransformer model and match configured dimension."""
         vector = self.model.encode(text, normalize_embeddings=True)
-        return vector.astype(float).tolist()
+        vec = np.array(vector, dtype=float)
+        if EMBEDDING_DIM > vec.shape[0]:
+            raise ValueError(
+                f"Configured EMBEDDING_DIM={EMBEDDING_DIM} exceeds model vector size {vec.shape[0]}"
+            )
+        vec = vec[:EMBEDDING_DIM]
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec = vec / norm
+        return vec.astype(float).tolist()
 
     def _embed_text_cloud(self, text: str) -> List[float]:
         """Embed via Jina AI embeddings-v3 cloud API."""

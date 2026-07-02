@@ -8,17 +8,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
-using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Localization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 
 public class GetRecommendationsUseCase
 {
+    private const int FinalTake = 5;
+    private const int ExplorationTake = 1;
+    private const int AiCandidateTake = 12;
+    private const double RecentRatingWeight = 1.0;
+    private const double LongTermGenreWeight = 0.82;
+    private const double HighQualityInteractionWeight = 0.9;
+    private const double SurveyWeight = 0.72;
+
     private readonly IRecommendationRepository _repository;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -39,24 +47,13 @@ public class GetRecommendationsUseCase
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
     }
 
-    private sealed record UserBehaviorProfile(string UserText, HashSet<Guid> InteractedMovieIds);
+    private sealed record RankedCandidate(Guid MovieId, double Score);
+    private sealed record AiQueryGroup(MovieBehaviorSignal Source, List<AiMovieScore> Results, double SourceWeight);
 
     public async Task<BaseResponse<List<RecommendedMovieRes>>> ExecuteAsync(Guid userId, CancellationToken cancellationToken)
     {
+        var interactedMovieIds = await BuildInteractedMovieIdsAsync(userId);
         var survey = await _repository.GetSurveyByUserIdAsync(userId);
-
-        var profile = await BuildUserBehaviorProfileAsync(userId, survey);
-        if (string.IsNullOrWhiteSpace(profile.UserText))
-        {
-            var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
-            ApplyMatchPercentage(fallback, invertDistance: false);
-            return new BaseResponse<List<RecommendedMovieRes>>
-            {
-                IsSuccess = true,
-                Data = fallback,
-                Message = Messages.Recommendation.PopularRecommendations
-            };
-        }
 
         try
         {
@@ -65,131 +62,375 @@ public class GetRecommendationsUseCase
             var aiServiceUrl = _configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000";
             var client = _httpClientFactory.CreateClient();
 
-            var reqBody = new AiRecommendRequest { UserText = profile.UserText, TopK = 12 };
-            var content = new StringContent(JsonSerializer.Serialize(reqBody), Encoding.UTF8, "application/json");
+            var recentRatings = await _repository.GetRecentPositiveRatingSignalsAsync(
+                userId,
+                DateTime.UtcNow.AddDays(-30),
+                take: 6);
 
-            var response = await client.PostAsync($"{aiServiceUrl}/recommend", content, cancellationToken);
-            if (!response.IsSuccessStatusCode)
+            if (recentRatings.Count > 0)
             {
-                _logger.LogWarning("AI service returned {StatusCode}", response.StatusCode);
-                var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
-                ApplyMatchPercentage(fallback, invertDistance: false);
-                return new BaseResponse<List<RecommendedMovieRes>>
+                var candidates = await QuerySimilarBySignalsAsync(
+                    client,
+                    aiServiceUrl,
+                    recentRatings,
+                    interactedMovieIds,
+                    RecentRatingWeight,
+                    cancellationToken);
+
+                if (candidates.Count > 0)
                 {
-                    IsSuccess = true,
-                    Data = fallback,
-                    Message = Messages.Recommendation.PopularRecommendations
-                };
+                    return Success(
+                        await BuildFinalListAsync(candidates, interactedMovieIds),
+                        Messages.Recommendation.BehaviorBased);
+                }
             }
 
-            var aiResult = JsonSerializer.Deserialize<AiRecommendResponse>(
-                await response.Content.ReadAsStringAsync(cancellationToken),
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (aiResult == null || aiResult.Results.Count == 0)
+            var dominantGenres = await _repository.GetDominantGenreSignalsAsync(userId, majorityThreshold: 0.5, take: 4);
+            if (dominantGenres.Count > 0)
             {
-                var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
-                ApplyMatchPercentage(fallback, invertDistance: false);
-                return new BaseResponse<List<RecommendedMovieRes>>
+                var genreText = BuildLongTermGenreText(dominantGenres);
+                var candidates = await QueryByTextAsync(
+                    client,
+                    aiServiceUrl,
+                    genreText,
+                    interactedMovieIds,
+                    LongTermGenreWeight,
+                    cancellationToken);
+
+                if (candidates.Count > 0)
                 {
-                    IsSuccess = true,
-                    Data = fallback,
-                    Message = Messages.Recommendation.PopularRecommendations
-                };
+                    return Success(
+                        await BuildFinalListAsync(candidates, interactedMovieIds),
+                        Messages.Recommendation.BehaviorBased);
+                }
             }
 
-            var movieIds = aiResult.Results
-                .Select(r => Guid.TryParse(r.MovieId, out var id) ? id : Guid.Empty)
-                .Where(id => id != Guid.Empty && !profile.InteractedMovieIds.Contains(id))
-                .Distinct()
-                .ToList();
+            var highQualityInteractions = await _repository.GetHighQualityInteractionSignalsAsync(
+                userId,
+                minAverageRating: 4.0,
+                take: 5);
 
-            var movies = await _repository.LoadRecommendedMoviesAsync(movieIds);
-
-            var scoreByMovieId = aiResult.Results
-                .Where(score => Guid.TryParse(score.MovieId, out _))
-                .ToDictionary(score => Guid.Parse(score.MovieId), score => score.Distance);
-
-            foreach (var movie in movies)
+            if (highQualityInteractions.Count > 0)
             {
-                movie.SimilarityScore = scoreByMovieId.GetValueOrDefault(movie.MovieId);
+                var candidates = await QuerySimilarBySignalsAsync(
+                    client,
+                    aiServiceUrl,
+                    highQualityInteractions,
+                    interactedMovieIds,
+                    HighQualityInteractionWeight,
+                    cancellationToken);
+
+                if (candidates.Count > 0)
+                {
+                    return Success(
+                        await BuildFinalListAsync(candidates, interactedMovieIds),
+                        Messages.Recommendation.BehaviorBased);
+                }
             }
 
-            var orderedMovies = movieIds
-                .Select(id => movies.FirstOrDefault(m => m.MovieId == id))
-                .Where(m => m != null)
-                .Cast<RecommendedMovieRes>()
-                .Take(5)
-                .ToList();
-
-            if (orderedMovies.Count < 5)
+            var surveyText = await BuildSurveyPreferenceTextAsync(survey);
+            if (!string.IsNullOrWhiteSpace(surveyText))
             {
-                var excludeIds = profile.InteractedMovieIds
-                    .Concat(orderedMovies.Select(m => m.MovieId))
-                    .ToHashSet();
-                var fallback = await GetRecommendationsWithFallbackAsync(
-                    excludeIds, 
-                    5 - orderedMovies.Count, 
-                    orderedMovies.Select(m => m.MovieId).ToHashSet());
-                orderedMovies.AddRange(fallback);
+                var candidates = await QueryByTextAsync(
+                    client,
+                    aiServiceUrl,
+                    surveyText,
+                    interactedMovieIds,
+                    SurveyWeight,
+                    cancellationToken);
+
+                if (candidates.Count > 0)
+                {
+                    return Success(
+                        await BuildFinalListAsync(candidates, interactedMovieIds),
+                        Messages.Recommendation.BehaviorBased);
+                }
             }
 
-            // AI distance: nhỏ hơn = khớp hơn → đảo chiều để tính % phù hợp
-            ApplyMatchPercentage(orderedMovies, invertDistance: true);
-            return new BaseResponse<List<RecommendedMovieRes>>
-            {
-                IsSuccess = true,
-                Data = orderedMovies,
-                Message = Messages.Recommendation.BehaviorBased
-            };
+            return Success(
+                await BuildFallbackListAsync(interactedMovieIds, FinalTake),
+                Messages.Recommendation.PopularRecommendations);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calling AI service");
-            var fallback = await GetRecommendationsWithFallbackAsync(profile.InteractedMovieIds, 5);
-            ApplyMatchPercentage(fallback, invertDistance: false);
-            return new BaseResponse<List<RecommendedMovieRes>>
-            {
-                IsSuccess = true,
-                Data = fallback,
-                Message = Messages.Recommendation.PopularRecommendations
-            };
+            _logger.LogError(ex, "Error building personalized recommendations");
+            return Success(
+                await BuildFallbackListAsync(interactedMovieIds, FinalTake),
+                Messages.Recommendation.PopularRecommendations);
         }
     }
 
+    private static BaseResponse<List<RecommendedMovieRes>> Success(List<RecommendedMovieRes> movies, string message)
+    {
+        return new BaseResponse<List<RecommendedMovieRes>>
+        {
+            IsSuccess = true,
+            Data = movies,
+            Message = message
+        };
+    }
+
+    private async Task<HashSet<Guid>> BuildInteractedMovieIdsAsync(Guid userId)
+    {
+        var signals = (await _repository.GetViewedMovieSignalsAsync(userId, 30))
+            .Concat(await _repository.GetBookedMovieSignalsAsync(userId, 30))
+            .Concat(await _repository.GetPositiveRatingSignalsAsync(userId, 30));
+
+        return signals.Select(x => x.MovieId).ToHashSet();
+    }
+
+    private async Task<List<RankedCandidate>> QuerySimilarBySignalsAsync(
+        HttpClient client,
+        string aiServiceUrl,
+        List<MovieBehaviorSignal> signals,
+        HashSet<Guid> interactedMovieIds,
+        double sourceWeight,
+        CancellationToken cancellationToken)
+    {
+        var groups = new List<AiQueryGroup>();
+        foreach (var signal in signals.OrderByDescending(x => x.LastAt).ThenByDescending(x => x.Count))
+        {
+            var excludeIds = interactedMovieIds
+                .Append(signal.MovieId)
+                .Select(id => id.ToString())
+                .Distinct()
+                .ToList();
+
+            var request = new AiRecommendByIdRequest
+            {
+                MovieId = signal.MovieId.ToString(),
+                TopK = AiCandidateTake,
+                ExcludeIds = excludeIds
+            };
+
+            var response = await PostAiAsync<AiRecommendByIdRequest, AiRecommendResponse>(
+                client,
+                $"{aiServiceUrl}/recommend-by-id",
+                request,
+                cancellationToken);
+
+            if (response?.Results.Count > 0)
+            {
+                groups.Add(new AiQueryGroup(signal, response.Results, sourceWeight));
+            }
+        }
+
+        return MergeGroupsRoundRobin(groups, interactedMovieIds, AiCandidateTake);
+    }
+
+    private async Task<List<RankedCandidate>> QueryByTextAsync(
+        HttpClient client,
+        string aiServiceUrl,
+        string userText,
+        HashSet<Guid> interactedMovieIds,
+        double sourceWeight,
+        CancellationToken cancellationToken)
+    {
+        var request = new AiRecommendRequest
+        {
+            UserText = userText,
+            TopK = AiCandidateTake,
+            ExcludeIds = interactedMovieIds.Select(id => id.ToString()).ToList()
+        };
+
+        var response = await PostAiAsync<AiRecommendRequest, AiRecommendResponse>(
+            client,
+            $"{aiServiceUrl}/recommend",
+            request,
+            cancellationToken);
+
+        if (response?.Results.Count is null or 0)
+        {
+            return [];
+        }
+
+        var seen = new HashSet<Guid>(interactedMovieIds);
+        var candidates = new List<RankedCandidate>();
+        foreach (var result in response.Results)
+        {
+            if (!Guid.TryParse(result.MovieId, out var movieId) || !seen.Add(movieId))
+            {
+                continue;
+            }
+
+            candidates.Add(new RankedCandidate(movieId, result.Distance * sourceWeight));
+        }
+
+        return candidates;
+    }
+
+    private async Task<TResponse?> PostAiAsync<TRequest, TResponse>(
+        HttpClient client,
+        string url,
+        TRequest request,
+        CancellationToken cancellationToken)
+    {
+        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
+        var response = await client.PostAsync(url, content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("AI service returned {StatusCode} for {Url}", response.StatusCode, url);
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<TResponse>(
+            await response.Content.ReadAsStringAsync(cancellationToken),
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+    }
+
+    private static List<RankedCandidate> MergeGroupsRoundRobin(
+        List<AiQueryGroup> groups,
+        HashSet<Guid> interactedMovieIds,
+        int maxTake)
+    {
+        var candidates = new List<RankedCandidate>();
+        var seen = new HashSet<Guid>(interactedMovieIds);
+        var maxDepth = groups.Count == 0 ? 0 : groups.Max(group => group.Results.Count);
+
+        for (var depth = 0; depth < maxDepth && candidates.Count < maxTake; depth++)
+        {
+            foreach (var group in groups)
+            {
+                if (depth >= group.Results.Count)
+                {
+                    continue;
+                }
+
+                var result = group.Results[depth];
+                if (!Guid.TryParse(result.MovieId, out var movieId) || !seen.Add(movieId))
+                {
+                    continue;
+                }
+
+                var score = result.Distance * group.SourceWeight
+                    + TimeDecay(group.Source.LastAt) * 0.15
+                    + (1.0 / (depth + 1)) * 0.05;
+                candidates.Add(new RankedCandidate(movieId, score));
+
+                if (candidates.Count >= maxTake)
+                {
+                    break;
+                }
+            }
+        }
+
+        return candidates;
+    }
+
+    private static double TimeDecay(DateTime lastAt)
+    {
+        var ageDays = Math.Max(0, (DateTime.UtcNow - lastAt).TotalDays);
+        return 1.0 / (1.0 + ageDays / 30.0);
+    }
+
+    private async Task<List<RecommendedMovieRes>> BuildFinalListAsync(
+        List<RankedCandidate> candidates,
+        HashSet<Guid> interactedMovieIds)
+    {
+        var personalTake = Math.Max(0, FinalTake - ExplorationTake);
+        var selectedCandidates = candidates.Take(personalTake).ToList();
+        var selected = await MaterializeCandidatesAsync(selectedCandidates);
+
+        var excludeIds = interactedMovieIds
+            .Concat(selected.Select(movie => movie.MovieId))
+            .ToHashSet();
+
+        if (selected.Count < FinalTake)
+        {
+            selected.AddRange(await GetRecommendationsWithFallbackAsync(excludeIds, FinalTake - selected.Count));
+        }
+
+        ApplyMatchPercentage(selected, higherScoreIsBetter: true);
+        return selected.Take(FinalTake).ToList();
+    }
+
+    private async Task<List<RecommendedMovieRes>> MaterializeCandidatesAsync(List<RankedCandidate> candidates)
+    {
+        if (candidates.Count == 0)
+        {
+            return [];
+        }
+
+        var movieIds = candidates.Select(x => x.MovieId).Distinct().ToList();
+        var movies = await _repository.LoadRecommendedMoviesAsync(movieIds);
+        var movieById = movies.ToDictionary(movie => movie.MovieId);
+        var scoreById = candidates
+            .GroupBy(x => x.MovieId)
+            .ToDictionary(g => g.Key, g => g.Max(x => x.Score));
+
+        var ordered = new List<RecommendedMovieRes>();
+        foreach (var candidate in candidates)
+        {
+            if (!movieById.TryGetValue(candidate.MovieId, out var movie)
+                || ordered.Any(x => x.MovieId == movie.MovieId))
+            {
+                continue;
+            }
+
+            movie.SimilarityScore = scoreById.GetValueOrDefault(movie.MovieId);
+            ordered.Add(movie);
+        }
+
+        return ordered;
+    }
+
+    private async Task<List<RecommendedMovieRes>> BuildFallbackListAsync(HashSet<Guid> excludedMovieIds, int take)
+    {
+        var fallback = await GetRecommendationsWithFallbackAsync(excludedMovieIds, take);
+        ApplyMatchPercentage(fallback, higherScoreIsBetter: true);
+        return fallback;
+    }
+
     private async Task<List<RecommendedMovieRes>> GetRecommendationsWithFallbackAsync(
-        HashSet<Guid> interactedMovieIds, 
-        int take, 
-        HashSet<Guid>? alreadyRecommendedMovieIds = null)
+        HashSet<Guid> interactedMovieIds,
+        int take)
     {
         var result = await _repository.GetFallbackRecommendationsAsync(interactedMovieIds, take);
         if (result.Count < take)
         {
-            var excludeIds = result.Select(m => m.MovieId)
-                .Concat(alreadyRecommendedMovieIds ?? [])
+            var excludeIds = interactedMovieIds
+                .Concat(result.Select(m => m.MovieId))
                 .ToHashSet();
-            var extra = await _repository.GetFallbackRecommendationsAsync(excludeIds, take - result.Count);
-            result.AddRange(extra);
+            result.AddRange(await _repository.GetFallbackRecommendationsAsync(excludeIds, take - result.Count));
         }
         return result;
     }
 
-    /// <summary>
-    /// Quy đổi SimilarityScore của toàn bộ danh sách về thang MatchPercentage (0–100%).
-    /// 
-    /// - invertDistance = false (Fallback): SimilarityScore cao hơn → % cao hơn.
-    ///   Dùng Min-Max normalization:
-    ///     MatchPercentage = (score - min) / (max - min) * 100
-    ///
-    /// - invertDistance = true (AI Embedding): SimilarityScore là khoảng cách Euclidean,
-    ///   giá trị nhỏ hơn nghĩa là khớp hơn, nên đảo chiều:
-    ///     MatchPercentage = (1 - score / maxScore) * 100
-    ///
-    /// Nếu tất cả điểm bằng nhau, gán 100% cho tất cả (tất cả đều phù hợp).
-    /// </summary>
-    private static void ApplyMatchPercentage(List<RecommendedMovieRes> movies, bool invertDistance)
+    private async Task<string> BuildSurveyPreferenceTextAsync(UserGenreSurveyEntity? survey)
     {
-        if (movies.Count == 0) return;
+        if (survey == null)
+        {
+            return string.Empty;
+        }
+
+        var textParts = new List<string>();
+        var genreIds = JsonSerializer.Deserialize<List<string>>(survey.PreferredGenreIds) ?? [];
+        var genres = await _repository.GetMovieGenreNamesAsync(genreIds);
+        if (genres.Count > 0)
+        {
+            textParts.Add($"User selected favorite cinema genres: {string.Join(", ", genres)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(survey.PreferenceDescription))
+        {
+            textParts.Add($"User preference description: {survey.PreferenceDescription}");
+        }
+
+        return string.Join(". ", textParts);
+    }
+
+    private static string BuildLongTermGenreText(List<GenrePreferenceSignal> genres)
+    {
+        return "User long-term cinema taste is dominated by these genres/tags: "
+            + string.Join(", ", genres.Select(x => x.GenreName));
+    }
+
+    private static void ApplyMatchPercentage(List<RecommendedMovieRes> movies, bool higherScoreIsBetter)
+    {
+        if (movies.Count == 0)
+        {
+            return;
+        }
 
         var scores = movies.Select(m => m.SimilarityScore).ToList();
         var minScore = scores.Min();
@@ -198,98 +439,16 @@ public class GetRecommendationsUseCase
 
         foreach (var movie in movies)
         {
-            if (invertDistance)
+            if (range <= 0)
             {
-                // Khoảng cách AI: nhỏ hơn = tốt hơn → đảo chiều
-                movie.MatchPercentage = maxScore > 0
-                    ? Math.Round((1.0 - movie.SimilarityScore / maxScore) * 100, 1)
-                    : 100.0;
+                movie.MatchPercentage = 100.0;
+                continue;
             }
-            else
-            {
-                // Fallback score: lớn hơn = tốt hơn → Min-Max normalize
-                movie.MatchPercentage = range > 0
-                    ? Math.Round((movie.SimilarityScore - minScore) / range * 100, 1)
-                    : 100.0;
-            }
-        }
-    }
 
-    private async Task<UserBehaviorProfile> BuildUserBehaviorProfileAsync(Guid userId, UserGenreSurveyEntity? survey)
-    {
-        var textParts = new List<string>();
-        var interactedMovieIds = new HashSet<Guid>();
-
-        await AddSurveySignalsAsync(survey, textParts);
-        await AddViewedMovieSignalsAsync(userId, textParts, interactedMovieIds);
-        await AddBookedMovieSignalsAsync(userId, textParts, interactedMovieIds);
-        await AddPositiveRatingSignalsAsync(userId, textParts, interactedMovieIds);
-
-        return new UserBehaviorProfile(
-            textParts.Count == 0 ? string.Empty : string.Join(". ", textParts),
-            interactedMovieIds);
-    }
-
-    private async Task AddSurveySignalsAsync(UserGenreSurveyEntity? survey, List<string> textParts)
-    {
-        if (survey == null) return;
-
-        var genreIds = JsonSerializer.Deserialize<List<string>>(survey.PreferredGenreIds) ?? [];
-        var genres = await _repository.GetMovieGenreNamesAsync(genreIds);
-
-        if (genres.Count > 0)
-        {
-            textParts.Add($"User selected favorite genres: {string.Join(", ", genres)}");
-        }
-
-        if (!string.IsNullOrWhiteSpace(survey.PreferenceDescription))
-        {
-            textParts.Add($"Survey preference description: {survey.PreferenceDescription}");
-        }
-    }
-
-    private async Task AddViewedMovieSignalsAsync(Guid userId, List<string> textParts, HashSet<Guid> interactedMovieIds)
-    {
-        var signals = await _repository.GetViewedMovieSignalsAsync(userId, 8);
-        AddSignals(interactedMovieIds, signals);
-
-        var snippets = await _repository.LoadMoviePreferenceSnippetsAsync(signals.Select(x => x.MovieId));
-        if (snippets.Count > 0)
-        {
-            textParts.Add($"User often views/clicks movies: {string.Join("; ", snippets)}");
-        }
-    }
-
-    private async Task AddBookedMovieSignalsAsync(Guid userId, List<string> textParts, HashSet<Guid> interactedMovieIds)
-    {
-        var signals = await _repository.GetBookedMovieSignalsAsync(userId, 8);
-        AddSignals(interactedMovieIds, signals);
-
-        var snippets = await _repository.LoadMoviePreferenceSnippetsAsync(signals.Select(x => x.MovieId));
-        if (snippets.Count > 0)
-        {
-            textParts.Add($"User has booked tickets for movies: {string.Join("; ", snippets)}");
-        }
-    }
-
-    private async Task AddPositiveRatingSignalsAsync(Guid userId, List<string> textParts, HashSet<Guid> interactedMovieIds)
-    {
-        var signals = await _repository.GetPositiveRatingSignalsAsync(userId, 8);
-        AddSignals(interactedMovieIds, signals);
-
-        var snippets = await _repository.LoadMoviePreferenceSnippetsAsync(signals.Select(x => x.MovieId));
-        if (snippets.Count > 0)
-        {
-            textParts.Add($"User rated these movies highly: {string.Join("; ", snippets)}");
-        }
-    }
-
-    private static void AddSignals(HashSet<Guid> target, IEnumerable<MovieBehaviorSignal> signals)
-    {
-        foreach (var signal in signals)
-        {
-            target.Add(signal.MovieId);
+            var normalized = higherScoreIsBetter
+                ? (movie.SimilarityScore - minScore) / range
+                : (maxScore - movie.SimilarityScore) / range;
+            movie.MatchPercentage = Math.Round(normalized * 100, 1);
         }
     }
 }
-

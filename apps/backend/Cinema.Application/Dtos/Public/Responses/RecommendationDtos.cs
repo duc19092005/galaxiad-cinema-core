@@ -60,6 +60,21 @@ public class AiRecommendRequest
 
     [JsonPropertyName("top_k")]
     public int TopK { get; set; } = 5;
+
+    [JsonPropertyName("exclude_ids")]
+    public List<string> ExcludeIds { get; set; } = [];
+}
+
+public class AiRecommendByIdRequest
+{
+    [JsonPropertyName("movie_id")]
+    public string MovieId { get; set; } = string.Empty;
+
+    [JsonPropertyName("top_k")]
+    public int TopK { get; set; } = 5;
+
+    [JsonPropertyName("exclude_ids")]
+    public List<string> ExcludeIds { get; set; } = [];
 }
 
 public class AiRecommendResponse

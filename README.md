@@ -177,6 +177,14 @@ python main.py
 
 ---
 
+## AI Recommendation Docs
+
+- Cơ chế gợi ý cá nhân hóa: [docs/algorithms/vi/movie-recommendation.md](docs/algorithms/vi/movie-recommendation.md)
+- Benchmark chọn embedding 768 chiều: [docs/benchmarks/embedding-dimension-benchmark.md](docs/benchmarks/embedding-dimension-benchmark.md)
+- Script benchmark và output ảnh: [services/ai/benchmarks/](services/ai/benchmarks/)
+
+---
+
 ## Deployment Evidence
 
 | Item | Status | Link |
