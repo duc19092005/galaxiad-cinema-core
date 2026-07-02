@@ -116,21 +116,6 @@ public class GroupBookingRepository : IGroupBookingRepository
             .FirstOrDefaultAsync(u => u.UserEmail == email);
     }
 
-    public async Task<List<GroupChatMessageEntity>> GetChatMessagesAsync(Guid groupSessionId, int limit = 50, DateTime? before = null)
-    {
-        var query = _dbContext.Set<GroupChatMessageEntity>()
-            .Include(m => m.UserInfoEntity)
-            .Where(m => m.GroupSessionId == groupSessionId);
-
-        if (before.HasValue)
-            query = query.Where(m => m.CreatedAt < before.Value);
-
-        return await query
-            .OrderByDescending(m => m.CreatedAt)
-            .Take(limit)
-            .ToListAsync();
-    }
-
     public async Task AddSessionAsync(GroupBookingSessionEntity session)
     {
         await _dbContext.Set<GroupBookingSessionEntity>().AddAsync(session);
@@ -149,11 +134,6 @@ public class GroupBookingRepository : IGroupBookingRepository
     public async Task AddSeatRangeAsync(List<GroupBookingSeatEntity> seats)
     {
         await _dbContext.Set<GroupBookingSeatEntity>().AddRangeAsync(seats);
-    }
-
-    public async Task AddChatMessageAsync(GroupChatMessageEntity message)
-    {
-        await _dbContext.Set<GroupChatMessageEntity>().AddAsync(message);
     }
 
     public void UpdateSession(GroupBookingSessionEntity session)

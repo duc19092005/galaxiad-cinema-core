@@ -1,13 +1,6 @@
 using System;
-using System.Collections.Concurrent;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
-
-using System.Collections.Generic;
-using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Interfaces.Booking;
 
 namespace Cinema.Application.Infrastructure.Booking;
@@ -19,32 +12,10 @@ namespace Cinema.Application.Infrastructure.Booking;
 public class GroupBookingWsManager
 {
     private readonly IGroupBroadcaster _broadcaster;
-    private readonly ConcurrentDictionary<Guid, ConcurrentQueue<ResGroupChatMessageDto>> _chatHistories = new();
 
     public GroupBookingWsManager(IGroupBroadcaster broadcaster)
     {
         _broadcaster = broadcaster;
-    }
-
-    public void AddChatMessage(Guid groupSessionId, ResGroupChatMessageDto message)
-    {
-        var queue = _chatHistories.GetOrAdd(groupSessionId, _ => new());
-        queue.Enqueue(message);
-
-        // Keep last 100 messages to prevent memory leak
-        while (queue.Count > 100)
-        {
-            queue.TryDequeue(out _);
-        }
-    }
-
-    public List<ResGroupChatMessageDto> GetChatMessages(Guid groupSessionId)
-    {
-        if (_chatHistories.TryGetValue(groupSessionId, out var queue))
-        {
-            return queue.ToList();
-        }
-        return new List<ResGroupChatMessageDto>();
     }
 
     /// <summary>

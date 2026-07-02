@@ -11,13 +11,16 @@ public class SeatLockerNotificationService : ISeatLockerNotificationService
 {
     private readonly SeatLockManager _seatLockManager;
     private readonly GroupBookingWsManager _groupBookingWsManager;
+    private readonly IGroupBookingCacheService _groupBookingCacheService;
 
     public SeatLockerNotificationService(
         SeatLockManager seatLockManager,
-        GroupBookingWsManager groupBookingWsManager)
+        GroupBookingWsManager groupBookingWsManager,
+        IGroupBookingCacheService groupBookingCacheService)
     {
         _seatLockManager = seatLockManager;
         _groupBookingWsManager = groupBookingWsManager;
+        _groupBookingCacheService = groupBookingCacheService;
     }
 
     public Task NotifySeatsReleasedAsync(string scheduleId, List<string> seatIds)
@@ -78,14 +81,19 @@ public class SeatLockerNotificationService : ISeatLockerNotificationService
         _seatLockManager.ClearGroupMemberSelections(scheduleId, groupSessionId, memberId);
     }
 
-    public async Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage)
+    public Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage)
     {
-        _groupBookingWsManager.AddChatMessage(groupSessionId, chatMessage);
+        return NotifyGroupChatMessageAsync(groupSessionId, chatMessage, TimeSpan.FromHours(24));
+    }
+
+    public async Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage, TimeSpan ttl)
+    {
+        await _groupBookingCacheService.AddChatMessageAsync(groupSessionId, chatMessage, ttl);
         await _groupBookingWsManager.BroadcastAsync(groupSessionId, new { type = "chat-message", chatMessage });
     }
 
-    public List<Cinema.Application.Dtos.Booking.ResGroupChatMessageDto> GetGroupChatMessages(Guid groupSessionId)
+    public Task<List<Cinema.Application.Dtos.Booking.ResGroupChatMessageDto>> GetGroupChatMessagesAsync(Guid groupSessionId, int limit)
     {
-        return _groupBookingWsManager.GetChatMessages(groupSessionId);
+        return _groupBookingCacheService.GetChatMessagesAsync(groupSessionId, limit);
     }
 }

@@ -32,7 +32,7 @@ public class GetGroupChatMessagesUseCase
         if (member == null || member.Status == GroupMemberStatusEnum.Removed)
             throw new BadRequestException("You are not a member of this group", "GBK70");
 
-        var messages = _notificationService.GetGroupChatMessages(groupSessionId);
+        var messages = await _notificationService.GetGroupChatMessagesAsync(groupSessionId, limit);
 
         // Sort descending to return latest messages first as requested
         var sorted = messages

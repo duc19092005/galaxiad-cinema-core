@@ -21,6 +21,7 @@ public class GroupBookingCacheService : IGroupBookingCacheService
     private static string FailVoteKey(Guid id, Guid mid) => $"group:{id}:fail:votes:{mid}";
     private static string FailHandKey(Guid id, Guid mid) => $"group:{id}:fail:hands:{mid}";
     private static string FailureResolutionKey(Guid id) => $"group:{id}:fail:resolution";
+    private static string ChatKey(Guid id) => $"group:{id}:chat";
 
     // ===== Payment Method Vote =====
     public async Task SetVoteEndTimeAsync(Guid groupSessionId, DateTime endTime, TimeSpan ttl)
@@ -148,6 +149,43 @@ public class GroupBookingCacheService : IGroupBookingCacheService
         var val = await Db().StringGetAsync(FailureResolutionKey(groupSessionId));
         if (!val.HasValue) return null;
         return JsonSerializer.Deserialize<ResPaymentFailureVoteStateDto>(val!, _jsonOpts);
+    }
+
+    // ===== Chat =====
+    public async Task AddChatMessageAsync(Guid groupSessionId, ResGroupChatMessageDto message, TimeSpan ttl)
+    {
+        var db = Db();
+        var key = ChatKey(groupSessionId);
+        var json = JsonSerializer.Serialize(message, _jsonOpts);
+
+        await db.ListRightPushAsync(key, json);
+        await db.ListTrimAsync(key, -100, -1);
+        await db.KeyExpireAsync(key, ttl);
+    }
+
+    public async Task<List<ResGroupChatMessageDto>> GetChatMessagesAsync(Guid groupSessionId, int limit)
+    {
+        limit = Math.Clamp(limit, 1, 100);
+        var values = await Db().ListRangeAsync(ChatKey(groupSessionId), -limit, -1);
+        var messages = new List<ResGroupChatMessageDto>();
+
+        foreach (var value in values)
+        {
+            if (!value.HasValue) continue;
+
+            try
+            {
+                var message = JsonSerializer.Deserialize<ResGroupChatMessageDto>(value!, _jsonOpts);
+                if (message != null)
+                    messages.Add(message);
+            }
+            catch (JsonException)
+            {
+                // Ignore malformed transient chat entries.
+            }
+        }
+
+        return messages;
     }
 
     // ===== Cleanup =====

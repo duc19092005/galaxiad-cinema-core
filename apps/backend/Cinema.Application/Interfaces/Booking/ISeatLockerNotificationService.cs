@@ -18,5 +18,6 @@ public interface ISeatLockerNotificationService
     void ClearGroupSelections(string scheduleId, Guid groupSessionId);
     void ClearGroupMemberSelections(string scheduleId, Guid groupSessionId, Guid memberId);
     Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage);
-    List<Cinema.Application.Dtos.Booking.ResGroupChatMessageDto> GetGroupChatMessages(Guid groupSessionId);
+    Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage, TimeSpan ttl);
+    Task<List<Cinema.Application.Dtos.Booking.ResGroupChatMessageDto>> GetGroupChatMessagesAsync(Guid groupSessionId, int limit);
 }

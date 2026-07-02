@@ -2790,37 +2790,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.ToTable("GroupBookingSessionEntity");
                 });
 
-            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupChatMessageEntity", b =>
-                {
-                    b.Property<Guid>("MessageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("GroupSessionId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("MessageType")
-                        .HasColumnType("int");
-
-                    b.Property<Guid?>("SenderId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("MessageId");
-
-                    b.HasIndex("SenderId");
-
-                    b.HasIndex("GroupSessionId", "CreatedAt");
-
-                    b.ToTable("GroupChatMessageEntity");
-                });
-
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCinemaEntity", b =>
                 {
                     b.Property<Guid>("MovieId")
@@ -5683,24 +5652,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("UserInfoEntity");
                 });
 
-            modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupChatMessageEntity", b =>
-                {
-                    b.HasOne("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", "GroupBookingSession")
-                        .WithMany("ChatMessages")
-                        .HasForeignKey("GroupSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "UserInfoEntity")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("GroupBookingSession");
-
-                    b.Navigation("UserInfoEntity");
-                });
-
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCinemaEntity", b =>
                 {
                     b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
@@ -6325,8 +6276,6 @@ namespace Cinema.Infrastructure.Migrations
 
             modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingSessionEntity", b =>
                 {
-                    b.Navigation("ChatMessages");
-
                     b.Navigation("Members");
 
                     b.Navigation("Pairs");

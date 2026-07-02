@@ -30,6 +30,10 @@ public interface IGroupBookingCacheService
     Task SetFailureResolutionStateAsync(Guid groupSessionId, ResPaymentFailureVoteStateDto state, TimeSpan ttl);
     Task<ResPaymentFailureVoteStateDto?> GetFailureResolutionStateAsync(Guid groupSessionId);
 
+    // Chat
+    Task AddChatMessageAsync(Guid groupSessionId, ResGroupChatMessageDto message, TimeSpan ttl);
+    Task<List<ResGroupChatMessageDto>> GetChatMessagesAsync(Guid groupSessionId, int limit);
+
     // Cleanup
     Task ClearAllGroupDataAsync(Guid groupSessionId);
 }

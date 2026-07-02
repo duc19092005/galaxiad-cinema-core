@@ -18,12 +18,10 @@ public interface IGroupBookingRepository
     Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId);
     Task<UserInfoEntity?> FindUserByIdAsync(Guid userId);
     Task<UserInfoEntity?> FindUserByEmailAsync(string email);
-    Task<List<GroupChatMessageEntity>> GetChatMessagesAsync(Guid groupSessionId, int limit = 50, DateTime? before = null);
     Task AddSessionAsync(GroupBookingSessionEntity session);
     Task AddMemberAsync(GroupBookingMemberEntity member);
     Task AddMemberRangeAsync(List<GroupBookingMemberEntity> members);
     Task AddSeatRangeAsync(List<GroupBookingSeatEntity> seats);
-    Task AddChatMessageAsync(GroupChatMessageEntity message);
     void UpdateSession(GroupBookingSessionEntity session);
     void UpdateMember(GroupBookingMemberEntity member);
     void RemoveSeats(List<GroupBookingSeatEntity> seats);

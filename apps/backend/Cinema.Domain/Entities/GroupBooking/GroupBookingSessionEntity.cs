@@ -53,5 +53,4 @@ public class GroupBookingSessionEntity
 
     public List<GroupBookingMemberEntity> Members { get; set; } = [];
 
-    public List<GroupChatMessageEntity> ChatMessages { get; set; } = [];
 }

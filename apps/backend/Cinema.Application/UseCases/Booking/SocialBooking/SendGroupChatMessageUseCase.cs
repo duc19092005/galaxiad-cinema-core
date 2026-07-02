@@ -3,8 +3,6 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Booking;
-using Cinema.Domain.Entities.GroupBooking;
-using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Enums;
 
 namespace Cinema.Application.UseCases.Booking.SocialBooking;
@@ -53,7 +51,10 @@ public class SendGroupChatMessageUseCase
             CreatedAt = DateTime.UtcNow
         };
 
-        await _notificationService.NotifyGroupChatMessageAsync(groupSessionId, messageDto);
+        await _notificationService.NotifyGroupChatMessageAsync(
+            groupSessionId,
+            messageDto,
+            GroupBookingCacheTtl.ForGroup(session.ExpiresAt));
 
         return new BaseResponse<ResGroupChatMessageDto>
         {

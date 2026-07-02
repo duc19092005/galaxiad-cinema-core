@@ -127,8 +127,6 @@ public class CinemaDbContext : DbContext
 
     public DbSet<GroupBookingSeatEntity> GroupBookingSeatEntity { get; set; }
 
-    public DbSet<GroupChatMessageEntity> GroupChatMessageEntity { get; set; }
-
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -684,21 +682,6 @@ public class CinemaDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<GroupChatMessageEntity>(entity =>
-        {
-            entity.HasKey(x => x.MessageId);
-            entity.HasIndex(x => new { x.GroupSessionId, x.CreatedAt });
-
-            entity.HasOne(x => x.GroupBookingSession)
-                .WithMany(x => x.ChatMessages)
-                .HasForeignKey(x => x.GroupSessionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            entity.HasOne(x => x.UserInfoEntity)
-                .WithMany()
-                .HasForeignKey(x => x.SenderId)
-                .OnDelete(DeleteBehavior.SetNull);
-        });
     }
     
 }
