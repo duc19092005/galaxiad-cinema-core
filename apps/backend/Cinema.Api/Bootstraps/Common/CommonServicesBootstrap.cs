@@ -68,6 +68,7 @@ public static class CommonServicesBootstrap
         services.AddScoped<IRedisLockService, RedisLockService>();
         services.AddScoped<IMovieCacheService, MovieCacheService>();
         services.AddScoped<IGroupBookingCacheService, GroupBookingCacheService>();
+        services.AddSingleton<ISeatLockService, SeatLockService>();
         services.AddSingleton<IVoteTimeoutScheduler, VoteTimeoutScheduler>();
         services.AddSingleton<ISseNotificationService, SseNotificationService>();
         services.AddScoped<ICommentModerationService, DeepSeekModerationService>();

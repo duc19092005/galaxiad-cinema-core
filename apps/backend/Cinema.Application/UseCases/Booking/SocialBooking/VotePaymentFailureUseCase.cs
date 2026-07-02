@@ -350,7 +350,7 @@ public class VotePaymentFailureUseCase
                         CreatedAt = DateTime.UtcNow
                     });
 
-                    _notification.ClearGroupSelections(session.MovieScheduleId.ToString(), session.GroupSessionId);
+                    await _notification.ClearGroupSelectionsAsync(session.MovieScheduleId.ToString(), session.GroupSessionId);
                     await _cache.ClearAllGroupDataAsync(groupSessionId);
                 }
                 else

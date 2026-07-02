@@ -57,7 +57,7 @@ const CashierSalesPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // WS Seat Lock
-  const { lockedSeats, lockSeat, unlockSeat } = useSeatWs(selectedScheduleId);
+  const { lockedSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(selectedScheduleId);
 
   // Parse cinemaName from session
   useEffect(() => {
@@ -233,7 +233,8 @@ const CashierSalesPage: React.FC = () => {
         customerPhone: phone,
         voucherId: voucherId || undefined,
         staffId: session?.staffId,
-        paymentMethod: paymentMethod // 2 = CASH, 0 = VNPAY
+        paymentMethod: paymentMethod, // 2 = CASH, 0 = VNPAY
+        seatLockOwnerToken
       };
 
       const res = await bookingApi.createBooking(payload);

@@ -66,7 +66,7 @@ public class LeaveGroupBookingUseCase
             session.Status = GroupBookingStatusEnum.Cancelled;
             _groupBookingRepository.UpdateSession(session);
 
-            _notificationService.ClearGroupSelections(scheduleIdStr, session.GroupSessionId);
+            await _notificationService.ClearGroupSelectionsAsync(scheduleIdStr, session.GroupSessionId);
 
             foreach (var m in session.Members.Where(x => x.Status != GroupMemberStatusEnum.Removed))
             {
@@ -87,7 +87,7 @@ public class LeaveGroupBookingUseCase
         else
         {
             // Regular member leaves: Release only their seats
-            _notificationService.ClearGroupMemberSelections(scheduleIdStr, session.GroupSessionId, member.MemberId);
+            await _notificationService.ClearGroupMemberSelectionsAsync(scheduleIdStr, session.GroupSessionId, member.MemberId);
 
             member.Status = GroupMemberStatusEnum.Removed;
             _groupBookingRepository.UpdateMember(member);

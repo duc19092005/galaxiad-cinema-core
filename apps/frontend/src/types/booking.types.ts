@@ -15,6 +15,7 @@ export interface CreateBookingRequest {
     voucherId?: string | null;
     staffId?: string | null;
     paymentMethod?: number;
+    seatLockOwnerToken?: string;
 }
 
 export interface CreateBookingResponse {

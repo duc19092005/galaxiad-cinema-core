@@ -37,7 +37,7 @@ const BookingPage: React.FC = () => {
     // Group Booking Modal
     const [showGroupModal, setShowGroupModal] = useState(false);
 
-    const { lockedSeats, lockSeat, unlockSeat } = useSeatWs(scheduleId || null);
+    const { lockedSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(scheduleId || null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
@@ -185,7 +185,8 @@ const BookingPage: React.FC = () => {
                 customerPhone: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.phone.trim(),
                 customerAddress: (isLoggedIn && !isCashierMode) ? undefined : customerInfo.address.trim(),
                 voucherId: selectedVoucherId ? selectedVoucherId : undefined,
-                staffId: staffIdFromSession
+                staffId: staffIdFromSession,
+                seatLockOwnerToken
             };
             const res = await bookingApi.createBooking(payload);
             if (res.data.paymentUrl) {

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Cinema.Application.Dtos.Booking;
 
 namespace Cinema.Application.Interfaces.Booking;
 
@@ -11,12 +12,19 @@ public interface ISeatLockerNotificationService
     Task NotifyGroupUpdateAsync(Guid groupSessionId, object state);
     Task NotifyPaymentMethodVoteUpdateAsync(Guid groupSessionId, object voteState);
     Task NotifyPaymentFailureVoteUpdateAsync(Guid groupSessionId, object failureVoteState);
-    Dictionary<string, string> GetCurrentLockedSeats(string scheduleId);
-    Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)> GetGroupSelectionsForSchedule(string scheduleId);
-    List<string> GetGroupSelectedSeats(string scheduleId, Guid groupSessionId);
-    (List<string> ReleasedSeatIds, List<string> NewlySelectedSeatIds) UpdateGroupMemberSelection(string scheduleId, Guid groupSessionId, Guid memberId, string memberName, List<string> seatIds);
-    void ClearGroupSelections(string scheduleId, Guid groupSessionId);
-    void ClearGroupMemberSelections(string scheduleId, Guid groupSessionId, Guid memberId);
+    Task<Dictionary<string, string>> GetCurrentLockedSeatsAsync(string scheduleId);
+    Task<Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)>> GetGroupSelectionsForScheduleAsync(string scheduleId);
+    Task<List<string>> GetGroupSelectedSeatsAsync(string scheduleId, Guid groupSessionId);
+    Task<(List<string> ReleasedSeatIds, List<string> NewlySelectedSeatIds)> UpdateGroupMemberSelectionAsync(
+        string scheduleId,
+        Guid groupSessionId,
+        Guid memberId,
+        string memberName,
+        List<GroupSeatSelectionDto> seatSelections,
+        TimeSpan ttl);
+    Task<IReadOnlyList<SeatLockInfo>> GetGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId);
+    Task ClearGroupSelectionsAsync(string scheduleId, Guid groupSessionId);
+    Task ClearGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId);
     Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage);
     Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage, TimeSpan ttl);
     Task<List<Cinema.Application.Dtos.Booking.ResGroupChatMessageDto>> GetGroupChatMessagesAsync(Guid groupSessionId, int limit);

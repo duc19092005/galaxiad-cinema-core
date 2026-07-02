@@ -121,7 +121,14 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
     if (!isMember || myConfirmedSeats.length === 0 || confirming || isMyStatusConfirmed) return;
     setConfirming(true);
     try {
-      const result = await socialBookingApi.confirmSeats(groupState.groupSessionId, myConfirmedSeats);
+      const result = await socialBookingApi.confirmSeats(
+        groupState.groupSessionId,
+        myConfirmedSeats,
+        myConfirmedSeats.map(seatId => ({
+          seatId,
+          userSegmentId: seatSegmentMap[seatId] || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7'
+        }))
+      );
       if (result.isSuccess) {
         showSuccess(result.message || t('socialBooking.seat.confirmSuccess', 'Đã xác nhận ghế thành công!'));
         onRefresh();

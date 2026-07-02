@@ -23,16 +23,16 @@ public class CinemaHub : Hub
         _logger = logger;
     }
 
-    public Task<SeatLockHubResponse> LockSeat(string scheduleId, string seatId, string userName, string clientId)
+    public async Task<SeatLockHubResponse> LockSeat(string scheduleId, string seatId, string userName, string clientId)
     {
-        var (success, message, lockedSeats) = _seatLockManager.LockSeat(scheduleId, seatId, userName, clientId);
-        return Task.FromResult(new SeatLockHubResponse(success, message, lockedSeats));
+        var (success, message, lockedSeats) = await _seatLockManager.LockSeatAsync(scheduleId, seatId, userName, clientId);
+        return new SeatLockHubResponse(success, message, lockedSeats);
     }
 
-    public Task<SeatLockHubResponse> UnlockSeat(string scheduleId, string seatId, string? clientId = null)
+    public async Task<SeatLockHubResponse> UnlockSeat(string scheduleId, string seatId, string? clientId = null)
     {
-        var (success, message, lockedSeats) = _seatLockManager.UnlockSeat(scheduleId, seatId, clientId);
-        return Task.FromResult(new SeatLockHubResponse(success, message, lockedSeats));
+        var (success, message, lockedSeats) = await _seatLockManager.UnlockSeatAsync(scheduleId, seatId, clientId);
+        return new SeatLockHubResponse(success, message, lockedSeats);
     }
 
     public override async Task OnConnectedAsync()
@@ -75,7 +75,7 @@ public class CinemaHub : Hub
             var clientId = httpContext?.Request.Query["clientId"].FirstOrDefault();
             if (!string.IsNullOrEmpty(clientId))
             {
-                _seatLockManager.ReleaseSeatsByClient(clientId);
+                await _seatLockManager.ReleaseSeatsByClientAsync(clientId);
             }
         }
 
@@ -98,7 +98,7 @@ public class CinemaHub : Hub
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
         // Send initial state
-        var lockedSeats = _seatLockManager.GetCurrentLockedSeats(scheduleId);
+        var lockedSeats = await _seatLockManager.GetCurrentLockedSeatsAsync(scheduleId);
         await Clients.Caller.SendAsync("initial-state", new { lockedSeats });
     }
 

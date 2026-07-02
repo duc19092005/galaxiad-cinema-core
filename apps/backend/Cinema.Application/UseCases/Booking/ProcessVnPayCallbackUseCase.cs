@@ -230,7 +230,7 @@ public class ProcessVnPayCallbackUseCase
                 .ToList();
             if (seatIds.Count > 0)
             {
-                _notificationService.ClearGroupSelections(
+                await _notificationService.ClearGroupSelectionsAsync(
                     session.MovieScheduleId.ToString(),
                     session.GroupSessionId);
             }
@@ -440,7 +440,7 @@ public class ProcessVnPayCallbackUseCase
 
         if (session.Status == GroupBookingStatusEnum.Completed)
         {
-            _notificationService.ClearGroupSelections(
+            await _notificationService.ClearGroupSelectionsAsync(
                 session.MovieScheduleId.ToString(),
                 session.GroupSessionId);
             await _groupBookingCacheService.ClearAllGroupDataAsync(session.GroupSessionId);

@@ -130,6 +130,9 @@ public class ReqCreateBookingDto
 
     /// <summary>Phương thức thanh toán (0 = VNPAY, 1 = GOOGLEPAY, 2 = CASH)</summary>
     public Cinema.Domain.Enums.PaymentMethodEnum? PaymentMethod { get; set; }
+
+    /// <summary>Token owner của Redis seat locks, thường là clientId từ SignalR seat connection.</summary>
+    public string? SeatLockOwnerToken { get; set; }
 }
 
 public class SeatSelectionDto

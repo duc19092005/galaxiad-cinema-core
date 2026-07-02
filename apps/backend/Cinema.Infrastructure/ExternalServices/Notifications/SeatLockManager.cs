@@ -1,144 +1,211 @@
-using System.Collections.Concurrent;
-using System.Text.Json;
 using Cinema.Application.Interfaces.Booking;
 
 namespace Cinema.Application.Infrastructure.Booking;
 
 /// <summary>
-/// Manages seat lock state per schedule and broadcasts events via SignalR.
+/// Coordinates Redis-backed seat locks and broadcasts lock changes via SignalR.
 /// </summary>
 public class SeatLockManager
 {
-    // scheduleId -> { seatId -> (userName, clientId) }
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, (string UserName, string ClientId)>> _scheduleSeatLocks = new();
-
-    // scheduleId -> { seatId -> (groupSessionId, memberId, memberName) }
-    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)>> _groupSeatSelections = new();
-
+    private static readonly TimeSpan DefaultSeatLockTtl = TimeSpan.FromMinutes(10);
     private readonly ISeatBroadcaster _broadcaster;
+    private readonly ISeatLockService _seatLockService;
 
-    public SeatLockManager(ISeatBroadcaster broadcaster)
+    public SeatLockManager(ISeatBroadcaster broadcaster, ISeatLockService seatLockService)
     {
         _broadcaster = broadcaster;
+        _seatLockService = seatLockService;
     }
 
-    /// <summary>
-    /// Lock một seat. Trả về false nếu seat đã bị user khác lock.
-    /// Idempotent: nếu chính user đó lock lại seat, trả về true.
-    /// </summary>
-    public (bool Success, string? Message, Dictionary<string, string> LockedSeats) LockSeat(
-        string scheduleId, string seatId, string userName, string clientId)
+    public async Task<(bool Success, string? Message, Dictionary<string, string> LockedSeats)> LockSeatAsync(
+        string scheduleId,
+        string seatId,
+        string userName,
+        string clientId)
     {
-        var seats = _scheduleSeatLocks.GetOrAdd(scheduleId, _ => new ConcurrentDictionary<string, (string, string)>());
+        var result = await _seatLockService.TryLockSeatAsync(
+            scheduleId,
+            seatId,
+            userName,
+            clientId,
+            ownerType: "booking",
+            ttl: DefaultSeatLockTtl);
 
-        if (seats.TryGetValue(seatId, out var existing))
+        var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
+        if (result.Success)
         {
-            if (existing.ClientId == clientId)
+            await BroadcastEventAsync(scheduleId, "seat-locked", new
             {
-                return (true, "Seat already locked by you", GetCurrentLockedSeats(scheduleId));
-            }
-            return (false, "Seat is locked by another user", GetCurrentLockedSeats(scheduleId));
+                seatId,
+                userName = result.CurrentLock?.UserName ?? userName,
+                lockedSeats
+            });
         }
 
-        if (!seats.TryAdd(seatId, (userName, clientId)))
-        {
-            seats.TryGetValue(seatId, out existing);
-            if (existing.ClientId == clientId)
-                return (true, "Seat already locked by you", GetCurrentLockedSeats(scheduleId));
-            return (false, "Seat is locked by another user", GetCurrentLockedSeats(scheduleId));
-        }
-
-        var lockedSeats = GetCurrentLockedSeats(scheduleId);
-        BroadcastEvent(scheduleId, "seat-locked", new { seatId, userName, lockedSeats });
-        return (true, "Seat locked successfully", lockedSeats);
+        return (result.Success, result.Message, lockedSeats);
     }
 
-    /// <summary>
-    /// Unlock một seat. Chỉ unlock được nếu clientId khớp hoặc là background job call.
-    /// </summary>
-    public (bool Success, string? Message, Dictionary<string, string> LockedSeats) UnlockSeat(
-        string scheduleId, string seatId, string? clientId = null)
+    public async Task<(bool Success, string? Message, Dictionary<string, string> LockedSeats)> UnlockSeatAsync(
+        string scheduleId,
+        string seatId,
+        string? clientId = null)
     {
-        if (!_scheduleSeatLocks.TryGetValue(scheduleId, out var seats))
+        var success = clientId == null
+            ? await ForceUnlockSeatAsync(scheduleId, seatId)
+            : await _seatLockService.UnlockSeatAsync(scheduleId, seatId, clientId);
+
+        var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
+        if (success)
         {
-            return (true, "No locks found", new Dictionary<string, string>());
+            await BroadcastEventAsync(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
         }
 
-        if (!seats.TryRemove(seatId, out var removed))
-        {
-            return (true, "Seat was not locked", GetCurrentLockedSeats(scheduleId));
-        }
-
-        if (clientId != null && removed.ClientId != clientId)
-        {
-            seats.TryAdd(seatId, removed);
-            return (false, "Cannot unlock seat locked by another user", GetCurrentLockedSeats(scheduleId));
-        }
-
-        var lockedSeats = GetCurrentLockedSeats(scheduleId);
-        BroadcastEvent(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
-        return (true, "Seat unlocked successfully", lockedSeats);
+        return (success, success ? "Seat unlocked successfully" : "Cannot unlock seat locked by another user", lockedSeats);
     }
 
-    /// <summary>
-    /// Giải phóng tất cả seats do một client lock.
-    /// </summary>
-    public void ReleaseSeatsByClient(string clientId)
+    public async Task ReleaseSeatsByClientAsync(string clientId)
     {
-        foreach (var schedulePair in _scheduleSeatLocks)
+        var locks = await GetLocksByOwnerAcrossSchedulesAsync(clientId);
+        await _seatLockService.ReleaseSeatsByOwnerAsync(clientId);
+
+        foreach (var lockInfo in locks)
         {
-            var scheduleId = schedulePair.Key;
-            var seats = schedulePair.Value;
-
-            var seatsToRemove = seats
-                .Where(s => s.Value.ClientId == clientId)
-                .Select(s => s.Key)
-                .ToList();
-
-            foreach (var seatId in seatsToRemove)
-            {
-                if (seats.TryRemove(seatId, out _))
-                {
-                    var lockedSeats = GetCurrentLockedSeats(scheduleId);
-                    BroadcastEvent(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
-                }
-            }
+            var lockedSeats = await GetCurrentLockedSeatsAsync(lockInfo.ScheduleId);
+            await BroadcastEventAsync(lockInfo.ScheduleId, "seat-unlocked", new { seatId = lockInfo.SeatId, lockedSeats });
         }
     }
 
-    /// <summary>
-    /// Giải phóng cụ thể các seats (gọi từ PendingOrderCancellationJob).
-    /// </summary>
-    public void ReleaseSeatsForSchedule(string scheduleId, List<string> seatIds)
+    public async Task ReleaseSeatsForScheduleAsync(string scheduleId, List<string> seatIds)
     {
-        if (!_scheduleSeatLocks.TryGetValue(scheduleId, out var seats))
-            return;
+        await _seatLockService.ReleaseSeatsForScheduleAsync(scheduleId, seatIds);
 
         foreach (var seatId in seatIds)
         {
-            if (seats.TryRemove(seatId, out _))
-            {
-                var lockedSeats = GetCurrentLockedSeats(scheduleId);
-                BroadcastEvent(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
-            }
+            var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
+            await BroadcastEventAsync(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
         }
     }
 
-    /// <summary>
-    /// Lấy danh sách seats đang bị lock của một schedule.
-    /// </summary>
-    public Dictionary<string, string> GetCurrentLockedSeats(string scheduleId)
+    public async Task<Dictionary<string, string>> GetCurrentLockedSeatsAsync(string scheduleId)
     {
-        if (!_scheduleSeatLocks.TryGetValue(scheduleId, out var seats))
-            return new Dictionary<string, string>();
-
-        return seats.ToDictionary(k => k.Key, v => v.Value.UserName);
+        var locks = await _seatLockService.GetLocksForScheduleAsync(scheduleId);
+        return locks.ToDictionary(l => l.SeatId.ToLowerInvariant(), l => l.UserName);
     }
 
-    /// <summary>
-    /// Broadcast trạng thái ghế đặt từ Group Booking sang những khách hàng đặt lẻ.
-    /// </summary>
-    public void BroadcastGroupSeatLockState(
+    public async Task<Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)>> GetGroupSelectionsForScheduleAsync(string scheduleId)
+    {
+        var locks = await _seatLockService.GetLocksForScheduleAsync(scheduleId);
+        return locks
+            .Where(l => l.OwnerType == "group-booking" && l.GroupSessionId.HasValue && l.MemberId.HasValue)
+            .ToDictionary(
+                l => l.SeatId.ToLowerInvariant(),
+                l => (l.GroupSessionId!.Value, l.MemberId!.Value, l.UserName));
+    }
+
+    public async Task<List<string>> GetGroupSelectedSeatsAsync(string scheduleId, Guid groupSessionId)
+    {
+        var locks = await _seatLockService.GetLocksForScheduleAsync(scheduleId);
+        return locks
+            .Where(l => l.OwnerType == "group-booking" && l.GroupSessionId == groupSessionId)
+            .Select(l => l.SeatId.ToLowerInvariant())
+            .ToList();
+    }
+
+    public Task<IReadOnlyList<SeatLockInfo>> GetSeatLockServiceLocksForOwnerAsync(string scheduleId, string ownerToken)
+    {
+        return _seatLockService.GetLocksForOwnerAsync(scheduleId, ownerToken);
+    }
+
+    public async Task<(List<string> ReleasedSeatIds, List<string> NewlySelectedSeatIds)> UpdateGroupMemberSelectionAsync(
+        string scheduleId,
+        Guid groupSessionId,
+        Guid memberId,
+        string memberName,
+        List<Cinema.Application.Dtos.Booking.GroupSeatSelectionDto> seatSelections,
+        TimeSpan ttl)
+    {
+        var ownerToken = GroupOwnerToken(groupSessionId, memberId);
+        var selectionBySeatId = seatSelections
+            .GroupBy(s => s.SeatId.ToString().ToLowerInvariant())
+            .ToDictionary(g => g.Key, g => g.First().UserSegmentId);
+        var normalizedSeatIds = selectionBySeatId.Keys.ToList();
+        var existingLocks = await _seatLockService.GetLocksForOwnerAsync(scheduleId, ownerToken);
+        var existingSeatIds = existingLocks.Select(l => l.SeatId.ToLowerInvariant()).ToList();
+
+        var releasedSeatIds = existingSeatIds.Except(normalizedSeatIds).ToList();
+        var newlySelectedSeatIds = normalizedSeatIds.Except(existingSeatIds).ToList();
+        var acquired = new List<string>();
+
+        foreach (var seatId in newlySelectedSeatIds)
+        {
+            var result = await _seatLockService.TryLockSeatAsync(
+                scheduleId,
+                seatId,
+                memberName,
+                ownerToken,
+                ownerType: "group-booking",
+                ttl,
+                groupSessionId,
+                memberId,
+                selectionBySeatId.TryGetValue(seatId, out var userSegmentId) ? userSegmentId : null);
+
+            if (!result.Success)
+            {
+                foreach (var acquiredSeatId in acquired)
+                    await _seatLockService.UnlockSeatAsync(scheduleId, acquiredSeatId, ownerToken);
+
+                throw new InvalidOperationException(result.Message ?? "Seat is locked by another user");
+            }
+
+            acquired.Add(seatId);
+        }
+
+        foreach (var seatId in releasedSeatIds)
+            await _seatLockService.UnlockSeatAsync(scheduleId, seatId, ownerToken);
+
+        foreach (var releasedId in releasedSeatIds)
+        {
+            await BroadcastGroupSeatLockStateAsync(scheduleId, releasedId, null, false, groupSessionId, memberId);
+        }
+
+        foreach (var newlySelectedId in newlySelectedSeatIds)
+        {
+            await BroadcastGroupSeatLockStateAsync(scheduleId, newlySelectedId, memberName, true, groupSessionId, memberId);
+        }
+
+        return (releasedSeatIds, newlySelectedSeatIds);
+    }
+
+    public async Task ClearGroupSelectionsAsync(string scheduleId, Guid groupSessionId)
+    {
+        var locks = await _seatLockService.GetLocksForScheduleAsync(scheduleId);
+        var groupLocks = locks
+            .Where(l => l.OwnerType == "group-booking" && l.GroupSessionId == groupSessionId)
+            .ToList();
+
+        foreach (var lockInfo in groupLocks)
+        {
+            await _seatLockService.ForceUnlockSeatAsync(scheduleId, lockInfo.SeatId);
+            await BroadcastGroupSeatLockStateAsync(scheduleId, lockInfo.SeatId, null, false, groupSessionId, lockInfo.MemberId);
+        }
+    }
+
+    public async Task ClearGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId)
+    {
+        var ownerToken = GroupOwnerToken(groupSessionId, memberId);
+        var locks = await _seatLockService.GetLocksForOwnerAsync(scheduleId, ownerToken);
+
+        foreach (var lockInfo in locks)
+        {
+            await _seatLockService.UnlockSeatAsync(scheduleId, lockInfo.SeatId, ownerToken);
+            await BroadcastGroupSeatLockStateAsync(scheduleId, lockInfo.SeatId, null, false, groupSessionId, memberId);
+        }
+    }
+
+    public static string GroupOwnerToken(Guid groupSessionId, Guid memberId) =>
+        $"group:{groupSessionId:N}:member:{memberId:N}";
+
+    public async Task BroadcastGroupSeatLockStateAsync(
         string scheduleId,
         string seatId,
         string? userName,
@@ -146,124 +213,34 @@ public class SeatLockManager
         Guid? groupSessionId = null,
         Guid? memberId = null)
     {
-        var lockedSeats = GetCurrentLockedSeats(scheduleId);
+        var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
         var eventType = isLocked ? "seat-locked" : "seat-released";
 
-        if (isLocked)
+        await BroadcastEventAsync(scheduleId, eventType, new
         {
-            BroadcastEvent(scheduleId, eventType, new
-            {
-                seatId,
-                userName = userName ?? "Group Member",
-                lockedSeats,
-                source = "group-booking",
-                groupSessionId,
-                memberId
-            });
-        }
-        else
-        {
-            BroadcastEvent(scheduleId, eventType, new
-            {
-                seatId,
-                lockedSeats,
-                source = "group-booking",
-                groupSessionId,
-                memberId
-            });
-        }
+            seatId,
+            userName = userName ?? "Group Member",
+            lockedSeats,
+            source = "group-booking",
+            groupSessionId,
+            memberId
+        });
     }
 
-    private void BroadcastEvent(string scheduleId, string eventType, object data)
+    private Task BroadcastEventAsync(string scheduleId, string eventType, object data)
     {
-        _ = _broadcaster.BroadcastAsync(scheduleId, eventType, new { type = eventType, data });
+        return _broadcaster.BroadcastAsync(scheduleId, eventType, new { type = eventType, data });
     }
 
-    public Dictionary<string, (Guid GroupSessionId, Guid MemberId, string MemberName)> GetGroupSelectionsForSchedule(string scheduleId)
+    private async Task<bool> ForceUnlockSeatAsync(string scheduleId, string seatId)
     {
-        if (!_groupSeatSelections.TryGetValue(scheduleId, out var selections))
-            return new Dictionary<string, (Guid, Guid, string)>();
-
-        return selections.ToDictionary(k => k.Key, v => v.Value);
+        await _seatLockService.ForceUnlockSeatAsync(scheduleId, seatId);
+        return true;
     }
 
-    public List<string> GetGroupSelectedSeats(string scheduleId, Guid groupSessionId)
+    private async Task<List<SeatLockInfo>> GetLocksByOwnerAcrossSchedulesAsync(string ownerToken)
     {
-        if (!_groupSeatSelections.TryGetValue(scheduleId, out var selections))
-            return new List<string>();
-
-        return selections.Where(s => s.Value.GroupSessionId == groupSessionId).Select(s => s.Key).ToList();
-    }
-
-    public (List<string> ReleasedSeatIds, List<string> NewlySelectedSeatIds) UpdateGroupMemberSelection(
-        string scheduleId, Guid groupSessionId, Guid memberId, string memberName, List<string> seatIds)
-    {
-        var selections = _groupSeatSelections.GetOrAdd(scheduleId, _ => new());
-
-        var existingSeats = selections
-            .Where(s => s.Value.MemberId == memberId)
-            .Select(s => s.Key)
-            .ToList();
-
-        var releasedSeatIds = existingSeats.Except(seatIds).ToList();
-        var newlySelectedSeatIds = seatIds.Except(existingSeats).ToList();
-
-        foreach (var seatId in releasedSeatIds)
-        {
-            selections.TryRemove(seatId, out _);
-        }
-
-        foreach (var seatId in newlySelectedSeatIds)
-        {
-            selections[seatId] = (groupSessionId, memberId, memberName);
-        }
-
-        foreach (var releasedId in releasedSeatIds)
-        {
-            BroadcastGroupSeatLockState(scheduleId, releasedId, null, false, groupSessionId, memberId);
-        }
-
-        foreach (var newlySelectedId in newlySelectedSeatIds)
-        {
-            BroadcastGroupSeatLockState(scheduleId, newlySelectedId, memberName, true, groupSessionId, memberId);
-        }
-
-        return (releasedSeatIds, newlySelectedSeatIds);
-    }
-
-    public void ClearGroupSelections(string scheduleId, Guid groupSessionId)
-    {
-        if (!_groupSeatSelections.TryGetValue(scheduleId, out var selections)) return;
-
-        var seatsToRemove = selections
-            .Where(s => s.Value.GroupSessionId == groupSessionId)
-            .Select(s => s.Key)
-            .ToList();
-
-        foreach (var seatId in seatsToRemove)
-        {
-            if (selections.TryRemove(seatId, out var removedSelection))
-            {
-                BroadcastGroupSeatLockState(scheduleId, seatId, null, false, groupSessionId, removedSelection.MemberId);
-            }
-        }
-    }
-
-    public void ClearGroupMemberSelections(string scheduleId, Guid groupSessionId, Guid memberId)
-    {
-        if (!_groupSeatSelections.TryGetValue(scheduleId, out var selections)) return;
-
-        var seatsToRemove = selections
-            .Where(s => s.Value.MemberId == memberId)
-            .Select(s => s.Key)
-            .ToList();
-
-        foreach (var seatId in seatsToRemove)
-        {
-            if (selections.TryRemove(seatId, out _))
-            {
-                BroadcastGroupSeatLockState(scheduleId, seatId, null, false, groupSessionId, memberId);
-            }
-        }
+        var locks = await _seatLockService.GetLocksForOwnerAsync(ownerToken);
+        return locks.ToList();
     }
 }

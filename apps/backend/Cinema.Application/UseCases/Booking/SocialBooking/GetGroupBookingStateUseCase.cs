@@ -115,7 +115,7 @@ public class GetGroupBookingStateUseCase
                 throw new NotFoundException("Group booking session not found");
         }
 
-        var activeSelections = _notificationService.GetGroupSelectionsForSchedule(session.MovieScheduleId.ToString());
+        var activeSelections = await _notificationService.GetGroupSelectionsForScheduleAsync(session.MovieScheduleId.ToString());
         var groupSelections = activeSelections
             .Where(s => s.Value.GroupSessionId == session.GroupSessionId)
             .ToList();

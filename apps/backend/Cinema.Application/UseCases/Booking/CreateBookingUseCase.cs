@@ -26,6 +26,7 @@ public class CreateBookingUseCase
     private readonly BookingVoucherService _voucherService;
     private readonly IMovieCacheService _cacheService;
     private readonly IBackgroundJobScheduler _jobScheduler;
+    private readonly ISeatLockService _seatLockService;
 
     public CreateBookingUseCase(
         IBookingOrderRepository orderRepository,
@@ -37,7 +38,8 @@ public class CreateBookingUseCase
         BookingVoucherService voucherService,
         IUnitOfWork unitOfWork,
         IMovieCacheService cacheService,
-        IBackgroundJobScheduler jobScheduler)
+        IBackgroundJobScheduler jobScheduler,
+        ISeatLockService seatLockService)
     {
         _unitOfWork = unitOfWork;
         _orderRepository = orderRepository;
@@ -49,6 +51,7 @@ public class CreateBookingUseCase
         _voucherService = voucherService;
         _cacheService = cacheService;
         _jobScheduler = jobScheduler;
+        _seatLockService = seatLockService;
     }
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
@@ -184,6 +187,35 @@ public class CreateBookingUseCase
         var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(auditoriumSeats, seatIds, occupiedSeatIds);
         if (seatSelectionErrors.Count > 0)
             throw new BadRequestException(seatSelectionErrors, "BK10");
+
+        await ValidateRedisSeatLocksAsync(request.ScheduleId, seatIds, request.SeatLockOwnerToken);
+    }
+
+    private async Task ValidateRedisSeatLocksAsync(Guid scheduleId, List<Guid> seatIds, string? ownerToken)
+    {
+        var locks = await _seatLockService.GetLocksForScheduleAsync(scheduleId.ToString());
+        var locksBySeat = locks.ToDictionary(l => l.SeatId.ToLowerInvariant(), l => l);
+
+        foreach (var seatId in seatIds)
+        {
+            var key = seatId.ToString().ToLowerInvariant();
+            if (!locksBySeat.TryGetValue(key, out var lockInfo))
+                continue;
+
+            if (string.IsNullOrWhiteSpace(ownerToken) || lockInfo.OwnerToken != ownerToken)
+                throw new BadRequestException("One or more seats are currently locked by another user", "BK11");
+        }
+
+        if (!string.IsNullOrWhiteSpace(ownerToken))
+        {
+            var ownedSeats = locks
+                .Where(l => l.OwnerToken == ownerToken)
+                .Select(l => Guid.Parse(l.SeatId))
+                .ToHashSet();
+
+            if (!seatIds.All(ownedSeats.Contains))
+                throw new BadRequestException("One or more selected seats are no longer held by your session", "BK12");
+        }
     }
 
     private async Task<decimal> GetRoleDiscountAsync(Guid? userId)

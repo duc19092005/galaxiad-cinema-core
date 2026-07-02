@@ -153,6 +153,7 @@ public class GroupSeatSelectionDto
 public class ReqConfirmGroupSeatsDto
 {
     public List<Guid> SeatIds { get; set; } = [];
+    public List<GroupSeatSelectionDto> SeatSelections { get; set; } = [];
 }
 
 public class ResConfirmGroupMemberSeatsDto

@@ -141,12 +141,12 @@ public class BookingController : ControllerBase
     }
 
     [HttpPost("seats/lock")]
-    public IActionResult LockSeat([FromBody] ReqLockSeatDto request)
+    public async Task<IActionResult> LockSeat([FromBody] ReqLockSeatDto request)
     {
         var clientId = string.IsNullOrWhiteSpace(request.ClientId)
             ? HttpContext.Connection.Id
             : request.ClientId;
-        var (success, message, lockedSeats) = _seatLockManager.LockSeat(
+        var (success, message, lockedSeats) = await _seatLockManager.LockSeatAsync(
             request.ScheduleId, request.SeatId, request.UserName, clientId);
 
         if (!success)
@@ -156,12 +156,12 @@ public class BookingController : ControllerBase
     }
 
     [HttpPost("seats/unlock")]
-    public IActionResult UnlockSeat([FromBody] ReqUnlockSeatDto request)
+    public async Task<IActionResult> UnlockSeat([FromBody] ReqUnlockSeatDto request)
     {
         var clientId = string.IsNullOrWhiteSpace(request.ClientId)
             ? HttpContext.Connection.Id
             : request.ClientId;
-        var (success, message, lockedSeats) = _seatLockManager.UnlockSeat(
+        var (success, message, lockedSeats) = await _seatLockManager.UnlockSeatAsync(
             request.ScheduleId, request.SeatId, clientId);
 
         return Ok(new ResSeatLockDto { Success = success, Message = message, LockedSeats = lockedSeats });

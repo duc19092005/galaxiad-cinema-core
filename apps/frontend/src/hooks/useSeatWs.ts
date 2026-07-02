@@ -7,6 +7,7 @@ interface UseSeatWsReturn {
     lockSeat: (seatId: string, userName: string) => Promise<boolean>;
     unlockSeat: (seatId: string) => Promise<boolean>;
     isConnected: boolean;
+    clientId: string;
 }
 
 interface UseSeatWsOptions {
@@ -164,5 +165,5 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
         }
     }, [scheduleId]);
 
-    return { lockedSeats, lockSeat, unlockSeat, isConnected };
+    return { lockedSeats, lockSeat, unlockSeat, isConnected, clientId: clientIdRef.current };
 }

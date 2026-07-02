@@ -76,8 +76,12 @@ export const socialBookingApi = {
     return normalizeSuccessResponse<any>(response);
   },
 
-  confirmSeats: async (groupSessionId: string, seatIds: string[]): Promise<ApiSuccessResponse<ConfirmGroupSeatsResponse>> => {
-    const response = await bookingAxios.post(`/group/confirm/${groupSessionId}`, { seatIds });
+  confirmSeats: async (
+    groupSessionId: string,
+    seatIds: string[],
+    seatSelections?: { seatId: string; userSegmentId: string }[]
+  ): Promise<ApiSuccessResponse<ConfirmGroupSeatsResponse>> => {
+    const response = await bookingAxios.post(`/group/confirm/${groupSessionId}`, { seatIds, seatSelections });
     return normalizeSuccessResponse<ConfirmGroupSeatsResponse>(response);
   },
 
