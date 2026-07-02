@@ -23,6 +23,18 @@ public class CinemaHub : Hub
         _logger = logger;
     }
 
+    public Task<SeatLockHubResponse> LockSeat(string scheduleId, string seatId, string userName, string clientId)
+    {
+        var (success, message, lockedSeats) = _seatLockManager.LockSeat(scheduleId, seatId, userName, clientId);
+        return Task.FromResult(new SeatLockHubResponse(success, message, lockedSeats));
+    }
+
+    public Task<SeatLockHubResponse> UnlockSeat(string scheduleId, string seatId, string? clientId = null)
+    {
+        var (success, message, lockedSeats) = _seatLockManager.UnlockSeat(scheduleId, seatId, clientId);
+        return Task.FromResult(new SeatLockHubResponse(success, message, lockedSeats));
+    }
+
     public override async Task OnConnectedAsync()
     {
         var httpContext = Context.GetHttpContext();
@@ -139,4 +151,6 @@ public class CinemaHub : Hub
 
     private bool IsAuthenticated() =>
         Context.User?.Identity?.IsAuthenticated == true;
+
+    public sealed record SeatLockHubResponse(bool Success, string? Message, Dictionary<string, string> LockedSeats);
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { bookingApi } from '../api/bookingApi';
 import { signalrClient, stopConnection } from '../api/signalrClient';
-import type { HubConnection } from '@microsoft/signalr';
+import { HubConnectionState, type HubConnection } from '@microsoft/signalr';
 
 interface UseSeatWsReturn {
     lockedSeats: Record<string, string>;
@@ -117,28 +116,52 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
                 const seatIds = Array.from(myLockedSeatsRef.current);
                 myLockedSeatsRef.current.clear();
                 for (const seatId of seatIds) {
-                    bookingApi.unlockSeat(scheduleId, seatId, clientIdRef.current).catch(() => {});
+                    if (connection.state === HubConnectionState.Connected) {
+                        connection.invoke('unlockSeat', scheduleId, seatId, clientIdRef.current).catch(() => {});
+                    }
                 }
             }
         };
     }, [scheduleId, ignoreGroupSessionId]);
 
     const lockSeat = useCallback(async (seatId: string, userName: string): Promise<boolean> => {
-        if (!scheduleId) return false;
-        const success = await bookingApi.lockSeat(scheduleId, seatId, userName, clientIdRef.current);
-        if (success) {
-            myLockedSeatsRef.current.add(seatId);
+        if (!scheduleId || !connectionRef.current) return false;
+
+        try {
+            const connection = connectionRef.current;
+            if (connection.state !== HubConnectionState.Connected) {
+                await connection.start();
+            }
+
+            const result = await connection.invoke('lockSeat', scheduleId, seatId, userName, clientIdRef.current) as { success?: boolean };
+            if (result?.success) {
+                myLockedSeatsRef.current.add(seatId);
+            }
+            return Boolean(result?.success);
+        } catch (error) {
+            console.warn('[Seats SignalR] Lock seat failed', error);
+            return false;
         }
-        return success;
     }, [scheduleId]);
 
     const unlockSeat = useCallback(async (seatId: string): Promise<boolean> => {
-        if (!scheduleId) return false;
-        const success = await bookingApi.unlockSeat(scheduleId, seatId, clientIdRef.current);
-        if (success) {
-            myLockedSeatsRef.current.delete(seatId);
+        if (!scheduleId || !connectionRef.current) return false;
+
+        try {
+            const connection = connectionRef.current;
+            if (connection.state !== HubConnectionState.Connected) {
+                await connection.start();
+            }
+
+            const result = await connection.invoke('unlockSeat', scheduleId, seatId, clientIdRef.current) as { success?: boolean };
+            if (result?.success) {
+                myLockedSeatsRef.current.delete(seatId);
+            }
+            return Boolean(result?.success);
+        } catch (error) {
+            console.warn('[Seats SignalR] Unlock seat failed', error);
+            return false;
         }
-        return success;
     }, [scheduleId]);
 
     return { lockedSeats, lockSeat, unlockSeat, isConnected };
