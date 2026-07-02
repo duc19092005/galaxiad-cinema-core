@@ -57,7 +57,7 @@ const CashierSalesPage: React.FC = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // WS Seat Lock
-  const { lockedSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(selectedScheduleId);
+  const { lockedSeats, unavailableSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(selectedScheduleId);
 
   // Parse cinemaName from session
   useEffect(() => {
@@ -172,7 +172,7 @@ const CashierSalesPage: React.FC = () => {
 
   // Toggle seat selection
   const toggleSeat = async (seat: PublicSeat) => {
-    if (seat.isBooked) return;
+    if (seat.isBooked || unavailableSeats[seat.seatId.toLowerCase()]) return;
     const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
     const isLockedByOther = lockedSeats[seat.seatId] && !isCurrentlySelected;
     if (isLockedByOther) return;
@@ -610,7 +610,7 @@ const CashierSalesPage: React.FC = () => {
                     return (
                       <button
                         key={seat.seatId}
-                        disabled={seat.isBooked || !!isLockedByOther}
+                        disabled={seat.isBooked || !!isLockedByOther || unavailableSeats[seat.seatId.toLowerCase()]}
                         onClick={() => toggleSeat(seat)}
                         style={{
                           gridColumnStart: seat.colIndex + 1,

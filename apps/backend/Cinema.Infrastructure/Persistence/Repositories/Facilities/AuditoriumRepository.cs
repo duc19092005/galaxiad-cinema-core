@@ -178,13 +178,17 @@ public class AuditoriumRepository : IAuditoriumRepository
     public async Task CancelPendingOrdersForScheduleAsync(Guid scheduleId)
     {
         var pendingOrders = await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
             .Where(o => o.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId)
                         && o.OrderStatus == OrderStatusEnum.Pending)
             .ToListAsync();
 
+        var releasedAt = DateTime.UtcNow;
         foreach (var order in pendingOrders)
         {
             order.OrderStatus = OrderStatusEnum.Canceled;
+            foreach (var detail in order.OrderDetailsInfo)
+                detail.ReleasedAt ??= releasedAt;
         }
     }
 }

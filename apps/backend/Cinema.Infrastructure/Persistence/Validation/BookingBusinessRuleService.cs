@@ -70,13 +70,17 @@ public class BookingBusinessRuleService : IBookingBusinessRuleService
     public async Task<int> MarkPendingOrdersForScheduleCanceledAsync(Guid scheduleId)
     {
         var pendingOrders = await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
             .Where(o => o.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId)
                         && o.OrderStatus == OrderStatusEnum.Pending)
             .ToListAsync();
 
+        var releasedAt = DateTime.UtcNow;
         foreach (var order in pendingOrders)
         {
             order.OrderStatus = OrderStatusEnum.Canceled;
+            foreach (var detail in order.OrderDetailsInfo)
+                detail.ReleasedAt ??= releasedAt;
         }
 
         return pendingOrders.Count;
@@ -87,13 +91,17 @@ public class BookingBusinessRuleService : IBookingBusinessRuleService
         var cutoff = DateTime.UtcNow.AddMinutes(-expireAfterMinutes);
 
         var staleOrders = await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
             .Where(o => o.OrderStatus == OrderStatusEnum.Pending
                         && o.OrderDate < cutoff)
             .ToListAsync();
 
+        var releasedAt = DateTime.UtcNow;
         foreach (var order in staleOrders)
         {
             order.OrderStatus = OrderStatusEnum.Canceled;
+            foreach (var detail in order.OrderDetailsInfo)
+                detail.ReleasedAt ??= releasedAt;
         }
 
         return staleOrders.Count;

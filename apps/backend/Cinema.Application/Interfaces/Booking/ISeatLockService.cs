@@ -16,6 +16,11 @@ public sealed record SeatLockAcquireResult(
     string? Message,
     SeatLockInfo? CurrentLock);
 
+public sealed record SeatLockRenewResult(
+    bool Success,
+    string? Message,
+    IReadOnlyList<SeatLockInfo> RenewedLocks);
+
 public interface ISeatLockService
 {
     Task<SeatLockAcquireResult> TryLockSeatAsync(
@@ -32,6 +37,8 @@ public interface ISeatLockService
     Task<bool> UnlockSeatAsync(string scheduleId, string seatId, string ownerToken);
 
     Task ForceUnlockSeatAsync(string scheduleId, string seatId);
+
+    Task<SeatLockRenewResult> RenewLocksForOwnerAsync(string scheduleId, string ownerToken, TimeSpan ttl);
 
     Task ReleaseSeatsByOwnerAsync(string ownerToken);
 

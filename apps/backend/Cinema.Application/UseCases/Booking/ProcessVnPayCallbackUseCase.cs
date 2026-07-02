@@ -149,6 +149,7 @@ public class ProcessVnPayCallbackUseCase
         else
         {
             order.OrderStatus = OrderStatusEnum.Canceled;
+            ReleaseOrderDetails(order);
         }
 
         await _unitOfWork.SaveChangesAsync();
@@ -454,6 +455,13 @@ public class ProcessVnPayCallbackUseCase
         }
 
         return (isSuccess, orderId, session.GroupCode);
+    }
+
+    private static void ReleaseOrderDetails(OrderInfoEntity order)
+    {
+        var releasedAt = DateTime.UtcNow;
+        foreach (var detail in order.OrderDetailsInfo ?? [])
+            detail.ReleasedAt ??= releasedAt;
     }
 
     private async Task<OrderInfoEntity> CreateBookedOrderForMemberAsync(

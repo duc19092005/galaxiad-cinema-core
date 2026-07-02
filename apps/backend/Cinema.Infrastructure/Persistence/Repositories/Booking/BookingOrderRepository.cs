@@ -58,6 +58,7 @@ public class BookingOrderRepository : IBookingOrderRepository
         return await _dbContext.Set<OrderDetailsInfo>()
             .Where(od => od.MovieScheduleId == scheduleId
                          && seatIds.Contains(od.SeatId)
+                         && od.ReleasedAt == null
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
             .Select(od => od.SeatId)
@@ -77,6 +78,7 @@ public class BookingOrderRepository : IBookingOrderRepository
     {
         var individualBookedSeats = await _dbContext.Set<OrderDetailsInfo>()
             .Where(od => od.MovieScheduleId == scheduleId
+                         && od.ReleasedAt == null
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
             .Select(od => od.SeatId)

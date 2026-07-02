@@ -37,7 +37,7 @@ const BookingPage: React.FC = () => {
     // Group Booking Modal
     const [showGroupModal, setShowGroupModal] = useState(false);
 
-    const { lockedSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(scheduleId || null);
+    const { lockedSeats, unavailableSeats, lockSeat, unlockSeat, clientId: seatLockOwnerToken } = useSeatWs(scheduleId || null);
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
@@ -133,7 +133,7 @@ const BookingPage: React.FC = () => {
     };
 
     const toggleSeat = async (seat: PublicSeat) => {
-        if (seat.isBooked) return;
+        if (seat.isBooked || unavailableSeats[seat.seatId.toLowerCase()]) return;
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
         if (!isCurrentlySelected && lockedSeats[seat.seatId.toLowerCase()]) return;
 
@@ -347,20 +347,21 @@ const BookingPage: React.FC = () => {
                         }} className="mb-16">
                             {seatMap.seatMap?.map((seat) => {
                                 const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
+                                const seatUnavailable = unavailableSeats[seat.seatId.toLowerCase()];
                                 const lockedBy = lockedSeats[seat.seatId.toLowerCase()];
                                 const isLockedByOther = lockedBy && !isSelected;
 
                                 return (
                                     <button
                                         key={seat.seatId}
-                                        disabled={seat.isBooked || !!isLockedByOther}
+                                        disabled={seat.isBooked || seatUnavailable || !!isLockedByOther}
                                         onClick={() => toggleSeat(seat)}
                                         style={{
                                             gridColumnStart: seat.colIndex + 1,
                                             gridRowStart: seat.rowIndex + 1,
                                         }}
                                         className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border ${
-                                            seat.isBooked
+                                            seat.isBooked || seatUnavailable
                                                 ? 'bg-zinc-900/50 text-zinc-700 border-zinc-800/40 opacity-40 cursor-not-allowed'
                                                 : isLockedByOther
                                                 ? 'bg-red-500/20 text-[#ef4444] border-red-500/40 cursor-not-allowed'

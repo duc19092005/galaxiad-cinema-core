@@ -8,6 +8,7 @@ namespace Cinema.Application.Interfaces.Booking;
 public interface ISeatLockerNotificationService
 {
     Task NotifySeatsReleasedAsync(string scheduleId, List<string> seatIds);
+    Task NotifySeatsUnavailableAsync(string scheduleId, List<string> seatIds, string? ownerToken = null);
     Task NotifyGroupSeatStateChangedAsync(string scheduleId, string seatId, string? userName, bool isLocked);
     Task NotifyGroupUpdateAsync(Guid groupSessionId, object state);
     Task NotifyPaymentMethodVoteUpdateAsync(Guid groupSessionId, object voteState);
@@ -23,6 +24,7 @@ public interface ISeatLockerNotificationService
         List<GroupSeatSelectionDto> seatSelections,
         TimeSpan ttl);
     Task<IReadOnlyList<SeatLockInfo>> GetGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId);
+    Task<(bool Success, string? Message)> RenewGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId, TimeSpan ttl);
     Task ClearGroupSelectionsAsync(string scheduleId, Guid groupSessionId);
     Task ClearGroupMemberSelectionsAsync(string scheduleId, Guid groupSessionId, Guid memberId);
     Task NotifyGroupChatMessageAsync(Guid groupSessionId, Cinema.Application.Dtos.Booking.ResGroupChatMessageDto chatMessage);

@@ -91,6 +91,14 @@ public class CinemaHubTests
             return Task.CompletedTask;
         }
 
+        public Task<SeatLockRenewResult> RenewLocksForOwnerAsync(string scheduleId, string ownerToken, TimeSpan ttl)
+        {
+            var renewed = _locks.Values
+                .Where(l => l.ScheduleId == scheduleId && l.OwnerToken == ownerToken)
+                .ToList();
+            return Task.FromResult(new SeatLockRenewResult(renewed.Count > 0, "Renewed", renewed));
+        }
+
         public Task<IReadOnlyList<SeatLockInfo>> GetLocksForScheduleAsync(string scheduleId)
         {
             return Task.FromResult<IReadOnlyList<SeatLockInfo>>(

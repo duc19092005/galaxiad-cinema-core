@@ -28,7 +28,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
   const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
-  const { lockedSeats } = useSeatWs(scheduleId, { ignoreGroupSessionId: groupState.groupSessionId });
+  const { lockedSeats, unavailableSeats } = useSeatWs(scheduleId, { ignoreGroupSessionId: groupState.groupSessionId });
 
   const currentUserId = JSON.parse(localStorage.getItem('user_info') || '{}').userId;
   const isMember = groupState.members?.some(m => m.userId === currentUserId);
@@ -192,6 +192,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
             const hasGroupOwner = Boolean(groupSeatMemberId);
             const isTeammateSeat = hasGroupOwner && groupSeatMemberId.toLowerCase() !== (myMember?.memberId ?? '').toLowerCase();
             const isLockedByOther = Boolean(lockedSeats[seat.seatId.toLowerCase()] && !isSelected && !hasGroupOwner);
+            const isUnavailable = unavailableSeats[seat.seatId.toLowerCase()];
 
             let bgColor = 'bg-[#343539]/40 text-[#dbc2ad]/40 border border-[#554334]/20 hover:border-[#ff9500]/50';
             let extraStyle: React.CSSProperties = {
@@ -213,6 +214,9 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
               extraStyle.backgroundColor = color;
               extraStyle.boxShadow = `0 0 10px ${color}60`;
               cursorClass = 'cursor-not-allowed';
+            } else if (isUnavailable) {
+              bgColor = 'bg-[#343539]/20 text-[#dbc2ad]/20 border border-[#554334]/10 opacity-30';
+              cursorClass = 'cursor-not-allowed';
             } else if (isLockedByOther) {
               bgColor = 'bg-red-500/15 text-red-400 border border-red-500/30';
               cursorClass = 'cursor-not-allowed';
@@ -222,7 +226,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
               <button
                 key={seat.seatId}
                 onClick={() => toggleSeat(seat)}
-                disabled={isBooked || isLockedByOther || (isTeammateSeat && !isSelected)}
+                disabled={isBooked || isLockedByOther || isUnavailable || (isTeammateSeat && !isSelected)}
                 style={extraStyle}
                 className={`w-[30px] h-[30px] md:w-[34px] md:h-[34px] rounded-lg flex items-center justify-center font-bold text-[9px] transition-all duration-200 border ${bgColor} ${cursorClass}`}
                 title={

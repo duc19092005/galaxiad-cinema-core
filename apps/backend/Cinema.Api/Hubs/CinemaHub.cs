@@ -35,6 +35,12 @@ public class CinemaHub : Hub
         return new SeatLockHubResponse(success, message, lockedSeats);
     }
 
+    public async Task<SeatLockHubResponse> RenewSeatLocks(string scheduleId, string clientId)
+    {
+        var (success, message, lockedSeats) = await _seatLockManager.RenewSeatLocksAsync(scheduleId, clientId);
+        return new SeatLockHubResponse(success, message, lockedSeats);
+    }
+
     public override async Task OnConnectedAsync()
     {
         var httpContext = Context.GetHttpContext();

@@ -35,6 +35,8 @@ public class OrderDetailsInfo
     [Column(TypeName = "decimal(18,2)")]
     public decimal FinalPrice { get; set; }
 
+    public DateTime? ReleasedAt { get; set; }
+
     [Column(TypeName = "nvarchar(100)")]
     public string? FullName { get; set; }
 

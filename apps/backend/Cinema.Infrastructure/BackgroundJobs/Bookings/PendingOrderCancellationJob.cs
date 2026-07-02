@@ -93,10 +93,14 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
     private async Task CancelOrderAndNotifyAsync(OrderInfoEntity order)
     {
         order.OrderStatus = OrderStatusEnum.Canceled;
+        var releasedAt = DateTime.UtcNow;
         
         var details = order.OrderDetailsInfo;
         if (details != null && details.Count > 0)
         {
+            foreach (var detail in details)
+                detail.ReleasedAt ??= releasedAt;
+
             var scheduleId = details.First().MovieScheduleId.ToString();
             var seatIds = details.Select(od => od.SeatId.ToString()).ToList();
             

@@ -192,7 +192,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                     CoordY = s.CoordY,
                     ColIndex = s.ColIndex,
                     RowIndex = s.RowIndex,
-                    IsBooked = s.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId && od.SeatId == s.SeatId &&
+                    IsBooked = s.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId && od.SeatId == s.SeatId && od.ReleasedAt == null &&
                         (od.OrderInfoEntity.OrderStatus == Cinema.Domain.Enums.OrderStatusEnum.Booked || od.OrderInfoEntity.OrderStatus == Cinema.Domain.Enums.OrderStatusEnum.Pending))
                 }).ToList() : new List<GetSeatsRes>()
             })

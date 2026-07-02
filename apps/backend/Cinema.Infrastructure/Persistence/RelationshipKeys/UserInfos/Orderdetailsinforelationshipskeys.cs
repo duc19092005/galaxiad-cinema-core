@@ -36,6 +36,11 @@ public static class OrderDetailsInfoRelationshipsKeys
     {
         modelBuilder.Entity<OrderDetailsInfo>()
             .HasKey(x => new { x.OrderId, x.MovieScheduleId, x.SeatId });
+
+        modelBuilder.Entity<OrderDetailsInfo>()
+            .HasIndex(x => new { x.MovieScheduleId, x.SeatId })
+            .IsUnique()
+            .HasFilter("[ReleasedAt] IS NULL");
     }
 }
 

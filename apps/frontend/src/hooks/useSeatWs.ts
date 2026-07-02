@@ -4,6 +4,7 @@ import { HubConnectionState, type HubConnection } from '@microsoft/signalr';
 
 interface UseSeatWsReturn {
     lockedSeats: Record<string, string>;
+    unavailableSeats: Record<string, boolean>;
     lockSeat: (seatId: string, userName: string) => Promise<boolean>;
     unlockSeat: (seatId: string) => Promise<boolean>;
     isConnected: boolean;
@@ -16,6 +17,7 @@ interface UseSeatWsOptions {
 
 export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions = {}): UseSeatWsReturn {
     const [lockedSeats, setLockedSeats] = useState<Record<string, string>>({});
+    const [unavailableSeats, setUnavailableSeats] = useState<Record<string, boolean>>({});
     const [isConnected, setIsConnected] = useState(false);
     const myLockedSeatsRef = useRef<Set<string>>(new Set());
     const connectionRef = useRef<HubConnection | null>(null);
@@ -26,9 +28,18 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
             : `seat-client-${Date.now()}-${Math.random().toString(36).slice(2)}`
     );
 
+    const normalizeKeys = (obj: Record<string, string>) => {
+        const normalized: Record<string, string> = {};
+        for (const key of Object.keys(obj || {})) {
+            normalized[key.toLowerCase()] = obj[key];
+        }
+        return normalized;
+    };
+
     useEffect(() => {
         if (!scheduleId) {
             setLockedSeats({});
+            setUnavailableSeats({});
             setIsConnected(false);
             return;
         }
@@ -36,14 +47,6 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
         let cancelled = false;
         const connection = signalrClient.createSeatConnection(scheduleId, clientIdRef.current);
         connectionRef.current = connection;
-
-        const normalizeKeys = (obj: Record<string, string>) => {
-            const normalized: Record<string, string> = {};
-            for (const key of Object.keys(obj || {})) {
-                normalized[key.toLowerCase()] = obj[key];
-            }
-            return normalized;
-        };
 
         const handleSeatLocked = (payload: any) => {
             const data = payload?.data ?? payload;
@@ -80,12 +83,28 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
             }
         };
 
+        const handleSeatUnavailable = (payload: any) => {
+            const data = payload?.data ?? payload;
+            if (!data?.seatId) return;
+
+            const seatKey = data.seatId.toLowerCase();
+            myLockedSeatsRef.current.delete(data.seatId);
+            myLockedSeatsRef.current.delete(seatKey);
+            setUnavailableSeats(prev => ({ ...prev, [seatKey]: true }));
+            setLockedSeats(prev => {
+                const next = { ...prev };
+                delete next[seatKey];
+                return next;
+            });
+        };
+
         connection.on('initial-state', (payload: { lockedSeats?: Record<string, string> }) => {
             setLockedSeats(normalizeKeys(payload?.lockedSeats || {}));
         });
         connection.on('seat-locked', handleSeatLocked);
         connection.on('seat-unlocked', handleSeatUnlocked);
         connection.on('seat-released', handleSeatUnlocked);
+        connection.on('seat-unavailable', handleSeatUnavailable);
 
         connection.onreconnecting(() => setIsConnected(false));
         connection.onreconnected(() => setIsConnected(true));
@@ -108,6 +127,7 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
             connection.off('seat-locked', handleSeatLocked);
             connection.off('seat-unlocked', handleSeatUnlocked);
             connection.off('seat-released', handleSeatUnlocked);
+            connection.off('seat-unavailable', handleSeatUnavailable);
             stopConnection(connection).catch(() => {});
             if (connectionRef.current === connection) {
                 connectionRef.current = null;
@@ -124,6 +144,31 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
             }
         };
     }, [scheduleId, ignoreGroupSessionId]);
+
+    useEffect(() => {
+        if (!scheduleId) return;
+
+        const renewTimer = window.setInterval(async () => {
+            const connection = connectionRef.current;
+            if (!connection || connection.state !== HubConnectionState.Connected || myLockedSeatsRef.current.size === 0) {
+                return;
+            }
+
+            try {
+                const result = await connection.invoke('renewSeatLocks', scheduleId, clientIdRef.current) as {
+                    success?: boolean;
+                    lockedSeats?: Record<string, string>;
+                };
+                if (result?.lockedSeats) {
+                    setLockedSeats(normalizeKeys(result.lockedSeats));
+                }
+            } catch (error) {
+                console.warn('[Seats SignalR] Renew seat locks failed', error);
+            }
+        }, 120000);
+
+        return () => window.clearInterval(renewTimer);
+    }, [scheduleId]);
 
     const lockSeat = useCallback(async (seatId: string, userName: string): Promise<boolean> => {
         if (!scheduleId || !connectionRef.current) return false;
@@ -165,5 +210,5 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
         }
     }, [scheduleId]);
 
-    return { lockedSeats, lockSeat, unlockSeat, isConnected, clientId: clientIdRef.current };
+    return { lockedSeats, unavailableSeats, lockSeat, unlockSeat, isConnected, clientId: clientIdRef.current };
 }

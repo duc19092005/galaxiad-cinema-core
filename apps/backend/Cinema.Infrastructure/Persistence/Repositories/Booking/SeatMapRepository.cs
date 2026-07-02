@@ -32,6 +32,7 @@ public class SeatMapRepository : ISeatMapRepository
     {
         var individualBookedSeats = await _dbContext.Set<OrderDetailsInfo>()
             .Where(od => od.MovieScheduleId == scheduleId
+                         && od.ReleasedAt == null
                          && od.OrderInfoEntity != null
                          && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
                              || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))

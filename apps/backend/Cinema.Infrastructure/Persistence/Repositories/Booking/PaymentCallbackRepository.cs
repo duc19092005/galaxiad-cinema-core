@@ -17,6 +17,7 @@ public class PaymentCallbackRepository : IPaymentCallbackRepository
     public async Task<OrderInfoEntity?> GetOrderByIdAsync(Guid orderId)
     {
         return await _dbContext.Set<OrderInfoEntity>()
+            .Include(o => o.OrderDetailsInfo)
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
     }
 

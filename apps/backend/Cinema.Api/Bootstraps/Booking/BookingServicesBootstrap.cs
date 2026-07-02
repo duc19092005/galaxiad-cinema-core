@@ -42,6 +42,7 @@ public static class BookingServicesBootstrap
         services.AddScoped<JoinGroupBookingUseCase>();
         services.AddScoped<GetGroupBookingStateUseCase>();
         services.AddScoped<SelectGroupSeatsUseCase>();
+        services.AddScoped<RenewGroupMemberSeatLocksUseCase>();
         services.AddScoped<ConfirmGroupMemberSeatsUseCase>();
         services.AddScoped<PayGroupBookingUseCase>();
         services.AddScoped<SendGroupChatMessageUseCase>();

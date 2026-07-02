@@ -28,6 +28,11 @@ public class SeatLockerNotificationService : ISeatLockerNotificationService
         return _seatLockManager.ReleaseSeatsForScheduleAsync(scheduleId, seatIds);
     }
 
+    public Task NotifySeatsUnavailableAsync(string scheduleId, List<string> seatIds, string? ownerToken = null)
+    {
+        return _seatLockManager.NotifySeatsUnavailableAsync(scheduleId, seatIds, ownerToken);
+    }
+
     public Task NotifyGroupSeatStateChangedAsync(string scheduleId, string seatId, string? userName, bool isLocked)
     {
         return _seatLockManager.BroadcastGroupSeatLockStateAsync(scheduleId, seatId, userName, isLocked);
@@ -73,6 +78,15 @@ public class SeatLockerNotificationService : ISeatLockerNotificationService
     {
         var ownerToken = SeatLockManager.GroupOwnerToken(groupSessionId, memberId);
         return await _seatLockManager.GetSeatLockServiceLocksForOwnerAsync(scheduleId, ownerToken);
+    }
+
+    public Task<(bool Success, string? Message)> RenewGroupMemberSelectionsAsync(
+        string scheduleId,
+        Guid groupSessionId,
+        Guid memberId,
+        TimeSpan ttl)
+    {
+        return _seatLockManager.RenewGroupMemberSelectionsAsync(scheduleId, groupSessionId, memberId, ttl);
     }
 
     public Task ClearGroupSelectionsAsync(string scheduleId, Guid groupSessionId)

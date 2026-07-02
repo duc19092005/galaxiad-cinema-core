@@ -7,6 +7,8 @@ namespace Cinema.Infrastructure.ExternalServices.Cache;
 public class SeatLockService : ISeatLockService
 {
     private readonly IConnectionMultiplexer _redis;
+    private static readonly TimeSpan RateLimitWindow = TimeSpan.FromMinutes(1);
+    private const int RateLimitMaxOperations = 60;
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public SeatLockService(IConnectionMultiplexer redis)
@@ -24,6 +26,9 @@ public class SeatLockService : ISeatLockService
     private static string SchedulePattern(string scheduleId) =>
         $"seatlock:{Normalize(scheduleId)}:*";
 
+    private static string RateLimitKey(string ownerToken) =>
+        $"seatlock:rate:{Normalize(ownerToken)}";
+
     public async Task<SeatLockAcquireResult> TryLockSeatAsync(
         string scheduleId,
         string seatId,
@@ -35,6 +40,9 @@ public class SeatLockService : ISeatLockService
         Guid? memberId = null,
         Guid? userSegmentId = null)
     {
+        if (!await TryConsumeRateLimitAsync(ownerToken))
+            return new SeatLockAcquireResult(false, "Too many seat lock operations. Please slow down.", null);
+
         var key = LockKey(scheduleId, seatId);
         var current = await Db().StringGetAsync(key);
         if (current.HasValue)
@@ -78,6 +86,9 @@ public class SeatLockService : ISeatLockService
 
     public async Task<bool> UnlockSeatAsync(string scheduleId, string seatId, string ownerToken)
     {
+        if (!await TryConsumeRateLimitAsync(ownerToken))
+            return false;
+
         var key = LockKey(scheduleId, seatId);
         var current = await Db().StringGetAsync(key);
         if (!current.HasValue)
@@ -105,6 +116,48 @@ public class SeatLockService : ISeatLockService
     public async Task ForceUnlockSeatAsync(string scheduleId, string seatId)
     {
         await Db().KeyDeleteAsync(LockKey(scheduleId, seatId));
+    }
+
+    public async Task<SeatLockRenewResult> RenewLocksForOwnerAsync(string scheduleId, string ownerToken, TimeSpan ttl)
+    {
+        if (!await TryConsumeRateLimitAsync(ownerToken))
+            return new SeatLockRenewResult(false, "Too many seat lock operations. Please slow down.", []);
+
+        var locks = await GetLocksForOwnerAsync(scheduleId, ownerToken);
+        if (locks.Count == 0)
+            return new SeatLockRenewResult(false, "No active seat locks found for this session.", []);
+
+        var renewed = new List<SeatLockInfo>();
+        const string luaScript = """
+            if redis.call('get', KEYS[1]) == ARGV[1] then
+                return redis.call('pexpire', KEYS[1], ARGV[2])
+            end
+            return 0
+            """;
+
+        foreach (var lockInfo in locks)
+        {
+            var key = LockKey(lockInfo.ScheduleId, lockInfo.SeatId);
+            var current = await Db().StringGetAsync(key);
+            if (!current.HasValue)
+                continue;
+
+            var currentLock = Deserialize(current!);
+            if (currentLock?.OwnerToken != ownerToken)
+                continue;
+
+            var result = await Db().ScriptEvaluateAsync(
+                luaScript,
+                new RedisKey[] { key },
+                new RedisValue[] { current, (long)ttl.TotalMilliseconds });
+
+            if ((int)result == 1)
+                renewed.Add(currentLock);
+        }
+
+        return renewed.Count > 0
+            ? new SeatLockRenewResult(true, "Seat locks renewed successfully.", renewed)
+            : new SeatLockRenewResult(false, "Seat locks could not be renewed.", []);
     }
 
     public async Task ReleaseSeatsByOwnerAsync(string ownerToken)
@@ -185,5 +238,19 @@ public class SeatLockService : ISeatLockService
         {
             return null;
         }
+    }
+
+    private async Task<bool> TryConsumeRateLimitAsync(string ownerToken)
+    {
+        if (string.IsNullOrWhiteSpace(ownerToken))
+            ownerToken = "anonymous";
+
+        var key = RateLimitKey(ownerToken);
+        var db = Db();
+        var count = await db.StringIncrementAsync(key);
+        if (count == 1)
+            await db.KeyExpireAsync(key, RateLimitWindow);
+
+        return count <= RateLimitMaxOperations;
     }
 }

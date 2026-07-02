@@ -18,6 +18,7 @@ public class GroupBookingController : ControllerBase
     private readonly JoinGroupBookingUseCase _joinGroupBookingUseCase;
     private readonly GetGroupBookingStateUseCase _getGroupBookingStateUseCase;
     private readonly SelectGroupSeatsUseCase _selectGroupSeatsUseCase;
+    private readonly RenewGroupMemberSeatLocksUseCase _renewGroupMemberSeatLocksUseCase;
     private readonly ConfirmGroupMemberSeatsUseCase _confirmGroupMemberSeatsUseCase;
     private readonly PayGroupBookingUseCase _payGroupBookingUseCase;
     private readonly SendGroupChatMessageUseCase _sendGroupChatMessageUseCase;
@@ -40,6 +41,7 @@ public class GroupBookingController : ControllerBase
         JoinGroupBookingUseCase joinGroupBookingUseCase,
         GetGroupBookingStateUseCase getGroupBookingStateUseCase,
         SelectGroupSeatsUseCase selectGroupSeatsUseCase,
+        RenewGroupMemberSeatLocksUseCase renewGroupMemberSeatLocksUseCase,
         ConfirmGroupMemberSeatsUseCase confirmGroupMemberSeatsUseCase,
         PayGroupBookingUseCase payGroupBookingUseCase,
         SendGroupChatMessageUseCase sendGroupChatMessageUseCase,
@@ -61,6 +63,7 @@ public class GroupBookingController : ControllerBase
         _joinGroupBookingUseCase = joinGroupBookingUseCase;
         _getGroupBookingStateUseCase = getGroupBookingStateUseCase;
         _selectGroupSeatsUseCase = selectGroupSeatsUseCase;
+        _renewGroupMemberSeatLocksUseCase = renewGroupMemberSeatLocksUseCase;
         _confirmGroupMemberSeatsUseCase = confirmGroupMemberSeatsUseCase;
         _payGroupBookingUseCase = payGroupBookingUseCase;
         _sendGroupChatMessageUseCase = sendGroupChatMessageUseCase;
@@ -134,6 +137,13 @@ public class GroupBookingController : ControllerBase
                 _logger.LogError(ex, "Failed to fetch/broadcast group state after seat selection for {GroupSessionId}", groupSessionId);
             }
         }
+        return Ok(result);
+    }
+
+    [HttpPost("seats/{groupSessionId}/renew")]
+    public async Task<IActionResult> RenewSeatLocks(Guid groupSessionId)
+    {
+        var result = await _renewGroupMemberSeatLocksUseCase.ExecuteAsync(groupSessionId);
         return Ok(result);
     }
 

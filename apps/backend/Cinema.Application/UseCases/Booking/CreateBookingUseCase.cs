@@ -27,6 +27,7 @@ public class CreateBookingUseCase
     private readonly IMovieCacheService _cacheService;
     private readonly IBackgroundJobScheduler _jobScheduler;
     private readonly ISeatLockService _seatLockService;
+    private readonly ISeatLockerNotificationService _seatLockerNotificationService;
 
     public CreateBookingUseCase(
         IBookingOrderRepository orderRepository,
@@ -39,7 +40,8 @@ public class CreateBookingUseCase
         IUnitOfWork unitOfWork,
         IMovieCacheService cacheService,
         IBackgroundJobScheduler jobScheduler,
-        ISeatLockService seatLockService)
+        ISeatLockService seatLockService,
+        ISeatLockerNotificationService seatLockerNotificationService)
     {
         _unitOfWork = unitOfWork;
         _orderRepository = orderRepository;
@@ -52,6 +54,7 @@ public class CreateBookingUseCase
         _cacheService = cacheService;
         _jobScheduler = jobScheduler;
         _seatLockService = seatLockService;
+        _seatLockerNotificationService = seatLockerNotificationService;
     }
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
@@ -92,6 +95,7 @@ public class CreateBookingUseCase
 
             await ClearUserCacheAsync(orderUserId);
             SchedulePostCommitJobs(orderId, resolvedOrderStatus, orderUserId);
+            await NotifySeatsUnavailableAsync(request);
 
             var paymentUrl = resolvedOrderStatus == OrderStatusEnum.Pending
                 ? _vnPayService.GenerateVnpayUrl((long)finalPrice, orderId.ToString(), ipAddress)
@@ -289,6 +293,24 @@ public class CreateBookingUseCase
         {
             _jobScheduler.Schedule<IPendingOrderCancellationJob>(
                 job => job.ExecuteForOrderAsync(orderId), TimeSpan.FromMinutes(10));
+        }
+    }
+
+    private async Task NotifySeatsUnavailableAsync(ReqCreateBookingDto request)
+    {
+        var seatIds = request.SeatSelections.Select(s => s.SeatId.ToString()).ToList();
+        if (seatIds.Count == 0) return;
+
+        try
+        {
+            await _seatLockerNotificationService.NotifySeatsUnavailableAsync(
+                request.ScheduleId.ToString(),
+                seatIds,
+                request.SeatLockOwnerToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to notify unavailable seats after booking creation");
         }
     }
 }

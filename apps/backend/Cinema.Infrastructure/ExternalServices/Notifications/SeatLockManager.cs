@@ -63,6 +63,16 @@ public class SeatLockManager
         return (success, success ? "Seat unlocked successfully" : "Cannot unlock seat locked by another user", lockedSeats);
     }
 
+    public async Task<(bool Success, string? Message, Dictionary<string, string> LockedSeats)> RenewSeatLocksAsync(
+        string scheduleId,
+        string clientId)
+    {
+        var result = await _seatLockService.RenewLocksForOwnerAsync(scheduleId, clientId, DefaultSeatLockTtl);
+        var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
+
+        return (result.Success, result.Message, lockedSeats);
+    }
+
     public async Task ReleaseSeatsByClientAsync(string clientId)
     {
         var locks = await GetLocksByOwnerAcrossSchedulesAsync(clientId);
@@ -83,6 +93,20 @@ public class SeatLockManager
         {
             var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
             await BroadcastEventAsync(scheduleId, "seat-unlocked", new { seatId, lockedSeats });
+        }
+    }
+
+    public async Task NotifySeatsUnavailableAsync(string scheduleId, List<string> seatIds, string? ownerToken = null)
+    {
+        if (!string.IsNullOrWhiteSpace(ownerToken))
+            await _seatLockService.ReleaseSeatsByOwnerAsync(ownerToken);
+        else
+            await _seatLockService.ReleaseSeatsForScheduleAsync(scheduleId, seatIds);
+
+        foreach (var seatId in seatIds)
+        {
+            var lockedSeats = await GetCurrentLockedSeatsAsync(scheduleId);
+            await BroadcastEventAsync(scheduleId, "seat-unavailable", new { seatId, lockedSeats });
         }
     }
 
@@ -174,6 +198,17 @@ public class SeatLockManager
         }
 
         return (releasedSeatIds, newlySelectedSeatIds);
+    }
+
+    public async Task<(bool Success, string? Message)> RenewGroupMemberSelectionsAsync(
+        string scheduleId,
+        Guid groupSessionId,
+        Guid memberId,
+        TimeSpan ttl)
+    {
+        var ownerToken = GroupOwnerToken(groupSessionId, memberId);
+        var result = await _seatLockService.RenewLocksForOwnerAsync(scheduleId, ownerToken, ttl);
+        return (result.Success, result.Message);
     }
 
     public async Task ClearGroupSelectionsAsync(string scheduleId, Guid groupSessionId)
