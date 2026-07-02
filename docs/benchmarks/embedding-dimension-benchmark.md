@@ -102,6 +102,29 @@ Collection production `cinema_movies` không bị thay đổi.
 | 256 | 1.3035 | 3.49ms | 1.000 | 0.060 | 0.0781MB |
 | 128 | 1.1885 | 3.12ms | 0.875 | 0.030 | 0.0391MB |
 
+## Giải thích cột kết quả
+
+| Cột | Cách hiểu |
+|---|---|
+| `dimension` | Số chiều embedding đang benchmark, ví dụ `1024`, `768`, `512`, `256`, `128`. |
+| `collection_name` | Tên collection Qdrant riêng cho dimension đó. Collection production `cinema_movies` không bị đụng vào. |
+| `movie_count` | Số phim được đưa vào collection benchmark. |
+| `query_count` | Số query benchmark đã chạy. |
+| `embedding_time_sec` | Tổng thời gian tạo embedding cho toàn bộ phim trong seed. |
+| `upsert_time_sec` | Tổng thời gian ghi toàn bộ vector phim vào Qdrant. |
+| `avg_search_ms` | Thời gian search trung bình cho mỗi query. |
+| `p50_search_ms` | Median latency: 50% query có thời gian search nhỏ hơn hoặc bằng giá trị này. |
+| `p95_search_ms` | Latency ngưỡng 95%: 95% query có thời gian search nhỏ hơn hoặc bằng giá trị này, dùng để nhìn các case chậm gần worst-case. |
+| `genre_precision@5` | Trung bình tỷ lệ phim trong top 5 có genre khớp với `expectedGenres`. |
+| `hard_negative_rate@5` | Trung bình tỷ lệ phim thuộc `hardNegativeMovieIds` xuất hiện trong top 5. Càng thấp càng tốt. |
+| `semantic_score@5` | Điểm semantic trung bình của top 5 theo `scoringRules` trong seed. Đây là metric chính để so chất lượng. |
+| `estimated_vector_memory_mb` | Ước tính bộ nhớ raw vector theo công thức `movie_count * dimension * 4 bytes`. |
+| `hit@1` | Tỷ lệ query có ít nhất 1 phim đúng trong top 1. Ví dụ `0.6` nghĩa là 60%. |
+| `hit@3` | Tỷ lệ query có ít nhất 1 phim đúng trong top 3. |
+| `hit@5` | Tỷ lệ query có ít nhất 1 phim đúng trong top 5. |
+
+Lưu ý: `hit@K`, `genre_precision@5`, `hard_negative_rate@5` và `semantic_score@5` trong file kết quả là giá trị tổng hợp trên toàn bộ query benchmark, không phải kết quả của một query đơn lẻ. Với từng query riêng lẻ, `hit@K` là `0` hoặc `1`; khi lấy trung bình trên nhiều query thì thành tỷ lệ phần trăm dạng số thập phân.
+
 ## Vì sao chọn 768 chiều?
 
 `768` được chọn vì là điểm cân bằng tốt nhất giữa chất lượng và chi phí:
