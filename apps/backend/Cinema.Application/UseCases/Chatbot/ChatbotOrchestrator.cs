@@ -406,6 +406,13 @@ public class ChatbotOrchestrator
 
                     if (!string.IsNullOrWhiteSpace(scheduleId))
                     {
+                        double? lat = null;
+                        if (item.TryGetProperty("Latitude", out var latEl) && latEl.ValueKind == JsonValueKind.Number)
+                            lat = latEl.GetDouble();
+                        double? lng = null;
+                        if (item.TryGetProperty("Longitude", out var lngEl) && lngEl.ValueKind == JsonValueKind.Number)
+                            lng = lngEl.GetDouble();
+
                         result.Add(new ReferencedScheduleDto
                         {
                             ScheduleId = scheduleId,
@@ -413,7 +420,9 @@ public class ChatbotOrchestrator
                             MovieName = movieName,
                             ShowTime = showTime,
                             CinemaName = cinemaName,
-                            FormatName = formatName
+                            FormatName = formatName,
+                            CinemaLatitude = lat,
+                            CinemaLongitude = lng
                         });
                     }
                 }

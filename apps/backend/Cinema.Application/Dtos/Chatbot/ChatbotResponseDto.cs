@@ -25,5 +25,7 @@ public class ReferencedScheduleDto
     public string ShowTime { get; set; } = string.Empty;
     public string CinemaName { get; set; } = string.Empty;
     public string FormatName { get; set; } = string.Empty;
+    public double? CinemaLatitude { get; set; }
+    public double? CinemaLongitude { get; set; }
 }
 

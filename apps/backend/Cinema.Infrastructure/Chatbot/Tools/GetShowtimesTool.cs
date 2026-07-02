@@ -76,7 +76,9 @@ public class GetShowtimesTool : IChatTool
                 AuditoriumNumber = s.AuditoriumInfoEntities?.AuditoriumNumber ?? "",
                 FormatName = s.MovieFormatInfoEntity?.MovieFormatName ?? "",
                 Date = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("dd/MM/yyyy"),
-                ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm")
+                ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm"),
+                Latitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Latitude,
+                Longitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Longitude
             })
             .OrderBy(s => s.Date).ThenBy(s => s.ShowTime)
             .ToList();
@@ -125,7 +127,9 @@ public class GetShowtimesTool : IChatTool
                 CinemaLocation = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaLocation ?? "",
                 AuditoriumNumber = s.AuditoriumInfoEntities?.AuditoriumNumber ?? "",
                 FormatName = s.MovieFormatInfoEntity?.MovieFormatName ?? "",
-                ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm")
+                ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm"),
+                Latitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Latitude,
+                Longitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Longitude
             }).ToList();
 
             return JsonSerializer.Serialize(new
@@ -149,7 +153,9 @@ public class GetShowtimesTool : IChatTool
             CinemaLocation = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaLocation ?? "",
             AuditoriumNumber = s.AuditoriumInfoEntities?.AuditoriumNumber ?? "",
             FormatName = s.MovieFormatInfoEntity?.MovieFormatName ?? "",
-            ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm:ss")
+            ShowTime = DateTimeHelper.ToVietnamTime(s.StartTime).ToString("HH:mm:ss"),
+            Latitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Latitude,
+            Longitude = s.AuditoriumInfoEntities?.CinemaInfoEntity?.Longitude
         }).ToList();
 
         return JsonSerializer.Serialize(result);

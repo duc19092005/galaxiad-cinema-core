@@ -1,6 +1,6 @@
 // src/components/ChatBot.tsx
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { MessageCircle, X, Send, Bot, User, ArrowDownUp, Plus, Ticket, Clock, Play, Tag } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User, ArrowDownUp, Plus, Ticket, Clock, Play, Tag, MapPin, Navigation } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,8 @@ interface ReferencedSchedule {
   showTime: string;
   cinemaName: string;
   formatName: string;
+  cinemaLatitude?: number;
+  cinemaLongitude?: number;
 }
 
 interface ChatMessage {
@@ -70,6 +72,33 @@ const readStoredMessages = (fallbackText: string): ChatMessage[] => {
 };
 
 // ── Inline style helpers ──────────────────────────────────────────────
+// ── FormattedText component (parse **bold**) ────────────────────────
+const FormattedText: React.FC<{ text: string }> = ({ text }) => {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          const inner = part.slice(2, -2);
+          return <strong key={i}>{inner}</strong>;
+        }
+        return <React.Fragment key={i}>{part}</React.Fragment>;
+      })}
+    </>
+  );
+};
+
+// Haversine distance in km
+const haversine = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
 const theme = {
   accent: '#f57c00',
   accentHover: '#e67300',
@@ -99,6 +128,8 @@ const ChatBot: React.FC = () => {
   const [historySortOrder, setHistorySortOrder] = useState<HistorySortOrder>('newest');
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [isCompactHistory, setIsCompactHistory] = useState(() => window.matchMedia('(max-width: 520px)').matches);
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLng, setUserLng] = useState<number | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -107,6 +138,34 @@ const ChatBot: React.FC = () => {
   const chatPanelRef = useRef<HTMLDivElement>(null);
   const floatBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Try geolocation
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { setUserLat(pos.coords.latitude); setUserLng(pos.coords.longitude); },
+      () => {},
+      { timeout: 5000, maximumAge: 600000 }
+    );
+  }, []);
+
+  // Sort schedules by distance (Haversine)
+  const sortSchedulesByDistance = useCallback(
+    (schedules: ReferencedSchedule[]): ReferencedSchedule[] => {
+      if (userLat == null || userLng == null) return schedules;
+      return [...schedules].sort((a, b) => {
+        const distA = a.cinemaLatitude != null && a.cinemaLongitude != null
+          ? haversine(userLat, userLng, a.cinemaLatitude, a.cinemaLongitude)
+          : Infinity;
+        const distB = b.cinemaLatitude != null && b.cinemaLongitude != null
+          ? haversine(userLat, userLng, b.cinemaLatitude, b.cinemaLongitude)
+          : Infinity;
+        return distA - distB;
+      });
+    },
+    [userLat, userLng]
+  );
+
+  // compact history
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 520px)');
     const handleChange = () => setIsCompactHistory(mediaQuery.matches);
@@ -722,7 +781,7 @@ const ChatBot: React.FC = () => {
                             {formatTimeShort(msg.createdAt)}
                           </span>
                         </div>
-                        {msg.text}
+                        {msg.role === 'bot' ? <FormattedText text={msg.text} /> : msg.text}
 
                         {/* Referenced movies */}
                         {msg.role === 'bot' && msg.movies && msg.movies.length > 0 && (
@@ -760,62 +819,117 @@ const ChatBot: React.FC = () => {
                             </div>
                           </div>
                         )}
-
                         {/* Referenced schedules */}
                         {msg.role === 'bot' && msg.schedules && msg.schedules.length > 0 && (
                           <div style={{
                             marginTop: 12,
-                            // Role is 'bot' here, use theme.border directly
                             borderTop: `1px solid ${theme.border}`,
                             paddingTop: 10,
                           }}>
                             <div style={{ fontSize: 10, opacity: 0.7, fontWeight: 600, marginBottom: 8 }}>
+                              <Clock size={12} style={{ verticalAlign: 'middle', marginRight: 4 }} />
                               Lịch chiếu — Chọn để đặt vé:
                             </div>
-                            {Array.from(new Set(msg.schedules.map(s => s.movieName))).map(movieName => {
-                              const movieSchedules = msg.schedules!.filter(s => s.movieName === movieName);
-                              return (
-                                <div key={movieName} style={{ marginBottom: 8 }}>
-                                  <div style={{ fontSize: 11, fontWeight: 700, opacity: 0.9, marginBottom: 4 }}>{movieName}</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                                    {movieSchedules.map(s => (
-                                      <button
-                                        key={s.scheduleId}
-                                        onClick={() => { setIsOpen(false); navigate(`/booking/${s.scheduleId}`); }}
-                                        title={`${s.cinemaName} – ${s.formatName}`}
-                                        style={{
-                                          background: '#7c3aed',
-                                          color: '#fff',
-                                          border: 'none',
-                                          padding: '4px 10px',
-                                          borderRadius: 8,
-                                          cursor: 'pointer',
-                                          fontSize: 11,
-                                          fontWeight: 600,
-                                          display: 'flex',
-                                          flexDirection: 'column',
-                                          alignItems: 'center',
-                                          lineHeight: 1.3,
-                                          transition: 'all 0.2s',
-                                        }}
-                                        onMouseEnter={e => {
-                                          e.currentTarget.style.transform = 'scale(1.05)';
-                                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,0.5)';
-                                        }}
-                                        onMouseLeave={e => {
-                                          e.currentTarget.style.transform = 'scale(1)';
-                                          e.currentTarget.style.boxShadow = 'none';
-                                        }}
-                                      >
-                                        <span style={{ fontSize: 12, fontWeight: 700 }}>{s.showTime}</span>
-                                        <span style={{ fontSize: 9, opacity: 0.85 }}>{s.formatName}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                  <div style={{ fontSize: 9, opacity: 0.6, marginTop: 2 }}>{movieSchedules[0]?.cinemaName}</div>
-                                </div>
-                              );
-                            })}
+                            {(() => {
+                              const sorted = sortSchedulesByDistance(msg.schedules!);
+                              return sorted.map(s => {
+                                const dist = userLat != null && userLng != null && s.cinemaLatitude != null && s.cinemaLongitude != null
+                                  ? haversine(userLat, userLng, s.cinemaLatitude, s.cinemaLongitude)
+                                  : null;
+                                const distText = dist != null ? (dist < 1 ? `${(dist * 1000).toFixed(0)}m` : `${dist.toFixed(1)}km`) : null;
+                                return (
+                                  <button
+                                    key={s.scheduleId}
+                                    onClick={() => { setIsOpen(false); navigate(`/booking/${s.scheduleId}`); }}
+                                    title={`${s.cinemaName} – ${s.formatName}`}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 8,
+                                      width: '100%',
+                                      background: theme.surfaceHighest + '40',
+                                      border: `1px solid ${theme.borderLight}`,
+                                      borderRadius: 10,
+                                      padding: '8px 12px',
+                                      cursor: 'pointer',
+                                      marginBottom: 6,
+                                      transition: 'all 0.2s',
+                                      color: theme.onSurface,
+                                    }}
+                                    onMouseEnter={e => {
+                                      e.currentTarget.style.background = theme.accentSoft;
+                                      e.currentTarget.style.borderColor = theme.accent;
+                                      e.currentTarget.style.transform = 'translateX(4px)';
+                                    }}
+                                    onMouseLeave={e => {
+                                      e.currentTarget.style.background = theme.surfaceHighest + '40';
+                                      e.currentTarget.style.borderColor = theme.borderLight;
+                                      e.currentTarget.style.transform = 'translateX(0)';
+                                    }}
+                                  >
+                                    {/* Time chip */}
+                                    <span style={{
+                                      background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
+                                      color: '#fff',
+                                      borderRadius: 7,
+                                      padding: '4px 10px',
+                                      fontSize: 13,
+                                      fontWeight: 700,
+                                      flexShrink: 0,
+                                      minWidth: 52,
+                                      textAlign: 'center',
+                                    }}>
+                                      {s.showTime}
+                                    </span>
+                                    {/* Format badge */}
+                                    <span style={{
+                                      background: theme.accentSoft,
+                                      color: theme.accent,
+                                      borderRadius: 5,
+                                      padding: '2px 6px',
+                                      fontSize: 10,
+                                      fontWeight: 600,
+                                      flexShrink: 0,
+                                    }}>
+                                      {s.formatName}
+                                    </span>
+                                    {/* Cinema name */}
+                                    <span style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 3,
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                      color: theme.onSurfaceVariant,
+                                      flex: 1,
+                                      minWidth: 0,
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}>
+                                      <MapPin size={11} style={{ flexShrink: 0, opacity: 0.6 }} />
+                                      {s.cinemaName}
+                                    </span>
+                                    {/* Distance badge */}
+                                    {distText && (
+                                      <span style={{
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        color: theme.accent,
+                                        opacity: 0.8,
+                                        flexShrink: 0,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                      }}>
+                                        <Navigation size={10} />
+                                        {distText}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              });
+                            })()}
                           </div>
                         )}
                       </div>
