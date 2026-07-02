@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore;
 using Cinema.Domain.Interfaces.Persistence;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Common;
 
 public class EfUnitOfWork : IUnitOfWork
 {

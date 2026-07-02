@@ -1,7 +1,7 @@
-using Cinema.Infrastructure.BackgroundJobs;
+using Cinema.Infrastructure.BackgroundJobs.Bookings;
 using Hangfire;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Jobs;
 
 /// <summary>
 /// Extension methods for registering the PendingOrderCancellationJob with Hangfire.

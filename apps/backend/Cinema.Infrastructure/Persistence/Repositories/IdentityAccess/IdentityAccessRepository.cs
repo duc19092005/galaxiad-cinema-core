@@ -8,7 +8,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IIdentityAccess;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.IdentityAccess;
 
 public class IdentityAccessRepository : IIdentityAccessRepository
 {

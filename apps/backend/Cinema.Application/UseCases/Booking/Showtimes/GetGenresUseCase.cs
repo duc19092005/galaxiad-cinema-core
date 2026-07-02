@@ -1,0 +1,34 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Booking;
+using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Mappers.Booking;
+using Cinema.Domain.Localization;
+
+namespace Cinema.Application.UseCases.Booking.Showtimes;
+
+public class GetGenresUseCase
+{
+    private readonly IBookingCatalogRepository _repository;
+
+    public GetGenresUseCase(IBookingCatalogRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<BaseResponse<List<ResPublicGenreDto>>> ExecuteAsync()
+    {
+        var genres = await _repository.GetGenresAsync();
+        var list = genres.Select(BookingMapper.ToResPublicGenreDto).ToList();
+
+        return new BaseResponse<List<ResPublicGenreDto>>
+        {
+            IsSuccess = true,
+            Data = list,
+            Message = Messages.Movie.GetGenresSuccess
+        };
+    }
+}

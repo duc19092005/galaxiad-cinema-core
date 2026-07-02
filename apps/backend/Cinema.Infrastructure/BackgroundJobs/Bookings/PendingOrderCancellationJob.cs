@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Cinema.Infrastructure.BackgroundJobs;
+namespace Cinema.Infrastructure.BackgroundJobs.Bookings;
 
 /// <summary>
 /// Background job that automatically cancels stale Pending orders.

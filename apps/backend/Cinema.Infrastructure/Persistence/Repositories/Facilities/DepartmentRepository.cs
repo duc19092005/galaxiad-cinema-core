@@ -8,7 +8,7 @@ using Cinema.Application.Mappers.Facilities;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Application.Interfaces.Facilities;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 
 public class DepartmentRepository : IDepartmentRepository
 {

@@ -4,7 +4,7 @@ using Cinema.Domain.Enums;
 using Cinema.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.SeedData;
+namespace Cinema.Infrastructure.Persistence.SeedData;
 
 public static class SeedDataUserInfos
 {

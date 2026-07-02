@@ -3,7 +3,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 
 public class MovieFormatRepository : IMovieFormatRepository
 {

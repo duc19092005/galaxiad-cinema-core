@@ -6,7 +6,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.TheaterManager;
 
 public class ShowtimeRecommendationRepository : IShowtimeRecommendationRepository
 {

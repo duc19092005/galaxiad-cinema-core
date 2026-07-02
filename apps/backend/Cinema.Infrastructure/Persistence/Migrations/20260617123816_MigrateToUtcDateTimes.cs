@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Cinema.Infrastructure.Migrations
+namespace Cinema.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class MigrateToUtcDateTimes : Migration

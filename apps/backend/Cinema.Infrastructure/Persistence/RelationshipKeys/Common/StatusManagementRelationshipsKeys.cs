@@ -2,7 +2,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.Common;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.Common;
 
 public static class StatusManagementRelationships
 {

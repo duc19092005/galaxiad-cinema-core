@@ -8,7 +8,7 @@ using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Entities.UserInfos;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Vouchers;
 
 public class VoucherRepository : IVoucherRepository
 {

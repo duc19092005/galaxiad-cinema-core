@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
-using Cinema.Application.Infrastructure.Booking;
+using Cinema.Infrastructure.ExternalServices.Notifications;
 using Cinema.Application.UseCases.Booking.SocialBooking;
 using Cinema.Api.Hubs;
 

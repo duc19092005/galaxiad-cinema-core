@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using Cinema.Application.Abstractions.Security;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Security;
 
 public class AesEncryptionService : IEncryptionService
 {

@@ -1,10 +1,13 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.UseCases.Chatbot;
 using Cinema.Infrastructure.Chatbot.Policy;
 using Cinema.Infrastructure.Chatbot.Registry;
 using Cinema.Infrastructure.Chatbot.Tools;
-using Cinema.Infrastructure.Services;
+using Cinema.Infrastructure.ExternalServices.Ai;
+using Grpc.Net.Client;
+using Aiservice;
 
 namespace Cinema.Api.Bootstraps.Chatbot;
 
@@ -12,6 +15,19 @@ public static class ChatbotBootstrap
 {
     public static IServiceCollection AddChatbotServices(this IServiceCollection services)
     {
+        // gRPC channel (singleton) and client (scoped)
+        services.AddSingleton<GrpcChannel>(sp =>
+        {
+            var config = sp.GetRequiredService<IConfiguration>();
+            var grpcUrl = config["AiService:GrpcUrl"] ?? "http://cinema-ai-service:50051";
+            return GrpcChannel.ForAddress(grpcUrl);
+        });
+        services.AddScoped<AiService.AiServiceClient>(sp =>
+        {
+            var channel = sp.GetRequiredService<GrpcChannel>();
+            return new AiService.AiServiceClient(channel);
+        });
+
         // LLM Client & Intent Classifier
         services.AddScoped<IChatLlmClient, DeepSeekChatLlmClient>();
         services.AddScoped<IChatIntentClassifier, DeepSeekChatIntentClassifier>();

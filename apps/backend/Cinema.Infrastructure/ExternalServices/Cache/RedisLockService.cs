@@ -1,7 +1,7 @@
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using StackExchange.Redis;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Cache;
 
 public class RedisLockService : IRedisLockService
 {

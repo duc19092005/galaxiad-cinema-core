@@ -2,6 +2,7 @@ using Cinema.Application.UseCases.TheaterManager;
 using Cinema.Application.UseCases.TheaterManager.MovieSchedules;
 using Cinema.Application.UseCases.TheaterManager.ShiftManagement;
 using Cinema.Application.UseCases.TheaterManager.ShowtimeRecommendations;
+using Cinema.Application.UseCases.TheaterManager.Auditoriums;
 using Cinema.Application.Services.TheaterManager.ShowtimeRecommendations;
 
 namespace Cinema.Api.Bootstraps.Facilities;
@@ -14,15 +15,15 @@ public static class FacilitiesServicesBootstrap
         // |                 Repositories                                  |
         // ----------------------------------------------------------------
 
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.IAuditoriumRepository, Cinema.Infrastructure.Repositories.AuditoriumRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.ICinemaRepository, Cinema.Infrastructure.Repositories.CinemaRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.IDepartmentRepository, Cinema.Infrastructure.Repositories.DepartmentRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.IMovieFormatRepository, Cinema.Infrastructure.Repositories.MovieFormatRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.ITheaterManagerDataRepository, Cinema.Infrastructure.Repositories.TheaterManagerDataRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.IShiftManagerRepository, Cinema.Infrastructure.Repositories.ShiftManagerRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.Facilities.IStaffShiftRepository, Cinema.Infrastructure.Repositories.StaffShiftRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IMovieScheduleRepository, Cinema.Infrastructure.Repositories.MovieScheduleRepository>();
-        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IShowtimeRecommendationRepository, Cinema.Infrastructure.Repositories.ShowtimeRecommendationRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.IAuditoriumRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.AuditoriumRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.ICinemaRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.CinemaRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.IDepartmentRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.DepartmentRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.IMovieFormatRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.MovieFormatRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.ITheaterManagerDataRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.TheaterManagerDataRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.IShiftManagerRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.ShiftManagerRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.IStaffShiftRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.StaffShiftRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IMovieScheduleRepository, Cinema.Infrastructure.Persistence.Repositories.TheaterManager.MovieScheduleRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.TheaterManager.IShowtimeRecommendationRepository, Cinema.Infrastructure.Persistence.Repositories.TheaterManager.ShowtimeRecommendationRepository>();
 
 
         // ----------------------------------------------------------------

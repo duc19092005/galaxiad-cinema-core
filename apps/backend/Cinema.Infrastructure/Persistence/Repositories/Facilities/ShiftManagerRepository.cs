@@ -10,7 +10,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 
 public class ShiftManagerRepository : IShiftManagerRepository
 {

@@ -4,7 +4,7 @@ using Cinema.Application.Interfaces.Catalog;
 using Cinema.Domain.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Catalog;
 
 public class PublicCatalogRepository : IPublicCatalogRepository
 {

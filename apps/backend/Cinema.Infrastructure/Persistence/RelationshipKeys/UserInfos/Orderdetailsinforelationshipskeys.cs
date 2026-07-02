@@ -2,7 +2,7 @@ using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.UserInfos;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.UserInfos;
 
 public static class OrderDetailsInfoRelationshipsKeys
 {

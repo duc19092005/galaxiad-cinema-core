@@ -2,7 +2,7 @@ using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.SeedData;
+namespace Cinema.Infrastructure.Persistence.SeedData;
 
 /// <summary>
 /// Seeds surcharge percentages per Cinema, MovieFormat, and UserSegment.

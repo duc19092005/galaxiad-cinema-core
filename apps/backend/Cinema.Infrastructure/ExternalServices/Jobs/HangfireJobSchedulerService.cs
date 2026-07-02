@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Hangfire;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Jobs;
 
 public class HangfireJobSchedulerService : IBackgroundJobScheduler
 {

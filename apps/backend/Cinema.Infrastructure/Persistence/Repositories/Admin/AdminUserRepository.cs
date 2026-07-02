@@ -11,7 +11,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Dtos;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Admin;
 
 public class AdminUserRepository : IAdminUserRepository
 {

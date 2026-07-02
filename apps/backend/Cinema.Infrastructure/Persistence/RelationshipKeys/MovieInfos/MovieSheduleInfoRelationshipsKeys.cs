@@ -1,7 +1,7 @@
 using Cinema.Domain.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.MovieInfos;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
 
 public static class MovieSheduleInfoRelationshipsKeys
 {

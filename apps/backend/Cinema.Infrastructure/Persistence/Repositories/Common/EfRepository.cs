@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Cinema.Domain.Interfaces.Persistence;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Common;
 
 public class EfRepository<TEntity> : IRepository<TEntity> where TEntity : class
 {

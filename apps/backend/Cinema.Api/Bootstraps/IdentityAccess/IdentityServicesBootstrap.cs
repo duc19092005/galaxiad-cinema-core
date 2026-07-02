@@ -1,7 +1,7 @@
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Application.UseCases.IdentityAccess;
 using Cinema.Infrastructure.Identity;
-using Cinema.Infrastructure.Repositories;
+using Cinema.Infrastructure.Persistence.Repositories.IdentityAccess;
 
 namespace Cinema.Api.Bootstraps.IdentityAccess;
 

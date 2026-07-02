@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Booking;
 
-namespace Cinema.Application.Infrastructure.Booking;
+namespace Cinema.Infrastructure.ExternalServices.Notifications;
 
 /// <summary>
 /// Manages group booking chat history and broadcasts events via SignalR.

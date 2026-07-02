@@ -1,5 +1,5 @@
 using Cinema.Api.Hubs;
-using Cinema.Application.Infrastructure.Booking;
+using Cinema.Infrastructure.ExternalServices.Notifications;
 using Cinema.Application.Interfaces.Booking;
 using Microsoft.Extensions.Logging.Abstractions;
 

@@ -18,10 +18,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Cinema.Infrastructure.BackgroundJobs;
+using Cinema.Infrastructure.BackgroundJobs.Recommendations;
+using Cinema.Infrastructure.BackgroundJobs.Bookings;
+using Cinema.Infrastructure.BackgroundJobs.Tracking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
-using Cinema.Infrastructure.Services;
 using Cinema.Application.Abstractions.Security;
-using Cinema.Application.Infrastructure.Booking;
+using Cinema.Infrastructure.ExternalServices.Security;
+using Cinema.Infrastructure.ExternalServices.Jobs;
+using Cinema.Infrastructure.ExternalServices.Storage;
+using Cinema.Infrastructure.ExternalServices.Notifications;
 
 var currentDir = Directory.GetCurrentDirectory();
 var envPath = Path.Combine(currentDir, ".env");

@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Comments;
 using StackExchange.Redis;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Cache;
 
 public class MovieViewBuffer : IMovieViewBuffer
 {

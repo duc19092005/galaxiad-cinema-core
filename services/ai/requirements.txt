@@ -14,5 +14,5 @@ matplotlib==3.9.2
 torch>=2.6.0+cpu
 sentence-transformers==3.0.1
 
-# Pin grpcio to avoid pip probing many versions
+# gRPC
 grpcio==1.72.1

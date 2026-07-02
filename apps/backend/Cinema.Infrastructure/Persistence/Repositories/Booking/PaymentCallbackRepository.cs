@@ -3,7 +3,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.Vouchers;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 
 public class PaymentCallbackRepository : IPaymentCallbackRepository
 {

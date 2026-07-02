@@ -7,13 +7,13 @@ using Cinema.Domain.Entities.ScheduleJob;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.Vouchers;
-using Cinema.Infrastructure.RelationshipKeys.MovieInfos;
-using Cinema.Infrastructure.SeedData;
-using Cinema.Infrastructure.RelationshipKeys.Facilities;
-using Cinema.Infrastructure.RelationshipKeys.IdentityAccess;
-using Cinema.Infrastructure.RelationshipKeys.Promotions;
-using Cinema.Infrastructure.RelationshipKeys.Common;
-using Cinema.Infrastructure.RelationshipKeys.UserInfos;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
+using Cinema.Infrastructure.Persistence.SeedData;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.IdentityAccess;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.Promotions;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.Common;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
 // ReSharper disable All

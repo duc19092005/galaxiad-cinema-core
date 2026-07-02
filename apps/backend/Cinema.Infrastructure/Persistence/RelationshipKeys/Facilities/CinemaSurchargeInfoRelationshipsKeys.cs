@@ -5,7 +5,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.Facilities;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
 
 public static class CinemaSurchargeInfoRelationshipsKeys
 {

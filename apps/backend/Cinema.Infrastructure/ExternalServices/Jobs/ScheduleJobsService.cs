@@ -14,7 +14,7 @@ using Cinema.Domain.Enums;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Jobs;
 
 public class ScheduleJobsService : IScheduleJobsService
 {

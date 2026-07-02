@@ -1,7 +1,7 @@
 using Cinema.Domain.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.IdentityAccess;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.IdentityAccess;
 
 public static class UserInfoRelationshipsKeys
 {

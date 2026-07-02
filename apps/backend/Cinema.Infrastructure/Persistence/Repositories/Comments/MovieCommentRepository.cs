@@ -9,7 +9,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Comments;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Comments;
 
 public class MovieCommentRepository : IMovieCommentRepository
 {

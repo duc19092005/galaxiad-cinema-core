@@ -1,8 +1,9 @@
 using System.Text.Json;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
-using Cinema.Application.Infrastructure.Booking;
-using Cinema.Application.UseCases.Booking;
+using Cinema.Infrastructure.ExternalServices.Notifications;
+using Cinema.Application.UseCases.Booking.BookingFlow;
+using Cinema.Application.UseCases.Booking.UserHistory;
 using Cinema.Domain.Localization;
 using Cinema.Api.Hubs;
 

@@ -1,4 +1,4 @@
-using Cinema.Application.Infrastructure.Booking;
+using Cinema.Infrastructure.ExternalServices.Notifications;
 using Cinema.Application.Interfaces.Booking;
 using System;
 using System.Collections.Generic;

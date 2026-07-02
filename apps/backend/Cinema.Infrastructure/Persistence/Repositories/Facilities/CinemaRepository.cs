@@ -10,7 +10,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 
 public class CinemaRepository : ICinemaRepository
 {

@@ -4,7 +4,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 
 public class BookingPricingRepository : IBookingPricingRepository
 {

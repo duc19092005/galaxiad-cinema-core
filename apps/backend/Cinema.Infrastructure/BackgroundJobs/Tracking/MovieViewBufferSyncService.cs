@@ -12,7 +12,7 @@ using Cinema.Application.Interfaces.Comments;
 using Cinema.Domain.Entities.MovieInfos;
 using StackExchange.Redis;
 
-namespace Cinema.Infrastructure.BackgroundJobs;
+namespace Cinema.Infrastructure.BackgroundJobs.Tracking;
 
 public class MovieViewBufferSyncService : BackgroundService
 {

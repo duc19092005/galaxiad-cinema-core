@@ -3,7 +3,7 @@ using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.Vouchers;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.SeedData;
+namespace Cinema.Infrastructure.Persistence.SeedData;
 
 public static class VoucherSeedData
 {

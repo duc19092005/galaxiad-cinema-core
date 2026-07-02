@@ -3,7 +3,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Entities.AuditLogs;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Admin;
 
 public class AdminAuditLogRepository : IAdminAuditLogRepository
 {

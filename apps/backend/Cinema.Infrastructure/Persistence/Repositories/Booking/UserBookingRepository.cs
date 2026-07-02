@@ -2,7 +2,7 @@ using Cinema.Application.Interfaces.Booking;
 using Cinema.Domain.Entities.UserInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 
 public class UserBookingRepository : IUserBookingRepository
 {

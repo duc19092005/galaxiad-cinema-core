@@ -1,139 +1,93 @@
 using System;
 using System.Collections.Generic;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.Chatbot;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Grpc.Net.Client;
+using Aiservice; // namespace from ai_service.proto
 
-namespace Cinema.Infrastructure.Services;
+namespace Cinema.Infrastructure.ExternalServices.Ai;
 
 /// <summary>
-/// HTTP client gọi Python AI Service /recommend endpoint cho semantic movie search trong chatbot.
+///   gRPC client for Python AI Service semantic movie search and recommendation.
 /// </summary>
 public class AiSemanticSearchClient : IAiSemanticSearchClient
 {
-    private readonly IConfiguration                      _configuration;
-    private readonly ILogger<AiSemanticSearchClient>     _logger;
-    private static readonly HttpClient HttpClient = new();
+    private readonly IConfiguration                     _configuration;
+    private readonly ILogger<AiSemanticSearchClient>    _logger;
+    private readonly AiService.AiServiceClient          _client;
 
     public AiSemanticSearchClient(
-        IConfiguration                  configuration,
-        ILogger<AiSemanticSearchClient> logger)
+        IConfiguration                   configuration,
+        ILogger<AiSemanticSearchClient>   logger,
+        AiService.AiServiceClient         client)
     {
         _configuration = configuration;
         _logger        = logger;
+        _client        = client;
     }
 
-    public async Task<List<AiMovieScore>> RecommendAsync(string queryText, int topK = 10, List<string>? excludeIds = null)
+    public async Task<List<AiMovieScore>> RecommendAsync(
+        string          queryText,
+        int             topK       = 10,
+        List<string>?   excludeIds = null)
     {
-        var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
-
         try
         {
-            var payload = new RecommendRequest { UserText = queryText, TopK = topK, ExcludeIds = excludeIds };
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json"
-            );
+            var request = new RecommendRequest
+            {
+                UserText = queryText,
+                TopK     = topK
+            };
+            if (excludeIds is { Count: > 0 })
+                request.ExcludeIds.AddRange(excludeIds);
 
-            using var response = await HttpClient.PostAsync($"{aiServiceUrl}/recommend", content);
-            response.EnsureSuccessStatusCode();
+            var reply = await _client.RecommendAsync(request);
 
-            var responseText = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<RecommendResponse>(
-                responseText,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (result?.Results == null || result.Results.Count == 0)
+            if (reply.Results.Count == 0)
                 return [];
 
-            return result.Results
-                .Select(r => new AiMovieScore(r.MovieId, r.Distance))
-                .ToList();
+            return reply.Results
+                        .Select(r => new AiMovieScore(r.MovieId, r.Distance))
+                        .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to call Python AI service /recommend. Returning empty results.");
+            _logger.LogWarning(ex, "gRPC RecommendAsync failed. Returning empty results.");
             return [];
         }
     }
 
-    public async Task<List<AiMovieScore>> RecommendByIdAsync(string movieId, int topK = 5, List<string>? excludeIds = null)
+    public async Task<List<AiMovieScore>> RecommendByIdAsync(
+        string          movieId,
+        int             topK       = 5,
+        List<string>?   excludeIds = null)
     {
-        var aiServiceUrl = _configuration["AiService:BaseUrl"]?.TrimEnd('/') ?? "http://cinema-ai-service:8000";
-
         try
         {
-            var payload = new RecommendByIdRequest { MovieId = movieId, TopK = topK, ExcludeIds = excludeIds };
-            var content = new StringContent(
-                JsonSerializer.Serialize(payload),
-                Encoding.UTF8,
-                "application/json"
-            );
+            var request = new RecommendByIdRequest
+            {
+                MovieId = movieId,
+                TopK    = topK
+            };
+            if (excludeIds is { Count: > 0 })
+                request.ExcludeIds.AddRange(excludeIds);
 
-            using var response = await HttpClient.PostAsync($"{aiServiceUrl}/recommend-by-id", content);
-            response.EnsureSuccessStatusCode();
+            var reply = await _client.RecommendByIdAsync(request);
 
-            var responseText = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<RecommendResponse>(
-                responseText,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (result?.Results == null || result.Results.Count == 0)
+            if (reply.Results.Count == 0)
                 return [];
 
-            return result.Results
-                .Select(r => new AiMovieScore(r.MovieId, r.Distance))
-                .ToList();
+            return reply.Results
+                        .Select(r => new AiMovieScore(r.MovieId, r.Distance))
+                        .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to call Python AI service /recommend-by-id. Returning empty results.");
+            _logger.LogWarning(ex, "gRPC RecommendByIdAsync failed. Returning empty results.");
             return [];
         }
-    }
-
-    private sealed class RecommendRequest
-    {
-        [JsonPropertyName("user_text")]
-        public string UserText { get; init; } = string.Empty;
-
-        [JsonPropertyName("top_k")]
-        public int TopK { get; init; } = 10;
-
-        [JsonPropertyName("exclude_ids")]
-        public List<string>? ExcludeIds { get; init; }
-    }
-
-    private sealed class RecommendByIdRequest
-    {
-        [JsonPropertyName("movie_id")]
-        public string MovieId { get; init; } = string.Empty;
-
-        [JsonPropertyName("top_k")]
-        public int TopK { get; init; } = 5;
-
-        [JsonPropertyName("exclude_ids")]
-        public List<string>? ExcludeIds { get; init; }
-    }
-
-    private sealed class RecommendResponse
-    {
-        [JsonPropertyName("results")]
-        public List<RecommendItem> Results { get; init; } = [];
-    }
-
-    private sealed class RecommendItem
-    {
-        [JsonPropertyName("movie_id")]
-        public string MovieId { get; init; } = string.Empty;
-
-        [JsonPropertyName("distance")]
-        public double Distance { get; init; }
     }
 }

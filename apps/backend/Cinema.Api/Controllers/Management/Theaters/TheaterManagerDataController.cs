@@ -1,4 +1,5 @@
-using Cinema.Application.UseCases.TheaterManager;
+using Cinema.Application.UseCases.TheaterManager.MovieSchedules;
+using Cinema.Application.UseCases.TheaterManager.Auditoriums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

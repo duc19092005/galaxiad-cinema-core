@@ -10,7 +10,7 @@ using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.PricingPromotions;
 
 public class PricingPromotionRepository : IPricingPromotionRepository
 {

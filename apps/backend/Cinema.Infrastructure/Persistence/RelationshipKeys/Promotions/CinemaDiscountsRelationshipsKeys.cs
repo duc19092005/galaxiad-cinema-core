@@ -1,7 +1,7 @@
 using Cinema.Domain.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.Promotions;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.Promotions;
 
 public static class CinemaDiscountsRelationshipsKeys
 {

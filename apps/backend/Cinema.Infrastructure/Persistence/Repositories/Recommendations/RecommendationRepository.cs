@@ -12,7 +12,7 @@ using System.Text.Json;
 using StackExchange.Redis;
 using Cinema.Domain.Enums;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Recommendations;
 
 public class RecommendationRepository : IRecommendationRepository
 {

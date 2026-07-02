@@ -5,7 +5,7 @@ using Cinema.Application.Interfaces.Facilities;
 using Cinema.Domain.Utils;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 
 public class StaffShiftRepository : IStaffShiftRepository
 {

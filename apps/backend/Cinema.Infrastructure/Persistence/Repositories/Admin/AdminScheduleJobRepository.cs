@@ -2,7 +2,7 @@ using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Entities.ScheduleJob;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Admin;
 
 public class AdminScheduleJobRepository : IAdminScheduleJobRepository
 {

@@ -3,7 +3,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.SeedData;
+namespace Cinema.Infrastructure.Persistence.SeedData;
 
 public static class SeedDataRoleLists
 {

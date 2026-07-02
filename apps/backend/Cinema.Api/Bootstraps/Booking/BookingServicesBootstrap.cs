@@ -1,13 +1,17 @@
 using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Application.Interfaces.PricingPromotions;
-using Cinema.Application.Infrastructure.Booking;
-using Cinema.Application.UseCases.Booking;
+using Cinema.Infrastructure.ExternalServices.Notifications;
+using Cinema.Application.UseCases.Booking.BookingFlow;
+using Cinema.Application.UseCases.Booking.Showtimes;
+using Cinema.Application.UseCases.Booking.UserHistory;
 using Cinema.Application.UseCases.Booking.Services;
 using Cinema.Application.UseCases.Booking.SocialBooking;
 using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Cinema.Application.UseCases.Admin.Vouchers;
-using Cinema.Infrastructure.Repositories;
+using Cinema.Infrastructure.Persistence.Repositories.Booking;
+using Cinema.Infrastructure.Persistence.Repositories.Vouchers;
+using Cinema.Infrastructure.Persistence.Repositories.PricingPromotions;
 using Cinema.Domain.Utils;
 
 namespace Cinema.Api.Bootstraps.Booking;

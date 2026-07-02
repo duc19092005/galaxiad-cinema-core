@@ -7,7 +7,7 @@ using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 
 public class BookingOrderRepository : IBookingOrderRepository
 {

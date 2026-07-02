@@ -1,11 +1,13 @@
-using Cinema.Infrastructure.Services;
+using Cinema.Infrastructure.ExternalServices;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Admin;
-using Cinema.Infrastructure.Repositories;
+using Cinema.Infrastructure.Persistence.Repositories.Admin;
 using Cinema.Application.UseCases.Admin;
 using Cinema.Application.UseCases.Admin.Audit;
 using Cinema.Application.UseCases.Admin.Dashboard;
 using Cinema.Application.UseCases.Admin.Transfers;
+using Cinema.Application.UseCases.Admin.UserManagement;
+using Cinema.Application.UseCases.Admin.ShiftSchedules;
 
 namespace Cinema.Api.Bootstraps.Admin;
 
@@ -37,7 +39,7 @@ public static class AdminBootstrap
         services.AddScoped<TransferManagementUseCase>();
 
         // Admin User Management
-        services.AddScoped<Cinema.Application.Interfaces.Admin.IAdminUserRepository, Cinema.Infrastructure.Repositories.AdminUserRepository>();
+        services.AddScoped<Cinema.Application.Interfaces.Admin.IAdminUserRepository, Cinema.Infrastructure.Persistence.Repositories.Admin.AdminUserRepository>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.GetAllUsersUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.SetUserStatusUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.UpdateUserPortraitUseCase>();

@@ -9,7 +9,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Utils;
 
 
-namespace Cinema.Infrastructure.Repositories;
+namespace Cinema.Infrastructure.Persistence.Repositories.Staff;
 
 public class StaffRepository : IStaffRepository
 {

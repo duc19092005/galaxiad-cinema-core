@@ -1,6 +1,7 @@
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
-using Cinema.Application.UseCases.Booking;
+using Cinema.Application.UseCases.Booking.Showtimes;
+using Cinema.Application.UseCases.Booking.BookingFlow;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

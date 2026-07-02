@@ -1,6 +1,6 @@
 using Cinema.Application.Interfaces.Booking;
 
-namespace Cinema.Application.Infrastructure.Booking;
+namespace Cinema.Infrastructure.ExternalServices.Notifications;
 
 /// <summary>
 /// Coordinates Redis-backed seat locks and broadcasts lock changes via SignalR.

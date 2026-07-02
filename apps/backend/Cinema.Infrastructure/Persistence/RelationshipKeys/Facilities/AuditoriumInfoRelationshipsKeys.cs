@@ -1,7 +1,7 @@
 using Cinema.Domain.Entities.CinemaInfos;
 using Microsoft.EntityFrameworkCore;
 
-namespace Cinema.Infrastructure.RelationshipKeys.Facilities;
+namespace Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
 
 public static class AuditoriumInfoRelationshipsKeys
 {

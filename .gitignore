@@ -25,6 +25,11 @@ apps/frontend/dist/
 services/ai/__pycache__/
 services/ai/*.pyc
 
+# gRPC generated stubs
+services/ai/app/pb/ai_service_pb2.py
+services/ai/app/pb/ai_service_pb2.pyi
+services/ai/app/pb/ai_service_pb2_grpc.py
+
 # OS
 .DS_Store
 Thumbs.db

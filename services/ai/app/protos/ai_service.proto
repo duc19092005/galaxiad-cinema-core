@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package aiservice;
+
+// ============================================================
+// Service Definition
+// ============================================================
+
+service AiService {
+  // -- Movie Embedding ------------------------------------------------------
+  rpc EmbedMovies(EmbedMoviesRequest) returns (EmbedMoviesResponse);
+  rpc SyncMovies(EmbedMoviesRequest) returns (EmbedMoviesResponse);
+  rpc DeleteEmbedding(DeleteEmbeddingRequest) returns (EmbedMoviesResponse);
+
+  // -- Semantic Search ------------------------------------------------------
+  rpc Recommend(RecommendRequest) returns (RecommendResponse);
+  rpc RecommendById(RecommendByIdRequest) returns (RecommendResponse);
+
+  // -- Chatbot --------------------------------------------------------------
+  rpc ClassifyIntent(ClassifyIntentRequest) returns (ClassifyIntentResponse);
+  rpc Guard(GuardRequest) returns (GuardResponse);
+  rpc Chat(ChatRequest) returns (ChatResponse);
+  rpc ChatStream(ChatRequest) returns (stream ChatResponse);
+  rpc Moderate(ModerationRequest) returns (ModerationResponse);
+
+  // -- Health ---------------------------------------------------------------
+  rpc HealthCheck(Empty) returns (HealthResponse);
+}
+
+// ============================================================
+// Common / Primitive Messages
+// ============================================================
+
+message Empty {}
+
+// ============================================================
+// Movie Embedding
+// ============================================================
+
+message MovieItem {
+  string movie_id       = 1;
+  string embedding_text = 2;
+}
+
+message EmbedMoviesRequest {
+  repeated MovieItem movies = 1;
+}
+
+message EmbedMoviesResponse {
+  bool   success        = 1;
+  int32  embedded_count = 2;
+  int32  deleted_count  = 3;
+  int32  skipped_count  = 4;
+  string message        = 5;
+}
+
+message DeleteEmbeddingRequest {
+  string movie_id = 1;
+}
+
+// ============================================================
+// Semantic Search
+// ============================================================
+
+message RecommendRequest {
+  string         user_text   = 1;
+  int32          top_k       = 2;
+  repeated string exclude_ids = 3;
+}
+
+message RecommendByIdRequest {
+  string         movie_id    = 1;
+  int32          top_k       = 2;
+  repeated string exclude_ids = 3;
+}
+
+message MovieScore {
+  string movie_id = 1;
+  double distance  = 2;
+}
+
+message RecommendResponse {
+  repeated MovieScore results = 1;
+}
+
+// ============================================================
+// Chatbot
+// ============================================================
+
+message ClassifyIntentRequest {
+  string message = 1;
+}
+
+message ClassifyIntentResponse {
+  string              intent     = 1;
+  map<string, string> parameters = 2;
+}
+
+message GuardRequest {
+  string message  = 1;
+  string language = 2;
+}
+
+message GuardResponse {
+  bool   is_blocked = 1;
+  string reason     = 2;
+}
+
+message ChatRequest {
+  string user_prompt   = 1;
+  string tool_context  = 2;
+  string user_role     = 3;
+  string user_id       = 4;
+  string language      = 5;
+}
+
+message ChatResponse {
+  string response = 1;
+}
+
+message ModerationRequest {
+  string content = 1;
+}
+
+message ModerationResponse {
+  bool   blocked = 1;
+  string reason  = 2;
+}
+
+// ============================================================
+// Health
+// ============================================================
+
+message HealthResponse {
+  string status                = 1;
+  int32  embedded_movies_count = 2;
+  string model                 = 3;
+}
