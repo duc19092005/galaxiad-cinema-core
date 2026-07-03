@@ -11,10 +11,37 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
+      - Database__AutoMigrate=${DATABASE_AUTO_MIGRATE:-true}
+      - ConnectionStrings__DatabaseConnection=${DATABASE_CONNECTION}
+      - ConnectionStrings__HangfireConnection=${HANGFIRE_CONNECTION}
+      - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD},abortConnect=false
+      - AllowedOrigins__0=https://galaxiadcine.online
+      - AllowedOrigins__1=https://www.galaxiadcine.online
+      - FrontendBaseUrl=${FRONTEND_BASE_URL:-https://galaxiadcine.online}
+      - JWT_Info__Key=${JWT_KEY}
+      - JWT_Info__Iss=${JWT_ISS}
+      - JWT_Info__Aud=${JWT_AUD}
+      - AES_256__Key=${AES_256_KEY}
+      - AES_256__IV=${AES_256_IV}
+      - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME}
+      - Cloudinary__ApiKey=${CLOUDINARY_API_KEY}
+      - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET}
+      - DeepSeek__ApiKey=${DEEPSEEK_API_KEY}
+      - VNPay__TmnCode=${VNPAY_TMN_CODE}
+      - VNPay__HashSecret=${VNPAY_HASH_SECRET}
+      - VNPay__PayUrl=${VNPAY_PAY_URL}
+      - VNPay__ReturnUrl=${VNPAY_RETURN_URL}
+      - Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Google__WebCallbackUrl=${GOOGLE_WEB_CALLBACK_URL:-https://galaxiadcine.online/auth/google-callback}
+      - Google__MobileCallbackUrl=${GOOGLE_MOBILE_CALLBACK_URL:-https://galaxiadcine.online/auth/google-callback-mobile}
+      - SeedAccounts__ProductionManagerPasswordHash=${PRODUCTION_MANAGER_PASSWORD_HASH}
     networks:
       - cinema-network
     depends_on:
       mssql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       ai:
         condition: service_healthy
@@ -87,9 +114,44 @@ services:
     networks:
       - cinema-network
 
+  # Redis cache, seat locks, group-booking state, and rate-limit counters
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
+  # Container management UI
+  portainer:
+    image: portainer/portainer-ce:latest
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: unless-stopped
+    networks:
+      - cinema-network
+
 networks:
   cinema-network:
     driver: bridge
 
 volumes:
   sqlvolume:
+  redis_data:
+  portainer_data:

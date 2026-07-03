@@ -6,6 +6,7 @@ using Cinema.Application.UseCases.Chatbot;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Chatbot;
 
@@ -14,6 +15,7 @@ namespace Cinema.Api.Controllers.Chatbot;
 [Route("api/v1/chatbot")]
 [Tags("Chatbot - AI Assistant")]
 [ApiExplorerSettings(GroupName = "v1-user")]
+[EnableRateLimiting("ChatbotPolicy")]
 public class ChatbotController : ControllerBase
 {
     private readonly ChatbotOrchestrator _chatbotOrchestrator;

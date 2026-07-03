@@ -72,7 +72,18 @@ public static class CommonServicesBootstrap
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var config = sp.GetRequiredService<IConfiguration>();
-            var redisConnStr = config.GetConnectionString("RedisConnection") ?? "localhost:6379";
+            var environment = sp.GetRequiredService<IHostEnvironment>();
+            var redisConnStr = config.GetConnectionString("RedisConnection");
+            if (string.IsNullOrWhiteSpace(redisConnStr))
+            {
+                if (environment.IsProduction())
+                {
+                    throw new InvalidOperationException("Missing production Redis connection string: ConnectionStrings:RedisConnection.");
+                }
+
+                redisConnStr = "localhost:6379";
+            }
+
             return ConnectionMultiplexer.Connect(redisConnStr);
         });
 

@@ -6,6 +6,7 @@ using Cinema.Application.UseCases.Booking.BookingFlow;
 using Cinema.Application.UseCases.Booking.UserHistory;
 using Cinema.Domain.Localization;
 using Cinema.Api.Hubs;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Booking;
 
@@ -51,6 +52,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpPost("create")]
+    [EnableRateLimiting("BookingCreatePolicy")]
     public async Task<IActionResult> CreateBooking([FromBody] ReqCreateBookingDto request)
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
@@ -79,6 +81,7 @@ public class BookingController : ControllerBase
     }
 
     [HttpGet("vnpay-callback")]
+    [EnableRateLimiting("PaymentCallbackPolicy")]
     public async Task<IActionResult> VnPayCallback()
     {
         var frontendBaseUrl = _configuration["FrontendBaseUrl"] ?? "https://renewcinemaprojectfrontend.vercel.app";

@@ -119,6 +119,12 @@ public class CreateBookingUseCase
         {
             await transaction.RollbackAsync();
             if (ex is AppException) throw;
+            if (IsSeatUniqueConflict(ex))
+            {
+                _logger.LogWarning(ex, "Seat conflict while creating booking for schedule {ScheduleId}", request.ScheduleId);
+                throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
+            }
+
             _logger.LogError(ex, "Error creating booking");
             throw CustomSystemException.SystemExceptionCaller();
         }
@@ -292,7 +298,7 @@ public class CreateBookingUseCase
         if (status == OrderStatusEnum.Pending)
         {
             _jobScheduler.Schedule<IPendingOrderCancellationJob>(
-                job => job.ExecuteForOrderAsync(orderId), TimeSpan.FromMinutes(10));
+                job => job.ExecuteForOrderAsync(orderId), TimeSpan.FromMinutes(15));
         }
     }
 
@@ -312,5 +318,18 @@ public class CreateBookingUseCase
         {
             _logger.LogWarning(ex, "Failed to notify unavailable seats after booking creation");
         }
+    }
+
+    private static bool IsSeatUniqueConflict(Exception exception)
+    {
+        if (!exception.GetType().Name.Contains("DbUpdateException", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var message = exception.ToString();
+        return message.Contains("IX_OrderDetailsInfoEntity_MovieScheduleId_SeatId", StringComparison.OrdinalIgnoreCase)
+               || (message.Contains("OrderDetailsInfoEntity", StringComparison.OrdinalIgnoreCase)
+                   && message.Contains("duplicate", StringComparison.OrdinalIgnoreCase));
     }
 }

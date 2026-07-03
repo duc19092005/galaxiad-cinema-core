@@ -29,6 +29,7 @@ public class VnpayService : IVnPayService
             string? tmnCode = _configuration["VNPay:TmnCode"];
             string? secureHash = _configuration["VNPay:HashSecret"];
             string? returnUrl = _configuration["VNPay:ReturnUrl"];
+            string? payUrl = _configuration["VNPay:PayUrl"];
 
             if (string.IsNullOrEmpty(tmnCode) || string.IsNullOrEmpty(returnUrl) || string.IsNullOrEmpty(secureHash))
             {
@@ -36,7 +37,9 @@ public class VnpayService : IVnPayService
                 throw CustomSystemException.SystemExceptionCaller();
             }
 
-            string vnpaySandboxUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+            string vnpayUrl = string.IsNullOrWhiteSpace(payUrl)
+                ? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+                : payUrl;
             string orderInfo = $"Thanh toan don hang {orderId}";
 
             // VNPAY requires time in GMT+7 (Vietnam Time)
@@ -82,7 +85,7 @@ public class VnpayService : IVnPayService
             // Hashing using the interface dependency
             var convertToSha512 = _sha256Services.Encrypt(rawDataStr, secureHash);
 
-            string finalUrl = $"{vnpaySandboxUrl}?{queryStringStr}&vnp_SecureHash={convertToSha512}";
+            string finalUrl = $"{vnpayUrl}?{queryStringStr}&vnp_SecureHash={convertToSha512}";
 
             return finalUrl;
         }

@@ -61,9 +61,11 @@ public class ProcessVnPayCallbackUseCase
         vnpParams.TryGetValue("vnp_TxnRef", out var txnRef);
         vnpParams.TryGetValue("vnp_ResponseCode", out var responseCode);
         vnpParams.TryGetValue("vnp_TransactionNo", out var transactionId);
+        vnpParams.TryGetValue("vnp_Amount", out var amountText);
         txnRef ??= "";
         responseCode ??= "";
         transactionId ??= "";
+        amountText ??= "";
 
         if (txnRef.StartsWith("GROUPMEM-"))
         {
@@ -92,14 +94,41 @@ public class ProcessVnPayCallbackUseCase
             return (false, orderId, null);
         }
 
-        if (order.OrderStatus != OrderStatusEnum.Pending)
+        var isSuccess = _vnPayService.IsPaymentSuccess(responseCode);
+
+        if (!IsCallbackAmountValid(amountText, order.TotalPrice))
         {
-            _logger.LogWarning("Order {OrderId} is not in Pending status, current: {Status}",
-                orderId, order.OrderStatus);
+            _logger.LogWarning(
+                "VNPay callback amount mismatch for order {OrderId}. Callback amount={CallbackAmount}, order total={OrderTotal}",
+                orderId,
+                amountText,
+                order.TotalPrice);
             return (false, orderId, null);
         }
 
-        var isSuccess = _vnPayService.IsPaymentSuccess(responseCode);
+        if (order.OrderStatus != OrderStatusEnum.Pending)
+        {
+            if (order.OrderStatus == OrderStatusEnum.Booked && isSuccess)
+            {
+                if (!string.IsNullOrWhiteSpace(order.VnPayTransactionId)
+                    && !string.IsNullOrWhiteSpace(transactionId)
+                    && !string.Equals(order.VnPayTransactionId, transactionId, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "Duplicate VNPay success callback for order {OrderId} has mismatched transaction id. Existing={ExistingTransactionId}, callback={CallbackTransactionId}",
+                        orderId,
+                        order.VnPayTransactionId,
+                        transactionId);
+                    return (false, orderId, null);
+                }
+
+                _logger.LogInformation("Duplicate VNPay success callback ignored for booked order {OrderId}", orderId);
+                return (true, orderId, null);
+            }
+
+            _logger.LogWarning("Order {OrderId} is not in Pending status, current: {Status}", orderId, order.OrderStatus);
+            return (false, orderId, null);
+        }
 
         if (isSuccess)
         {
@@ -462,6 +491,17 @@ public class ProcessVnPayCallbackUseCase
         var releasedAt = DateTime.UtcNow;
         foreach (var detail in order.OrderDetailsInfo ?? [])
             detail.ReleasedAt ??= releasedAt;
+    }
+
+    private static bool IsCallbackAmountValid(string amountText, decimal orderTotal)
+    {
+        if (!long.TryParse(amountText, out var callbackAmount))
+        {
+            return false;
+        }
+
+        var expectedAmount = checked((long)orderTotal * 100);
+        return callbackAmount == expectedAmount;
     }
 
     private async Task<OrderInfoEntity> CreateBookedOrderForMemberAsync(

@@ -13,6 +13,7 @@ using Cinema.Application.Exceptions;
 using Cinema.Infrastructure;
 using Cinema.Infrastructure.Identity;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,10 @@ using Cinema.Infrastructure.ExternalServices.Security;
 using Cinema.Infrastructure.ExternalServices.Jobs;
 using Cinema.Infrastructure.ExternalServices.Storage;
 using Cinema.Infrastructure.ExternalServices.Notifications;
+using Cinema.Domain.Entities.UserInfos;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Security.Claims;
+using System.Threading.RateLimiting;
 
 var currentDir = Directory.GetCurrentDirectory();
 var envPath = Path.Combine(currentDir, ".env");
@@ -56,13 +61,45 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IEncryptionService, AesEncryptionService>();
 builder.Services.AddSingleton<UserIdentityCodeConstant>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("ChatbotPolicy", context =>
+        RateLimitPartition.GetFixedWindowLimiter(GetRateLimitKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            AutoReplenishment = true
+        }));
+
+    options.AddPolicy("BookingCreatePolicy", context =>
+        RateLimitPartition.GetFixedWindowLimiter(GetRateLimitKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            AutoReplenishment = true
+        }));
+
+    options.AddPolicy("PaymentCallbackPolicy", context =>
+        RateLimitPartition.GetFixedWindowLimiter(GetRateLimitKey(context), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 60,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            AutoReplenishment = true
+        }));
+});
 
 // DB Context
-builder.Services.AddDbContext<CinemaDbContext>(options => 
+builder.Services.AddDbContext<CinemaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DatabaseConnection")));
 
 // Custom Error Message API Response
@@ -74,7 +111,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
             .FirstOrDefault();
-        
+
         throw new AppException(firstError ?? "Missing One or more Fields", 400, "Validation error");
     };
 });
@@ -98,7 +135,6 @@ builder.Services.AddApplicationFactories();
 builder.Services.AddAdminBootstrap();
 builder.Services.AddChatbotServices();
 
-// Chạy Background Service mỗi 10 phút để cập nhật trạng thái Movie và Schedule
 builder.Services.AddHostedService<MovieStatusSyncBackgroundService>();
 builder.Services.AddHostedService<AiMovieEmbeddingStartupService>();
 builder.Services.AddHostedService<MovieViewBufferSyncService>();
@@ -109,21 +145,26 @@ builder.Services.AddScoped<IImageStorageService, CloudinaryImageStorageService>(
 builder.Services.AddScoped<IBackgroundJobScheduler, HangfireJobSchedulerService>();
 builder.Services.TheaterManagerValidate();
 
-// --- CẤU HÌNH CORS (ĐÃ SỬA LỖI) ---
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("web", policy =>
     {
-        policy.SetIsOriginAllowed(origin => 
-              {
-                  if (string.IsNullOrWhiteSpace(origin)) return false;
-                  var host = new Uri(origin).Host;
-                  // Chấp nhận localhost và tất cả các sub-domain của vercel.app
-                  return host == "localhost" || host == "127.0.0.1" || host.EndsWith("vercel.app");
-              })
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials(); 
+        var configuredOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+        var allowedOrigins = configuredOrigins
+            .Where(origin => !string.IsNullOrWhiteSpace(origin))
+            .Select(origin => origin.Trim().TrimEnd('/'))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        policy.SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+                if (!builder.Environment.IsProduction()) return true;
+                return allowedOrigins.Contains(origin.Trim().TrimEnd('/'));
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -170,17 +211,51 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<CinemaDbContext>();
-    await dbContext.Database.MigrateAsync();
-    await EnsureAuditLogTableAsync(dbContext);
+    var startupLogger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+    var autoMigrate = app.Configuration.GetValue("Database:AutoMigrate", true);
+    if (autoMigrate)
+    {
+        await dbContext.Database.MigrateAsync();
+        await EnsureAuditLogTableAsync(dbContext);
+    }
+    else
+    {
+        startupLogger.LogInformation("Database auto-migration is disabled.");
+    }
+
+    await NormalizeProductionSeedAccountsAsync(dbContext, app.Environment, app.Configuration, startupLogger);
 
     var scheduleJobsService = scope.ServiceProvider.GetRequiredService<IScheduleJobsService>();
     await scheduleJobsService.SyncSeededJobs();
 }
 
+app.UseRouting();
+
 app.UseCors("web");
 
 app.UseLocalizationMiddleware();
 app.UseErrorMiddleware();
+
+app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseRateLimiter();
+
+if (app.Environment.IsProduction())
+{
+    app.Use(async (context, next) =>
+    {
+        if (context.Request.Path.StartsWithSegments("/swagger") && !IsAdmin(context.User))
+        {
+            context.Response.StatusCode = StatusCodes.Status404NotFound;
+            return;
+        }
+
+        await next();
+    });
+}
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -192,12 +267,12 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1-admin/swagger.json", "admin API");
 });
 
-app.UseHttpsRedirection();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.UseHangfireDashboard();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = app.Environment.IsProduction()
+        ? [new AdminDashboardAuthorizationFilter()]
+        : []
+});
 
 // Register recurring job for auto-canceling pending orders
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
@@ -207,6 +282,74 @@ app.MapControllers();
 app.MapHub<CinemaHub>("/hubs/cinema");
 
 app.Run();
+
+static string GetRateLimitKey(HttpContext context)
+{
+    var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                 ?? context.User.FindFirstValue(ClaimTypes.Sid);
+    if (!string.IsNullOrWhiteSpace(userId))
+    {
+        return $"user:{userId}";
+    }
+
+    return $"ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
+}
+
+static bool IsAdmin(ClaimsPrincipal user)
+{
+    return user.Identity?.IsAuthenticated == true && user.IsInRole("Admin");
+}
+
+static async Task NormalizeProductionSeedAccountsAsync(
+    CinemaDbContext dbContext,
+    IHostEnvironment environment,
+    IConfiguration configuration,
+    ILogger logger)
+{
+    if (!environment.IsProduction())
+    {
+        return;
+    }
+
+    var productionHash = configuration["SeedAccounts:ProductionManagerPasswordHash"];
+    if (string.IsNullOrWhiteSpace(productionHash))
+    {
+        throw new InvalidOperationException("Missing production seed password hash: SeedAccounts:ProductionManagerPasswordHash.");
+    }
+
+    var managerEmails = new[]
+    {
+        "admin@cinema.com",
+        "movie.manager@cinema.com",
+        "theater.manager@cinema.com",
+        "facilities.manager@cinema.com"
+    };
+
+    var users = await dbContext.Set<UserInfoEntity>()
+        .Where(user => managerEmails.Contains(user.UserEmail))
+        .ToListAsync();
+
+    var changed = 0;
+    foreach (var user in users)
+    {
+        if (user.Password == productionHash)
+        {
+            continue;
+        }
+
+        user.Password = productionHash;
+        changed++;
+    }
+
+    if (changed > 0)
+    {
+        await dbContext.SaveChangesAsync();
+    }
+
+    logger.LogInformation(
+        "Production seed account password normalization completed. Updated {Count} admin/manager account(s).",
+        changed);
+}
 
 static async Task EnsureAuditLogTableAsync(CinemaDbContext dbContext)
 {
