@@ -103,23 +103,31 @@ High-quality development standards have been applied to ensure performance, secu
 *   **Database & ORM:** MS SQL Server, Entity Framework Core 8
 *   **Real-time Broadcast:** SSE (Server-Sent Events)
 *   **Background Jobs:** Hangfire (managing automatic release of expired seat holds)
+*   **AI & Agent Services:**
+    *   **Python AI Service** (FastAPI + gRPC) — Dedicated AI service for Chatbot, Embedding & Movie Recommendations
+    *   **LangChain Agent** (`create_tool_calling_agent`) — Agent-driven auto-booking flow with DeepSeek LLM
+    *   **Qdrant** — Vector database for semantic movie search (Google Gemini Embeddings)
+    *   **Redis** — Chat history storage (30-min TTL) and caching
+    *   **gRPC (protobuf)** — Communication between C# ↔ Python AI Service
 *   **Third-Party Services:**
     *   **VNPay:** Electronic payment gateway.
     *   **Cloudinary:** Secure cloud storage and delivery of movie poster assets.
     *   **Google OAuth 2.0:** Secure identity verification.
 *   **API Documentation:** Swagger OpenAPI (divided into modular documents for simplified API testing).
 
-### 2. Clean Architecture (4-Layer)
-The backend is structured into 4 clean layers:
+### 2. Clean Architecture (4-Layer + Python AI Service)
+The backend is structured into 4 clean layers plus a dedicated Python AI Service:
 *   **`Cinema.Domain`**: Pure business core containing Entities, Enums, Custom Exceptions, Repository/UnitOfWork Interfaces, Constants, and Utils. It has zero external dependencies.
 *   **`Cinema.Application`**: Application-specific logic containing Use Cases, DTOs, Application Interfaces, and Validators.
-*   **`Cinema.Infrastructure`**: DB Context, Migrations, Seed Data, Repositories implementations, and integration adapters (VNPay, Cloudinary, Redis, DeepSeek AI).
+*   **`Cinema.Infrastructure`**: DB Context, Migrations, Seed Data, Repositories implementations, and integration adapters (VNPay, Cloudinary, Redis, DeepSeek AI, gRPC).
 *   **`Cinema.Api`**: API Presentation layer containing controllers, middlewares, bootstrapper DI configurations, SSE services, and Program.cs.
+*   **`Python AI Service`** (`services/ai/`): FastAPI + gRPC server running LangChain Agent, DeepSeek LLM integration, Google Gemini embeddings + Qdrant vector search.
 
 ### 3. Engineering Highlights
 *   **Unit of Work & Repository Pattern:** Ensures all operations inside a booking session (creating orders, locking seats, deducting customer points) execute inside a single database transaction. This prevents data inconsistency.
 *   **Single Responsibility Principle (SRP) Use Cases:** Each business workflow is encapsulated into a dedicated Use Case class in a separate file, containing a single public execution entry point (`ExecuteAsync`). For example, operations like creating, updating, and deleting cinemas are split into `CreateCinemaUseCase`, `UpdateCinemaUseCase`, and `DeleteCinemaUseCase` instead of being grouped together. This maximizes testability, modularity, and isolation of business changes.
 *   **Database Engine Independence:** The Business Layer depends only on the `IUnitOfWork` interface, allowing database swaps in the future.
+*   **Agentic Chatbot Architecture:** The chatbot has evolved from direct LLM calls to a **LangChain Agent** (`create_tool_calling_agent`) with auto-booking capability via 3 tools: seat suggestion, voucher lookup, and booking confirmation. The Agent communicates with the C# backend via gRPC, stores conversation history in Redis (30-min TTL), and automatically falls back to direct DeepSeek calls if the Agent fails.
 *   **Dockerized:** Ships with Dockerfile and Docker Compose configurations for instant local deployment.
 
 ---

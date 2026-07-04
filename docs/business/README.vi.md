@@ -193,11 +193,17 @@
 
 | Mã | Tên Quy Định | Nội Dung |
 |:--:|:-------------|:---------|
-| **BS82** | Chủ đề chatbot | Chatbot có thể xử lý: danh sách phim, suất chiếu, đặt vé, thống kê rạp, nhật ký kiểm toán và FAQ chung. |
-| **BS83** | Truy cập chatbot theo vai trò | Khách vãng lai chỉ xem phim. Khách hàng có thể đặt vé. Quản lý xem lịch chiếu. Admin quản lý mọi thứ. Chatbot từ chối yêu cầu không được ủy quyền. |
-| **BS84** | Bảo vệ 3 lớp | Chatbot có 3 lớp bảo vệ: (1) **Bộ lọc ngôn ngữ** — lọc từ ngữ không phù hợp, (2) **Phân loại ý định** — định tuyến đến công cụ đúng, (3) **Đăng ký công cụ** — mỗi công cụ kiểm tra quyền vai trò trước khi thực thi. |
+| **BS82** | Chủ đề chatbot | Chatbot có thể xử lý: danh sách phim, suất chiếu, đặt vé tự động, gợi ý ghế, áp dụng voucher, thống kê rạp, nhật ký kiểm toán và FAQ chung. |
+| **BS83** | Truy cập chatbot theo vai trò | Khách vãng lai chỉ xem phim. Khách hàng có thể đặt vé tự động. Quản lý xem lịch chiếu. Admin quản lý mọi thứ. Chatbot từ chối yêu cầu không được ủy quyền. |
+| **BS84** | Bảo vệ 3 lớp | Chatbot có 3 lớp bảo vệ: (1) **Linguistic Guard** — lọc ngôn ngữ xấu, (2) **Phân loại ý định** — định tuyến đến công cụ đúng, (3) **LangChain Agent + Tool Registry** — kiểm tra quyền và thực thi tools. |
 | **BS85** | Chuyển tiếp chatbot | Nếu chatbot không hiểu câu hỏi, nó sẽ hướng dẫn người dùng liên hệ hỗ trợ khách hàng. |
 | **BS86** | Chatbot không tạo lịch chiếu | LLM không bao giờ trực tiếp tạo lịch chiếu. Quản lý phải xem trước đề xuất AI trước khi áp dụng. |
+| **BS124** | LangChain Agent điều khiển đặt vé | LangChain Agent sử dụng `create_tool_calling_agent` để điều phối luồng đặt vé: chọn ghế → voucher → xác nhận → thanh toán. |
+| **BS125** | Agent gợi ý ghế thông minh | Agent dùng `suggest_seats_tool` đề xuất ghế trống gần trung tâm phòng chiếu, ưu tiên ghế liên tiếp. |
+| **BS126** | Voucher chỉ cho user đã đăng nhập | Agent chỉ gọi `get_available_vouchers_tool` khi user_id là GUID hợp lệ. Khách vãng lai bỏ qua bước chọn voucher. |
+| **BS127** | Xác nhận đặt vé tự động | Agent gọi `confirm_booking_tool` chỉ sau khi người dùng xác nhận rõ ràng và có đủ thông tin: schedule_id, seat_ids, user_segment_id, contact. |
+| **BS128** | Bộ nhớ hội thoại 30 phút | Agent lưu lịch sử chat qua Redis với TTL 30 phút. Fallback In-Memory nếu Redis không khả dụng. |
+| **BS129** | Fallback khi Agent fail | Nếu LangChain Agent thất bại, hệ thống tự động fallback về gọi DeepSeek trực tiếp với system prompt tĩnh. |
 
 ---
 
@@ -233,14 +239,6 @@
 | **BS98** | Ưu tiên phim Việt Nam | Suất chiếu phim Việt Nam được ưu tiên từ **18:00 đến 22:00**. |
 | **BS99** | Giờ chiếu dưới 13 tuổi | Suất chiếu cho khách hàng dưới 13 tuổi phải kết thúc **trước 22:00**. |
 | **BS100** | Giờ chiếu dưới 16 tuổi | Suất chiếu cho khách hàng dưới 16 tuổi phải kết thúc **trước 23:00**. |
-| **BS101** | Không quay phim | Khách hàng không được quay phim trái phép trong rạp. |
-| **BS102** | Không gây rối | Khách hàng không được gây mất trật tự hoặc cản trở khách hàng khác. |
-| **BS103** | Không hút thuốc | Thuốc lá và thuốc lá điện tử không được phép trong rạp. |
-| **BS104** | Không vũ khí | Vũ khí, vật liệu dễ cháy và chất độc hại bị cấm. |
-| **BS105** | Không thú cưng | Thú cưng không được phép vào rạp (trừ động vật hỗ trợ). |
-| **BS106** | Không đồ ăn ngoài | Đồ ăn và thức uống từ bên ngoài không được phép mang vào khi chưa được cho phép. |
-| **BS107** | Cam kết bảo mật | Dữ liệu cá nhân của khách hàng không được bán hoặc chuyển giao cho bên thứ ba mà không có sự đồng ý. |
-| **BS108** | Sử dụng cookie | Trang web sử dụng cookie để cải thiện trải nghiệm người dùng. Khách hàng có thể quản lý cài đặt cookie trong trình duyệt. |
 
 ---
 

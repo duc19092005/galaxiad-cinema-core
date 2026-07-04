@@ -194,11 +194,17 @@
 
 | Code | Rule Name | Content |
 |:----:|:----------|:--------|
-| **BS82** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, cinema statistics, audit logs, and general FAQ. |
-| **BS83** | Role-based chatbot access | Guest users can only browse movies. Customers can book tickets. Managers can view schedules. Admin can manage everything. The chatbot declines unauthorized requests. |
-| **BS84** | 3-layer protection | The chatbot has 3 safety layers: (1) **Linguistic guard** — filters inappropriate language, (2) **Intent classification** — routes to correct tool, (3) **Tool registry** — each tool checks role permissions before executing. |
+| **BS82** | Chatbot topics | The chatbot can handle: movie lists, showtimes, bookings, auto-booking with seat suggestions, voucher application, cinema statistics, audit logs, and general FAQ. |
+| **BS83** | Role-based chatbot access | Guest users can only browse movies. Customers can book tickets via auto-booking flow. Managers can view schedules. Admin can manage everything. The chatbot declines unauthorized requests. |
+| **BS84** | 3-layer protection | The chatbot has 3 safety layers: (1) **Linguistic guard** — filters inappropriate language, (2) **Intent classification** — routes to correct tool, (3) **LangChain Agent + Tool Registry** — checks role permissions before executing tools. |
 | **BS85** | Chatbot escalation | If the chatbot cannot understand the question, it directs the user to contact customer support. |
 | **BS86** | Chatbot cannot create schedules | The LLM never directly creates showtime schedules. Managers must preview AI recommendations before applying. |
+| **BS124** | LangChain Agent drives booking flow | The LangChain Agent uses `create_tool_calling_agent` to orchestrate the booking flow: seat selection → voucher → confirmation → payment. |
+| **BS125** | Smart seat suggestion by Agent | The Agent uses `suggest_seats_tool` to propose available seats near auditorium center, prioritizing consecutive seats. |
+| **BS126** | Vouchers for logged-in users only | The Agent calls `get_available_vouchers_tool` only when user_id is a valid GUID. Guest users skip voucher selection entirely. |
+| **BS127** | Auto booking confirmation | The Agent calls `confirm_booking_tool` only after explicit user confirmation with complete info: schedule_id, seat_ids, user_segment_id, contact. |
+| **BS128** | 30-minute conversation memory | The Agent stores chat history via Redis with 30-minute TTL. Falls back to In-Memory if Redis is unavailable. |
+| **BS129** | Fallback on Agent failure | If the LangChain Agent fails, the system automatically falls back to calling DeepSeek directly with a static system prompt. |
 
 ---
 
@@ -234,14 +240,6 @@
 | **BS98** | Vietnamese film priority | Vietnamese film screenings are prioritized from **18:00 to 22:00**. |
 | **BS99** | Under-13 screening hours | Screenings for customers under 13 must end **before 22:00**. |
 | **BS100** | Under-16 screening hours | Screenings for customers under 16 must end **before 23:00**. |
-| **BS101** | No recording | Customers must not illegally record movies in the theater. |
-| **BS102** | No disruptive behavior | Customers must not cause disturbances or obstruct other customers. |
-| **BS103** | No smoking | Tobacco and e-cigarettes are not permitted in the theater. |
-| **BS104** | No weapons | Weapons, flammable materials, and toxic substances are prohibited. |
-| **BS105** | No pets | Pets are not allowed in the cinema (except service animals). |
-| **BS106** | No outside food | Outside food and drinks are not permitted without authorization. |
-| **BS107** | Privacy commitment | Customer personal data is not sold or transferred to third parties without consent. |
-| **BS108** | Cookie usage | The website uses cookies to improve user experience. Customers can manage cookie settings in their browser. |
 
 ---
 

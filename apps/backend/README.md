@@ -103,6 +103,12 @@ Hệ thống được phát triển với sự chú trọng cao về chất lư�
 *   **Cơ sở Dữ liệu & ORM:** MS SQL Server, Entity Framework Core 8
 *   **Xử lý Realtime:** SSE (Server-Sent Events)
 *   **Tác vụ ngầm (Background Jobs):** Hangfire (quản lý việc tự động hủy vé quá hạn giữ ghế)
+*   **Dịch vụ AI & Agent:**
+    *   **Python AI Service** (FastAPI + gRPC) — Dịch vụ AI riêng biệt cho Chatbot, Embedding & Gợi ý phim
+    *   **LangChain Agent** (`create_tool_calling_agent`) — Agent điều khiển luồng đặt vé tự động với DeepSeek LLM
+    *   **Qdrant** — Vector database cho semantic search phim (Google Gemini Embeddings)
+    *   **Redis** — Lưu chat history (TTL 30 phút) và caching
+    *   **gRPC (protobuf)** — Giao tiếp C# ↔ Python AI Service
 *   **Dịch vụ Bên thứ ba (3rd-party Services):**
     *   **VNPay:** Cổng thanh toán trực tuyến
     *   **Cloudinary:** Lưu trữ và tối ưu hóa hình ảnh poster phim bảo mật
@@ -141,11 +147,13 @@ Cinema.Application/
 ├── Dtos/               # Request/Response DTOs
 ├── Interfaces/         # IJwtService, IPasswordHasher, IVnPayService...
 ├── UseCases/           # Business workflows (1 class = 1 use case)
+│   └── Chatbot/        # ChatbotOrchestrator, Intent Classification, Tool Registry
 └── Validators/         # Input validators
 
 Cinema.Infrastructure/
 |-- BackgroundJobs/     # Runtime jobs grouped by feature: Bookings, Movies, Recommendations, Tracking
 |-- ExternalServices/   # VNPay, Cloudinary, Redis, DeepSeek AI, SSE, AuditLog, Hangfire integrations
+|   |-- Ai/             # gRPC clients: DeepSeekChatLlmClient, DeepSeekChatIntentClassifier, AiSemanticSearchClient, DeepSeekModerationService
 |-- Identity/           # BCryptPasswordHasher, JwtService, UserContextService
 `-- Persistence/        # CinemaDbContext, Migrations, SeedData, RelationshipKeys, EF repositories
 
@@ -155,6 +163,32 @@ Cinema.Api/
 ├── Hubs/               # SeatLockerNotificationService (SSE)
 ├── Middlewares/        # Error & Localization middlewares
 └── Program.cs          # Application entry point
+
+—— Python AI Service (services/ai/) ——
+├── app/
+│   ├── agent.py        # LangChain Agent (create_tool_calling_agent)
+│   ├── tools.py        # 3 LangChain Tools: suggest_seats, vouchers, confirm_booking
+│   ├── main.py         # FastAPI REST endpoints + gRPC server integration
+│   ├── grpc_server.py  # gRPC server (protobuf)
+│   ├── embedder.py     # Google Gemini Embeddings + Qdrant vector search
+│   ├── config.py       # Configuration
+│   └── models.py       # Pydantic models
+```
+
+#### Kiến trúc Chatbot (Luồng dữ liệu mới)
+
+```
+User → C# Backend (ChatbotOrchestrator) →
+  Linguistic Guard (lọc ngôn ngữ) →
+  Intent Classification (phân loại ý định) →
+  C# Tool Registry (truy vấn DB lấy context) →
+  gRPC (protobuf) →
+  Python AI Service →
+    LangChain Agent (DeepSeek LLM + 3 Tools):
+      - suggest_seats_tool: Gợi ý ghế thông minh
+      - get_available_vouchers_tool: Tra voucher
+      - confirm_booking_tool: Tạo đơn hàng
+  → Response → Frontend UI
 ```
 
 ### 3. Điểm cộng về Kỹ thuật của Backend
@@ -162,6 +196,7 @@ Cinema.Api/
 *   **Thiết kế Use Cases đơn nhiệm (Single Responsibility Principle - SRP):** Mỗi lớp nghiệp vụ (Use Case) chỉ chịu trách nhiệm cho một hành động duy nhất (ví dụ: `CreateCinemaUseCase`, `UpdateCinemaUseCase`, `DeleteCinemaUseCase` được tách thành các lớp và tệp riêng biệt thay vì gộp chung). Mỗi Use Case chỉ có duy nhất một phương thức thực thi công khai (thường là `ExecuteAsync`), giúp tối ưu hóa khả năng kiểm thử (Unit Test), dễ dàng bảo trì và cô lập nghiệp vụ khi có thay đổi. Các tác vụ nền (Hangfire Jobs) cũng được mô-đun hóa thành các Use Case riêng lẻ.
 *   **Dependency Inversion cho Identity helpers:** `BCrypt` và `JWT` không được tham chiếu trực tiếp từ Application layer. Thay vào đó, Application định nghĩa interface `IPasswordHasher` và `IJwtService`; Infrastructure cung cấp implementation — giúp Application hoàn toàn độc lập với thư viện crypto bên thứ ba.
 *   **Không phụ thuộc trực tiếp vào DbContext ở tầng nghiệp vụ:** Tầng Business chỉ giao tiếp qua interface `IUnitOfWork`, giúp hệ thống linh hoạt và có thể thay đổi nhà cung cấp cơ sở dữ liệu dễ dàng trong tương lai.
+*   **Kiến trúc Chatbot Agentic:** Chatbot đã được nâng cấp từ kiến trúc gọi LLM trực tiếp sang **LangChain Agent** (`create_tool_calling_agent`) với khả năng tự động đặt vé thông qua 3 tools: gợi ý ghế, tra voucher, xác nhận đơn hàng. Agent giao tiếp với C# backend qua gRPC, lưu lịch sử hội thoại trên Redis (TTL 30 phút) và tự động fallback về gọi DeepSeek trực tiếp nếu Agent thất bại.
 *   **Dockerized:** Đã sẵn sàng tệp Dockerfile và Docker Compose giúp triển khai hệ thống nhanh chóng chỉ với một dòng lệnh ở mọi môi trường.
 
 ---
