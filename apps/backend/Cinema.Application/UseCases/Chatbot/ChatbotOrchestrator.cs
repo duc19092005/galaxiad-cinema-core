@@ -91,6 +91,7 @@ public class ChatbotOrchestrator
         }
         catch (Exception ex)
         {
+            Console.WriteLine("CHATBOT ERROR: " + ex);
             return new BaseResponse<ChatbotResponseDto>
             {
                 IsSuccess = true,
@@ -169,8 +170,9 @@ public class ChatbotOrchestrator
                 }
             };
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine("CHATBOT STREAM ERROR: " + ex);
             await onToken(ChatbotResponseMessages.Refusals.SystemError);
             return new BaseResponse<ChatbotResponseDto>
             {

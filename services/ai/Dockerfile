@@ -6,8 +6,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --prefer-binary \
     --default-timeout=300 \
-    -i https://mirrors.aliyun.com/pypi/simple/ \
     -r requirements.txt
+
 
 # Copy application code
 COPY . .

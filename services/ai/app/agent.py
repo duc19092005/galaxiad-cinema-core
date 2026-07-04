@@ -1,7 +1,7 @@
 import redis
 from loguru import logger
 from langchain_openai import ChatOpenAI
-from langchain.agents import create_tool_calling_agent, AgentExecutor
+from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.chat_history import InMemoryChatMessageHistory, BaseChatMessageHistory
 from langchain_community.chat_message_histories import RedisChatMessageHistory
