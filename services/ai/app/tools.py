@@ -1,191 +1,275 @@
+import json
+from typing import Any
+
 import httpx
 from langchain_core.tools import tool
-from config import BACKEND_API_URL
 from loguru import logger
+
+from config import BACKEND_API_URL
+
+
+def _json_result(payload: dict[str, Any]) -> str:
+    return json.dumps(payload, ensure_ascii=False)
+
+
+def _response_data(response_json: dict[str, Any]) -> Any:
+    return response_json.get("data", response_json.get("Data", {}))
+
+
+def _field(data: dict[str, Any], camel_name: str, default: Any = None) -> Any:
+    pascal_name = camel_name[:1].upper() + camel_name[1:]
+    return data.get(camel_name, data.get(pascal_name, default))
+
 
 @tool
 async def get_available_vouchers_tool(user_id: str) -> str:
     """
-    Tra cứu danh sách voucher khả dụng của người dùng đã đăng nhập.
-    Nếu user_id trống hoặc là Guest/NA, trả về thông báo không có voucher.
+    Return available vouchers for a logged-in customer as structured JSON.
+    Guest users must skip voucher selection.
     """
     if not user_id or user_id in ["", "N/A", "Guest"]:
-        return "Không có voucher khả dụng (Khách vãng lai)."
+        return _json_result({
+            "ok": True,
+            "type": "voucher_list",
+            "message": "Guest user: skip voucher selection.",
+            "vouchers": [],
+            "isGuest": True,
+        })
 
-    url = f"{BACKEND_API_URL}/vouchers/available-for-user?userId={user_id}"
+    url = f"{BACKEND_API_URL}/public/vouchers/available-for-user"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                vouchers = data.get("data", [])
-                if not vouchers:
-                    return "Bạn không có voucher khả dụng nào."
-                
-                result = []
-                for v in vouchers:
-                    desc = f"Mã: {v.get('code')} (ID: {v.get('voucherId')}) - Giảm {v.get('discountAmount')}%"
-                    if v.get('requiredPoints', 0) > 0:
-                        desc += f" (Cần {v.get('requiredPoints')} điểm tích lũy)"
-                    else:
-                        desc += " (Công khai)"
-                    result.append(desc)
-                return "\n".join(result)
-            else:
-                return "Không thể tra cứu voucher lúc này từ hệ thống."
-    except Exception as e:
-        logger.error(f"Error fetching vouchers: {e}")
-        return f"Lỗi khi tra cứu voucher: {str(e)}"
+            response = await client.get(url, params={"userId": user_id})
+
+        if response.status_code != 200:
+            return _json_result({
+                "ok": False,
+                "type": "voucher_list",
+                "message": "Could not load vouchers from backend.",
+                "statusCode": response.status_code,
+                "vouchers": [],
+            })
+
+        vouchers = _response_data(response.json()) or []
+        normalized = [
+            {
+                "voucherId": _field(voucher, "voucherId"),
+                "code": _field(voucher, "code") or _field(voucher, "voucherName"),
+                "discountPercent": _field(voucher, "discountAmount") or _field(voucher, "voucherDiscountPercent"),
+                "description": _field(voucher, "description", ""),
+            }
+            for voucher in vouchers
+        ]
+
+        return _json_result({
+            "ok": True,
+            "type": "voucher_list",
+            "message": "Available vouchers loaded.",
+            "vouchers": normalized,
+            "bestVoucher": max(normalized, key=lambda item: item.get("discountPercent") or 0) if normalized else None,
+            "isGuest": False,
+        })
+    except Exception as exc:
+        logger.error(f"Error fetching vouchers: {exc}")
+        return _json_result({
+            "ok": False,
+            "type": "voucher_list",
+            "message": f"Voucher lookup failed: {exc}",
+            "vouchers": [],
+        })
+
 
 @tool
 async def suggest_seats_tool(schedule_id: str, quantity: int) -> str:
     """
-    Tự động phân tích tọa độ ghế phòng chiếu để tìm và gợi ý cụm ghế trống đẹp nhất sát khu vực trung tâm.
-    Tham số:
-    - schedule_id: ID lịch chiếu
-    - quantity: Số lượng vé cần mua
+    Suggest available seats near the configured auditorium center.
+    Prefer consecutive seats in one row; fall back to individual seats nearest center.
     """
     if quantity <= 0:
-        return "Số lượng ghế phải lớn hơn 0."
-        
+        return _json_result({
+            "ok": False,
+            "type": "seat_suggestion",
+            "message": "Quantity must be greater than zero.",
+            "seats": [],
+        })
+
     url = f"{BACKEND_API_URL}/public/movies/schedules/{schedule_id}/seats"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(url)
-            if response.status_code != 200:
-                return "Không thể tải sơ đồ ghế cho lịch chiếu này từ backend."
-                
-            res_json = response.json()
-            data = res_json.get("data", {})
-            seats = data.get("seats", [])
-            
-            if not seats:
-                return "Phòng chiếu không có ghế hoặc không tìm thấy sơ đồ."
 
-            # Đọc tọa độ trung tâm được cấu hình bởi admin
-            center_row_start = data.get("centerRowStart", 0)
-            center_row_end = data.get("centerRowEnd", 0)
-            center_col_start = data.get("centerColStart", 0)
-            center_col_end = data.get("centerColEnd", 0)
-            
-            # Nếu chưa cấu hình tọa độ trung tâm, mặc định là khu vực 1/3 ở giữa
-            all_rows = [s.get("rowIndex") for s in seats]
-            all_cols = [s.get("colIndex") for s in seats]
-            max_row = max(all_rows) if all_rows else 10
-            max_col = max(all_cols) if all_cols else 15
-            
-            if center_row_start == 0 and center_row_end == 0:
-                center_row_start = max_row // 3
-                center_row_end = 2 * (max_row // 3)
-            if center_col_start == 0 and center_col_end == 0:
-                center_col_start = max_col // 3
-                center_col_end = 2 * (max_col // 3)
-                
-            # Tính toán tọa độ tâm của vùng trung tâm
-            target_row = (center_row_start + center_row_end) / 2.0
-            target_col = (center_col_start + center_col_end) / 2.0
-            
-            available_seats = [s for s in seats if not s.get("isOccupied")]
-            if len(available_seats) < quantity:
-                return f"Không đủ ghế trống. Chỉ còn {len(available_seats)} ghế trống."
-                
-            # Gom nhóm ghế trống theo từng hàng (RowIndex) để ưu tiên xếp ghế liền kề nhau
-            seats_by_row = {}
-            for s in available_seats:
-                r = s.get("rowIndex")
-                if r not in seats_by_row:
-                    seats_by_row[r] = []
-                seats_by_row[r].append(s)
-                
-            valid_clusters = []
-            
-            # Tìm cụm N ghế liên tục nhau trên cùng một hàng
-            for r, row_seats in seats_by_row.items():
-                row_seats.sort(key=lambda x: x.get("colIndex"))
-                for i in range(len(row_seats) - quantity + 1):
-                    subset = row_seats[i:i+quantity]
-                    # Kiểm tra xem có liên tiếp về mặt ColIndex không
-                    is_consecutive = True
-                    for j in range(1, quantity):
-                        if subset[j].get("colIndex") != subset[j-1].get("colIndex") + 1:
-                            is_consecutive = False
-                            break
-                    if is_consecutive:
-                        # Tính khoảng cách trung bình đến tâm vùng trung tâm
-                        avg_row = sum(s.get("rowIndex") for s in subset) / float(quantity)
-                        avg_col = sum(s.get("colIndex") for s in subset) / float(quantity)
-                        dist = (avg_row - target_row)**2 + (avg_col - target_col)**2
-                        valid_clusters.append((subset, dist))
-                        
-            # Nếu không tìm thấy cụm ghế liên tiếp, gợi ý các ghế đơn lẻ gần tâm nhất
-            if not valid_clusters:
-                available_seats.sort(key=lambda s: (s.get("rowIndex") - target_row)**2 + (s.get("colIndex") - target_col)**2)
-                selected_seats = available_seats[:quantity]
-                seat_numbers = ", ".join([s.get("seatNumber") for s in selected_seats])
-                seat_ids = [s.get("seatId") for s in selected_seats]
-                return f"Gợi ý chọn các ghế lẻ gần trung tâm nhất (không có ghế liền kề): {seat_numbers} (IDs: {seat_ids})"
-                
-            # Sắp xếp các cụm ghế liên tục theo khoảng cách tăng dần tới tâm
-            valid_clusters.sort(key=lambda x: x[1])
-            best_subset = valid_clusters[0][0]
-            seat_numbers = ", ".join([s.get("seatNumber") for s in best_subset])
-            seat_ids = [s.get("seatId") for s in best_subset]
-            
-            return f"Gợi ý chọn cụm ghế sát nhau tại vùng trung tâm: {seat_numbers} (IDs: {seat_ids})"
-            
-    except Exception as e:
-        logger.error(f"Error suggesting seats: {e}")
-        return f"Lỗi tính toán gợi ý ghế: {str(e)}"
+        if response.status_code != 200:
+            return _json_result({
+                "ok": False,
+                "type": "seat_suggestion",
+                "message": "Could not load seat map from backend.",
+                "statusCode": response.status_code,
+                "seats": [],
+            })
+
+        data = _response_data(response.json()) or {}
+        seats = data.get("seats") or data.get("Seats") or data.get("seatMap") or []
+        if not seats:
+            return _json_result({
+                "ok": False,
+                "type": "seat_suggestion",
+                "message": "Seat map is empty.",
+                "seats": [],
+            })
+
+        all_rows = [_field(seat, "rowIndex", 0) for seat in seats]
+        all_cols = [_field(seat, "colIndex", 0) for seat in seats]
+        max_row = max(all_rows) if all_rows else 10
+        max_col = max(all_cols) if all_cols else 15
+
+        center_row_start = _field(data, "centerRowStart") or max_row // 3
+        center_row_end = _field(data, "centerRowEnd") or 2 * (max_row // 3)
+        center_col_start = _field(data, "centerColStart") or max_col // 3
+        center_col_end = _field(data, "centerColEnd") or 2 * (max_col // 3)
+        target_row = (center_row_start + center_row_end) / 2.0
+        target_col = (center_col_start + center_col_end) / 2.0
+
+        available = [
+            seat for seat in seats
+            if not (_field(seat, "isOccupied", False) or _field(seat, "isBooked", False))
+        ]
+        if len(available) < quantity:
+            return _json_result({
+                "ok": False,
+                "type": "seat_suggestion",
+                "message": f"Only {len(available)} available seats remain.",
+                "availableCount": len(available),
+                "seats": [],
+            })
+
+        seats_by_row: dict[int, list[dict[str, Any]]] = {}
+        for seat in available:
+            row = int(_field(seat, "rowIndex", 0))
+            seats_by_row.setdefault(row, []).append(seat)
+
+        clusters: list[tuple[list[dict[str, Any]], float]] = []
+        for row_seats in seats_by_row.values():
+            row_seats.sort(key=lambda item: _field(item, "colIndex", 0))
+            for index in range(len(row_seats) - quantity + 1):
+                subset = row_seats[index:index + quantity]
+                consecutive = all(
+                    _field(subset[i], "colIndex", 0) == _field(subset[i - 1], "colIndex", 0) + 1
+                    for i in range(1, quantity)
+                )
+                if consecutive:
+                    avg_row = sum(_field(seat, "rowIndex", 0) for seat in subset) / quantity
+                    avg_col = sum(_field(seat, "colIndex", 0) for seat in subset) / quantity
+                    score = (avg_row - target_row) ** 2 + (avg_col - target_col) ** 2
+                    clusters.append((subset, score))
+
+        strategy = "center_consecutive"
+        if clusters:
+            clusters.sort(key=lambda item: item[1])
+            selected = clusters[0][0]
+        else:
+            strategy = "center_individual"
+            available.sort(
+                key=lambda seat: (_field(seat, "rowIndex", 0) - target_row) ** 2
+                + (_field(seat, "colIndex", 0) - target_col) ** 2
+            )
+            selected = available[:quantity]
+
+        normalized = [
+            {
+                "seatId": _field(seat, "seatId"),
+                "seatNumber": _field(seat, "seatNumber") or _field(seat, "seatName"),
+                "rowIndex": _field(seat, "rowIndex", 0),
+                "colIndex": _field(seat, "colIndex", 0),
+            }
+            for seat in selected
+        ]
+
+        return _json_result({
+            "ok": True,
+            "type": "seat_suggestion",
+            "message": "Seat suggestion generated.",
+            "strategy": strategy,
+            "quantity": quantity,
+            "availableCount": len(available),
+            "center": {"row": target_row, "col": target_col},
+            "seatIds": [seat["seatId"] for seat in normalized],
+            "seatNumbers": [seat["seatNumber"] for seat in normalized],
+            "seats": normalized,
+        })
+    except Exception as exc:
+        logger.error(f"Error suggesting seats: {exc}")
+        return _json_result({
+            "ok": False,
+            "type": "seat_suggestion",
+            "message": f"Seat suggestion failed: {exc}",
+            "seats": [],
+        })
+
 
 @tool
-async def confirm_booking_tool(schedule_id: str, seat_ids: list, customer_email: str, customer_name: str = "", customer_phone: str = "", payment_method: int = 0, voucher_id: str = "") -> str:
+async def confirm_booking_tool(
+    schedule_id: str,
+    seat_ids: list,
+    customer_email: str,
+    user_segment_id: str = "",
+    customer_name: str = "",
+    customer_phone: str = "",
+    payment_method: int = 0,
+    voucher_id: str = "",
+) -> str:
     """
-    Thực hiện đặt vé qua API hệ thống chính, khóa ghế và lấy link thanh toán.
-    Tham số:
-    - schedule_id: ID lịch chiếu
-    - seat_ids: Mảng danh sách Seat IDs
-    - customer_email: Email người nhận vé
-    - customer_name: Tên khách hàng (mặc định 'Chatbot User')
-    - customer_phone: Số điện thoại nhận thông báo
-    - payment_method: 0 = VNPAY, 1 = GOOGLEPAY, 2 = CASH
-    - voucher_id: ID Voucher cần áp dụng (nếu có)
+    Create a booking order and return structured JSON with the VNPay payment URL.
+    Every selected seat must include user_segment_id because the booking API prices by segment.
     """
-    url = f"{BACKEND_API_URL}/booking/create"
-    
-    payload = {
+    if not user_segment_id:
+        return _json_result({
+            "ok": False,
+            "type": "booking_confirmation",
+            "message": "Missing user_segment_id. Ask the customer to choose ticket type first.",
+        })
+
+    payload: dict[str, Any] = {
         "scheduleId": schedule_id,
-        "seatSelections": [{"seatId": sid} for sid in seat_ids],
+        "seatSelections": [{"seatId": seat_id, "userSegmentId": user_segment_id} for seat_id in seat_ids],
         "customerEmail": customer_email,
-        "customerName": customer_name or "Khách hàng Chatbot",
-        "customerPhone": customer_phone or "0901234567",
-        "paymentMethod": payment_method
+        "customerName": customer_name or "Chatbot Customer",
+        "customerPhone": customer_phone,
+        "paymentMethod": payment_method,
     }
-    
+
     if voucher_id and voucher_id.strip() not in ["", "null", "None", "undefined"]:
         payload["voucherId"] = voucher_id
-        
+
+    url = f"{BACKEND_API_URL}/booking/create"
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(url, json=payload)
-            if response.status_code == 200:
-                res_json = response.json()
-                is_success = res_json.get("isSuccess", False)
-                message = res_json.get("message", "")
-                data = res_json.get("data", {})
-                
-                if is_success:
-                    order_id = data.get("orderId")
-                    payment_url = data.get("paymentUrl")
-                    total_amount = data.get("totalAmount")
-                    
-                    reply = f"Đơn hàng của bạn đã được khởi tạo! Mã đơn: {order_id}. Tổng thanh toán: {total_amount:,} VND."
-                    if payment_url:
-                        reply += f" Vui lòng click vào liên kết sau để thanh toán: {payment_url}"
-                    return reply
-                else:
-                    return f"Không thể hoàn tất tạo đơn đặt vé: {message}"
-            else:
-                return f"Lỗi hệ thống backend: Mã HTTP {response.status_code}"
-    except Exception as e:
-        logger.error(f"Error confirming booking: {e}")
-        return f"Lỗi kết nối đặt vé: {str(e)}"
+
+        response_json = response.json() if response.content else {}
+        data = _response_data(response_json) or {}
+        is_success = response_json.get("isSuccess", response_json.get("IsSuccess", response.status_code < 400))
+        if response.status_code == 200 and is_success:
+            return _json_result({
+                "ok": True,
+                "type": "booking_confirmation",
+                "message": "Booking order created.",
+                "orderId": _field(data, "orderId"),
+                "paymentUrl": _field(data, "paymentUrl"),
+                "totalPrice": _field(data, "totalPrice"),
+                "totalQuantity": _field(data, "totalQuantity"),
+                "orderDate": _field(data, "orderDate"),
+            })
+
+        return _json_result({
+            "ok": False,
+            "type": "booking_confirmation",
+            "message": response_json.get("message") or response_json.get("Message") or "Booking creation failed.",
+            "statusCode": response.status_code,
+        })
+    except Exception as exc:
+        logger.error(f"Error confirming booking: {exc}")
+        return _json_result({
+            "ok": False,
+            "type": "booking_confirmation",
+            "message": f"Booking confirmation failed: {exc}",
+        })
