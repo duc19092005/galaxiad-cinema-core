@@ -5,9 +5,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Cinema.Infrastructure.Persistence.SeedData;
 
 /// <summary>
-/// Seeds surcharge percentages per Cinema, MovieFormat, and UserSegment.
+/// Seeds surcharge percentages per Cinema, MovieFormat, and ticket segment.
 /// SurchangePercent is added on top of the base MovieFormatPrice.
-/// Example: Adult=0% (base price), Student=-15% (discount), Child=-20%, Senior=-10%, Member=-5%, VIP=-25%
+/// Example: Adult=0% (base price), Student=-15% (discount), Child=-20%, Senior=-10%.
 /// </summary>
 public static class CinemaSurchargeSeedData
 {
@@ -28,9 +28,7 @@ public static class CinemaSurchargeSeedData
             { user_segments_constant.Adult, 0m },           // Base price - no adjustment
             { user_segments_constant.Student, -15.00m },    // 15% discount
             { user_segments_constant.Child, -20.00m },      // 20% discount
-            { user_segments_constant.SeniorCell, -10.00m }, // 10% discount
-            { user_segments_constant.MemberStandard, -5.00m },  // 5% discount
-            { user_segments_constant.MemberVIP, -25.00m },  // 25% discount (best deal)
+            { user_segments_constant.SeniorCell, -10.00m }  // 10% discount
         };
 
         // Movie Formats available at each cinema (from AuditoriumFormat seed)

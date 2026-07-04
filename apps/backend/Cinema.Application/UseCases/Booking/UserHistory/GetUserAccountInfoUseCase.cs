@@ -64,7 +64,9 @@ public class GetUserAccountInfoUseCase
             IdentityCode = decryptedIdentityCode,
             DateOfBirth = user.DateOfBirth,
             PhoneNumber = user.PhoneNumber,
-            RewardPoints = user.RewardPoints
+            RewardPoints = user.RewardPoints,
+            TotalPoint = user.CustomerProfileEntity?.TotalPoint ?? 0,
+            MembershipRank = user.CustomerProfileEntity?.MembershipRank ?? Cinema.Domain.Enums.MembershipRankEnum.Standard
         };
 
         var response = new BaseResponse<ResUserAccountInfoDto>

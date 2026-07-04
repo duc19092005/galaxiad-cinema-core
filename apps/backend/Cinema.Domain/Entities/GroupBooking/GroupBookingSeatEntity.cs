@@ -10,6 +10,8 @@ public class GroupBookingSeatEntity
 
     public Guid SeatId { get; set; }
 
+    public Guid UserSegmentId { get; set; }
+
     public bool IsConfirmed { get; set; }
 
     [Column(TypeName = "decimal(18,2)")]

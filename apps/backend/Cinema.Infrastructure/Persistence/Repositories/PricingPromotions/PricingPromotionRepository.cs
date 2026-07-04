@@ -7,7 +7,6 @@ using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 
 namespace Cinema.Infrastructure.Persistence.Repositories.PricingPromotions;
@@ -31,8 +30,6 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-                .ThenInclude(x => x.RequiredMembershipTierEntity)
             .Where(x => x.IsActive
                         && (!x.StartDate.HasValue || x.StartDate <= now)
                         && (!x.EndDate.HasValue || x.EndDate >= now)
@@ -50,8 +47,6 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-                .ThenInclude(x => x.RequiredMembershipTierEntity)
             .OrderByDescending(x => x.UpdatedAt)
             .ToListAsync();
     }
@@ -65,8 +60,6 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-                .ThenInclude(x => x.RequiredMembershipTierEntity)
             .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
     }
 
@@ -79,8 +72,6 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-                .ThenInclude(x => x.RequiredMembershipTierEntity)
             .FirstOrDefaultAsync(x => x.Slug == slug);
     }
 
@@ -94,8 +85,6 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
-            .Include(x => x.Rules)
-                .ThenInclude(x => x.RequiredMembershipTierEntity)
             .FirstOrDefaultAsync(x => x.Slug == slug
                                       && x.IsActive
                                       && (!x.StartDate.HasValue || x.StartDate <= now)
@@ -152,20 +141,14 @@ public class PricingPromotionRepository : IPricingPromotionRepository
             .ToListAsync();
     }
 
-    public async Task<List<UserSegmentsInfoEntity>> GetMembershipTiersAsync()
-    {
-        return await _dbContext.Set<UserSegmentsInfoEntity>()
-            .OrderBy(x => x.UserSegmentName)
-            .ToListAsync();
-    }
-
     public async Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(
         DateTime showDateUtc, 
         int showDayMask, 
         Guid movieFormatId, 
         Guid? cinemaId, 
         Guid auditoriumId, 
-        Guid? userSegmentId)
+        Guid? userSegmentId,
+        MembershipRankEnum? membershipRank)
     {
         return await _dbContext.Set<PricingPromotionRuleEntity>()
             .Include(x => x.PricingPromotionEntity)
@@ -178,7 +161,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                         && (!x.MovieFormatId.HasValue || x.MovieFormatId == movieFormatId)
                         && (!x.CinemaId.HasValue || x.CinemaId == cinemaId)
                         && (!x.AuditoriumId.HasValue || x.AuditoriumId == auditoriumId)
-                        && (!x.RequiredMembershipTierId.HasValue || x.RequiredMembershipTierId == userSegmentId)
+                        && (!x.RequiredMembershipRank.HasValue || x.RequiredMembershipRank == membershipRank)
                         && (x.DaysOfWeekMask & showDayMask) != 0)
             .ToListAsync();
     }

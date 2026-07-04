@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Enums;
 
 namespace Cinema.Domain.Entities.Promotions;
@@ -28,9 +27,7 @@ public class PricingPromotionRuleEntity
 
     public AuditoriumInfoEntities? AuditoriumInfoEntity { get; set; }
 
-    public Guid? RequiredMembershipTierId { get; set; }
-
-    public UserSegmentsInfoEntity? RequiredMembershipTierEntity { get; set; }
+    public MembershipRankEnum? RequiredMembershipRank { get; set; }
 
     public PromotionTypeEnum PromotionType { get; set; }
 

@@ -9,6 +9,7 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.UseCases.Booking.SocialBooking;
+using Cinema.Domain.Constants;
 
 namespace Cinema.Application.UseCases.Booking.BookingFlow;
 
@@ -138,31 +139,8 @@ public class ProcessVnPayCallbackUseCase
             // Credit points and mark voucher as used
             if (order.UserId.HasValue)
             {
-                var customerProfile = await _repo.GetCustomerProfileWithSegmentAsync(order.UserId.Value);
-
-                decimal earningMultiplier = 1m;
-                if (customerProfile?.UserSegmentsInfoEntity != null)
-                {
-                    var segmentName = customerProfile.UserSegmentsInfoEntity.UserSegmentName;
-                    if (segmentName == "VIP Member")
-                        earningMultiplier = 2m;
-                    else if (segmentName == "Student")
-                        earningMultiplier = 1.5m;
-                }
-
                 var ticketCount = await _repo.CountOrderDetailsAsync(order.OrderId);
-                var pointsFromPrice = (long)Math.Floor(order.TotalPrice / 10000m);
-                var pointsFromTickets = ticketCount * 10L;
-                var pointsEarned = Math.Max(1L, (long)Math.Floor((pointsFromPrice + pointsFromTickets) * earningMultiplier));
-
-                if (pointsEarned > 0)
-                {
-                    var user = await _repo.FindUserByIdAsync(order.UserId.Value);
-                    if (user != null)
-                    {
-                        user.RewardPoints += pointsEarned;
-                    }
-                }
+                await CreditLoyaltyPointsAsync(order.UserId.Value, order.TotalPrice, ticketCount);
 
                 if (order.VoucherId.HasValue)
                 {
@@ -228,8 +206,9 @@ public class ProcessVnPayCallbackUseCase
 
             foreach (var member in activeMembers)
             {
-                var order = await CreateBookedOrderForMemberAsync(member, session.MovieScheduleId, transactionId);
+                var order = CreateBookedOrderForMember(member, session.MovieScheduleId, transactionId);
                 await _repo.AddOrderAsync(order);
+                await CreditLoyaltyPointsAsync(member.UserId, order.TotalPrice, order.OrderDetailsInfo.Count);
                 if (firstOrderId == Guid.Empty)
                     firstOrderId = order.OrderId;
 
@@ -362,8 +341,9 @@ public class ProcessVnPayCallbackUseCase
 
         if (isSuccess)
         {
-            var order = await CreateBookedOrderForMemberAsync(member, session.MovieScheduleId, transactionId);
+            var order = CreateBookedOrderForMember(member, session.MovieScheduleId, transactionId);
             await _repo.AddOrderAsync(order);
+            await CreditLoyaltyPointsAsync(member.UserId, order.TotalPrice, order.OrderDetailsInfo.Count);
             orderId = order.OrderId;
 
             member.Status = GroupMemberStatusEnum.Paid;
@@ -504,18 +484,11 @@ public class ProcessVnPayCallbackUseCase
         return callbackAmount == expectedAmount;
     }
 
-    private async Task<OrderInfoEntity> CreateBookedOrderForMemberAsync(
+    private static OrderInfoEntity CreateBookedOrderForMember(
         GroupBookingMemberEntity member,
         Guid movieScheduleId,
         string transactionId)
     {
-        var userSegmentId = Guid.Parse("7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7");
-        var customerProfile = await _repo.GetCustomerProfileWithSegmentAsync(member.UserId);
-        if (customerProfile?.UserSegmentsInfoEntity != null)
-        {
-            userSegmentId = customerProfile.UserSegmentsInfoEntity.UserSegmentId;
-        }
-
         var order = new OrderInfoEntity
         {
             OrderId = Guid.NewGuid(),
@@ -539,7 +512,7 @@ public class ProcessVnPayCallbackUseCase
                 OrderId = order.OrderId,
                 SeatId = seat.SeatId,
                 MovieScheduleId = movieScheduleId,
-                UserSegmentId = userSegmentId,
+                UserSegmentId = seat.UserSegmentId == Guid.Empty ? user_segments_constant.Adult : seat.UserSegmentId,
                 PriceEach = seat.PriceEach,
                 BaseFormatPriceSnapshot = seat.PriceEach,
                 PricingAdjustmentAmount = 0,
@@ -550,5 +523,29 @@ public class ProcessVnPayCallbackUseCase
         }
 
         return order;
+    }
+
+    private async Task CreditLoyaltyPointsAsync(Guid userId, decimal paidAmount, int ticketCount)
+    {
+        var customerProfile = await _repo.GetCustomerProfileAsync(userId);
+        var earningMultiplier = customerProfile?.MembershipRank == MembershipRankEnum.VIP ? 2m : 1m;
+        var pointsFromPrice = (long)Math.Floor(paidAmount / 10000m);
+        var pointsFromTickets = ticketCount * 10L;
+        var pointsEarned = Math.Max(1L, (long)Math.Floor((pointsFromPrice + pointsFromTickets) * earningMultiplier));
+
+        var user = await _repo.FindUserByIdAsync(userId);
+        if (user != null)
+        {
+            user.RewardPoints += pointsEarned;
+        }
+
+        if (customerProfile != null)
+        {
+            customerProfile.TotalPoint += pointsEarned;
+            if (customerProfile.TotalPoint >= 1000m)
+            {
+                customerProfile.MembershipRank = MembershipRankEnum.VIP;
+            }
+        }
     }
 }

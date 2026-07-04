@@ -40,12 +40,7 @@ public class GetPricingUseCase
         var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
         var formatId = schedule.MovieFormatId;
 
-        bool hasHighRole = _userContextService.IsInRole("Admin") || 
-                           _userContextService.IsInRole("MovieManager") || 
-                           _userContextService.IsInRole("TheaterManager") || 
-                           _userContextService.IsInRole("FacilitiesManager");
-
-        var segments = await _repository.GetSegmentsAsync(hasHighRole);
+        var segments = await _repository.GetSegmentsAsync();
         var surcharges = await _repository.GetCinemaSurchargesAsync(cinemaId ?? Guid.Empty, formatId);
 
         var segmentPrices = new List<SegmentPriceDto>();

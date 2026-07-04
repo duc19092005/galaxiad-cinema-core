@@ -29,16 +29,6 @@ public static class SeedDataUserSegmentsInfos
                 UserSegmentId = user_segments_constant.SeniorCell,
                 UserSegmentName = "Senior",
                 UserSegmentDescription = "Senior citizens aged 60 and above with a valid ID."
-            },
-            new() {
-                UserSegmentId = user_segments_constant.MemberStandard,
-                UserSegmentName = "Standard Member",
-                UserSegmentDescription = "Registered members with basic loyalty benefits."
-            },
-            new() {
-                UserSegmentId = user_segments_constant.MemberVIP,
-                UserSegmentName = "VIP Member",
-                UserSegmentDescription = "High-tier members with premium discounts and exclusive offers."
             }
         });
     }

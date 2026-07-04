@@ -40,6 +40,7 @@ const getPromotionTypes = (t: (key: string) => string): { value: PromotionTypeNa
 interface ConditionState {
   movieFormatIds: string[];
   cinemaIds: string[];
+  requiredMembershipRank: number | null;
   promotionType: PromotionTypeName;
   adjustmentValue: number;
   timeFrom: string;
@@ -75,6 +76,7 @@ const DAY_VALUES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 const createCondition = (): ConditionState => ({
   movieFormatIds: [],
   cinemaIds: [],
+  requiredMembershipRank: null,
   promotionType: 'FixedTicketPrice',
   adjustmentValue: 45000,
   timeFrom: '00:00',
@@ -174,6 +176,7 @@ const buildFormFromPromotion = (p: PricingPromotionDto): WizardFormState => {
     const existing = groups.find(g =>
       g.promotionType === rule.promotionTypeName &&
       g.adjustmentValue === rule.adjustmentValue &&
+      g.requiredMembershipRank === (rule.requiredMembershipRank == null ? null : Number(rule.requiredMembershipRank)) &&
       g.timeFrom === toTimeInput(rule.timeFrom) &&
       g.timeTo === toTimeInput(rule.timeTo) &&
       g.startDate === toDateInput(rule.startDate) &&
@@ -190,6 +193,7 @@ const buildFormFromPromotion = (p: PricingPromotionDto): WizardFormState => {
       groups.push({
         movieFormatIds: rule.movieFormatId ? [rule.movieFormatId] : [],
         cinemaIds: rule.cinemaId ? [rule.cinemaId] : [],
+        requiredMembershipRank: rule.requiredMembershipRank == null ? null : Number(rule.requiredMembershipRank),
         promotionType: rule.promotionTypeName as PromotionTypeName,
         adjustmentValue: rule.adjustmentValue,
         timeFrom: toTimeInput(rule.timeFrom),
@@ -221,6 +225,7 @@ const toPayload = (form: WizardFormState): PricingPromotionUpsertDto => {
   const rules: PricingPromotionRuleRequestDto[] = form.conditions.map(cond => ({
     movieFormatIds: cond.movieFormatIds.length > 0 ? cond.movieFormatIds : [],
     cinemaIds: cond.cinemaIds.length > 0 ? cond.cinemaIds : [],
+    requiredMembershipRank: cond.requiredMembershipRank,
     promotionType: cond.promotionType,
     adjustmentValue: cond.adjustmentValue,
     startDate: toApiDate(cond.startDate),
@@ -468,6 +473,31 @@ const ConditionCard: React.FC<{
                 const isAct = cond.cinemaIds.length === 0 || cond.cinemaIds.includes(c.id);
                 return (
                   <PillButton key={c.id} label={c.name} active={isAct} onClick={() => toggleCinema(c.id)} />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Membership rank */}
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Hạng thành viên
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <PillButton
+                label="Tất cả hạng"
+                active={cond.requiredMembershipRank === null}
+                onClick={() => onUpdate({ requiredMembershipRank: null })}
+              />
+              {options.membershipTiers.map(rank => {
+                const rankValue = Number(rank.id);
+                return (
+                  <PillButton
+                    key={rank.id}
+                    label={rank.name}
+                    active={cond.requiredMembershipRank === rankValue}
+                    onClick={() => onUpdate({ requiredMembershipRank: rankValue })}
+                  />
                 );
               })}
             </div>

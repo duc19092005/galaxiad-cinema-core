@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
@@ -23,15 +24,15 @@ public class BookingPricingRepository : IBookingPricingRepository
             .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);
     }
 
-    public async Task<List<UserSegmentsInfoEntity>> GetSegmentsAsync(bool hasHighRole)
+    public async Task<List<UserSegmentsInfoEntity>> GetSegmentsAsync()
     {
-        var query = _dbContext.Set<UserSegmentsInfoEntity>().AsQueryable();
-        if (!hasHighRole)
-        {
-            query = query.Where(seg => seg.UserSegmentName == "Adult" || seg.UserSegmentName == "Child");
-        }
-
-        return await query.ToListAsync();
+        return await _dbContext.Set<UserSegmentsInfoEntity>()
+            .Where(seg => user_segments_constant.TicketSegmentIds.Contains(seg.UserSegmentId))
+            .OrderBy(seg => seg.UserSegmentName == "Adult" ? 0 :
+                            seg.UserSegmentName == "Student" ? 1 :
+                            seg.UserSegmentName == "Child" ? 2 :
+                            seg.UserSegmentName == "Senior" ? 3 : 4)
+            .ToListAsync();
     }
 
     public async Task<List<CinemaSurchargeInfosEntity>> GetCinemaSurchargesAsync(Guid cinemaId, Guid formatId)

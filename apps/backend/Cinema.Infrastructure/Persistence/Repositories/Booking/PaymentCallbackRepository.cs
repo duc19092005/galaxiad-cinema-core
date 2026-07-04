@@ -21,10 +21,9 @@ public class PaymentCallbackRepository : IPaymentCallbackRepository
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
     }
 
-    public async Task<CustomerProfileEntity?> GetCustomerProfileWithSegmentAsync(Guid userId)
+    public async Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid userId)
     {
         return await _dbContext.Set<CustomerProfileEntity>()
-            .Include(cp => cp.UserSegmentsInfoEntity)
             .FirstOrDefaultAsync(cp => cp.UserId == userId);
     }
 

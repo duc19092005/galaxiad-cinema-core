@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Cinema.Domain.Entities.Promotions;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
-using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.Interfaces.PricingPromotions;
 
@@ -25,7 +25,6 @@ public interface IPricingPromotionRepository
     Task<List<MovieFormatInfoEntity>> GetMovieFormatsAsync();
     Task<List<CinemaInfoEntity>> GetCinemasAsync();
     Task<List<AuditoriumInfoEntities>> GetAuditoriumsAsync();
-    Task<List<UserSegmentsInfoEntity>> GetMembershipTiersAsync();
     
     // Calculation
     Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(
@@ -34,6 +33,7 @@ public interface IPricingPromotionRepository
         Guid movieFormatId, 
         Guid? cinemaId, 
         Guid auditoriumId, 
-        Guid? userSegmentId);
+        Guid? userSegmentId,
+        MembershipRankEnum? membershipRank);
     Task<bool> IsHolidayAsync(DateTime vietnamDate);
 }

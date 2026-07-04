@@ -38,7 +38,6 @@ public class UserBookingRepository : IUserBookingRepository
     {
         return await _dbContext.Set<UserInfoEntity>()
             .Include(u => u.CustomerProfileEntity!)
-                .ThenInclude(cp => cp.UserSegmentsInfoEntity!)
             .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 

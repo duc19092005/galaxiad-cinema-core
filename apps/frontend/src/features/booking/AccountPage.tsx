@@ -5,7 +5,7 @@ import {
     History, ChevronLeft, Loader2, AlertCircle,
     Ticket, MapPin, Clock, CheckCircle2, Timer,
     ExternalLink, Lock, Edit2, Check, X,
-    Sparkles
+    Sparkles, Trophy
 } from 'lucide-react';
 import { bookingApi } from '../../api/bookingApi';
 import { authApi } from '../../api/authApi';
@@ -188,6 +188,11 @@ const AccountPage: React.FC = () => {
         }
     };
 
+    const getMembershipRankLabel = (rank?: number | string) => {
+        if (rank === 1 || rank === '1' || rank === 'VIP') return 'VIP';
+        return 'Standard';
+    };
+
     if (loading) {
         return (
             <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -294,7 +299,13 @@ const AccountPage: React.FC = () => {
                         </p>
                         {accountInfo?.rewardPoints !== undefined && (
                             <p style={{ color: 'var(--primary, #ff8a00)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 'bold', margin: '6px 0 0' }}>
-                                <Sparkles size={16} /> {accountInfo.rewardPoints} points
+                                <Sparkles size={16} /> Điểm đổi voucher: {accountInfo.rewardPoints.toLocaleString('vi-VN')}
+                            </p>
+                        )}
+                        {accountInfo?.totalPoint !== undefined && (
+                            <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 700, margin: '6px 0 0' }}>
+                                <Trophy size={16} style={{ color: 'var(--accent)' }} />
+                                Hạng {getMembershipRankLabel(accountInfo.membershipRank)} · Điểm nâng hạng: {accountInfo.totalPoint.toLocaleString('vi-VN')}
                             </p>
                         )}
                     </div>

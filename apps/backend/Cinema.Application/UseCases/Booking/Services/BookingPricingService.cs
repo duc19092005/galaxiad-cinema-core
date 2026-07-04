@@ -5,6 +5,7 @@ using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.UseCases.Booking.Services;
 
@@ -24,7 +25,8 @@ public class BookingPricingService
     public async Task<(List<OrderDetailsInfo> Details, decimal TotalPrice)> CalculateSeatPricesAsync(
         MovieScheduleInfoEntity schedule,
         List<SeatSelectionDto> seatSelections,
-        Guid orderId)
+        Guid orderId,
+        MembershipRankEnum? membershipRank = null)
     {
         var basePrice = schedule.MovieFormatInfoEntity?.MovieFormatPrice ?? 0;
         var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId;
@@ -47,7 +49,8 @@ public class BookingPricingService
             var promotionPrice = await _calculatePricingPromotionUseCase.ExecuteAsync(
                 schedule,
                 priceBeforePromotion,
-                sel.UserSegmentId);
+                sel.UserSegmentId,
+                membershipRank);
             var priceEach = Math.Round(promotionPrice.FinalPrice, 0);
             totalPrice += priceEach;
 
@@ -72,14 +75,9 @@ public class BookingPricingService
 
     public static decimal CalculateRoleDiscountPercent(CustomerProfileEntity? customerProfile)
     {
-        if (customerProfile?.UserSegmentsInfoEntity == null)
-            return 5;
-
-        var segmentName = customerProfile.UserSegmentsInfoEntity.UserSegmentName;
-        return segmentName switch
+        return customerProfile?.MembershipRank switch
         {
-            "VIP Member" => 15,
-            "Student" => 10,
+            MembershipRankEnum.VIP => 15,
             _ => 5
         };
     }

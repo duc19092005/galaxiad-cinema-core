@@ -367,10 +367,7 @@ public class CinemaDbContext : DbContext
                 .HasForeignKey(x => x.AuditoriumId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(x => x.RequiredMembershipTierEntity)
-                .WithMany()
-                .HasForeignKey(x => x.RequiredMembershipTierId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(x => x.RequiredMembershipRank).HasConversion<int?>();
         });
 
         modelBuilder.Entity<HolidayCalendarEntity>(entity =>

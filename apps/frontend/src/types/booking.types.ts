@@ -77,6 +77,8 @@ export interface UserAccountInfo {
     dateOfBirth: string;
     phoneNumber: string;
     rewardPoints?: number;
+    totalPoint?: number;
+    membershipRank?: number | string;
 }
 
 export interface BookingHistoryItem {

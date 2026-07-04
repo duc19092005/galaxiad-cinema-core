@@ -22,7 +22,8 @@ public class CalculatePricingPromotionUseCase
     public async Task<PricingPromotionCalculationResult> ExecuteAsync(
         MovieScheduleInfoEntity schedule,
         decimal currentPrice,
-        Guid? userSegmentId = null)
+        Guid? userSegmentId = null,
+        MembershipRankEnum? membershipRank = null)
     {
         var result = new PricingPromotionCalculationResult
         {
@@ -43,7 +44,8 @@ public class CalculatePricingPromotionUseCase
             schedule.MovieFormatId,
             cinemaId,
             schedule.AuditoriumId,
-            userSegmentId);
+            userSegmentId,
+            membershipRank);
 
         var matchingRules = new List<PricingPromotionRuleEntity>();
         foreach (var rule in rules)
@@ -117,4 +119,3 @@ public class CalculatePricingPromotionUseCase
         return Math.Max(0, Math.Round(next, 0));
     }
 }
-

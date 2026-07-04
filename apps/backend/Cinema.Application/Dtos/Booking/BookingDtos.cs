@@ -266,6 +266,8 @@ public class ResUserAccountInfoDto
     public DateTime DateOfBirth { get; set; }
     public string PhoneNumber { get; set; } = string.Empty;
     public long RewardPoints { get; set; }
+    public decimal TotalPoint { get; set; }
+    public Cinema.Domain.Enums.MembershipRankEnum MembershipRank { get; set; }
 }
 
 public class ResUserBookingHistoryDto

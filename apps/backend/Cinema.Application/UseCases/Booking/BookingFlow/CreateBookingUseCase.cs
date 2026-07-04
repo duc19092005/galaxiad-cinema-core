@@ -67,12 +67,13 @@ public class CreateBookingUseCase
 
             var schedule = await ValidateScheduleAsync(request.ScheduleId);
             await ValidateSeatsAsync(schedule, request);
+            var customerProfile = await GetCustomerProfileAsync(orderUserId);
 
             var orderId = Guid.NewGuid();
             var (orderDetails, totalPrice) = await _pricingService.CalculateSeatPricesAsync(
-                schedule, request.SeatSelections, orderId);
+                schedule, request.SeatSelections, orderId, customerProfile?.MembershipRank);
 
-            var roleDiscountPercent = await GetRoleDiscountAsync(orderUserId);
+            var roleDiscountPercent = BookingPricingService.CalculateRoleDiscountPercent(customerProfile);
             var voucherDiscountPercent = await _voucherService.ValidateAndCalculateVoucherDiscountAsync(request, orderUserId);
             var finalPrice = BookingVoucherService.ApplyDiscounts(totalPrice, roleDiscountPercent, voucherDiscountPercent, orderDetails);
 
@@ -228,11 +229,11 @@ public class CreateBookingUseCase
         }
     }
 
-    private async Task<decimal> GetRoleDiscountAsync(Guid? userId)
+    private async Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid? userId)
     {
-        if (!userId.HasValue) return 0;
-        var customerProfile = await _orderRepository.GetCustomerProfileAsync(userId.Value);
-        return BookingPricingService.CalculateRoleDiscountPercent(customerProfile);
+        return userId.HasValue
+            ? await _orderRepository.GetCustomerProfileAsync(userId.Value)
+            : null;
     }
 
     private async Task<(string? Name, string? Email, string? Phone)> ResolveCustomerInfoAsync(

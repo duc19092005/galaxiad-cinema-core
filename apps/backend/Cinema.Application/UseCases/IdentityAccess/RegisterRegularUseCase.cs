@@ -109,7 +109,7 @@ public class IdentityAccessRegularRegisterUseCase : IAddBehavior<ReqRegularRegis
             {
                 UserId = generateUserId,
                 TotalPoint = 0,
-                UserSegmentId = user_segments_constant.MemberStandard
+                MembershipRank = MembershipRankEnum.Standard
             });
 
             await _unitOfWork.SaveChangesAsync();

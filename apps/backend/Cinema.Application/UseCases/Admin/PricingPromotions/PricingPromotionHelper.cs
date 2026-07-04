@@ -28,7 +28,7 @@ public static class PricingPromotionHelper
                     MovieFormatId = formatId,
                     CinemaId = cinemaId,
                     AuditoriumId = dto.AuditoriumId,
-                    RequiredMembershipTierId = dto.RequiredMembershipTierId,
+                    RequiredMembershipRank = dto.RequiredMembershipRank,
                     PromotionType = dto.PromotionType,
                     AdjustmentValue = dto.AdjustmentValue,
                     StartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate),
@@ -80,8 +80,8 @@ public static class PricingPromotionHelper
             CinemaName = rule.CinemaInfoEntity?.CinemaName,
             AuditoriumId = rule.AuditoriumId,
             AuditoriumNumber = rule.AuditoriumInfoEntity?.AuditoriumNumber,
-            RequiredMembershipTierId = rule.RequiredMembershipTierId,
-            RequiredMembershipTierName = rule.RequiredMembershipTierEntity?.UserSegmentName,
+            RequiredMembershipRank = rule.RequiredMembershipRank,
+            RequiredMembershipRankName = rule.RequiredMembershipRank?.ToString(),
             PromotionType = rule.PromotionType,
             PromotionTypeName = rule.PromotionType.ToString(),
             AdjustmentValue = rule.AdjustmentValue,
@@ -133,4 +133,3 @@ public static class PricingPromotionHelper
         return string.IsNullOrWhiteSpace(slug) ? Guid.NewGuid().ToString("N")[..12] : slug;
     }
 }
-

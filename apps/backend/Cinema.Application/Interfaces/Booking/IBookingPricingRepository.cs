@@ -7,6 +7,6 @@ namespace Cinema.Application.Interfaces.Booking;
 public interface IBookingPricingRepository
 {
     Task<MovieScheduleInfoEntity?> GetScheduleForPricingAsync(Guid scheduleId);
-    Task<List<UserSegmentsInfoEntity>> GetSegmentsAsync(bool hasHighRole);
+    Task<List<UserSegmentsInfoEntity>> GetSegmentsAsync();
     Task<List<CinemaSurchargeInfosEntity>> GetCinemaSurchargesAsync(Guid cinemaId, Guid formatId);
 }

@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.UseCases.Admin.PricingPromotions;
 
@@ -19,15 +20,14 @@ public class GetPricingPromotionOptionsUseCase
         var formats = await _repository.GetMovieFormatsAsync();
         var cinemas = await _repository.GetCinemasAsync();
         var auditoriums = await _repository.GetAuditoriumsAsync();
-        var membershipTiers = await _repository.GetMembershipTiersAsync();
-
         return new PricingPromotionOptionsDto
         {
-            Formats = formats.Select(x => new PricingPromotionOptionDto { Id = x.MovieFormatId, Name = x.MovieFormatName }).ToList(),
-            Cinemas = cinemas.Select(x => new PricingPromotionOptionDto { Id = x.CinemaId, Name = x.CinemaName }).ToList(),
-            Auditoriums = auditoriums.Select(x => new PricingPromotionOptionDto { Id = x.AuditoriumId, Name = x.AuditoriumNumber }).ToList(),
-            MembershipTiers = membershipTiers.Select(x => new PricingPromotionOptionDto { Id = x.UserSegmentId, Name = x.UserSegmentName }).ToList()
+            Formats = formats.Select(x => new PricingPromotionOptionDto { Id = x.MovieFormatId.ToString(), Name = x.MovieFormatName }).ToList(),
+            Cinemas = cinemas.Select(x => new PricingPromotionOptionDto { Id = x.CinemaId.ToString(), Name = x.CinemaName }).ToList(),
+            Auditoriums = auditoriums.Select(x => new PricingPromotionOptionDto { Id = x.AuditoriumId.ToString(), Name = x.AuditoriumNumber }).ToList(),
+            MembershipTiers = System.Enum.GetValues<MembershipRankEnum>()
+                .Select(x => new PricingPromotionOptionDto { Id = ((int)x).ToString(), Name = x.ToString() })
+                .ToList()
         };
     }
 }
-

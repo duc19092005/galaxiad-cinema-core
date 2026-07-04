@@ -121,8 +121,8 @@ export interface PublicPromotionRule {
     cinemaName: string | null;
     auditoriumId: string | null;
     auditoriumName: string | null;
-    requiredMembershipTierId: string | null;
-    requiredMembershipTierName: string | null;
+    requiredMembershipRank: number | string | null;
+    requiredMembershipRankName: string | null;
     promotionType: number | string;
     promotionTypeName: string;
     adjustmentValue: number;

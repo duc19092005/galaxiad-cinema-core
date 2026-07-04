@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Cinema.Domain.Enums;
 // ReSharper disable All
 
 namespace Cinema.Domain.Entities.UserInfos;
@@ -12,9 +13,7 @@ public class CustomerProfileEntity
     [Column(TypeName = "decimal(18,2)")]
     public decimal TotalPoint { get; set; } = 0;
 
-    public Guid UserSegmentId { get; set; }
-
-    public UserSegmentsInfoEntity UserSegmentsInfoEntity { get; set; } = null!;
+    public MembershipRankEnum MembershipRank { get; set; } = MembershipRankEnum.Standard;
 
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
 }

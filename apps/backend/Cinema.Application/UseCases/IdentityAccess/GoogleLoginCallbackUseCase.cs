@@ -177,7 +177,7 @@ public class GoogleLoginCallbackUseCase
                 {
                     UserId = userId,
                     TotalPoint = 0,
-                    UserSegmentId = user_segments_constant.MemberStandard
+                    MembershipRank = MembershipRankEnum.Standard
                 });
 
                 await _unitOfWork.SaveChangesAsync();

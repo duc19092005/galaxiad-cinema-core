@@ -100,6 +100,7 @@ public class ConfirmGroupMemberSeatsUseCase
             GroupSeatId = Guid.NewGuid(),
             MemberId = member.MemberId,
             SeatId = selection.SeatId,
+            UserSegmentId = selection.UserSegmentId,
             PriceEach = pricesBySeat.GetValueOrDefault(selection.SeatId),
             IsConfirmed = true,
             SelectedAt = DateTime.UtcNow
