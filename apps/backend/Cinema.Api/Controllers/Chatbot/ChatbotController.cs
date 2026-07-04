@@ -64,7 +64,10 @@ public class ChatbotController : ControllerBase
                     result.Data?.Intent,
                     result.Data?.IsAuthorized,
                     result.Data?.ReferencedMovies,
-                    result.Data?.ReferencedSchedules
+                    result.Data?.ReferencedSchedules,
+                    result.Data?.UiActions,
+                    result.Data?.BookingState,
+                    result.Data?.OrderId
                 });
             }
             else
