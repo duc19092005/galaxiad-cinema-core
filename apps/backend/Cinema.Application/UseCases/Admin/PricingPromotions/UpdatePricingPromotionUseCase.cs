@@ -54,8 +54,11 @@ public class UpdatePricingPromotionUseCase
         promotion.UpdatedAt = DateTime.UtcNow;
         promotion.UpdatedBy = TryGetUserId();
 
-        _repository.RemovePromotionRulesRange(promotion.Rules);
-        promotion.Rules = dto.Rules.SelectMany(PricingPromotionHelper.BuildRules).ToList();
+        promotion.Rules.Clear();
+        foreach (var rule in dto.Rules.SelectMany(PricingPromotionHelper.BuildRules))
+        {
+            promotion.Rules.Add(rule);
+        }
 
         _repository.UpdatePromotion(promotion);
         await _unitOfWork.SaveChangesAsync();
