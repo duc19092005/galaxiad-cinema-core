@@ -528,7 +528,18 @@ public class ProcessVnPayCallbackUseCase
     private async Task CreditLoyaltyPointsAsync(Guid userId, decimal paidAmount, int ticketCount)
     {
         var customerProfile = await _repo.GetCustomerProfileAsync(userId);
-        var earningMultiplier = customerProfile?.MembershipRank == MembershipRankEnum.VIP ? 2m : 1m;
+        var earningMultiplier = 1m;
+        if (customerProfile != null)
+        {
+            earningMultiplier = customerProfile.MembershipRank switch
+            {
+                MembershipRankEnum.Diamond => 3m,
+                MembershipRankEnum.Gold => 2.5m,
+                MembershipRankEnum.VIP => 2m,
+                _ => 1m
+            };
+        }
+
         var pointsFromPrice = (long)Math.Floor(paidAmount / 10000m);
         var pointsFromTickets = ticketCount * 10L;
         var pointsEarned = Math.Max(1L, (long)Math.Floor((pointsFromPrice + pointsFromTickets) * earningMultiplier));
@@ -542,7 +553,15 @@ public class ProcessVnPayCallbackUseCase
         if (customerProfile != null)
         {
             customerProfile.TotalPoint += pointsEarned;
-            if (customerProfile.TotalPoint >= 1000m)
+            if (customerProfile.TotalPoint >= 5000m)
+            {
+                customerProfile.MembershipRank = MembershipRankEnum.Diamond;
+            }
+            else if (customerProfile.TotalPoint >= 2000m)
+            {
+                customerProfile.MembershipRank = MembershipRankEnum.Gold;
+            }
+            else if (customerProfile.TotalPoint >= 1000m)
             {
                 customerProfile.MembershipRank = MembershipRankEnum.VIP;
             }

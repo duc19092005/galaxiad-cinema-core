@@ -4,16 +4,19 @@ using Cinema.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Cinema.Infrastructure.Migrations
+namespace Cinema.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260704205638_AddVoucherMembershipRanks")]
+    partial class AddVoucherMembershipRanks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3513,6 +3516,9 @@ namespace Cinema.Infrastructure.Migrations
                     b.Property<int>("PromotionType")
                         .HasColumnType("int");
 
+                    b.Property<int?>("RequiredMembershipRank")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("datetime2");
 
@@ -3521,9 +3527,6 @@ namespace Cinema.Infrastructure.Migrations
 
                     b.Property<TimeSpan?>("TimeTo")
                         .HasColumnType("time");
-
-                    b.Property<Guid?>("UserSegmentId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("PricingPromotionRuleId");
 
@@ -3534,8 +3537,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.HasIndex("MovieFormatId");
 
                     b.HasIndex("PricingPromotionId");
-
-                    b.HasIndex("UserSegmentId");
 
                     b.HasIndex("TimeFrom", "TimeTo");
 
@@ -5672,11 +5673,6 @@ namespace Cinema.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity", "UserSegmentsInfoEntity")
-                        .WithMany()
-                        .HasForeignKey("UserSegmentId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("AuditoriumInfoEntity");
 
                     b.Navigation("CinemaInfoEntity");
@@ -5684,8 +5680,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("MovieFormatInfoEntity");
 
                     b.Navigation("PricingPromotionEntity");
-
-                    b.Navigation("UserSegmentsInfoEntity");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.UserInfos.CustomerProfileEntity", b =>

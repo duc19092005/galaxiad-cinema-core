@@ -372,6 +372,7 @@ public static class Messages
         public const string ExpiredOrNotActive = "Voucher has expired or is not yet active";
         public const string UserNotFound = "User not found";
         public const string NotEligible = "User is not eligible for this voucher (role mismatch)";
+        public const string RankNotEligible = "User is not eligible for this voucher (membership rank mismatch).";
         public const string GuestsCannotApply = "Guests cannot apply vouchers.";
         public const string InvalidOrUsed = "Voucher is invalid or has already been used.";
         public const string ExpiredOrInactive = "Voucher has expired or is not active yet.";

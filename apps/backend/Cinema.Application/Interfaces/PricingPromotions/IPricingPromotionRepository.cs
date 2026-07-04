@@ -25,6 +25,7 @@ public interface IPricingPromotionRepository
     Task<List<MovieFormatInfoEntity>> GetMovieFormatsAsync();
     Task<List<CinemaInfoEntity>> GetCinemasAsync();
     Task<List<AuditoriumInfoEntities>> GetAuditoriumsAsync();
+    Task<List<Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity>> GetUserSegmentsAsync();
     
     // Calculation
     Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(

@@ -23,6 +23,7 @@ public class VoucherRepository : IVoucherRepository
     {
         return await _dbContext.Set<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
+            .Include(v => v.VoucherMembershipRanks)
             .FirstOrDefaultAsync(v => v.voucherId == voucherId);
     }
 
@@ -59,6 +60,7 @@ public class VoucherRepository : IVoucherRepository
     {
         return await _dbContext.Set<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
+            .Include(v => v.VoucherMembershipRanks)
             .Select(v => new VoucherDto
             {
                 VoucherId = v.voucherId,
@@ -73,7 +75,8 @@ public class VoucherRepository : IVoucherRepository
                 VoucherPointsCost = v.VoucherPointsCost,
                 VoucherQuantity = v.VoucherQuantity,
                 RemainingQuantity = v.RemainingQuantity,
-                IsActive = v.IsValid(null)
+                IsActive = v.IsValid(null),
+                TargetRanks = v.VoucherMembershipRanks.Select(vr => vr.MembershipRank).ToList()
             })
             .ToListAsync();
     }
@@ -83,6 +86,7 @@ public class VoucherRepository : IVoucherRepository
         var now = DateTime.UtcNow;
         return await _dbContext.Set<VoucherInfoEntity>()
             .Include(v => v.RoleListInfoEntity)
+            .Include(v => v.VoucherMembershipRanks)
             .Where(v => v.RemainingQuantity > 0 && 
                         (v.ValidFrom == null || v.ValidFrom <= now) &&
                         (v.ValidTo == null || v.ValidTo >= now))
@@ -100,7 +104,8 @@ public class VoucherRepository : IVoucherRepository
                 VoucherPointsCost = v.VoucherPointsCost,
                 VoucherQuantity = v.VoucherQuantity,
                 RemainingQuantity = v.RemainingQuantity,
-                IsActive = true
+                IsActive = true,
+                TargetRanks = v.VoucherMembershipRanks.Select(vr => vr.MembershipRank).ToList()
             })
             .ToListAsync();
     }
@@ -130,7 +135,9 @@ public class VoucherRepository : IVoucherRepository
 
     public async Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
     {
-        return await _dbContext.Set<UserInfoEntity>().FindAsync(userId);
+        return await _dbContext.Set<UserInfoEntity>()
+            .Include(u => u.CustomerProfileEntity)
+            .FirstOrDefaultAsync(u => u.UserId == userId);
     }
 
     public async Task<bool> UserHasRoleAsync(Guid userId, Guid roleId)

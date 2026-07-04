@@ -11,14 +11,14 @@ using Cinema.Domain.Constants;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Localization;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetMyBookingsTool : IChatTool
+public class GetMyBookingsContextProvider : IChatContextProvider
 {
     private readonly IUserBookingRepository _repo;
     private readonly IUserContextService _userContextService;
 
-    public GetMyBookingsTool(IUserBookingRepository repo, IUserContextService userContextService)
+    public GetMyBookingsContextProvider(IUserBookingRepository repo, IUserContextService userContextService)
     {
         _repo = repo;
         _userContextService = userContextService;

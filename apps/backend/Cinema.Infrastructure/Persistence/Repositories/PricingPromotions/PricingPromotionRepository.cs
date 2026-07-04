@@ -47,6 +47,8 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
+            .Include(x => x.Rules)
+                .ThenInclude(x => x.UserSegmentsInfoEntity)
             .OrderByDescending(x => x.UpdatedAt)
             .ToListAsync();
     }
@@ -60,6 +62,8 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
+            .Include(x => x.Rules)
+                .ThenInclude(x => x.UserSegmentsInfoEntity)
             .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
     }
 
@@ -72,6 +76,8 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
+            .Include(x => x.Rules)
+                .ThenInclude(x => x.UserSegmentsInfoEntity)
             .FirstOrDefaultAsync(x => x.Slug == slug);
     }
 
@@ -85,6 +91,8 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.CinemaInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.AuditoriumInfoEntity)
+            .Include(x => x.Rules)
+                .ThenInclude(x => x.UserSegmentsInfoEntity)
             .FirstOrDefaultAsync(x => x.Slug == slug
                                       && x.IsActive
                                       && (!x.StartDate.HasValue || x.StartDate <= now)
@@ -141,6 +149,13 @@ public class PricingPromotionRepository : IPricingPromotionRepository
             .ToListAsync();
     }
 
+    public async Task<List<Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity>> GetUserSegmentsAsync()
+    {
+        return await _dbContext.Set<Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity>()
+            .OrderBy(x => x.UserSegmentName)
+            .ToListAsync();
+    }
+
     public async Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(
         DateTime showDateUtc, 
         int showDayMask, 
@@ -161,7 +176,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                         && (!x.MovieFormatId.HasValue || x.MovieFormatId == movieFormatId)
                         && (!x.CinemaId.HasValue || x.CinemaId == cinemaId)
                         && (!x.AuditoriumId.HasValue || x.AuditoriumId == auditoriumId)
-                        && (!x.RequiredMembershipRank.HasValue || x.RequiredMembershipRank == membershipRank)
+                        && (!x.UserSegmentId.HasValue || x.UserSegmentId == userSegmentId)
                         && (x.DaysOfWeekMask & showDayMask) != 0)
             .ToListAsync();
     }

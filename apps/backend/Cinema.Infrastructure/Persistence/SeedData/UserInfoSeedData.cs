@@ -22,6 +22,11 @@ public static class SeedDataUserInfos
         var bhdTicketPosId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31");
         var bhdFoodPosId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32");
 
+        var customerStandardId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
+        var customerVipId = Guid.Parse("c0000000-0000-0000-0000-000000000002");
+        var customerGoldId = Guid.Parse("c0000000-0000-0000-0000-000000000003");
+        var customerDiamondId = Guid.Parse("c0000000-0000-0000-0000-000000000004");
+
         const string adminPasswordHash = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi";
         const string departmentPasswordHash = "$2a$12$yDhsoUoUEcJKNcTFGo3gwugzOT7glSqRHVP2pk7yV6xeWQMUrAWuu";
 
@@ -147,6 +152,54 @@ public static class SeedDataUserInfos
                 PhoneNumber = "0999000032",
                 DateOfBirth = new DateTime(1990, 1, 1),
                 IdentityCode = "POS_BHD_FOOD"
+            },
+            new UserInfoEntity
+            {
+                UserId = customerStandardId,
+                UserEmail = "customer.standard@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Khách Hàng Standard",
+                PhoneNumber = "0900000001",
+                DateOfBirth = new DateTime(1995, 1, 1),
+                IdentityCode = "111111111111"
+            },
+            new UserInfoEntity
+            {
+                UserId = customerVipId,
+                UserEmail = "customer.vip@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Khách Hàng VIP",
+                PhoneNumber = "0900000002",
+                DateOfBirth = new DateTime(1995, 1, 1),
+                IdentityCode = "222222222222"
+            },
+            new UserInfoEntity
+            {
+                UserId = customerGoldId,
+                UserEmail = "customer.gold@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Khách Hàng Gold",
+                PhoneNumber = "0900000003",
+                DateOfBirth = new DateTime(1995, 1, 1),
+                IdentityCode = "333333333333"
+            },
+            new UserInfoEntity
+            {
+                UserId = customerDiamondId,
+                UserEmail = "customer.diamond@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Khách Hàng Diamond",
+                PhoneNumber = "0900000004",
+                DateOfBirth = new DateTime(1995, 1, 1),
+                IdentityCode = "444444444444"
             }
         );
 
@@ -163,7 +216,18 @@ public static class SeedDataUserInfos
             new UserRoleInfoEntity { UserId = lotteTicketPosId, RoleId = userRoles.Cashier },
             new UserRoleInfoEntity { UserId = lotteFoodPosId, RoleId = userRoles.Cashier },
             new UserRoleInfoEntity { UserId = bhdTicketPosId, RoleId = userRoles.Cashier },
-            new UserRoleInfoEntity { UserId = bhdFoodPosId, RoleId = userRoles.Cashier }
+            new UserRoleInfoEntity { UserId = bhdFoodPosId, RoleId = userRoles.Cashier },
+            new UserRoleInfoEntity { UserId = customerStandardId, RoleId = userRoles.Customer },
+            new UserRoleInfoEntity { UserId = customerVipId, RoleId = userRoles.Customer },
+            new UserRoleInfoEntity { UserId = customerGoldId, RoleId = userRoles.Customer },
+            new UserRoleInfoEntity { UserId = customerDiamondId, RoleId = userRoles.Customer }
+        );
+
+        modelBuilder.Entity<CustomerProfileEntity>().HasData(
+            new CustomerProfileEntity { UserId = customerStandardId, TotalPoint = 0, MembershipRank = MembershipRankEnum.Standard },
+            new CustomerProfileEntity { UserId = customerVipId, TotalPoint = 1200, MembershipRank = MembershipRankEnum.VIP },
+            new CustomerProfileEntity { UserId = customerGoldId, TotalPoint = 2500, MembershipRank = MembershipRankEnum.Gold },
+            new CustomerProfileEntity { UserId = customerDiamondId, TotalPoint = 5500, MembershipRank = MembershipRankEnum.Diamond }
         );
 
         modelBuilder.Entity<StaffProfileEntity>().HasData(

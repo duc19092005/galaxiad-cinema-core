@@ -7,13 +7,13 @@ using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetCinemaLocationsTool : IChatTool
+public class GetCinemaLocationsContextProvider : IChatContextProvider
 {
     private readonly IBookingCatalogRepository _bookingCatalogRepo;
 
-    public GetCinemaLocationsTool(IBookingCatalogRepository bookingCatalogRepo)
+    public GetCinemaLocationsContextProvider(IBookingCatalogRepository bookingCatalogRepo)
     {
         _bookingCatalogRepo = bookingCatalogRepo;
     }

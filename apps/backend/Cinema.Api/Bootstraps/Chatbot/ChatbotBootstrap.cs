@@ -4,7 +4,7 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.UseCases.Chatbot;
 using Cinema.Infrastructure.Chatbot.Policy;
 using Cinema.Infrastructure.Chatbot.Registry;
-using Cinema.Infrastructure.Chatbot.Tools;
+using Cinema.Infrastructure.Chatbot.ContextProviders;
 using Cinema.Infrastructure.ExternalServices.Ai;
 using Grpc.Net.Client;
 using Aiservice;
@@ -35,27 +35,27 @@ public static class ChatbotBootstrap
         // Policy Service
         services.AddScoped<IChatPolicyService, ChatPolicyService>();
 
-        // Predefined Chatbot Tools (original)
-        services.AddScoped<IChatTool, GetMoviesTool>();
-        services.AddScoped<IChatTool, GetShowtimesTool>();
-        services.AddScoped<IChatTool, GetMyBookingsTool>();
-        services.AddScoped<IChatTool, GetCinemaStatisticsTool>();
-        services.AddScoped<IChatTool, GetShowtimeRecommendationsTool>();
-        services.AddScoped<IChatTool, GetSystemAuditLogsTool>();
+        // Predefined Chatbot Context Providers (original)
+        services.AddScoped<IChatContextProvider, GetMoviesContextProvider>();
+        services.AddScoped<IChatContextProvider, GetShowtimesContextProvider>();
+        services.AddScoped<IChatContextProvider, GetMyBookingsContextProvider>();
+        services.AddScoped<IChatContextProvider, GetCinemaStatisticsContextProvider>();
+        services.AddScoped<IChatContextProvider, GetShowtimeRecommendationsContextProvider>();
+        services.AddScoped<IChatContextProvider, GetSystemAuditLogsContextProvider>();
 
-        // New tools
-        services.AddScoped<IChatTool, GetPromotionsTool>();
-        services.AddScoped<IChatTool, GetBookingStatusTool>();
-        services.AddScoped<IChatTool, GetCinemaLocationsTool>();
-        services.AddScoped<IChatTool, GetAvailableSeatsTool>();
-        services.AddScoped<IChatTool, SearchMoviesSemanticTool>();
-        services.AddScoped<IChatTool, GetTrendingMoviesTool>();
+        // Additional context providers
+        services.AddScoped<IChatContextProvider, GetPromotionsContextProvider>();
+        services.AddScoped<IChatContextProvider, GetBookingStatusContextProvider>();
+        services.AddScoped<IChatContextProvider, GetCinemaLocationsContextProvider>();
+        services.AddScoped<IChatContextProvider, GetAvailableSeatsContextProvider>();
+        services.AddScoped<IChatContextProvider, SearchMoviesSemanticContextProvider>();
+        services.AddScoped<IChatContextProvider, GetTrendingMoviesContextProvider>();
 
-        // AI Semantic Search Client (for SearchMoviesSemanticTool → Python /recommend)
+        // AI Semantic Search Client (for SearchMoviesSemanticContextProvider → Python /recommend)
         services.AddScoped<IAiSemanticSearchClient, AiSemanticSearchClient>();
 
-        // Tool Registry
-        services.AddScoped<IChatToolRegistry, ChatToolRegistry>();
+        // Context Provider Registry
+        services.AddScoped<IChatContextProviderRegistry, ChatContextProviderRegistry>();
 
         // Chatbot Orchestrator
         services.AddScoped<ChatbotOrchestrator>();

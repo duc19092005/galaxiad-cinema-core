@@ -1,10 +1,13 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Constants;
+using Cinema.Domain.Entities.Vouchers;
 
 namespace Cinema.Application.UseCases.Admin.Vouchers;
 
@@ -60,6 +63,19 @@ public class UpdateVoucherUseCase
         voucher.VoucherPointsCost = dto.VoucherPointsCost;
         voucher.VoucherQuantity = dto.VoucherQuantity;
         voucher.RemainingQuantity = newRemaining;
+
+        voucher.VoucherMembershipRanks.Clear();
+        if (dto.RoleId == userRoles.Customer && dto.TargetRanks != null && dto.TargetRanks.Count > 0)
+        {
+            foreach (var rank in dto.TargetRanks)
+            {
+                voucher.VoucherMembershipRanks.Add(new VoucherMembershipRankEntity
+                {
+                    VoucherId = voucher.voucherId,
+                    MembershipRank = rank
+                });
+            }
+        }
 
         await _unitOfWork.SaveChangesAsync();
         return await _getVoucherByIdUseCase.ExecuteAsync(voucher.voucherId);

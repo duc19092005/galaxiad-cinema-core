@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Film, Calendar, MapPin, Ticket, User } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -52,8 +51,7 @@ function AppRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location}>
         {/* Route root - check token và redirect */}
         <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
 
@@ -99,7 +97,6 @@ function AppRoutes() {
         <Route path="/contact-us" element={<PageTransition><ContactUsPage /></PageTransition>} />
         <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
       </Routes>
-    </AnimatePresence>
   );
 }
 
@@ -152,8 +149,7 @@ function BottomNavBar() {
           >
             {/* Circular Background Bubble */}
             {active && (
-              <motion.div
-                layoutId="activeTabBubble"
+              <div
                 className="absolute"
                 style={{
                   width: 46,
@@ -164,51 +160,30 @@ function BottomNavBar() {
                   top: -12,
                   zIndex: 0
                 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 380,
-                  damping: 30
-                }}
               />
             )}
 
             {/* Icon Wrapper */}
-            <motion.div
+            <div
               className="z-10 flex items-center justify-center"
-              animate={{
-                y: active ? -16 : 0,
-                scale: active ? 1.15 : 1
-              }}
-              transition={{
-                type: 'spring',
-                stiffness: 380,
-                damping: 30
-              }}
               style={{
                 color: active ? '#111114' : 'rgba(255, 255, 255, 0.6)',
+                transform: active ? 'translateY(-16px) scale(1.08)' : 'none',
               }}
             >
               <Icon size={20} />
-            </motion.div>
+            </div>
 
             {/* Label */}
-            <motion.span
+            <span
               className="text-[10px] font-sans font-semibold mt-1 tracking-tight"
-              animate={{
-                opacity: active ? 0 : 1,
-                scale: active ? 0.8 : 1,
-                y: active ? 6 : 0
-              }}
-              transition={{
-                duration: 0.15
-              }}
               style={{
                 color: 'rgba(255, 255, 255, 0.6)',
                 display: active ? 'none' : 'block'
               }}
             >
               {item.label}
-            </motion.span>
+            </span>
           </button>
         );
       })}

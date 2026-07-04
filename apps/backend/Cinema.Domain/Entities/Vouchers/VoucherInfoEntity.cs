@@ -41,6 +41,8 @@ public class VoucherInfoEntity
 
     public virtual ICollection<UserVoucherEntity> UserVouchers { get; set; } = [];
 
+    public virtual ICollection<VoucherMembershipRankEntity> VoucherMembershipRanks { get; set; } = [];
+
     /// <summary>
     /// Ngày bắt đầu có hiệu lực của voucher
     /// </summary>

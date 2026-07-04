@@ -5,19 +5,19 @@ export const getThemeClasses = {
   // Background colors
   bg: (theme: Theme) => {
     if (theme === 'dark') return 'bg-black';
-    if (theme === 'modern') return 'min-h-screen bg-[#020617] relative sm:before:absolute sm:before:top-[-20%] sm:before:left-[-10%] sm:before:w-[50%] sm:before:h-[50%] sm:before:rounded-full sm:before:bg-indigo-500/20 sm:before:blur-[120px] sm:before:z-0 sm:after:absolute sm:after:bottom-[-20%] sm:after:right-[-10%] sm:after:w-[40%] sm:after:h-[40%] sm:after:rounded-full sm:after:bg-cyan-500/10 sm:after:blur-[100px] sm:after:z-0 overflow-x-hidden';
+    if (theme === 'modern') return 'min-h-screen bg-[#020617] relative overflow-x-hidden';
     return 'bg-gray-50';
   },
 
   bgCard: (theme: Theme) => {
     if (theme === 'dark') return 'bg-gray-900';
-    if (theme === 'modern') return 'bg-[#0f172a]/40 backdrop-blur-2xl border border-indigo-500/20 shadow-[0_8px_32px_rgba(0,0,0,0.4)] ring-1 ring-white/5';
+    if (theme === 'modern') return 'bg-[#0f172a]/72 border border-indigo-500/20 shadow-[0_6px_18px_rgba(0,0,0,0.28)] ring-1 ring-white/5';
     return 'bg-white';
   },
 
   bgSecondary: (theme: Theme) => {
     if (theme === 'dark') return 'bg-gray-800';
-    if (theme === 'modern') return 'bg-[#0f172a]/30 backdrop-blur-xl border border-indigo-500/20 shadow-sm';
+    if (theme === 'modern') return 'bg-[#0f172a]/70 border border-indigo-500/20 shadow-sm';
     return 'bg-gray-50';
   },
 
@@ -63,7 +63,7 @@ export const getThemeClasses = {
   // Sidebar
   sidebarBg: (theme: Theme) => {
     if (theme === 'dark') return 'bg-gray-900 border-gray-800';
-    if (theme === 'modern') return 'bg-[#0f172a]/40 backdrop-blur-2xl border-slate-800/60 shadow-2xl';
+    if (theme === 'modern') return 'bg-[#0f172a]/76 border-slate-800/60 shadow-xl';
     return 'bg-white border-gray-200';
   },
 

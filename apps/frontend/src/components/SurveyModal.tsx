@@ -99,7 +99,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
       <g
         style={{
           transformOrigin: '100px 160px',
-          animation: 'bearFloat 4.5s ease-in-out infinite',
+          animation: 'none',
         }}
       >
         {/* Ears */}
@@ -107,7 +107,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
         <g
           style={{
             transformOrigin: '55px 75px',
-            animation: state === 'selected' ? 'wiggleLeft 0.5s ease-in-out infinite alternate' : 'none',
+            animation: 'none',
           }}
         >
           <circle cx="58" cy="72" r="20" fill="#35210E" />
@@ -118,7 +118,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
         <g
           style={{
             transformOrigin: '145px 75px',
-            animation: state === 'selected' ? 'wiggleRight 0.5s ease-in-out infinite alternate-reverse' : 'none',
+            animation: 'none',
           }}
         >
           <circle cx="142" cy="72" r="20" fill="#35210E" />
@@ -162,7 +162,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
         <g
           style={{
             transformOrigin: '100px 109px',
-            animation: 'glassesGiggle 6s ease-in-out infinite',
+            animation: 'none',
           }}
         >
           <rect x="69" y="100" width="62" height="18" rx="4" fill="#1A1B1C" stroke="#000000" strokeWidth="1.5" />
@@ -183,7 +183,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
         <g
           style={{
             transformOrigin: '100px 180px',
-            animation: state === 'selected' || state === 'loading' ? 'bounceBucket 0.8s ease-in-out infinite' : 'none',
+            animation: 'none',
           }}
         >
           <path d="M84 152 L87 185 H113 L116 152 Z" fill="#FFFFFF" stroke="#1C1108" strokeWidth="2" />

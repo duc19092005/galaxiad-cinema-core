@@ -148,7 +148,6 @@ const LoginForm: React.FC = () => {
             position: 'absolute', top: 0, left: 0, right: 0, height: 3,
             background: 'linear-gradient(90deg, #ff8a00, #ea580c, #ff8a00)',
             backgroundSize: '200% 100%',
-            animation: 'gradientShift 3s ease-in-out infinite',
           }} />
 
           {/* Logo & Title */}

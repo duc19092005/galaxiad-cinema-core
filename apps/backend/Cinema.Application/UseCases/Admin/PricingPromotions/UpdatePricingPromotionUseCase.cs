@@ -43,9 +43,9 @@ public class UpdatePricingPromotionUseCase
         promotion.Name = dto.Name.Trim();
         promotion.Slug = await PricingPromotionHelper.BuildUniqueSlugAsync(_repository, dto.Slug, dto.Title, id);
         promotion.Title = dto.Title.Trim();
-        promotion.ShortDescription = dto.ShortDescription.Trim();
-        promotion.Description = dto.Description.Trim();
-        promotion.TermsAndConditions = dto.TermsAndConditions.Trim();
+        promotion.ShortDescription = (dto.ShortDescription ?? string.Empty).Trim();
+        promotion.Description = (dto.Description ?? string.Empty).Trim();
+        promotion.TermsAndConditions = (dto.TermsAndConditions ?? string.Empty).Trim();
         promotion.ImageUrl = string.IsNullOrWhiteSpace(dto.ImageUrl) ? null : dto.ImageUrl.Trim();
         promotion.IsActive = dto.IsActive;
         promotion.ExcludeHolidays = dto.ExcludeHolidays;

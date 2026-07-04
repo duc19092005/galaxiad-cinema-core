@@ -7,13 +7,13 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Cinema.Domain.Constants;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetTrendingMoviesTool : IChatTool
+public class GetTrendingMoviesContextProvider : IChatContextProvider
 {
     private readonly GetTrendingMoviesUseCase _getTrendingMoviesUseCase;
 
-    public GetTrendingMoviesTool(GetTrendingMoviesUseCase getTrendingMoviesUseCase)
+    public GetTrendingMoviesContextProvider(GetTrendingMoviesUseCase getTrendingMoviesUseCase)
     {
         _getTrendingMoviesUseCase = getTrendingMoviesUseCase;
     }

@@ -292,7 +292,7 @@ export const TheatersPage: React.FC = () => {
                           borderRadius: '50%', 
                           backgroundColor: 'var(--primary, #ff8a00)', 
                           boxShadow: '0 0 15px var(--primary)',
-                          animation: 'ping 2s infinite' 
+                          animation: 'none' 
                         }} 
                       />
                       <MapPin size={24} style={{ color: 'var(--primary)', marginTop: '-20px', position: 'relative', zIndex: 1 }} />

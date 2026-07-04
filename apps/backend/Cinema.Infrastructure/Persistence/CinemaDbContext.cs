@@ -109,6 +109,8 @@ public class CinemaDbContext : DbContext
     
     public DbSet<UserVoucherEntity> UserVoucherEntity { get; set; }
 
+    public DbSet<VoucherMembershipRankEntity> VoucherMembershipRankEntity { get; set; }
+
     public DbSet<UserNotificationEntity> UserNotificationEntity { get; set; }
 
     public DbSet<UserGenreSurveyEntity> UserGenreSurveyEntity { get; set; }
@@ -367,7 +369,10 @@ public class CinemaDbContext : DbContext
                 .HasForeignKey(x => x.AuditoriumId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.Property(x => x.RequiredMembershipRank).HasConversion<int?>();
+            entity.HasOne(x => x.UserSegmentsInfoEntity)
+                .WithMany()
+                .HasForeignKey(x => x.UserSegmentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<HolidayCalendarEntity>(entity =>

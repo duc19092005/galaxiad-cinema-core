@@ -32,7 +32,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 
     public async Task<string> SendChatRequestAsync(
         string userPrompt,
-        string toolContext,
+        string supportingContext,
         string userRole,
         string userId,
         string sessionId = "")
@@ -42,7 +42,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
             var request = new ChatRequest
             {
                 UserPrompt  = userPrompt,
-                ToolContext = toolContext,
+                ToolContext = supportingContext,
                 UserRole    = userRole,
                 UserId      = userId,
                 Language    = _localizationService.CurrentLanguage,
@@ -61,7 +61,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
 
     public async IAsyncEnumerable<string> StreamChatRequestAsync(
         string          userPrompt,
-        string          toolContext,
+        string          supportingContext,
         string          userRole,
         string          userId,
         string          sessionId = "",
@@ -70,7 +70,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         var request = new ChatRequest
         {
             UserPrompt  = userPrompt,
-            ToolContext = toolContext,
+            ToolContext = supportingContext,
             UserRole    = userRole,
             UserId      = userId,
             Language    = _localizationService.CurrentLanguage,

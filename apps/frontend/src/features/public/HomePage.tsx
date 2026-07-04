@@ -245,16 +245,16 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           to { transform: rotate(360deg); }
         }
         @keyframes homeBgSlide {
-          from { opacity: 0.45; transform: translate3d(26px, 0, 0) scale(1.045); }
-          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1.02); }
+          from { opacity: 0.65; }
+          to { opacity: 1; }
         }
         @keyframes homeCopySlide {
-          from { opacity: 0; transform: translate3d(-22px, 0, 0); }
-          to { opacity: 1; transform: translate3d(0, 0, 0); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         @keyframes homeFeatureSlide {
-          from { opacity: 0; transform: translate3d(24px, 0, 0) scale(0.985); }
-          to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
@@ -284,8 +284,8 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           object-fit: cover;
           filter: saturate(1.05) brightness(0.72);
           transform: scale(1.02);
-          transition: opacity 0.35s ease, transform 0.6s ease;
-          animation: homeBgSlide 0.62s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+          transition: opacity 0.16s ease;
+          animation: homeBgSlide 0.18s ease-out both;
         }
         .home-hero-bg::after {
           content: "";
@@ -311,8 +311,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           max-width: 720px;
         }
         .home-slide-copy {
-          animation: homeCopySlide 0.46s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-          will-change: transform, opacity;
+          animation: homeCopySlide 0.16s ease-out both;
         }
         .home-hero-kicker {
           display: inline-flex;
@@ -416,7 +415,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           opacity: 0.58;
           cursor: pointer;
           padding: 0;
-          transition: opacity 0.2s ease, transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+          transition: opacity 0.12s ease, border-color 0.12s ease;
         }
         .home-hero-thumb img {
           width: 100%;
@@ -427,9 +426,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         .home-hero-thumb:hover,
         .home-hero-thumb.is-active {
           opacity: 1;
-          transform: scale(1.04);
           border-color: rgba(255,138,0,0.9);
-          box-shadow: 0 0 0 3px rgba(255,138,0,0.18);
         }
         .home-hero-nav {
           width: 44px;
@@ -442,11 +439,10 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          transition: transform 0.2s ease, background 0.2s ease;
+          transition: background 0.12s ease;
         }
         .home-hero-nav:hover {
           background: rgba(255,138,0,0.12);
-          transform: scale(1.04);
         }
         .home-trending-stage {
           display: grid;
@@ -461,20 +457,16 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           overflow: hidden;
           border: 1px solid rgba(255,255,255,0.08);
           background: rgba(255,255,255,0.04);
-          box-shadow: 0 28px 70px rgba(0,0,0,0.36);
+          box-shadow: 0 16px 38px rgba(0,0,0,0.28);
           cursor: pointer;
-          animation: homeFeatureSlide 0.48s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-          will-change: transform, opacity;
+          animation: homeFeatureSlide 0.16s ease-out both;
         }
         .home-trending-feature img {
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
-          transition: transform 0.45s ease;
-        }
-        .home-trending-feature:hover img {
-          transform: scale(1.035);
+          transition: none;
         }
         .home-trending-feature::after {
           content: "";
@@ -583,7 +575,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           color: inherit;
           cursor: pointer;
           text-align: left;
-          transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+          transition: background 0.12s ease, border-color 0.12s ease;
         }
         .home-trending-row + .home-trending-row {
           margin-top: 8px;
@@ -593,16 +585,13 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           background: rgba(255,138,0,0.1);
           border-color: rgba(255,138,0,0.22);
         }
-        .home-trending-row:active {
-          transform: translateY(1px);
-        }
         .home-trending-row img {
           width: 72px;
           aspect-ratio: 5 / 7;
           border-radius: 12px;
           object-fit: cover;
           flex: 0 0 auto;
-          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+          box-shadow: 0 6px 14px rgba(0,0,0,0.22);
         }
         .home-trending-row-title {
           margin: 0;
@@ -634,12 +623,11 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           border-radius: 16px;
           overflow: hidden;
           cursor: pointer;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
+          transition: box-shadow 0.12s ease;
           scroll-snap-align: start;
         }
         .home-movie-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+          box-shadow: 0 8px 22px rgba(0,0,0,0.28);
         }
         @media (max-width: 640px) {
           .home-movie-card {

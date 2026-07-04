@@ -16,6 +16,7 @@ export interface VoucherDto {
   voucherQuantity: number;
   remainingQuantity: number;
   isActive: boolean;
+  targetRanks: number[];
 }
 
 export interface CreateVoucherDto {
@@ -28,6 +29,7 @@ export interface CreateVoucherDto {
   validTo: string | null;
   voucherPointsCost: number;
   voucherQuantity: number;
+  targetRanks: number[];
 }
 
 export interface UpdateVoucherDto {
@@ -40,6 +42,7 @@ export interface UpdateVoucherDto {
   validTo: string | null;
   voucherPointsCost: number;
   voucherQuantity: number;
+  targetRanks: number[];
 }
 
 export interface UserVoucherDto {

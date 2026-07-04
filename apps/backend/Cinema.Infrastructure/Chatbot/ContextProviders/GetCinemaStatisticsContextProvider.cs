@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -6,13 +6,13 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Constants;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetCinemaStatisticsTool : IChatTool
+public class GetCinemaStatisticsContextProvider : IChatContextProvider
 {
     private readonly IAdminDashboardRepository _adminRepository;
 
-    public GetCinemaStatisticsTool(IAdminDashboardRepository adminRepository)
+    public GetCinemaStatisticsContextProvider(IAdminDashboardRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

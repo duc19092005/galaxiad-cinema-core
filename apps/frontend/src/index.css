@@ -25,7 +25,8 @@ html.theme-transitioning,
 html.theme-transitioning *,
 html.theme-transitioning *::before,
 html.theme-transitioning *::after {
-  transition: all 700ms cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition-duration: 180ms !important;
+  transition-timing-function: ease !important;
   transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
 }
 
@@ -183,15 +184,15 @@ body {
    ============================================ */
 .glass {
   background: rgba(20, 20, 20, 0.6);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .glass-strong {
   background: rgba(26, 26, 26, 0.8);
-  backdrop-filter: blur(32px) saturate(1.6);
-  -webkit-backdrop-filter: blur(32px) saturate(1.6);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -201,8 +202,8 @@ body {
     rgba(255, 255, 255, 0.04) 0%,
     rgba(255, 255, 255, 0.01) 100%
   );
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2),
               inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -224,8 +225,8 @@ body {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--bg-surface);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-right: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
@@ -303,8 +304,8 @@ body {
   right: 0;
   height: var(--header-height);
   background: rgba(var(--bg-base-rgb, 10, 10, 10), 0.8);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(10px) saturate(1.1);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
@@ -547,8 +548,8 @@ tr:hover td {
   justify-content: center;
   padding: 16px;
   background: var(--bg-overlay);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -623,8 +624,8 @@ tr:hover td {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(10, 14, 24, 0.78);
-  backdrop-filter: blur(18px) saturate(1.3);
-  -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  backdrop-filter: blur(8px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.05);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.32);
 }
 
@@ -678,12 +679,12 @@ tr:hover td {
    ANIMATIONS
    ============================================ */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .animate-in {
-  animation: fadeIn 0.4s ease-out forwards;
+  animation: fadeIn 0.16s ease-out forwards;
 }
 
 /* ============================================
@@ -692,24 +693,21 @@ tr:hover td {
 @keyframes tabSlideIn {
   from {
     opacity: 0;
-    transform: translateY(14px) scale(0.995);
-    filter: blur(2px);
+    transform: none;
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: none;
   }
 }
 
 @keyframes tabFadeOut {
-  from { opacity: 1; transform: translateY(0); }
-  to   { opacity: 0; transform: translateY(-8px); }
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 .tab-content-enter {
-  animation: tabSlideIn 0.32s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-  will-change: transform, opacity;
+  animation: tabSlideIn 0.14s ease-out forwards;
   isolation: isolate;
 }
 
@@ -729,7 +727,7 @@ tr:hover td {
 }
 
 .animate-float {
-  animation: float 4s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes fadeInOverlay {
@@ -738,11 +736,11 @@ tr:hover td {
 }
 
 .panel-slide-in {
-  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInOverlay 0.14s ease-out forwards;
 }
 
 .overlay-fade-in {
-  animation: fadeInOverlay 0.25s ease-out forwards;
+  animation: fadeInOverlay 0.14s ease-out forwards;
 }
 
 @keyframes stepSlideLeft {
@@ -766,15 +764,15 @@ tr:hover td {
 }
 
 .step-forward {
-  animation: stepSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.14s ease-out forwards;
 }
 
 .step-backward {
-  animation: stepSlideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.14s ease-out forwards;
 }
 
 .ai-pulse {
-  animation: aiPulse 2s ease-in-out infinite;
+  animation: none;
 }
 
 .skeleton-shimmer {
@@ -784,7 +782,7 @@ tr:hover td {
     var(--bg-elevated) 75%
   );
   background-size: 800px 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  animation: none;
 }
 
 @keyframes pulse-dot {
@@ -793,26 +791,33 @@ tr:hover td {
 }
 
 .pulse-dot {
-  animation: pulse-dot 2s ease-in-out infinite;
+  animation: none;
+}
+
+.animate-pulse,
+.animate-bounce {
+  animation: none !important;
 }
 
 /* ============================================
    PAGE ENTRANCE ANIMATIONS
    ============================================ */
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .page-enter {
-  animation: fadeSlideUp 0.5s ease-out forwards;
+  animation: fadeSlideUp 0.16s ease-out forwards;
 }
 
-.page-enter-d1 { animation: fadeSlideUp 0.5s ease-out 0.05s both; }
-.page-enter-d2 { animation: fadeSlideUp 0.5s ease-out 0.10s both; }
-.page-enter-d3 { animation: fadeSlideUp 0.5s ease-out 0.15s both; }
-.page-enter-d4 { animation: fadeSlideUp 0.5s ease-out 0.20s both; }
-.page-enter-d5 { animation: fadeSlideUp 0.5s ease-out 0.25s both; }
+.page-enter-d1,
+.page-enter-d2,
+.page-enter-d3,
+.page-enter-d4,
+.page-enter-d5 {
+  animation: fadeSlideUp 0.16s ease-out both;
+}
 
 /* ============================================
    AMBER ACCENT LINE (Signature Element)
@@ -841,7 +846,7 @@ tr:hover td {
 }
 
 .faq-answer-open {
-  animation: faqSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeIn 0.14s ease-out forwards;
 }
 
 .faq-item-active {
@@ -877,6 +882,43 @@ tr:hover td {
 }
 .grid-desktop-3 {
   grid-template-columns: repeat(3, 1fr) !important;
+}
+
+/* ============================================
+   PERFORMANCE DEFAULTS
+   ============================================ */
+.backdrop-blur-xl,
+.backdrop-blur-2xl {
+  --tw-backdrop-blur: blur(8px) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.blur-\[120px\],
+.blur-\[100px\] {
+  --tw-blur: blur(48px) !important;
+  filter: blur(48px) !important;
+}
+
+.blur-\[20px\] {
+  --tw-blur: blur(10px) !important;
+  filter: blur(10px) !important;
+}
+
+.animate-ping,
+.animate-pulse-slow {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
 .grid-desktop-4 {
   grid-template-columns: repeat(4, 1fr) !important;

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.Dtos.Vouchers;
 
@@ -30,4 +32,6 @@ public class UpdateVoucherDto
 
     [Range(0, int.MaxValue)]
     public int VoucherQuantity { get; set; }
+
+    public List<MembershipRankEnum> TargetRanks { get; set; } = [];
 }

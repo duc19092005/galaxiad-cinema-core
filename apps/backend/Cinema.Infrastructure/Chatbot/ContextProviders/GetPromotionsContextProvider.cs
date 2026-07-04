@@ -7,13 +7,13 @@ using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetPromotionsTool : IChatTool
+public class GetPromotionsContextProvider : IChatContextProvider
 {
     private readonly IPricingPromotionRepository _promotionRepository;
 
-    public GetPromotionsTool(IPricingPromotionRepository promotionRepository)
+    public GetPromotionsContextProvider(IPricingPromotionRepository promotionRepository)
     {
         _promotionRepository = promotionRepository;
     }

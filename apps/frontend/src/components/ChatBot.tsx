@@ -31,6 +31,7 @@ import type {
   ActiveCinema,
   ActiveMovie,
   NearestCinema,
+  PublicSeatMap,
   PublicPricing,
   PublicSegmentPrice,
   SearchCinemaShowtimes,
@@ -43,6 +44,7 @@ type ChatActionType =
   | 'moviePicker'
   | 'datePicker'
   | 'cinemaPicker'
+  | 'showtimePreferencePicker'
   | 'showtimePicker'
   | 'segmentQuantityPicker'
   | 'seatSuggestion'
@@ -102,6 +104,8 @@ interface NormalizedSeat {
   isOccupied: boolean;
 }
 
+type ShowtimePickMode = 'time' | 'format';
+
 interface ShowtimeOption {
   scheduleId: string;
   movieId: string;
@@ -133,6 +137,7 @@ interface BookingDraft {
   date?: string;
   cinema?: CinemaOption;
   showtime?: ShowtimeOption;
+  seatMap?: PublicSeatMap;
   pricing?: PublicPricing;
   segment?: PublicSegmentPrice;
   quantity: number;
@@ -323,6 +328,23 @@ const suggestSeats = (seatMap: any, quantity: number, history: any[] = []) => {
     });
   return [...best, ...rest].slice(0, quantity);
 };
+
+const getSeatGridMetrics = (seats: NormalizedSeat[]) => {
+  const maxCol = seats.length ? Math.max(...seats.map(seat => seat.colIndex)) + 1 : 0;
+  const maxRow = seats.length ? Math.max(...seats.map(seat => seat.rowIndex)) + 1 : 0;
+  return { maxCol, maxRow };
+};
+
+const isCenterSeat = (seat: NormalizedSeat, seatMap?: PublicSeatMap) => (
+  seatMap?.centerRowStart !== undefined &&
+  seatMap.centerRowEnd !== undefined &&
+  seatMap.centerColStart !== undefined &&
+  seatMap.centerColEnd !== undefined &&
+  seat.rowIndex >= seatMap.centerRowStart &&
+  seat.rowIndex <= seatMap.centerRowEnd &&
+  seat.colIndex >= seatMap.centerColStart &&
+  seat.colIndex <= seatMap.centerColEnd
+);
 
 const flattenShowtimes = (results: SearchScheduleResult[], selectedCinemaId?: string): ShowtimeOption[] => {
   return results.flatMap(movie => movie.cinemas.flatMap((cinema: SearchCinemaShowtimes) => {
@@ -541,15 +563,77 @@ const CinemaPicker: React.FC<{
   );
 };
 
-const ShowtimePicker: React.FC<{
-  showtimes: ShowtimeOption[];
-  onPick: (showtime: ShowtimeOption) => void;
-}> = ({ showtimes, onPick }) => {
+const ShowtimePreferencePicker: React.FC<{
+  onPick: (mode: ShowtimePickMode) => void;
+}> = ({ onPick }) => {
   const { t } = useTranslation();
   return (
+    <ActionShell title={t('chatbot.showtimePreference')} icon={<Clock size={13} />}>
+      <div style={{ display: 'grid', gap: 8 }}>
+        <button onClick={() => onPick('time')} style={{ ...optionButtonStyle, alignItems: 'flex-start' }}>
+          <span style={{ textAlign: 'left' }}>
+            <span style={{ display: 'block', fontWeight: 900 }}>{t('chatbot.showtimeByTime')}</span>
+            <span style={{ display: 'block', color: theme.muted, fontSize: 11, marginTop: 2 }}>{t('chatbot.showtimeByTimeDesc')}</span>
+          </span>
+          <Check size={14} />
+        </button>
+        <button onClick={() => onPick('format')} style={{ ...optionButtonStyle, alignItems: 'flex-start' }}>
+          <span style={{ textAlign: 'left' }}>
+            <span style={{ display: 'block', fontWeight: 900 }}>{t('chatbot.showtimeByFormat')}</span>
+            <span style={{ display: 'block', color: theme.muted, fontSize: 11, marginTop: 2 }}>{t('chatbot.showtimeByFormatDesc')}</span>
+          </span>
+          <Check size={14} />
+        </button>
+      </div>
+    </ActionShell>
+  );
+};
+
+const ShowtimePicker: React.FC<{
+  showtimes: ShowtimeOption[];
+  mode?: ShowtimePickMode;
+  onPick: (showtime: ShowtimeOption) => void;
+}> = ({ showtimes, mode = 'time', onPick }) => {
+  const { t } = useTranslation();
+  const formats = Array.from(new Set(showtimes.map(showtime => showtime.formatName))).sort((a, b) => a.localeCompare(b));
+  const [selectedFormat, setSelectedFormat] = useState<string>(mode === 'format' ? '' : 'all');
+  const visibleShowtimes = (mode === 'format' && selectedFormat)
+    ? showtimes.filter(showtime => showtime.formatName === selectedFormat)
+    : mode === 'format'
+      ? []
+      : showtimes;
+
+  return (
     <ActionShell title={t('chatbot.showtimePicker')} icon={<Clock size={13} />}>
+      {mode === 'format' && (
+        <div style={{ display: 'grid', gap: 7, marginBottom: selectedFormat ? 10 : 0 }}>
+          {formats.map(format => {
+            const count = showtimes.filter(showtime => showtime.formatName === format).length;
+            const firstTime = showtimes.filter(showtime => showtime.formatName === format).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())[0];
+            return (
+              <button
+                key={format}
+                onClick={() => setSelectedFormat(format)}
+                style={{
+                  ...optionButtonStyle,
+                  borderColor: selectedFormat === format ? theme.accent : theme.border,
+                  background: selectedFormat === format ? theme.accentSoft : 'rgba(255,255,255,0.055)',
+                }}
+              >
+                <span style={{ textAlign: 'left' }}>
+                  <span style={{ display: 'block', fontWeight: 900 }}>{format}</span>
+                  <span style={{ display: 'block', color: theme.muted, fontSize: 11, marginTop: 2 }}>
+                    {t('chatbot.formatShowtimeCount', { count, first: formatTime(firstTime?.startTime) })}
+                  </span>
+                </span>
+                <Check size={14} />
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div style={{ display: 'grid', gap: 7 }}>
-        {showtimes.map(showtime => (
+        {visibleShowtimes.map(showtime => (
           <button key={showtime.scheduleId} onClick={() => onPick(showtime)} style={optionButtonStyle}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
               <span style={{
@@ -638,12 +722,209 @@ const SegmentQuantityPicker: React.FC<{
   );
 };
 
-const SeatSuggestionCard: React.FC<{
-  seats: NormalizedSeat[];
-  onAccept: () => void;
-  onRetry: () => void;
-}> = ({ seats, onAccept, onRetry }) => {
+const SeatMapBoard: React.FC<{
+  seatMap?: PublicSeatMap;
+  highlightedSeats: NormalizedSeat[];
+  selectedSeats?: NormalizedSeat[];
+  interactive?: boolean;
+  onToggleSeat?: (seat: NormalizedSeat) => void;
+}> = ({ seatMap, highlightedSeats, selectedSeats = [], interactive, onToggleSeat }) => {
+  const seats = normalizeSeatMap(seatMap);
+  const { maxCol, maxRow } = getSeatGridMetrics(seats);
+  const highlightedIds = new Set(highlightedSeats.map(seat => seat.seatId));
+  const selectedIds = new Set(selectedSeats.map(seat => seat.seatId));
+
+  if (!seatMap || seats.length === 0 || maxCol === 0 || maxRow === 0) {
+    return null;
+  }
+
+  return (
+    <div>
+      <div style={{
+        height: 18,
+        borderRadius: '0 0 999px 999px',
+        borderBottom: `3px solid ${theme.accent}`,
+        background: 'linear-gradient(180deg, rgba(245,124,0,0.18), rgba(245,124,0,0.02))',
+        margin: '0 auto 10px',
+        maxWidth: 260,
+      }} />
+      <div style={{ textAlign: 'center', color: theme.muted, fontSize: 10, fontWeight: 900, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>
+        Screen
+      </div>
+      <div style={{
+        overflow: 'auto',
+        maxHeight: interactive ? '58vh' : 260,
+        padding: 8,
+        borderRadius: 12,
+        background: 'rgba(0,0,0,0.18)',
+        border: `1px solid ${theme.border}`,
+      }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${maxCol}, minmax(28px, 1fr))`,
+          gridTemplateRows: `repeat(${maxRow}, minmax(28px, 1fr))`,
+          gap: 5,
+          minWidth: Math.max(maxCol * 34, 280),
+          position: 'relative',
+        }}>
+          {seatMap.centerRowStart !== undefined &&
+            seatMap.centerRowEnd !== undefined &&
+            seatMap.centerColStart !== undefined &&
+            seatMap.centerColEnd !== undefined && (
+              <div style={{
+                gridRowStart: seatMap.centerRowStart + 1,
+                gridRowEnd: seatMap.centerRowEnd + 2,
+                gridColumnStart: seatMap.centerColStart + 1,
+                gridColumnEnd: seatMap.centerColEnd + 2,
+                border: '1px dashed rgba(245,124,0,0.55)',
+                borderRadius: 10,
+                pointerEvents: 'none',
+                margin: -3,
+              }} />
+            )}
+          {seats.map(seat => {
+            const selected = selectedIds.has(seat.seatId);
+            const highlighted = highlightedIds.has(seat.seatId);
+            const center = isCenterSeat(seat, seatMap);
+            const disabled = seat.isOccupied;
+            return (
+              <button
+                key={seat.seatId}
+                disabled={disabled || !interactive}
+                onClick={() => onToggleSeat?.(seat)}
+                title={seat.seatNumber}
+                style={{
+                  ...baseButton,
+                  gridColumnStart: seat.colIndex + 1,
+                  gridRowStart: seat.rowIndex + 1,
+                  aspectRatio: '1 / 1',
+                  minWidth: 28,
+                  minHeight: 28,
+                  borderRadius: 8,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  border: selected
+                    ? `1px solid ${theme.accent}`
+                    : highlighted
+                      ? `1px solid ${theme.success}`
+                      : center
+                        ? '1px solid rgba(245,124,0,0.45)'
+                        : `1px solid ${theme.border}`,
+                  background: disabled
+                    ? 'rgba(255,255,255,0.035)'
+                    : selected
+                      ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`
+                      : highlighted
+                        ? 'rgba(34,197,94,0.22)'
+                        : center
+                          ? theme.accentSoft
+                          : 'rgba(255,255,255,0.08)',
+                  color: disabled ? 'rgba(255,255,255,0.28)' : selected ? '#fff' : highlighted ? '#86efac' : theme.text,
+                  opacity: disabled ? 0.55 : 1,
+                  cursor: disabled || !interactive ? 'default' : 'pointer',
+                }}
+              >
+                {seat.seatNumber}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, color: theme.muted, fontSize: 10, fontWeight: 800 }}>
+        <span><span style={{ color: theme.text }}>■</span> Trống</span>
+        <span><span style={{ color: theme.accent }}>■</span> Trung tâm</span>
+        <span><span style={{ color: theme.success }}>■</span> Gợi ý</span>
+        <span><span style={{ color: 'rgba(255,255,255,0.35)' }}>■</span> Đã đặt</span>
+      </div>
+    </div>
+  );
+};
+
+const SeatSelectionModal: React.FC<{
+  seatMap?: PublicSeatMap;
+  suggestedSeats: NormalizedSeat[];
+  quantity: number;
+  onClose: () => void;
+  onConfirm: (seats: NormalizedSeat[]) => void;
+}> = ({ seatMap, suggestedSeats, quantity, onClose, onConfirm }) => {
   const { t } = useTranslation();
+  const [selectedSeats, setSelectedSeats] = useState<NormalizedSeat[]>(suggestedSeats);
+
+  const toggleSeat = (seat: NormalizedSeat) => {
+    if (seat.isOccupied) return;
+    setSelectedSeats(prev => {
+      if (prev.some(item => item.seatId === seat.seatId)) {
+        return prev.filter(item => item.seatId !== seat.seatId);
+      }
+      if (prev.length >= quantity) return prev;
+      return [...prev, seat];
+    });
+  };
+
+  const complete = selectedSeats.length === quantity;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 10000,
+      background: 'rgba(0,0,0,0.68)',
+      display: 'grid',
+      placeItems: 'center',
+      padding: 16,
+    }}>
+      <div style={{
+        width: 'min(920px, 100%)',
+        maxHeight: 'calc(100vh - 32px)',
+        overflow: 'hidden',
+        borderRadius: 16,
+        background: theme.surface,
+        border: `1px solid ${theme.border}`,
+        boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, borderBottom: `1px solid ${theme.border}` }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ color: theme.text, fontWeight: 900 }}>{t('chatbot.manualSeatTitle')}</div>
+            <div style={{ color: theme.muted, fontSize: 12, marginTop: 2 }}>
+              {t('chatbot.manualSeatCount', { selected: selectedSeats.length, total: quantity })}
+            </div>
+          </div>
+          <button onClick={onClose} style={{ ...ghostButton, width: 36, height: 36, padding: 0, display: 'grid', placeItems: 'center' }}>
+            <X size={16} />
+          </button>
+        </div>
+        <div style={{ padding: 14, overflow: 'auto' }}>
+          <SeatMapBoard
+            seatMap={seatMap}
+            highlightedSeats={suggestedSeats}
+            selectedSeats={selectedSeats}
+            interactive
+            onToggleSeat={toggleSeat}
+          />
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, padding: 14, borderTop: `1px solid ${theme.border}` }}>
+          <button onClick={onClose} style={ghostButton}>{t('chatbot.cancelManualSeats')}</button>
+          <button disabled={!complete} onClick={() => onConfirm(selectedSeats)} style={{ ...primaryButton, opacity: complete ? 1 : 0.5 }}>
+            {t('chatbot.confirmManualSeats')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SeatSuggestionCard: React.FC<{
+  seatMap?: PublicSeatMap;
+  seats: NormalizedSeat[];
+  quantity: number;
+  onAccept: (seats?: NormalizedSeat[]) => void;
+  onRetry: () => void;
+}> = ({ seatMap, seats, quantity, onAccept, onRetry }) => {
+  const { t } = useTranslation();
+  const [manualOpen, setManualOpen] = useState(false);
+
   return (
     <ActionShell title={t('chatbot.seatSuggestion')} icon={<Armchair size={13} />}>
       {seats.length === 0 ? (
@@ -653,6 +934,7 @@ const SeatSuggestionCard: React.FC<{
         </>
       ) : (
         <>
+          <SeatMapBoard seatMap={seatMap} highlightedSeats={seats} />
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {seats.map(seat => (
               <span key={seat.seatId} style={{
@@ -672,8 +954,23 @@ const SeatSuggestionCard: React.FC<{
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
             <button onClick={onRetry} style={ghostButton}>{t('chatbot.resuggest')}</button>
-            <button onClick={onAccept} style={primaryButton}>{t('chatbot.acceptSeats')}</button>
+            <button onClick={() => onAccept()} style={primaryButton}>{t('chatbot.acceptSeats')}</button>
           </div>
+          <button onClick={() => setManualOpen(true)} style={{ ...ghostButton, width: '100%', marginTop: 8 }}>
+            {t('chatbot.pickSeatsManually')}
+          </button>
+          {manualOpen && (
+            <SeatSelectionModal
+              seatMap={seatMap}
+              suggestedSeats={seats}
+              quantity={quantity}
+              onClose={() => setManualOpen(false)}
+              onConfirm={(selected) => {
+                setManualOpen(false);
+                onAccept(selected);
+              }}
+            />
+          )}
         </>
       )}
     </ActionShell>
@@ -899,9 +1196,10 @@ const ChatActionRenderer: React.FC<{
   onPickMovie: (movie: ActiveMovie) => void;
   onPickDate: (date: string) => void;
   onPickCinema: (cinema: CinemaOption) => void;
+  onPickShowtimePreference: (mode: ShowtimePickMode, showtimes: ShowtimeOption[]) => void;
   onPickShowtime: (showtime: ShowtimeOption) => void;
   onPickSegment: (segment: PublicSegmentPrice, quantity: number) => void;
-  onAcceptSeats: () => void;
+  onAcceptSeats: (seats?: NormalizedSeat[]) => void;
   onRetrySeats: () => void;
   onVoucherMode: (mode: 'owned' | 'redeem' | 'skip') => void;
   onPickOwnedVoucher: (voucher: UserVoucherDto) => void;
@@ -918,6 +1216,7 @@ const ChatActionRenderer: React.FC<{
   onPickMovie,
   onPickDate,
   onPickCinema,
+  onPickShowtimePreference,
   onPickShowtime,
   onPickSegment,
   onAcceptSeats,
@@ -939,12 +1238,14 @@ const ChatActionRenderer: React.FC<{
       return <DatePicker dates={action.payload.dates || []} onPick={onPickDate} />;
     case 'cinemaPicker':
       return <CinemaPicker cinemas={action.payload.cinemas || []} onPick={onPickCinema} />;
+    case 'showtimePreferencePicker':
+      return <ShowtimePreferencePicker onPick={(mode) => onPickShowtimePreference(mode, action.payload.showtimes || [])} />;
     case 'showtimePicker':
-      return <ShowtimePicker showtimes={action.payload.showtimes || []} onPick={onPickShowtime} />;
+      return <ShowtimePicker showtimes={action.payload.showtimes || []} mode={action.payload.mode || 'time'} onPick={onPickShowtime} />;
     case 'segmentQuantityPicker':
       return <SegmentQuantityPicker pricing={action.payload.pricing} onPick={onPickSegment} />;
     case 'seatSuggestion':
-      return <SeatSuggestionCard seats={draft.suggestedSeats} onAccept={onAcceptSeats} onRetry={onRetrySeats} />;
+      return <SeatSuggestionCard seatMap={draft.seatMap} seats={draft.suggestedSeats} quantity={draft.quantity} onAccept={onAcceptSeats} onRetry={onRetrySeats} />;
     case 'voucherPicker':
       return (
         <VoucherPicker
@@ -1127,7 +1428,7 @@ const ChatBot: React.FC = () => {
 
   const handlePickMovie = useCallback(async (movie: ActiveMovie) => {
     appendUser(t('chatbot.selectedMovie', { name: movie.movieName }));
-    setDraft(prev => ({ ...prev, movie, date: undefined, cinema: undefined, showtime: undefined, suggestedSeats: [] }));
+    setDraft(prev => ({ ...prev, movie, date: undefined, cinema: undefined, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
     setIsLoading(true);
     try {
       const response = await publicApi.getScheduleDates(movie.movieId);
@@ -1151,7 +1452,7 @@ const ChatBot: React.FC = () => {
     }
 
     appendUser(`${t('chatbot.selectedDate')} ${formatDate(date)}`);
-    setDraft(prev => ({ ...prev, date, cinema: undefined, showtime: undefined, suggestedSeats: [] }));
+    setDraft(prev => ({ ...prev, date, cinema: undefined, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
     try {
@@ -1210,7 +1511,7 @@ const ChatBot: React.FC = () => {
     }
 
     appendUser(`${t('chatbot.selectedCinema')} ${cinema.cinemaName}`);
-    setDraft(prev => ({ ...prev, cinema, showtime: undefined, suggestedSeats: [] }));
+    setDraft(prev => ({ ...prev, cinema, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
     try {
@@ -1224,8 +1525,8 @@ const ChatBot: React.FC = () => {
         return;
       }
 
-      appendBot(t('chatbot.askShowtime'), [
-        makeAction('showtimePicker', t('chatbot.showtimePicker'), { showtimes }),
+      appendBot(t('chatbot.askShowtimePreference'), [
+        makeAction('showtimePreferencePicker', t('chatbot.showtimePreference'), { showtimes }),
       ]);
     } catch {
       appendBot(t('chatbot.errorNoPricing'));
@@ -1234,9 +1535,19 @@ const ChatBot: React.FC = () => {
     }
   }, [appendBot, appendUser, draft.date, draft.movie, makeAction, t]);
 
+  const handlePickShowtimePreference = useCallback((mode: ShowtimePickMode, showtimes: ShowtimeOption[]) => {
+    appendUser(mode === 'time' ? t('chatbot.showtimeByTimeLog') : t('chatbot.showtimeByFormatLog'));
+    appendBot(mode === 'time' ? t('chatbot.askShowtimeByTime') : t('chatbot.askShowtimeByFormat'), [
+      makeAction('showtimePicker', t('chatbot.showtimePicker'), {
+        showtimes,
+        mode,
+      }),
+    ]);
+  }, [appendBot, appendUser, makeAction, t]);
+
   const handlePickShowtime = useCallback(async (showtime: ShowtimeOption) => {
     appendUser(`${t('chatbot.selectedShowtime')} ${formatTime(showtime.startTime)} - ${showtime.formatName}`);
-    setDraft(prev => ({ ...prev, showtime, pricing: undefined, segment: undefined, suggestedSeats: [] }));
+    setDraft(prev => ({ ...prev, showtime, pricing: undefined, segment: undefined, seatMap: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
     try {
@@ -1277,9 +1588,10 @@ const ChatBot: React.FC = () => {
         return;
       }
 
+      const seatMap = seatMapResponse.value.data;
       const history = historyResponse.status === 'fulfilled' ? (historyResponse.value.data || []) : [];
-      const seats = suggestSeats(seatMapResponse.value.data, quantity, history as any[]);
-      setDraft(prev => ({ ...prev, suggestedSeats: seats }));
+      const seats = suggestSeats(seatMap, quantity, history as any[]);
+      setDraft(prev => ({ ...prev, seatMap, suggestedSeats: seats }));
       appendBot(seats.length ? t('chatbot.seatsSuggested') : t('chatbot.errorNoSeats'), [
         makeAction('seatSuggestion', t('chatbot.seatSuggestion'), {}),
       ]);
@@ -1302,15 +1614,47 @@ const ChatBot: React.FC = () => {
     }
   }, [appendBot, makeAction, t]);
 
-  const handleAcceptSeats = useCallback(async () => {
-    appendUser(t('chatbot.acceptSeatsLog', { seats: draft.suggestedSeats.map(seat => seat.seatNumber).join(', ') }));
+  const handleAcceptSeats = useCallback(async (seats?: NormalizedSeat[]) => {
+    const acceptedSeats = seats?.length ? seats : draft.suggestedSeats;
+    if (acceptedSeats.length !== draft.quantity) {
+      appendBot(t('chatbot.errorSeatQuantity', { count: draft.quantity }));
+      return;
+    }
+
+    setDraft(prev => ({ ...prev, suggestedSeats: acceptedSeats }));
+    appendUser(t('chatbot.acceptSeatsLog', { seats: acceptedSeats.map(seat => seat.seatNumber).join(', ') }));
     await continueAfterSeats();
-  }, [appendUser, continueAfterSeats, draft.suggestedSeats, t]);
+  }, [appendBot, appendUser, continueAfterSeats, draft.quantity, draft.suggestedSeats, t]);
 
   const handleRetrySeats = useCallback(async () => {
-    if (!draft.segment) return;
-    await handlePickSegment(draft.segment, draft.quantity);
-  }, [draft.quantity, draft.segment, handlePickSegment, t]);
+    if (!draft.showtime || !draft.segment) return;
+    appendUser(t('chatbot.resuggest'));
+    setIsLoading(true);
+
+    try {
+      const [seatMapResponse, historyResponse] = await Promise.allSettled([
+        publicApi.getSeatMap(draft.showtime.scheduleId),
+        isLoggedIn() ? bookingApi.getBookingHistory() : Promise.resolve({ data: [] }),
+      ]);
+
+      if (seatMapResponse.status !== 'fulfilled') {
+        appendBot(t('chatbot.errorNoSeatMap'));
+        return;
+      }
+
+      const seatMap = seatMapResponse.value.data;
+      const history = historyResponse.status === 'fulfilled' ? (historyResponse.value.data || []) : [];
+      const seats = suggestSeats(seatMap, draft.quantity, history as any[]);
+      setDraft(prev => ({ ...prev, seatMap, suggestedSeats: seats }));
+      appendBot(seats.length ? t('chatbot.seatsSuggested') : t('chatbot.errorNoSeats'), [
+        makeAction('seatSuggestion', t('chatbot.seatSuggestion'), {}),
+      ]);
+    } catch {
+      appendBot(t('chatbot.errorNoSeatMap'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [appendBot, appendUser, draft.quantity, draft.segment, draft.showtime, makeAction, t]);
 
   const handleVoucherMode = useCallback(async (mode: 'owned' | 'redeem' | 'skip') => {
     if (mode === 'skip') {
@@ -1578,7 +1922,7 @@ const ChatBot: React.FC = () => {
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
-            transition={{ type: 'spring', stiffness: 320, damping: 24 }}
+            transition={{ duration: 0.14, ease: 'easeOut' }}
             style={{
               position: 'fixed',
               right: 24,
@@ -1629,6 +1973,7 @@ const ChatBot: React.FC = () => {
                       onPickMovie={handlePickMovie}
                       onPickDate={handlePickDate}
                       onPickCinema={handlePickCinema}
+                      onPickShowtimePreference={handlePickShowtimePreference}
                       onPickShowtime={handlePickShowtime}
                       onPickSegment={handlePickSegment}
                       onAcceptSeats={handleAcceptSeats}
@@ -1744,8 +2089,8 @@ const ChatBot: React.FC = () => {
         onClick={() => setIsOpen(value => !value)}
         aria-label="Open CinemaPro AI"
         className={`chatbot-trigger-btn ${isOpen ? 'is-open' : ''}`}
-        whileHover={shouldReduceMotion ? {} : { scale: 1.08, translateY: -2 }}
-        whileTap={shouldReduceMotion ? {} : { scale: 0.94 }}
+        whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
+        whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
         style={{
           position: 'fixed',
           right: 24,

@@ -19,20 +19,20 @@ public class ChatbotOrchestrator
 {
     private readonly IChatIntentClassifier _intentClassifier;
     private readonly IChatPolicyService _policyService;
-    private readonly IChatToolRegistry _toolRegistry;
+    private readonly IChatContextProviderRegistry _contextProviderRegistry;
     private readonly IChatLlmClient _llmClient;
     private readonly IUserContextService _userContextService;
 
     public ChatbotOrchestrator(
         IChatIntentClassifier intentClassifier,
         IChatPolicyService policyService,
-        IChatToolRegistry toolRegistry,
+        IChatContextProviderRegistry contextProviderRegistry,
         IChatLlmClient llmClient,
         IUserContextService userContextService)
     {
         _intentClassifier = intentClassifier;
         _policyService = policyService;
-        _toolRegistry = toolRegistry;
+        _contextProviderRegistry = contextProviderRegistry;
         _llmClient = llmClient;
         _userContextService = userContextService;
     }
@@ -72,20 +72,20 @@ public class ChatbotOrchestrator
             // 1. Phân loại ý định (Intent Classification)
             var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
 
-            // 2. Tìm và thực thi tool trong C# để lấy thông tin DB làm toolContext
-            string toolContext = string.Empty;
+            // 2. Resolve deterministic C# context before handing the message to the Python LangChain agent.
+            string supportingContext = string.Empty;
             if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
             {
-                var tool = _toolRegistry.GetTool(intentResult.Intent);
-                if (tool != null)
+                var provider = _contextProviderRegistry.GetProvider(intentResult.Intent);
+                if (provider != null)
                 {
                     try
                     {
-                        toolContext = await tool.ExecuteAsync(intentResult.Parameters);
+                        supportingContext = await provider.ExecuteAsync(intentResult.Parameters);
                     }
-                    catch (Exception toolEx)
+                    catch (Exception providerEx)
                     {
-                        Console.WriteLine($"Error executing chatbot tool {intentResult.Intent}: {toolEx}");
+                        Console.WriteLine($"Error executing chatbot context provider {intentResult.Intent}: {providerEx}");
                     }
                 }
             }
@@ -93,15 +93,15 @@ public class ChatbotOrchestrator
             // Gửi trực tiếp tin nhắn sang LangChain Agent ở dịch vụ Python AI
             var assistantResponse = await _llmClient.SendChatRequestAsync(
                 requestDto.Message, 
-                toolContext, 
+                supportingContext, 
                 userRoles, 
                 userId, 
                 sessionId
             );
 
             // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
-            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
-            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
+            var referencedMovies = ExtractMoviesFromContext(supportingContext, assistantResponse);
+            var referencedSchedules = ExtractSchedulesFromContext(supportingContext);
 
             return new BaseResponse<ChatbotResponseDto>
             {
@@ -169,20 +169,20 @@ public class ChatbotOrchestrator
             await onStatus("Phân loại ý định...");
             var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
 
-            string toolContext = string.Empty;
+            string supportingContext = string.Empty;
             if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
             {
                 await onStatus($"Đang tìm kiếm thông tin: {intentResult.Intent}...");
-                var tool = _toolRegistry.GetTool(intentResult.Intent);
-                if (tool != null)
+                var provider = _contextProviderRegistry.GetProvider(intentResult.Intent);
+                if (provider != null)
                 {
                     try
                     {
-                        toolContext = await tool.ExecuteAsync(intentResult.Parameters);
+                        supportingContext = await provider.ExecuteAsync(intentResult.Parameters);
                     }
-                    catch (Exception toolEx)
+                    catch (Exception providerEx)
                     {
-                        Console.WriteLine($"Error executing chatbot tool {intentResult.Intent}: {toolEx}");
+                        Console.WriteLine($"Error executing chatbot context provider {intentResult.Intent}: {providerEx}");
                     }
                 }
             }
@@ -195,7 +195,7 @@ public class ChatbotOrchestrator
             var responseBuilder = new StringBuilder();
             await foreach (var token in _llmClient.StreamChatRequestAsync(
                 requestDto.Message,
-                toolContext,
+                supportingContext,
                 userRoles,
                 userId,
                 sessionId,
@@ -208,8 +208,8 @@ public class ChatbotOrchestrator
             var assistantResponse = responseBuilder.ToString();
 
             // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
-            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
-            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
+            var referencedMovies = ExtractMoviesFromContext(supportingContext, assistantResponse);
+            var referencedSchedules = ExtractSchedulesFromContext(supportingContext);
 
             return new BaseResponse<ChatbotResponseDto>
             {
@@ -303,7 +303,7 @@ public class ChatbotOrchestrator
         }
         catch
         {
-            // Ignore JSON parsing errors from toolContext
+            // Ignore JSON parsing errors from supporting context.
         }
 
         return referencedMovies;

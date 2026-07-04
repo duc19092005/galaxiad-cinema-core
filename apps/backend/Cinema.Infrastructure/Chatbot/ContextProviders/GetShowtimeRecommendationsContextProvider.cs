@@ -5,13 +5,13 @@ using Cinema.Application.UseCases.TheaterManager.ShowtimeRecommendations;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetShowtimeRecommendationsTool : IChatTool
+public class GetShowtimeRecommendationsContextProvider : IChatContextProvider
 {
     private readonly GenerateShowtimeRecommendationsUseCase _generateUseCase;
 
-    public GetShowtimeRecommendationsTool(GenerateShowtimeRecommendationsUseCase generateUseCase)
+    public GetShowtimeRecommendationsContextProvider(GenerateShowtimeRecommendationsUseCase generateUseCase)
     {
         _generateUseCase = generateUseCase;
     }

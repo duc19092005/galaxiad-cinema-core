@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
@@ -6,6 +7,8 @@ using Cinema.Domain.Entities.Vouchers;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
+using Cinema.Domain.Constants;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.UseCases.Admin.Vouchers;
 
@@ -34,6 +37,16 @@ public class RedeemVoucherUseCase
             ?? throw new AppException(Messages.Admin.UserNotFound, 404, "V06");
 
         await ValidateUserRoleAsync(userId, voucher.roleId);
+
+        if (voucher.roleId == userRoles.Customer && voucher.VoucherMembershipRanks.Any())
+        {
+            var userRank = user.CustomerProfileEntity?.MembershipRank ?? MembershipRankEnum.Standard;
+            var isEligible = voucher.VoucherMembershipRanks.Any(vr => vr.MembershipRank == userRank);
+            if (!isEligible)
+            {
+                throw new AppException(Messages.Voucher.RankNotEligible, 400, "V09");
+            }
+        }
 
         // 2. Perform business logic and persist changes
         await using var transaction = await _unitOfWork.BeginTransactionAsync();

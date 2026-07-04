@@ -75,7 +75,7 @@ export default function GroupSuccessView({ groupState }: Props) {
         style={{ background: 'radial-gradient(circle at center, rgba(255,149,0,0.1) 0%, transparent 70%)' }}>
         <div className="flex justify-center mb-5">
           <div className="w-20 h-20 bg-[#34C759] rounded-full flex items-center justify-center"
-            style={{ boxShadow: '0 0 30px rgba(52,199,89,0.4)', animation: 'float 4s ease-in-out infinite' }}>
+            style={{ boxShadow: '0 0 18px rgba(52,199,89,0.28)' }}>
             <CheckCircle2 className="w-10 h-10 text-white" fill="white" />
           </div>
         </div>

@@ -40,14 +40,12 @@ const getPromotionTypes = (t: (key: string) => string): { value: PromotionTypeNa
 interface ConditionState {
   movieFormatIds: string[];
   cinemaIds: string[];
-  requiredMembershipRank: number | null;
+  userSegmentIds: string[];
   promotionType: PromotionTypeName;
   adjustmentValue: number;
   timeFrom: string;
   timeTo: string;
   daysOfWeek: string[];
-  startDate: string;
-  endDate: string;
   isActive: boolean;
 }
 
@@ -76,14 +74,12 @@ const DAY_VALUES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sat
 const createCondition = (): ConditionState => ({
   movieFormatIds: [],
   cinemaIds: [],
-  requiredMembershipRank: null,
+  userSegmentIds: [],
   promotionType: 'FixedTicketPrice',
   adjustmentValue: 45000,
   timeFrom: '00:00',
   timeTo: '23:59',
   daysOfWeek: [...DAY_VALUES],
-  startDate: '',
-  endDate: '',
   isActive: true,
 });
 
@@ -176,11 +172,8 @@ const buildFormFromPromotion = (p: PricingPromotionDto): WizardFormState => {
     const existing = groups.find(g =>
       g.promotionType === rule.promotionTypeName &&
       g.adjustmentValue === rule.adjustmentValue &&
-      g.requiredMembershipRank === (rule.requiredMembershipRank == null ? null : Number(rule.requiredMembershipRank)) &&
       g.timeFrom === toTimeInput(rule.timeFrom) &&
       g.timeTo === toTimeInput(rule.timeTo) &&
-      g.startDate === toDateInput(rule.startDate) &&
-      g.endDate === toDateInput(rule.endDate) &&
       g.isActive === rule.isActive &&
       JSON.stringify(g.daysOfWeek.slice().sort()) === JSON.stringify(rule.daysOfWeek.slice().sort())
     );
@@ -189,18 +182,18 @@ const buildFormFromPromotion = (p: PricingPromotionDto): WizardFormState => {
         existing.movieFormatIds.push(rule.movieFormatId);
       if (rule.cinemaId && !existing.cinemaIds.includes(rule.cinemaId))
         existing.cinemaIds.push(rule.cinemaId);
+      if (rule.userSegmentId && !existing.userSegmentIds.includes(rule.userSegmentId))
+        existing.userSegmentIds.push(rule.userSegmentId);
     } else {
       groups.push({
         movieFormatIds: rule.movieFormatId ? [rule.movieFormatId] : [],
         cinemaIds: rule.cinemaId ? [rule.cinemaId] : [],
-        requiredMembershipRank: rule.requiredMembershipRank == null ? null : Number(rule.requiredMembershipRank),
+        userSegmentIds: rule.userSegmentId ? [rule.userSegmentId] : [],
         promotionType: rule.promotionTypeName as PromotionTypeName,
         adjustmentValue: rule.adjustmentValue,
         timeFrom: toTimeInput(rule.timeFrom),
         timeTo: toTimeInput(rule.timeTo),
         daysOfWeek: rule.daysOfWeek.length ? rule.daysOfWeek : [...DAY_VALUES],
-        startDate: toDateInput(rule.startDate),
-        endDate: toDateInput(rule.endDate),
         isActive: rule.isActive,
       });
     }
@@ -225,11 +218,11 @@ const toPayload = (form: WizardFormState): PricingPromotionUpsertDto => {
   const rules: PricingPromotionRuleRequestDto[] = form.conditions.map(cond => ({
     movieFormatIds: cond.movieFormatIds.length > 0 ? cond.movieFormatIds : [],
     cinemaIds: cond.cinemaIds.length > 0 ? cond.cinemaIds : [],
-    requiredMembershipRank: cond.requiredMembershipRank,
+    userSegmentIds: cond.userSegmentIds.length > 0 ? cond.userSegmentIds : [],
     promotionType: cond.promotionType,
     adjustmentValue: cond.adjustmentValue,
-    startDate: toApiDate(cond.startDate),
-    endDate: toApiDate(cond.endDate, true),
+    startDate: toApiDate(form.startDate),
+    endDate: toApiDate(form.endDate, true),
     timeFrom: toApiTime(cond.timeFrom),
     timeTo: toApiTime(cond.timeTo),
     daysOfWeek: cond.daysOfWeek.length ? cond.daysOfWeek : [...DAY_VALUES],
@@ -352,6 +345,22 @@ const ConditionCard: React.FC<{
       }
     }
     onUpdate({ cinemaIds: next });
+  };
+
+  const toggleSegment = (id: string) => {
+    let next: string[];
+    if (cond.userSegmentIds.length === 0) {
+      // All were active. Clicking one deactivates it.
+      next = options.membershipTiers.map(t => t.id).filter(x => x !== id);
+    } else {
+      next = cond.userSegmentIds.includes(id)
+        ? cond.userSegmentIds.filter(x => x !== id)
+        : [...cond.userSegmentIds, id];
+      if (next.length === options.membershipTiers.length) {
+        next = [];
+      }
+    }
+    onUpdate({ userSegmentIds: next });
   };
 
   const toggleDay = (val: string) => {
@@ -478,25 +487,25 @@ const ConditionCard: React.FC<{
             </div>
           </div>
 
-          {/* Membership rank */}
+          {/* User segments */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-              Hạng thành viên
+              Tệp người dùng áp dụng
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               <PillButton
-                label="Tất cả hạng"
-                active={cond.requiredMembershipRank === null}
-                onClick={() => onUpdate({ requiredMembershipRank: null })}
+                label="Tất cả tệp người dùng"
+                active={cond.userSegmentIds.length === 0}
+                onClick={() => onUpdate({ userSegmentIds: [] })}
               />
-              {options.membershipTiers.map(rank => {
-                const rankValue = Number(rank.id);
+              {options.membershipTiers.map(seg => {
+                const isAct = cond.userSegmentIds.length === 0 || cond.userSegmentIds.includes(seg.id);
                 return (
                   <PillButton
-                    key={rank.id}
-                    label={rank.name}
-                    active={cond.requiredMembershipRank === rankValue}
-                    onClick={() => onUpdate({ requiredMembershipRank: rankValue })}
+                    key={seg.id}
+                    label={seg.name}
+                    active={isAct}
+                    onClick={() => toggleSegment(seg.id)}
                   />
                 );
               })}
@@ -535,18 +544,12 @@ const ConditionCard: React.FC<{
           </div>
 
           {/* Time */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <FieldLabel label={t('pricingPromotions.fromTime')}>
               <input type="time" className="input" value={cond.timeFrom} onChange={e => onUpdate({ timeFrom: e.target.value })} />
             </FieldLabel>
             <FieldLabel label={t('pricingPromotions.toTime')}>
               <input type="time" className="input" value={cond.timeTo} onChange={e => onUpdate({ timeTo: e.target.value })} />
-            </FieldLabel>
-            <FieldLabel label={t('pricingPromotions.fromDate')}>
-              <input type="date" className="input" value={cond.startDate} onChange={e => onUpdate({ startDate: e.target.value })} />
-            </FieldLabel>
-            <FieldLabel label={t('pricingPromotions.toDate')}>
-              <input type="date" className="input" value={cond.endDate} onChange={e => onUpdate({ endDate: e.target.value })} />
             </FieldLabel>
           </div>
 

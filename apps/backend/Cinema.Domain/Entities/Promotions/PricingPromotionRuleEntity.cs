@@ -27,7 +27,9 @@ public class PricingPromotionRuleEntity
 
     public AuditoriumInfoEntities? AuditoriumInfoEntity { get; set; }
 
-    public MembershipRankEnum? RequiredMembershipRank { get; set; }
+    public Guid? UserSegmentId { get; set; }
+
+    public Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity? UserSegmentsInfoEntity { get; set; }
 
     public PromotionTypeEnum PromotionType { get; set; }
 

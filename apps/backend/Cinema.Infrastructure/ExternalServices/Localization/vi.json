@@ -415,6 +415,7 @@
         "There are currently no active promotions.": "Hiện tại không có khuyến mãi nào đang hoạt động.",
         "No matching movies found.": "Không tìm thấy phim phù hợp.",
         "No movies found.": "Không tìm thấy phim nào.",
-        "Booking not found. Please check your booking code or make sure you are logged in with the correct account.": "Không tìm thấy đơn đặt vé với mã này. Vui lòng kiểm tra lại mã hoặc đảm bảo bạn đang đăng nhập đúng tài khoản."
+        "Booking not found. Please check your booking code or make sure you are logged in with the correct account.": "Không tìm thấy đơn đặt vé với mã này. Vui lòng kiểm tra lại mã hoặc đảm bảo bạn đang đăng nhập đúng tài khoản.",
+        "User is not eligible for this voucher (membership rank mismatch).": "Người dùng không đủ điều kiện sử dụng voucher này (sai hạng thành viên)."
     }
 }

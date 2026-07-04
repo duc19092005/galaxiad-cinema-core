@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Cinema.Application.Interfaces.Chatbot;
 
-public interface IChatTool
+public interface IChatContextProvider
 {
     string IntentName { get; }
     Task<string> ExecuteAsync(Dictionary<string, string> parameters);

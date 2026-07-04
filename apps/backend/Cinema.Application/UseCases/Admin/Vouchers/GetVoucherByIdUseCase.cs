@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.Vouchers;
 using Cinema.Application.Interfaces.Vouchers;
@@ -38,7 +39,8 @@ public class GetVoucherByIdUseCase
             VoucherPointsCost = v.VoucherPointsCost,
             VoucherQuantity = v.VoucherQuantity,
             RemainingQuantity = v.RemainingQuantity,
-            IsActive = v.IsValid(null)
+            IsActive = v.IsValid(null),
+            TargetRanks = v.VoucherMembershipRanks.Select(vr => vr.MembershipRank).ToList()
         };
     }
 }

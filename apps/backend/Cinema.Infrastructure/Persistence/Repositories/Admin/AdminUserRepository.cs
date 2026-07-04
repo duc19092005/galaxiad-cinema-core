@@ -94,7 +94,6 @@ public class AdminUserRepository : IAdminUserRepository
     {
         return await _dbContext.Set<RoleListInfoEntity>()
             .AsNoTracking()
-            .Where(x => x.RoleType == RoleCategory.Staff || x.RoleType == RoleCategory.Manager)
             .Select(x => new ResponseRolesDto
             {
                 RoleId = x.RoleId,

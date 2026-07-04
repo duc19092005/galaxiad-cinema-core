@@ -11,6 +11,15 @@ public static class VoucherInfoRelationshipsKeys
             .HasOne(x => x.RoleListInfoEntity)
             .WithMany(x => x.VoucherInfoEntity)
             .HasForeignKey(x => x.roleId);
+
+        modelBuilder.Entity<VoucherMembershipRankEntity>()
+            .HasKey(vr => new { vr.VoucherId, vr.MembershipRank });
+
+        modelBuilder.Entity<VoucherMembershipRankEntity>()
+            .HasOne(vr => vr.VoucherInfoEntity)
+            .WithMany(v => v.VoucherMembershipRanks)
+            .HasForeignKey(vr => vr.VoucherId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
     public static void AddVoucherInfoKeys(ModelBuilder modelBuilder)
     {

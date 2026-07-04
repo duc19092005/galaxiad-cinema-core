@@ -9,13 +9,13 @@ using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetAvailableSeatsTool : IChatTool
+public class GetAvailableSeatsContextProvider : IChatContextProvider
 {
     private readonly IPublicCatalogRepository _catalogRepo;
 
-    public GetAvailableSeatsTool(IPublicCatalogRepository catalogRepo)
+    public GetAvailableSeatsContextProvider(IPublicCatalogRepository catalogRepo)
     {
         _catalogRepo = catalogRepo;
     }

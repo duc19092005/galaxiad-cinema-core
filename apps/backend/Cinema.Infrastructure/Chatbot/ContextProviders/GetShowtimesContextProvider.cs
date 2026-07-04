@@ -9,13 +9,13 @@ using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetShowtimesTool : IChatTool
+public class GetShowtimesContextProvider : IChatContextProvider
 {
     private readonly IPublicCatalogRepository _catalogRepository;
 
-    public GetShowtimesTool(IPublicCatalogRepository catalogRepository)
+    public GetShowtimesContextProvider(IPublicCatalogRepository catalogRepository)
     {
         _catalogRepository = catalogRepository;
     }

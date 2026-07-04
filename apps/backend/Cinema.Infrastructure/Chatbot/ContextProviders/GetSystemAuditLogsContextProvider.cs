@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -7,13 +7,13 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Domain.Constants;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class GetSystemAuditLogsTool : IChatTool
+public class GetSystemAuditLogsContextProvider : IChatContextProvider
 {
     private readonly IAdminAuditLogRepository _adminRepository;
 
-    public GetSystemAuditLogsTool(IAdminAuditLogRepository adminRepository)
+    public GetSystemAuditLogsContextProvider(IAdminAuditLogRepository adminRepository)
     {
         _adminRepository = adminRepository;
     }

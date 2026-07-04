@@ -8,14 +8,14 @@ using Cinema.Application.Interfaces.Chatbot;
 using Cinema.Domain.Constants;
 using Cinema.Domain.Localization;
 
-namespace Cinema.Infrastructure.Chatbot.Tools;
+namespace Cinema.Infrastructure.Chatbot.ContextProviders;
 
-public class SearchMoviesSemanticTool : IChatTool
+public class SearchMoviesSemanticContextProvider : IChatContextProvider
 {
     private readonly IPublicCatalogRepository            _catalogRepo;
     private readonly IAiSemanticSearchClient             _aiSearchClient;
 
-    public SearchMoviesSemanticTool(
+    public SearchMoviesSemanticContextProvider(
         IPublicCatalogRepository catalogRepo,
         IAiSemanticSearchClient  aiSearchClient)
     {

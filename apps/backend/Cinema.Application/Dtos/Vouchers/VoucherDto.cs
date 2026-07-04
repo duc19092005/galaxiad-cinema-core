@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Cinema.Domain.Enums;
 
 namespace Cinema.Application.Dtos.Vouchers;
 
@@ -17,4 +19,5 @@ public class VoucherDto
     public int VoucherQuantity { get; set; }
     public int RemainingQuantity { get; set; }
     public bool IsActive { get; set; }
+    public List<MembershipRankEnum> TargetRanks { get; set; } = [];
 }

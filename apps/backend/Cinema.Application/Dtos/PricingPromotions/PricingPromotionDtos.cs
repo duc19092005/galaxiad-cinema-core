@@ -9,7 +9,7 @@ public class PricingPromotionRuleRequestDto
     public List<Guid> MovieFormatIds { get; set; } = [];
     public List<Guid> CinemaIds { get; set; } = [];
     public Guid? AuditoriumId { get; set; }
-    public MembershipRankEnum? RequiredMembershipRank { get; set; }
+    public List<Guid> UserSegmentIds { get; set; } = [];
     [Required]
     public PromotionTypeEnum PromotionType { get; set; }
     [Range(0, 999999999)]
@@ -34,9 +34,9 @@ public class PricingPromotionUpsertDto
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
     [StringLength(500)]
-    public string ShortDescription { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string TermsAndConditions { get; set; } = string.Empty;
+    public string? ShortDescription { get; set; }
+    public string? Description { get; set; }
+    public string? TermsAndConditions { get; set; }
     [StringLength(2048)]
     public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
@@ -55,8 +55,8 @@ public class PricingPromotionRuleDto
     public string? CinemaName { get; set; }
     public Guid? AuditoriumId { get; set; }
     public string? AuditoriumNumber { get; set; }
-    public MembershipRankEnum? RequiredMembershipRank { get; set; }
-    public string? RequiredMembershipRankName { get; set; }
+    public Guid? UserSegmentId { get; set; }
+    public string? UserSegmentName { get; set; }
     public PromotionTypeEnum PromotionType { get; set; }
     public string PromotionTypeName { get; set; } = string.Empty;
     public decimal AdjustmentValue { get; set; }

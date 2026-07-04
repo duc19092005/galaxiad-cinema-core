@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos.PricingPromotions;
 using Cinema.Application.Interfaces.PricingPromotions;
@@ -20,14 +20,13 @@ public class GetPricingPromotionOptionsUseCase
         var formats = await _repository.GetMovieFormatsAsync();
         var cinemas = await _repository.GetCinemasAsync();
         var auditoriums = await _repository.GetAuditoriumsAsync();
+        var segments = await _repository.GetUserSegmentsAsync();
         return new PricingPromotionOptionsDto
         {
             Formats = formats.Select(x => new PricingPromotionOptionDto { Id = x.MovieFormatId.ToString(), Name = x.MovieFormatName }).ToList(),
             Cinemas = cinemas.Select(x => new PricingPromotionOptionDto { Id = x.CinemaId.ToString(), Name = x.CinemaName }).ToList(),
             Auditoriums = auditoriums.Select(x => new PricingPromotionOptionDto { Id = x.AuditoriumId.ToString(), Name = x.AuditoriumNumber }).ToList(),
-            MembershipTiers = System.Enum.GetValues<MembershipRankEnum>()
-                .Select(x => new PricingPromotionOptionDto { Id = ((int)x).ToString(), Name = x.ToString() })
-                .ToList()
+            MembershipTiers = segments.Select(x => new PricingPromotionOptionDto { Id = x.UserSegmentId.ToString(), Name = x.UserSegmentName }).ToList()
         };
     }
 }

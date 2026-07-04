@@ -17,28 +17,32 @@ public static class PricingPromotionHelper
     {
         var formats = dto.MovieFormatIds.Count > 0 ? dto.MovieFormatIds.Cast<Guid?>().ToList() : new List<Guid?> { null };
         var cinemas = dto.CinemaIds.Count > 0 ? dto.CinemaIds.Cast<Guid?>().ToList() : new List<Guid?> { null };
+        var segments = dto.UserSegmentIds.Count > 0 ? dto.UserSegmentIds.Cast<Guid?>().ToList() : new List<Guid?> { null };
 
         foreach (var formatId in formats)
         {
             foreach (var cinemaId in cinemas)
             {
-                yield return new PricingPromotionRuleEntity
+                foreach (var segmentId in segments)
                 {
-                    PricingPromotionRuleId = Guid.NewGuid(),
-                    MovieFormatId = formatId,
-                    CinemaId = cinemaId,
-                    AuditoriumId = dto.AuditoriumId,
-                    RequiredMembershipRank = dto.RequiredMembershipRank,
-                    PromotionType = dto.PromotionType,
-                    AdjustmentValue = dto.AdjustmentValue,
-                    StartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate),
-                    EndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate),
-                    TimeFrom = dto.TimeFrom,
-                    TimeTo = dto.TimeTo,
-                    DaysOfWeekMask = DaysOfWeekMaskHelper.Encode(dto.DaysOfWeek),
-                    Priority = dto.Priority,
-                    IsActive = dto.IsActive
-                };
+                    yield return new PricingPromotionRuleEntity
+                    {
+                        PricingPromotionRuleId = Guid.NewGuid(),
+                        MovieFormatId = formatId,
+                        CinemaId = cinemaId,
+                        AuditoriumId = dto.AuditoriumId,
+                        UserSegmentId = segmentId,
+                        PromotionType = dto.PromotionType,
+                        AdjustmentValue = dto.AdjustmentValue,
+                        StartDate = DateTimeHelper.NormalizeIncoming(dto.StartDate),
+                        EndDate = DateTimeHelper.NormalizeIncoming(dto.EndDate),
+                        TimeFrom = dto.TimeFrom,
+                        TimeTo = dto.TimeTo,
+                        DaysOfWeekMask = DaysOfWeekMaskHelper.Encode(dto.DaysOfWeek),
+                        Priority = dto.Priority,
+                        IsActive = dto.IsActive
+                    };
+                }
             }
         }
     }
@@ -80,8 +84,8 @@ public static class PricingPromotionHelper
             CinemaName = rule.CinemaInfoEntity?.CinemaName,
             AuditoriumId = rule.AuditoriumId,
             AuditoriumNumber = rule.AuditoriumInfoEntity?.AuditoriumNumber,
-            RequiredMembershipRank = rule.RequiredMembershipRank,
-            RequiredMembershipRankName = rule.RequiredMembershipRank?.ToString(),
+            UserSegmentId = rule.UserSegmentId,
+            UserSegmentName = rule.UserSegmentsInfoEntity?.UserSegmentName,
             PromotionType = rule.PromotionType,
             PromotionTypeName = rule.PromotionType.ToString(),
             AdjustmentValue = rule.AdjustmentValue,
