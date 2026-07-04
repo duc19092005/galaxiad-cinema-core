@@ -17,6 +17,11 @@ public class AddReqAuditoriumDto
     [Required]
     [MinLength(1, ErrorMessage = "Auditorium must have at least one seat")]
     public List<ReqSeatsAuditoriumDto> AddReqSeatsAuditoriumDto { get; set; } = [];
+
+    public int CenterRowStart { get; set; }
+    public int CenterRowEnd { get; set; }
+    public int CenterColStart { get; set; }
+    public int CenterColEnd { get; set; }
 }
 
 public class ReqSeatsAuditoriumDto
@@ -47,4 +52,9 @@ public class EditReqAuditoriumDto
     
     public List<ReqSeatsAuditoriumDto>? AddReqSeatsAuditoriumDto { get; set; }
     
+    public int? CenterRowStart { get; set; }
+    public int? CenterRowEnd { get; set; }
+    public int? CenterColStart { get; set; }
+    public int? CenterColEnd { get; set; }
 }
+

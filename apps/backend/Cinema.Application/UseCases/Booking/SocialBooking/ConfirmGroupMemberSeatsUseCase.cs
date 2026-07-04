@@ -43,8 +43,9 @@ public class ConfirmGroupMemberSeatsUseCase
         if (session == null)
             throw new NotFoundException("Group booking session not found");
 
-        if (session.Status != GroupBookingStatusEnum.SeatsSelected && session.Status != GroupBookingStatusEnum.Confirming)
+        if (session.Status != GroupBookingStatusEnum.Open && session.Status != GroupBookingStatusEnum.SeatsSelected && session.Status != GroupBookingStatusEnum.Confirming)
             throw new BadRequestException("Cannot confirm seats in current session status", "GBK30");
+
 
         var member = session.Members.FirstOrDefault(m => m.UserId == userId && m.Status != GroupMemberStatusEnum.Removed);
         if (member == null)

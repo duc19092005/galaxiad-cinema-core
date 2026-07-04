@@ -34,7 +34,8 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         string userPrompt,
         string toolContext,
         string userRole,
-        string userId)
+        string userId,
+        string sessionId = "")
     {
         try
         {
@@ -44,7 +45,8 @@ public class DeepSeekChatLlmClient : IChatLlmClient
                 ToolContext = toolContext,
                 UserRole    = userRole,
                 UserId      = userId,
-                Language    = _localizationService.CurrentLanguage
+                Language    = _localizationService.CurrentLanguage,
+                SessionId   = sessionId
             };
 
             var reply = await _client.ChatAsync(request);
@@ -62,6 +64,7 @@ public class DeepSeekChatLlmClient : IChatLlmClient
         string          toolContext,
         string          userRole,
         string          userId,
+        string          sessionId = "",
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var request = new ChatRequest
@@ -70,16 +73,18 @@ public class DeepSeekChatLlmClient : IChatLlmClient
             ToolContext = toolContext,
             UserRole    = userRole,
             UserId      = userId,
-            Language    = _localizationService.CurrentLanguage
+            Language    = _localizationService.CurrentLanguage,
+            SessionId   = sessionId
         };
 
-        using var call = _client.ChatStream(request);
+        using var call = _client.ChatStream(request, cancellationToken: cancellationToken);
 
         while (await call.ResponseStream.MoveNext(cancellationToken))
         {
             yield return call.ResponseStream.Current.Response;
         }
     }
+
 
     public async Task<ChatGuardResult> CheckMessageSafetyAsync(string message)
     {

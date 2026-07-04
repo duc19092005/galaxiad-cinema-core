@@ -342,14 +342,47 @@ const BookingPage: React.FC = () => {
                             borderRadius: 16,
                             backgroundColor: 'rgba(255,255,255,0.02)',
                             width: '100%',
-                            maxWidth: `min(${maxCol * 56}px, 100%)`,
+                            maxWidth: `min(${maxCol * 60}px, 100%)`,
                             justifyContent: 'center',
+                            placeItems: 'center',
                         }} className="mb-16">
+                            {/* Big dashed border frame enclosing the center seats */}
+                            {seatMap.centerRowStart !== undefined &&
+                             seatMap.centerRowEnd !== undefined &&
+                             seatMap.centerColStart !== undefined &&
+                             seatMap.centerColEnd !== undefined &&
+                             seatMap.centerRowStart > 0 &&
+                             seatMap.centerColStart > 0 && (
+                                <div style={{
+                                    gridRowStart: seatMap.centerRowStart + 1,
+                                    gridRowEnd: seatMap.centerRowEnd + 2,
+                                    gridColumnStart: seatMap.centerColStart + 1,
+                                    gridColumnEnd: seatMap.centerColEnd + 2,
+                                    border: '2px dashed rgba(255, 255, 255, 0.45)',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                                    borderRadius: '16px',
+                                    pointerEvents: 'none',
+                                    zIndex: 0,
+                                    boxShadow: '0 0 15px rgba(255, 255, 255, 0.05)',
+                                    margin: '-6px',
+                                }} />
+                            )}
+
                             {seatMap.seatMap?.map((seat) => {
                                 const isSelected = selectedSeats.find(s => s.seatId === seat.seatId);
                                 const seatUnavailable = unavailableSeats[seat.seatId.toLowerCase()];
                                 const lockedBy = lockedSeats[seat.seatId.toLowerCase()];
                                 const isLockedByOther = lockedBy && !isSelected;
+                                
+                                const isCenterSeat = 
+                                    seatMap.centerRowStart !== undefined &&
+                                    seatMap.centerRowEnd !== undefined &&
+                                    seatMap.centerColStart !== undefined &&
+                                    seatMap.centerColEnd !== undefined &&
+                                    seat.rowIndex >= seatMap.centerRowStart &&
+                                    seat.rowIndex <= seatMap.centerRowEnd &&
+                                    seat.colIndex >= seatMap.centerColStart &&
+                                    seat.colIndex <= seatMap.centerColEnd;
 
                                 return (
                                     <button
@@ -360,13 +393,15 @@ const BookingPage: React.FC = () => {
                                             gridColumnStart: seat.colIndex + 1,
                                             gridRowStart: seat.rowIndex + 1,
                                         }}
-                                        className={`w-10 h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border ${
+                                        className={`w-full aspect-square max-w-[42px] md:max-w-[50px] rounded-lg flex items-center justify-center font-bold text-xs transition-all duration-200 active:scale-90 border ${
                                             seat.isBooked || seatUnavailable
                                                 ? 'bg-zinc-900/50 text-zinc-700 border-zinc-800/40 opacity-40 cursor-not-allowed'
                                                 : isLockedByOther
                                                 ? 'bg-red-500/20 text-[#ef4444] border-red-500/40 cursor-not-allowed'
                                                 : isSelected
                                                 ? 'seat-selected'
+                                                : isCenterSeat
+                                                ? 'bg-zinc-800 text-[#ff8a00] hover:bg-zinc-700 hover:text-white border-[#ff8a00]/60 shadow-[0_0_6px_rgba(255,138,0,0.25)] cursor-pointer'
                                                 : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer border-zinc-700/50'
                                         }`}
                                         title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
@@ -384,6 +419,10 @@ const BookingPage: React.FC = () => {
                                 <span className="text-xs text-[#ddc1ae]">{t('booking.available', 'Available')}</span>
                             </div>
                             <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-sm bg-zinc-800 border border-[#ff8a00]/60 shadow-[0_0_6px_rgba(255,138,0,0.25)]"></div>
+                                <span className="text-xs text-[#ddc1ae]">{t('booking.center', 'Vùng trung tâm (Góc đẹp)')}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-[#ff8a00] shadow-[0_0_8px_rgba(255,138,0,0.5)] border border-[#ff8a00]"></div>
                                 <span className="text-xs text-[#ddc1ae]">{t('booking.selected', 'Selected')}</span>
                             </div>
@@ -396,6 +435,7 @@ const BookingPage: React.FC = () => {
                                 <span className="text-xs text-[#ddc1ae]">{t('booking.occupied', 'Occupied')}</span>
                             </div>
                         </div>
+
                     </div>
 
                     {/* Right: Summary */}

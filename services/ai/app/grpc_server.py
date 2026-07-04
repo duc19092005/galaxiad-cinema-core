@@ -26,6 +26,8 @@ from pb import ai_service_pb2 as pb
 from pb import ai_service_pb2_grpc as pb_grpc
 
 from embedder import embedder
+from agent import agent_with_history
+
 
 # ============================================================
 # DeepSeek HTTP helpers (reuse from main.py with slight adaptation)
@@ -275,20 +277,61 @@ Return JSON: {{"is_blocked": true|false, "reason": "error message in {lang_name}
             return pb.GuardResponse(is_blocked=False, reason="")
 
     async def Chat(self, request: pb.ChatRequest, context) -> pb.ChatResponse:
-        """Generate chatbot response."""
-        system_prompt = _build_chat_system_prompt(request)
-        response_text = await _call_deepseek(system_prompt, request.user_prompt, temperature=0.2)
-        return pb.ChatResponse(response=response_text)
+        """Generate chatbot response using LangChain Agent."""
+        try:
+            session_id = request.session_id or request.user_id or "default_session"
+            config = {"configurable": {"session_id": session_id}}
+            
+            result = await agent_with_history.ainvoke(
+                {
+                    "input": request.user_prompt,
+                    "user_id": request.user_id or "N/A",
+                    "user_role": request.user_role or "Guest",
+                    "tool_context": request.tool_context or ""
+                },
+                config=config
+            )
+            response_text = result.get("output", "")
+            return pb.ChatResponse(response=response_text)
+        except Exception as e:
+            logger.error(f"LangChain Chat agent failed: {e}")
+            try:
+                system_prompt = _build_chat_system_prompt(request)
+                response_text = await _call_deepseek(system_prompt, request.user_prompt, temperature=0.2)
+                return pb.ChatResponse(response=response_text)
+            except Exception as inner_e:
+                await context.abort(grpc.StatusCode.INTERNAL, f"Chat agent failed: {str(e)}. Fallback failed: {str(inner_e)}")
 
     async def ChatStream(self, request: pb.ChatRequest, context) -> pb.ChatResponse:
-        """Stream chatbot response tokens via gRPC server-streaming."""
-        system_prompt = _build_chat_system_prompt(request)
-
+        """Stream chatbot response tokens via gRPC server-streaming using LangChain Agent."""
         try:
-            async for token in _call_deepseek_stream(system_prompt, request.user_prompt, temperature=0.2):
-                yield pb.ChatResponse(response=token)
+            session_id = request.session_id or request.user_id or "default_session"
+            config = {"configurable": {"session_id": session_id}}
+            
+            async for event in agent_with_history.astream_events(
+                {
+                    "input": request.user_prompt,
+                    "user_id": request.user_id or "N/A",
+                    "user_role": request.user_role or "Guest",
+                    "tool_context": request.tool_context or ""
+                },
+                config=config,
+                version="v2"
+            ):
+                kind = event.get("event")
+                if kind == "on_chat_model_stream":
+                    content = event["data"].get("chunk").content
+                    if content:
+                        yield pb.ChatResponse(response=content)
         except Exception as e:
-            logger.error(f"ChatStream failed: {e}")
+            logger.error(f"ChatStream agent failed: {e}")
+            try:
+                system_prompt = _build_chat_system_prompt(request)
+                async for token in _call_deepseek_stream(system_prompt, request.user_prompt, temperature=0.2):
+                    yield pb.ChatResponse(response=token)
+            except Exception as inner_e:
+                logger.error(f"Fallback stream failed: {inner_e}")
+
 
     async def Moderate(self, request: pb.ModerationRequest, context) -> pb.ModerationResponse:
         """Moderate user comment content."""

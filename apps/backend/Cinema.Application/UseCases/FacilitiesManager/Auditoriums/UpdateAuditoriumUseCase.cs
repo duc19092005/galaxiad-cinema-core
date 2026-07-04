@@ -101,6 +101,11 @@ public class UpdateAuditoriumUseCase
             findAuditorium.CreatedAt = DateTime.UtcNow;
             findAuditorium.UpdatedAt = DateTime.UtcNow;
             findAuditorium.UpdatedByUserId = getUserId;
+            findAuditorium.CenterRowStart = request.CenterRowStart ?? findAuditorium.CenterRowStart;
+            findAuditorium.CenterRowEnd = request.CenterRowEnd ?? findAuditorium.CenterRowEnd;
+            findAuditorium.CenterColStart = request.CenterColStart ?? findAuditorium.CenterColStart;
+            findAuditorium.CenterColEnd = request.CenterColEnd ?? findAuditorium.CenterColEnd;
+
 
             if (request.AddReqSeatsAuditoriumDto != null && request.AddReqSeatsAuditoriumDto.Count > 0)
             {

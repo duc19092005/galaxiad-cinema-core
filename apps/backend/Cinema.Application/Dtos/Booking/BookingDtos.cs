@@ -82,7 +82,12 @@ public class ResPublicSeatMapDto
     public string FormatName { get; set; } = string.Empty;
     public DateTime StartTime { get; set; }
     public List<SeatDto> Seats { get; set; } = [];
+    public int CenterRowStart { get; set; }
+    public int CenterRowEnd { get; set; }
+    public int CenterColStart { get; set; }
+    public int CenterColEnd { get; set; }
 }
+
 
 public class SeatDto
 {

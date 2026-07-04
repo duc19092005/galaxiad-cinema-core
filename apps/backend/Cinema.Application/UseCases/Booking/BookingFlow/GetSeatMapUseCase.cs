@@ -37,6 +37,10 @@ public class GetSeatMapUseCase
             MovieName = schedule.MovieInfoEntity?.MovieName ?? string.Empty,
             FormatName = schedule.MovieFormatInfoEntity?.MovieFormatName ?? string.Empty,
             StartTime = schedule.StartTime,
+            CenterRowStart = schedule.AuditoriumInfoEntities?.CenterRowStart ?? 0,
+            CenterRowEnd = schedule.AuditoriumInfoEntities?.CenterRowEnd ?? 0,
+            CenterColStart = schedule.AuditoriumInfoEntities?.CenterColStart ?? 0,
+            CenterColEnd = schedule.AuditoriumInfoEntities?.CenterColEnd ?? 0,
             Seats = schedule.AuditoriumInfoEntities!.SeatsInfoEntity.Select(s => new SeatDto
             {
                 SeatId = s.SeatId,
@@ -46,6 +50,7 @@ public class GetSeatMapUseCase
                 IsOccupied = occupiedSet.Contains(s.SeatId)
             }).OrderBy(s => s.RowIndex).ThenBy(s => s.ColIndex).ToList()
         };
+
 
         return new BaseResponse<ResPublicSeatMapDto>
         {

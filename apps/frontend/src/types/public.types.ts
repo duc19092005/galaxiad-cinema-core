@@ -77,7 +77,12 @@ export interface PublicSeatMap {
     movieVisualFormatName: string;
     startTime: string;
     seatMap: PublicSeat[];
+    centerRowStart?: number;
+    centerRowEnd?: number;
+    centerColStart?: number;
+    centerColEnd?: number;
 }
+
 
 export interface PublicSegmentPrice {
     userSegmentId: string;

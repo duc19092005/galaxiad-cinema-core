@@ -112,7 +112,9 @@ message ChatRequest {
   string user_role     = 3;
   string user_id       = 4;
   string language      = 5;
+  string session_id    = 6;
 }
+
 
 message ChatResponse {
   string response = 1;

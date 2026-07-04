@@ -30,6 +30,13 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   const [roomCols, setRoomCols] = useState(10);
   const [roomRows, setRoomRows] = useState(8);
 
+  // Seating center area configurations
+  const [centerRowStart, setCenterRowStart] = useState(2);
+  const [centerRowEnd, setCenterRowEnd] = useState(5);
+  const [centerColStart, setCenterColStart] = useState(2);
+  const [centerColEnd, setCenterColEnd] = useState(7);
+
+
   // Step 3: Seats
   const [seats, setSeats] = useState<SeatPosition[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -108,6 +115,10 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
       const data = res.data as any;
       if (data) {
         setAuditoriumNumber(data.auditoriumNumber || '');
+        if (data.centerRowStart !== undefined) setCenterRowStart(data.centerRowStart);
+        if (data.centerRowEnd !== undefined) setCenterRowEnd(data.centerRowEnd);
+        if (data.centerColStart !== undefined) setCenterColStart(data.centerColStart);
+        if (data.centerColEnd !== undefined) setCenterColEnd(data.centerColEnd);
 
         // Infer grid dimensions from seat data
         if (data.seatsInfos && data.seatsInfos.length > 0) {
@@ -839,6 +850,10 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           auditoriumNumber: auditoriumNumber.trim(),
           addReqSeatsAuditoriumDto: normalizedSeats,
           seats: normalizedSeats,
+          centerRowStart,
+          centerRowEnd,
+          centerColStart,
+          centerColEnd,
         };
         const response = await facilitiesApi.updateAuditorium(editAuditoriumId, requestData as any);
         if (response.isSuccess) {
@@ -856,7 +871,12 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           cinemaId,
           addReqSeatsAuditoriumDto: normalizedSeats,
           seats: normalizedSeats,
+          centerRowStart,
+          centerRowEnd,
+          centerColStart,
+          centerColEnd,
         };
+
         const response = await facilitiesApi.createAuditorium(requestData as any);
         if (response.isSuccess) {
           setCreateSuccess(true);
@@ -1084,6 +1104,62 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                         />
                         <p className="text-[10px] text-on-surface-variant/60 mt-1">Tối thiểu: 5, Tối đa: 15</p>
                       </div>
+                    </div>
+
+                    {/* Center Area Configuration */}
+                    <div className="mt-4 pt-4 border-t border-dashed border-cinema-border/20">
+                      <h4 className={`text-xs font-bold mb-3 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                        Cấu hình Vùng Trung Tâm (Dành cho gợi ý ghế AI)
+                      </h4>
+                      <div className="grid grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Row Start</label>
+                          <input
+                            type="number" min="0" max={roomRows - 1}
+                            value={centerRowStart}
+                            onChange={(e) => setCenterRowStart(Math.max(0, Math.min(roomRows - 1, parseInt(e.target.value) || 0)))}
+                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                              isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Row End</label>
+                          <input
+                            type="number" min={centerRowStart} max={roomRows - 1}
+                            value={centerRowEnd}
+                            onChange={(e) => setCenterRowEnd(Math.max(centerRowStart, Math.min(roomRows - 1, parseInt(e.target.value) || 0)))}
+                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                              isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Col Start</label>
+                          <input
+                            type="number" min="0" max={roomCols - 1}
+                            value={centerColStart}
+                            onChange={(e) => setCenterColStart(Math.max(0, Math.min(roomCols - 1, parseInt(e.target.value) || 0)))}
+                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                              isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Col End</label>
+                          <input
+                            type="number" min={centerColStart} max={roomCols - 1}
+                            value={centerColEnd}
+                            onChange={(e) => setCenterColEnd(Math.max(centerColStart, Math.min(roomCols - 1, parseInt(e.target.value) || 0)))}
+                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                              isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-on-surface-variant/60 mt-2">
+                        Tọa độ index tính từ 0. Ví dụ: hàng 2-5 và cột 2-7 là khu vực trung tâm có view đẹp nhất.
+                      </p>
                     </div>
                   </div>
                 </div>

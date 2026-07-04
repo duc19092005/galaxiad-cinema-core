@@ -50,7 +50,7 @@ public class ChatbotOrchestrator
 
         try
         {
-            // 0. Kiểm tra an toàn ngôn ngữ (Python /guard) — chạy trước mọi bước khác
+            // 0. Kiểm tra an toàn ngôn ngữ qua Python /guard
             var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
             if (guardResult.IsBlocked)
             {
@@ -66,70 +66,17 @@ public class ChatbotOrchestrator
                 };
             }
 
-            // 1. Phân loại ý định (Intent Classification)
-            var classification = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
-            var intent = classification.Intent;
+            var (userRoles, userId) = GetCurrentUserContext();
+            var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
 
-            // 2. Kiểm tra quyền truy cập (Policy Enforcement)
-            var isAuthorized = await _policyService.IsAuthorizedAsync(intent);
-            if (!isAuthorized)
-            {
-                return new BaseResponse<ChatbotResponseDto>
-                {
-                    IsSuccess = true,
-                    Data = new ChatbotResponseDto
-                    {
-                        Response = ChatbotResponseMessages.Refusals.Unauthorized,
-                        Intent = intent,
-                        IsAuthorized = false
-                    }
-                };
-            }
-
-            // 3. Thực thi Tool nếu có để lấy Context
-            string toolContext = string.Empty;
-            var tool = _toolRegistry.GetTool(intent);
-            if (tool != null)
-            {
-                try
-                {
-                    toolContext = await tool.ExecuteAsync(classification.Parameters);
-                }
-                catch (Exception ex)
-                {
-                    toolContext = $"[Error executing tool {intent}: {ex.Message}]";
-                }
-            }
-
-            // 4. Lấy thông tin ngữ cảnh người dùng hiện tại
-            string userRoles = "Guest (Chưa đăng nhập)";
-            string userId = "N/A";
-            try
-            {
-                var guid = _userContextService.GetUserId();
-                if (guid != Guid.Empty)
-                {
-                    userId = guid.ToString();
-                    var roles = new List<string>();
-                    if (_userContextService.IsInRole("Admin")) roles.Add("Admin");
-                    if (_userContextService.IsInRole("TheaterManager")) roles.Add("TheaterManager");
-                    if (_userContextService.IsInRole("FacilitiesManager")) roles.Add("FacilitiesManager");
-                    if (_userContextService.IsInRole("MovieManager")) roles.Add("MovieManager");
-                    if (_userContextService.IsInRole("Cashier")) roles.Add("Cashier");
-                    if (roles.Count == 0) roles.Add("Customer");
-                    userRoles = string.Join(", ", roles);
-                }
-            }
-            catch
-            {
-                // Guest user
-            }
-
-            // 5. Xây dựng Prompt và sinh câu trả lời bằng LLM
-            var assistantResponse = await _llmClient.SendChatRequestAsync(requestDto.Message, toolContext, userRoles, userId);
-
-            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
-            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
+            // Gửi trực tiếp tin nhắn sang LangChain Agent ở dịch vụ Python AI
+            var assistantResponse = await _llmClient.SendChatRequestAsync(
+                requestDto.Message, 
+                string.Empty, 
+                userRoles, 
+                userId, 
+                sessionId
+            );
 
             return new BaseResponse<ChatbotResponseDto>
             {
@@ -137,10 +84,8 @@ public class ChatbotOrchestrator
                 Data = new ChatbotResponseDto
                 {
                     Response = assistantResponse,
-                    Intent = intent,
-                    IsAuthorized = true,
-                    ReferencedMovies = referencedMovies,
-                    ReferencedSchedules = referencedSchedules
+                    Intent = "AgentChat",
+                    IsAuthorized = true
                 }
             };
         }
@@ -176,7 +121,7 @@ public class ChatbotOrchestrator
 
         try
         {
-            await onStatus("Đang kiểm tra nội dung câu hỏi...");
+            await onStatus("Đang kiểm tra an toàn...");
             var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
             if (guardResult.IsBlocked)
             {
@@ -193,51 +138,18 @@ public class ChatbotOrchestrator
                 };
             }
 
-            await onStatus("Đang phân tích ý định...");
-            var classification = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
-            var intent = classification.Intent;
-
-            await onStatus("Đang kiểm tra quyền truy cập...");
-            var isAuthorized = await _policyService.IsAuthorizedAsync(intent);
-            if (!isAuthorized)
-            {
-                await onToken(ChatbotResponseMessages.Refusals.Unauthorized);
-                return new BaseResponse<ChatbotResponseDto>
-                {
-                    IsSuccess = true,
-                    Data = new ChatbotResponseDto
-                    {
-                        Response = ChatbotResponseMessages.Refusals.Unauthorized,
-                        Intent = intent,
-                        IsAuthorized = false
-                    }
-                };
-            }
-
-            await onStatus("Đang tìm dữ liệu phù hợp...");
-            string toolContext = string.Empty;
-            var tool = _toolRegistry.GetTool(intent);
-            if (tool != null)
-            {
-                try
-                {
-                    toolContext = await tool.ExecuteAsync(classification.Parameters);
-                }
-                catch (Exception ex)
-                {
-                    toolContext = $"[Error executing tool {intent}: {ex.Message}]";
-                }
-            }
-
             var (userRoles, userId) = GetCurrentUserContext();
-            await onStatus("Đang soạn câu trả lời...");
+            var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
+
+            await onStatus("AI đang xử lý yêu cầu...");
 
             var responseBuilder = new StringBuilder();
             await foreach (var token in _llmClient.StreamChatRequestAsync(
                 requestDto.Message,
-                toolContext,
+                string.Empty,
                 userRoles,
                 userId,
+                sessionId,
                 cancellationToken))
             {
                 responseBuilder.Append(token);
@@ -245,8 +157,6 @@ public class ChatbotOrchestrator
             }
 
             var assistantResponse = responseBuilder.ToString();
-            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
-            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
 
             return new BaseResponse<ChatbotResponseDto>
             {
@@ -254,10 +164,8 @@ public class ChatbotOrchestrator
                 Data = new ChatbotResponseDto
                 {
                     Response = assistantResponse,
-                    Intent = intent,
-                    IsAuthorized = true,
-                    ReferencedMovies = referencedMovies,
-                    ReferencedSchedules = referencedSchedules
+                    Intent = "AgentChat",
+                    IsAuthorized = true
                 }
             };
         }
@@ -276,6 +184,7 @@ public class ChatbotOrchestrator
             };
         }
     }
+
 
     private (string UserRoles, string UserId) GetCurrentUserContext()
     {

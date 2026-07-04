@@ -51,8 +51,14 @@ public class GetAuditoriumInfosRes
 
     public DateTime StartTime { get; set; }
 
+    public int CenterRowStart { get; set; }
+    public int CenterRowEnd { get; set; }
+    public int CenterColStart { get; set; }
+    public int CenterColEnd { get; set; }
+
     public List<GetSeatsRes> SeatMap {get;set;} = [];
 }
+
 
 // Schedule Time Response LƯU Ý : NÓ CHỈ LÀ CON ĐỂ TRẢ VỀ TH CHỨ KO TRẢ VỀ THẰNG NÀY RIÊNG LẺ
 // CỤM TRẢ VỀ SẼ LÀ 1 LIST CỦA CỤM GETSCHEDULEDETAILSRES ĐỂ TRẢ VỀ NHỮNG LỊCH CHIẾU CỦA 1 NGÀY ĐÓ

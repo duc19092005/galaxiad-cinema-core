@@ -25,6 +25,13 @@ public partial class AuditoriumInfoEntities : BaseManagementStatus<UserInfoEntit
     public CinemaInfoEntity CinemaInfoEntity { get; set; } = null!;
 
     public List<AuditoriumFormatInfos> AuditoriumFormatInfosList { get; set; } = [];
+
+    // Seating center coordinates configurations for AI suggestions
+    public int CenterRowStart { get; set; }
+    public int CenterRowEnd { get; set; }
+    public int CenterColStart { get; set; }
+    public int CenterColEnd { get; set; }
 }
+
 
 

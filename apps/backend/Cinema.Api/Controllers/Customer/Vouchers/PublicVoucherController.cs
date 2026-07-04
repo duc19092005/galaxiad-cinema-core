@@ -1,10 +1,12 @@
 using System;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Cinema.Application.Dtos;
 using Cinema.Application.UseCases.Admin.Vouchers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Application.Exceptions;
+
 
 namespace Cinema.Api.Controllers.Customer.Vouchers;
 
@@ -62,4 +64,33 @@ public class PublicVoucherController : ControllerBase
         var result = await _getMyVouchersUseCase.ExecuteAsync(userId);
         return Ok(result);
     }
+
+    [HttpGet("available-for-user")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAvailableVouchersForChatbot([FromQuery] Guid userId)
+    {
+        var ownedVouchers = await _getMyVouchersUseCase.ExecuteAsync(userId);
+        
+        // Filter out used/expired vouchers and map to the format Python expects
+        var activeVouchers = System.Linq.Enumerable.ToList(
+            System.Linq.Enumerable.Select(
+                System.Linq.Enumerable.Where(ownedVouchers, v => !v.IsUsed && (v.ValidTo == null || v.ValidTo >= DateTime.UtcNow)),
+                v => new
+                {
+                    VoucherId = v.VoucherId,
+                    Code = v.VoucherName,
+                    DiscountAmount = v.VoucherDiscountPercent,
+                    Description = v.VoucherDescription
+                }
+            )
+        );
+            
+        return Ok(new BaseResponse<object>
+        {
+            IsSuccess = true,
+            Data = activeVouchers,
+            Message = "Get available vouchers for chatbot successfully."
+        });
+    }
 }
+

@@ -62,6 +62,8 @@ class ChatLlmRequest(BaseModel):
     user_role: Optional[str] = ""
     user_id: Optional[str] = ""
     language: Optional[str] = "vi"
+    session_id: Optional[str] = ""
+
 
 
 class ChatLlmResponse(BaseModel):

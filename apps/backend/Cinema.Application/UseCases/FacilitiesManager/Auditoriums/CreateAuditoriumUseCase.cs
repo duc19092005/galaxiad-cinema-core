@@ -61,8 +61,13 @@ public class CreateAuditoriumUseCase
                 CinemaId = request.CinemaId,
                 AuditoriumNumber = request.AuditoriumNumber,
                 CreatedAt = DateTime.UtcNow,
-                CreatedByUserId = userId
+                CreatedByUserId = userId,
+                CenterRowStart = request.CenterRowStart,
+                CenterRowEnd = request.CenterRowEnd,
+                CenterColStart = request.CenterColStart,
+                CenterColEnd = request.CenterColEnd
             };
+
 
             var listsAuditoriumFormat = request.MovieFormatId.Select(x => new AuditoriumFormatInfos
             {

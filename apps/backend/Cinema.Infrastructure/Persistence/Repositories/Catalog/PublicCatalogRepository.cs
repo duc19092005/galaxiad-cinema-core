@@ -184,6 +184,10 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 AuditoriumName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.AuditoriumNumber : "",
                 AuditoriumId = x.AuditoriumId.ToString(),
                 StartTime = x.StartTime,
+                CenterRowStart = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CenterRowStart : 0,
+                CenterRowEnd = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CenterRowEnd : 0,
+                CenterColStart = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CenterColStart : 0,
+                CenterColEnd = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CenterColEnd : 0,
                 SeatMap = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.SeatsInfoEntity.Select(s => new GetSeatsRes
                 {
                     SeatId = s.SeatId,

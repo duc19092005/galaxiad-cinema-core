@@ -24,3 +24,11 @@ QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
 DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").rstrip("/")
 DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+
+# Redis config for chatbot session memory
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+
+# Backend C# API base URL for agent tool retrieval
+BACKEND_API_URL = os.getenv("BACKEND_API_URL", "http://localhost:8080/api/v1")
+
