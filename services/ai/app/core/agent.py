@@ -1,0 +1,76 @@
+import redis
+from loguru import logger
+from langchain_openai import ChatOpenAI
+from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.chat_history import InMemoryChatMessageHistory, BaseChatMessageHistory
+from langchain_community.chat_message_histories import RedisChatMessageHistory
+from langchain_core.runnables.history import RunnableWithMessageHistory
+
+from config import (
+    DEEPSEEK_API_KEY,
+    DEEPSEEK_BASE_URL,
+    DEEPSEEK_MODEL,
+    REDIS_HOST,
+    REDIS_PORT,
+)
+from core.prompts import AGENT_SYSTEM_PROMPT
+from core.tools import get_available_vouchers_tool, suggest_seats_tool, confirm_booking_tool
+
+_in_memory_histories = {}
+
+
+def get_message_history(session_id: str) -> BaseChatMessageHistory:
+    """
+    Load conversation memory from Redis with a 30 minute TTL.
+    If Redis is unavailable, fall back to in-memory storage.
+    """
+    if not session_id or session_id.strip() == "":
+        return InMemoryChatMessageHistory()
+
+    redis_key = f"cinema:chat:session:{session_id}"
+    try:
+        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_timeout=1.0)
+        redis_client.ping()
+        return RedisChatMessageHistory(
+            session_id=redis_key,
+            url=f"redis://{REDIS_HOST}:{REDIS_PORT}",
+            ttl=1800,
+        )
+    except Exception as exc:
+        logger.warning(f"Redis memory client disconnected. Fallback to in-memory: {exc}")
+        if session_id not in _in_memory_histories:
+            _in_memory_histories[session_id] = InMemoryChatMessageHistory()
+        return _in_memory_histories[session_id]
+
+
+llm = ChatOpenAI(
+    api_key=DEEPSEEK_API_KEY,
+    base_url=DEEPSEEK_BASE_URL,
+    model=DEEPSEEK_MODEL,
+    temperature=0.2,
+)
+
+tools = [get_available_vouchers_tool, suggest_seats_tool, confirm_booking_tool]
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", AGENT_SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="chat_history"),
+    ("human", "{input}"),
+    MessagesPlaceholder(variable_name="agent_scratchpad"),
+])
+
+agent = create_tool_calling_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(
+    agent=agent,
+    tools=tools,
+    verbose=True,
+    handle_parsing_errors=True,
+)
+
+agent_with_history = RunnableWithMessageHistory(
+    agent_executor,
+    get_message_history,
+    input_messages_key="input",
+    history_messages_key="chat_history",
+)

@@ -160,10 +160,6 @@ class MovieEmbedder:
     def embed_movies(self, movies: List[Tuple[str, str]]) -> int:
         """
         Embed and upsert movies into Qdrant.
-        Args:
-            movies: List of (movie_id, embedding_text) tuples
-        Returns:
-            Number of successfully embedded/upserted movies
         """
         self._ensure_ready()
 
@@ -204,8 +200,6 @@ class MovieEmbedder:
     def sync_movies(self, movies: List[Tuple[str, str]]) -> Tuple[int, int, int]:
         """
         Reconcile Qdrant with the active/coming-soon movie snapshot from SQL.
-        Returns:
-            (embedded_count, deleted_count, skipped_count)
         """
         self._ensure_ready()
 
@@ -268,7 +262,6 @@ class MovieEmbedder:
             movie_id = str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower())
             if movie_id in exclude_lower:
                 continue
-            # Qdrant score = cosine similarity (1 = identical, 0 = orthogonal)
             similarity = float(point.score)
             results.append((movie_id, similarity))
             if len(results) >= top_k:
@@ -277,15 +270,6 @@ class MovieEmbedder:
         return results
 
     def search_by_id(self, movie_id: str, top_k: int = 5, exclude_ids: list[str] | None = None) -> List[Tuple[str, float]]:
-        """
-        Find movies similar to a given movie by using its OWN vector from Qdrant.
-        This is the CORRECT way to do movie-to-movie similarity — no manual mapping needed.
-
-        Flow:
-        1. Fetch the movie's point (with vector) from Qdrant by movie_id
-        2. Use that vector as query to find nearest neighbors
-        3. Return top-k results (excluding the source movie_id)
-        """
         self._ensure_ready()
         if self.movie_count == 0:
             logger.warning("No movies embedded yet")
@@ -293,7 +277,6 @@ class MovieEmbedder:
 
         movie_id_lower = movie_id.lower()
 
-        # Step 1: Fetch the movie's point with its vector
         points, _ = self.client.scroll(
             collection_name=self.collection_name,
             limit=1,
@@ -318,7 +301,6 @@ class MovieEmbedder:
             logger.warning(f"Movie {movie_id_lower} has no vector in Qdrant")
             return []
 
-        # Step 2: Use the movie's own vector to find similar movies
         exclude = [movie_id_lower]
         if exclude_ids:
             exclude.extend([e.lower() for e in exclude_ids])
@@ -336,7 +318,6 @@ class MovieEmbedder:
             point_id = str(point.payload.get("movie_id", point.id).lower() if point.payload else str(point.id).lower())
             if point_id in exclude:
                 continue
-            # Qdrant score = cosine similarity (1 = identical, 0 = orthogonal)
             similarity = float(point.score)
             results.append((point_id, similarity))
             if len(results) >= top_k:
