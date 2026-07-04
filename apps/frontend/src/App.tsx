@@ -1,5 +1,7 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
+import { Film, Calendar, MapPin, Ticket, User } from 'lucide-react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CinemaProvider } from './contexts/CinemaContext';
 import { Toaster } from 'react-hot-toast';
@@ -101,6 +103,119 @@ function AppRoutes() {
   );
 }
 
+function BottomNavBar() {
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const storedUserStr = localStorage.getItem('user_info');
+  const user = storedUserStr ? JSON.parse(storedUserStr) : null;
+
+  // Only show bottom nav on public client pages (exclude admin, movie-manager, cashier, staff, etc.)
+  const hidePaths = ['/admin', '/movie-manager', '/theater-manager', '/facilities-manager', '/cashier', '/staff', '/login', '/register'];
+  const shouldHide = hidePaths.some(p => location.pathname.startsWith(p));
+
+  if (shouldHide) return null;
+
+  const bottomNavItems = [
+    { icon: Film, label: t('home.moviesNav', 'Movies'), path: '/home' },
+    { icon: Calendar, label: t('home.showtimesNav', 'Showtimes'), path: '/showtimes' },
+    { icon: MapPin, label: t('home.theatersNav', 'Theaters'), path: '/theaters' },
+    { icon: Ticket, label: t('home.offersNav', 'Offers'), path: '/offers' },
+    { icon: User, label: user ? t('header.myProfile', 'Profile') : t('header.login', 'Sign In'), path: user ? '/account' : '/login' },
+  ];
+
+  return (
+    <div 
+      className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-[#111114]/90 backdrop-blur-xl border-t border-white/10 shadow-2xl flex justify-around items-center px-2 py-1.5"
+      style={{
+        boxShadow: '0 -8px 24px rgba(0,0,0,0.5)',
+        paddingBottom: 'calc(6px + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      <style dangerouslySetInnerHTML={{__html: `
+        @media (max-width: 768px) {
+          body {
+            padding-bottom: 76px !important;
+          }
+        }
+      `}} />
+      {bottomNavItems.map((item, index) => {
+        const active = location.pathname === item.path || (item.path === '/home' && location.pathname === '/');
+        const Icon = item.icon;
+        return (
+          <button
+            key={index}
+            onClick={() => navigate(item.path)}
+            className="flex flex-col items-center justify-center relative py-1 flex-1 bg-transparent border-none cursor-pointer"
+            style={{ height: 50 }}
+          >
+            {/* Circular Background Bubble */}
+            {active && (
+              <motion.div
+                layoutId="activeTabBubble"
+                className="absolute"
+                style={{
+                  width: 46,
+                  height: 46,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #ff8a00, #ffb77f)',
+                  boxShadow: '0 4px 14px rgba(255, 138, 0, 0.4)',
+                  top: -12,
+                  zIndex: 0
+                }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 380,
+                  damping: 30
+                }}
+              />
+            )}
+
+            {/* Icon Wrapper */}
+            <motion.div
+              className="z-10 flex items-center justify-center"
+              animate={{
+                y: active ? -16 : 0,
+                scale: active ? 1.15 : 1
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 380,
+                damping: 30
+              }}
+              style={{
+                color: active ? '#111114' : 'rgba(255, 255, 255, 0.6)',
+              }}
+            >
+              <Icon size={20} />
+            </motion.div>
+
+            {/* Label */}
+            <motion.span
+              className="text-[10px] font-sans font-semibold mt-1 tracking-tight"
+              animate={{
+                opacity: active ? 0 : 1,
+                scale: active ? 0.8 : 1,
+                y: active ? 6 : 0
+              }}
+              transition={{
+                duration: 0.15
+              }}
+              style={{
+                color: 'rgba(255, 255, 255, 0.6)',
+                display: active ? 'none' : 'block'
+              }}
+            >
+              {item.label}
+            </motion.span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -111,6 +226,7 @@ function App() {
           <ScrollToTop />
           <ScrollRestore />
           <AppRoutes />
+          <BottomNavBar />
           <ChatBot />
         </Router>
       </CinemaProvider>

@@ -428,6 +428,7 @@ public static class Messages
         public const string NoActivePromotions = "There are currently no active promotions.";
         public const string NoMatchingMovies = "No matching movies found.";
         public const string NoMoviesFound = "No movies found.";
+        public const string BookingNotFound = "Booking not found. Please check your booking code or make sure you are logged in with the correct account.";
     }
 
     // =============================================================

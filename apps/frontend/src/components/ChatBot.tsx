@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Armchair,
   Bot,
@@ -201,7 +202,7 @@ const readStoredMessages = (): ChatMessage[] => {
   return [{
     id: uid('bot'),
     role: 'bot',
-    text: 'Xin chao, minh la CinemaPro AI. Minh co the tu dong dat ve cho ban bang cac lua chon nhanh ngay trong khung chat.',
+    text: '👋',
     createdAt: new Date().toISOString(),
   }];
 };
@@ -448,14 +449,15 @@ const MoviePicker: React.FC<{
   movies: ActiveMovie[];
   onPick: (movie: ActiveMovie) => void;
 }> = ({ movies, onPick }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const filtered = movies
     .filter(movie => movie.movieName.toLowerCase().includes(query.toLowerCase()))
     .slice(0, 12);
 
   return (
-    <ActionShell title="Chon phim" icon={<Film size={13} />}>
-      <SearchInput value={query} onChange={setQuery} placeholder="Tim phim..." />
+    <ActionShell title={t('chatbot.moviePicker')} icon={<Film size={13} />}>
+      <SearchInput value={query} onChange={setQuery} placeholder={t('chatbot.searchMovie')} />
       <div style={{ display: 'grid', gap: 6, marginTop: 8 }}>
         {filtered.map(movie => (
           <button key={movie.movieId} onClick={() => onPick(movie)} style={optionButtonStyle}>
@@ -472,9 +474,10 @@ const DatePicker: React.FC<{
   dates: string[];
   onPick: (date: string) => void;
 }> = ({ dates, onPick }) => {
+  const { t } = useTranslation();
   const suggestedDates = dates.slice(0, 7);
   return (
-    <ActionShell title="Chon ngay" icon={<Clock size={13} />}>
+    <ActionShell title={t('chatbot.datePicker')} icon={<Clock size={13} />}>
       <input
         type="date"
         min={todayInputValue()}
@@ -507,14 +510,15 @@ const CinemaPicker: React.FC<{
   cinemas: CinemaOption[];
   onPick: (cinema: CinemaOption) => void;
 }> = ({ cinemas, onPick }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const filtered = cinemas
     .filter(cinema => `${cinema.cinemaName} ${cinema.cinemaCity || ''} ${cinema.cinemaLocation || ''}`.toLowerCase().includes(query.toLowerCase()))
     .slice(0, 14);
 
   return (
-    <ActionShell title="Chon rap" icon={<MapPin size={13} />}>
-      <SearchInput value={query} onChange={setQuery} placeholder="Tim rap, thanh pho..." />
+    <ActionShell title={t('chatbot.cinemaPicker')} icon={<MapPin size={13} />}>
+      <SearchInput value={query} onChange={setQuery} placeholder={t('chatbot.searchCinema')} />
       <div style={{ display: 'grid', gap: 7, marginTop: 8 }}>
         {filtered.map(cinema => (
           <button key={cinema.cinemaId} onClick={() => onPick(cinema)} style={{ ...optionButtonStyle, alignItems: 'flex-start' }}>
@@ -540,44 +544,48 @@ const CinemaPicker: React.FC<{
 const ShowtimePicker: React.FC<{
   showtimes: ShowtimeOption[];
   onPick: (showtime: ShowtimeOption) => void;
-}> = ({ showtimes, onPick }) => (
-  <ActionShell title="Chon suat chieu" icon={<Clock size={13} />}>
-    <div style={{ display: 'grid', gap: 7 }}>
-      {showtimes.map(showtime => (
-        <button key={showtime.scheduleId} onClick={() => onPick(showtime)} style={optionButtonStyle}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <span style={{
-              background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
-              color: '#fff',
-              borderRadius: 8,
-              padding: '5px 9px',
-              fontWeight: 900,
-              minWidth: 54,
-            }}>
-              {formatTime(showtime.startTime)}
+}> = ({ showtimes, onPick }) => {
+  const { t } = useTranslation();
+  return (
+    <ActionShell title={t('chatbot.showtimePicker')} icon={<Clock size={13} />}>
+      <div style={{ display: 'grid', gap: 7 }}>
+        {showtimes.map(showtime => (
+          <button key={showtime.scheduleId} onClick={() => onPick(showtime)} style={optionButtonStyle}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{
+                background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
+                color: '#fff',
+                borderRadius: 8,
+                padding: '5px 9px',
+                fontWeight: 900,
+                minWidth: 54,
+              }}>
+                {formatTime(showtime.startTime)}
+              </span>
+              <span style={{ textAlign: 'left', minWidth: 0 }}>
+                <span style={{ display: 'block', fontWeight: 900 }}>{showtime.formatName}</span>
+                <span style={{ color: theme.muted, fontSize: 11 }}>{t('chatbot.auditoriumLabel', { number: showtime.auditoriumNumber })}</span>
+              </span>
             </span>
-            <span style={{ textAlign: 'left', minWidth: 0 }}>
-              <span style={{ display: 'block', fontWeight: 900 }}>{showtime.formatName}</span>
-              <span style={{ color: theme.muted, fontSize: 11 }}>Phong {showtime.auditoriumNumber}</span>
-            </span>
-          </span>
-          <Check size={14} />
-        </button>
-      ))}
-    </div>
-  </ActionShell>
-);
+            <Check size={14} />
+          </button>
+        ))}
+      </div>
+    </ActionShell>
+  );
+};
 
 const SegmentQuantityPicker: React.FC<{
   pricing: PublicPricing;
   onPick: (segment: PublicSegmentPrice, quantity: number) => void;
 }> = ({ pricing, onPick }) => {
+  const { t } = useTranslation();
   const [segmentId, setSegmentId] = useState(pricing.segmentPrices[0]?.userSegmentId || '');
   const [quantity, setQuantity] = useState(1);
   const segment = pricing.segmentPrices.find(item => item.userSegmentId === segmentId) || pricing.segmentPrices[0];
 
   return (
-    <ActionShell title="Loai ve va so luong" icon={<Ticket size={13} />}>
+    <ActionShell title={t('chatbot.segmentPicker')} icon={<Ticket size={13} />}>
       <div style={{ display: 'grid', gap: 8 }}>
         {pricing.segmentPrices.map(item => (
           <button
@@ -591,7 +599,7 @@ const SegmentQuantityPicker: React.FC<{
           >
             <span style={{ textAlign: 'left' }}>
               <span style={{ display: 'block', fontWeight: 900 }}>{item.segmentName}</span>
-              <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>{item.description || 'Gia ve'}</span>
+              <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>{item.description || t('chatbot.segmentDesc')}</span>
             </span>
             <span style={{ color: theme.accent, fontWeight: 900 }}>{formatCurrency(item.finalPrice)}</span>
           </button>
@@ -624,7 +632,7 @@ const SegmentQuantityPicker: React.FC<{
         onClick={() => segment && onPick(segment, quantity)}
         style={{ ...primaryButton, width: '100%', marginTop: 10, opacity: segment ? 1 : 0.5 }}
       >
-        Goi y ghe cho {quantity} ve
+        {t('chatbot.suggestSeats', { count: quantity })}
       </button>
     </ActionShell>
   );
@@ -634,40 +642,43 @@ const SeatSuggestionCard: React.FC<{
   seats: NormalizedSeat[];
   onAccept: () => void;
   onRetry: () => void;
-}> = ({ seats, onAccept, onRetry }) => (
-  <ActionShell title="Ghe goi y" icon={<Armchair size={13} />}>
-    {seats.length === 0 ? (
-      <>
-        <p style={{ margin: '0 0 10px', color: theme.muted, fontSize: 12 }}>Khong tim thay cum ghe phu hop cho suat nay.</p>
-        <button onClick={onRetry} style={{ ...ghostButton, width: '100%' }}>Thu lai</button>
-      </>
-    ) : (
-      <>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          {seats.map(seat => (
-            <span key={seat.seatId} style={{
-              background: theme.accentSoft,
-              color: theme.accent,
-              border: `1px solid ${theme.accent}`,
-              borderRadius: 9,
-              padding: '7px 10px',
-              fontWeight: 900,
-            }}>
-              {seat.seatNumber}
-            </span>
-          ))}
-        </div>
-        <p style={{ margin: '9px 0 0', color: theme.muted, fontSize: 12 }}>
-          Minh uu tien cum ghe gan trung tam. Neu ban co lich su dat ve, goi y se nghieng theo thoi quen ghe cua ban.
-        </p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
-          <button onClick={onRetry} style={ghostButton}>Goi y lai</button>
-          <button onClick={onAccept} style={primaryButton}>Chon ghe nay</button>
-        </div>
-      </>
-    )}
-  </ActionShell>
-);
+}> = ({ seats, onAccept, onRetry }) => {
+  const { t } = useTranslation();
+  return (
+    <ActionShell title={t('chatbot.seatSuggestion')} icon={<Armchair size={13} />}>
+      {seats.length === 0 ? (
+        <>
+          <p style={{ margin: '0 0 10px', color: theme.muted, fontSize: 12 }}>{t('chatbot.noSeatsFound')}</p>
+          <button onClick={onRetry} style={{ ...ghostButton, width: '100%' }}>{t('chatbot.retry')}</button>
+        </>
+      ) : (
+        <>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {seats.map(seat => (
+              <span key={seat.seatId} style={{
+                background: theme.accentSoft,
+                color: theme.accent,
+                border: `1px solid ${theme.accent}`,
+                borderRadius: 9,
+                padding: '7px 10px',
+                fontWeight: 900,
+              }}>
+                {seat.seatNumber}
+              </span>
+            ))}
+          </div>
+          <p style={{ margin: '9px 0 0', color: theme.muted, fontSize: 12 }}>
+            {t('chatbot.seatsDescription')}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 10 }}>
+            <button onClick={onRetry} style={ghostButton}>{t('chatbot.resuggest')}</button>
+            <button onClick={onAccept} style={primaryButton}>{t('chatbot.acceptSeats')}</button>
+          </div>
+        </>
+      )}
+    </ActionShell>
+  );
+};
 
 const VoucherPicker: React.FC<{
   mode: 'mode' | 'owned' | 'redeem';
@@ -677,64 +688,68 @@ const VoucherPicker: React.FC<{
   onChooseMode: (mode: 'owned' | 'redeem' | 'skip') => void;
   onPickOwned: (voucher: UserVoucherDto) => void;
   onRedeem: (voucher: VoucherDto) => void;
-}> = ({ mode, vouchers, redeemableVouchers, rewardPoints, onChooseMode, onPickOwned, onRedeem }) => (
-  <ActionShell title="Voucher" icon={<Tag size={13} />}>
-    {mode === 'mode' && (
-      <div style={{ display: 'grid', gap: 8 }}>
-        <button onClick={() => onChooseMode('owned')} style={optionButtonStyle}>Dung voucher dang co</button>
-        <button onClick={() => onChooseMode('redeem')} style={optionButtonStyle}>Mua voucher bang diem tich luy</button>
-        <button onClick={() => onChooseMode('skip')} style={ghostButton}>Bo qua voucher</button>
-      </div>
-    )}
-    {mode === 'owned' && (
-      <div style={{ display: 'grid', gap: 8 }}>
-        {vouchers.length === 0 && <p style={{ color: theme.muted, fontSize: 12, margin: 0 }}>Ban chua co voucher kha dung.</p>}
-        {vouchers.map(voucher => (
-          <button key={voucher.userVoucherId} onClick={() => onPickOwned(voucher)} style={optionButtonStyle}>
-            <span style={{ textAlign: 'left' }}>
-              <span style={{ display: 'block', fontWeight: 900 }}>{voucher.voucherName}</span>
-              <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>Giam {voucher.voucherDiscountPercent}%</span>
-            </span>
-            <Check size={14} />
-          </button>
-        ))}
-        <button onClick={() => onChooseMode('skip')} style={ghostButton}>Khong dung voucher</button>
-      </div>
-    )}
-    {mode === 'redeem' && (
-      <div style={{ display: 'grid', gap: 8 }}>
-        <div style={{ color: theme.muted, fontSize: 12, fontWeight: 800 }}>Diem hien co: {rewardPoints.toLocaleString('vi-VN')}</div>
-        {redeemableVouchers.length === 0 && <p style={{ color: theme.muted, fontSize: 12, margin: 0 }}>Chua co voucher nao du diem de mua.</p>}
-        {redeemableVouchers.map(voucher => (
-          <button key={voucher.voucherId} onClick={() => onRedeem(voucher)} style={optionButtonStyle}>
-            <span style={{ textAlign: 'left' }}>
-              <span style={{ display: 'block', fontWeight: 900 }}>{voucher.voucherName}</span>
-              <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>Giam {voucher.voucherDiscountPercent}%</span>
-            </span>
-            <span style={{ color: theme.accent, fontWeight: 900 }}>{voucher.voucherPointsCost} diem</span>
-          </button>
-        ))}
-        <button onClick={() => onChooseMode('skip')} style={ghostButton}>Bo qua voucher</button>
-      </div>
-    )}
-  </ActionShell>
-);
+}> = ({ mode, vouchers, redeemableVouchers, rewardPoints, onChooseMode, onPickOwned, onRedeem }) => {
+  const { t } = useTranslation();
+  return (
+    <ActionShell title={t('chatbot.voucherTitle')} icon={<Tag size={13} />}>
+      {mode === 'mode' && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <button onClick={() => onChooseMode('owned')} style={optionButtonStyle}>{t('chatbot.useVoucher')}</button>
+          <button onClick={() => onChooseMode('redeem')} style={optionButtonStyle}>{t('chatbot.buyVoucher')}</button>
+          <button onClick={() => onChooseMode('skip')} style={ghostButton}>{t('chatbot.skipVoucher')}</button>
+        </div>
+      )}
+      {mode === 'owned' && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          {vouchers.length === 0 && <p style={{ color: theme.muted, fontSize: 12, margin: 0 }}>{t('chatbot.noVoucherAvailable')}</p>}
+          {vouchers.map(voucher => (
+            <button key={voucher.userVoucherId} onClick={() => onPickOwned(voucher)} style={optionButtonStyle}>
+              <span style={{ textAlign: 'left' }}>
+                <span style={{ display: 'block', fontWeight: 900 }}>{voucher.voucherName}</span>
+                <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>{t('chatbot.discountPercent', { percent: voucher.voucherDiscountPercent })}</span>
+              </span>
+              <Check size={14} />
+            </button>
+          ))}
+          <button onClick={() => onChooseMode('skip')} style={ghostButton}>{t('chatbot.skipVoucher')}</button>
+        </div>
+      )}
+      {mode === 'redeem' && (
+        <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ color: theme.muted, fontSize: 12, fontWeight: 800 }}>{t('chatbot.rewardPoints', { points: rewardPoints.toLocaleString('vi-VN') })}</div>
+          {redeemableVouchers.length === 0 && <p style={{ color: theme.muted, fontSize: 12, margin: 0 }}>{t('chatbot.noRedeemableVouchers')}</p>}
+          {redeemableVouchers.map(voucher => (
+            <button key={voucher.voucherId} onClick={() => onRedeem(voucher)} style={optionButtonStyle}>
+              <span style={{ textAlign: 'left' }}>
+                <span style={{ display: 'block', fontWeight: 900 }}>{voucher.voucherName}</span>
+                <span style={{ display: 'block', color: theme.muted, fontSize: 11 }}>{t('chatbot.discountPercent', { percent: voucher.voucherDiscountPercent })}</span>
+              </span>
+              <span style={{ color: theme.accent, fontWeight: 900 }}>{t('chatbot.pointsCost', { points: voucher.voucherPointsCost })}</span>
+            </button>
+          ))}
+          <button onClick={() => onChooseMode('skip')} style={ghostButton}>{t('chatbot.skipVoucher')}</button>
+        </div>
+      )}
+    </ActionShell>
+  );
+};
 
 const GuestContactForm: React.FC<{
   initial: GuestContact;
   onSubmit: (contact: GuestContact) => void;
 }> = ({ initial, onSubmit }) => {
+  const { t } = useTranslation();
   const [contact, setContact] = useState(initial);
   const valid = contact.name.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email.trim()) && contact.phone.trim();
 
   return (
-    <ActionShell title="Thong tin nhan ve" icon={<User size={13} />}>
+    <ActionShell title={t('chatbot.guestContact')} icon={<User size={13} />}>
       <div style={{ display: 'grid', gap: 8 }}>
-        <TextInput value={contact.name} onChange={name => setContact(prev => ({ ...prev, name }))} placeholder="Ho ten" />
-        <TextInput value={contact.email} onChange={email => setContact(prev => ({ ...prev, email }))} placeholder="Email nhan ve" />
-        <TextInput value={contact.phone} onChange={phone => setContact(prev => ({ ...prev, phone }))} placeholder="So dien thoai" />
+        <TextInput value={contact.name} onChange={name => setContact(prev => ({ ...prev, name }))} placeholder={t('chatbot.namePlaceholder')} />
+        <TextInput value={contact.email} onChange={email => setContact(prev => ({ ...prev, email }))} placeholder={t('chatbot.emailPlaceholder')} />
+        <TextInput value={contact.phone} onChange={phone => setContact(prev => ({ ...prev, phone }))} placeholder={t('chatbot.phonePlaceholder')} />
         <button disabled={!valid} onClick={() => onSubmit(contact)} style={{ ...primaryButton, opacity: valid ? 1 : 0.5 }}>
-          Tiep tuc
+          {t('chatbot.continueBtn')}
         </button>
       </div>
     </ActionShell>
@@ -745,22 +760,23 @@ const BookingSummaryCard: React.FC<{
   draft: BookingDraft;
   onConfirm: () => void;
 }> = ({ draft, onConfirm }) => {
+  const { t } = useTranslation();
   const subtotal = (draft.segment?.finalPrice || 0) * draft.quantity;
-  const voucherText = draft.voucherName ? draft.voucherName : 'Khong ap dung';
+  const voucherText = draft.voucherName ? draft.voucherName : t('chatbot.noVoucher');
 
   return (
-    <ActionShell title="Xac nhan dat ve" icon={<Sparkles size={13} />}>
+    <ActionShell title={t('chatbot.bookingSummary')} icon={<Sparkles size={13} />}>
       <div style={{ display: 'grid', gap: 7, fontSize: 12 }}>
-        <SummaryRow label="Phim" value={draft.movie?.movieName || '-'} />
-        <SummaryRow label="Rap" value={draft.cinema?.cinemaName || '-'} />
-        <SummaryRow label="Suat" value={`${formatDate(draft.showtime?.startTime)} ${formatTime(draft.showtime?.startTime)}`} />
-        <SummaryRow label="Loai ve" value={`${draft.segment?.segmentName || '-'} x ${draft.quantity}`} />
-        <SummaryRow label="Ghe" value={draft.suggestedSeats.map(seat => seat.seatNumber).join(', ')} />
-        <SummaryRow label="Voucher" value={voucherText} />
-        <SummaryRow label="Tam tinh" value={formatCurrency(subtotal)} strong />
+        <SummaryRow label={t('chatbot.summaryMovie')} value={draft.movie?.movieName || '-'} />
+        <SummaryRow label={t('chatbot.summaryCinema')} value={draft.cinema?.cinemaName || '-'} />
+        <SummaryRow label={t('chatbot.summaryShowtime')} value={`${formatDate(draft.showtime?.startTime)} ${formatTime(draft.showtime?.startTime)}`} />
+        <SummaryRow label={t('chatbot.summaryTicketType')} value={`${draft.segment?.segmentName || '-'} x ${draft.quantity}`} />
+        <SummaryRow label={t('chatbot.summarySeats')} value={draft.suggestedSeats.map(seat => seat.seatNumber).join(', ')} />
+        <SummaryRow label={t('chatbot.summaryVoucher')} value={voucherText} />
+        <SummaryRow label={t('chatbot.subtotal')} value={formatCurrency(subtotal)} strong />
       </div>
       <button onClick={onConfirm} style={{ ...primaryButton, width: '100%', marginTop: 10 }}>
-        Tao don va thanh toan
+        {t('chatbot.payAndBook')}
       </button>
     </ActionShell>
   );
@@ -771,52 +787,58 @@ const PaymentStatusCard: React.FC<{
   loading: boolean;
   onOpen: () => void;
   onCheck: () => void;
-}> = ({ paymentUrl, loading, onOpen, onCheck }) => (
-  <ActionShell title="Thanh toan" icon={<CreditCard size={13} />}>
-    <p style={{ color: theme.muted, fontSize: 12, margin: '0 0 10px' }}>
-      Minh dang theo doi ket qua thanh toan. Sau khi thanh toan thanh cong, ve se hien o day.
-    </p>
-    <div style={{ display: 'grid', gap: 8 }}>
-      {paymentUrl && <button onClick={onOpen} style={primaryButton}>Mo lai cong thanh toan</button>}
-      <button onClick={onCheck} style={ghostButton} disabled={loading}>
-        {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : 'Toi da thanh toan'}
-      </button>
-    </div>
-  </ActionShell>
-);
-
-const TicketCard: React.FC<{ ticket: TicketInfo; onDownload: () => void }> = ({ ticket, onDownload }) => (
-  <ActionShell title="Ve cua ban" icon={<Ticket size={13} />}>
-    <div style={{ display: 'flex', gap: 10 }}>
-      {ticket.movieImageUrl && (
-        <img src={ticket.movieImageUrl} alt={ticket.movieName} style={{ width: 62, height: 86, objectFit: 'cover', borderRadius: 8 }} />
-      )}
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ fontWeight: 900, color: theme.text, overflowWrap: 'anywhere' }}>{ticket.movieName}</div>
-        <div style={{ color: theme.muted, fontSize: 12, marginTop: 4 }}>{ticket.cinemaName}</div>
-        <div style={{ color: theme.muted, fontSize: 12 }}>{formatDate(ticket.showTime)} {formatTime(ticket.showTime)}</div>
+}> = ({ paymentUrl, loading, onOpen, onCheck }) => {
+  const { t } = useTranslation();
+  return (
+    <ActionShell title={t('chatbot.paymentTitle')} icon={<CreditCard size={13} />}>
+      <p style={{ color: theme.muted, fontSize: 12, margin: '0 0 10px' }}>
+        {t('chatbot.paymentDesc')}
+      </p>
+      <div style={{ display: 'grid', gap: 8 }}>
+        {paymentUrl && <button onClick={onOpen} style={primaryButton}>{t('chatbot.openPayment')}</button>}
+        <button onClick={onCheck} style={ghostButton} disabled={loading}>
+          {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : t('chatbot.paid')}
+        </button>
       </div>
-    </div>
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
-      {ticket.seats.map(seat => (
-        <span key={`${seat.seatNumber}-${seat.segmentName}`} style={{
-          background: theme.accentSoft,
-          color: theme.accent,
-          borderRadius: 8,
-          padding: '6px 9px',
-          fontWeight: 900,
-          fontSize: 12,
-        }}>
-          {seat.seatNumber} - {seat.segmentName}
-        </span>
-      ))}
-    </div>
-    <SummaryRow label="Tong tien" value={formatCurrency(ticket.totalPrice)} strong />
-    <button onClick={onDownload} style={{ ...primaryButton, width: '100%', marginTop: 10 }}>
-      <Download size={14} /> Tai ve
-    </button>
-  </ActionShell>
-);
+    </ActionShell>
+  );
+};
+
+const TicketCard: React.FC<{ ticket: TicketInfo; onDownload: () => void }> = ({ ticket, onDownload }) => {
+  const { t } = useTranslation();
+  return (
+    <ActionShell title={t('chatbot.ticket')} icon={<Ticket size={13} />}>
+      <div style={{ display: 'flex', gap: 10 }}>
+        {ticket.movieImageUrl && (
+          <img src={ticket.movieImageUrl} alt={ticket.movieName} style={{ width: 62, height: 86, objectFit: 'cover', borderRadius: 8 }} />
+        )}
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontWeight: 900, color: theme.text, overflowWrap: 'anywhere' }}>{ticket.movieName}</div>
+          <div style={{ color: theme.muted, fontSize: 12, marginTop: 4 }}>{ticket.cinemaName}</div>
+          <div style={{ color: theme.muted, fontSize: 12 }}>{formatDate(ticket.showTime)} {formatTime(ticket.showTime)}</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+        {ticket.seats.map(seat => (
+          <span key={`${seat.seatNumber}-${seat.segmentName}`} style={{
+            background: theme.accentSoft,
+            color: theme.accent,
+            borderRadius: 8,
+            padding: '6px 9px',
+            fontWeight: 900,
+            fontSize: 12,
+          }}>
+            {seat.seatNumber} - {seat.segmentName}
+          </span>
+        ))}
+      </div>
+      <SummaryRow label={t('chatbot.total')} value={formatCurrency(ticket.totalPrice)} strong />
+      <button onClick={onDownload} style={{ ...primaryButton, width: '100%', marginTop: 10 }}>
+        <Download size={14} /> {t('chatbot.download')}
+      </button>
+    </ActionShell>
+  );
+};
 
 const SummaryRow: React.FC<{ label: string; value: string; strong?: boolean }> = ({ label, value, strong }) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '6px 0', borderBottom: `1px solid ${theme.border}` }}>
@@ -949,6 +971,7 @@ const ChatActionRenderer: React.FC<{
 };
 
 const ChatBot: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const shouldReduceMotion = useReducedMotion();
   const [isOpen, setIsOpen] = useState(false);
@@ -1053,7 +1076,7 @@ const ChatBot: React.FC = () => {
 
       const payload = JSON.parse(dataText);
       if (eventName === 'status') {
-        const statusText = payload.message || 'Dang xu ly...';
+        const statusText = payload.message || t('chatbot.processing');
         setStreamStatus(statusText);
         onStatus?.(statusText);
       } else if (eventName === 'token') {
@@ -1064,7 +1087,7 @@ const ChatBot: React.FC = () => {
       } else if (eventName === 'message') {
         finalPayload = payload;
       } else if (eventName === 'error') {
-        streamError = payload.message || 'Chatbot dang ban, ban thu lai sau nhe.';
+        streamError = payload.message || t('chatbot.errorBusy');
       }
     };
 
@@ -1080,21 +1103,21 @@ const ChatBot: React.FC = () => {
     if (buffer.trim()) handleEventBlock(buffer);
     if (streamError) throw new Error(streamError);
     return finalPayload || { response: streamedText };
-  }, []);
+  }, [t]);
 
   const askForMovie = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await publicApi.getActiveMovies();
-      appendBot('Ban muon xem phim nao? Minh se lay lich chieu con ve cho phim do.', [
-        makeAction('moviePicker', 'Chon phim', { movies: response.data || [] }),
+      appendBot(t('chatbot.askMovie'), [
+        makeAction('moviePicker', t('chatbot.moviePicker'), { movies: response.data || [] }),
       ]);
     } catch {
-      appendBot('Minh chua tai duoc danh sach phim. Ban thu lai sau it phut nhe.');
+      appendBot(t('chatbot.errorLoadMovies'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, makeAction]);
+  }, [appendBot, makeAction, t]);
 
   const startBookingFlow = useCallback(async (userText?: string) => {
     resetBooking();
@@ -1103,31 +1126,31 @@ const ChatBot: React.FC = () => {
   }, [appendUser, askForMovie, resetBooking]);
 
   const handlePickMovie = useCallback(async (movie: ActiveMovie) => {
-    appendUser(`Chon phim: ${movie.movieName}`);
+    appendUser(t('chatbot.selectedMovie', { name: movie.movieName }));
     setDraft(prev => ({ ...prev, movie, date: undefined, cinema: undefined, showtime: undefined, suggestedSeats: [] }));
     setIsLoading(true);
     try {
       const response = await publicApi.getScheduleDates(movie.movieId);
-      appendBot('Tuyet, ban muon xem ngay nao?', [
-        makeAction('datePicker', 'Chon ngay', { dates: response.data || [] }),
+      appendBot(t('chatbot.askDate'), [
+        makeAction('datePicker', t('chatbot.datePicker'), { dates: response.data || [] }),
       ]);
     } catch {
-      appendBot('Minh chua lay duoc ngay chieu cho phim nay. Ban chon ngay tren lich thu cong nhe.', [
-        makeAction('datePicker', 'Chon ngay', { dates: [] }),
+      appendBot(t('chatbot.errorLoadDates'), [
+        makeAction('datePicker', t('chatbot.datePicker'), { dates: [] }),
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const handlePickDate = useCallback(async (date: string) => {
     if (!draft.movie) {
-      appendBot('Minh can biet phim truoc da.');
+      appendBot(t('chatbot.errorMissingInfo'));
       await askForMovie();
       return;
     }
 
-    appendUser(`Chon ngay: ${formatDate(date)}`);
+    appendUser(`${t('chatbot.selectedDate')} ${formatDate(date)}`);
     setDraft(prev => ({ ...prev, date, cinema: undefined, showtime: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
@@ -1164,29 +1187,29 @@ const ChatBot: React.FC = () => {
       }
 
       if (cinemas.length === 0) {
-        appendBot('Ngay nay chua co rap nao co suat cho phim da chon. Ban chon ngay khac nhe.', [
-          makeAction('datePicker', 'Chon ngay khac', { dates: [] }),
+        appendBot(t('chatbot.errorNoCinemas'), [
+          makeAction('datePicker', t('chatbot.datePicker'), { dates: [] }),
         ]);
         return;
       }
 
-      appendBot('Ban muon xem o rap nao? Minh uu tien rap gan ban neu trinh duyet cho phep lay vi tri.', [
-        makeAction('cinemaPicker', 'Chon rap', { cinemas }),
+      appendBot(t('chatbot.askCinema'), [
+        makeAction('cinemaPicker', t('chatbot.cinemaPicker'), { cinemas }),
       ]);
     } catch {
-      appendBot('Minh chua tai duoc danh sach rap cho ngay nay. Ban thu lai sau it phut nhe.');
+      appendBot(t('chatbot.errorLoadMovies'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, askForMovie, draft.movie, makeAction, userLocation]);
+  }, [appendBot, appendUser, askForMovie, draft.movie, makeAction, userLocation, t]);
 
   const handlePickCinema = useCallback(async (cinema: CinemaOption) => {
     if (!draft.movie || !draft.date) {
-      appendBot('Minh can co phim va ngay truoc khi chon rap.');
+      appendBot(t('chatbot.errorMissingInfo'));
       return;
     }
 
-    appendUser(`Chon rap: ${cinema.cinemaName}`);
+    appendUser(`${t('chatbot.selectedCinema')} ${cinema.cinemaName}`);
     setDraft(prev => ({ ...prev, cinema, showtime: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
@@ -1197,49 +1220,49 @@ const ChatBot: React.FC = () => {
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
       if (showtimes.length === 0) {
-        appendBot('Rap nay khong con suat phu hop trong ngay da chon. Ban chon rap khac nhe.');
+        appendBot(t('chatbot.errorNoShowtimes'));
         return;
       }
 
-      appendBot('Minh tim thay cac suat chieu nay. Ban chon gio muon xem nhe.', [
-        makeAction('showtimePicker', 'Chon suat chieu', { showtimes }),
+      appendBot(t('chatbot.askShowtime'), [
+        makeAction('showtimePicker', t('chatbot.showtimePicker'), { showtimes }),
       ]);
     } catch {
-      appendBot('Minh chua tai duoc suat chieu cua rap nay. Ban thu lai sau it phut nhe.');
+      appendBot(t('chatbot.errorNoPricing'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, draft.date, draft.movie, makeAction]);
+  }, [appendBot, appendUser, draft.date, draft.movie, makeAction, t]);
 
   const handlePickShowtime = useCallback(async (showtime: ShowtimeOption) => {
-    appendUser(`Chon suat: ${formatTime(showtime.startTime)} - ${showtime.formatName}`);
+    appendUser(`${t('chatbot.selectedShowtime')} ${formatTime(showtime.startTime)} - ${showtime.formatName}`);
     setDraft(prev => ({ ...prev, showtime, pricing: undefined, segment: undefined, suggestedSeats: [] }));
     setIsLoading(true);
 
     try {
       const response = await publicApi.getPricing(showtime.scheduleId);
       if (!response.data?.segmentPrices?.length) {
-        appendBot('Suat nay chua co cau hinh gia ve. Ban chon suat khac nhe.');
+        appendBot(t('chatbot.errorNoPricing'));
         return;
       }
       setDraft(prev => ({ ...prev, pricing: response.data }));
-      appendBot('Ban chon loai ve va so luong nhe.', [
-        makeAction('segmentQuantityPicker', 'Loai ve va so luong', { pricing: response.data }),
+      appendBot(t('chatbot.askSegment'), [
+        makeAction('segmentQuantityPicker', t('chatbot.segmentPicker'), { pricing: response.data }),
       ]);
     } catch {
-      appendBot('Minh chua lay duoc gia ve cua suat nay. Ban thu lai sau it phut nhe.');
+      appendBot(t('chatbot.errorNoPricing'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const handlePickSegment = useCallback(async (segment: PublicSegmentPrice, quantity: number) => {
     if (!draft.showtime) {
-      appendBot('Minh can chon suat chieu truoc.');
+      appendBot(t('chatbot.errorMissingInfo'));
       return;
     }
 
-    appendUser(`Chon ${quantity} ve ${segment.segmentName}`);
+    appendUser(t('chatbot.selectedSegment', { count: quantity, name: segment.segmentName }));
     setDraft(prev => ({ ...prev, segment, quantity }));
     setIsLoading(true);
 
@@ -1250,55 +1273,55 @@ const ChatBot: React.FC = () => {
       ]);
 
       if (seatMapResponse.status !== 'fulfilled') {
-        appendBot('Minh chua tai duoc so do ghe cua suat nay.');
+        appendBot(t('chatbot.errorNoSeatMap'));
         return;
       }
 
       const history = historyResponse.status === 'fulfilled' ? (historyResponse.value.data || []) : [];
       const seats = suggestSeats(seatMapResponse.value.data, quantity, history as any[]);
       setDraft(prev => ({ ...prev, suggestedSeats: seats }));
-      appendBot(seats.length ? 'Minh goi y cum ghe nay cho ban.' : 'Suat nay khong con du ghe trong phu hop.', [
-        makeAction('seatSuggestion', 'Ghe goi y', {}),
+      appendBot(seats.length ? t('chatbot.seatsSuggested') : t('chatbot.errorNoSeats'), [
+        makeAction('seatSuggestion', t('chatbot.seatSuggestion'), {}),
       ]);
     } catch {
-      appendBot('Minh chua goi y duoc ghe luc nay. Ban thu lai sau it phut nhe.');
+      appendBot(t('chatbot.errorNoSeatMap'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, draft.showtime, makeAction]);
+  }, [appendBot, appendUser, draft.showtime, makeAction, t]);
 
   const continueAfterSeats = useCallback(async () => {
     if (isLoggedIn()) {
-      appendBot('Ban muon dung voucher theo cach nao?', [
-        makeAction('voucherPicker', 'Voucher', { mode: 'mode' }),
+      appendBot(t('chatbot.askVoucherMode'), [
+        makeAction('voucherPicker', t('chatbot.voucherPicker'), { mode: 'mode' }),
       ]);
     } else {
-      appendBot('Ban vui long de lai thong tin nhan ve. Khach vang lai se bo qua voucher.', [
-        makeAction('guestContact', 'Thong tin nhan ve', {}),
+      appendBot(t('chatbot.askGuestInfo'), [
+        makeAction('guestContact', t('chatbot.guestContact'), {}),
       ]);
     }
-  }, [appendBot, makeAction]);
+  }, [appendBot, makeAction, t]);
 
   const handleAcceptSeats = useCallback(async () => {
-    appendUser(`Dong y ghe: ${draft.suggestedSeats.map(seat => seat.seatNumber).join(', ')}`);
+    appendUser(t('chatbot.acceptSeatsLog', { seats: draft.suggestedSeats.map(seat => seat.seatNumber).join(', ') }));
     await continueAfterSeats();
-  }, [appendUser, continueAfterSeats, draft.suggestedSeats]);
+  }, [appendUser, continueAfterSeats, draft.suggestedSeats, t]);
 
   const handleRetrySeats = useCallback(async () => {
     if (!draft.segment) return;
     await handlePickSegment(draft.segment, draft.quantity);
-  }, [draft.quantity, draft.segment, handlePickSegment]);
+  }, [draft.quantity, draft.segment, handlePickSegment, t]);
 
   const handleVoucherMode = useCallback(async (mode: 'owned' | 'redeem' | 'skip') => {
     if (mode === 'skip') {
-      appendUser('Bo qua voucher');
-      appendBot('Minh tom tat don hang de ban xac nhan.', [
-        makeAction('bookingSummary', 'Xac nhan', {}),
+      appendUser(t('chatbot.skipVoucherLog'));
+      appendBot(t('chatbot.bookingConfirm'), [
+        makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
       ]);
       return;
     }
 
-    appendUser(mode === 'owned' ? 'Dung voucher dang co' : 'Mua voucher bang diem');
+    appendUser(mode === 'owned' ? t('chatbot.useVoucherLog') : t('chatbot.buyVoucherLog'));
     setIsLoading(true);
 
     try {
@@ -1308,8 +1331,8 @@ const ChatBot: React.FC = () => {
         const vouchers = (response.data || [])
           .filter(voucher => !voucher.isUsed && (!voucher.validTo || new Date(voucher.validTo).getTime() >= now))
           .sort((a, b) => b.voucherDiscountPercent - a.voucherDiscountPercent);
-        appendBot('Day la cac voucher ban co the ap dung.', [
-          makeAction('voucherPicker', 'Voucher dang co', { mode: 'owned', vouchers }),
+        appendBot(t('chatbot.ownedVouchers'), [
+          makeAction('voucherPicker', t('chatbot.ownedVoucherTitle'), { mode: 'owned', vouchers }),
         ]);
       } else {
         const [voucherResponse, accountResponse] = await Promise.all([
@@ -1320,29 +1343,29 @@ const ChatBot: React.FC = () => {
         const redeemableVouchers = (voucherResponse.data || [])
           .filter(voucher => voucher.isActive && voucher.remainingQuantity > 0 && voucher.voucherPointsCost <= rewardPoints)
           .sort((a, b) => b.voucherDiscountPercent - a.voucherDiscountPercent);
-        appendBot('Ban co the mua cac voucher du diem sau.', [
-          makeAction('voucherPicker', 'Mua voucher', { mode: 'redeem', redeemableVouchers, rewardPoints }),
+        appendBot(t('chatbot.redeemableVouchers'), [
+          makeAction('voucherPicker', t('chatbot.redeemVoucherTitle'), { mode: 'redeem', redeemableVouchers, rewardPoints }),
         ]);
       }
     } catch {
-      appendBot('Minh chua tai duoc voucher. Ban co the bo qua va tiep tuc thanh toan.', [
-        makeAction('voucherPicker', 'Voucher', { mode: 'mode' }),
+      appendBot(t('chatbot.errorNoVouchers'), [
+        makeAction('voucherPicker', t('chatbot.voucherTitle'), { mode: 'mode' }),
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const handlePickOwnedVoucher = useCallback((voucher: UserVoucherDto) => {
-    appendUser(`Ap dung voucher: ${voucher.voucherName}`);
+    appendUser(t('chatbot.appliedVoucherLog', { name: voucher.voucherName }));
     setDraft(prev => ({ ...prev, voucherId: voucher.voucherId, voucherName: voucher.voucherName }));
-    appendBot('Da ap dung voucher. Ban kiem tra lai don hang nhe.', [
-      makeAction('bookingSummary', 'Xac nhan', {}),
+    appendBot(t('chatbot.voucherApplied'), [
+      makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
     ]);
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const handleRedeemVoucher = useCallback(async (voucher: VoucherDto) => {
-    appendUser(`Mua voucher: ${voucher.voucherName}`);
+    appendUser(t('chatbot.redeemVoucherLog', { name: voucher.voucherName }));
     setIsLoading(true);
     try {
       const response = await voucherApi.redeemVoucher(voucher.voucherId);
@@ -1351,25 +1374,25 @@ const ChatBot: React.FC = () => {
         voucherId: response.data?.voucherId || voucher.voucherId,
         voucherName: response.data?.voucherName || voucher.voucherName,
       }));
-      appendBot('Da mua va ap dung voucher. Ban kiem tra lai don hang nhe.', [
-        makeAction('bookingSummary', 'Xac nhan', {}),
+      appendBot(t('chatbot.voucherRedeemed'), [
+        makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
       ]);
     } catch {
-      appendBot('Khong the mua voucher nay. Ban chon voucher khac hoac bo qua nhe.', [
-        makeAction('voucherPicker', 'Voucher', { mode: 'mode' }),
+      appendBot(t('chatbot.voucherRedeemFail'), [
+        makeAction('voucherPicker', t('chatbot.voucherTitle'), { mode: 'mode' }),
       ]);
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const handleGuestContact = useCallback((contact: GuestContact) => {
-    appendUser(`Thong tin nhan ve: ${contact.name} - ${contact.email}`);
+    appendUser(t('chatbot.guestContactLog', { name: contact.name, email: contact.email }));
     setDraft(prev => ({ ...prev, guestContact: contact }));
-    appendBot('Minh tom tat don hang de ban xac nhan.', [
-      makeAction('bookingSummary', 'Xac nhan', {}),
+    appendBot(t('chatbot.bookingConfirm'), [
+      makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
     ]);
-  }, [appendBot, appendUser, makeAction]);
+  }, [appendBot, appendUser, makeAction, t]);
 
   const checkPaymentAndRenderTicket = useCallback(async (orderId?: string) => {
     const id = orderId || draft.order?.orderId;
@@ -1379,8 +1402,8 @@ const ChatBot: React.FC = () => {
       const response = await bookingApi.getTicketInfo(id);
       if (response.data) {
         setDraft(prev => ({ ...prev, ticket: response.data }));
-        appendBot('Thanh toan thanh cong. Ve cua ban day!', [
-          makeAction('ticketCard', 'Ve', {}),
+        appendBot(t('chatbot.bookingSuccess'), [
+          makeAction('ticketCard', t('chatbot.ticket'), {}),
         ]);
         return true;
       }
@@ -1390,15 +1413,15 @@ const ChatBot: React.FC = () => {
       setPaymentChecking(false);
     }
     return false;
-  }, [appendBot, draft.order?.orderId, makeAction]);
+  }, [appendBot, draft.order?.orderId, makeAction, t]);
 
   const handleConfirmBooking = useCallback(async () => {
     if (!draft.showtime || !draft.segment || draft.suggestedSeats.length === 0) {
-      appendBot('Don hang con thieu suat chieu, loai ve hoac ghe.');
+      appendBot(t('chatbot.errorMissingInfo'));
       return;
     }
 
-    appendUser('Xac nhan tao don thanh toan');
+    appendUser(t('chatbot.confirmBookingLog'));
     const paymentWindow = window.open('', '_blank', 'width=520,height=760');
     paymentWindowRef.current = paymentWindow;
     setIsLoading(true);
@@ -1425,14 +1448,14 @@ const ChatBot: React.FC = () => {
         if (paymentWindow && !paymentWindow.closed) {
           paymentWindow.location.href = order.paymentUrl;
         } else {
-          appendBot('Trinh duyet da chan popup thanh toan. Bam nut ben duoi de mo cong thanh toan.', [
-            makeAction('paymentAction', 'Thanh toan', {}),
+          appendBot(t('chatbot.blockedPopup'), [
+            makeAction('paymentAction', t('chatbot.paymentTitle'), {}),
           ]);
           return;
         }
 
-        appendBot('Minh da mo cong thanh toan. Cu thanh toan xong, minh se tu hien thi ve trong chat.', [
-          makeAction('paymentAction', 'Thanh toan', {}),
+        appendBot(t('chatbot.paymentOpened'), [
+          makeAction('paymentAction', t('chatbot.paymentTitle'), {}),
         ]);
       } else {
         paymentWindow?.close();
@@ -1440,18 +1463,18 @@ const ChatBot: React.FC = () => {
       }
     } catch (error: any) {
       paymentWindow?.close();
-      appendBot(error?.response?.data?.message || 'Khong the tao don dat ve. Ghe co the da bi dat hoac suat chieu khong con hop le.');
+      appendBot(error?.response?.data?.message || t('chatbot.errorBooking'));
     } finally {
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, checkPaymentAndRenderTicket, draft.guestContact, draft.segment, draft.showtime, draft.suggestedSeats, draft.voucherId, makeAction]);
+  }, [appendBot, appendUser, checkPaymentAndRenderTicket, draft.guestContact, draft.segment, draft.showtime, draft.suggestedSeats, draft.voucherId, makeAction, t]);
 
   const handleOpenPayment = useCallback(() => {
     if (!draft.paymentUrl) return;
     const opened = window.open(draft.paymentUrl, '_blank', 'width=520,height=760');
     paymentWindowRef.current = opened;
-    if (!opened) appendBot('Popup bi chan. Ban cho phep popup cho trang nay roi bam lai nut thanh toan nhe.');
-  }, [appendBot, draft.paymentUrl]);
+    if (!opened) appendBot(t('chatbot.blockedPopupManual'));
+  }, [appendBot, draft.paymentUrl, t]);
 
   useEffect(() => {
     const orderId = draft.order?.orderId;
@@ -1468,8 +1491,8 @@ const ChatBot: React.FC = () => {
           if (event.status === 'success') {
             await checkPaymentAndRenderTicket(orderId);
           } else {
-            appendBot(event.message || 'Thanh toan that bai. Ban co the mo lai cong thanh toan de thu lai.', [
-              makeAction('paymentAction', 'Thanh toan', {}),
+            appendBot(event.message || t('chatbot.paymentFailed'), [
+              makeAction('paymentAction', t('chatbot.paymentTitle'), {}),
             ]);
           }
         });
@@ -1492,7 +1515,7 @@ const ChatBot: React.FC = () => {
       if (intervalId) window.clearInterval(intervalId);
       void stopConnection(connection);
     };
-  }, [appendBot, checkPaymentAndRenderTicket, draft.order?.orderId, draft.ticket, makeAction]);
+  }, [appendBot, checkPaymentAndRenderTicket, draft.order?.orderId, draft.ticket, makeAction, t]);
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
@@ -1509,7 +1532,7 @@ const ChatBot: React.FC = () => {
     setMessages(prev => [...prev, {
       id: botMessageId,
       role: 'bot',
-      text: 'Dang ket noi chatbot...',
+      text: t('chatbot.connecting'),
       createdAt: new Date().toISOString(),
     }]);
     setIsLoading(true);
@@ -1523,28 +1546,28 @@ const ChatBot: React.FC = () => {
       try {
         botData = await sendMessageWithSse(text, streamed => updateBot(streamed), status => updateBot(status));
       } catch {
-        setStreamStatus('Dang dung ket noi du phong...');
+        setStreamStatus(t('chatbot.fallbackConnection'));
         const response = await identityAxios.post('/chatbot/chat', { message: text });
         botData = response.data?.data || {};
       }
-      updateBot(botData.response || 'Minh chua co cau tra loi phu hop luc nay.', {
+      updateBot(botData.response || t('chatbot.errorDefault'), {
         movies: botData.referencedMovies || [],
         schedules: botData.referencedSchedules || [],
         actions: botData.uiActions || [],
       });
     } catch {
-      updateBot('Chatbot dang ban, ban thu lai sau it phut nhe.');
+      updateBot(t('chatbot.errorBusy'));
     } finally {
       setStreamStatus('');
       setIsLoading(false);
     }
-  }, [appendUser, input, isLoading, sendMessageWithSse, startBookingFlow]);
+  }, [appendUser, input, isLoading, sendMessageWithSse, startBookingFlow, t]);
 
   const quickActions = useMemo(() => [
-    { icon: Ticket, label: 'Dat ve', value: 'dat ve tu dong cho toi' },
-    { icon: Clock, label: 'Suat chieu', value: 'suat chieu hom nay' },
-    { icon: Tag, label: 'Uu dai', value: 'khuyen mai dang co' },
-  ], []);
+    { icon: Ticket, label: t('chatbot.quickBook'), value: t('chatbot.quickBookValue') },
+    { icon: Clock, label: t('chatbot.quickShowtimes'), value: t('chatbot.quickShowtimesValue') },
+    { icon: Tag, label: t('chatbot.quickPromotions'), value: t('chatbot.quickPromotionsValue') },
+  ], [t]);
 
   return (
     <>
@@ -1588,9 +1611,9 @@ const ChatBot: React.FC = () => {
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 900, fontSize: 16 }}>CinemaPro AI</div>
-                <div style={{ fontSize: 11, opacity: 0.86, fontWeight: 700, textTransform: 'uppercase' }}>Agentic booking concierge</div>
+                <div style={{ fontSize: 11, opacity: 0.86, fontWeight: 700, textTransform: 'uppercase' }}>{t('chatbot.subtitle')}</div>
               </div>
-              <button onClick={() => setIsOpen(false)} style={{ ...baseButton, width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.12)', color: '#fff' }} title="Dong">
+              <button onClick={() => setIsOpen(false)} style={{ ...baseButton, width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.12)', color: '#fff' }} title={t('chatbot.close')}>
                 <X size={18} />
               </button>
             </div>
@@ -1622,7 +1645,7 @@ const ChatBot: React.FC = () => {
                     />
                   ))}
                   {message.movies && message.movies.length > 0 && (
-                    <ActionShell title="Phim lien quan" icon={<Film size={13} />}>
+                    <ActionShell title={t('chatbot.relatedMovies')} icon={<Film size={13} />}>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                         {message.movies.map(movie => (
                           <button key={movie.movieId} onClick={() => { setIsOpen(false); navigate(`/movie/${movie.movieId}`); }} style={{ ...ghostButton, fontSize: 12 }}>
@@ -1635,10 +1658,10 @@ const ChatBot: React.FC = () => {
                 </ChatMessageBubble>
               ))}
               {isLoading && (
-                <ChatMessageBubble message={{ id: 'loading', role: 'bot', text: streamStatus || 'AI dang xu ly...', createdAt: new Date().toISOString() }}>
+                <ChatMessageBubble message={{ id: 'loading', role: 'bot', text: streamStatus || t('chatbot.loading'), createdAt: new Date().toISOString() }}>
                   <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, color: theme.muted, fontSize: 11 }}>
                     <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                    <span>Dang tai du lieu that tu he thong</span>
+                    <span>{t('chatbot.loadingData')}</span>
                   </div>
                 </ChatMessageBubble>
               )}
@@ -1675,7 +1698,7 @@ const ChatBot: React.FC = () => {
                   onKeyDown={event => {
                     if (event.key === 'Enter' && !event.shiftKey) void handleSend();
                   }}
-                  placeholder="Hoi ve phim, rap, hoac dat ve..."
+                  placeholder={t('chatbot.placeholder')}
                   style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: theme.text, fontSize: 14, padding: '10px 0' }}
                 />
                 <button
@@ -1690,7 +1713,7 @@ const ChatBot: React.FC = () => {
                     placeItems: 'center',
                     opacity: input.trim() && !isLoading ? 1 : 0.45,
                   }}
-                  title="Gui"
+                  title={t('chatbot.send')}
                 >
                   <Send size={16} />
                 </button>
@@ -1700,16 +1723,32 @@ const ChatBot: React.FC = () => {
         )}
       </AnimatePresence>
 
+      <style dangerouslySetInnerHTML={{__html: `
+        .chatbot-trigger-btn {
+          bottom: 92px !important;
+        }
+        @media (max-width: 768px) {
+          .chatbot-trigger-btn.is-open {
+            display: none !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .chatbot-trigger-btn {
+            bottom: 24px !important;
+          }
+        }
+      `}} />
+
       <motion.button
         ref={buttonRef}
         onClick={() => setIsOpen(value => !value)}
         aria-label="Open CinemaPro AI"
+        className={`chatbot-trigger-btn ${isOpen ? 'is-open' : ''}`}
         whileHover={shouldReduceMotion ? {} : { scale: 1.08, translateY: -2 }}
         whileTap={shouldReduceMotion ? {} : { scale: 0.94 }}
         style={{
           position: 'fixed',
           right: 24,
-          bottom: 24,
           zIndex: 9999,
           width: 56,
           height: 56,

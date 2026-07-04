@@ -404,6 +404,17 @@
         "Get movies list successfully": "Список фильмов успешно получен.",
         "Get auditorium detail successfully": "Детали зала успешно получены.",
         "Auditorium info not found for this schedule.": "Информация о зале для этого сеанса не найдена.",
-        "Your account has not been assigned to any department yet.": "Ваша учётная запись ещё не привязана ни к одному отделу."
+        "Your account has not been assigned to any department yet.": "Ваша учётная запись ещё не привязана ни к одному отделу.",
+        "You do not have permission to perform this request with your current role.": "У вас нет прав для выполнения этого запроса с вашей текущей ролью.",
+        "Please login to perform this request.": "Пожалуйста, войдите в систему, чтобы выполнить этот запрос.",
+        "System encountered an error processing your question. Please try again later.": "Система обнаружила ошибку при обработке вашего вопроса. Пожалуйста, повторите попытку позже.",
+        "Please provide a movie name or screening date so I can check available seats.": "Пожалуйста, укажите название фильма или дату сеанса, чтобы я мог проверить доступные места.",
+        "No matching schedule found. You can ask \"When is movie ABC showing?\" to see the schedule.": "Подходящее расписание не найдено. Вы можете спросить \"Когда показывают фильм ABC?\", чтобы увидеть расписание.",
+        "Multiple schedules found. Which show do you want to check seats for?": "Найдено несколько сеансов. Для какого сеанса вы хотите проверить места?",
+        "Auditorium information not found.": "Информация о зале не найдена.",
+        "There are currently no active promotions.": "На данный момент нет активных акций.",
+        "No matching movies found.": "Подходящие фильмы не найдены.",
+        "No movies found.": "Фильмы не найдены.",
+        "Booking not found. Please check your booking code or make sure you are logged in with the correct account.": "Бронь не найдена. Пожалуйста, проверьте код бронирования или убедитесь, что вы вошли в правильную учётную запись."
     }
 }

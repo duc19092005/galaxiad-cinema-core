@@ -404,6 +404,17 @@
         "Get movies list successfully": "Lấy danh sách phim thành công.",
         "Get auditorium detail successfully": "Lấy chi tiết phòng chiếu thành công.",
         "Auditorium info not found for this schedule.": "Không tìm thấy thông tin phòng chiếu cho suất chiếu này.",
-        "Your account has not been assigned to any department yet.": "Tài khoản của bạn chưa được gán phòng ban nào."
+        "Your account has not been assigned to any department yet.": "Tài khoản của bạn chưa được gán phòng ban nào.",
+        "You do not have permission to perform this request with your current role.": "Bạn không có quyền thực hiện yêu cầu này với vai trò hiện tại.",
+        "Please login to perform this request.": "Vui lòng đăng nhập để thực hiện yêu cầu này.",
+        "System encountered an error processing your question. Please try again later.": "Hệ thống gặp lỗi khi xử lý câu hỏi của bạn. Vui lòng thử lại sau.",
+        "Please provide a movie name or screening date so I can check available seats.": "Vui lòng cung cấp tên phim hoặc ngày chiếu để tôi kiểm tra ghế trống.",
+        "No matching schedule found. You can ask \"When is movie ABC showing?\" to see the schedule.": "Không tìm thấy lịch chiếu phù hợp. Bạn có thể hỏi \"Khi nào phim ABC chiếu?\" để xem lịch.",
+        "Multiple schedules found. Which show do you want to check seats for?": "Tìm thấy nhiều suất chiếu. Bạn muốn kiểm tra ghế cho suất nào?",
+        "Auditorium information not found.": "Không tìm thấy thông tin phòng chiếu.",
+        "There are currently no active promotions.": "Hiện tại không có khuyến mãi nào đang hoạt động.",
+        "No matching movies found.": "Không tìm thấy phim phù hợp.",
+        "No movies found.": "Không tìm thấy phim nào.",
+        "Booking not found. Please check your booking code or make sure you are logged in with the correct account.": "Không tìm thấy đơn đặt vé với mã này. Vui lòng kiểm tra lại mã hoặc đảm bảo bạn đang đăng nhập đúng tài khoản."
     }
 }

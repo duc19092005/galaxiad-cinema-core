@@ -69,14 +69,39 @@ public class ChatbotOrchestrator
             var (userRoles, userId) = GetCurrentUserContext();
             var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
 
+            // 1. Phân loại ý định (Intent Classification)
+            var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
+
+            // 2. Tìm và thực thi tool trong C# để lấy thông tin DB làm toolContext
+            string toolContext = string.Empty;
+            if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
+            {
+                var tool = _toolRegistry.GetTool(intentResult.Intent);
+                if (tool != null)
+                {
+                    try
+                    {
+                        toolContext = await tool.ExecuteAsync(intentResult.Parameters);
+                    }
+                    catch (Exception toolEx)
+                    {
+                        Console.WriteLine($"Error executing chatbot tool {intentResult.Intent}: {toolEx}");
+                    }
+                }
+            }
+
             // Gửi trực tiếp tin nhắn sang LangChain Agent ở dịch vụ Python AI
             var assistantResponse = await _llmClient.SendChatRequestAsync(
                 requestDto.Message, 
-                string.Empty, 
+                toolContext, 
                 userRoles, 
                 userId, 
                 sessionId
             );
+
+            // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
+            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
+            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
 
             return new BaseResponse<ChatbotResponseDto>
             {
@@ -84,8 +109,10 @@ public class ChatbotOrchestrator
                 Data = new ChatbotResponseDto
                 {
                     Response = assistantResponse,
-                    Intent = "AgentChat",
-                    IsAuthorized = true
+                    Intent = intentResult?.Intent ?? "AgentChat",
+                    IsAuthorized = true,
+                    ReferencedMovies = referencedMovies,
+                    ReferencedSchedules = referencedSchedules
                 }
             };
         }
@@ -139,6 +166,27 @@ public class ChatbotOrchestrator
                 };
             }
 
+            await onStatus("Phân loại ý định...");
+            var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
+
+            string toolContext = string.Empty;
+            if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
+            {
+                await onStatus($"Đang tìm kiếm thông tin: {intentResult.Intent}...");
+                var tool = _toolRegistry.GetTool(intentResult.Intent);
+                if (tool != null)
+                {
+                    try
+                    {
+                        toolContext = await tool.ExecuteAsync(intentResult.Parameters);
+                    }
+                    catch (Exception toolEx)
+                    {
+                        Console.WriteLine($"Error executing chatbot tool {intentResult.Intent}: {toolEx}");
+                    }
+                }
+            }
+
             var (userRoles, userId) = GetCurrentUserContext();
             var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
 
@@ -147,7 +195,7 @@ public class ChatbotOrchestrator
             var responseBuilder = new StringBuilder();
             await foreach (var token in _llmClient.StreamChatRequestAsync(
                 requestDto.Message,
-                string.Empty,
+                toolContext,
                 userRoles,
                 userId,
                 sessionId,
@@ -159,14 +207,20 @@ public class ChatbotOrchestrator
 
             var assistantResponse = responseBuilder.ToString();
 
+            // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
+            var referencedMovies = ExtractMoviesFromContext(toolContext, assistantResponse);
+            var referencedSchedules = ExtractSchedulesFromContext(toolContext);
+
             return new BaseResponse<ChatbotResponseDto>
             {
                 IsSuccess = true,
                 Data = new ChatbotResponseDto
                 {
                     Response = assistantResponse,
-                    Intent = "AgentChat",
-                    IsAuthorized = true
+                    Intent = intentResult?.Intent ?? "AgentChat",
+                    IsAuthorized = true,
+                    ReferencedMovies = referencedMovies,
+                    ReferencedSchedules = referencedSchedules
                 }
             };
         }
