@@ -1,0 +1,222 @@
+# 🎬 Galaxiad Cinema Core
+
+> Comprehensive cinema management platform — manage auditoriums, showtimes, tickets, promotions, staff, and AI assistance — all in one unified interface.
+
+---
+
+## 🚀 Project Mission
+
+**Galaxiad Cinema Core** is a modern cinema management platform that helps theater owners and operations teams manage their entire business — from online ticket booking, auditorium management, showtime scheduling, promotions, staff management, attendance tracking, to revenue reports — all in a single system.
+
+The platform integrates AI for intelligent showtime recommendations, a 24/7 AI chatbot powered by LangChain Agent, and personalized movie suggestions based on user behavior.
+
+---
+
+## 🏛️ Architecture Overview
+
+```mermaid
+flowchart TD
+    subgraph Client["User Interface"]
+        FE["React Frontend (Vite + TypeScript)"]
+        POS["POS Interface"]
+    end
+
+    subgraph Backend["Backend (.NET)"]
+        API["ASP.NET Core API"]
+        UC["Use Cases & Tool Registry"]
+        Hubs["WebSocket Events & Background Jobs"]
+        API --- UC
+        API --- Hubs
+    end
+
+    subgraph AI["AI Service (Python)"]
+        FastAPI["FastAPI Server"]
+        LangChain["LangChain Agent"]
+        DeepSeek["DeepSeek LLM"]
+        FastAPI --> LangChain
+        LangChain --> DeepSeek
+    end
+
+    subgraph Storage["Storage"]
+        SQL[("SQL Server
+
+    Primary Data")]
+        Redis[("Redis
+
+    Cache & Chat History")]
+        Qdrant[("Qdrant
+
+    Vector Database")]
+    end
+
+    FE <-->|"REST API + WebSocket"| API
+    API <-->|"SQL Queries"| SQL
+    API <-->|"Cache"| Redis
+    API <-->|"gRPC"| FastAPI
+    FastAPI <-->|"Vector Search"| Qdrant
+```
+
+**Simple explanation:** The web UI (React) communicates with the backend (.NET) via REST API and WebSocket (persistent two-way connection for real-time updates). The backend stores data in SQL Server, uses Redis for caching and chat history, and calls the Python AI Service via gRPC to run the LangChain Agent with DeepSeek LLM for chatbot, movie recommendations, and auto-booking.
+
+---
+
+## ✨ Core Features (by role)
+
+### 👤 Customer
+- **Online Booking**: Select movies, real-time seat selection (seats are temporarily locked), VNPay payment
+- **AI Chatbot**: Smart Q&A — find movies, check showtimes, seat suggestions, auto-booking via LangChain Agent
+- **History & Notifications**: View booking history, receive promotion alerts
+
+### 💵 Cashier / POS
+- **Counter Sales**: Find customers by email, select seats, cash or VNPay payment
+- **Shift Management**: Register shifts, facial recognition clock-in/out
+
+### 🏢 Facilities Manager
+- **Cinema & Auditorium Management**: Add/edit theaters, auditoriums, seats
+- **Pricing Segments**: Manage ticket pricing by segment (Student, Adult, VIP...)
+
+### 🎬 Movie Manager
+- **Movie Information Management**: Add/edit movies, showtimes, age ratings (P, K, T13, T16, T18, C)
+
+### 📋 Theater Manager
+- **Staff Shift Management**: Approve shifts, view attendance
+- **Revenue Reports**: View revenue and statistics
+
+### 🔧 Admin
+- **User Management & Permissions**: Create accounts, assign roles, transfer rights
+- **Promotions & Vouchers**: Create and manage promotions, reward point vouchers
+- **Audit Log**: View system-wide activity logs
+- **Dashboard**: Revenue charts, ticket sales, recent activity
+
+---
+
+## 🛠️ Technology Stack
+
+| Layer | Technology | Role |
+|-------|-----------|------|
+| **Frontend** | React + TypeScript + Vite | User Interface (Web) |
+| **Backend** | ASP.NET Core 8 | Business logic, REST API, WebSocket |
+| **AI Service** | Python FastAPI + DeepSeek LLM | LangChain Agent, chatbot, recommendations, auto-booking |
+| **LangChain Agent** | `create_tool_calling_agent` | Booking flow orchestration: seat suggestion, voucher, confirmation |
+| **Communication** | gRPC (protobuf) | C# backend ↔ Python AI Service |
+| **Database** | SQL Server (MSSQL) | Primary data storage (transactions, users, metadata) |
+| **Cache & Memory** | Redis | Fast caching, chat history (30-min TTL) |
+| **Vector DB** | Qdrant | Vector embeddings for movie recommendations |
+| **Real-time** | WebSocket | Real-time seat status updates |
+
+---
+
+## 🚀 Quick Start
+
+### Requirements
+- Docker & Docker Compose
+- .NET 8.0 SDK (for backend)
+- Node.js 18+ (for frontend)
+- Python 3.10+ (for AI Service)
+
+### Quick Start (Docker Compose)
+```bash
+# 1. Clone the project
+git clone <repository-url>
+cd galaxiad-cinema-core
+
+# 2. Create .env file for AI service
+echo "DEEPSEEK_API_KEY=your-deepseek-api-key" > services/ai/.env
+
+# 3. Run entire system
+docker compose up --build
+```
+
+Access: `http://localhost:5173`
+
+### Run individually
+
+**Backend:**
+```bash
+cd apps/backend
+dotnet run --project Cinema.Api
+```
+
+**Frontend:**
+```bash
+cd apps/frontend
+npm install
+npm run dev
+```
+
+**AI Service:**
+```bash
+cd services/ai
+pip install -r requirements.txt
+# Create .env: DEEPSEEK_API_KEY=your-key
+python main.py
+```
+
+---
+
+## 📚 Documentation
+
+### Algorithms & Techniques
+- [Algorithm Overview](docs/algorithms/README.en.md)
+  - [Movie Search](docs/algorithms/en/movie-search.md)
+  - [Movie Recommendations](docs/algorithms/en/movie-recommendation.md)
+  - [Dynamic Pricing & Promotions](docs/algorithms/en/pricing-promotions.md)
+  - [Role-aware Chatbot](docs/algorithms/en/role-aware-chatbot.md)
+  - [Redis Cache Strategy](docs/algorithms/en/redis-cache-strategy.md)
+  - [Shift Schedule Rules](docs/algorithms/en/shift-schedule-rules.md)
+  - [Real-time Seat Locking](docs/algorithms/en/seat-locking.md)
+
+### Business Rules
+- [Business Rules Reference](docs/business/README.en.md)
+
+### Development (Backend)
+- [Backend README (VI)](apps/backend/README.md)
+- [Backend README (EN)](apps/backend/README.en.md)
+- [Backend README (RU)](apps/backend/README.ru.md)
+
+---
+
+## AI Recommendation Docs
+
+- Personalized recommendation engine: [docs/algorithms/en/movie-recommendation.md](docs/algorithms/en/movie-recommendation.md)
+- Embedding dimension benchmark (768d): [docs/benchmarks/embedding-dimension-benchmark.md](docs/benchmarks/embedding-dimension-benchmark.md)
+- Benchmark scripts and images: [services/ai/benchmarks/](services/ai/benchmarks/)
+
+---
+
+## Deployment Evidence
+
+| Item | Status | Link |
+|------|--------|------|
+| CI/CD | GitHub Actions (build + type check) | `.github/workflows/build.yml` |
+| Frontend Demo | Live on Vercel | https://galaxiad-cinema-core-gamma.vercel.app/ |
+| API Swagger | Live | https://apicinestartplus.runasp.net/swagger |
+| Seed Data | Included | 5 movies, 3 cinemas, 6 auditoriums, sample pricing |
+| Deployment Guide | [DEPLOYMENT.md](DEPLOYMENT.md) | VPS setup + Docker production config |
+
+### Production Architecture
+- **Frontend**: Vercel (auto-deploy from `main` branch)
+- **Backend**: runasp.net (ASP.NET Core hosting)
+- **AI Service**: Self-hosted with DeepSeek LLM + BAAI/bge-m3 local embedding model
+- **Database**: SQL Server 2022 + Redis + Qdrant
+
+---
+
+## 🌐 Languages
+
+- 🇻🇳 [Tiếng Việt](README.md)
+- 🇬🇧 [English](README.en.md)
+- 🇷🇺 [Русский](README.ru.md)
+
+## 📚 Detailed References
+
+| Document | Description |
+|---|---|
+| [docs/features/](docs/features/) | Detailed feature documentation |
+| [docs/algorithms/](docs/algorithms/) | Algorithms (movie search, pricing, seat locking, cache) |
+| [docs/business/](docs/business/) | Business rules |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide |
+
+---
+
+> ⚡ Galaxiad Cinema Core — Built with ❤️ by the Galaxiad Team

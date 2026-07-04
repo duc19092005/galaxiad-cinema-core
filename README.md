@@ -8,7 +8,7 @@
 
 **Galaxiad Cinema Core** là một nền tảng quản lý rạp chiếu phim hiện đại, giúp chủ rạp và đội ngũ vận hành quản lý toàn bộ hoạt động kinh doanh — từ đặt vé online, quản lý phòng chiếu, lịch chiếu phim, khuyến mãi, nhân viên, đến chấm công và báo cáo doanh thu — tất cả trên một hệ thống duy nhất.
 
-Hệ thống tích hợp AI để đề xuất lịch chiếu thông minh, chatbot hỗ trợ khách hàng 24/7, và gợi ý phim cá nhân hóa dựa trên hành vi người dùng.
+Hệ thống tích hợp AI để đề xuất lịch chiếu thông minh, chatbot hỗ trợ khách hàng 24/7 với LangChain Agent, và gợi ý phim cá nhân hóa dựa trên hành vi người dùng.
 
 ---
 
@@ -24,40 +24,39 @@ flowchart TD
     subgraph Backend["Backend (.NET)"]
         API["ASP.NET Core API"]
         UC["Use Cases & Tool Registry"]
-        Hubs["SSE Events & Background Jobs"]
+        Hubs["WebSocket Events & Background Jobs"]
         API --- UC
         API --- Hubs
     end
 
-    subgraph AI["Dịch vụ AI"]
-        FastAPI["Python FastAPI"]
-        Gemini["Google Gemini LLM"]
-        Embedder["Vector Embeddings"]
-        FastAPI --- Gemini
-        FastAPI --- Embedder
+    subgraph AI["Dịch vụ AI (Python)"]
+        FastAPI["FastAPI Server"]
+        LangChain["LangChain Agent"]
+        DeepSeek["DeepSeek LLM"]
+        FastAPI --> LangChain
+        LangChain --> DeepSeek
     end
 
     subgraph Storage["Lưu trữ"]
         SQL[("SQL Server
-    
+
     Dữ liệu chính")]
         Redis[("Redis
-    
-    Cache & Lock")]
+
+    Cache & Chat History")]
         Qdrant[("Qdrant
-    
+
     Vector Database")]
     end
 
     FE <-->|"REST API + WebSocket"| API
     API <-->|"SQL Queries"| SQL
     API <-->|"Cache"| Redis
-    API <-->|"AI Request"| FastAPI
+    API <-->|"gRPC"| FastAPI
     FastAPI <-->|"Vector Search"| Qdrant
-    Embedder <-->|"Embeddings"| Gemini
 ```
 
-**Giải thích đơn giản:** Giao diện web (React) nói chuyện với backend (.NET) qua REST API và WebSocket (kết nối bền vững hai chiều cho cập nhật real-time). Backend lưu dữ liệu vào SQL Server, dùng Redis để nhớ nhanh (cache) và khóa trùng lặp, và gọi Python AI Service để phân tích hành vi khách hàng, gợi ý phim và hỗ trợ chatbot.
+**Giải thích đơn giản:** Giao diện web (React) nói chuyện với backend (.NET) qua REST API và WebSocket (kết nối bền vững hai chiều cho cập nhật real-time). Backend lưu dữ liệu vào SQL Server, dùng Redis để nhớ nhanh (cache) và lưu lịch sử chat, và gọi Python AI Service qua gRPC để chạy LangChain Agent với DeepSeek LLM cho chatbot, gợi ý phim và đặt vé tự động.
 
 ---
 
@@ -65,7 +64,7 @@ flowchart TD
 
 ### 👤 Khách hàng (Customer)
 - **Đặt vé online**: Chọn phim, chọn ghế real-time (ghế được khóa tạm thời khi có người chọn), thanh toán qua VNPay
-- **Chatbot AI**: Hỏi đáp thông minh — tìm phim, xem lịch chiếu, giải đáp thắc mắc
+- **Chatbot AI**: Hỏi đáp thông minh — tìm phim, xem lịch chiếu, gợi ý ghế, đặt vé tự động qua LangChain Agent
 - **Lịch sử & thông báo**: Xem lịch sử đặt vé, nhận thông báo khuyến mãi
 
 ### 💵 Thu ngân (Cashier / POS)
@@ -97,11 +96,13 @@ flowchart TD
 |-------|-----------|---------|
 | **Frontend** | React + TypeScript + Vite | Giao diện người dùng (Web) |
 | **Backend** | ASP.NET Core 8 | Xử lý nghiệp vụ, REST API, WebSocket |
-| **AI Service** | Python FastAPI + Google Gemini | Chatbot, gợi ý phim, phân tích |
+| **AI Service** | Python FastAPI + DeepSeek LLM | LangChain Agent, chatbot, gợi ý phim, đặt vé tự động |
+| **LangChain Agent** | `create_tool_calling_agent` | Điều phối luồng đặt vé: gợi ý ghế, voucher, xác nhận |
+| **Communication** | gRPC (protobuf) | Giao tiếp giữa C# backend và Python AI Service |
 | **Database** | SQL Server (MSSQL) | Lưu trữ dữ liệu chính (giao dịch, người dùng, metadata) |
-| **Cache** | Redis | Cache nhanh, khóa phân tán (distributed lock) |
+| **Cache & Memory** | Redis | Cache nhanh, lưu chat history (TTL 30 phút) |
 | **Vector DB** | Qdrant | Lưu trữ vector embeddings cho gợi ý phim |
-| **Real-time** | WebSocket (raw) | Cập nhật trạng thái ghế real-time, thông báo |
+| **Real-time** | WebSocket | Cập nhật trạng thái ghế real-time, thông báo |
 
 ---
 
@@ -120,7 +121,7 @@ git clone <repository-url>
 cd galaxiad-cinema-core
 
 # 2. Tạo file .env cho AI service
-echo "GOOGLE_API_KEY=your-gemini-api-key" > services/ai/.env
+echo "DEEPSEEK_API_KEY=your-deepseek-api-key" > services/ai/.env
 
 # 3. Chạy toàn bộ hệ thống
 docker compose up --build
@@ -147,7 +148,7 @@ npm run dev
 ```bash
 cd services/ai
 pip install -r requirements.txt
-# Tạo .env: GOOGLE_API_KEY=your-key
+# Tạo .env: DEEPSEEK_API_KEY=your-key
 python main.py
 ```
 
@@ -169,6 +170,9 @@ python main.py
 - [Business Rules Reference](docs/business/README.en.md)
 
 ### Phát triển (Backend)
+- [Backend README (VI)](apps/backend/README.md)
+- [Backend README (EN)](apps/backend/README.en.md)
+- [Backend README (RU)](apps/backend/README.ru.md)
 <!-- xem endpoints trong docs/features/ -->
 
 ### Dịch thuật
@@ -198,7 +202,7 @@ python main.py
 ### Production Architecture
 - **Frontend**: Vercel (auto-deploy from `main` branch)
 - **Backend**: runasp.net (ASP.NET Core hosting)
-- **AI Service**: Self-hosted with BAAI/bge-m3 local embedding model
+- **AI Service**: Self-hosted with DeepSeek LLM + BAAI/bge-m3 local embedding model
 - **Database**: SQL Server 2022 + Redis + Qdrant
 
 ---
