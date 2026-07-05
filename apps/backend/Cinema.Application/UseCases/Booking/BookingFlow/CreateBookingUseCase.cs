@@ -185,15 +185,17 @@ public class CreateBookingUseCase
         var seatIds = request.SeatSelections.Select(s => s.SeatId).ToList();
         var segmentIds = request.SeatSelections.Select(s => s.UserSegmentId).Distinct().ToList();
 
-        var validSeats = await _orderRepository.GetValidSeatsAsync(schedule.AuditoriumId, seatIds);
-        if (validSeats.Count != seatIds.Count)
+        var auditoriumSeats = await _orderRepository.GetAuditoriumSeatsAsync(schedule.AuditoriumId);
+        
+        // In-memory validation of seat existence in the auditorium
+        var validSeatCount = auditoriumSeats.Count(s => seatIds.Contains(s.SeatId));
+        if (validSeatCount != seatIds.Count)
             throw new BadRequestException(Messages.Booking.InvalidSeats, "BK03");
 
         var alreadyBooked = await _orderRepository.GetAlreadyBookedSeatsAsync(request.ScheduleId, seatIds);
         if (alreadyBooked.Any())
             throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
 
-        var auditoriumSeats = await _orderRepository.GetAuditoriumSeatsAsync(schedule.AuditoriumId);
         var occupiedSeatIds = await _orderRepository.GetOccupiedSeatIdsAsync(request.ScheduleId);
         var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(auditoriumSeats, seatIds, occupiedSeatIds);
         if (seatSelectionErrors.Count > 0)
