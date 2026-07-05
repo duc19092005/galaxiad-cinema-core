@@ -27,6 +27,7 @@ from pb import ai_service_pb2_grpc as pb_grpc
 # Import core modules
 from core.embedder import embedder
 from core.agent import agent_with_history
+from core.booking_fast_path import try_booking_fast_path
 from core.llm_client import (
     call_deepseek,
     call_deepseek_stream,
@@ -197,6 +198,14 @@ class AiServiceServicer(pb_grpc.AiServiceServicer):
     async def Chat(self, request: pb.ChatRequest, context) -> pb.ChatResponse:
         """Generate chatbot response using LangChain Agent."""
         try:
+            fast_path_response = await try_booking_fast_path(
+                request.user_prompt,
+                request.tool_context or "",
+                request.user_id or "N/A",
+            )
+            if fast_path_response:
+                return pb.ChatResponse(response=fast_path_response)
+
             session_id = request.session_id or request.user_id or "default_session"
             config = {"configurable": {"session_id": session_id}}
             
@@ -223,6 +232,15 @@ class AiServiceServicer(pb_grpc.AiServiceServicer):
     async def ChatStream(self, request: pb.ChatRequest, context) -> pb.ChatResponse:
         """Stream chatbot response tokens via gRPC server-streaming using LangChain Agent."""
         try:
+            fast_path_response = await try_booking_fast_path(
+                request.user_prompt,
+                request.tool_context or "",
+                request.user_id or "N/A",
+            )
+            if fast_path_response:
+                yield pb.ChatResponse(response=fast_path_response)
+                return
+
             session_id = request.session_id or request.user_id or "default_session"
             config = {"configurable": {"session_id": session_id}}
             

@@ -1,6 +1,7 @@
 using System.Text;
 using Cinema.Application.Exceptions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Net.Http.Headers;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Cinema.Api.Bootstraps.Authentication;
@@ -32,7 +33,15 @@ public static class JwtBootstrap
                 {
                     OnMessageReceived = context =>
                     {
-                        context.Token = context.Request.Cookies["X-Access-Token"];
+                        var authorization = context.Request.Headers[HeaderNames.Authorization].ToString();
+                        if (authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                        {
+                            context.Token = authorization["Bearer ".Length..].Trim();
+                        }
+                        else
+                        {
+                            context.Token = context.Request.Cookies["X-Access-Token"];
+                        }
                         return Task.CompletedTask;
                     },
                     OnChallenge = async context => 

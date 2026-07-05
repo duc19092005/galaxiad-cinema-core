@@ -4,6 +4,7 @@ from fastapi.responses import StreamingResponse
 from loguru import logger
 from models import ChatLlmRequest, ChatLlmResponse
 from core.agent import agent_with_history
+from core.booking_fast_path import try_booking_fast_path
 from core.prompts import FALLBACK_CHAT_PROMPT
 from core.llm_client import call_deepseek, call_deepseek_stream
 
@@ -30,6 +31,14 @@ async def chat_llm(request: ChatLlmRequest):
     Chatbot response generation endpoint using LangChain Agent.
     """
     try:
+        fast_path_response = await try_booking_fast_path(
+            request.user_prompt,
+            request.tool_context or "",
+            request.user_id or "N/A",
+        )
+        if fast_path_response:
+            return ChatLlmResponse(response=fast_path_response)
+
         session_id = request.session_id or request.user_id or "default_session"
         config = {"configurable": {"session_id": session_id}}
         
@@ -59,6 +68,16 @@ async def chat_llm_stream(request: ChatLlmRequest):
 
     async def event_generator():
         try:
+            fast_path_response = await try_booking_fast_path(
+                request.user_prompt,
+                request.tool_context or "",
+                request.user_id or "N/A",
+            )
+            if fast_path_response:
+                yield f"event: token\ndata: {json.dumps({'text': fast_path_response}, ensure_ascii=False)}\n\n"
+                yield "event: done\ndata: {\"ok\": true}\n\n"
+                return
+
             async for event in agent_with_history.astream_events(
                 {
                     "input": request.user_prompt,

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -39,6 +40,7 @@ public class ChatbotOrchestrator
 
     public async Task<BaseResponse<ChatbotResponseDto>> ExecuteAsync(ChatbotRequestDto requestDto)
     {
+        var stopwatch = Stopwatch.StartNew();
         if (string.IsNullOrWhiteSpace(requestDto.Message))
         {
             return new BaseResponse<ChatbotResponseDto>
@@ -51,6 +53,39 @@ public class ChatbotOrchestrator
         try
         {
             // 0. Kiểm tra an toàn ngôn ngữ qua Python /guard
+
+            var (fastUserRoles, fastUserId) = GetCurrentUserContext();
+            var fastSessionId = requestDto.SessionId ?? (fastUserId != "N/A" ? fastUserId : Guid.NewGuid().ToString());
+
+            if (IsStructuredUserSelection(requestDto.Message))
+            {
+                var fastSupportingContext = BuildAgentSupportingContext(string.Empty, fastUserId, fastUserRoles);
+                var fastAssistantResponse = await _llmClient.SendChatRequestAsync(
+                    requestDto.Message,
+                    fastSupportingContext,
+                    fastUserRoles,
+                    fastUserId,
+                    fastSessionId
+                );
+
+                var (cleanFastResponse, fastUiActions) = ParseUiActions(fastAssistantResponse);
+                stopwatch.Stop();
+                return new BaseResponse<ChatbotResponseDto>
+                {
+                    IsSuccess = true,
+                    Data = new ChatbotResponseDto
+                    {
+                        Response = cleanFastResponse,
+                        Intent = "AgentFastPath",
+                        IsAuthorized = true,
+                        UiActions = fastUiActions,
+                        ProcessingPath = "fastPath",
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        IsAuthenticated = fastUserId != "N/A"
+                    }
+                };
+            }
+
             var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
             if (guardResult.IsBlocked)
             {
@@ -116,7 +151,10 @@ public class ChatbotOrchestrator
                     IsAuthorized = true,
                     ReferencedMovies = referencedMovies,
                     ReferencedSchedules = referencedSchedules,
-                    UiActions = uiActions
+                    UiActions = uiActions,
+                    ProcessingPath = "llmPath",
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    IsAuthenticated = userId != "N/A"
                 }
             };
         }
@@ -142,6 +180,7 @@ public class ChatbotOrchestrator
         Func<string, Task> onToken,
         CancellationToken cancellationToken = default)
     {
+        var stopwatch = Stopwatch.StartNew();
         if (string.IsNullOrWhiteSpace(requestDto.Message))
         {
             return new BaseResponse<ChatbotResponseDto>
@@ -154,6 +193,45 @@ public class ChatbotOrchestrator
         try
         {
             await onStatus("Đang kiểm tra an toàn...");
+            var (fastUserRoles, fastUserId) = GetCurrentUserContext();
+            var fastSessionId = requestDto.SessionId ?? (fastUserId != "N/A" ? fastUserId : Guid.NewGuid().ToString());
+
+            if (IsStructuredUserSelection(requestDto.Message))
+            {
+                await onStatus("Processing your selection...");
+                var fastSupportingContext = BuildAgentSupportingContext(string.Empty, fastUserId, fastUserRoles);
+                var fastResponseBuilder = new StringBuilder();
+                await foreach (var token in _llmClient.StreamChatRequestAsync(
+                    requestDto.Message,
+                    fastSupportingContext,
+                    fastUserRoles,
+                    fastUserId,
+                    fastSessionId,
+                    cancellationToken))
+                {
+                    fastResponseBuilder.Append(token);
+                    await onToken(token);
+                }
+
+                var fastAssistantResponse = fastResponseBuilder.ToString();
+                var (cleanFastResponse, fastUiActions) = ParseUiActions(fastAssistantResponse);
+                stopwatch.Stop();
+                return new BaseResponse<ChatbotResponseDto>
+                {
+                    IsSuccess = true,
+                    Data = new ChatbotResponseDto
+                    {
+                        Response = cleanFastResponse,
+                        Intent = "AgentFastPath",
+                        IsAuthorized = true,
+                        UiActions = fastUiActions,
+                        ProcessingPath = "fastPath",
+                        ElapsedMs = stopwatch.ElapsedMilliseconds,
+                        IsAuthenticated = fastUserId != "N/A"
+                    }
+                };
+            }
+
             var guardResult = await _llmClient.CheckMessageSafetyAsync(requestDto.Message);
             if (guardResult.IsBlocked)
             {
@@ -228,7 +306,10 @@ public class ChatbotOrchestrator
                     IsAuthorized = true,
                     ReferencedMovies = referencedMovies,
                     ReferencedSchedules = referencedSchedules,
-                    UiActions = uiActions
+                    UiActions = uiActions,
+                    ProcessingPath = "llmPath",
+                    ElapsedMs = stopwatch.ElapsedMilliseconds,
+                    IsAuthenticated = userId != "N/A"
                 }
             };
         }
@@ -276,6 +357,11 @@ public class ChatbotOrchestrator
         }
 
         return (userRoles, userId);
+    }
+
+    private static bool IsStructuredUserSelection(string message)
+    {
+        return message.TrimStart().StartsWith("[USER_SELECTION]", StringComparison.Ordinal);
     }
 
     private string BuildAgentSupportingContext(string deterministicContext, string userId, string userRoles)

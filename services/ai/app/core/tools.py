@@ -7,6 +7,15 @@ from loguru import logger
 
 from config import BACKEND_API_URL
 
+_backend_client: httpx.AsyncClient | None = None
+
+
+def _get_backend_client() -> httpx.AsyncClient:
+    global _backend_client
+    if _backend_client is None or _backend_client.is_closed:
+        _backend_client = httpx.AsyncClient(timeout=15.0)
+    return _backend_client
+
 
 def _json_result(payload: dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False)
@@ -23,8 +32,12 @@ def _field(data: dict[str, Any], camel_name: str, default: Any = None) -> Any:
 
 async def _get_backend(path: str, params: dict[str, Any] | None = None, timeout: float = 10.0) -> dict[str, Any]:
     url = f"{BACKEND_API_URL}{path}"
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.get(url, params={key: value for key, value in (params or {}).items() if value not in [None, ""]})
+    client = _get_backend_client()
+    response = await client.get(
+        url,
+        params={key: value for key, value in (params or {}).items() if value not in [None, ""]},
+        timeout=timeout,
+    )
 
     response_json = response.json() if response.content else {}
     if response.status_code >= 400:
@@ -257,8 +270,8 @@ async def get_available_vouchers_tool(user_id: str) -> str:
 
     url = f"{BACKEND_API_URL}/public/vouchers/available-for-user"
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, params={"userId": user_id})
+        client = _get_backend_client()
+        response = await client.get(url, params={"userId": user_id}, timeout=10.0)
 
         if response.status_code != 200:
             return _json_result({
@@ -314,8 +327,8 @@ async def suggest_seats_tool(schedule_id: str, quantity: int) -> str:
 
     url = f"{BACKEND_API_URL}/public/movies/schedules/{schedule_id}/seats"
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url)
+        client = _get_backend_client()
+        response = await client.get(url, timeout=10.0)
 
         if response.status_code != 200:
             return _json_result({
@@ -466,8 +479,8 @@ async def confirm_booking_tool(
 
     url = f"{BACKEND_API_URL}/booking/create"
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(url, json=payload)
+        client = _get_backend_client()
+        response = await client.post(url, json=payload, timeout=15.0)
 
         response_json = response.json() if response.content else {}
         data = _response_data(response_json) or {}

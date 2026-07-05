@@ -13,6 +13,9 @@ public class ChatbotResponseDto
     public List<ChatbotUiActionDto> UiActions { get; set; } = [];
     public JsonElement? BookingState { get; set; }
     public string? OrderId { get; set; }
+    public string ProcessingPath { get; set; } = string.Empty;
+    public long ElapsedMs { get; set; }
+    public bool IsAuthenticated { get; set; }
 }
 
 public class ChatbotUiActionDto

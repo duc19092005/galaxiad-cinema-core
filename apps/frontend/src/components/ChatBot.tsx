@@ -80,6 +80,9 @@ interface ChatbotResponsePayload {
   uiActions?: ChatAction[];
   bookingState?: Record<string, unknown>;
   orderId?: string;
+  processingPath?: string;
+  elapsedMs?: number;
+  isAuthenticated?: boolean;
 }
 
 interface ChatAction {
@@ -145,9 +148,14 @@ interface GuestContact {
 }
 
 interface BookingDraft {
+  bookingPath?: BookingPathMode;
+  discoveryMode?: DiscoveryMode;
+  genre?: PublicGenre;
   movie?: ActiveMovie;
   date?: string;
   cinema?: CinemaOption;
+  showtimePreference?: ShowtimePickMode;
+  availableShowtimes?: ShowtimeOption[];
   showtime?: ShowtimeOption;
   seatMap?: PublicSeatMap;
   pricing?: PublicPricing;
@@ -218,8 +226,34 @@ const stripInternalChatMarkup = (value?: string) => {
     .trim();
 };
 
-const agentSelection = (type: string, payload: Record<string, unknown>) => (
-  `[USER_SELECTION] ${JSON.stringify({ type, payload })}`
+const buildBookingState = (draft: BookingDraft, patch: Partial<BookingDraft> = {}) => {
+  const next = { ...draft, ...patch };
+  return {
+    bookingPath: next.bookingPath,
+    discoveryMode: next.discoveryMode,
+    genre: next.genre,
+    movie: next.movie,
+    date: next.date,
+    cinema: next.cinema,
+    showtimePreference: next.showtimePreference,
+    showtime: next.showtime,
+    pricing: next.pricing,
+    segment: next.segment,
+    quantity: next.quantity,
+    selectedSeats: next.suggestedSeats,
+    suggestedSeats: next.suggestedSeats,
+    voucherId: next.voucherId,
+    voucherName: next.voucherName,
+    guestContact: next.guestContact,
+  };
+};
+
+const agentSelection = (
+  type: string,
+  payload: Record<string, unknown>,
+  bookingState?: Record<string, unknown>
+) => (
+  `[USER_SELECTION] ${JSON.stringify({ type, payload, bookingState })}`
 );
 
 
@@ -1514,6 +1548,17 @@ const ChatBot: React.FC = () => {
             ...prev,
             pricing: action.payload.pricing,
           }));
+        } else if (action.type === 'showtimePreferencePicker' && action.payload?.showtimes) {
+          setDraft(prev => ({
+            ...prev,
+            availableShowtimes: action.payload.showtimes,
+          }));
+        } else if (action.type === 'showtimePicker' && action.payload?.showtimes) {
+          setDraft(prev => ({
+            ...prev,
+            availableShowtimes: action.payload.showtimes,
+            showtimePreference: action.payload.mode || prev.showtimePreference,
+          }));
         } else if (action.type === 'paymentAction' && action.payload) {
           setDraft(prev => ({
             ...prev,
@@ -1532,46 +1577,50 @@ const ChatBot: React.FC = () => {
 
   const handlePickBookingPath = useCallback(async (mode: BookingPathMode) => {
     const label = mode === 'cinemaFirst' ? 'theo rạp trước' : 'theo phim trước';
-    await executeSendMessage(agentSelection('bookingPathSelected', { bookingPath: mode }), `Tôi muốn bắt đầu ${label}`);
-  }, [executeSendMessage]);
+    setDraft(prev => ({ ...prev, bookingPath: mode }));
+    await executeSendMessage(agentSelection('bookingPathSelected', { bookingPath: mode }, buildBookingState(draft, { bookingPath: mode })), `Tôi muốn bắt đầu ${label}`);
+  }, [draft, executeSendMessage]);
 
   const handlePickDiscoveryMode = useCallback(async (mode: DiscoveryMode) => {
     const label = mode === 'timeFirst' ? 'theo giờ chiếu trước' : 'theo thể loại phim trước';
-    await executeSendMessage(agentSelection('discoveryModeSelected', { discoveryMode: mode }), `Tôi muốn chọn ${label}`);
-  }, [executeSendMessage]);
+    setDraft(prev => ({ ...prev, discoveryMode: mode }));
+    await executeSendMessage(agentSelection('discoveryModeSelected', { discoveryMode: mode }, buildBookingState(draft, { discoveryMode: mode })), `Tôi muốn chọn ${label}`);
+  }, [draft, executeSendMessage]);
 
   const handlePickGenre = useCallback(async (genre: PublicGenre) => {
+    setDraft(prev => ({ ...prev, genre }));
     await executeSendMessage(
-      agentSelection('genreSelected', { genreId: genre.genreId, genreName: genre.genreName }),
+      agentSelection('genreSelected', { genreId: genre.genreId, genreName: genre.genreName }, buildBookingState(draft, { genre })),
       `Tôi chọn thể loại: ${genre.genreName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handlePickMovie = useCallback(async (movie: ActiveMovie) => {
     setDraft(prev => ({ ...prev, movie }));
     await executeSendMessage(
-      agentSelection('movieSelected', { movieId: movie.movieId, movieName: movie.movieName }),
+      agentSelection('movieSelected', { movieId: movie.movieId, movieName: movie.movieName }, buildBookingState(draft, { movie })),
       `Tôi chọn phim: ${movie.movieName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handlePickDate = useCallback(async (date: string) => {
     setDraft(prev => ({ ...prev, date }));
-    await executeSendMessage(agentSelection('dateSelected', { date }), `Tôi chọn ngày: ${formatDate(date)}`);
-  }, [executeSendMessage]);
+    await executeSendMessage(agentSelection('dateSelected', { date }, buildBookingState(draft, { date })), `Tôi chọn ngày: ${formatDate(date)}`);
+  }, [draft, executeSendMessage]);
 
   const handlePickCinema = useCallback(async (cinema: CinemaOption) => {
     setDraft(prev => ({ ...prev, cinema }));
     await executeSendMessage(
-      agentSelection('cinemaSelected', { cinemaId: cinema.cinemaId, cinemaName: cinema.cinemaName }),
+      agentSelection('cinemaSelected', { cinemaId: cinema.cinemaId, cinemaName: cinema.cinemaName }, buildBookingState(draft, { cinema })),
       `Tôi chọn rạp: ${cinema.cinemaName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handlePickShowtimePreference = useCallback(async (mode: ShowtimePickMode) => {
     const text = mode === 'time' ? "Tôi muốn chọn suất chiếu theo khung giờ" : "Tôi muốn chọn suất chiếu theo định dạng";
-    await executeSendMessage(agentSelection('showtimePreferenceSelected', { mode }), text);
-  }, [executeSendMessage]);
+    setDraft(prev => ({ ...prev, showtimePreference: mode }));
+    await executeSendMessage(agentSelection('showtimePreferenceSelected', { mode }, buildBookingState(draft, { showtimePreference: mode })), text);
+  }, [draft, executeSendMessage]);
 
   const handlePickShowtime = useCallback(async (showtime: ShowtimeOption) => {
     const timeStr = `${formatDate(showtime.startTime)} ${formatTime(showtime.startTime)}`;
@@ -1585,10 +1634,10 @@ const ChatBot: React.FC = () => {
         cinemaName: showtime.cinemaName,
         formatName: showtime.formatName,
         startTime: showtime.startTime,
-      }),
+      }, buildBookingState(draft, { showtime })),
       `Tôi chọn suất chiếu: ${timeStr} (${showtime.formatName})`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handlePickSegment = useCallback(async (segment: PublicSegmentPrice, quantity: number) => {
     setDraft(prev => ({ ...prev, segment, quantity }));
@@ -1597,10 +1646,10 @@ const ChatBot: React.FC = () => {
         userSegmentId: segment.userSegmentId,
         segmentName: segment.segmentName,
         quantity,
-      }),
+      }, buildBookingState(draft, { segment, quantity })),
       `Tôi chọn ${quantity} vé ${segment.segmentName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handleAcceptSeats = useCallback(async (seats?: NormalizedSeat[]) => {
     const selectedSeats = seats?.length ? seats : draft.suggestedSeats;
@@ -1610,10 +1659,10 @@ const ChatBot: React.FC = () => {
       agentSelection('seatsSelected', {
         seatIds: selectedSeats.map(seat => seat.seatId),
         seatNumbers: selectedSeats.map(seat => seat.seatNumber),
-      }),
+      }, buildBookingState(draft, { suggestedSeats: selectedSeats })),
       `Tôi chọn ghế: ${seatNumbers}`
     );
-  }, [draft.suggestedSeats, executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handleRetrySeats = useCallback(async () => {
     await executeSendMessage("Gợi ý ghế khác cho tôi");
@@ -1621,42 +1670,46 @@ const ChatBot: React.FC = () => {
 
   const handleVoucherMode = useCallback(async (mode: 'owned' | 'redeem' | 'skip') => {
     if (mode === 'skip') {
-      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn bỏ qua voucher");
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }, buildBookingState(draft)), "Tôi muốn bỏ qua voucher");
     } else if (mode === 'redeem') {
-      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn mua voucher bằng điểm");
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }, buildBookingState(draft)), "Tôi muốn mua voucher bằng điểm");
     } else {
-      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn dùng voucher đang có");
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }, buildBookingState(draft)), "Tôi muốn dùng voucher đang có");
     }
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handlePickOwnedVoucher = useCallback(async (voucher: UserVoucherDto) => {
     setDraft(prev => ({ ...prev, voucherId: voucher.userVoucherId, voucherName: voucher.voucherName }));
+    const voucherId = voucher.userVoucherId;
+    const voucherName = voucher.voucherName;
     await executeSendMessage(
       agentSelection('ownedVoucherSelected', {
         userVoucherId: voucher.userVoucherId,
         voucherId: (voucher as any).voucherId,
         voucherName: voucher.voucherName,
-      }),
+      }, buildBookingState(draft, { voucherId, voucherName })),
       `Tôi chọn voucher: ${voucher.voucherName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handleRedeemVoucher = useCallback(async (voucher: VoucherDto) => {
     setDraft(prev => ({ ...prev, voucherId: voucher.voucherId, voucherName: voucher.voucherName }));
+    const voucherId = voucher.voucherId;
+    const voucherName = voucher.voucherName;
     await executeSendMessage(
-      agentSelection('redeemVoucherSelected', { voucherId: voucher.voucherId, voucherName: voucher.voucherName }),
+      agentSelection('redeemVoucherSelected', { voucherId: voucher.voucherId, voucherName: voucher.voucherName }, buildBookingState(draft, { voucherId, voucherName })),
       `Tôi mua voucher: ${voucher.voucherName}`
     );
-  }, [executeSendMessage]);
+  }, [draft, executeSendMessage]);
 
   const handleGuestContact = useCallback(async (contact: GuestContact) => {
     setDraft(prev => ({ ...prev, guestContact: contact }));
-    await executeSendMessage(agentSelection('guestContactSubmitted', { ...contact }), "Tôi đã nhập thông tin liên hệ");
-  }, [executeSendMessage]);
+    await executeSendMessage(agentSelection('guestContactSubmitted', { ...contact }, buildBookingState(draft, { guestContact: contact })), "Tôi đã nhập thông tin liên hệ");
+  }, [draft, executeSendMessage]);
 
   const handleConfirmBooking = useCallback(async () => {
-    await executeSendMessage(agentSelection('bookingConfirmed', {}), "Xác nhận đặt vé và thanh toán");
-  }, [executeSendMessage]);
+    await executeSendMessage(agentSelection('bookingConfirmed', {}, buildBookingState(draft)), "Xác nhận đặt vé và thanh toán");
+  }, [draft, executeSendMessage]);
 
   const checkPaymentAndRenderTicket = useCallback(async (orderId?: string) => {
     const id = orderId || draft.order?.orderId;
