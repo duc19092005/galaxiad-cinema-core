@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Plus, Loader2, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Grid3x3, DoorOpen, Square } from 'lucide-react';
+import { X, Plus, Loader2, AlertCircle, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
 import { facilitiesApi, type MovieFormat, type SeatPosition } from '../../../api/facilitiesApi';
 import { useTranslation } from 'react-i18next';
@@ -45,43 +45,58 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
   const [cellSize, setCellSize] = useState({ width: 40, height: 40 });
   const [isMobile, setIsMobile] = useState(false);
 
-  // Drawing mode
-  type DrawingMode = 'seat' | 'exit' | 'aisle';
-  const [drawingMode, setDrawingMode] = useState<DrawingMode>('seat');
-  const [isClearDropdownOpen, setIsClearDropdownOpen] = useState(false);
 
-  // Exit/Doors - người dùng tự vẽ
-  interface ExitArea {
-    id: string;
-    colIndex: number;
-    rowIndex: number;
-    width: number; // số cột
-    height: number; // số hàng
-    side: 'top' | 'bottom' | 'left' | 'right';
-  }
-  const [exits, setExits] = useState<ExitArea[]>([]);
-  const [exitDragStart, setExitDragStart] = useState<{ col: number; row: number; side: 'top' | 'bottom' | 'left' | 'right' | null } | null>(null);
-
-  // Aisle/Passage - lối đi
-  interface AisleArea {
-    id: string;
-    colIndex: number;
-    rowIndex: number;
-    width: number; // số cột
-    height: number; // số hàng
-  }
-  const [aisles, setAisles] = useState<AisleArea[]>([]);
-  const [aisleDragStart, setAisleDragStart] = useState<{ col: number; row: number } | null>(null);
 
   // Computed visible elements based on active column and row bounds
   const visibleSeats = seats.filter(s => s.colIndex < roomCols && s.rowIndex < roomRows);
-  const visibleExits = exits.filter(e => e.colIndex < roomCols && e.rowIndex < roomRows);
-  const visibleAisles = aisles.filter(a => a.colIndex < roomCols && a.rowIndex < roomRows);
 
   // Create state
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createSuccess, setCreateSuccess] = useState(false);
+
+  const rowOptions = Array.from({ length: roomRows }).map((_, i) => ({
+    value: i,
+    label: String.fromCharCode(65 + i),
+  }));
+
+  const colOptions = Array.from({ length: roomCols }).map((_, i) => ({
+    value: i,
+    label: `${i + 1}`,
+  }));
+
+  const handleCenterRowStartChange = (val: number) => {
+    setCenterRowStart(val);
+    if (centerRowEnd < val) {
+      setCenterRowEnd(val);
+    }
+  };
+
+  const handleCenterRowEndChange = (val: number) => {
+    setCenterRowEnd(Math.max(centerRowStart, val));
+  };
+
+  const handleCenterColStartChange = (val: number) => {
+    setCenterColStart(val);
+    if (centerColEnd < val) {
+      setCenterColEnd(val);
+    }
+  };
+
+  const handleCenterColEndChange = (val: number) => {
+    setCenterColEnd(Math.max(centerColStart, val));
+  };
+
+  const handleAutoCenter = () => {
+    const rStart = Math.max(0, Math.floor(roomRows / 4));
+    const rEnd = Math.min(roomRows - 1, Math.floor(roomRows * 3 / 4));
+    const cStart = Math.max(0, Math.floor(roomCols / 4));
+    const cEnd = Math.min(roomCols - 1, Math.floor(roomCols * 3 / 4));
+    setCenterRowStart(rStart);
+    setCenterRowEnd(rEnd);
+    setCenterColStart(cStart);
+    setCenterColEnd(cEnd);
+  };
 
   // Check mobile
   useEffect(() => {
@@ -192,12 +207,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
 
   // Only clear seats on grid change when NOT in edit mode loading
   // and only when the grid actually resizes due to user input
-  useEffect(() => {
-    if (!isLoadingExisting.current) {
-      setExits([]);
-      setAisles([]);
-    }
-  }, [roomCols, roomRows]);
+
 
   // Fetch movie formats
   useEffect(() => {
@@ -222,11 +232,6 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
       setRoomCols(10);
       setRoomRows(8);
       setSeats([]);
-      setExits([]);
-      setAisles([]);
-      setExitDragStart(null);
-      setAisleDragStart(null);
-      setDrawingMode('seat');
       setCreateError(null);
       setCreateSuccess(false);
     }
@@ -266,14 +271,10 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
       const newSeats: SeatPosition[] = [];
       for (let row = 0; row < gridSize.rows; row++) {
         for (let col = 0; col < gridSize.cols; col++) {
-          // Check if seat already exists at this position
           const existingSeat = currentSeats.find(
             s => s.colIndex === col && s.rowIndex === row
           );
-          // Check if position is in an aisle - skip if it is
-          const isInAisle = isPositionInAisle(col, row);
-          
-          if (!existingSeat && !isInAisle) {
+          if (!existingSeat) {
             const seatNumber = `${String.fromCharCode(65 + row)}${col + 1}`;
             newSeats.push({
               seatNumber,
@@ -285,9 +286,7 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
           }
         }
       }
-      const updatedSeats = [...currentSeats, ...newSeats];
-      console.log(`Auto-filled ${newSeats.length} seats. Total seats: ${updatedSeats.length}`);
-      return updatedSeats;
+      return [...currentSeats, ...newSeats];
     });
   };
 
@@ -296,49 +295,12 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     setSeats(seats.filter(s => !(s.colIndex < roomCols && s.rowIndex < roomRows)));
   };
 
-  const handleClearExits = () => {
-    setExits(exits.filter(e => !(e.colIndex < roomCols && e.rowIndex < roomRows)));
-  };
 
-  const handleClearAisles = () => {
-    setAisles(aisles.filter(a => !(a.colIndex < roomCols && a.rowIndex < roomRows)));
-  };
-
-  const handleClearAll = () => {
-    setSeats(seats.filter(s => !(s.colIndex < roomCols && s.rowIndex < roomRows)));
-    setExits(exits.filter(e => !(e.colIndex < roomCols && e.rowIndex < roomRows)));
-    setAisles(aisles.filter(a => !(a.colIndex < roomCols && a.rowIndex < roomRows)));
-  };
 
   const handlePrevStep = () => {
     if (currentStep === 'seats') {
       setCurrentStep('format');
     }
-  };
-
-  // Handle removing items
-  const handleRemoveAisle = (colIndex: number, rowIndex: number) => {
-    setAisles(aisles.filter(a =>
-      !(colIndex >= a.colIndex && colIndex < a.colIndex + a.width &&
-        rowIndex >= a.rowIndex && rowIndex < a.rowIndex + a.height)
-    ));
-  };
-
-  // Helper function to check if a position is in an aisle
-  const isPositionInAisle = (colIndex: number, rowIndex: number): boolean => {
-    return aisles.some(aisle =>
-      colIndex >= aisle.colIndex && colIndex < aisle.colIndex + aisle.width &&
-      rowIndex >= aisle.rowIndex && rowIndex < aisle.rowIndex + aisle.height
-    );
-  };
-
-  // Helper function to detect edge side
-  const detectEdgeSide = (colIndex: number, rowIndex: number): 'top' | 'bottom' | 'left' | 'right' | null => {
-    if (rowIndex === 0) return 'top';
-    if (rowIndex === gridSize.rows - 1) return 'bottom';
-    if (colIndex === 0) return 'left';
-    if (colIndex === gridSize.cols - 1) return 'right';
-    return null;
   };
 
   // Seat drag and drop
@@ -357,96 +319,43 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
       return;
     }
 
-    // Handle removal based on drawing mode
-    if (drawingMode === 'exit') {
-      // Check if clicking on existing exit (anywhere in grid)
-      const clickedExit = exits.find(exit => {
-        return colIndex >= exit.colIndex && colIndex < exit.colIndex + exit.width &&
-          rowIndex >= exit.rowIndex && rowIndex < exit.rowIndex + exit.height;
-      });
-      if (clickedExit) {
-        setExits(exits.filter(e => e.id !== clickedExit.id));
-        return;
-      }
-      // Start drawing exit - allow drawing anywhere in grid
-      // Determine side based on position (prefer edges but allow anywhere)
-      const edgeSide = detectEdgeSide(colIndex, rowIndex);
-      setExitDragStart({
-        col: colIndex,
-        row: rowIndex,
-        side: edgeSide || 'bottom' // Default to bottom if not near edge
-      });
+    const existingSeat = seats.find(
+      s => s.colIndex === colIndex && s.rowIndex === rowIndex
+    );
+    if (existingSeat) {
+      handleRemoveSeat(colIndex, rowIndex);
       return;
-    } else if (drawingMode === 'aisle') {
-      const clickedAisle = aisles.find(aisle =>
-        colIndex >= aisle.colIndex && colIndex < aisle.colIndex + aisle.width &&
-        rowIndex >= aisle.rowIndex && rowIndex < aisle.rowIndex + aisle.height
-      );
-      if (clickedAisle) {
-        handleRemoveAisle(colIndex, rowIndex);
-        return;
-      }
-      // Start drawing aisle - allow drawing anywhere in grid
-      setAisleDragStart({ col: colIndex, row: rowIndex });
-      return;
-    } else if (drawingMode === 'seat') {
-      // Check if position is in an aisle - cannot add seat here
-      if (isPositionInAisle(colIndex, rowIndex)) {
-        return; // Do nothing if trying to add seat in aisle
-      }
-      // Check if clicking on existing seat
-      const existingSeat = seats.find(
-        s => s.colIndex === colIndex && s.rowIndex === rowIndex
-      );
-      if (existingSeat) {
-        handleRemoveSeat(colIndex, rowIndex);
-        return;
-      }
-      // Start dragging to add seats
-      setIsDragging(true);
-
-      // Add first seat immediately
-      const seatNumber = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
-      const newSeat: SeatPosition = {
-        seatNumber,
-        coordX: colIndex * cellSize.width,
-        coordY: rowIndex * cellSize.height,
-        colIndex,
-        rowIndex,
-      };
-      setSeats([...seats, newSeat]);
     }
+
+    setIsDragging(true);
+
+    const seatNumber = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
+    const newSeat: SeatPosition = {
+      seatNumber,
+      coordX: colIndex * cellSize.width,
+      coordY: rowIndex * cellSize.height,
+      colIndex,
+      rowIndex,
+    };
+    setSeats([...seats, newSeat]);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    // Exit and aisle drawing are handled in mouse up, just track movement
-    if (exitDragStart || aisleDragStart) {
-      return;
-    }
-
-    if (!isDragging || !canvasRef.current || drawingMode !== 'seat') return;
+    if (!isDragging || !canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Calculate grid position
     const colIndex = Math.floor(x / cellSize.width);
     const rowIndex = Math.floor(y / cellSize.height);
 
-    // Check if within bounds
     if (colIndex >= 0 && colIndex < gridSize.cols && rowIndex >= 0 && rowIndex < gridSize.rows) {
-      // Check if position is in an aisle - cannot add seat here
-      if (isPositionInAisle(colIndex, rowIndex)) {
-        return; // Do nothing if trying to add seat in aisle
-      }
-      // Check if seat already exists at this position
       const existingSeat = seats.find(
         s => s.colIndex === colIndex && s.rowIndex === rowIndex
       );
 
       if (!existingSeat) {
-        // Create new seat
         const seatNumber = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
         const newSeat: SeatPosition = {
           seatNumber,
@@ -460,116 +369,8 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     }
   };
 
-  const handleMouseUp = (e?: React.MouseEvent<HTMLDivElement>) => {
-    if (exitDragStart && canvasRef.current && e && exitDragStart.side) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const endCol = Math.floor(x / cellSize.width);
-      const endRow = Math.floor(y / cellSize.height);
-
-      // Clamp to grid bounds
-      const clampedEndCol = Math.max(0, Math.min(endCol, gridSize.cols - 1));
-      const clampedEndRow = Math.max(0, Math.min(endRow, gridSize.rows - 1));
-      const clampedStartCol = Math.max(0, Math.min(exitDragStart.col, gridSize.cols - 1));
-      const clampedStartRow = Math.max(0, Math.min(exitDragStart.row, gridSize.rows - 1));
-
-      const side = exitDragStart.side;
-      let exitArea: ExitArea;
-
-      // Allow drawing exits anywhere in grid, not just at edges
-      // Determine orientation based on drag direction
-      const colDiff = Math.abs(clampedEndCol - clampedStartCol);
-      const rowDiff = Math.abs(clampedEndRow - clampedStartRow);
-
-      if (colDiff > rowDiff) {
-        // Horizontal exit
-        const startCol = Math.min(clampedStartCol, clampedEndCol);
-        const width = Math.abs(clampedEndCol - clampedStartCol) + 1;
-        // Use the row from start position
-        const row = clampedStartRow;
-        exitArea = {
-          id: `exit-${Date.now()}`,
-          colIndex: startCol,
-          rowIndex: row,
-          width: Math.min(width, gridSize.cols - startCol),
-          height: 1,
-          side: row === 0 ? 'top' : row === gridSize.rows - 1 ? 'bottom' : side === 'top' ? 'top' : side === 'bottom' ? 'bottom' : 'bottom',
-        };
-      } else {
-        // Vertical exit
-        const startRow = Math.min(clampedStartRow, clampedEndRow);
-        const height = Math.abs(clampedEndRow - clampedStartRow) + 1;
-        // Use the col from start position
-        const col = clampedStartCol;
-        exitArea = {
-          id: `exit-${Date.now()}`,
-          colIndex: col,
-          rowIndex: startRow,
-          width: 1,
-          height: Math.min(height, gridSize.rows - startRow),
-          side: col === 0 ? 'left' : col === gridSize.cols - 1 ? 'right' : side === 'left' ? 'left' : side === 'right' ? 'right' : 'right',
-        };
-      }
-
-      // Check for overlap with existing exits
-      const hasOverlap = exits.some(existing => {
-        // Check if exits overlap in the same area
-        return !(exitArea.colIndex + exitArea.width <= existing.colIndex ||
-          exitArea.colIndex >= existing.colIndex + existing.width ||
-          exitArea.rowIndex + exitArea.height <= existing.rowIndex ||
-          exitArea.rowIndex >= existing.rowIndex + existing.height);
-      });
-
-      if (!hasOverlap && exitArea.width > 0 && exitArea.height > 0) {
-        setExits([...exits, exitArea]);
-      }
-
-      setExitDragStart(null);
-      return;
-    }
-
-    if (aisleDragStart && canvasRef.current && e) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const endCol = Math.floor(x / cellSize.width);
-      const endRow = Math.floor(y / cellSize.height);
-
-      const startCol = Math.min(aisleDragStart.col, endCol);
-      const startRow = Math.min(aisleDragStart.row, endRow);
-      const width = Math.abs(endCol - aisleDragStart.col) + 1;
-      const height = Math.abs(endRow - aisleDragStart.row) + 1;
-
-      const aisleArea: AisleArea = {
-        id: `aisle-${Date.now()}`,
-        colIndex: Math.max(0, Math.min(startCol, gridSize.cols - 1)),
-        rowIndex: Math.max(0, Math.min(startRow, gridSize.rows - 1)),
-        width: Math.min(width, gridSize.cols - Math.max(0, Math.min(startCol, gridSize.cols - 1))),
-        height: Math.min(height, gridSize.rows - Math.max(0, Math.min(startRow, gridSize.rows - 1))),
-      };
-
-      // Check for overlap with existing aisles
-      const hasOverlap = aisles.some(existing => {
-        return !(aisleArea.colIndex + aisleArea.width <= existing.colIndex ||
-          aisleArea.colIndex >= existing.colIndex + existing.width ||
-          aisleArea.rowIndex + aisleArea.height <= existing.rowIndex ||
-          aisleArea.rowIndex >= existing.rowIndex + existing.height);
-      });
-
-      if (!hasOverlap && aisleArea.width > 0 && aisleArea.height > 0) {
-        setAisles([...aisles, aisleArea]);
-      }
-
-      setAisleDragStart(null);
-      return;
-    }
-
+  const handleMouseUp = () => {
     setIsDragging(false);
-    setExitDragStart(null);
-    setAisleDragStart(null);
   };
 
   const handleRemoveSeat = (colIndex: number, rowIndex: number) => {
@@ -587,72 +388,32 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     const colIndex = Math.floor(x / cellSize.width);
     const rowIndex = Math.floor(y / cellSize.height);
 
-    // Check bounds
     if (colIndex < 0 || colIndex >= gridSize.cols || rowIndex < 0 || rowIndex >= gridSize.rows) {
       return;
     }
 
-    // Handle removal based on drawing mode
-    if (drawingMode === 'exit') {
-      // Check if clicking on existing exit (anywhere in grid)
-      const clickedExit = exits.find(exit => {
-        return colIndex >= exit.colIndex && colIndex < exit.colIndex + exit.width &&
-          rowIndex >= exit.rowIndex && rowIndex < exit.rowIndex + exit.height;
-      });
-      if (clickedExit) {
-        setExits(exits.filter(e => e.id !== clickedExit.id));
-        return;
-      }
-      // Allow drawing exit anywhere in grid
-      const edgeSide = detectEdgeSide(colIndex, rowIndex);
-      setExitDragStart({
-        col: colIndex,
-        row: rowIndex,
-        side: edgeSide || 'bottom' // Default to bottom if not near edge
-      });
+    const existingSeat = seats.find(
+      s => s.colIndex === colIndex && s.rowIndex === rowIndex
+    );
+    if (existingSeat) {
+      handleRemoveSeat(colIndex, rowIndex);
       return;
-    } else if (drawingMode === 'aisle') {
-      const clickedAisle = aisles.find(aisle =>
-        colIndex >= aisle.colIndex && colIndex < aisle.colIndex + aisle.width &&
-        rowIndex >= aisle.rowIndex && rowIndex < aisle.rowIndex + aisle.height
-      );
-      if (clickedAisle) {
-        handleRemoveAisle(colIndex, rowIndex);
-        return;
-      }
-      setAisleDragStart({ col: colIndex, row: rowIndex });
-      return;
-    } else if (drawingMode === 'seat') {
-      // Check if position is in an aisle - cannot add seat here
-      if (isPositionInAisle(colIndex, rowIndex)) {
-        return; // Do nothing if trying to add seat in aisle
-      }
-      const existingSeat = seats.find(
-        s => s.colIndex === colIndex && s.rowIndex === rowIndex
-      );
-      if (existingSeat) {
-        handleRemoveSeat(colIndex, rowIndex);
-        return;
-      }
-      setIsDragging(true);
-      const seatNumber = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
-      const newSeat: SeatPosition = {
-        seatNumber,
-        coordX: colIndex * cellSize.width,
-        coordY: rowIndex * cellSize.height,
-        colIndex,
-        rowIndex,
-      };
-      setSeats([...seats, newSeat]);
     }
+
+    setIsDragging(true);
+    const seatNumber = `${String.fromCharCode(65 + rowIndex)}${colIndex + 1}`;
+    const newSeat: SeatPosition = {
+      seatNumber,
+      coordX: colIndex * cellSize.width,
+      coordY: rowIndex * cellSize.height,
+      colIndex,
+      rowIndex,
+    };
+    setSeats([...seats, newSeat]);
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if ((exitDragStart || aisleDragStart) && !isDragging) {
-      return;
-    }
-
-    if (!isDragging || !canvasRef.current || drawingMode !== 'seat') return;
+    if (!isDragging || !canvasRef.current) return;
     e.preventDefault();
 
     const rect = canvasRef.current.getBoundingClientRect();
@@ -664,10 +425,6 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     const rowIndex = Math.floor(y / cellSize.height);
 
     if (colIndex >= 0 && colIndex < gridSize.cols && rowIndex >= 0 && rowIndex < gridSize.rows) {
-      // Check if position is in an aisle - cannot add seat here
-      if (isPositionInAisle(colIndex, rowIndex)) {
-        return; // Do nothing if trying to add seat in aisle
-      }
       const existingSeat = seats.find(
         s => s.colIndex === colIndex && s.rowIndex === rowIndex
       );
@@ -686,121 +443,11 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     }
   };
 
-  const handleTouchEnd = (e?: React.TouchEvent<HTMLDivElement>) => {
-    if (exitDragStart && canvasRef.current && e && exitDragStart.side) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const touch = e.changedTouches[0];
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-
-      const endCol = Math.floor(x / cellSize.width);
-      const endRow = Math.floor(y / cellSize.height);
-
-      // Clamp to grid bounds
-      const clampedEndCol = Math.max(0, Math.min(endCol, gridSize.cols - 1));
-      const clampedEndRow = Math.max(0, Math.min(endRow, gridSize.rows - 1));
-      const clampedStartCol = Math.max(0, Math.min(exitDragStart.col, gridSize.cols - 1));
-      const clampedStartRow = Math.max(0, Math.min(exitDragStart.row, gridSize.rows - 1));
-
-      const side = exitDragStart.side;
-      let exitArea: ExitArea;
-
-      // Allow drawing exits anywhere in grid, not just at edges
-      // Determine orientation based on drag direction
-      const colDiff = Math.abs(clampedEndCol - clampedStartCol);
-      const rowDiff = Math.abs(clampedEndRow - clampedStartRow);
-
-      if (colDiff > rowDiff) {
-        // Horizontal exit
-        const startCol = Math.min(clampedStartCol, clampedEndCol);
-        const width = Math.abs(clampedEndCol - clampedStartCol) + 1;
-        const row = clampedStartRow;
-        exitArea = {
-          id: `exit-${Date.now()}`,
-          colIndex: startCol,
-          rowIndex: row,
-          width: Math.min(width, gridSize.cols - startCol),
-          height: 1,
-          side: row === 0 ? 'top' : row === gridSize.rows - 1 ? 'bottom' : side === 'top' ? 'top' : side === 'bottom' ? 'bottom' : 'bottom',
-        };
-      } else {
-        // Vertical exit
-        const startRow = Math.min(clampedStartRow, clampedEndRow);
-        const height = Math.abs(clampedEndRow - clampedStartRow) + 1;
-        const col = clampedStartCol;
-        exitArea = {
-          id: `exit-${Date.now()}`,
-          colIndex: col,
-          rowIndex: startRow,
-          width: 1,
-          height: Math.min(height, gridSize.rows - startRow),
-          side: col === 0 ? 'left' : col === gridSize.cols - 1 ? 'right' : side === 'left' ? 'left' : side === 'right' ? 'right' : 'right',
-        };
-      }
-
-      // Check for overlap with existing exits
-      const hasOverlap = exits.some(existing => {
-        return !(exitArea.colIndex + exitArea.width <= existing.colIndex ||
-          exitArea.colIndex >= existing.colIndex + existing.width ||
-          exitArea.rowIndex + exitArea.height <= existing.rowIndex ||
-          exitArea.rowIndex >= existing.rowIndex + existing.height);
-      });
-
-      if (!hasOverlap && exitArea.width > 0 && exitArea.height > 0) {
-        setExits([...exits, exitArea]);
-      }
-
-      setExitDragStart(null);
-      return;
-    }
-
-    if (aisleDragStart && canvasRef.current && e) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const touch = e.changedTouches[0];
-      const x = touch.clientX - rect.left;
-      const y = touch.clientY - rect.top;
-
-      const endCol = Math.floor(x / cellSize.width);
-      const endRow = Math.floor(y / cellSize.height);
-
-      const startCol = Math.min(aisleDragStart.col, endCol);
-      const startRow = Math.min(aisleDragStart.row, endRow);
-      const width = Math.abs(endCol - aisleDragStart.col) + 1;
-      const height = Math.abs(endRow - aisleDragStart.row) + 1;
-
-      const aisleArea: AisleArea = {
-        id: `aisle-${Date.now()}`,
-        colIndex: Math.max(0, Math.min(startCol, gridSize.cols - 1)),
-        rowIndex: Math.max(0, Math.min(startRow, gridSize.rows - 1)),
-        width: Math.min(width, gridSize.cols - Math.max(0, Math.min(startCol, gridSize.cols - 1))),
-        height: Math.min(height, gridSize.rows - Math.max(0, Math.min(startRow, gridSize.rows - 1))),
-      };
-
-      const hasOverlap = aisles.some(existing => {
-        return !(aisleArea.colIndex + aisleArea.width <= existing.colIndex ||
-          aisleArea.colIndex >= existing.colIndex + existing.width ||
-          aisleArea.rowIndex + aisleArea.height <= existing.rowIndex ||
-          aisleArea.rowIndex >= existing.rowIndex + existing.height);
-      });
-
-      if (!hasOverlap && aisleArea.width > 0 && aisleArea.height > 0) {
-        setAisles([...aisles, aisleArea]);
-      }
-
-      setAisleDragStart(null);
-      return;
-    }
-
+  const handleTouchEnd = () => {
     setIsDragging(false);
-    setExitDragStart(null);
-    setAisleDragStart(null);
   };
 
   const validateFullVisibleSeatGrid = (): string | null => {
-    if (visibleSeats.length !== roomCols * roomRows) {
-      return 'Seat layout must fill every cell in the room grid before saving.';
-    }
-
     const coordinates = new Set(visibleSeats.map(seat => `${seat.rowIndex}:${seat.colIndex}`));
     if (coordinates.size !== visibleSeats.length) {
       return 'Seat layout contains duplicate seat positions.';
@@ -809,14 +456,6 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
     const seatNumbers = new Set(visibleSeats.map(seat => seat.seatNumber.trim().toLowerCase()));
     if (seatNumbers.size !== visibleSeats.length) {
       return 'Seat layout contains duplicate seat numbers.';
-    }
-
-    for (let row = 0; row < roomRows; row++) {
-      for (let col = 0; col < roomCols; col++) {
-        if (!coordinates.has(`${row}:${col}`)) {
-          return 'Seat layout must fill every cell in the room grid before saving.';
-        }
-      }
     }
 
     return null;
@@ -1108,139 +747,80 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
 
                     {/* Center Area Configuration */}
                     <div className="mt-4 pt-4 border-t border-dashed border-cinema-border/20">
-                      <h4 className={`text-xs font-bold mb-3 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                        Cấu hình Vùng Trung Tâm (Dành cho gợi ý ghế AI)
-                      </h4>
-                      <div className="grid grid-cols-4 gap-3">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className={`text-xs font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                          Cấu hình Vùng Trung Tâm (Gợi ý AI)
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={handleAutoCenter}
+                          className="px-2 py-1 text-[10px] font-bold rounded bg-primary-container text-white active:scale-95 transition-all hover:brightness-110"
+                        >
+                          Tự Động Chọn
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Row Start</label>
-                          <input
-                            type="number" min="0" max={roomRows - 1}
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Hàng Bắt Đầu</label>
+                          <select
                             value={centerRowStart}
-                            onChange={(e) => setCenterRowStart(Math.max(0, Math.min(roomRows - 1, parseInt(e.target.value) || 0)))}
-                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                            onChange={(e) => handleCenterRowStartChange(parseInt(e.target.value))}
+                            className={`w-full px-2 py-1.5 rounded border text-xs outline-none ${
                               isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
                             }`}
-                          />
+                          >
+                            {rowOptions.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Row End</label>
-                          <input
-                            type="number" min={centerRowStart} max={roomRows - 1}
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Hàng Kết Thúc</label>
+                          <select
                             value={centerRowEnd}
-                            onChange={(e) => setCenterRowEnd(Math.max(centerRowStart, Math.min(roomRows - 1, parseInt(e.target.value) || 0)))}
-                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                            onChange={(e) => handleCenterRowEndChange(parseInt(e.target.value))}
+                            className={`w-full px-2 py-1.5 rounded border text-xs outline-none ${
                               isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
                             }`}
-                          />
+                          >
+                            {rowOptions.filter(opt => opt.value >= centerRowStart).map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Col Start</label>
-                          <input
-                            type="number" min="0" max={roomCols - 1}
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Cột Bắt Đầu</label>
+                          <select
                             value={centerColStart}
-                            onChange={(e) => setCenterColStart(Math.max(0, Math.min(roomCols - 1, parseInt(e.target.value) || 0)))}
-                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                            onChange={(e) => handleCenterColStartChange(parseInt(e.target.value))}
+                            className={`w-full px-2 py-1.5 rounded border text-xs outline-none ${
                               isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
                             }`}
-                          />
+                          >
+                            {colOptions.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
                         </div>
                         <div>
-                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Col End</label>
-                          <input
-                            type="number" min={centerColStart} max={roomCols - 1}
+                          <label className="block text-[10px] uppercase tracking-wider text-on-surface-variant/60 mb-1">Cột Kết Thúc</label>
+                          <select
                             value={centerColEnd}
-                            onChange={(e) => setCenterColEnd(Math.max(centerColStart, Math.min(roomCols - 1, parseInt(e.target.value) || 0)))}
-                            className={`w-full px-2 py-1 rounded border text-xs outline-none ${
+                            onChange={(e) => handleCenterColEndChange(parseInt(e.target.value))}
+                            className={`w-full px-2 py-1.5 rounded border text-xs outline-none ${
                               isDark || isModern ? 'bg-cinema-surface border-cinema-border/30 text-white' : 'bg-white border-gray-300 text-gray-900'
                             }`}
-                          />
+                          >
+                            {colOptions.filter(opt => opt.value >= centerColStart).map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
                         </div>
                       </div>
                       <p className="text-[10px] text-on-surface-variant/60 mt-2">
-                        Tọa độ index tính từ 0. Ví dụ: hàng 2-5 và cột 2-7 là khu vực trung tâm có view đẹp nhất.
+                        Chọn ranh giới hàng/cột trực quan để thiết lập khu vực trung tâm có view đẹp nhất.
                       </p>
                     </div>
-                  </div>
-                </div>
-
-                {/* Drawing Mode */}
-                <div className={`rounded-xl p-5 ${
-                  isModern 
-                    ? 'bg-surface-container/40 backdrop-blur-xl border border-outline-variant/30' 
-                    : isDark ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'
-                }`}>
-                  <h3 className={`font-bold text-base mb-5 flex items-center gap-2 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                    <span className="w-2 h-2 rounded-full bg-secondary-container inline-block" />
-                    Chế Độ Vẽ
-                  </h3>
-                  <div className="space-y-2.5">
-                    <button
-                      onClick={() => setDrawingMode('seat')}
-                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
-                        drawingMode === 'seat'
-                          ? 'bg-cinema-accent/15 border-cinema-accent'
-                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-cinema-accent/50' : 'bg-white border-gray-200 hover:border-primary'}`
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        drawingMode === 'seat' ? 'bg-cinema-accent' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
-                      }`}>
-                        <Grid3x3 className={`w-5 h-5 ${drawingMode === 'seat' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                          Vẽ Ghế
-                        </p>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {visibleSeats.length} ghế hiện có
-                        </p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDrawingMode('exit')}
-                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
-                        drawingMode === 'exit'
-                          ? 'border-rose-500 bg-rose-500/20'
-                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-rose-500/50' : 'bg-white border-gray-200 hover:border-rose-500'}`
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        drawingMode === 'exit' ? 'bg-rose-500' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
-                      }`}>
-                        <DoorOpen className={`w-5 h-5 ${drawingMode === 'exit' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                          Vẽ Lối Ra
-                        </p>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {visibleExits.length} lối ra
-                        </p>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDrawingMode('aisle')}
-                      className={`w-full flex items-center gap-4 p-3.5 rounded-xl border transition-all ${
-                        drawingMode === 'aisle'
-                          ? 'border-cyan-500 bg-cyan-500/20'
-                          : `${isDark ? 'bg-gray-700 border-gray-600 hover:border-gray-500' : isModern ? 'bg-gray-800/30 border-gray-700/30 hover:border-cyan-500/50' : 'bg-white border-gray-200 hover:border-cyan-500'}`
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        drawingMode === 'aisle' ? 'bg-cyan-500' : isDark ? 'bg-gray-600' : isModern ? 'bg-gray-700/50' : 'bg-gray-200'
-                      }`}>
-                        <Square className={`w-5 h-5 ${drawingMode === 'aisle' ? 'text-white' : isDark || isModern ? 'text-gray-400' : 'text-gray-500'}`} />
-                      </div>
-                      <div className="text-left">
-                        <p className={`font-semibold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                          Vẽ Lối Đi
-                        </p>
-                        <p className={`text-xs ${isDark ? 'text-gray-400' : isModern ? 'text-on-surface-variant/70' : 'text-gray-500'}`}>
-                          {visibleAisles.length} lối đi
-                        </p>
-                      </div>
-                    </button>
                   </div>
                 </div>
               </div>
@@ -1262,77 +842,19 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                         <Plus className="w-4 h-4" />
                         {t('createAuditorium.autoFillSeats')}
                       </button>
-                      <div className="relative">
-                        <button
-                          onClick={() => setIsClearDropdownOpen(!isClearDropdownOpen)}
-                          disabled={visibleSeats.length === 0 && visibleExits.length === 0 && visibleAisles.length === 0}
-                          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
-                            (visibleSeats.length === 0 && visibleExits.length === 0 && visibleAisles.length === 0) ? 'opacity-50 cursor-not-allowed' : ''
-                          } ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : isModern ? 'bg-surface-variant/50 text-on-surface-variant hover:bg-error-container/20 hover:text-error' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
-                        >
-                          <X className="w-4 h-4" />
-                          Xóa...
-                        </button>
-                        
-                        {isClearDropdownOpen && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setIsClearDropdownOpen(false)} />
-                            <div
-                              className={`absolute right-0 mt-2 w-48 rounded-xl border shadow-xl z-50 py-1 transition-all overflow-hidden ${
-                                isDark
-                                  ? 'bg-gray-800 border-gray-700 text-gray-200'
-                                  : isModern
-                                    ? 'bg-[#0b1326]/95 backdrop-blur-2xl border-cinema-accent/15 text-white'
-                                    : 'bg-white border-gray-200 text-gray-700'
-                              }`}
-                            >
-                              <button
-                                onClick={() => {
-                                  handleClearSeats();
-                                  setIsClearDropdownOpen(false);
-                                }}
-                                disabled={visibleSeats.length === 0}
-                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Xóa Ghế ({visibleSeats.length})
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleClearExits();
-                                  setIsClearDropdownOpen(false);
-                                }}
-                                disabled={visibleExits.length === 0}
-                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Xóa Lối Ra ({visibleExits.length})
-                              </button>
-                              <button
-                                onClick={() => {
-                                  handleClearAisles();
-                                  setIsClearDropdownOpen(false);
-                                }}
-                                disabled={visibleAisles.length === 0}
-                                className="w-full text-left px-4 py-2 text-xs transition-colors hover:bg-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                Xóa Lối Đi ({visibleAisles.length})
-                              </button>
-                              <div className={`border-t my-1 ${isDark ? 'border-gray-700' : isModern ? 'border-cinema-accent/15' : 'border-gray-100'}`} />
-                              <button
-                                onClick={() => {
-                                  handleClearAll();
-                                  setIsClearDropdownOpen(false);
-                                }}
-                                className="w-full text-left px-4 py-2 text-xs transition-colors font-bold text-red-500 hover:bg-red-500/10"
-                              >
-                                Xóa Tất Cả
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
+                      <button
+                        onClick={handleClearSeats}
+                        disabled={visibleSeats.length === 0}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all active:scale-95 ${
+                          visibleSeats.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+                        } ${isDark ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : isModern ? 'bg-surface-variant/50 text-on-surface-variant hover:bg-error-container/20 hover:text-error' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                      >
+                        <X className="w-4 h-4" />
+                        Xóa tất cả ghế
+                      </button>
                     </div>
                     <div className="flex items-center gap-1.5 text-xs text-on-surface-variant/70">
-                      <p className="text-xs text-cinema-text-muted/70 mt-3 italic">
+                      <p className="text-xs text-cinema-text-muted/70 italic">
                         {t('createAuditorium.hintSeat')}
                       </p>
                     </div>
@@ -1346,15 +868,62 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                       <p className="text-center text-[11px] font-bold tracking-[0.2em] text-primary mt-2 uppercase">MÀN HÌNH</p>
                     </div>
 
-                    {/* Grid */}
-                    <div className="overflow-auto max-h-96 w-full flex p-2">
-                      <div className="relative inline-block mx-auto">
+                    {/* Grid Wrapper with Headers */}
+                    <div className="overflow-auto max-h-[50vh] w-full flex p-2 justify-center">
+                      <div 
+                        className="relative inline-block" 
+                        style={{
+                          paddingLeft: 28,
+                          paddingTop: 24,
+                          width: gridSize.cols * cellSize.width + 28,
+                          height: gridSize.rows * cellSize.height + 24
+                        }}
+                      >
+                        {/* Row Labels (Letters) */}
+                        {Array.from({ length: gridSize.rows }).map((_, r) => (
+                          <div
+                            key={`row-label-${r}`}
+                            className={`absolute flex items-center justify-center text-xs font-bold ${
+                              isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-400'
+                            }`}
+                            style={{
+                              left: 0,
+                              top: 24 + r * cellSize.height,
+                              width: 24,
+                              height: cellSize.height,
+                            }}
+                          >
+                            {String.fromCharCode(65 + r)}
+                          </div>
+                        ))}
+
+                        {/* Column Labels (Numbers) */}
+                        {Array.from({ length: gridSize.cols }).map((_, c) => (
+                          <div
+                            key={`col-label-${c}`}
+                            className={`absolute flex items-center justify-center text-xs font-bold ${
+                              isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-400'
+                            }`}
+                            style={{
+                              left: 28 + c * cellSize.width,
+                              top: 0,
+                              width: cellSize.width,
+                              height: 20,
+                            }}
+                          >
+                            {c + 1}
+                          </div>
+                        ))}
+
+                        {/* Canvas Grid */}
                         <div
                           ref={canvasRef}
                           className={`relative border-2 ${
                             isDark ? 'border-gray-700' : isModern ? 'border-outline-variant/30' : 'border-gray-300'
                           }`}
                           style={{
+                            left: 28,
+                            top: 24,
                             width: gridSize.cols * cellSize.width,
                             height: gridSize.rows * cellSize.height,
                             backgroundImage: `
@@ -1371,54 +940,39 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                           onTouchMove={handleTouchMove}
                           onTouchEnd={handleTouchEnd}
                         >
-                          {/* Exit overlays */}
-                          {visibleExits.map((exit) => (
-                            <div
-                              key={exit.id}
-                              className="absolute border-2 cursor-pointer"
-                              style={{
-                                left: exit.colIndex * cellSize.width,
-                                top: exit.rowIndex * cellSize.height,
-                                width: exit.width * cellSize.width,
-                                height: exit.height * cellSize.height,
-                                borderColor: '#f43f5e',
-                                backgroundColor: isDark ? 'rgba(244,63,94,0.25)' : isModern ? 'rgba(244,63,94,0.18)' : 'rgba(244,63,94,0.15)',
-                              }}
-                              title="Exit"
-                            />
-                          ))}
-
-                          {/* Aisle overlays */}
-                          {visibleAisles.map((aisle) => (
-                            <div
-                              key={aisle.id}
-                              className="absolute border-2 cursor-pointer"
-                              style={{
-                                left: aisle.colIndex * cellSize.width,
-                                top: aisle.rowIndex * cellSize.height,
-                                width: aisle.width * cellSize.width,
-                                height: aisle.height * cellSize.height,
-                                borderColor: '#06b6d4',
-                                backgroundColor: isDark ? 'rgba(6,182,212,0.25)' : isModern ? 'rgba(6,182,212,0.18)' : 'rgba(6,182,212,0.15)',
-                              }}
-                              title="Aisle"
-                            />
-                          ))}
+                          {/* Center Area Overlay Preview */}
+                          <div
+                            className="absolute border-2 border-dashed border-[#ff8a00] pointer-events-none"
+                            style={{
+                              left: centerColStart * cellSize.width,
+                              top: centerRowStart * cellSize.height,
+                              width: (centerColEnd - centerColStart + 1) * cellSize.width,
+                              height: (centerRowEnd - centerRowStart + 1) * cellSize.height,
+                              backgroundColor: 'rgba(255, 138, 0, 0.08)',
+                              zIndex: 5,
+                            }}
+                          >
+                            <div className="absolute top-1 left-2 text-[9px] font-bold text-[#ff8a00] bg-black/60 px-1 rounded uppercase tracking-wider">
+                              AI Center
+                            </div>
+                          </div>
 
                           {/* Seats */}
                           {visibleSeats.map((seat, index) => (
                             <div
                               key={index}
-                              onClick={() => handleRemoveSeat(seat.colIndex, seat.rowIndex)}
-                              className={`absolute cursor-pointer rounded transition-all hover:scale-110 flex items-center justify-center text-[10px] font-bold ${
-                                isModern ? 'bg-primary-container text-white' : 'bg-primary-container text-white'
-                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveSeat(seat.colIndex, seat.rowIndex);
+                              }}
+                              className="absolute cursor-pointer rounded transition-all hover:scale-110 flex items-center justify-center text-[10px] font-bold bg-primary-container text-white"
                               style={{
                                 left: seat.colIndex * cellSize.width,
                                 top: seat.rowIndex * cellSize.height,
                                 width: cellSize.width - 4,
                                 height: cellSize.height - 4,
                                 margin: '2px',
+                                zIndex: 10,
                               }}
                               title={seat.seatNumber}
                             >
@@ -1436,16 +990,12 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                         Ghế (Seat)
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-sm" style={{backgroundColor: '#f43f5e'}} />
-                        Lối ra (Exit)
+                        <span className="w-3 h-3 rounded-sm border border-dashed border-[#ff8a00] bg-[#ff8a00]/10" />
+                        Vùng trung tâm AI (AI Center)
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="w-3 h-3 rounded-sm bg-gray-500/30 border" style={{borderColor: '#475569'}} />
                         Trống (Empty)
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-sm" style={{backgroundColor: '#06b6d4'}} />
-                        Lối đi (Aisle)
                       </div>
                     </div>
                   </div>
@@ -1460,16 +1010,12 @@ const CreateAuditoriumModal: React.FC<CreateAuditoriumModalProps> = ({ cinemaId,
                         <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{gridSize.cols} columns × {gridSize.rows} rows</p>
                       </div>
                       <div>
-                        <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Tổng Diện Tích</p>
-                        <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{cellSize.width}px × {cellSize.height}px cell</p>
-                      </div>
-                      <div>
                         <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark || isModern ? 'text-on-surface-variant/60' : 'text-gray-500'}`}>Tổng Ghế</p>
                         <p className={`text-sm font-bold ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>{visibleSeats.length}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-1.5 text-on-surface-variant/60 text-xs">
-                      Click and drag to add seat, click on seat to remove
+                      Nhấp và kéo để vẽ ghế, nhấp vào ghế để xóa
                     </div>
                   </div>
                 </div>

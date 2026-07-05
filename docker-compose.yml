@@ -79,7 +79,11 @@ services:
       - EMBEDDING_DIM=768
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=cinema_movies
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BACKEND_API_URL=http://api:8080/api/v1
     depends_on:
+      - redis
       - qdrant
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]

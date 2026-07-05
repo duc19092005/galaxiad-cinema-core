@@ -61,6 +61,7 @@ public class ChatbotController : ControllerBase
             {
                 await WriteSseAsync("metadata", new
                 {
+                    result.Data?.Response,
                     result.Data?.Intent,
                     result.Data?.IsAuthorized,
                     result.Data?.ReferencedMovies,

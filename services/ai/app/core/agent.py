@@ -14,8 +14,19 @@ from config import (
     REDIS_HOST,
     REDIS_PORT,
 )
-from core.prompts import AGENT_SYSTEM_PROMPT
-from core.tools import get_available_vouchers_tool, suggest_seats_tool, confirm_booking_tool
+from core.prompts import AGENT_SYSTEM_PROMPT_TEMPLATE
+from core.tools import (
+    confirm_booking_tool,
+    get_available_vouchers_tool,
+    get_pricing_tool,
+    get_seat_map_tool,
+    list_active_cinemas_tool,
+    list_active_movies_tool,
+    list_genres_tool,
+    list_schedule_dates_tool,
+    search_showtimes_tool,
+    suggest_seats_tool,
+)
 
 _in_memory_histories = {}
 
@@ -51,10 +62,21 @@ llm = ChatOpenAI(
     temperature=0.2,
 )
 
-tools = [get_available_vouchers_tool, suggest_seats_tool, confirm_booking_tool]
+tools = [
+    list_active_movies_tool,
+    list_active_cinemas_tool,
+    list_genres_tool,
+    list_schedule_dates_tool,
+    search_showtimes_tool,
+    get_pricing_tool,
+    get_seat_map_tool,
+    get_available_vouchers_tool,
+    suggest_seats_tool,
+    confirm_booking_tool,
+]
 
 prompt = ChatPromptTemplate.from_messages([
-    ("system", AGENT_SYSTEM_PROMPT),
+    ("system", AGENT_SYSTEM_PROMPT_TEMPLATE),
     MessagesPlaceholder(variable_name="chat_history"),
     ("human", "{input}"),
     MessagesPlaceholder(variable_name="agent_scratchpad"),

@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { downloadTicketAsPdf } from '../utils/ticketPdfGenerator';
 import {
   Armchair,
+  ArrowDown,
   Bot,
   Check,
   Clock,
@@ -21,26 +23,27 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL, identityAxios } from '../api/axiosClient';
-import { publicApi } from '../api/publicApi';
 import { bookingApi } from '../api/bookingApi';
 import { signalrClient, stopConnection } from '../api/signalrClient';
-import { voucherApi, type UserVoucherDto, type VoucherDto } from '../api/voucherApi';
+import { type UserVoucherDto, type VoucherDto } from '../api/voucherApi';
 import type {
   ActiveCinema,
   ActiveMovie,
-  NearestCinema,
   PublicSeatMap,
   PublicPricing,
   PublicSegmentPrice,
-  SearchCinemaShowtimes,
-  SearchScheduleResult,
+  PublicGenre,
 } from '../types/public.types';
 import type { CreateBookingResponse, PaymentEvent, TicketInfo } from '../types/booking.types';
 
 type ChatRole = 'bot' | 'user';
 type ChatActionType =
+  | 'bookingPathPicker'
+  | 'discoveryModePicker'
+  | 'genrePicker'
   | 'moviePicker'
   | 'datePicker'
   | 'cinemaPicker'
@@ -105,6 +108,15 @@ interface NormalizedSeat {
 }
 
 type ShowtimePickMode = 'time' | 'format';
+type BookingPathMode = 'movieFirst' | 'cinemaFirst';
+type DiscoveryMode = 'genreFirst' | 'timeFirst';
+
+interface ChoiceOption {
+  id?: string;
+  value?: string;
+  label: string;
+  description?: string;
+}
 
 interface ShowtimeOption {
   scheduleId: string;
@@ -148,15 +160,14 @@ interface BookingDraft {
   order?: CreateBookingResponse;
   paymentUrl?: string;
   ticket?: TicketInfo;
+  initialPrompt?: string;
 }
 
-interface UserLocation {
-  lat: number;
-  lng: number;
-}
 
-const CHAT_HISTORY_STORAGE_KEY = 'cinemapro_agentic_chat_messages';
-const CHAT_DRAFT_STORAGE_KEY = 'cinemapro_agentic_booking_draft';
+
+const CHAT_HISTORY_STORAGE_KEY = 'cinemapro_agentic_chat_messages_v2';
+const CHAT_DRAFT_STORAGE_KEY = 'cinemapro_agentic_booking_draft_v2';
+const CHAT_SESSION_STORAGE_KEY = 'cinemapro_agentic_chat_session_id_v2';
 const MAX_TICKETS = 10;
 
 const theme = {
@@ -178,21 +189,44 @@ const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toStrin
 
 const todayInputValue = () => new Date().toISOString().slice(0, 10);
 
-const isBookingIntent = (text: string) => {
-  const normalized = text.toLowerCase();
-  return ['dat ve', 'đặt vé', 'mua ve', 'mua vé', 'book', 'ticket'].some(keyword => normalized.includes(keyword));
+const getChatSessionId = () => {
+  const existing = sessionStorage.getItem(CHAT_SESSION_STORAGE_KEY);
+  if (existing) return existing;
+  const next = `web-chat-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  sessionStorage.setItem(CHAT_SESSION_STORAGE_KEY, next);
+  return next;
 };
 
-const getStoredUser = (): any | null => {
+const getStoredAccessToken = () => {
   try {
-    const raw = localStorage.getItem('user_info');
-    return raw ? JSON.parse(raw) : null;
+    const user = JSON.parse(localStorage.getItem('user_info') || '{}');
+    return user.accessToken || Cookies.get('X-Access-Token') || '';
   } catch {
-    return null;
+    return Cookies.get('X-Access-Token') || '';
   }
 };
 
-const isLoggedIn = () => Boolean(getStoredUser());
+const stripInternalChatMarkup = (value?: string) => {
+  if (!value) return '';
+  const tagIndex = value.indexOf('[UI_ACTION:');
+  const visible = tagIndex >= 0 ? value.slice(0, tagIndex) : value;
+  return visible
+    .replace(/```json[\s\S]*?```/gi, '')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\|\s*(movieId|cinemaId|scheduleId|userSegmentId|seatIds|voucherId|genreId|bookingPath|discoveryMode)\s*=[^\n|]+/gi, '')
+    .trim();
+};
+
+const agentSelection = (type: string, payload: Record<string, unknown>) => (
+  `[USER_SELECTION] ${JSON.stringify({ type, payload })}`
+);
+
+
+
+
+
+
 
 const readStoredMessages = (): ChatMessage[] => {
   try {
@@ -207,7 +241,7 @@ const readStoredMessages = (): ChatMessage[] => {
   return [{
     id: uid('bot'),
     role: 'bot',
-    text: '👋',
+    text: 'Xin chào! Tôi là CinemaPro AI - Trợ lý ảo đặt vé thông minh của Galaxy Cinema. 🎬\n\nTôi sẵn sàng hỗ trợ bạn thực hiện các tác vụ:\n1. 🔍 Tìm kiếm phim đang chiếu, xem lịch chiếu theo rạp và ngày.\n2. 🎟️ Đặt vé nhanh chóng: Chọn nhiều loại vé cùng lúc (Người lớn, Học sinh, Trẻ em, Người cao tuổi).\n3. 🪑 Gợi ý chọn ghế ngồi tối ưu hoặc tự do lựa chọn ghế ngồi.\n4. 🎁 Áp dụng Voucher giảm giá và tích lũy điểm thưởng thành viên.\n5. 📄 Xuất vé điện tử dạng PDF trực tiếp để quét mã nhận vé cứng tại quầy.\n\nBạn muốn tìm kiếm phim hoặc đặt vé suất chiếu nào hôm nay? Hãy trò chuyện với tôi nhé!',
     createdAt: new Date().toISOString(),
   }];
 };
@@ -254,80 +288,9 @@ const normalizeSeatMap = (seatMap: any): NormalizedSeat[] => {
   })).filter((seat: NormalizedSeat) => Boolean(seat.seatId));
 };
 
-const getSeatCenter = (seats: NormalizedSeat[], seatMap: any) => {
-  const rows = seats.map(seat => seat.rowIndex);
-  const cols = seats.map(seat => seat.colIndex);
-  const maxRow = Math.max(...rows, 1);
-  const maxCol = Math.max(...cols, 1);
-  const centerRowStart = Number(seatMap?.centerRowStart || Math.floor(maxRow / 3));
-  const centerRowEnd = Number(seatMap?.centerRowEnd || Math.ceil(maxRow * 2 / 3));
-  const centerColStart = Number(seatMap?.centerColStart || Math.floor(maxCol / 3));
-  const centerColEnd = Number(seatMap?.centerColEnd || Math.ceil(maxCol * 2 / 3));
-  return {
-    row: (centerRowStart + centerRowEnd) / 2,
-    col: (centerColStart + centerColEnd) / 2,
-  };
-};
 
-const consecutiveClusters = (seats: NormalizedSeat[], quantity: number) => {
-  const byRow = new Map<number, NormalizedSeat[]>();
-  seats.forEach(seat => {
-    byRow.set(seat.rowIndex, [...(byRow.get(seat.rowIndex) || []), seat]);
-  });
 
-  const clusters: NormalizedSeat[][] = [];
-  byRow.forEach(rowSeats => {
-    const sorted = [...rowSeats].sort((a, b) => a.colIndex - b.colIndex);
-    for (let i = 0; i <= sorted.length - quantity; i += 1) {
-      const slice = sorted.slice(i, i + quantity);
-      const isConsecutive = slice.every((seat, index) => index === 0 || seat.colIndex === slice[index - 1].colIndex + 1);
-      if (isConsecutive) clusters.push(slice);
-    }
-  });
-  return clusters;
-};
 
-const extractSeatPreference = (history: any[] = []) => {
-  const seats = history.flatMap(item => item?.seats || []);
-  const rows = seats.map((seat: string) => seat.match(/[A-Za-z]+/)?.[0]?.toUpperCase()).filter(Boolean) as string[];
-  const cols = seats.map((seat: string) => Number(seat.match(/\d+/)?.[0])).filter(n => Number.isFinite(n));
-  const row = rows.length ? rows.sort((a, b) => rows.filter(r => r === b).length - rows.filter(r => r === a).length)[0] : null;
-  const avgCol = cols.length ? cols.reduce((sum, value) => sum + value, 0) / cols.length : null;
-  return { row, avgCol };
-};
-
-const suggestSeats = (seatMap: any, quantity: number, history: any[] = []) => {
-  const seats = normalizeSeatMap(seatMap);
-  const available = seats.filter(seat => !seat.isOccupied);
-  if (available.length < quantity) return [];
-
-  const center = getSeatCenter(seats, seatMap);
-  const preference = extractSeatPreference(history);
-  const clusters = consecutiveClusters(available, quantity);
-  const candidates = clusters.length ? clusters : available.map(seat => [seat]);
-
-  const scoreCluster = (cluster: NormalizedSeat[]) => {
-    const avgRow = cluster.reduce((sum, seat) => sum + seat.rowIndex, 0) / cluster.length;
-    const avgCol = cluster.reduce((sum, seat) => sum + seat.colIndex, 0) / cluster.length;
-    const centerScore = (avgRow - center.row) ** 2 + (avgCol - center.col) ** 2;
-    const historyRowBonus = preference.row && cluster.some(seat => seat.seatNumber.toUpperCase().startsWith(preference.row!)) ? -1.5 : 0;
-    const historyColBonus = preference.avgCol != null ? Math.abs(avgCol - preference.avgCol) * 0.15 : 0;
-    return centerScore + historyRowBonus + historyColBonus;
-  };
-
-  const best = [...candidates].sort((a, b) => scoreCluster(a) - scoreCluster(b))[0];
-  if (best.length >= quantity) return best.slice(0, quantity);
-
-  const selectedIds = new Set(best.map(seat => seat.seatId));
-  const rest = available
-    .filter(seat => !selectedIds.has(seat.seatId))
-    .sort((a, b) => {
-      const scoreA = (a.rowIndex - center.row) ** 2 + (a.colIndex - center.col) ** 2;
-      const scoreB = (b.rowIndex - center.row) ** 2 + (b.colIndex - center.col) ** 2;
-      return scoreA - scoreB;
-    });
-  return [...best, ...rest].slice(0, quantity);
-};
 
 const getSeatGridMetrics = (seats: NormalizedSeat[]) => {
   const maxCol = seats.length ? Math.max(...seats.map(seat => seat.colIndex)) + 1 : 0;
@@ -346,23 +309,7 @@ const isCenterSeat = (seat: NormalizedSeat, seatMap?: PublicSeatMap) => (
   seat.colIndex <= seatMap.centerColEnd
 );
 
-const flattenShowtimes = (results: SearchScheduleResult[], selectedCinemaId?: string): ShowtimeOption[] => {
-  return results.flatMap(movie => movie.cinemas.flatMap((cinema: SearchCinemaShowtimes) => {
-    if (selectedCinemaId && cinema.cinemaId !== selectedCinemaId) return [];
-    return cinema.formatShowtimes.flatMap(format => format.showtimes.map(showtime => ({
-      scheduleId: showtime.scheduleId,
-      movieId: movie.movieId,
-      movieName: movie.movieName,
-      cinemaId: cinema.cinemaId,
-      cinemaName: cinema.cinemaName,
-      cinemaLocation: cinema.cinemaLocation,
-      formatName: format.formatName,
-      auditoriumNumber: showtime.auditoriumNumber,
-      startTime: showtime.startTime,
-      endedTime: showtime.endedTime,
-    })));
-  }));
-};
+
 
 const baseButton: React.CSSProperties = {
   border: 'none',
@@ -423,7 +370,7 @@ const ChatMessageBubble: React.FC<{
           borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
           background: isUser ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})` : theme.surfaceHigh,
           border: isUser ? 'none' : `1px solid ${theme.border}`,
-          fontSize: 13,
+          fontSize: 12,
           lineHeight: 1.5,
           whiteSpace: 'pre-wrap',
           overflowWrap: 'anywhere',
@@ -465,6 +412,38 @@ const ActionShell: React.FC<{ title: string; icon: React.ReactNode; children: Re
     </div>
     {children}
   </div>
+);
+
+const ChoicePicker: React.FC<{
+  title: string;
+  icon: React.ReactNode;
+  options: ChoiceOption[];
+  onPick: (value: string, option: ChoiceOption) => void;
+}> = ({ title, icon, options, onPick }) => (
+  <ActionShell title={title} icon={icon}>
+    <div style={{ display: 'grid', gap: 8 }}>
+      {options.map(option => {
+        const value = option.value || option.id || option.label;
+        return (
+          <button
+            key={value}
+            onClick={() => onPick(value, option)}
+            style={{ ...optionButtonStyle, alignItems: 'flex-start' }}
+          >
+            <span style={{ textAlign: 'left', minWidth: 0 }}>
+              <span style={{ display: 'block', fontWeight: 900 }}>{option.label}</span>
+              {option.description && (
+                <span style={{ display: 'block', color: theme.muted, fontSize: 11, marginTop: 2 }}>
+                  {option.description}
+                </span>
+              )}
+            </span>
+            <Check size={14} />
+          </button>
+        );
+      })}
+    </div>
+  </ActionShell>
 );
 
 const MoviePicker: React.FC<{
@@ -556,6 +535,36 @@ const CinemaPicker: React.FC<{
                 {cinema.distanceInKm < 1 ? `${Math.round(cinema.distanceInKm * 1000)}m` : `${cinema.distanceInKm.toFixed(1)}km`}
               </span>
             )}
+          </button>
+        ))}
+      </div>
+    </ActionShell>
+  );
+};
+
+const GenrePicker: React.FC<{
+  genres: PublicGenre[];
+  onPick: (genre: PublicGenre) => void;
+}> = ({ genres, onPick }) => {
+  const { t } = useTranslation();
+  const [query, setQuery] = useState('');
+  const filtered = genres
+    .filter(genre => `${genre.genreName} ${genre.description || ''}`.toLowerCase().includes(query.toLowerCase()))
+    .slice(0, 16);
+
+  return (
+    <ActionShell title={t('chatbot.genrePicker')} icon={<Film size={13} />}>
+      <SearchInput value={query} onChange={setQuery} placeholder={t('chatbot.searchGenre')} />
+      <div style={{ display: 'grid', gap: 7, marginTop: 8 }}>
+        {filtered.map(genre => (
+          <button key={genre.genreId} onClick={() => onPick(genre)} style={{ ...optionButtonStyle, alignItems: 'flex-start' }}>
+            <span style={{ textAlign: 'left', minWidth: 0 }}>
+              <span style={{ display: 'block', fontWeight: 900 }}>{genre.genreName}</span>
+              {genre.description && (
+                <span style={{ display: 'block', color: theme.muted, fontSize: 11, marginTop: 2 }}>{genre.description}</span>
+              )}
+            </span>
+            <Check size={14} />
           </button>
         ))}
       </div>
@@ -1101,7 +1110,7 @@ const PaymentStatusCard: React.FC<{
   );
 };
 
-const TicketCard: React.FC<{ ticket: TicketInfo; onDownload: () => void }> = ({ ticket, onDownload }) => {
+const TicketCard: React.FC<{ ticket: TicketInfo }> = ({ ticket }) => {
   const { t } = useTranslation();
   return (
     <ActionShell title={t('chatbot.ticket')} icon={<Ticket size={13} />}>
@@ -1129,8 +1138,11 @@ const TicketCard: React.FC<{ ticket: TicketInfo; onDownload: () => void }> = ({ 
           </span>
         ))}
       </div>
-      <SummaryRow label={t('chatbot.total')} value={formatCurrency(ticket.totalPrice)} strong />
-      <button onClick={onDownload} style={{ ...primaryButton, width: '100%', marginTop: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '6px 0', borderBottom: `1px solid ${theme.border}` }}>
+        <span style={{ color: theme.muted }}>{t('chatbot.total')}</span>
+        <span style={{ color: theme.accent, fontWeight: 900, textAlign: 'right', overflowWrap: 'anywhere' }}>{formatCurrency(ticket.totalPrice)}</span>
+      </div>
+      <button onClick={() => downloadTicketAsPdf(ticket)} style={{ ...primaryButton, width: '100%', marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <Download size={14} /> {t('chatbot.download')}
       </button>
     </ActionShell>
@@ -1193,6 +1205,9 @@ const optionButtonStyle: React.CSSProperties = {
 const ChatActionRenderer: React.FC<{
   action: ChatAction;
   draft: BookingDraft;
+  onPickBookingPath: (mode: BookingPathMode) => void;
+  onPickDiscoveryMode: (mode: DiscoveryMode) => void;
+  onPickGenre: (genre: PublicGenre) => void;
   onPickMovie: (movie: ActiveMovie) => void;
   onPickDate: (date: string) => void;
   onPickCinema: (cinema: CinemaOption) => void;
@@ -1208,11 +1223,13 @@ const ChatActionRenderer: React.FC<{
   onConfirmBooking: () => void;
   onOpenPayment: () => void;
   onCheckPayment: () => void;
-  onDownloadTicket: (orderId: string) => void;
   paymentChecking: boolean;
 }> = ({
   action,
   draft,
+  onPickBookingPath,
+  onPickDiscoveryMode,
+  onPickGenre,
   onPickMovie,
   onPickDate,
   onPickCinema,
@@ -1228,22 +1245,51 @@ const ChatActionRenderer: React.FC<{
   onConfirmBooking,
   onOpenPayment,
   onCheckPayment,
-  onDownloadTicket,
   paymentChecking,
 }) => {
+  const { t } = useTranslation();
+  const bookingPathOptions: ChoiceOption[] = action.payload?.options || [
+    { value: 'movieFirst', label: t('chatbot.bookingPathMovie'), description: t('chatbot.bookingPathMovieDesc') },
+    { value: 'cinemaFirst', label: t('chatbot.bookingPathCinema'), description: t('chatbot.bookingPathCinemaDesc') },
+  ];
+  const discoveryModeOptions: ChoiceOption[] = action.payload?.options || [
+    { value: 'genreFirst', label: t('chatbot.discoveryGenre'), description: t('chatbot.discoveryGenreDesc') },
+    { value: 'timeFirst', label: t('chatbot.discoveryTime'), description: t('chatbot.discoveryTimeDesc') },
+  ];
+
   switch (action.type) {
+    case 'bookingPathPicker':
+      return (
+        <ChoicePicker
+          title={t('chatbot.bookingPathPicker')}
+          icon={<Navigation size={13} />}
+          options={bookingPathOptions}
+          onPick={(value) => onPickBookingPath(value === 'cinemaFirst' ? 'cinemaFirst' : 'movieFirst')}
+        />
+      );
+    case 'discoveryModePicker':
+      return (
+        <ChoicePicker
+          title={t('chatbot.discoveryModePicker')}
+          icon={<Search size={13} />}
+          options={discoveryModeOptions}
+          onPick={(value) => onPickDiscoveryMode(value === 'timeFirst' ? 'timeFirst' : 'genreFirst')}
+        />
+      );
+    case 'genrePicker':
+      return <GenrePicker genres={action.payload?.genres || []} onPick={onPickGenre} />;
     case 'moviePicker':
-      return <MoviePicker movies={action.payload.movies || []} onPick={onPickMovie} />;
+      return <MoviePicker movies={action.payload?.movies || []} onPick={onPickMovie} />;
     case 'datePicker':
-      return <DatePicker dates={action.payload.dates || []} onPick={onPickDate} />;
+      return <DatePicker dates={action.payload?.dates || []} onPick={onPickDate} />;
     case 'cinemaPicker':
-      return <CinemaPicker cinemas={action.payload.cinemas || []} onPick={onPickCinema} />;
+      return <CinemaPicker cinemas={action.payload?.cinemas || []} onPick={onPickCinema} />;
     case 'showtimePreferencePicker':
-      return <ShowtimePreferencePicker onPick={(mode) => onPickShowtimePreference(mode, action.payload.showtimes || [])} />;
+      return <ShowtimePreferencePicker onPick={(mode) => onPickShowtimePreference(mode, action.payload?.showtimes || [])} />;
     case 'showtimePicker':
-      return <ShowtimePicker showtimes={action.payload.showtimes || []} mode={action.payload.mode || 'time'} onPick={onPickShowtime} />;
+      return <ShowtimePicker showtimes={action.payload?.showtimes || []} mode={action.payload?.mode || 'time'} onPick={onPickShowtime} />;
     case 'segmentQuantityPicker':
-      return <SegmentQuantityPicker pricing={action.payload.pricing} onPick={onPickSegment} />;
+      return action.payload?.pricing ? <SegmentQuantityPicker pricing={action.payload.pricing} onPick={onPickSegment} /> : null;
     case 'seatSuggestion':
       return <SeatSuggestionCard seatMap={draft.seatMap} seats={draft.suggestedSeats} quantity={draft.quantity} onAccept={onAcceptSeats} onRetry={onRetrySeats} />;
     case 'voucherPicker':
@@ -1265,7 +1311,7 @@ const ChatActionRenderer: React.FC<{
     case 'paymentAction':
       return <PaymentStatusCard paymentUrl={draft.paymentUrl} loading={paymentChecking} onOpen={onOpenPayment} onCheck={onCheckPayment} />;
     case 'ticketCard':
-      return draft.ticket && draft.order?.orderId ? <TicketCard ticket={draft.ticket} onDownload={() => onDownloadTicket(draft.order!.orderId)} /> : null;
+      return draft.ticket ? <TicketCard ticket={draft.ticket} /> : null;
     default:
       return null;
   }
@@ -1281,30 +1327,32 @@ const ChatBot: React.FC = () => {
   const [draft, setDraft] = useState<BookingDraft>(readStoredDraft);
   const [isLoading, setIsLoading] = useState(false);
   const [streamStatus, setStreamStatus] = useState('');
-  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [paymentChecking, setPaymentChecking] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const paymentWindowRef = useRef<Window | null>(null);
+  const chatSessionIdRef = useRef(getChatSessionId());
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 150;
+    setShowScrollButton(!isNearBottom);
+  };
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowScrollButton(false);
   }, [messages]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_DRAFT_STORAGE_KEY, JSON.stringify(draft));
   }, [draft]);
 
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => setUserLocation(null),
-      { timeout: 5000, maximumAge: 600000 },
-    );
-  }, []);
+
 
   useEffect(() => {
     if (!isOpen) return;
@@ -1336,9 +1384,7 @@ const ChatBot: React.FC = () => {
     payload,
   }), []);
 
-  const resetBooking = useCallback(() => {
-    setDraft({ quantity: 1, suggestedSeats: [], guestContact: { name: '', email: '', phone: '' } });
-  }, []);
+
 
   const sendMessageWithSse = useCallback(async (
     text: string,
@@ -1346,6 +1392,7 @@ const ChatBot: React.FC = () => {
     onStatus?: (statusText: string) => void,
   ): Promise<ChatbotResponsePayload> => {
     const language = localStorage.getItem('language') || 'vi';
+    const accessToken = getStoredAccessToken();
     const response = await fetch(`${API_BASE_URL}/api/v1/chatbot/chat/stream`, {
       method: 'POST',
       credentials: 'include',
@@ -1354,8 +1401,9 @@ const ChatBot: React.FC = () => {
         'Content-Type': 'application/json',
         'Accept-Language': language,
         'X-Language': language,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, sessionId: chatSessionIdRef.current }),
     });
 
     if (!response.ok || !response.body) throw new Error('Chat stream is not available');
@@ -1384,7 +1432,7 @@ const ChatBot: React.FC = () => {
         streamedText += payload.text || '';
         onToken(streamedText);
       } else if (eventName === 'metadata') {
-        finalPayload = { ...finalPayload, ...payload, response: streamedText };
+        finalPayload = { ...finalPayload, ...payload, response: payload.response || streamedText };
       } else if (eventName === 'message') {
         finalPayload = payload;
       } else if (eventName === 'error') {
@@ -1406,337 +1454,209 @@ const ChatBot: React.FC = () => {
     return finalPayload || { response: streamedText };
   }, [t]);
 
-  const askForMovie = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const response = await publicApi.getActiveMovies();
-      appendBot(t('chatbot.askMovie'), [
-        makeAction('moviePicker', t('chatbot.moviePicker'), { movies: response.data || [] }),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorLoadMovies'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, makeAction, t]);
+  const executeSendMessage = useCallback(async (agentTextToSend: string, displayTextToShow?: string) => {
+    const agentText = agentTextToSend.trim();
+    const displayText = (displayTextToShow || agentTextToSend).trim();
+    if (!agentText || isLoading) return;
 
-  const startBookingFlow = useCallback(async (userText?: string) => {
-    resetBooking();
-    if (userText) appendUser(userText);
-    await askForMovie();
-  }, [appendUser, askForMovie, resetBooking]);
-
-  const handlePickMovie = useCallback(async (movie: ActiveMovie) => {
-    appendUser(t('chatbot.selectedMovie', { name: movie.movieName }));
-    setDraft(prev => ({ ...prev, movie, date: undefined, cinema: undefined, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
-    setIsLoading(true);
-    try {
-      const response = await publicApi.getScheduleDates(movie.movieId);
-      appendBot(t('chatbot.askDate'), [
-        makeAction('datePicker', t('chatbot.datePicker'), { dates: response.data || [] }),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorLoadDates'), [
-        makeAction('datePicker', t('chatbot.datePicker'), { dates: [] }),
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, makeAction, t]);
-
-  const handlePickDate = useCallback(async (date: string) => {
-    if (!draft.movie) {
-      appendBot(t('chatbot.errorMissingInfo'));
-      await askForMovie();
-      return;
-    }
-
-    appendUser(`${t('chatbot.selectedDate')} ${formatDate(date)}`);
-    setDraft(prev => ({ ...prev, date, cinema: undefined, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
+    appendUser(stripInternalChatMarkup(displayText) || displayText);
+    const botMessageId = uid('bot');
+    setMessages(prev => [...prev, {
+      id: botMessageId,
+      role: 'bot',
+      text: t('chatbot.connecting'),
+      createdAt: new Date().toISOString(),
+    }]);
     setIsLoading(true);
 
+    const updateBot = (textValue: string, extra?: Partial<ChatMessage>) => {
+      const cleanText = stripInternalChatMarkup(textValue);
+      setMessages(prev => prev.map(message => message.id === botMessageId ? { ...message, text: cleanText, ...extra } : message));
+    };
+
     try {
-      const scheduleResponse = await publicApi.searchSchedules(date, draft.movie.movieId);
-      const cinemaMap = new Map<string, CinemaOption>();
-      scheduleResponse.data?.forEach(movie => {
-        movie.cinemas.forEach(cinema => {
-          cinemaMap.set(cinema.cinemaId, {
-            cinemaId: cinema.cinemaId,
-            cinemaName: cinema.cinemaName,
-            cinemaCity: cinema.cinemaCity,
-            cinemaLocation: cinema.cinemaLocation,
-          });
-        });
+      let botData: ChatbotResponsePayload;
+      try {
+        botData = await sendMessageWithSse(agentText, streamed => updateBot(streamed), status => updateBot(status));
+      } catch {
+        setStreamStatus(t('chatbot.fallbackConnection'));
+        const accessToken = getStoredAccessToken();
+        const response = await identityAxios.post(
+          '/chatbot/chat',
+          { message: agentText, sessionId: chatSessionIdRef.current },
+          accessToken ? { headers: { Authorization: `Bearer ${accessToken}` } } : undefined
+        );
+        botData = response.data?.data || {};
+      }
+
+      const actions = botData.uiActions || [];
+      const cleanFinalResponse = stripInternalChatMarkup(botData.response);
+
+      updateBot(cleanFinalResponse || t('chatbot.errorDefault'), {
+        movies: botData.referencedMovies || [],
+        schedules: botData.referencedSchedules || [],
+        actions: actions,
       });
 
-      let cinemas = Array.from(cinemaMap.values());
-      if (userLocation) {
-        try {
-          const nearestResponse = await publicApi.getNearestCinemas(userLocation.lat, userLocation.lng);
-          const nearestById = new Map((nearestResponse.data || []).map((cinema: NearestCinema) => [cinema.cinemaId, cinema]));
-          cinemas = cinemas
-            .map(cinema => {
-              const nearest = nearestById.get(cinema.cinemaId);
-              return nearest ? { ...cinema, ...nearest, distanceInKm: nearest.distanceInKm } : cinema;
-            })
-            .sort((a, b) => (a.distanceInKm ?? Number.MAX_VALUE) - (b.distanceInKm ?? Number.MAX_VALUE));
-        } catch {
-          cinemas = cinemas.sort((a, b) => a.cinemaName.localeCompare(b.cinemaName));
+      if (actions.length > 0) {
+        const action = actions[0];
+        if (action.type === 'seatSuggestion' && action.payload) {
+          const suggestedSeats = action.payload.suggestedSeats || action.payload.seats || [];
+          setDraft(prev => ({
+            ...prev,
+            seatMap: action.payload.seatMap || prev.seatMap,
+            suggestedSeats,
+            quantity: action.payload.quantity || 0,
+            showtime: action.payload.scheduleId ? { scheduleId: action.payload.scheduleId } as any : prev.showtime
+          }));
+        } else if (action.type === 'segmentQuantityPicker' && action.payload?.pricing) {
+          setDraft(prev => ({
+            ...prev,
+            pricing: action.payload.pricing,
+          }));
+        } else if (action.type === 'paymentAction' && action.payload) {
+          setDraft(prev => ({
+            ...prev,
+            paymentUrl: action.payload.paymentUrl,
+            order: { orderId: action.payload.orderId } as any,
+          }));
         }
-      } else {
-        cinemas = cinemas.sort((a, b) => a.cinemaName.localeCompare(b.cinemaName));
       }
-
-      if (cinemas.length === 0) {
-        appendBot(t('chatbot.errorNoCinemas'), [
-          makeAction('datePicker', t('chatbot.datePicker'), { dates: [] }),
-        ]);
-        return;
-      }
-
-      appendBot(t('chatbot.askCinema'), [
-        makeAction('cinemaPicker', t('chatbot.cinemaPicker'), { cinemas }),
-      ]);
     } catch {
-      appendBot(t('chatbot.errorLoadMovies'));
+      updateBot(t('chatbot.errorBusy'));
     } finally {
+      setStreamStatus('');
       setIsLoading(false);
     }
-  }, [appendBot, appendUser, askForMovie, draft.movie, makeAction, userLocation, t]);
+  }, [appendUser, isLoading, sendMessageWithSse, t]);
+
+  const handlePickBookingPath = useCallback(async (mode: BookingPathMode) => {
+    const label = mode === 'cinemaFirst' ? 'theo rạp trước' : 'theo phim trước';
+    await executeSendMessage(agentSelection('bookingPathSelected', { bookingPath: mode }), `Tôi muốn bắt đầu ${label}`);
+  }, [executeSendMessage]);
+
+  const handlePickDiscoveryMode = useCallback(async (mode: DiscoveryMode) => {
+    const label = mode === 'timeFirst' ? 'theo giờ chiếu trước' : 'theo thể loại phim trước';
+    await executeSendMessage(agentSelection('discoveryModeSelected', { discoveryMode: mode }), `Tôi muốn chọn ${label}`);
+  }, [executeSendMessage]);
+
+  const handlePickGenre = useCallback(async (genre: PublicGenre) => {
+    await executeSendMessage(
+      agentSelection('genreSelected', { genreId: genre.genreId, genreName: genre.genreName }),
+      `Tôi chọn thể loại: ${genre.genreName}`
+    );
+  }, [executeSendMessage]);
+
+  const handlePickMovie = useCallback(async (movie: ActiveMovie) => {
+    setDraft(prev => ({ ...prev, movie }));
+    await executeSendMessage(
+      agentSelection('movieSelected', { movieId: movie.movieId, movieName: movie.movieName }),
+      `Tôi chọn phim: ${movie.movieName}`
+    );
+  }, [executeSendMessage]);
+
+  const handlePickDate = useCallback(async (date: string) => {
+    setDraft(prev => ({ ...prev, date }));
+    await executeSendMessage(agentSelection('dateSelected', { date }), `Tôi chọn ngày: ${formatDate(date)}`);
+  }, [executeSendMessage]);
 
   const handlePickCinema = useCallback(async (cinema: CinemaOption) => {
-    if (!draft.movie || !draft.date) {
-      appendBot(t('chatbot.errorMissingInfo'));
-      return;
-    }
+    setDraft(prev => ({ ...prev, cinema }));
+    await executeSendMessage(
+      agentSelection('cinemaSelected', { cinemaId: cinema.cinemaId, cinemaName: cinema.cinemaName }),
+      `Tôi chọn rạp: ${cinema.cinemaName}`
+    );
+  }, [executeSendMessage]);
 
-    appendUser(`${t('chatbot.selectedCinema')} ${cinema.cinemaName}`);
-    setDraft(prev => ({ ...prev, cinema, showtime: undefined, seatMap: undefined, suggestedSeats: [] }));
-    setIsLoading(true);
-
-    try {
-      const response = await publicApi.searchSchedules(draft.date, draft.movie.movieId, cinema.cinemaId);
-      const showtimes = flattenShowtimes(response.data || [], cinema.cinemaId)
-        .filter(showtime => new Date(showtime.startTime).getTime() > Date.now())
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-
-      if (showtimes.length === 0) {
-        appendBot(t('chatbot.errorNoShowtimes'));
-        return;
-      }
-
-      appendBot(t('chatbot.askShowtimePreference'), [
-        makeAction('showtimePreferencePicker', t('chatbot.showtimePreference'), { showtimes }),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorNoPricing'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, draft.date, draft.movie, makeAction, t]);
-
-  const handlePickShowtimePreference = useCallback((mode: ShowtimePickMode, showtimes: ShowtimeOption[]) => {
-    appendUser(mode === 'time' ? t('chatbot.showtimeByTimeLog') : t('chatbot.showtimeByFormatLog'));
-    appendBot(mode === 'time' ? t('chatbot.askShowtimeByTime') : t('chatbot.askShowtimeByFormat'), [
-      makeAction('showtimePicker', t('chatbot.showtimePicker'), {
-        showtimes,
-        mode,
-      }),
-    ]);
-  }, [appendBot, appendUser, makeAction, t]);
+  const handlePickShowtimePreference = useCallback(async (mode: ShowtimePickMode) => {
+    const text = mode === 'time' ? "Tôi muốn chọn suất chiếu theo khung giờ" : "Tôi muốn chọn suất chiếu theo định dạng";
+    await executeSendMessage(agentSelection('showtimePreferenceSelected', { mode }), text);
+  }, [executeSendMessage]);
 
   const handlePickShowtime = useCallback(async (showtime: ShowtimeOption) => {
-    appendUser(`${t('chatbot.selectedShowtime')} ${formatTime(showtime.startTime)} - ${showtime.formatName}`);
-    setDraft(prev => ({ ...prev, showtime, pricing: undefined, segment: undefined, seatMap: undefined, suggestedSeats: [] }));
-    setIsLoading(true);
-
-    try {
-      const response = await publicApi.getPricing(showtime.scheduleId);
-      if (!response.data?.segmentPrices?.length) {
-        appendBot(t('chatbot.errorNoPricing'));
-        return;
-      }
-      setDraft(prev => ({ ...prev, pricing: response.data }));
-      appendBot(t('chatbot.askSegment'), [
-        makeAction('segmentQuantityPicker', t('chatbot.segmentPicker'), { pricing: response.data }),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorNoPricing'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, makeAction, t]);
+    const timeStr = `${formatDate(showtime.startTime)} ${formatTime(showtime.startTime)}`;
+    setDraft(prev => ({ ...prev, showtime }));
+    await executeSendMessage(
+      agentSelection('showtimeSelected', {
+        scheduleId: showtime.scheduleId,
+        movieId: showtime.movieId,
+        movieName: showtime.movieName,
+        cinemaId: showtime.cinemaId,
+        cinemaName: showtime.cinemaName,
+        formatName: showtime.formatName,
+        startTime: showtime.startTime,
+      }),
+      `Tôi chọn suất chiếu: ${timeStr} (${showtime.formatName})`
+    );
+  }, [executeSendMessage]);
 
   const handlePickSegment = useCallback(async (segment: PublicSegmentPrice, quantity: number) => {
-    if (!draft.showtime) {
-      appendBot(t('chatbot.errorMissingInfo'));
-      return;
-    }
-
-    appendUser(t('chatbot.selectedSegment', { count: quantity, name: segment.segmentName }));
     setDraft(prev => ({ ...prev, segment, quantity }));
-    setIsLoading(true);
-
-    try {
-      const [seatMapResponse, historyResponse] = await Promise.allSettled([
-        publicApi.getSeatMap(draft.showtime.scheduleId),
-        isLoggedIn() ? bookingApi.getBookingHistory() : Promise.resolve({ data: [] }),
-      ]);
-
-      if (seatMapResponse.status !== 'fulfilled') {
-        appendBot(t('chatbot.errorNoSeatMap'));
-        return;
-      }
-
-      const seatMap = seatMapResponse.value.data;
-      const history = historyResponse.status === 'fulfilled' ? (historyResponse.value.data || []) : [];
-      const seats = suggestSeats(seatMap, quantity, history as any[]);
-      setDraft(prev => ({ ...prev, seatMap, suggestedSeats: seats }));
-      appendBot(seats.length ? t('chatbot.seatsSuggested') : t('chatbot.errorNoSeats'), [
-        makeAction('seatSuggestion', t('chatbot.seatSuggestion'), {}),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorNoSeatMap'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, draft.showtime, makeAction, t]);
-
-  const continueAfterSeats = useCallback(async () => {
-    if (isLoggedIn()) {
-      appendBot(t('chatbot.askVoucherMode'), [
-        makeAction('voucherPicker', t('chatbot.voucherPicker'), { mode: 'mode' }),
-      ]);
-    } else {
-      appendBot(t('chatbot.askGuestInfo'), [
-        makeAction('guestContact', t('chatbot.guestContact'), {}),
-      ]);
-    }
-  }, [appendBot, makeAction, t]);
+    await executeSendMessage(
+      agentSelection('ticketSegmentSelected', {
+        userSegmentId: segment.userSegmentId,
+        segmentName: segment.segmentName,
+        quantity,
+      }),
+      `Tôi chọn ${quantity} vé ${segment.segmentName}`
+    );
+  }, [executeSendMessage]);
 
   const handleAcceptSeats = useCallback(async (seats?: NormalizedSeat[]) => {
-    const acceptedSeats = seats?.length ? seats : draft.suggestedSeats;
-    if (acceptedSeats.length !== draft.quantity) {
-      appendBot(t('chatbot.errorSeatQuantity', { count: draft.quantity }));
-      return;
-    }
-
-    setDraft(prev => ({ ...prev, suggestedSeats: acceptedSeats }));
-    appendUser(t('chatbot.acceptSeatsLog', { seats: acceptedSeats.map(seat => seat.seatNumber).join(', ') }));
-    await continueAfterSeats();
-  }, [appendBot, appendUser, continueAfterSeats, draft.quantity, draft.suggestedSeats, t]);
+    const selectedSeats = seats?.length ? seats : draft.suggestedSeats;
+    setDraft(prev => ({ ...prev, suggestedSeats: selectedSeats }));
+    const seatNumbers = selectedSeats.map(seat => seat.seatNumber).join(', ');
+    await executeSendMessage(
+      agentSelection('seatsSelected', {
+        seatIds: selectedSeats.map(seat => seat.seatId),
+        seatNumbers: selectedSeats.map(seat => seat.seatNumber),
+      }),
+      `Tôi chọn ghế: ${seatNumbers}`
+    );
+  }, [draft.suggestedSeats, executeSendMessage]);
 
   const handleRetrySeats = useCallback(async () => {
-    if (!draft.showtime || !draft.segment) return;
-    appendUser(t('chatbot.resuggest'));
-    setIsLoading(true);
-
-    try {
-      const [seatMapResponse, historyResponse] = await Promise.allSettled([
-        publicApi.getSeatMap(draft.showtime.scheduleId),
-        isLoggedIn() ? bookingApi.getBookingHistory() : Promise.resolve({ data: [] }),
-      ]);
-
-      if (seatMapResponse.status !== 'fulfilled') {
-        appendBot(t('chatbot.errorNoSeatMap'));
-        return;
-      }
-
-      const seatMap = seatMapResponse.value.data;
-      const history = historyResponse.status === 'fulfilled' ? (historyResponse.value.data || []) : [];
-      const seats = suggestSeats(seatMap, draft.quantity, history as any[]);
-      setDraft(prev => ({ ...prev, seatMap, suggestedSeats: seats }));
-      appendBot(seats.length ? t('chatbot.seatsSuggested') : t('chatbot.errorNoSeats'), [
-        makeAction('seatSuggestion', t('chatbot.seatSuggestion'), {}),
-      ]);
-    } catch {
-      appendBot(t('chatbot.errorNoSeatMap'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, draft.quantity, draft.segment, draft.showtime, makeAction, t]);
+    await executeSendMessage("Gợi ý ghế khác cho tôi");
+  }, [executeSendMessage]);
 
   const handleVoucherMode = useCallback(async (mode: 'owned' | 'redeem' | 'skip') => {
     if (mode === 'skip') {
-      appendUser(t('chatbot.skipVoucherLog'));
-      appendBot(t('chatbot.bookingConfirm'), [
-        makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
-      ]);
-      return;
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn bỏ qua voucher");
+    } else if (mode === 'redeem') {
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn mua voucher bằng điểm");
+    } else {
+      await executeSendMessage(agentSelection('voucherModeSelected', { mode }), "Tôi muốn dùng voucher đang có");
     }
+  }, [executeSendMessage]);
 
-    appendUser(mode === 'owned' ? t('chatbot.useVoucherLog') : t('chatbot.buyVoucherLog'));
-    setIsLoading(true);
-
-    try {
-      if (mode === 'owned') {
-        const response = await voucherApi.getMyVouchers();
-        const now = Date.now();
-        const vouchers = (response.data || [])
-          .filter(voucher => !voucher.isUsed && (!voucher.validTo || new Date(voucher.validTo).getTime() >= now))
-          .sort((a, b) => b.voucherDiscountPercent - a.voucherDiscountPercent);
-        appendBot(t('chatbot.ownedVouchers'), [
-          makeAction('voucherPicker', t('chatbot.ownedVoucherTitle'), { mode: 'owned', vouchers }),
-        ]);
-      } else {
-        const [voucherResponse, accountResponse] = await Promise.all([
-          voucherApi.getActiveVouchers(),
-          bookingApi.getAccountInfo(),
-        ]);
-        const rewardPoints = accountResponse.data?.rewardPoints || 0;
-        const redeemableVouchers = (voucherResponse.data || [])
-          .filter(voucher => voucher.isActive && voucher.remainingQuantity > 0 && voucher.voucherPointsCost <= rewardPoints)
-          .sort((a, b) => b.voucherDiscountPercent - a.voucherDiscountPercent);
-        appendBot(t('chatbot.redeemableVouchers'), [
-          makeAction('voucherPicker', t('chatbot.redeemVoucherTitle'), { mode: 'redeem', redeemableVouchers, rewardPoints }),
-        ]);
-      }
-    } catch {
-      appendBot(t('chatbot.errorNoVouchers'), [
-        makeAction('voucherPicker', t('chatbot.voucherTitle'), { mode: 'mode' }),
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, makeAction, t]);
-
-  const handlePickOwnedVoucher = useCallback((voucher: UserVoucherDto) => {
-    appendUser(t('chatbot.appliedVoucherLog', { name: voucher.voucherName }));
-    setDraft(prev => ({ ...prev, voucherId: voucher.voucherId, voucherName: voucher.voucherName }));
-    appendBot(t('chatbot.voucherApplied'), [
-      makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
-    ]);
-  }, [appendBot, appendUser, makeAction, t]);
+  const handlePickOwnedVoucher = useCallback(async (voucher: UserVoucherDto) => {
+    setDraft(prev => ({ ...prev, voucherId: voucher.userVoucherId, voucherName: voucher.voucherName }));
+    await executeSendMessage(
+      agentSelection('ownedVoucherSelected', {
+        userVoucherId: voucher.userVoucherId,
+        voucherId: (voucher as any).voucherId,
+        voucherName: voucher.voucherName,
+      }),
+      `Tôi chọn voucher: ${voucher.voucherName}`
+    );
+  }, [executeSendMessage]);
 
   const handleRedeemVoucher = useCallback(async (voucher: VoucherDto) => {
-    appendUser(t('chatbot.redeemVoucherLog', { name: voucher.voucherName }));
-    setIsLoading(true);
-    try {
-      const response = await voucherApi.redeemVoucher(voucher.voucherId);
-      setDraft(prev => ({
-        ...prev,
-        voucherId: response.data?.voucherId || voucher.voucherId,
-        voucherName: response.data?.voucherName || voucher.voucherName,
-      }));
-      appendBot(t('chatbot.voucherRedeemed'), [
-        makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
-      ]);
-    } catch {
-      appendBot(t('chatbot.voucherRedeemFail'), [
-        makeAction('voucherPicker', t('chatbot.voucherTitle'), { mode: 'mode' }),
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, makeAction, t]);
+    setDraft(prev => ({ ...prev, voucherId: voucher.voucherId, voucherName: voucher.voucherName }));
+    await executeSendMessage(
+      agentSelection('redeemVoucherSelected', { voucherId: voucher.voucherId, voucherName: voucher.voucherName }),
+      `Tôi mua voucher: ${voucher.voucherName}`
+    );
+  }, [executeSendMessage]);
 
-  const handleGuestContact = useCallback((contact: GuestContact) => {
-    appendUser(t('chatbot.guestContactLog', { name: contact.name, email: contact.email }));
+  const handleGuestContact = useCallback(async (contact: GuestContact) => {
     setDraft(prev => ({ ...prev, guestContact: contact }));
-    appendBot(t('chatbot.bookingConfirm'), [
-      makeAction('bookingSummary', t('chatbot.bookingSummary'), {}),
-    ]);
-  }, [appendBot, appendUser, makeAction, t]);
+    await executeSendMessage(agentSelection('guestContactSubmitted', { ...contact }), "Tôi đã nhập thông tin liên hệ");
+  }, [executeSendMessage]);
+
+  const handleConfirmBooking = useCallback(async () => {
+    await executeSendMessage(agentSelection('bookingConfirmed', {}), "Xác nhận đặt vé và thanh toán");
+  }, [executeSendMessage]);
 
   const checkPaymentAndRenderTicket = useCallback(async (orderId?: string) => {
     const id = orderId || draft.order?.orderId;
@@ -1759,59 +1679,9 @@ const ChatBot: React.FC = () => {
     return false;
   }, [appendBot, draft.order?.orderId, makeAction, t]);
 
-  const handleConfirmBooking = useCallback(async () => {
-    if (!draft.showtime || !draft.segment || draft.suggestedSeats.length === 0) {
-      appendBot(t('chatbot.errorMissingInfo'));
-      return;
-    }
+  // Redundant old handlers removed
 
-    appendUser(t('chatbot.confirmBookingLog'));
-    const paymentWindow = window.open('', '_blank', 'width=520,height=760');
-    paymentWindowRef.current = paymentWindow;
-    setIsLoading(true);
 
-    try {
-      const loggedIn = isLoggedIn();
-      const response = await bookingApi.createBooking({
-        scheduleId: draft.showtime.scheduleId,
-        seatSelections: draft.suggestedSeats.map(seat => ({
-          seatId: seat.seatId,
-          userSegmentId: draft.segment!.userSegmentId,
-        })),
-        customerName: loggedIn ? undefined : draft.guestContact.name.trim(),
-        customerEmail: loggedIn ? undefined : draft.guestContact.email.trim(),
-        customerPhone: loggedIn ? undefined : draft.guestContact.phone.trim(),
-        voucherId: draft.voucherId || undefined,
-        paymentMethod: 0,
-      });
-
-      const order = response.data;
-      setDraft(prev => ({ ...prev, order, paymentUrl: order.paymentUrl }));
-
-      if (order.paymentUrl) {
-        if (paymentWindow && !paymentWindow.closed) {
-          paymentWindow.location.href = order.paymentUrl;
-        } else {
-          appendBot(t('chatbot.blockedPopup'), [
-            makeAction('paymentAction', t('chatbot.paymentTitle'), {}),
-          ]);
-          return;
-        }
-
-        appendBot(t('chatbot.paymentOpened'), [
-          makeAction('paymentAction', t('chatbot.paymentTitle'), {}),
-        ]);
-      } else {
-        paymentWindow?.close();
-        await checkPaymentAndRenderTicket(order.orderId);
-      }
-    } catch (error: any) {
-      paymentWindow?.close();
-      appendBot(error?.response?.data?.message || t('chatbot.errorBooking'));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [appendBot, appendUser, checkPaymentAndRenderTicket, draft.guestContact, draft.segment, draft.showtime, draft.suggestedSeats, draft.voucherId, makeAction, t]);
 
   const handleOpenPayment = useCallback(() => {
     if (!draft.paymentUrl) return;
@@ -1863,49 +1733,10 @@ const ChatBot: React.FC = () => {
 
   const handleSend = useCallback(async () => {
     const text = input.trim();
-    if (!text || isLoading) return;
+    if (!text) return;
     setInput('');
-
-    if (isBookingIntent(text)) {
-      await startBookingFlow(text);
-      return;
-    }
-
-    appendUser(text);
-    const botMessageId = uid('bot');
-    setMessages(prev => [...prev, {
-      id: botMessageId,
-      role: 'bot',
-      text: t('chatbot.connecting'),
-      createdAt: new Date().toISOString(),
-    }]);
-    setIsLoading(true);
-
-    const updateBot = (textValue: string, extra?: Partial<ChatMessage>) => {
-      setMessages(prev => prev.map(message => message.id === botMessageId ? { ...message, text: textValue, ...extra } : message));
-    };
-
-    try {
-      let botData: ChatbotResponsePayload;
-      try {
-        botData = await sendMessageWithSse(text, streamed => updateBot(streamed), status => updateBot(status));
-      } catch {
-        setStreamStatus(t('chatbot.fallbackConnection'));
-        const response = await identityAxios.post('/chatbot/chat', { message: text });
-        botData = response.data?.data || {};
-      }
-      updateBot(botData.response || t('chatbot.errorDefault'), {
-        movies: botData.referencedMovies || [],
-        schedules: botData.referencedSchedules || [],
-        actions: botData.uiActions || [],
-      });
-    } catch {
-      updateBot(t('chatbot.errorBusy'));
-    } finally {
-      setStreamStatus('');
-      setIsLoading(false);
-    }
-  }, [appendUser, input, isLoading, sendMessageWithSse, startBookingFlow, t]);
+    await executeSendMessage(text);
+  }, [executeSendMessage, input]);
 
   const quickActions = useMemo(() => [
     { icon: Ticket, label: t('chatbot.quickBook'), value: t('chatbot.quickBookValue') },
@@ -1962,55 +1793,90 @@ const ChatBot: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {messages.map(message => (
-                <ChatMessageBubble key={message.id} message={message}>
-                  {message.actions?.map(action => (
-                    <ChatActionRenderer
-                      key={action.actionId}
-                      action={action}
-                      draft={draft}
-                      onPickMovie={handlePickMovie}
-                      onPickDate={handlePickDate}
-                      onPickCinema={handlePickCinema}
-                      onPickShowtimePreference={handlePickShowtimePreference}
-                      onPickShowtime={handlePickShowtime}
-                      onPickSegment={handlePickSegment}
-                      onAcceptSeats={handleAcceptSeats}
-                      onRetrySeats={handleRetrySeats}
-                      onVoucherMode={handleVoucherMode}
-                      onPickOwnedVoucher={handlePickOwnedVoucher}
-                      onRedeemVoucher={handleRedeemVoucher}
-                      onGuestContact={handleGuestContact}
-                      onConfirmBooking={handleConfirmBooking}
-                      onOpenPayment={handleOpenPayment}
-                      onCheckPayment={() => void checkPaymentAndRenderTicket()}
-                      onDownloadTicket={(orderId) => window.open(bookingApi.getTicketDownloadUrl(orderId), '_blank')}
-                      paymentChecking={paymentChecking}
-                    />
-                  ))}
-                  {message.movies && message.movies.length > 0 && (
-                    <ActionShell title={t('chatbot.relatedMovies')} icon={<Film size={13} />}>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                        {message.movies.map(movie => (
-                          <button key={movie.movieId} onClick={() => { setIsOpen(false); navigate(`/movie/${movie.movieId}`); }} style={{ ...ghostButton, fontSize: 12 }}>
-                            {movie.movieName}
-                          </button>
-                        ))}
-                      </div>
-                    </ActionShell>
-                  )}
-                </ChatMessageBubble>
-              ))}
-              {isLoading && (
-                <ChatMessageBubble message={{ id: 'loading', role: 'bot', text: streamStatus || t('chatbot.loading'), createdAt: new Date().toISOString() }}>
-                  <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, color: theme.muted, fontSize: 11 }}>
-                    <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                    <span>{t('chatbot.loadingData')}</span>
-                  </div>
-                </ChatMessageBubble>
+            <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+              <div
+                ref={scrollContainerRef}
+                onScroll={handleScroll}
+                style={{ height: '100%', overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}
+              >
+                {messages.map(message => (
+                  <ChatMessageBubble key={message.id} message={message}>
+                    {message.actions?.map(action => (
+                      <ChatActionRenderer
+                        key={action.actionId}
+                        action={action}
+                        draft={draft}
+                        onPickBookingPath={handlePickBookingPath}
+                        onPickDiscoveryMode={handlePickDiscoveryMode}
+                        onPickGenre={handlePickGenre}
+                        onPickMovie={handlePickMovie}
+                        onPickDate={handlePickDate}
+                        onPickCinema={handlePickCinema}
+                        onPickShowtimePreference={handlePickShowtimePreference}
+                        onPickShowtime={handlePickShowtime}
+                        onPickSegment={handlePickSegment}
+                        onAcceptSeats={handleAcceptSeats}
+                        onRetrySeats={handleRetrySeats}
+                        onVoucherMode={handleVoucherMode}
+                        onPickOwnedVoucher={handlePickOwnedVoucher}
+                        onRedeemVoucher={handleRedeemVoucher}
+                        onGuestContact={handleGuestContact}
+                        onConfirmBooking={handleConfirmBooking}
+                        onOpenPayment={handleOpenPayment}
+                        onCheckPayment={() => void checkPaymentAndRenderTicket()}
+                        paymentChecking={paymentChecking}
+                      />
+                    ))}
+                    {message.movies && message.movies.length > 0 && (
+                      <ActionShell title={t('chatbot.relatedMovies')} icon={<Film size={13} />}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {message.movies.map(movie => (
+                            <button key={movie.movieId} onClick={() => { setIsOpen(false); navigate(`/movie/${movie.movieId}`); }} style={{ ...ghostButton, fontSize: 12 }}>
+                              {movie.movieName}
+                            </button>
+                          ))}
+                        </div>
+                      </ActionShell>
+                    )}
+                  </ChatMessageBubble>
+                ))}
+                {isLoading && (
+                  <ChatMessageBubble message={{ id: 'loading', role: 'bot', text: streamStatus || t('chatbot.loading'), createdAt: new Date().toISOString() }}>
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, color: theme.muted, fontSize: 11 }}>
+                      <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
+                      <span>{t('chatbot.loadingData')}</span>
+                    </div>
+                  </ChatMessageBubble>
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+              {showScrollButton && (
+                <button
+                  onClick={() => {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  style={{
+                    position: 'absolute',
+                    bottom: 16,
+                    right: 16,
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: theme.accent,
+                    color: '#fff',
+                    border: 'none',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 40,
+                  }}
+                  title="Cuộn xuống tin nhắn mới nhất"
+                >
+                  <ArrowDown size={18} />
+                </button>
               )}
-              <div ref={messagesEndRef} />
             </div>
 
             <div style={{ flexShrink: 0, padding: '8px 14px 0', display: 'flex', gap: 7, overflowX: 'auto' }}>

@@ -75,12 +75,14 @@ public class BookingPricingService
 
     public static decimal CalculateRoleDiscountPercent(CustomerProfileEntity? customerProfile)
     {
-        return customerProfile?.MembershipRank switch
+        if (customerProfile == null) return 0;
+        return customerProfile.MembershipRank switch
         {
             MembershipRankEnum.Diamond => 25,
             MembershipRankEnum.Gold => 20,
             MembershipRankEnum.VIP => 15,
-            _ => 5
+            MembershipRankEnum.Standard => 0,
+            _ => 0
         };
     }
 }

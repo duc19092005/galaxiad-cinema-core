@@ -60,6 +60,18 @@ public class UserContextService : IUserContextService
         }
     }
 
+    public string? GetEmail()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        return user?.FindFirst(ClaimTypes.Email)?.Value;
+    }
+
+    public string? GetUserName()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        return user?.FindFirst(ClaimTypes.Name)?.Value;
+    }
+
     public bool IsInRole(string roleName)
     {
         return _httpContextAccessor.HttpContext?.User.IsInRole(roleName) ?? false;

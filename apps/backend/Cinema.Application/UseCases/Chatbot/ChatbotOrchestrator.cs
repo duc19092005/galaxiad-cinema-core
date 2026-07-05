@@ -91,6 +91,8 @@ public class ChatbotOrchestrator
             }
 
             // Gửi trực tiếp tin nhắn sang LangChain Agent ở dịch vụ Python AI
+            supportingContext = BuildAgentSupportingContext(supportingContext, userId, userRoles);
+
             var assistantResponse = await _llmClient.SendChatRequestAsync(
                 requestDto.Message, 
                 supportingContext, 
@@ -102,17 +104,19 @@ public class ChatbotOrchestrator
             // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
             var referencedMovies = ExtractMoviesFromContext(supportingContext, assistantResponse);
             var referencedSchedules = ExtractSchedulesFromContext(supportingContext);
+            var (cleanResponse, uiActions) = ParseUiActions(assistantResponse);
 
             return new BaseResponse<ChatbotResponseDto>
             {
                 IsSuccess = true,
                 Data = new ChatbotResponseDto
                 {
-                    Response = assistantResponse,
+                    Response = cleanResponse,
                     Intent = intentResult?.Intent ?? "AgentChat",
                     IsAuthorized = true,
                     ReferencedMovies = referencedMovies,
-                    ReferencedSchedules = referencedSchedules
+                    ReferencedSchedules = referencedSchedules,
+                    UiActions = uiActions
                 }
             };
         }
@@ -192,6 +196,8 @@ public class ChatbotOrchestrator
 
             await onStatus("AI đang xử lý yêu cầu...");
 
+            supportingContext = BuildAgentSupportingContext(supportingContext, userId, userRoles);
+
             var responseBuilder = new StringBuilder();
             await foreach (var token in _llmClient.StreamChatRequestAsync(
                 requestDto.Message,
@@ -210,17 +216,19 @@ public class ChatbotOrchestrator
             // Trích xuất movies và schedules được nhắc đến trong câu trả lời từ context
             var referencedMovies = ExtractMoviesFromContext(supportingContext, assistantResponse);
             var referencedSchedules = ExtractSchedulesFromContext(supportingContext);
+            var (cleanResponse, uiActions) = ParseUiActions(assistantResponse);
 
             return new BaseResponse<ChatbotResponseDto>
             {
                 IsSuccess = true,
                 Data = new ChatbotResponseDto
                 {
-                    Response = assistantResponse,
+                    Response = cleanResponse,
                     Intent = intentResult?.Intent ?? "AgentChat",
                     IsAuthorized = true,
                     ReferencedMovies = referencedMovies,
-                    ReferencedSchedules = referencedSchedules
+                    ReferencedSchedules = referencedSchedules,
+                    UiActions = uiActions
                 }
             };
         }
@@ -268,6 +276,29 @@ public class ChatbotOrchestrator
         }
 
         return (userRoles, userId);
+    }
+
+    private string BuildAgentSupportingContext(string deterministicContext, string userId, string userRoles)
+    {
+        var currentUser = new
+        {
+            IsAuthenticated = userId != "N/A",
+            UserId = userId == "N/A" ? null : userId,
+            Roles = userRoles,
+            Email = _userContextService.GetEmail(),
+            Name = _userContextService.GetUserName()
+        };
+
+        var envelope = new
+        {
+            CurrentUser = currentUser,
+            DeterministicContext = string.IsNullOrWhiteSpace(deterministicContext) ? null : deterministicContext
+        };
+
+        return JsonSerializer.Serialize(envelope, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
     }
 
     private List<ReferencedMovieDto> ExtractMoviesFromContext(string jsonContext, string llmResponse)
@@ -399,5 +430,137 @@ public class ChatbotOrchestrator
         }
 
         return result;
+    }
+
+    private (string CleanResponse, List<ChatbotUiActionDto> UiActions) ParseUiActions(string rawResponse)
+    {
+        var uiActions = new List<ChatbotUiActionDto>();
+        var cleanBuilder = new StringBuilder();
+        var cursor = 0;
+
+        while (cursor < rawResponse.Length)
+        {
+            var tagStart = rawResponse.IndexOf("[UI_ACTION:", cursor, StringComparison.Ordinal);
+            if (tagStart < 0)
+            {
+                cleanBuilder.Append(rawResponse[cursor..]);
+                break;
+            }
+
+            cleanBuilder.Append(rawResponse[cursor..tagStart]);
+            var jsonStart = rawResponse.IndexOf('{', tagStart);
+            if (jsonStart < 0)
+            {
+                cleanBuilder.Append(rawResponse[tagStart..]);
+                break;
+            }
+
+            var jsonEnd = FindJsonObjectEnd(rawResponse, jsonStart);
+            if (jsonEnd < 0)
+            {
+                cleanBuilder.Append(rawResponse[tagStart..]);
+                break;
+            }
+
+            var tagEnd = rawResponse.IndexOf(']', jsonEnd);
+            cursor = tagEnd >= 0 ? tagEnd + 1 : jsonEnd + 1;
+
+            try
+            {
+                var jsonStr = rawResponse.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                using var doc = JsonDocument.Parse(jsonStr);
+                var root = doc.RootElement;
+
+                var type = root.TryGetProperty("type", out var typeEl) ? typeEl.GetString() ?? string.Empty : string.Empty;
+                if (!string.IsNullOrWhiteSpace(type))
+                {
+                    uiActions.Add(new ChatbotUiActionDto
+                    {
+                        ActionId = $"action-{Guid.NewGuid()}",
+                        Type = type,
+                        Title = root.TryGetProperty("title", out var titleEl) ? titleEl.GetString() ?? string.Empty : string.Empty,
+                        Options = ParseUiOptions(root),
+                        Payload = root.TryGetProperty("payload", out var payloadEl) ? payloadEl.Clone() : null
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error parsing UI Action tag: " + ex.Message);
+            }
+        }
+
+        return (cleanBuilder.ToString().Trim(), uiActions);
+    }
+
+    private static int FindJsonObjectEnd(string value, int start)
+    {
+        var depth = 0;
+        var inString = false;
+        var escaping = false;
+
+        for (var index = start; index < value.Length; index++)
+        {
+            var current = value[index];
+            if (inString)
+            {
+                if (escaping)
+                {
+                    escaping = false;
+                }
+                else if (current == '\\')
+                {
+                    escaping = true;
+                }
+                else if (current == '"')
+                {
+                    inString = false;
+                }
+
+                continue;
+            }
+
+            if (current == '"')
+            {
+                inString = true;
+                continue;
+            }
+
+            if (current == '{')
+            {
+                depth++;
+            }
+            else if (current == '}')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return index;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+    private static List<ChatbotUiOptionDto> ParseUiOptions(JsonElement root)
+    {
+        var options = new List<ChatbotUiOptionDto>();
+        if (!root.TryGetProperty("options", out var optionsEl) || optionsEl.ValueKind != JsonValueKind.Array)
+        {
+            return options;
+        }
+
+        foreach (var optionEl in optionsEl.EnumerateArray())
+        {
+            options.Add(new ChatbotUiOptionDto
+            {
+                Label = optionEl.TryGetProperty("label", out var labelEl) ? labelEl.GetString() ?? string.Empty : string.Empty,
+                Value = optionEl.TryGetProperty("value", out var valueEl) ? valueEl.GetString() ?? string.Empty : string.Empty,
+                Payload = optionEl.TryGetProperty("payload", out var payloadEl) ? payloadEl.Clone() : null
+            });
+        }
+
+        return options;
     }
 }

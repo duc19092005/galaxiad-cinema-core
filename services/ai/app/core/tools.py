@@ -21,6 +21,225 @@ def _field(data: dict[str, Any], camel_name: str, default: Any = None) -> Any:
     return data.get(camel_name, data.get(pascal_name, default))
 
 
+async def _get_backend(path: str, params: dict[str, Any] | None = None, timeout: float = 10.0) -> dict[str, Any]:
+    url = f"{BACKEND_API_URL}{path}"
+    async with httpx.AsyncClient(timeout=timeout) as client:
+        response = await client.get(url, params={key: value for key, value in (params or {}).items() if value not in [None, ""]})
+
+    response_json = response.json() if response.content else {}
+    if response.status_code >= 400:
+        return {
+            "ok": False,
+            "statusCode": response.status_code,
+            "message": response_json.get("message") or response_json.get("Message") or "Backend request failed.",
+            "data": None,
+        }
+
+    return {
+        "ok": True,
+        "statusCode": response.status_code,
+        "message": response_json.get("message") or response_json.get("Message") or "OK",
+        "data": _response_data(response_json),
+    }
+
+
+def _normalize_movie(movie: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "movieId": _field(movie, "movieId"),
+        "movieName": _field(movie, "movieName"),
+        "movieImageUrl": _field(movie, "movieImageUrl") or _field(movie, "moviePosterURL"),
+        "movieDescription": _field(movie, "movieDescription", ""),
+        "movieDuration": _field(movie, "movieDuration"),
+        "movieGenres": _field(movie, "movieGenres", []) or _field(movie, "movieCategoryInfos", []),
+    }
+
+
+def _normalize_cinema(cinema: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "cinemaId": _field(cinema, "cinemaId"),
+        "cinemaName": _field(cinema, "cinemaName"),
+        "cinemaCity": _field(cinema, "cinemaCity", ""),
+        "cinemaLocation": _field(cinema, "cinemaLocation", ""),
+        "latitude": _field(cinema, "latitude"),
+        "longitude": _field(cinema, "longitude"),
+        "distanceInKm": _field(cinema, "distanceInKm"),
+    }
+
+
+def _normalize_seat(seat: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "seatId": _field(seat, "seatId"),
+        "seatNumber": _field(seat, "seatNumber") or _field(seat, "seatName"),
+        "seatName": _field(seat, "seatName") or _field(seat, "seatNumber"),
+        "rowIndex": _field(seat, "rowIndex", _field(seat, "coordY", 0)),
+        "colIndex": _field(seat, "colIndex", _field(seat, "coordX", 0)),
+        "isBooked": _field(seat, "isBooked", False),
+        "isOccupied": _field(seat, "isOccupied", _field(seat, "isBooked", False)),
+    }
+
+
+def _flatten_showtimes(results: list[dict[str, Any]], genre: str = "", mode: str = "time") -> list[dict[str, Any]]:
+    showtimes: list[dict[str, Any]] = []
+    genre_query = genre.strip().lower()
+
+    for movie in results:
+        movie_genres = _field(movie, "movieGenres", []) or []
+        if genre_query and not any(genre_query in str(item).lower() for item in movie_genres):
+            continue
+
+        for cinema in _field(movie, "cinemas", []) or []:
+            for format_group in _field(cinema, "formatShowtimes", []) or []:
+                for showtime in _field(format_group, "showtimes", []) or []:
+                    showtimes.append({
+                        "scheduleId": _field(showtime, "scheduleId"),
+                        "movieId": _field(movie, "movieId"),
+                        "movieName": _field(movie, "movieName"),
+                        "cinemaId": _field(cinema, "cinemaId"),
+                        "cinemaName": _field(cinema, "cinemaName"),
+                        "cinemaLocation": _field(cinema, "cinemaLocation", ""),
+                        "cinemaCity": _field(cinema, "cinemaCity", ""),
+                        "formatId": _field(format_group, "formatId"),
+                        "formatName": _field(format_group, "formatName"),
+                        "auditoriumId": _field(showtime, "auditoriumId"),
+                        "auditoriumNumber": _field(showtime, "auditoriumNumber"),
+                        "startTime": _field(showtime, "startTime"),
+                        "endedTime": _field(showtime, "endedTime"),
+                        "movieGenres": movie_genres,
+                    })
+
+    return sorted(showtimes, key=lambda item: (item.get("startTime") or "", item.get("formatName") or "")) if mode == "time" else showtimes
+
+
+@tool
+async def list_active_movies_tool() -> str:
+    """Return active movies that can be selected for the booking flow."""
+    try:
+        result = await _get_backend("/public/movies/active-movies")
+        movies = [_normalize_movie(movie) for movie in (result.get("data") or [])]
+        return _json_result({"ok": result["ok"], "type": "movie_list", "movies": movies})
+    except Exception as exc:
+        logger.error(f"Error loading active movies: {exc}")
+        return _json_result({"ok": False, "type": "movie_list", "message": str(exc), "movies": []})
+
+
+@tool
+async def list_active_cinemas_tool() -> str:
+    """Return active cinemas that can be selected for the booking flow."""
+    try:
+        result = await _get_backend("/public/movies/active-cinemas")
+        cinemas = [_normalize_cinema(cinema) for cinema in (result.get("data") or [])]
+        return _json_result({"ok": result["ok"], "type": "cinema_list", "cinemas": cinemas})
+    except Exception as exc:
+        logger.error(f"Error loading active cinemas: {exc}")
+        return _json_result({"ok": False, "type": "cinema_list", "message": str(exc), "cinemas": []})
+
+
+@tool
+async def list_genres_tool() -> str:
+    """Return movie genres that can be selected before filtering movies/showtimes."""
+    try:
+        result = await _get_backend("/public/movies/genres")
+        genres = [
+            {
+                "genreId": _field(genre, "genreId"),
+                "genreName": _field(genre, "genreName"),
+                "description": _field(genre, "description", ""),
+            }
+            for genre in (result.get("data") or [])
+        ]
+        return _json_result({"ok": result["ok"], "type": "genre_list", "genres": genres})
+    except Exception as exc:
+        logger.error(f"Error loading genres: {exc}")
+        return _json_result({"ok": False, "type": "genre_list", "message": str(exc), "genres": []})
+
+
+@tool
+async def list_schedule_dates_tool(movie_id: str = "", cinema_id: str = "", city: str = "") -> str:
+    """Return upcoming schedule dates for a selected movie or cinema."""
+    try:
+        if movie_id:
+            result = await _get_backend(f"/public/ScheduleDates/{movie_id}", {"city": city})
+        else:
+            result = await _get_backend("/public/UpcomingDates", {"city": city, "cinemaId": cinema_id})
+        dates = result.get("data") or []
+        return _json_result({"ok": result["ok"], "type": "date_list", "dates": dates})
+    except Exception as exc:
+        logger.error(f"Error loading schedule dates: {exc}")
+        return _json_result({"ok": False, "type": "date_list", "message": str(exc), "dates": []})
+
+
+@tool
+async def search_showtimes_tool(
+    date: str = "",
+    movie_id: str = "",
+    cinema_id: str = "",
+    genre_name: str = "",
+    mode: str = "time",
+) -> str:
+    """
+    Search available showtimes by date, movie, cinema, and optional genre.
+    Use mode='time' to sort by start time, or mode='format' before rendering a format-first picker.
+    """
+    try:
+        result = await _get_backend(
+            "/public/movies/search-schedules",
+            {"date": date, "movieId": movie_id, "cinemaId": cinema_id},
+        )
+        raw_results = result.get("data") or []
+        showtimes = _flatten_showtimes(raw_results, genre=genre_name, mode=mode)
+        movies_by_id: dict[str, dict[str, Any]] = {}
+        cinemas_by_id: dict[str, dict[str, Any]] = {}
+        for movie in raw_results:
+            if genre_name:
+                movie_genres = _field(movie, "movieGenres", []) or []
+                if not any(genre_name.lower() in str(item).lower() for item in movie_genres):
+                    continue
+            movie_id_value = _field(movie, "movieId")
+            if movie_id_value:
+                movies_by_id[movie_id_value] = _normalize_movie(movie)
+            for cinema in _field(movie, "cinemas", []) or []:
+                cinema_id_value = _field(cinema, "cinemaId")
+                if cinema_id_value:
+                    cinemas_by_id[cinema_id_value] = _normalize_cinema(cinema)
+
+        return _json_result({
+            "ok": result["ok"],
+            "type": "showtime_search",
+            "movies": list(movies_by_id.values()),
+            "cinemas": list(cinemas_by_id.values()),
+            "showtimes": showtimes,
+        })
+    except Exception as exc:
+        logger.error(f"Error searching showtimes: {exc}")
+        return _json_result({"ok": False, "type": "showtime_search", "message": str(exc), "movies": [], "cinemas": [], "showtimes": []})
+
+
+@tool
+async def get_pricing_tool(schedule_id: str) -> str:
+    """Return ticket segment prices for a selected showtime."""
+    try:
+        result = await _get_backend(f"/public/movies/schedules/{schedule_id}/prices")
+        pricing = result.get("data") or {}
+        return _json_result({"ok": result["ok"], "type": "pricing", "pricing": pricing})
+    except Exception as exc:
+        logger.error(f"Error loading pricing: {exc}")
+        return _json_result({"ok": False, "type": "pricing", "message": str(exc), "pricing": None})
+
+
+@tool
+async def get_seat_map_tool(schedule_id: str) -> str:
+    """Return the full seat map for a selected showtime."""
+    try:
+        result = await _get_backend(f"/public/movies/schedules/{schedule_id}/seats")
+        seat_map = result.get("data") or {}
+        seats = [_normalize_seat(seat) for seat in (seat_map.get("seatMap") or seat_map.get("seats") or [])]
+        seat_map["seatMap"] = seats
+        return _json_result({"ok": result["ok"], "type": "seat_map", "seatMap": seat_map, "seats": seats})
+    except Exception as exc:
+        logger.error(f"Error loading seat map: {exc}")
+        return _json_result({"ok": False, "type": "seat_map", "message": str(exc), "seatMap": None, "seats": []})
+
+
 @tool
 async def get_available_vouchers_tool(user_id: str) -> str:
     """
@@ -195,6 +414,11 @@ async def suggest_seats_tool(schedule_id: str, quantity: int) -> str:
             "seatIds": [seat["seatId"] for seat in normalized],
             "seatNumbers": [seat["seatNumber"] for seat in normalized],
             "seats": normalized,
+            "suggestedSeats": normalized,
+            "seatMap": {
+                **data,
+                "seatMap": [_normalize_seat(seat) for seat in seats],
+            },
         })
     except Exception as exc:
         logger.error(f"Error suggesting seats: {exc}")
