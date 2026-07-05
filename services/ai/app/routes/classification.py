@@ -1,6 +1,6 @@
 import re
 import json
-from datetime import date, timedelta
+from datetime import datetime, timezone, timedelta, date
 from fastapi import APIRouter
 from loguru import logger
 from models import ClassifyIntentRequest, ClassifyIntentResponse
@@ -12,8 +12,8 @@ router = APIRouter()
 @router.post("/classify-intent", response_model=ClassifyIntentResponse)
 async def classify_intent(request: ClassifyIntentRequest):
     """Classify user message into predefined Cinema intents and extract variables."""
-    today = date.today()
-    today_str = today.strftime("%Y-%m-%d")
+    tz_vietnam = timezone(timedelta(hours=7))
+    today = datetime.now(tz_vietnam).date()
     
     # Compute this-week range (Monday–Sunday)
     week_start = today - timedelta(days=today.weekday())  # Monday

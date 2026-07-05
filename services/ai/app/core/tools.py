@@ -148,6 +148,23 @@ async def list_active_cinemas_tool() -> str:
 
 
 @tool
+async def list_nearest_cinemas_tool(latitude: float, longitude: float) -> str:
+    """
+    Return active cinemas sorted by distance from the user's current GPS coordinates.
+    Arguments:
+    - latitude: User's latitude (decimal number)
+    - longitude: User's longitude (decimal number)
+    """
+    try:
+        result = await _get_backend("/public/movies/nearest-cinemas", {"latitude": latitude, "longitude": longitude})
+        cinemas = [_normalize_cinema(cinema) for cinema in (result.get("data") or [])]
+        return _json_result({"ok": result["ok"], "type": "cinema_list", "cinemas": cinemas})
+    except Exception as exc:
+        logger.error(f"Error loading nearest cinemas: {exc}")
+        return _json_result({"ok": False, "type": "cinema_list", "message": str(exc), "cinemas": []})
+
+
+@tool
 async def list_genres_tool() -> str:
     """Return movie genres that can be selected before filtering movies/showtimes."""
     try:

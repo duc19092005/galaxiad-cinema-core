@@ -21,6 +21,7 @@ from core.tools import (
     get_pricing_tool,
     get_seat_map_tool,
     list_active_cinemas_tool,
+    list_nearest_cinemas_tool,
     list_active_movies_tool,
     list_genres_tool,
     list_schedule_dates_tool,
@@ -65,6 +66,7 @@ llm = ChatOpenAI(
 tools = [
     list_active_movies_tool,
     list_active_cinemas_tool,
+    list_nearest_cinemas_tool,
     list_genres_tool,
     list_schedule_dates_tool,
     search_showtimes_tool,

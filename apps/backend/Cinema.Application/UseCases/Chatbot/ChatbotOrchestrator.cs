@@ -152,6 +152,7 @@ public class ChatbotOrchestrator
                     ReferencedMovies = referencedMovies,
                     ReferencedSchedules = referencedSchedules,
                     UiActions = uiActions,
+                    BookingState = GetBookingStateFromIntent(intentResult),
                     ProcessingPath = "llmPath",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,
                     IsAuthenticated = userId != "N/A"
@@ -307,6 +308,7 @@ public class ChatbotOrchestrator
                     ReferencedMovies = referencedMovies,
                     ReferencedSchedules = referencedSchedules,
                     UiActions = uiActions,
+                    BookingState = GetBookingStateFromIntent(intentResult),
                     ProcessingPath = "llmPath",
                     ElapsedMs = stopwatch.ElapsedMilliseconds,
                     IsAuthenticated = userId != "N/A"
@@ -648,5 +650,46 @@ public class ChatbotOrchestrator
         }
 
         return options;
+    }
+
+    private static JsonElement? GetBookingStateFromIntent(ChatIntentResult? intentResult)
+    {
+        if (intentResult?.Parameters == null || intentResult.Parameters.Count == 0)
+        {
+            return null;
+        }
+
+        var stateDict = new Dictionary<string, object>();
+        if (intentResult.Parameters.TryGetValue("date", out var dVal) && !string.IsNullOrEmpty(dVal))
+        {
+            stateDict["date"] = dVal;
+        }
+        if (intentResult.Parameters.TryGetValue("movieId", out var mVal) && !string.IsNullOrEmpty(mVal))
+        {
+            stateDict["movie"] = new { movieId = mVal };
+        }
+        if (intentResult.Parameters.TryGetValue("cinemaId", out var cVal) && !string.IsNullOrEmpty(cVal))
+        {
+            stateDict["cinema"] = new { cinemaId = cVal };
+        }
+        if (intentResult.Parameters.TryGetValue("format", out var fVal) && !string.IsNullOrEmpty(fVal))
+        {
+            stateDict["formatName"] = fVal;
+        }
+
+        if (stateDict.Count == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            var serialized = JsonSerializer.Serialize(stateDict);
+            return JsonDocument.Parse(serialized).RootElement;
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

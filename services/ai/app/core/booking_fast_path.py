@@ -9,6 +9,7 @@ from core.tools import (
     get_available_vouchers_tool,
     get_pricing_tool,
     list_active_cinemas_tool,
+    list_nearest_cinemas_tool,
     list_active_movies_tool,
     list_genres_tool,
     list_schedule_dates_tool,
@@ -142,6 +143,17 @@ async def try_booking_fast_path(
     state = _state(selection)
 
     try:
+        if selection_type == "locationProvided":
+            lat = float(payload.get("latitude") or 0.0)
+            lng = float(payload.get("longitude") or 0.0)
+            result = await _tool(list_nearest_cinemas_tool, {"latitude": lat, "longitude": lng})
+            return _reply(
+                "Mình tìm thấy các rạp chiếu phim gần bạn nhất.",
+                "cinemaPicker",
+                "Select Cinema",
+                {"cinemas": result.get("cinemas", [])},
+            )
+
         if selection_type == "bookingPathSelected":
             path = payload.get("bookingPath")
             if path == "cinemaFirst":
@@ -192,6 +204,49 @@ async def try_booking_fast_path(
             )
 
         if selection_type == "movieSelected":
+            chosen_date = _field(state, "date", "")
+            cinema_id = _field(state, "cinemaId", "") or _field(state, "cinema", {}).get("cinemaId", "") or payload.get("cinemaId", "")
+            movie_id = payload.get("movieId", "")
+
+            if chosen_date and cinema_id:
+                format_pref = _field(state, "formatName", "") or _field(payload, "formatName", "")
+                result = await _cached_tool(
+                    "showtimes",
+                    search_showtimes_tool,
+                    {"date": chosen_date, "movie_id": movie_id, "cinema_id": cinema_id},
+                    60,
+                )
+                showtimes = result.get("showtimes", [])
+                if format_pref:
+                    filtered_showtimes = [st for st in showtimes if format_pref.lower() in str(st.get("formatName", "")).lower()]
+                    return _reply(
+                        f"Đây là các suất chiếu định dạng {format_pref} phù hợp.",
+                        "showtimePicker",
+                        "Select Showtime",
+                        {"mode": "time", "showtimes": filtered_showtimes},
+                    )
+                return _reply(
+                    "Bạn muốn chọn suất theo giờ hay theo định dạng?",
+                    "showtimePreferencePicker",
+                    "Showtime choice",
+                    {"showtimes": showtimes},
+                )
+
+            if chosen_date:
+                # If date is already selected, let's search showtimes for this movie and date, then render cinemaPicker
+                result = await _cached_tool(
+                    "showtimes",
+                    search_showtimes_tool,
+                    {"date": chosen_date, "movie_id": movie_id},
+                    60,
+                )
+                return _reply(
+                    "Ngày này có các rạp sau còn suất chiếu.",
+                    "cinemaPicker",
+                    "Select Cinema",
+                    {"cinemas": result.get("cinemas", [])},
+                )
+
             result = await _cached_tool("schedule_dates", list_schedule_dates_tool, {"movie_id": payload.get("movieId", "")}, 120)
             return _reply(
                 "Phim này đang có các ngày chiếu sau.",
@@ -229,13 +284,42 @@ async def try_booking_fast_path(
 
         if selection_type == "cinemaSelected":
             params = _showtime_params(state, payload)
+            format_pref = _field(state, "formatName", "") or _field(payload, "formatName", "")
+
             if params.get("movie_id") and params.get("date") and params.get("cinema_id"):
                 result = await _cached_tool("showtimes", search_showtimes_tool, params, 60)
+                showtimes = result.get("showtimes", [])
+                if format_pref:
+                    filtered_showtimes = [st for st in showtimes if format_pref.lower() in str(st.get("formatName", "")).lower()]
+                    return _reply(
+                        f"Đây là các suất chiếu định dạng {format_pref} phù hợp.",
+                        "showtimePicker",
+                        "Select Showtime",
+                        {"mode": "time", "showtimes": filtered_showtimes},
+                    )
                 return _reply(
                     "Bạn muốn chọn suất theo giờ hay theo định dạng?",
                     "showtimePreferencePicker",
                     "Showtime choice",
-                    {"showtimes": result.get("showtimes", [])},
+                    {"showtimes": showtimes},
+                )
+
+            # If format is already known (from initial prompt), skip discoveryModePicker →
+            # go straight to datePicker for the cinema-first path
+            cinema = _field(state, "cinema", {}) or {}
+            cinema_id_for_dates = _field(cinema, "cinemaId", "") or params.get("cinema_id", "")
+            if format_pref and cinema_id_for_dates:
+                result = await _cached_tool(
+                    "schedule_dates",
+                    list_schedule_dates_tool,
+                    {"cinema_id": cinema_id_for_dates},
+                    120,
+                )
+                return _reply(
+                    f"Bạn muốn xem định dạng {format_pref}. Bạn chọn ngày xem nhé!",
+                    "datePicker",
+                    "Select Date",
+                    {"dates": result.get("dates", [])},
                 )
 
             return _reply(

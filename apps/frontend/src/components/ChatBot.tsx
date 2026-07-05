@@ -55,7 +55,8 @@ type ChatActionType =
   | 'guestContact'
   | 'bookingSummary'
   | 'paymentAction'
-  | 'ticketCard';
+  | 'ticketCard'
+  | 'requestLocation';
 
 interface ReferencedMovie {
   movieId: string;
@@ -169,6 +170,7 @@ interface BookingDraft {
   paymentUrl?: string;
   ticket?: TicketInfo;
   initialPrompt?: string;
+  formatName?: string;
 }
 
 
@@ -245,6 +247,7 @@ const buildBookingState = (draft: BookingDraft, patch: Partial<BookingDraft> = {
     voucherId: next.voucherId,
     voucherName: next.voucherName,
     guestContact: next.guestContact,
+    formatName: next.formatName,
   };
 };
 
@@ -1236,6 +1239,23 @@ const optionButtonStyle: React.CSSProperties = {
   fontSize: 12,
 };
 
+const RequestLocationCard: React.FC<{
+  onShare: () => void;
+  onManual: () => void;
+}> = ({ onShare, onManual }) => {
+  return (
+    <ActionShell title="Định vị vị trí" icon={<Navigation size={13} />}>
+      <p style={{ margin: '0 0 10px', color: theme.muted, fontSize: 12, lineHeight: 1.4 }}>
+        Để tìm các rạp gần bạn nhất, vui lòng chia sẻ vị trí hiện tại của bạn.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <button onClick={onManual} style={ghostButton}>Chọn thủ công</button>
+        <button onClick={onShare} style={primaryButton}>Chia sẻ vị trí</button>
+      </div>
+    </ActionShell>
+  );
+};
+
 const ChatActionRenderer: React.FC<{
   action: ChatAction;
   draft: BookingDraft;
@@ -1258,6 +1278,8 @@ const ChatActionRenderer: React.FC<{
   onOpenPayment: () => void;
   onCheckPayment: () => void;
   paymentChecking: boolean;
+  onShareLocation: () => void;
+  onManualLocation: () => void;
 }> = ({
   action,
   draft,
@@ -1280,6 +1302,8 @@ const ChatActionRenderer: React.FC<{
   onOpenPayment,
   onCheckPayment,
   paymentChecking,
+  onShareLocation,
+  onManualLocation,
 }) => {
   const { t } = useTranslation();
   const bookingPathOptions: ChoiceOption[] = action.payload?.options || [
@@ -1346,6 +1370,8 @@ const ChatActionRenderer: React.FC<{
       return <PaymentStatusCard paymentUrl={draft.paymentUrl} loading={paymentChecking} onOpen={onOpenPayment} onCheck={onCheckPayment} />;
     case 'ticketCard':
       return draft.ticket ? <TicketCard ticket={draft.ticket} /> : null;
+    case 'requestLocation':
+      return <RequestLocationCard onShare={onShareLocation} onManual={onManualLocation} />;
     default:
       return null;
   }
@@ -1532,8 +1558,21 @@ const ChatBot: React.FC = () => {
         actions: actions,
       });
 
+      if (botData.bookingState) {
+        setDraft(prev => ({
+          ...prev,
+          ...botData.bookingState,
+        }));
+      }
+
       if (actions.length > 0) {
         const action = actions[0];
+        if (action.payload?.bookingState) {
+          setDraft(prev => ({
+            ...prev,
+            ...action.payload.bookingState,
+          }));
+        }
         if (action.type === 'seatSuggestion' && action.payload) {
           const suggestedSeats = action.payload.suggestedSeats || action.payload.seats || [];
           setDraft(prev => ({
@@ -1618,13 +1657,17 @@ const ChatBot: React.FC = () => {
 
   const handlePickShowtimePreference = useCallback(async (mode: ShowtimePickMode) => {
     const text = mode === 'time' ? "Tôi muốn chọn suất chiếu theo khung giờ" : "Tôi muốn chọn suất chiếu theo định dạng";
-    setDraft(prev => ({ ...prev, showtimePreference: mode }));
-    await executeSendMessage(agentSelection('showtimePreferenceSelected', { mode }, buildBookingState(draft, { showtimePreference: mode })), text);
+    const patch: Partial<BookingDraft> = { showtimePreference: mode };
+    if (mode === 'format') {
+      patch.formatName = undefined;
+    }
+    setDraft(prev => ({ ...prev, ...patch }));
+    await executeSendMessage(agentSelection('showtimePreferenceSelected', { mode, ...patch }, buildBookingState(draft, { ...patch })), text);
   }, [draft, executeSendMessage]);
 
   const handlePickShowtime = useCallback(async (showtime: ShowtimeOption) => {
     const timeStr = `${formatDate(showtime.startTime)} ${formatTime(showtime.startTime)}`;
-    setDraft(prev => ({ ...prev, showtime }));
+    setDraft(prev => ({ ...prev, showtime, formatName: showtime.formatName }));
     await executeSendMessage(
       agentSelection('showtimeSelected', {
         scheduleId: showtime.scheduleId,
@@ -1634,7 +1677,7 @@ const ChatBot: React.FC = () => {
         cinemaName: showtime.cinemaName,
         formatName: showtime.formatName,
         startTime: showtime.startTime,
-      }, buildBookingState(draft, { showtime })),
+      }, buildBookingState(draft, { showtime, formatName: showtime.formatName })),
       `Tôi chọn suất chiếu: ${timeStr} (${showtime.formatName})`
     );
   }, [draft, executeSendMessage]);
@@ -1784,6 +1827,59 @@ const ChatBot: React.FC = () => {
     };
   }, [appendBot, checkPaymentAndRenderTicket, draft.order?.orderId, draft.ticket, makeAction, t]);
 
+  const handleRequestLocation = useCallback(async () => {
+    if (!navigator.geolocation) {
+      appendBot("Trình duyệt của bạn không hỗ trợ định vị. Vui lòng chọn rạp chiếu phim thủ công.");
+      await handleRequestLocationManual();
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        await executeSendMessage(
+          agentSelection('locationProvided', { latitude, longitude }, buildBookingState(draft)),
+          "Tôi đã chia sẻ vị trí của mình"
+        );
+      },
+      async (error) => {
+        console.warn("Geolocation permission error:", error);
+        appendBot("Không thể truy cập vị trí của bạn. Vui lòng chọn rạp chiếu phim thủ công.");
+        await handleRequestLocationManual();
+      }
+    );
+  }, [draft, executeSendMessage, appendBot]);
+
+  const handleRequestLocationManual = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const response = await identityAxios.post(
+        '/chatbot/chat',
+        { 
+          message: agentSelection('bookingPathSelected', { bookingPath: 'cinemaFirst' }, buildBookingState(draft, { bookingPath: 'cinemaFirst' })),
+          sessionId: chatSessionIdRef.current 
+        }
+      );
+      const botData = response.data?.data || {};
+      const actions = botData.uiActions || [];
+      const cleanFinalResponse = stripInternalChatMarkup(botData.response);
+      
+      setMessages(prev => [...prev, {
+        id: uid('bot'),
+        role: 'bot',
+        text: cleanFinalResponse || "Bạn chọn rạp thủ công dưới đây nhé:",
+        actions: actions,
+        createdAt: new Date().toISOString()
+      }]);
+    } catch {
+      appendBot("Lỗi tải danh sách rạp. Bạn hãy thử lại sau nhé.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [draft, appendBot]);
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text) return;
@@ -1878,6 +1974,8 @@ const ChatBot: React.FC = () => {
                         onOpenPayment={handleOpenPayment}
                         onCheckPayment={() => void checkPaymentAndRenderTicket()}
                         paymentChecking={paymentChecking}
+                        onShareLocation={handleRequestLocation}
+                        onManualLocation={handleRequestLocationManual}
                       />
                     ))}
                     {message.movies && message.movies.length > 0 && (

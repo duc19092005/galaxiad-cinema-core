@@ -47,6 +47,33 @@ def _language_name(lang: str) -> str:
     return mapping.get(lang.lower(), "Vietnamese")
 
 
+# fmt: off
+_FORMAT_ALIASES: list[tuple[str, list[str]]] = [
+    ("IMAX",       ["imax", "i-max", "màn hình lớn", "man hinh lon", "màn khổng lồ", "man khong lo"]),
+    ("4DX",        ["4dx", "4d", "bon chieu", "bốn chiều", "ghe rung", "ghế rung", "4-d", "bon-d"]),
+    ("3D",         ["3d", "ba chieu", "ba chiều", "phim nổi", "phim noi", "phim 3d", "ba-d", "3-d", "3 chieu", "3 chiều"]),
+    ("2D",         ["2d", "hai chieu", "hai chiều", "phim phẳng", "phim phang", "2-d", "hai-d", "2 chieu", "2 chiều"]),
+    ("Subtitles",  ["subtitles", "sub", "phụ đề", "phu de", "co phu de", "có phụ đề"]),
+    ("Dubbed",     ["dubbed", "dub", "lồng tiếng", "long tieng"]),
+]
+# fmt: on
+
+
+def _normalize_format(raw: str) -> str:
+    """Map informal / abbreviated format strings to canonical cinema format tags."""
+    if not raw:
+        return raw
+    lowered = raw.strip().lower()
+    for canonical, aliases in _FORMAT_ALIASES:
+        if lowered == canonical.lower():
+            return canonical
+        for alias in aliases:
+            if alias in lowered:
+                return canonical
+    # Return as-is uppercased if it looks like a known short token (e.g. "imax", "ScreenX")
+    return raw.strip().upper() if len(raw.strip()) <= 6 else raw.strip()
+
+
 def _build_chat_system_prompt(request: pb.ChatRequest) -> str:
     tool_context = (request.tool_context or "").strip()
     user_role = request.user_role or "Guest (Chưa đăng nhập)"
@@ -141,7 +168,9 @@ class AiServiceServicer(pb_grpc.AiServiceServicer):
 
     async def ClassifyIntent(self, request: pb.ClassifyIntentRequest, context) -> pb.ClassifyIntentResponse:
         """Classify user message into predefined Cinema intents."""
-        today = date.today()
+        from datetime import datetime, timezone
+        tz_vietnam = timezone(timedelta(hours=7))
+        today = datetime.now(tz_vietnam).date()
         today_str = today.strftime("%Y-%m-%d")
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
@@ -173,6 +202,10 @@ class AiServiceServicer(pb_grpc.AiServiceServicer):
             if isinstance(parameters, dict):
                 for k, v in parameters.items():
                     params_str[k] = str(v) if v is not None else ""
+
+            # Server-side format normalization: map informal Vietnamese phrases to canonical tags
+            if "format" in params_str:
+                params_str["format"] = _normalize_format(params_str["format"])
 
             return pb.ClassifyIntentResponse(intent=intent, parameters=params_str)
         except Exception:
