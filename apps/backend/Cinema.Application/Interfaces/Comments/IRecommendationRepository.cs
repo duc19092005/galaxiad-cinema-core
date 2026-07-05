@@ -33,6 +33,6 @@ public interface IRecommendationRepository
     Task<List<string>> LoadMoviePreferenceSnippetsAsync(IEnumerable<Guid> movieIds);
     Task<List<RecommendedMovieRes>> LoadRecommendedMoviesAsync(List<Guid> movieIds);
     Task<List<RecommendedMovieRes>> GetFallbackRecommendationsAsync(HashSet<Guid> excludedMovieIds, int take);
-    Task<List<MovieInfoEntity>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken);
-    Task<MovieInfoEntity?> GetMovieForEmbeddingAsync(Guid movieId, CancellationToken cancellationToken);
+    Task<List<AiMovieItem>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken);
+    Task<AiMovieItem?> GetMovieForEmbeddingAsync(Guid movieId, CancellationToken cancellationToken);
 }

@@ -147,9 +147,9 @@ public class StaffRepository : IStaffRepository
         var endUtcLimit = dateOnly.AddDays(1);
 
         var rawList = await _dbContext.Set<CinemaShiftScheduleEntity>()
+            .AsNoTracking()
             .Include(s => s.RoleListInfoEntity)
-            .Include(s => s.DepartmentEntity)
-            .Include(s => s.StaffShiftRegistrationEntities)
+            .Include(s => s.CinemaInfoEntity)
             .Where(s => s.CinemaId == cinemaId 
                      && s.DepartmentId == departmentId 
                      && s.Date >= startUtcLimit

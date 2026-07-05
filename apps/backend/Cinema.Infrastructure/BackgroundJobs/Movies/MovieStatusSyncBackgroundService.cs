@@ -59,97 +59,75 @@ public class MovieStatusSyncBackgroundService : BackgroundService
 
         _logger.LogInformation("MovieStatusSyncBackgroundService running sync at UTC {Time}", utcNow);
 
-        // 1. Cập nhật MovieInfoEntity: nếu Current > EndedDate -> IsActive = false
+        // 1. Cập nhật MovieInfoEntity: nếu Current > EndedDate -> IsActive = false, IsCommingSoon = false
         var movieRepository = unitOfWork.Repository<MovieInfoEntity>();
         var scheduleRepository = unitOfWork.Repository<MovieScheduleInfoEntity>();
 
-        var overDueMovies = await movieRepository.Query()
+        var overDueMovieIds = await movieRepository.Query()
             .Where(m => (m.IsActive == true || m.IsCommingSoon == true) && m.EndedDate < utcNow && !m.IsDeleted)
+            .Select(m => m.MovieId)
             .ToListAsync(cancellationToken);
 
-        if (overDueMovies.Any())
+        if (overDueMovieIds.Any())
         {
-            foreach (var movie in overDueMovies)
-            {
-                movie.IsActive = false;
-                movie.IsCommingSoon = false;
-            }
-            foreach (var movie in overDueMovies)
-            {
-                movieRepository.Update(movie);
-            }
-            _logger.LogInformation($"Updated {overDueMovies.Count} movies to IsActive = false, IsCommingSoon = false due to EndedDate.");
+            await movieRepository.Query()
+                .Where(m => overDueMovieIds.Contains(m.MovieId))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(m => m.IsActive, false)
+                    .SetProperty(m => m.IsCommingSoon, false), cancellationToken);
+
+            _logger.LogInformation($"Updated {overDueMovieIds.Count} movies to IsActive = false, IsCommingSoon = false due to EndedDate.");
         }
 
         // Nếu ActiveAt <= Current < EndedDate -> IsActive = true, IsCommingSoon = false
-        var startingMovies = await movieRepository.Query()
+        var startingMovieIds = await movieRepository.Query()
             .Where(m => (m.IsActive == false || m.IsCommingSoon == true) 
                         && m.ActiveAt <= utcNow && m.EndedDate > utcNow && !m.IsDeleted)
+            .Select(m => m.MovieId)
             .ToListAsync(cancellationToken);
 
-        if (startingMovies.Any())
+        if (startingMovieIds.Any())
         {
-            foreach (var movie in startingMovies)
-            {
-                movie.IsActive = true;
-                movie.IsCommingSoon = false;
-            }
-            foreach (var movie in startingMovies)
-            {
-                movieRepository.Update(movie);
-            }
-            _logger.LogInformation($"Updated {startingMovies.Count} movies to IsActive = true, IsCommingSoon = false.");
+            await movieRepository.Query()
+                .Where(m => startingMovieIds.Contains(m.MovieId))
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(m => m.IsActive, true)
+                    .SetProperty(m => m.IsCommingSoon, false), cancellationToken);
+
+            _logger.LogInformation($"Updated {startingMovieIds.Count} movies to IsActive = true, IsCommingSoon = false.");
         }
 
         // 2. Cập nhật MovieScheduleInfoEntity (Lịch chiếu): nếu Current > EndedTime -> IsActive = false
-        var overDueSchedules = await scheduleRepository.Query()
+        var overDueScheduleCount = await scheduleRepository.Query()
             .Where(s => s.IsActive == true && s.EndedTime < utcNow && !s.IsDeleted)
-            .ToListAsync(cancellationToken);
+            .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.IsActive, false), cancellationToken);
 
-        if (overDueSchedules.Any())
+        if (overDueScheduleCount > 0)
         {
-            foreach (var schedule in overDueSchedules)
-            {
-                schedule.IsActive = false;
-            }
-            foreach (var schedule in overDueSchedules)
-            {
-                scheduleRepository.Update(schedule);
-            }
-            _logger.LogInformation($"Updated {overDueSchedules.Count} schedules to IsActive = false due to EndedTime.");
+            _logger.LogInformation($"Updated {overDueScheduleCount} schedules to IsActive = false due to EndedTime.");
         }
         
         // Cập nhật lịch chiếu tới giờ chạy (StartTime <= Current < EndedTime)
-        var startingSchedules = await scheduleRepository.Query()
+        var startingScheduleCount = await scheduleRepository.Query()
             .Where(s => s.IsActive == false && s.StartTime <= utcNow && s.EndedTime > utcNow && !s.IsDeleted)
-            .ToListAsync(cancellationToken);
+            .ExecuteUpdateAsync(setters => setters.SetProperty(s => s.IsActive, true), cancellationToken);
             
-        if (startingSchedules.Any())
+        if (startingScheduleCount > 0)
         {
-            foreach (var schedule in startingSchedules)
-            {
-                schedule.IsActive = true;
-            }
-            foreach (var schedule in startingSchedules)
-            {
-                scheduleRepository.Update(schedule);
-            }
-            _logger.LogInformation($"Updated {startingSchedules.Count} schedules to IsActive = true.");
+            _logger.LogInformation($"Updated {startingScheduleCount} schedules to IsActive = true.");
         }
 
-        if (overDueMovies.Any() || startingMovies.Any() || overDueSchedules.Any() || startingSchedules.Any())
+        // Đồng bộ AI (nếu có cập nhật phim)
+        if (startingMovieIds.Any() || overDueMovieIds.Any())
         {
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Changes saved to database successfully.");
-
-            foreach (var movie in startingMovies)
+            foreach (var movieId in startingMovieIds)
             {
-                await aiMovieEmbeddingSyncService.SyncMovieAsync(movie.MovieId, cancellationToken);
+                await aiMovieEmbeddingSyncService.SyncMovieAsync(movieId, cancellationToken);
             }
 
-            foreach (var movie in overDueMovies)
+            foreach (var movieId in overDueMovieIds)
             {
-                await aiMovieEmbeddingSyncService.DeleteMovieAsync(movie.MovieId, cancellationToken);
+                await aiMovieEmbeddingSyncService.DeleteMovieAsync(movieId, cancellationToken);
             }
         }
     }

@@ -32,13 +32,11 @@ public class GetMovieDetailUseCase
             return cached;
         }
 
-        var movie = await _repository.GetMovieDetailAsync(movieId);
-        if (movie == null)
+        var dto = await _repository.GetMovieDetailDtoAsync(movieId);
+        if (dto == null)
         {
             throw new NotFoundException(Messages.Movie.NotFoundById(movieId));
         }
-
-        var dto = BookingMapper.ToResPublicMovieDetailDto(movie);
 
         var response = new BaseResponse<ResPublicMovieDetailDto>
         {

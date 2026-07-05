@@ -17,44 +17,14 @@ public class GetTicketDataUseCase
 
     public async Task<ResTicketPdfDto> ExecuteAsync(Guid orderId)
     {
-        var order = await _repo.GetOrderWithDetailsAsync(orderId);
+        var ticket = await _repo.GetTicketDataAsync(orderId);
 
-        if (order == null || order.OrderStatus != OrderStatusEnum.Booked)
+        if (ticket == null)
         {
             throw new NotFoundException(Messages.Booking.TicketNotFoundOrNotPaid);
         }
 
-        return new ResTicketPdfDto
-        {
-            OrderId = order.OrderId,
-            CustomerName = order.CustomerName,
-            CustomerEmail = order.CustomerEmail,
-            OrderDate = order.OrderDate,
-            TotalPrice = order.TotalPrice,
-            VnPayTransactionId = order.VnPayTransactionId,
-            MovieName = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
-            MovieImageUrl = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieImageUrl).FirstOrDefault() ?? "",
-            CinemaName = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
-            CinemaAddress = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaLocation).FirstOrDefault() ?? "",
-            AuditoriumNumber = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
-            FormatName = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.MovieFormatInfoEntity!.MovieFormatName).FirstOrDefault() ?? "",
-            ShowTime = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
-            EndedTime = order.OrderDetailsInfo
-                .Select(od => od.MovieScheduleInfoEntity.EndedTime).FirstOrDefault(),
-            Seats = order.OrderDetailsInfo.Select(od => new TicketSeatDetail
-            {
-                SeatNumber = od.SeatsInfoEntity.SeatNumber,
-                SegmentName = od.UserSegmentsInfoEntity.UserSegmentName,
-                PriceEach = od.PriceEach
-            }).ToList()
-        };
+        return ticket;
     }
 
     public byte[] GenerateTicketPdf(ResTicketPdfDto ticket)

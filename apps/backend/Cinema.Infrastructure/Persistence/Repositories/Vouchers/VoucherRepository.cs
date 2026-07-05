@@ -59,8 +59,7 @@ public class VoucherRepository : IVoucherRepository
     public async Task<List<VoucherDto>> GetAllAsync()
     {
         return await _dbContext.Set<VoucherInfoEntity>()
-            .Include(v => v.RoleListInfoEntity)
-            .Include(v => v.VoucherMembershipRanks)
+            .AsNoTracking()
             .Select(v => new VoucherDto
             {
                 VoucherId = v.voucherId,
@@ -85,11 +84,10 @@ public class VoucherRepository : IVoucherRepository
     {
         var now = DateTime.UtcNow;
         return await _dbContext.Set<VoucherInfoEntity>()
-            .Include(v => v.RoleListInfoEntity)
-            .Include(v => v.VoucherMembershipRanks)
             .Where(v => v.RemainingQuantity > 0 && 
                         (v.ValidFrom == null || v.ValidFrom <= now) &&
                         (v.ValidTo == null || v.ValidTo >= now))
+            .AsNoTracking()
             .Select(v => new VoucherDto
             {
                 VoucherId = v.voucherId,
@@ -113,9 +111,9 @@ public class VoucherRepository : IVoucherRepository
     public async Task<List<UserVoucherDto>> GetMyVouchersAsync(Guid userId)
     {
         return await _dbContext.Set<UserVoucherEntity>()
-            .Include(uv => uv.VoucherInfoEntity)
             .Where(uv => uv.UserId == userId)
             .OrderByDescending(uv => uv.PurchasedAt)
+            .AsNoTracking()
             .Select(uv => new UserVoucherDto
             {
                 UserVoucherId = uv.UserVoucherId,

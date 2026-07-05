@@ -29,29 +29,7 @@ public class GetAdvancedSearchSchedulesUseCase
 
         var schedules = await _repository.GetAdvancedSearchSchedulesAsync(startUtc, endUtc, nowUtc, movieId, cinemaId);
 
-        var projected = schedules.Select(s => new
-        {
-            s.MovieScheduleInfoId,
-            s.StartTime,
-            s.EndedTime,
-            s.MovieId,
-            MovieName = s.MovieInfoEntity?.MovieName ?? string.Empty,
-            MovieImageUrl = s.MovieInfoEntity?.MovieImageUrl ?? string.Empty,
-            MovieDuration = s.MovieInfoEntity?.MovieDuration ?? 0,
-            MovieDescription = s.MovieInfoEntity?.MovieDescription ?? string.Empty,
-            MovieRequiredAgeSymbol = s.MovieInfoEntity?.MovieRequiredAgeEntity?.MovieRequiredAgeSymbol?.Trim() ?? string.Empty,
-            MovieGenres = s.MovieInfoEntity?.MovieGenreMovieInfoEntity?.Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList() ?? [],
-            CinemaId = s.AuditoriumInfoEntities?.CinemaId ?? Guid.Empty,
-            CinemaName = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaName ?? string.Empty,
-            CinemaLocation = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaLocation ?? string.Empty,
-            CinemaCity = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaCity ?? string.Empty,
-            FormatId = s.MovieFormatId,
-            FormatName = s.MovieFormatInfoEntity?.MovieFormatName ?? string.Empty,
-            AuditoriumId = s.AuditoriumId,
-            AuditoriumNumber = s.AuditoriumInfoEntities?.AuditoriumNumber ?? string.Empty
-        }).ToList();
-
-        var result = projected.GroupBy(s => new { s.MovieId, s.MovieName, s.MovieImageUrl, s.MovieDuration, s.MovieRequiredAgeSymbol, s.MovieDescription })
+        var result = schedules.GroupBy(s => new { s.MovieId, s.MovieName, s.MovieImageUrl, s.MovieDuration, s.MovieRequiredAgeSymbol, s.MovieDescription })
             .Select(mGroup => new ResAdvancedSearchMovieDto
             {
                 MovieId = mGroup.Key.MovieId,
@@ -75,7 +53,7 @@ public class GetAdvancedSearchSchedulesUseCase
                                 FormatName = fGroup.Key.FormatName,
                                 Showtimes = fGroup.Select(st => new ShowtimeSlot
                                 {
-                                    ScheduleId = st.MovieScheduleInfoId,
+                                    ScheduleId = st.ScheduleId,
                                     StartTime = DateTimeHelper.ToVietnamTime(st.StartTime),
                                     EndedTime = DateTimeHelper.ToVietnamTime(st.EndedTime),
                                     AuditoriumId = st.AuditoriumId,

@@ -121,7 +121,7 @@ public class StaffShiftRepository : IStaffShiftRepository
             .ToListAsync();
     }
 
-    public async Task<List<OrderInfoEntity>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs)
+    public async Task<List<Cinema.Application.Dtos.Booking.ResStaffSaleHistoryDto>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs)
     {
         if (logs.Count == 0) return [];
 
@@ -129,18 +129,22 @@ public class StaffShiftRepository : IStaffShiftRepository
         var to = logs.Max(l => l.EndedShiftTime ?? DateTime.UtcNow);
 
         return await _dbContext.Set<OrderInfoEntity>()
-            .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.MovieScheduleInfoEntity!)
-                    .ThenInclude(s => s.MovieInfoEntity!)
-            .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.MovieScheduleInfoEntity!)
-                    .ThenInclude(s => s.AuditoriumInfoEntities!)
-                        .ThenInclude(a => a.CinemaInfoEntity!)
-            .Include(o => o.OrderDetailsInfo)
-                .ThenInclude(d => d.SeatsInfoEntity!)
+            .AsNoTracking()
             .Where(o => o.StaffId == staffId && o.OrderDate >= from && o.OrderDate <= to)
             .OrderByDescending(o => o.OrderDate)
-            .AsNoTracking()
+            .Select(o => new Cinema.Application.Dtos.Booking.ResStaffSaleHistoryDto
+            {
+                OrderId = o.OrderId,
+                BookingCode = o.BookingCode,
+                OrderDate = o.OrderDate,
+                TotalPrice = o.TotalPrice,
+                OrderStatus = o.OrderStatus.ToString(),
+                MovieName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
+                CinemaName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
+                AuditoriumNumber = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
+                StartTime = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault(),
+                Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList()
+            })
             .ToListAsync();
     }
 

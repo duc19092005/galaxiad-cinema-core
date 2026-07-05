@@ -42,9 +42,7 @@ public class GetUserBookingHistoryUseCase
         }
 
         var nowUtc = DateTime.UtcNow;
-        var orders = await _repo.GetUserBookingHistoryAsync(userId, userEmail);
-
-        var dtos = orders.Select(o => BookingMapper.ToResUserBookingHistoryDto(o, nowUtc)).ToList();
+        var dtos = await _repo.GetUserBookingHistoryDtosAsync(userId, userEmail, nowUtc);
 
         var response = new BaseResponse<List<ResUserBookingHistoryDto>>
         {

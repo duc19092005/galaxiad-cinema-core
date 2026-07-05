@@ -273,6 +273,7 @@ public class ResUserAccountInfoDto
 public class ResUserBookingHistoryDto
 {
     public Guid OrderId { get; set; }
+    public Guid MovieId { get; set; }
     public DateTime OrderDate { get; set; }
     public decimal TotalPrice { get; set; }
     public string OrderStatus { get; set; } = string.Empty;
@@ -346,4 +347,54 @@ public class ResAdvancedSearchMovieDto
     public List<string> MovieGenres { get; set; } = [];
     
     public List<ResPublicCinemaShowtimeDto> Cinemas { get; set; } = [];
+}
+
+public class ResChatbotBookingStatusDto
+{
+    public Guid? UserId { get; set; }
+    public string BookingCode { get; set; } = string.Empty;
+    public string OrderStatus { get; set; } = string.Empty;
+    public DateTime OrderDate { get; set; }
+    public decimal TotalPrice { get; set; }
+    public decimal FinalAmount { get; set; }
+    public string MovieName { get; set; } = string.Empty;
+    public string CinemaName { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
+    public List<string> Seats { get; set; } = [];
+}
+
+public class ScheduleSearchRowDto
+{
+    public Guid ScheduleId { get; set; }
+    public DateTime StartTime { get; set; }
+    public DateTime EndedTime { get; set; }
+    public Guid MovieId { get; set; }
+    public string MovieName { get; set; } = string.Empty;
+    public string MovieImageUrl { get; set; } = string.Empty;
+    public int MovieDuration { get; set; }
+    public string MovieDescription { get; set; } = string.Empty;
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
+    public List<string> MovieGenres { get; set; } = [];
+    public Guid CinemaId { get; set; }
+    public string CinemaName { get; set; } = string.Empty;
+    public string CinemaLocation { get; set; } = string.Empty;
+    public string CinemaCity { get; set; } = string.Empty;
+    public Guid FormatId { get; set; }
+    public string FormatName { get; set; } = string.Empty;
+    public Guid AuditoriumId { get; set; }
+    public string AuditoriumNumber { get; set; } = string.Empty;
+}
+
+public class SeatMapScheduleQueryDto
+{
+    public Guid ScheduleId { get; set; }
+    public string AuditoriumNumber { get; set; } = string.Empty;
+    public string MovieName { get; set; } = string.Empty;
+    public string FormatName { get; set; } = string.Empty;
+    public DateTime StartTime { get; set; }
+    public int CenterRowStart { get; set; }
+    public int CenterRowEnd { get; set; }
+    public int CenterColStart { get; set; }
+    public int CenterColEnd { get; set; }
+    public List<SeatDto> Seats { get; set; } = [];
 }

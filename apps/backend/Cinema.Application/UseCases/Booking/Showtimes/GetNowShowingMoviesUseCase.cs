@@ -33,9 +33,7 @@ public class GetNowShowingMoviesUseCase
 
         var totalCount = await _repository.GetNowShowingMoviesCountAsync(keyword);
         var skip = (pageIndex - 1) * pageSize;
-        var movies = await _repository.GetNowShowingMoviesPagedAsync(keyword, skip, pageSize);
-
-        var list = movies.Select(BookingMapper.ToResPublicMovieListDto).ToList();
+        var list = await _repository.GetNowShowingMovieDtosPagedAsync(keyword, skip, pageSize);
 
         var response = new BaseResponse<PagedResult<ResPublicMovieListDto>>
         {

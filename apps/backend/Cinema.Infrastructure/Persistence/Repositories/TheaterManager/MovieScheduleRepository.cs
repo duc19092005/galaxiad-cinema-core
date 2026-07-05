@@ -42,9 +42,6 @@ public class MovieScheduleRepository : IMovieScheduleRepository
     {
         return await _dbContext.Set<AuditoriumInfoEntities>()
             .AsNoTracking()
-            .Include(x => x.SeatsInfoEntity)
-            .Include(x => x.AuditoriumFormatInfosList)
-                .ThenInclude(y => y.MovieFormatInfoEntity)
             .Where(x => x.CinemaId == cinemaId && x.IsActive && !x.IsDeleted)
             .Select(x => new TheaterManagerAuditoriumInfos
             {
@@ -68,8 +65,6 @@ public class MovieScheduleRepository : IMovieScheduleRepository
     {
         return await _dbContext.Set<MovieScheduleInfoEntity>()
             .AsNoTracking()
-            .Include(x => x.MovieInfoEntity)
-            .Include(x => x.MovieFormatInfoEntity)
             .Where(x => x.AuditoriumId == auditoriumId)
             .Select(x => new TheaterManagerMovieScheduleResDto
             {
@@ -94,8 +89,7 @@ public class MovieScheduleRepository : IMovieScheduleRepository
 
     public async Task<bool> IsAuditoriumExistForManagerAsync(Guid auditoriumId, Guid managerId, bool isAdmin)
     {
-        var query = _dbContext.Set<AuditoriumInfoEntities>()
-            .Include(x => x.CinemaInfoEntity);
+        var query = _dbContext.Set<AuditoriumInfoEntities>();
         if (isAdmin)
         {
             return await query.AnyAsync(x => x.AuditoriumId == auditoriumId);
@@ -105,8 +99,7 @@ public class MovieScheduleRepository : IMovieScheduleRepository
 
     public async Task<bool> IsAuditoriumExistForTheaterOrFacilitiesManagerAsync(Guid auditoriumId, Guid managerId, bool isAdmin)
     {
-        var query = _dbContext.Set<AuditoriumInfoEntities>()
-            .Include(x => x.CinemaInfoEntity);
+        var query = _dbContext.Set<AuditoriumInfoEntities>();
         if (isAdmin)
         {
             return await query.AnyAsync(x => x.AuditoriumId == auditoriumId);

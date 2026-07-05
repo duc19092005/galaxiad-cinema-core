@@ -69,26 +69,41 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 .Any(mc => mc.CinemaId == cinemaId.Value));
         }
 
-        return await query.Select(x => new MovieInfoRes
+        var rawMovies = await query.AsNoTracking().Select(x => new
         {
             MovieId = x.MovieId,
             MovieName = x.MovieName,
             MovieDuration = x.MovieDuration,
             MoviePosterURL = x.MovieImageUrl,
             MovieBannerURL = x.MovieBannerUrl,
-            MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-            MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
-            MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),
+            MovieRequiredAge = x.MovieRequiredAgeEntity != null ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol : string.Empty,
+            MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
+            MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
             IsCommingSoon = x.IsCommingSoon,
             ExpectedReleaseDate = x.ActiveAt
         }).ToListAsync();
+
+        return rawMovies.Select(x => new MovieInfoRes
+        {
+            MovieId = x.MovieId,
+            MovieName = x.MovieName,
+            MovieDuration = x.MovieDuration,
+            MoviePosterURL = x.MoviePosterURL,
+            MovieBannerURL = x.MovieBannerURL,
+            MovieRequiredAge = (x.MovieRequiredAge ?? string.Empty).Trim(),
+            MovieFormatInfos = string.Join(", ", x.MovieFormats),
+            MovieCategoryInfos = string.Join(", ", x.MovieCategories),
+            IsCommingSoon = x.IsCommingSoon,
+            ExpectedReleaseDate = x.ExpectedReleaseDate
+        }).ToList();
     }
 
     public async Task<MovieDetailInfoRes?> GetMovieDetailAsync(Guid movieId)
     {
-        return await _dbContext.Set<MovieInfoEntity>()
+        var rawMovie = await _dbContext.Set<MovieInfoEntity>()
             .Where(x => !x.IsDeleted && x.IsActive && x.MovieId == movieId)
-            .Select(x => new MovieDetailInfoRes
+            .AsNoTracking()
+            .Select(x => new
             {
                 MovieId = x.MovieId,
                 MovieName = x.MovieName,
@@ -96,15 +111,34 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 MovieDescription = x.MovieDescription,
                 MoviePosterURL = x.MovieImageUrl,
                 MovieBannerURL = x.MovieBannerUrl,
-                MovieRequiredAge = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
-                MovieFormatInfos = string.Join(", ", x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName)),
+                MovieRequiredAge = x.MovieRequiredAgeEntity != null ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol : string.Empty,
+                MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 IsCommingSoon = x.IsCommingSoon,
-                MovieCategoryInfos = string.Join(", ", x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName)),
+                MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 ReleaseDate = x.ActiveAt,
                 Actor = x.Actors,
                 Director = x.Director
             })
             .FirstOrDefaultAsync();
+
+        if (rawMovie == null) return null;
+
+        return new MovieDetailInfoRes
+        {
+            MovieId = rawMovie.MovieId,
+            MovieName = rawMovie.MovieName,
+            MovieDuration = rawMovie.MovieDuration,
+            MovieDescription = rawMovie.MovieDescription,
+            MoviePosterURL = rawMovie.MoviePosterURL,
+            MovieBannerURL = rawMovie.MovieBannerURL,
+            MovieRequiredAge = (rawMovie.MovieRequiredAge ?? string.Empty).Trim(),
+            MovieFormatInfos = string.Join(", ", rawMovie.MovieFormats),
+            IsCommingSoon = rawMovie.IsCommingSoon,
+            MovieCategoryInfos = string.Join(", ", rawMovie.MovieCategories),
+            ReleaseDate = rawMovie.ReleaseDate,
+            Actor = rawMovie.Actor,
+            Director = rawMovie.Director
+        };
     }
 
     public async Task<List<DateTime>> GetScheduleUtcTimesAsync(Guid movieId, string? city)

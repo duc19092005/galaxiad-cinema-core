@@ -32,16 +32,16 @@ public class GetSeatMapUseCase
 
         var seatMap = new ResPublicSeatMapDto
         {
-            ScheduleId = schedule.MovieScheduleInfoId,
-            AuditoriumNumber = schedule.AuditoriumInfoEntities?.AuditoriumNumber ?? string.Empty,
-            MovieName = schedule.MovieInfoEntity?.MovieName ?? string.Empty,
-            FormatName = schedule.MovieFormatInfoEntity?.MovieFormatName ?? string.Empty,
+            ScheduleId = schedule.ScheduleId,
+            AuditoriumNumber = schedule.AuditoriumNumber,
+            MovieName = schedule.MovieName,
+            FormatName = schedule.FormatName,
             StartTime = schedule.StartTime,
-            CenterRowStart = schedule.AuditoriumInfoEntities?.CenterRowStart ?? 0,
-            CenterRowEnd = schedule.AuditoriumInfoEntities?.CenterRowEnd ?? 0,
-            CenterColStart = schedule.AuditoriumInfoEntities?.CenterColStart ?? 0,
-            CenterColEnd = schedule.AuditoriumInfoEntities?.CenterColEnd ?? 0,
-            Seats = schedule.AuditoriumInfoEntities!.SeatsInfoEntity.Select(s => new SeatDto
+            CenterRowStart = schedule.CenterRowStart,
+            CenterRowEnd = schedule.CenterRowEnd,
+            CenterColStart = schedule.CenterColStart,
+            CenterColEnd = schedule.CenterColEnd,
+            Seats = schedule.Seats.Select(s => new SeatDto
             {
                 SeatId = s.SeatId,
                 SeatNumber = s.SeatNumber,

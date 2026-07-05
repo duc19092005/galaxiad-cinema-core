@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
 using Microsoft.EntityFrameworkCore;
@@ -60,18 +61,33 @@ public class BookingCatalogRepository : IBookingCatalogRepository
         return await BuildNowShowingMoviesQuery(searchParam).CountAsync();
     }
 
-    public async Task<List<MovieInfoEntity>> GetNowShowingMoviesPagedAsync(string? searchParam, int skip, int take)
+
+    public async Task<List<ResPublicMovieListDto>> GetNowShowingMovieDtosPagedAsync(string? searchParam, int skip, int take)
     {
         return await BuildNowShowingMoviesQuery(searchParam)
-            .Include(x => x.MovieRequiredAgeEntity)
-            .Include(x => x.MovieGenreMovieInfoEntity)
-                .ThenInclude(g => g.MovieGenreInfoEntity)
-            .Include(x => x.MovieFormatMovieInfoEntity)
-                .ThenInclude(f => f.MovieFormatInfoEntity)
             .OrderByDescending(x => x.CreatedAt)
             .Skip(skip)
             .Take(take)
             .AsNoTracking()
+            .Select(x => new ResPublicMovieListDto
+            {
+                MovieId = x.MovieId,
+                MovieName = x.MovieName,
+                MovieImageUrl = x.MovieImageUrl,
+                MovieDescription = x.MovieDescription,
+                MovieDuration = x.MovieDuration,
+                StartedDate = x.ActiveAt,
+                EndedDate = x.EndedDate,
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity != null
+                    ? (x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol ?? "P").Trim()
+                    : "P",
+                MovieGenres = x.MovieGenreMovieInfoEntity
+                    .Select(g => g.MovieGenreInfoEntity.MovieGenreName)
+                    .ToList(),
+                MovieFormats = x.MovieFormatMovieInfoEntity
+                    .Select(f => f.MovieFormatInfoEntity.MovieFormatName)
+                    .ToList()
+            })
             .ToListAsync();
     }
 
@@ -80,18 +96,33 @@ public class BookingCatalogRepository : IBookingCatalogRepository
         return await BuildComingSoonMoviesQuery(searchParam).CountAsync();
     }
 
-    public async Task<List<MovieInfoEntity>> GetComingSoonMoviesPagedAsync(string? searchParam, int skip, int take)
+
+    public async Task<List<ResPublicMovieListDto>> GetComingSoonMovieDtosPagedAsync(string? searchParam, int skip, int take)
     {
         return await BuildComingSoonMoviesQuery(searchParam)
-            .Include(x => x.MovieRequiredAgeEntity)
-            .Include(x => x.MovieGenreMovieInfoEntity)
-                .ThenInclude(g => g.MovieGenreInfoEntity)
-            .Include(x => x.MovieFormatMovieInfoEntity)
-                .ThenInclude(f => f.MovieFormatInfoEntity)
             .OrderByDescending(x => x.CreatedAt)
             .Skip(skip)
             .Take(take)
             .AsNoTracking()
+            .Select(x => new ResPublicMovieListDto
+            {
+                MovieId = x.MovieId,
+                MovieName = x.MovieName,
+                MovieImageUrl = x.MovieImageUrl,
+                MovieDescription = x.MovieDescription,
+                MovieDuration = x.MovieDuration,
+                StartedDate = x.ActiveAt,
+                EndedDate = x.EndedDate,
+                MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity != null
+                    ? (x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol ?? "P").Trim()
+                    : "P",
+                MovieGenres = x.MovieGenreMovieInfoEntity
+                    .Select(g => g.MovieGenreInfoEntity.MovieGenreName)
+                    .ToList(),
+                MovieFormats = x.MovieFormatMovieInfoEntity
+                    .Select(f => f.MovieFormatInfoEntity.MovieFormatName)
+                    .ToList()
+            })
             .ToListAsync();
     }
 
@@ -105,6 +136,36 @@ public class BookingCatalogRepository : IBookingCatalogRepository
                 .ThenInclude(f => f.MovieFormatInfoEntity)
             .Where(x => x.MovieId == movieId && !x.IsDeleted)
             .AsNoTracking()
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<ResPublicMovieDetailDto?> GetMovieDetailDtoAsync(Guid movieId)
+    {
+        return await _dbContext.Set<MovieInfoEntity>()
+            .Where(x => x.MovieId == movieId && !x.IsDeleted)
+            .AsNoTracking()
+            .Select(movie => new ResPublicMovieDetailDto
+            {
+                MovieId = movie.MovieId,
+                MovieName = movie.MovieName,
+                MovieImageUrl = movie.MovieImageUrl,
+                MovieDescription = movie.MovieDescription,
+                TrailerUrl = movie.TrailerUrl,
+                Director = movie.Director,
+                Actors = movie.Actors,
+                MovieDuration = movie.MovieDuration,
+                StartedDate = movie.ActiveAt,
+                EndedDate = movie.EndedDate,
+                MovieRequiredAgeSymbol = movie.MovieRequiredAgeEntity != null
+                    ? (movie.MovieRequiredAgeEntity.MovieRequiredAgeSymbol ?? "P").Trim()
+                    : "P",
+                MovieGenres = movie.MovieGenreMovieInfoEntity
+                    .Select(g => g.MovieGenreInfoEntity.MovieGenreName)
+                    .ToList(),
+                MovieFormats = movie.MovieFormatMovieInfoEntity
+                    .Select(f => f.MovieFormatInfoEntity.MovieFormatName)
+                    .ToList()
+            })
             .FirstOrDefaultAsync();
     }
 

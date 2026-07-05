@@ -19,9 +19,33 @@ public class BookingPricingRepository : IBookingPricingRepository
     public async Task<MovieScheduleInfoEntity?> GetScheduleForPricingAsync(Guid scheduleId)
     {
         return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Include(s => s.MovieFormatInfoEntity)
-            .Include(s => s.AuditoriumInfoEntities)
-            .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);
+            .Where(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted)
+            .AsNoTracking()
+            .Select(s => new MovieScheduleInfoEntity
+            {
+                MovieScheduleInfoId = s.MovieScheduleInfoId,
+                MovieId = s.MovieId,
+                AuditoriumId = s.AuditoriumId,
+                MovieFormatId = s.MovieFormatId,
+                StartTime = s.StartTime,
+                EndedTime = s.EndedTime,
+                MovieFormatInfoEntity = s.MovieFormatInfoEntity == null
+                    ? null
+                    : new MovieFormatInfoEntity
+                    {
+                        MovieFormatId = s.MovieFormatInfoEntity.MovieFormatId,
+                        MovieFormatName = s.MovieFormatInfoEntity.MovieFormatName,
+                        MovieFormatPrice = s.MovieFormatInfoEntity.MovieFormatPrice
+                    },
+                AuditoriumInfoEntities = s.AuditoriumInfoEntities == null
+                    ? null
+                    : new AuditoriumInfoEntities
+                    {
+                        AuditoriumId = s.AuditoriumInfoEntities.AuditoriumId,
+                        CinemaId = s.AuditoriumInfoEntities.CinemaId
+                    }
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<UserSegmentsInfoEntity>> GetSegmentsAsync()
@@ -32,6 +56,7 @@ public class BookingPricingRepository : IBookingPricingRepository
                             seg.UserSegmentName == "Student" ? 1 :
                             seg.UserSegmentName == "Child" ? 2 :
                             seg.UserSegmentName == "Senior" ? 3 : 4)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -39,6 +64,7 @@ public class BookingPricingRepository : IBookingPricingRepository
     {
         return await _dbContext.Set<CinemaSurchargeInfosEntity>()
             .Where(s => s.CinemaId == cinemaId && s.MovieFormatId == formatId)
+            .AsNoTracking()
             .ToListAsync();
     }
 }

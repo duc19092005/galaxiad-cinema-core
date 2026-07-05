@@ -31,7 +31,7 @@ public class LocalizationMiddleware
             if (httpContext.Response.ContentType?.Contains("application/json") == true && !httpContext.Response.HasStarted)
             {
                 memoryStream.Seek(0, SeekOrigin.Begin);
-                using var reader = new StreamReader(memoryStream, Encoding.UTF8);
+                using var reader = new StreamReader(memoryStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
                 var responseBody = await reader.ReadToEndAsync();
 
                 if (!string.IsNullOrEmpty(responseBody))

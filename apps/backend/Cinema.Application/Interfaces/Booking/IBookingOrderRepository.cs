@@ -1,4 +1,5 @@
 using Cinema.Domain.Entities.CinemaInfos;
+using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.Vouchers;
@@ -21,4 +22,5 @@ public interface IBookingOrderRepository
     Task AddOrderAsync(OrderInfoEntity order);
     Task AddOrderDetailsRangeAsync(List<OrderDetailsInfo> details);
     Task<OrderInfoEntity?> GetOrderWithDetailsAsync(Guid orderId);
+    Task<ResTicketPdfDto?> GetTicketDataAsync(Guid orderId);
 }

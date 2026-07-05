@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
@@ -141,5 +142,54 @@ public class BookingOrderRepository : IBookingOrderRepository
                 .ThenInclude(od => od.UserSegmentsInfoEntity!)
             .AsNoTracking()
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
+    }
+
+    public async Task<ResTicketPdfDto?> GetTicketDataAsync(Guid orderId)
+    {
+        return await _dbContext.Set<OrderInfoEntity>()
+            .Where(o => o.OrderId == orderId && o.OrderStatus == OrderStatusEnum.Booked)
+            .AsNoTracking()
+            .Select(o => new ResTicketPdfDto
+            {
+                OrderId = o.OrderId,
+                CustomerName = o.CustomerName,
+                CustomerEmail = o.CustomerEmail,
+                OrderDate = o.OrderDate,
+                TotalPrice = o.TotalPrice,
+                VnPayTransactionId = o.VnPayTransactionId,
+                MovieName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName)
+                    .FirstOrDefault() ?? string.Empty,
+                MovieImageUrl = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieImageUrl)
+                    .FirstOrDefault() ?? string.Empty,
+                CinemaName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName)
+                    .FirstOrDefault() ?? string.Empty,
+                CinemaAddress = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaLocation)
+                    .FirstOrDefault() ?? string.Empty,
+                AuditoriumNumber = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber)
+                    .FirstOrDefault() ?? string.Empty,
+                FormatName = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.MovieFormatInfoEntity!.MovieFormatName)
+                    .FirstOrDefault() ?? string.Empty,
+                ShowTime = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.StartTime)
+                    .FirstOrDefault(),
+                EndedTime = o.OrderDetailsInfo
+                    .Select(od => od.MovieScheduleInfoEntity.EndedTime)
+                    .FirstOrDefault(),
+                Seats = o.OrderDetailsInfo
+                    .Select(od => new TicketSeatDetail
+                    {
+                        SeatNumber = od.SeatsInfoEntity.SeatNumber,
+                        SegmentName = od.UserSegmentsInfoEntity.UserSegmentName,
+                        PriceEach = od.PriceEach
+                    })
+                    .ToList()
+            })
+            .FirstOrDefaultAsync();
     }
 }

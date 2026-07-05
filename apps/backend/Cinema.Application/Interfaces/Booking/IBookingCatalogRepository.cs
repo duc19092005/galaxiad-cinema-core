@@ -1,5 +1,6 @@
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.MovieInfos;
+using Cinema.Application.Dtos.Booking;
 
 namespace Cinema.Application.Interfaces.Booking;
 
@@ -11,8 +12,9 @@ public interface IBookingCatalogRepository
     Task<List<string>> GetCitiesAsync();
     Task<List<MovieGenreInfoEntity>> GetGenresAsync();
     Task<int> GetNowShowingMoviesCountAsync(string? searchParam);
-    Task<List<MovieInfoEntity>> GetNowShowingMoviesPagedAsync(string? searchParam, int skip, int take);
+    Task<List<ResPublicMovieListDto>> GetNowShowingMovieDtosPagedAsync(string? searchParam, int skip, int take);
     Task<int> GetComingSoonMoviesCountAsync(string? searchParam);
-    Task<List<MovieInfoEntity>> GetComingSoonMoviesPagedAsync(string? searchParam, int skip, int take);
+    Task<List<ResPublicMovieListDto>> GetComingSoonMovieDtosPagedAsync(string? searchParam, int skip, int take);
     Task<MovieInfoEntity?> GetMovieDetailAsync(Guid movieId);
+    Task<ResPublicMovieDetailDto?> GetMovieDetailDtoAsync(Guid movieId);
 }

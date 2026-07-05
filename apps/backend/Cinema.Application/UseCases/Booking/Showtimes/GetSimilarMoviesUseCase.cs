@@ -58,15 +58,15 @@ public class GetSimilarMoviesUseCase
         }
 
         // 1. Load candidate pool (Now Showing + Coming Soon)
-        var showingMovies = await _repository.GetNowShowingMoviesPagedAsync(null, 0, 100);
-        var comingSoonMovies = await _repository.GetComingSoonMoviesPagedAsync(null, 0, 100);
+        var showingMovies = await _repository.GetNowShowingMovieDtosPagedAsync(null, 0, 100);
+        var comingSoonMovies = await _repository.GetComingSoonMovieDtosPagedAsync(null, 0, 100);
         var candidates = showingMovies.Concat(comingSoonMovies)
             .GroupBy(m => m.MovieId)
             .Select(g => g.First())
             .Where(m => m.MovieId != movieId)
             .ToList();
 
-        List<MovieInfoEntity> similarMovies = [];
+        List<ResPublicMovieListDto> similarMovies = [];
 
         // 2. Attempt AI embedding similarity recommendation
         var genresStr = string.Join(", ", targetMovie.MovieGenreMovieInfoEntity
@@ -101,7 +101,7 @@ public class GetSimilarMoviesUseCase
                     similarMovies = aiMovieIds
                         .Select(id => candidates.FirstOrDefault(c => c.MovieId == id))
                         .Where(m => m != null)
-                        .Cast<MovieInfoEntity>()
+                        .Cast<ResPublicMovieListDto>()
                         .Take(limit)
                         .ToList();
                 }
@@ -115,8 +115,8 @@ public class GetSimilarMoviesUseCase
         // 3. Fallback: Database-based genre matching
         if (similarMovies.Count < limit)
         {
-            var targetGenreIds = targetMovie.MovieGenreMovieInfoEntity
-                .Select(g => g.MovieGenreId)
+            var targetGenreNames = targetMovie.MovieGenreMovieInfoEntity
+                .Select(g => g.MovieGenreInfoEntity.MovieGenreName)
                 .ToHashSet();
 
             var currentSimilarIds = similarMovies.Select(m => m.MovieId).ToHashSet();
@@ -126,7 +126,7 @@ public class GetSimilarMoviesUseCase
                 .Select(m => new
                 {
                     Movie = m,
-                    MatchedGenreCount = m.MovieGenreMovieInfoEntity.Count(g => targetGenreIds.Contains(g.MovieGenreId))
+                    MatchedGenreCount = m.MovieGenres.Count(name => targetGenreNames.Contains(name))
                 })
                 .Where(x => x.MatchedGenreCount > 0)
                 .OrderByDescending(x => x.MatchedGenreCount)
@@ -149,7 +149,7 @@ public class GetSimilarMoviesUseCase
             similarMovies.AddRange(extraMovies);
         }
 
-        var dtoList = similarMovies.Select(BookingMapper.ToResPublicMovieListDto).ToList();
+        var dtoList = similarMovies;
 
         var finalResponse = new BaseResponse<List<ResPublicMovieListDto>>
         {

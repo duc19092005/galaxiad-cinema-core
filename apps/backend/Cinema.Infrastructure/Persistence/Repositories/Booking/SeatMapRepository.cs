@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Dtos.Booking;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Entities.UserInfos;
@@ -16,15 +17,35 @@ public class SeatMapRepository : ISeatMapRepository
         _dbContext = dbContext;
     }
 
-    public async Task<MovieScheduleInfoEntity?> GetScheduleForSeatMapAsync(Guid scheduleId)
+    public async Task<SeatMapScheduleQueryDto?> GetScheduleForSeatMapAsync(Guid scheduleId)
     {
         return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Include(s => s.MovieInfoEntity!)
-            .Include(s => s.MovieFormatInfoEntity!)
-            .Include(s => s.AuditoriumInfoEntities!)
-                .ThenInclude(a => a.SeatsInfoEntity!)
             .Where(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted)
             .AsNoTracking()
+            .Select(s => new SeatMapScheduleQueryDto
+            {
+                ScheduleId = s.MovieScheduleInfoId,
+                AuditoriumNumber = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.AuditoriumNumber : string.Empty,
+                MovieName = s.MovieInfoEntity != null ? s.MovieInfoEntity.MovieName : string.Empty,
+                FormatName = s.MovieFormatInfoEntity != null ? s.MovieFormatInfoEntity.MovieFormatName : string.Empty,
+                StartTime = s.StartTime,
+                CenterRowStart = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CenterRowStart : 0,
+                CenterRowEnd = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CenterRowEnd : 0,
+                CenterColStart = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CenterColStart : 0,
+                CenterColEnd = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CenterColEnd : 0,
+                Seats = s.AuditoriumInfoEntities != null
+                    ? s.AuditoriumInfoEntities.SeatsInfoEntity
+                        .Select(seat => new SeatDto
+                        {
+                            SeatId = seat.SeatId,
+                            SeatNumber = seat.SeatNumber,
+                            ColIndex = seat.ColIndex,
+                            RowIndex = seat.RowIndex,
+                            IsOccupied = false
+                        })
+                        .ToList()
+                    : new List<SeatDto>()
+            })
             .FirstOrDefaultAsync();
     }
 

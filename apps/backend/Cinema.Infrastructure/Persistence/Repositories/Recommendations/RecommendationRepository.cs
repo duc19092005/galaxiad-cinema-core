@@ -358,22 +358,53 @@ public class RecommendationRepository : IRecommendationRepository
             .ToList();
     }
 
-    public async Task<List<MovieInfoEntity>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken)
+    public async Task<List<AiMovieItem>> GetActiveMoviesForEmbeddingAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        return await _dbContext.Set<MovieInfoEntity>()
-            .Include(m => m.MovieGenreMovieInfoEntity)
-            .ThenInclude(g => g.MovieGenreInfoEntity)
+        var movieData = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
             .Where(m => !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && now <= m.EndedDate)
+            .Select(m => new
+            {
+                MovieId = m.MovieId,
+                MovieName = m.MovieName,
+                MovieDescription = m.MovieDescription,
+                Director = m.Director,
+                Actors = m.Actors,
+                Genres = m.MovieGenreMovieInfoEntity.Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList()
+            })
             .ToListAsync(cancellationToken);
+
+        return movieData.Select(m => new AiMovieItem
+        {
+            MovieId = m.MovieId.ToString(),
+            EmbeddingText = $"Tên phim: {m.MovieName}. Thể loại: {string.Join(", ", m.Genres)}. Mô tả: {m.MovieDescription}. Đạo diễn: {m.Director}. Diễn viên: {m.Actors}"
+        }).ToList();
     }
 
-    public async Task<MovieInfoEntity?> GetMovieForEmbeddingAsync(Guid movieId, CancellationToken cancellationToken)
+    public async Task<AiMovieItem?> GetMovieForEmbeddingAsync(Guid movieId, CancellationToken cancellationToken)
     {
-        return await _dbContext.Set<MovieInfoEntity>()
-            .Include(m => m.MovieGenreMovieInfoEntity)
-            .ThenInclude(g => g.MovieGenreInfoEntity)
-            .Where(m => m.MovieId == movieId)
+        var now = DateTime.UtcNow;
+        var m = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(m => m.MovieId == movieId && !m.IsDeleted && (m.IsActive || m.IsCommingSoon) && now <= m.EndedDate)
+            .Select(m => new
+            {
+                MovieId = m.MovieId,
+                MovieName = m.MovieName,
+                MovieDescription = m.MovieDescription,
+                Director = m.Director,
+                Actors = m.Actors,
+                Genres = m.MovieGenreMovieInfoEntity.Select(g => g.MovieGenreInfoEntity.MovieGenreName).ToList()
+            })
             .FirstOrDefaultAsync(cancellationToken);
+
+        if (m == null) return null;
+
+        return new AiMovieItem
+        {
+            MovieId = m.MovieId.ToString(),
+            EmbeddingText = $"Tên phim: {m.MovieName}. Thể loại: {string.Join(", ", m.Genres)}. Mô tả: {m.MovieDescription}. Đạo diễn: {m.Director}. Diễn viên: {m.Actors}"
+        };
     }
 }

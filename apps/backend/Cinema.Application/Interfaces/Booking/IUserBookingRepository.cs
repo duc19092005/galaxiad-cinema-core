@@ -1,10 +1,11 @@
 using Cinema.Domain.Entities.UserInfos;
+using Cinema.Application.Dtos.Booking;
 
 namespace Cinema.Application.Interfaces.Booking;
 
 public interface IUserBookingRepository
 {
-    Task<List<OrderInfoEntity>> GetUserBookingHistoryAsync(Guid userId, string userEmail);
+    Task<List<ResUserBookingHistoryDto>> GetUserBookingHistoryDtosAsync(Guid userId, string userEmail, DateTime nowUtc);
     Task<UserInfoEntity?> GetUserAccountInfoAsync(Guid userId);
-    Task<OrderInfoEntity?> GetOrderByBookingCodeAsync(string bookingCode);
+    Task<ResChatbotBookingStatusDto?> GetOrderByBookingCodeAsync(string bookingCode);
 }

@@ -30,10 +30,10 @@ public class GetCinemaShowtimesUseCase
 
         var cinemas = rawSchedules
             .GroupBy(s => new {
-                CinemaId = s.AuditoriumInfoEntities?.CinemaId ?? Guid.Empty,
-                CinemaName = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaName ?? string.Empty,
-                CinemaLocation = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaLocation ?? string.Empty,
-                CinemaCity = s.AuditoriumInfoEntities?.CinemaInfoEntity?.CinemaCity ?? string.Empty
+                s.CinemaId,
+                s.CinemaName,
+                s.CinemaLocation,
+                s.CinemaCity
             })
             .Select(cGroup => new ResPublicCinemaShowtimeDto
             {
@@ -42,8 +42,8 @@ public class GetCinemaShowtimesUseCase
                 CinemaLocation = cGroup.Key.CinemaLocation,
                 CinemaCity = cGroup.Key.CinemaCity,
                 FormatShowtimes = cGroup.GroupBy(f => new {
-                    FormatId = f.MovieFormatId,
-                    FormatName = f.MovieFormatInfoEntity?.MovieFormatName ?? string.Empty
+                    f.FormatId,
+                    f.FormatName
                 })
                 .Select(fGroup => new FormatShowtimeGroup
                 {
@@ -51,11 +51,11 @@ public class GetCinemaShowtimesUseCase
                     FormatName = fGroup.Key.FormatName,
                     Showtimes = fGroup.Select(s => new ShowtimeSlot
                     {
-                        ScheduleId = s.MovieScheduleInfoId,
+                        ScheduleId = s.ScheduleId,
                         StartTime = DateTimeHelper.ToVietnamTime(s.StartTime),
                         EndedTime = DateTimeHelper.ToVietnamTime(s.EndedTime),
                         AuditoriumId = s.AuditoriumId,
-                        AuditoriumNumber = s.AuditoriumInfoEntities?.AuditoriumNumber ?? string.Empty
+                        AuditoriumNumber = s.AuditoriumNumber
                     }).OrderBy(s => s.StartTime).ToList()
                 }).ToList()
             })

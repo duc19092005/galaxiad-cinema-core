@@ -35,25 +35,23 @@ public class GetMyBookingsContextProvider : IChatContextProvider
         }
 
         var account = await _repo.GetUserAccountInfoAsync(userId);
-        var orders = await _repo.GetUserBookingHistoryAsync(userId, account?.UserEmail ?? string.Empty);
         var nowUtc = DateTime.UtcNow;
+        var orders = await _repo.GetUserBookingHistoryDtosAsync(userId, account?.UserEmail ?? string.Empty, nowUtc);
 
         var result = orders.Select(o => new
         {
             o.OrderId,
             o.OrderDate,
             o.TotalPrice,
-            OrderStatus = o.OrderStatus.ToString(),
-            MovieId = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieId).FirstOrDefault(),
-            MovieName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.MovieInfoEntity!.MovieName).FirstOrDefault() ?? "",
-            CinemaName = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.CinemaInfoEntity.CinemaName).FirstOrDefault() ?? "",
-            AuditoriumNumber = o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.AuditoriumInfoEntities!.AuditoriumNumber).FirstOrDefault() ?? "",
-            StartTime = DateTimeHelper.ToVietnamTime(o.OrderDetailsInfo.Select(od => od.MovieScheduleInfoEntity.StartTime).FirstOrDefault()),
-            Seats = o.OrderDetailsInfo.Select(od => od.SeatsInfoEntity.SeatNumber).ToList(),
-            MovieAiringStatus = o.OrderDetailsInfo.Select(od =>
-                nowUtc < od.MovieScheduleInfoEntity.StartTime ? "Sắp chiếu (Upcoming)" :
-                (nowUtc >= od.MovieScheduleInfoEntity.StartTime && nowUtc <= od.MovieScheduleInfoEntity.EndedTime) ? "Đang chiếu (Airing)" : "Đã kết thúc (Finished)"
-            ).FirstOrDefault() ?? ""
+            o.OrderStatus,
+            o.MovieId,
+            o.MovieName,
+            o.CinemaName,
+            o.AuditoriumNumber,
+            StartTime = DateTimeHelper.ToVietnamTime(o.StartTime),
+            o.Seats,
+            MovieAiringStatus = o.MovieAiringStatus == "Upcoming" ? "Sắp chiếu (Upcoming)" :
+                                o.MovieAiringStatus == "Airing" ? "Đang chiếu (Airing)" : "Đã kết thúc (Finished)"
         }).ToList();
 
         return JsonSerializer.Serialize(result);

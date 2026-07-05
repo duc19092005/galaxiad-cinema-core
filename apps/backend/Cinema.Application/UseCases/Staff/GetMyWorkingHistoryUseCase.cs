@@ -34,10 +34,8 @@ public class GetMyWorkingHistoryUseCase
             TotalReceived = l.TotalReceived,
             Sales = sales
                 .Where(o => o.OrderDate >= l.StartedShiftTime && o.OrderDate <= (l.EndedShiftTime ?? DateTime.UtcNow))
-                .Select(BookingMapper.ToResStaffSaleHistoryDto)
                 .ToList()
         }).ToList();
         return new BaseResponse<List<ResStaffWorkingLogDto>> { IsSuccess = true, Data = dtos };
     }
 }
-

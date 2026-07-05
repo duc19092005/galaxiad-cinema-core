@@ -62,9 +62,7 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
     {
         try
         {
-            var movies = await _repository.GetActiveMoviesForEmbeddingAsync(cancellationToken);
-
-            var aiMovies = movies.Select(BuildAiMovieItem).ToList();
+            var aiMovies = await _repository.GetActiveMoviesForEmbeddingAsync(cancellationToken);
             return await PostMoviesAsync("sync-movies", aiMovies, cancellationToken);
         }
         catch (Exception ex)
@@ -82,14 +80,14 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
     {
         try
         {
-            var movie = await _repository.GetMovieForEmbeddingAsync(movieId, cancellationToken);
+            var aiMovie = await _repository.GetMovieForEmbeddingAsync(movieId, cancellationToken);
 
-            if (movie == null || movie.IsDeleted || (!movie.IsActive && !movie.IsCommingSoon) || DateTime.UtcNow > movie.EndedDate)
+            if (aiMovie == null)
             {
                 return await DeleteMovieAsync(movieId, cancellationToken);
             }
 
-            return await PostMoviesAsync("embed-movies", [BuildAiMovieItem(movie)], cancellationToken);
+            return await PostMoviesAsync("embed-movies", [aiMovie], cancellationToken);
         }
         catch (Exception ex)
         {
@@ -142,18 +140,6 @@ public class AiMovieEmbeddingSyncService : IAiMovieEmbeddingSyncService
                 Message = "Delete movie from AI service failed"
             };
         }
-    }
-
-    private static AiMovieItem BuildAiMovieItem(MovieInfoEntity movie)
-    {
-        var genres = string.Join(", ", movie.MovieGenreMovieInfoEntity
-            .Select(g => g.MovieGenreInfoEntity.MovieGenreName));
-
-        return new AiMovieItem
-        {
-            MovieId = movie.MovieId.ToString(),
-            EmbeddingText = $"Tên phim: {movie.MovieName}. Thể loại: {genres}. Mô tả: {movie.MovieDescription}. Đạo diễn: {movie.Director}. Diễn viên: {movie.Actors}"
-        };
     }
 
     private async Task<AiMovieEmbeddingSyncResultDto> PostMoviesAsync(string endpoint, List<AiMovieItem> movies, CancellationToken cancellationToken)

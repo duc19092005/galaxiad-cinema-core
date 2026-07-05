@@ -41,6 +41,7 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
             var cutoff = DateTime.UtcNow.AddMinutes(-expireAfterMinutes);
             var staleOrders = await _unitOfWork.Repository<OrderInfoEntity>().Query()
                 .Include(o => o.OrderDetailsInfo)
+                .AsSplitQuery()
                 .Where(o => o.OrderStatus == OrderStatusEnum.Pending && o.OrderDate < cutoff)
                 .ToListAsync();
 
@@ -74,6 +75,7 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
         {
             var order = await _unitOfWork.Repository<OrderInfoEntity>().Query()
                 .Include(o => o.OrderDetailsInfo)
+                .AsSplitQuery()
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             if (order != null && order.OrderStatus == OrderStatusEnum.Pending)

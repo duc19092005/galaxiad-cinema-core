@@ -186,7 +186,6 @@ public class ShowtimeRecommendationRepository : IShowtimeRecommendationRepositor
     {
         var query = _dbContext.Set<ShowtimeRecommendationBatchEntity>()
             .AsNoTracking()
-            .Include(x => x.Items)
             .Where(x => x.CinemaId == cinemaId);
 
         if (!isAdmin)

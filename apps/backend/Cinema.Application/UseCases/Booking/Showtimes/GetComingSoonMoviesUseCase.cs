@@ -33,9 +33,7 @@ public class GetComingSoonMoviesUseCase
 
         var totalCount = await _repository.GetComingSoonMoviesCountAsync(keyword);
         var skip = (pageIndex - 1) * pageSize;
-        var movies = await _repository.GetComingSoonMoviesPagedAsync(keyword, skip, pageSize);
-
-        var list = movies.Select(BookingMapper.ToResPublicMovieListDto).ToList();
+        var list = await _repository.GetComingSoonMovieDtosPagedAsync(keyword, skip, pageSize);
 
         var response = new BaseResponse<PagedResult<ResPublicMovieListDto>>
         {

@@ -55,25 +55,17 @@ public class GetBookingStatusContextProvider : IChatContextProvider
         if (order == null || order.UserId != userId)
             return JsonSerializer.Serialize(new { Error = ChatbotResponseMessages.Refusals.BookingNotFound });
 
-        var firstDetail = order.OrderDetailsInfo.FirstOrDefault();
-        var schedule    = firstDetail?.MovieScheduleInfoEntity;
-        var cinema      = schedule?.AuditoriumInfoEntities?.CinemaInfoEntity;
-
         return JsonSerializer.Serialize(new
         {
             order.BookingCode,
-            OrderStatus  = order.OrderStatus.ToString(),
-            OrderDate    = order.OrderDate.ToString("dd/MM/yyyy HH:mm"),
-            TotalPrice   = order.TotalPrice,
-            FinalAmount  = order.FinalAmount,
-            MovieName    = schedule?.MovieInfoEntity?.MovieName ?? "",
-            CinemaName   = cinema?.CinemaName ?? "",
-            ShowTime     = schedule != null
-                           ? DateTimeHelper.ToVietnamTime(schedule.StartTime).ToString("HH:mm dd/MM/yyyy")
-                           : "",
-            Seats = order.OrderDetailsInfo
-                         .Select(d => d.SeatsInfoEntity.SeatNumber)
-                         .ToList()
+            order.OrderStatus,
+            OrderDate = order.OrderDate.ToString("dd/MM/yyyy HH:mm"),
+            order.TotalPrice,
+            order.FinalAmount,
+            order.MovieName,
+            order.CinemaName,
+            ShowTime = DateTimeHelper.ToVietnamTime(order.StartTime).ToString("HH:mm dd/MM/yyyy"),
+            order.Seats
         });
     }
 }

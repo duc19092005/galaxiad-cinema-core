@@ -1,3 +1,4 @@
+using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Dtos.Shifts;
 using Cinema.Domain.Entities.CinemaInfos;
 using Cinema.Domain.Entities.UserInfos;
@@ -18,6 +19,6 @@ public interface IStaffShiftRepository
     Task RemoveRegistrationsAsync(List<StaffShiftRegistrationEntity> registrations);
     Task<List<StaffShiftRegistrationEntity>> GetPendingRegistrationsByIdsAsync(List<Guid> ids, Guid staffId);
     Task<List<StaffWorkingLoggerEntity>> GetMyWorkingHistoryAsync(Guid staffId);
-    Task<List<OrderInfoEntity>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs);
+    Task<List<ResStaffSaleHistoryDto>> GetTicketSalesForWorkingLogsAsync(Guid staffId, List<StaffWorkingLoggerEntity> logs);
     Task<List<ResPayrollDto>> GetMyPayrollAsync(Guid staffId);
 }
