@@ -10,6 +10,7 @@ using Cinema.Application.UseCases.Booking.SocialBooking;
 using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Cinema.Application.UseCases.Admin.Vouchers;
 using Cinema.Infrastructure.Persistence.Repositories.Booking;
+using Cinema.Infrastructure.Persistence.Repositories.Common;
 using Cinema.Infrastructure.Persistence.Repositories.Vouchers;
 using Cinema.Infrastructure.Persistence.Repositories.PricingPromotions;
 using Cinema.Domain.Utils;
@@ -21,6 +22,7 @@ public static class BookingServicesBootstrap
     public static IServiceCollection AddBookingServices(this IServiceCollection services)
     {
         // Core Booking infrastructure
+        services.AddScoped<ICommonBookingQueries, CommonBookingQueries>();
         services.AddScoped<IBookingCatalogRepository, BookingCatalogRepository>();
         services.AddScoped<IBookingShowtimeRepository, BookingShowtimeRepository>();
         services.AddScoped<ISeatMapRepository, SeatMapRepository>();

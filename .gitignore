@@ -35,3 +35,4 @@ services/ai/app/pb/ai_service_pb2_grpc.py
 # OS
 .DS_Store
 Thumbs.db
+.mimocode/

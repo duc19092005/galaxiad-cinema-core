@@ -15,6 +15,7 @@ public static class FacilitiesServicesBootstrap
         // |                 Repositories                                  |
         // ----------------------------------------------------------------
 
+        services.AddScoped<Cinema.Application.Interfaces.Facilities.ICommonFacilityQueries, Cinema.Infrastructure.Persistence.Repositories.Common.CommonFacilityQueries>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IAuditoriumRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.AuditoriumRepository>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.ICinemaRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.CinemaRepository>();
         services.AddScoped<Cinema.Application.Interfaces.Facilities.IDepartmentRepository, Cinema.Infrastructure.Persistence.Repositories.Facilities.DepartmentRepository>();

@@ -13,10 +13,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 public class BookingOrderRepository : IBookingOrderRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly ICommonBookingQueries _common;
 
-    public BookingOrderRepository(CinemaDbContext dbContext)
+    public BookingOrderRepository(CinemaDbContext dbContext, ICommonBookingQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<DepartmentEntity?> GetDepartmentBySharedUserIdAsync(Guid userId)
@@ -38,21 +40,11 @@ public class BookingOrderRepository : IBookingOrderRepository
             .FirstOrDefaultAsync(u => u.UserEmail == email);
     }
 
-    public async Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId)
-    {
-        return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Include(s => s.MovieFormatInfoEntity)
-            .Include(s => s.MovieInfoEntity)
-            .Include(s => s.AuditoriumInfoEntities)
-            .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);
-    }
+    public Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId)
+        => _common.GetScheduleByIdAsync(scheduleId);
 
-    public async Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds)
-    {
-        return await _dbContext.Set<SeatsInfoEntity>()
-            .Where(s => s.AuditoriumId == auditoriumId && seatIds.Contains(s.SeatId))
-            .ToListAsync();
-    }
+    public Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds)
+        => _common.GetValidSeatsAsync(auditoriumId, seatIds);
 
     public async Task<List<Guid>> GetAlreadyBookedSeatsAsync(Guid scheduleId, List<Guid> seatIds)
     {
@@ -75,24 +67,8 @@ public class BookingOrderRepository : IBookingOrderRepository
             .ToListAsync();
     }
 
-    public async Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
-    {
-        var individualBookedSeats = await _dbContext.Set<OrderDetailsInfo>()
-            .Where(od => od.MovieScheduleId == scheduleId
-                         && od.ReleasedAt == null
-                         && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
-                             || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
-            .Select(od => od.SeatId)
-            .ToListAsync();
-
-        var groupBookedSeats = await _dbContext.Set<GroupBookingSeatEntity>()
-            .Where(gs => gs.GroupBookingMember.GroupBookingSession.MovieScheduleId == scheduleId
-                         && gs.GroupBookingMember.GroupBookingSession.Status != GroupBookingStatusEnum.Cancelled)
-            .Select(gs => gs.SeatId)
-            .ToListAsync();
-
-        return individualBookedSeats.Concat(groupBookedSeats).Distinct().ToList();
-    }
+    public Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
+        => _common.GetOccupiedSeatIdsAsync(scheduleId);
 
     public async Task<CustomerProfileEntity?> GetCustomerProfileAsync(Guid userId)
     {
@@ -107,11 +83,8 @@ public class BookingOrderRepository : IBookingOrderRepository
             .FirstOrDefaultAsync(uv => uv.VoucherId == voucherId && uv.UserId == userId && !uv.IsUsed);
     }
 
-    public async Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
-    {
-        return await _dbContext.Set<UserInfoEntity>()
-            .FirstOrDefaultAsync(u => u.UserId == userId);
-    }
+    public Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
+        => _common.FindUserByIdAsync(userId);
 
     public async Task AddOrderAsync(OrderInfoEntity order)
     {
@@ -141,6 +114,7 @@ public class BookingOrderRepository : IBookingOrderRepository
             .Include(o => o.OrderDetailsInfo)
                 .ThenInclude(od => od.UserSegmentsInfoEntity!)
             .AsNoTracking()
+            .AsSplitQuery()
             .FirstOrDefaultAsync(o => o.OrderId == orderId);
     }
 

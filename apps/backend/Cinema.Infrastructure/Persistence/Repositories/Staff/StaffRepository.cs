@@ -14,10 +14,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Staff;
 public class StaffRepository : IStaffRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly Cinema.Application.Interfaces.Facilities.ICommonFacilityQueries _common;
 
-    public StaffRepository(CinemaDbContext dbContext)
+    public StaffRepository(CinemaDbContext dbContext, Cinema.Application.Interfaces.Facilities.ICommonFacilityQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<StaffProfileEntity?> GetStaffProfileByIdAsync(Guid staffId)
@@ -140,32 +142,8 @@ public class StaffRepository : IStaffRepository
                              && (r.Status == "Approved" || r.Status == "Pending"));
     }
 
-    public async Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
-    {
-        var dateOnly = date.Date;
-        var startUtcLimit = dateOnly.AddDays(-1);
-        var endUtcLimit = dateOnly.AddDays(1);
-
-        var rawList = await _dbContext.Set<CinemaShiftScheduleEntity>()
-            .AsNoTracking()
-            .Include(s => s.RoleListInfoEntity)
-            .Include(s => s.CinemaInfoEntity)
-            .Where(s => s.CinemaId == cinemaId 
-                     && s.DepartmentId == departmentId 
-                     && s.Date >= startUtcLimit
-                     && s.Date <= endUtcLimit
-                     && s.IsActive 
-                     && s.DeletionStatus == "Active")
-            .ToListAsync();
-
-        // Filter in-memory using local Vietnam time conversion
-        return rawList.Where(s => 
-        {
-            var utcStart = s.Date.Date + s.StartTime;
-            var localStart = DateTimeHelper.ToVietnamTime(utcStart);
-            return localStart.Date == dateOnly;
-        }).ToList();
-    }
+    public Task<List<CinemaShiftScheduleEntity>> GetActiveShiftSchedulesForCinemaAndDepartmentAsync(Guid cinemaId, Guid departmentId, DateTime date)
+        => _common.GetActiveShiftSchedulesForCinemaAndDepartmentAsync(cinemaId, departmentId, date);
 
     public async Task<CinemaShiftScheduleEntity?> GetShiftScheduleByIdAsync(Guid shiftScheduleId)
     {

@@ -11,10 +11,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 public class SeatMapRepository : ISeatMapRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly ICommonBookingQueries _common;
 
-    public SeatMapRepository(CinemaDbContext dbContext)
+    public SeatMapRepository(CinemaDbContext dbContext, ICommonBookingQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<SeatMapScheduleQueryDto?> GetScheduleForSeatMapAsync(Guid scheduleId)
@@ -49,23 +51,6 @@ public class SeatMapRepository : ISeatMapRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
-    {
-        var individualBookedSeats = await _dbContext.Set<OrderDetailsInfo>()
-            .Where(od => od.MovieScheduleId == scheduleId
-                         && od.ReleasedAt == null
-                         && od.OrderInfoEntity != null
-                         && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
-                             || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
-            .Select(od => od.SeatId)
-            .ToListAsync();
-
-        var groupBookedSeats = await _dbContext.Set<GroupBookingSeatEntity>()
-            .Where(gs => gs.GroupBookingMember.GroupBookingSession.MovieScheduleId == scheduleId
-                         && gs.GroupBookingMember.GroupBookingSession.Status != GroupBookingStatusEnum.Cancelled)
-            .Select(gs => gs.SeatId)
-            .ToListAsync();
-
-        return individualBookedSeats.Concat(groupBookedSeats).Distinct().ToList();
-    }
+    public Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId)
+        => _common.GetOccupiedSeatIdsAsync(scheduleId);
 }

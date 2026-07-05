@@ -8,10 +8,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 public class PaymentCallbackRepository : IPaymentCallbackRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly ICommonBookingQueries _common;
 
-    public PaymentCallbackRepository(CinemaDbContext dbContext)
+    public PaymentCallbackRepository(CinemaDbContext dbContext, ICommonBookingQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<OrderInfoEntity?> GetOrderByIdAsync(Guid orderId)
@@ -33,11 +35,8 @@ public class PaymentCallbackRepository : IPaymentCallbackRepository
             .CountAsync(od => od.OrderId == orderId);
     }
 
-    public async Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
-    {
-        return await _dbContext.Set<UserInfoEntity>()
-            .FirstOrDefaultAsync(u => u.UserId == userId);
-    }
+    public Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
+        => _common.FindUserByIdAsync(userId);
 
     public async Task<UserVoucherEntity?> GetUserVoucherForUsageAsync(Guid voucherId, Guid userId)
     {

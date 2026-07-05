@@ -50,6 +50,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
             .Include(x => x.Rules)
                 .ThenInclude(x => x.UserSegmentsInfoEntity)
             .OrderByDescending(x => x.UpdatedAt)
+            .AsNoTracking()
             .ToListAsync();
     }
 
@@ -64,6 +65,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.AuditoriumInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.UserSegmentsInfoEntity)
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.PricingPromotionId == id);
     }
 
@@ -78,6 +80,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.AuditoriumInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.UserSegmentsInfoEntity)
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Slug == slug);
     }
 
@@ -93,6 +96,7 @@ public class PricingPromotionRepository : IPricingPromotionRepository
                 .ThenInclude(x => x.AuditoriumInfoEntity)
             .Include(x => x.Rules)
                 .ThenInclude(x => x.UserSegmentsInfoEntity)
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Slug == slug
                                       && x.IsActive
                                       && (!x.StartDate.HasValue || x.StartDate <= now)

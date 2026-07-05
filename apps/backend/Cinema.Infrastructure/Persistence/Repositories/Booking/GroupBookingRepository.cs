@@ -10,10 +10,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Booking;
 public class GroupBookingRepository : IGroupBookingRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly ICommonBookingQueries _common;
 
-    public GroupBookingRepository(CinemaDbContext dbContext)
+    public GroupBookingRepository(CinemaDbContext dbContext, ICommonBookingQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<GroupBookingSessionEntity?> GetSessionByIdAsync(Guid groupSessionId)
@@ -42,6 +44,7 @@ public class GroupBookingRepository : IGroupBookingRepository
                 .ThenInclude(ms => ms.MovieFormatInfoEntity)
             .Include(s => s.MovieScheduleInfoEntity)
                 .ThenInclude(ms => ms.AuditoriumInfoEntities)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(s => s.GroupSessionId == groupSessionId);
     }
 
@@ -69,46 +72,17 @@ public class GroupBookingRepository : IGroupBookingRepository
             .ToListAsync();
     }
 
-    public async Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId, Guid excludeGroupSessionId)
-    {
-        var bookedSeats = await _dbContext.Set<OrderDetailsInfo>()
-            .Where(od => od.MovieScheduleId == scheduleId
-                         && (od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Pending
-                             || od.OrderInfoEntity.OrderStatus == OrderStatusEnum.Booked))
-            .Select(od => od.SeatId)
-            .ToListAsync();
+    public Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId, Guid excludeGroupSessionId)
+        => _common.GetOccupiedSeatIdsAsync(scheduleId, excludeGroupSessionId);
 
-        var groupSeats = await _dbContext.Set<GroupBookingSeatEntity>()
-            .Where(gs => gs.GroupBookingMember.GroupSessionId != excludeGroupSessionId
-                         && gs.GroupBookingMember.GroupBookingSession.MovieScheduleId == scheduleId
-                         && gs.GroupBookingMember.GroupBookingSession.Status != GroupBookingStatusEnum.Cancelled)
-            .Select(gs => gs.SeatId)
-            .ToListAsync();
+    public Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds)
+        => _common.GetValidSeatsAsync(auditoriumId, seatIds);
 
-        return bookedSeats.Concat(groupSeats).Distinct().ToList();
-    }
+    public Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId)
+        => _common.GetScheduleByIdAsync(scheduleId);
 
-    public async Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds)
-    {
-        return await _dbContext.Set<SeatsInfoEntity>()
-            .Where(s => s.AuditoriumId == auditoriumId && seatIds.Contains(s.SeatId))
-            .ToListAsync();
-    }
-
-    public async Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId)
-    {
-        return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Include(s => s.MovieFormatInfoEntity)
-            .Include(s => s.MovieInfoEntity)
-            .Include(s => s.AuditoriumInfoEntities)
-            .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);
-    }
-
-    public async Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
-    {
-        return await _dbContext.Set<UserInfoEntity>()
-            .FirstOrDefaultAsync(u => u.UserId == userId);
-    }
+    public Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
+        => _common.FindUserByIdAsync(userId);
 
     public async Task<UserInfoEntity?> FindUserByEmailAsync(string email)
     {
@@ -183,6 +157,7 @@ public class GroupBookingRepository : IGroupBookingRepository
                 .ThenInclude(m => m.SelectedSeats)
                     .ThenInclude(ss => ss.SeatsInfoEntity)
             .Include(s => s.MovieScheduleInfoEntity)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(s => s.GroupSessionId.ToString().Replace("-", "").StartsWith(partialId));
     }
 
@@ -198,8 +173,7 @@ public class GroupBookingRepository : IGroupBookingRepository
     public async Task<List<GroupBookingSessionEntity>> GetVotingSessionsAsync()
     {
         return await _dbContext.Set<GroupBookingSessionEntity>()
-            .Where(s => s.Status == GroupBookingStatusEnum.VotingPaymentMethod
-                     || s.Status == GroupBookingStatusEnum.VotingPaymentMethod)
+            .Where(s => s.Status == GroupBookingStatusEnum.VotingPaymentMethod)
             .ToListAsync();
     }
 }

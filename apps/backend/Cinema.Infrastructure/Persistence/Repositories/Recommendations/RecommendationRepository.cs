@@ -61,9 +61,9 @@ public class RecommendationRepository : IRecommendationRepository
 
         var dbSignalList = dbSignals.Select(x => new MovieBehaviorSignal(x.MovieId, x.Count, x.LastAt)).ToList();
 
-        // 2. Query Redis for buffered view signals
+        // 2. Query Redis for buffered view signals (bounded read: last 500 entries)
         var redisDb = _redis.GetDatabase();
-        var rawRedis = await redisDb.ListRangeAsync("cinema:movie_views_queue");
+        var rawRedis = await redisDb.ListRangeAsync("cinema:movie_views_queue", 0, 499);
         var redisViews = new List<RedisMovieViewDto>();
 
         foreach (var item in rawRedis)

@@ -207,6 +207,11 @@ public class CinemaDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<OrderInfoEntity>(entity =>
+        {
+            entity.HasIndex(o => o.BookingCode).IsUnique();
+        });
+
         modelBuilder.Entity<ShowtimeRecommendationBatchEntity>(entity =>
         {
             entity.HasKey(x => x.BatchId);

@@ -394,6 +394,7 @@ public class ProcessVnPayCallbackUseCase
             {
                 session.Status = GroupBookingStatusEnum.PaymentFailedPartial;
                 session.PaymentDeadlineAt = DateTime.UtcNow.AddSeconds(60);
+                _voteTimeoutScheduler.Schedule(session.GroupSessionId, session.PaymentDeadlineAt.Value);
 
                 var resolutionState = new ResPaymentFailureVoteStateDto
                 {

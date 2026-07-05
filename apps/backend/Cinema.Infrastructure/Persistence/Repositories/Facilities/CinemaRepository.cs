@@ -15,10 +15,12 @@ namespace Cinema.Infrastructure.Persistence.Repositories.Facilities;
 public class CinemaRepository : ICinemaRepository
 {
     private readonly CinemaDbContext _dbContext;
+    private readonly ICommonFacilityQueries _common;
 
-    public CinemaRepository(CinemaDbContext dbContext)
+    public CinemaRepository(CinemaDbContext dbContext, ICommonFacilityQueries common)
     {
         _dbContext = dbContext;
+        _common = common;
     }
 
     public async Task<List<ResFacilitiesManagerCinema>> GetAllCinemasAsync(Guid userId, bool isAdmin, bool isFacilitiesManager, bool isTheaterManager)
@@ -141,29 +143,11 @@ public class CinemaRepository : ICinemaRepository
             .ToListAsync();
     }
 
-    public async Task<List<MovieScheduleInfoEntity>> GetActiveSchedulesByAuditoriumIdAsync(Guid auditoriumId)
-    {
-        return await _dbContext.Set<MovieScheduleInfoEntity>()
-            .Where(s => s.AuditoriumId == auditoriumId && !s.IsDeleted)
-            .ToListAsync();
-    }
+    public Task<List<MovieScheduleInfoEntity>> GetActiveSchedulesByAuditoriumIdAsync(Guid auditoriumId)
+        => _common.GetActiveSchedulesByAuditoriumIdAsync(auditoriumId);
 
-    public async Task CancelPendingOrdersForScheduleAsync(Guid scheduleId)
-    {
-        var pendingOrders = await _dbContext.Set<OrderInfoEntity>()
-            .Include(o => o.OrderDetailsInfo)
-            .Where(o => o.OrderDetailsInfo.Any(od => od.MovieScheduleId == scheduleId)
-                        && o.OrderStatus == OrderStatusEnum.Pending)
-            .ToListAsync();
-
-        var releasedAt = DateTime.UtcNow;
-        foreach (var order in pendingOrders)
-        {
-            order.OrderStatus = OrderStatusEnum.Canceled;
-            foreach (var detail in order.OrderDetailsInfo)
-                detail.ReleasedAt ??= releasedAt;
-        }
-    }
+    public Task CancelPendingOrdersForScheduleAsync(Guid scheduleId)
+        => _common.CancelPendingOrdersForScheduleAsync(scheduleId);
 
     public async Task AddCinemaAsync(CinemaInfoEntity cinema)
     {
