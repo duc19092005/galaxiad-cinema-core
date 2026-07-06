@@ -1,4 +1,5 @@
 services:
+  # CI/CD Trigger: test rebuild
   # ─────────────────────────────────────────
   # C# ASP.NET Core API (Production)
   # ─────────────────────────────────────────
