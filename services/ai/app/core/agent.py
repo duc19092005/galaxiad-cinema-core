@@ -13,6 +13,7 @@ from config import (
     DEEPSEEK_MODEL,
     REDIS_HOST,
     REDIS_PORT,
+    REDIS_PASSWORD,
 )
 from core.prompts import AGENT_SYSTEM_PROMPT_TEMPLATE
 from core.tools import (
@@ -42,11 +43,21 @@ def get_message_history(session_id: str) -> BaseChatMessageHistory:
 
     redis_key = f"cinema:chat:session:{session_id}"
     try:
-        redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, socket_timeout=1.0)
+        redis_client = redis.Redis(
+            host=REDIS_HOST,
+            port=REDIS_PORT,
+            password=REDIS_PASSWORD or None,
+            socket_timeout=1.0,
+        )
         redis_client.ping()
+        redis_url = (
+            f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}"
+            if REDIS_PASSWORD
+            else f"redis://{REDIS_HOST}:{REDIS_PORT}"
+        )
         return RedisChatMessageHistory(
             session_id=redis_key,
-            url=f"redis://{REDIS_HOST}:{REDIS_PORT}",
+            url=redis_url,
             ttl=1800,
         )
     except Exception as exc:

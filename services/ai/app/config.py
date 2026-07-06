@@ -28,6 +28,7 @@ DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 # Redis config for chatbot session memory
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
 
 # Backend C# API base URL for agent tool retrieval
 BACKEND_API_URL = os.getenv("BACKEND_API_URL", "http://localhost:8080/api/v1")
