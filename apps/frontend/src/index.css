@@ -65,8 +65,8 @@ html.theme-transitioning *::after {
 
   /* Text */
   --text-primary: #e4e4e7;
-  --text-secondary: #a1a1aa;
-  --text-muted: #52525b;
+  --text-secondary: #c8c8d0;
+  --text-muted: #8a8a96;
 
   /* Semantic */
   --danger: #ef4444;

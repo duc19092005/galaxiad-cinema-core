@@ -164,11 +164,11 @@ const AdminRevenueChart: React.FC<{ data?: ManagementDashboardDto | null }> = ({
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.01em' }}>Revenue Overview</h3>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#ccc' }}>
             Daily gross revenue comparison across all regions.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: 'var(--text-muted)', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: '#bbb', flexWrap: 'wrap' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--accent)' }} /> Revenue</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--success)' }} /> Tickets</span>
         </div>
@@ -207,7 +207,7 @@ const AdminRevenueChart: React.FC<{ data?: ManagementDashboardDto | null }> = ({
                   background: 'rgba(34,197,94,0.78)',
                 }} />
               </div>
-              <span style={{ textAlign: 'center', fontSize: 10, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase' }}>
+              <span style={{ textAlign: 'center', fontSize: 10, color: '#aaa', fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase' }}>
                 {row.dateLabel}
               </span>
             </div>
