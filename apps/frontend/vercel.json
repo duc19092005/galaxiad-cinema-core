@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://apicinestartplus.runasp.net/api/:path*"
+      "destination": "https://api.galaxiadcine.online/api/:path*"
     },
     {
       "source": "/(.*)",
