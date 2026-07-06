@@ -160,6 +160,7 @@ interface BookingDraft {
   showtime?: ShowtimeOption;
   seatMap?: PublicSeatMap;
   pricing?: PublicPricing;
+  ageRestriction?: string;
   segment?: PublicSegmentPrice;
   quantity: number;
   suggestedSeats: NormalizedSeat[];
@@ -707,17 +708,28 @@ const ShowtimePicker: React.FC<{
 
 const SegmentQuantityPicker: React.FC<{
   pricing: PublicPricing;
+  ageRestriction?: string;
   onPick: (segment: PublicSegmentPrice, quantity: number) => void;
-}> = ({ pricing, onPick }) => {
+}> = ({ pricing, ageRestriction, onPick }) => {
   const { t } = useTranslation();
-  const [segmentId, setSegmentId] = useState(pricing.segmentPrices[0]?.userSegmentId || '');
+
+  const filteredSegments = useMemo(() => {
+    const age = ageRestriction?.trim();
+    if (!age || age === 'P' || age === 'K') return pricing.segmentPrices;
+    if (age === 'T13' || age === 'T16' || age === 'T18') {
+      return pricing.segmentPrices.filter(s => s.segmentName !== 'Child');
+    }
+    return pricing.segmentPrices;
+  }, [pricing.segmentPrices, ageRestriction]);
+
+  const [segmentId, setSegmentId] = useState(filteredSegments[0]?.userSegmentId || '');
   const [quantity, setQuantity] = useState(1);
-  const segment = pricing.segmentPrices.find(item => item.userSegmentId === segmentId) || pricing.segmentPrices[0];
+  const segment = filteredSegments.find(item => item.userSegmentId === segmentId) || filteredSegments[0];
 
   return (
     <ActionShell title={t('chatbot.segmentPicker')} icon={<Ticket size={13} />}>
       <div style={{ display: 'grid', gap: 8 }}>
-        {pricing.segmentPrices.map(item => (
+        {filteredSegments.map(item => (
           <button
             key={item.userSegmentId}
             onClick={() => setSegmentId(item.userSegmentId)}
@@ -1347,7 +1359,7 @@ const ChatActionRenderer: React.FC<{
     case 'showtimePicker':
       return <ShowtimePicker showtimes={action.payload?.showtimes || []} mode={action.payload?.mode || 'time'} onPick={onPickShowtime} />;
     case 'segmentQuantityPicker':
-      return action.payload?.pricing ? <SegmentQuantityPicker pricing={action.payload.pricing} onPick={onPickSegment} /> : null;
+      return action.payload?.pricing ? <SegmentQuantityPicker pricing={action.payload.pricing} ageRestriction={action.payload.pricing.ageRestriction} onPick={onPickSegment} /> : null;
     case 'seatSuggestion':
       return <SeatSuggestionCard seatMap={draft.seatMap} seats={draft.suggestedSeats} quantity={draft.quantity} onAccept={onAcceptSeats} onRetry={onRetrySeats} />;
     case 'voucherPicker':
@@ -1586,6 +1598,7 @@ const ChatBot: React.FC = () => {
           setDraft(prev => ({
             ...prev,
             pricing: action.payload.pricing,
+            ageRestriction: action.payload.pricing.ageRestriction || '',
           }));
         } else if (action.type === 'showtimePreferencePicker' && action.payload?.showtimes) {
           setDraft(prev => ({

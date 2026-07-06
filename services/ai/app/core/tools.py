@@ -250,11 +250,28 @@ async def get_pricing_tool(schedule_id: str) -> str:
     try:
         result = await _get_backend(f"/public/movies/schedules/{schedule_id}/prices")
         pricing = result.get("data") or {}
+
+        # Fetch age restriction from seat map endpoint (already available there)
+        age_symbol = ""
+        try:
+            seat_result = await _get_backend(f"/public/movies/schedules/{schedule_id}/seats")
+            seat_data = seat_result.get("data") or {}
+            age_symbol = (seat_data.get("movieRequiredAgeSymbol") or "").strip()
+        except Exception:
+            pass
+
+        # Filter out Child segment for T13/T16/T18 movies
+        if age_symbol in ("T13", "T16", "T18") and pricing.get("segmentPrices"):
+            pricing["segmentPrices"] = [
+                seg for seg in pricing["segmentPrices"]
+                if seg.get("segmentName") != "Child"
+            ]
+
         return _json_result({
             "ok": result["ok"],
             "type": "pricing",
             "pricing": pricing,
-            "ageRestriction": pricing.get("movieRequiredAgeSymbol", ""),
+            "ageRestriction": age_symbol,
         })
     except Exception as exc:
         logger.error(f"Error loading pricing: {exc}")
