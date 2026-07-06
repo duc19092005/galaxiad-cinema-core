@@ -92,9 +92,12 @@ jobs:
             cd /var/portainer_data/compose/5
             if [ ! -d ".git" ]; then
               git init
-              git remote add origin https://github.com/duc19092005/galaxiad-cinema-core.git
+              git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/duc19092005/galaxiad-cinema-core.git
+            else
+              git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/duc19092005/galaxiad-cinema-core.git
             fi
             git fetch origin main
+
             
             # Kiểm tra xem đã có commit HEAD chưa (tránh lỗi chạy lần đầu khi mới init git)
             if git rev-parse --verify HEAD >/dev/null 2>&1; then
