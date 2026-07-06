@@ -40,7 +40,7 @@ services:
     networks:
       - cinema-network
     depends_on:
-      ai:
+      cinema-ai-service:
         condition: service_healthy
     deploy:
       resources:
@@ -53,7 +53,7 @@ services:
   # Python AI Microservice (Production)
   # Cloud embedding (Jina AI) + Cloud Qdrant
   # ─────────────────────────────────────────
-  ai:
+  cinema-ai-service:
     build:
       context: ./services/ai
       dockerfile: Dockerfile
