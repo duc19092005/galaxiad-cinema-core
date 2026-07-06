@@ -95,9 +95,20 @@ jobs:
               git remote add origin https://github.com/duc19092005/galaxiad-cinema-core.git
             fi
             git fetch origin main
+            
+            # Kiểm tra xem có thay đổi nào ở Backend, AI, Nginx hoặc Compose file không
+            CHANGES=$(git diff --name-only HEAD origin/main | grep -E '^(apps/backend/|services/ai/|nginx/|docker-compose.prod.yml)')
+            
             git reset --hard origin/main
-            docker compose -f docker-compose.prod.yml -p galaxiad-cinema down
-            docker compose -f docker-compose.prod.yml -p galaxiad-cinema up -d --build --remove-orphans
+            
+            if [ -n "$CHANGES" ]; then
+              echo "Phat hien thay doi o Backend/AI/Nginx. Tien hanh build lai container..."
+              docker compose -f docker-compose.prod.yml -p galaxiad-cinema down
+              docker compose -f docker-compose.prod.yml -p galaxiad-cinema up -d --build --remove-orphans
+            else
+              echo "Chi co thay doi o Frontend. Bo qua khong build lai VPS."
+            fi
+
 
 
 
