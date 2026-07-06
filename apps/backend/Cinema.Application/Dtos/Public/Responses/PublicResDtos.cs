@@ -45,6 +45,8 @@ public class GetAuditoriumInfosRes
 
     public string MovieVisualFormatName { get; set; } = string.Empty;
 
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
+
     public string AuditoriumName {get;set;} = string.Empty;
 
     public string AuditoriumId {get;set;} = string.Empty;

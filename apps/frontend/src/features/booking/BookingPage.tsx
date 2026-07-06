@@ -125,11 +125,20 @@ const BookingPage: React.FC = () => {
         if (!ageSymbol || ageSymbol === 'P' || ageSymbol === 'K') return pricing.segmentPrices;
         return pricing.segmentPrices.filter(s => {
             const name = s.segmentName.toLowerCase();
-            if (ageSymbol === 'T13' || ageSymbol === 'T16') return !name.includes('child') && !name.includes('trẻ em');
-            if (ageSymbol === 'T18') return !name.includes('child') && !name.includes('trẻ em') && !name.includes('student') && !name.includes('học sinh');
+            // T13, T16, T18: Block Child only
+            if (ageSymbol === 'T13' || ageSymbol === 'T16' || ageSymbol === 'T18') {
+                return !name.includes('child') && !name.includes('trẻ em');
+            }
             return true;
         });
     }, [pricing?.segmentPrices, ageSymbol]);
+
+    // Check if any selected seat uses Student segment on T18 movie
+    const hasStudentOnT18 = ageSymbol === 'T18' && selectedSeats.some(s => {
+        const segId = seatSegmentMap[s.seatId];
+        const seg = pricing?.segmentPrices.find(sp => sp.userSegmentId === segId);
+        return seg?.segmentName.toLowerCase().includes('student');
+    });
 
     const fetchData = async () => {
         setLoading(true); setError(null);
@@ -478,8 +487,16 @@ const BookingPage: React.FC = () => {
                                         <AlertCircle size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
                                         <span className="text-amber-200 text-xs leading-relaxed">
                                             {ageSymbol === 'T18'
-                                                ? `Phim ${ageSymbol} — Chỉ bán vé cho người lớn và học sinh/sinh viên. Không áp dụng cho trẻ em.`
+                                                ? `Phim ${ageSymbol} — Không bán vé cho trẻ em. Sinh viên phải trình CCCD khi vào rạp.`
                                                 : `Phim ${ageSymbol} — Không bán vé cho trẻ em.`}
+                                        </span>
+                                    </div>
+                                )}
+                                {hasStudentOnT18 && (
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                                        <AlertCircle size={16} className="text-blue-400 mt-0.5 flex-shrink-0" />
+                                        <span className="text-blue-200 text-xs leading-relaxed">
+                                            Vé sinh viên: Vui lòng mang theo CCCD/CMND khi đến rạp để nhân viên kiểm tra.
                                         </span>
                                     </div>
                                 )}
@@ -582,7 +599,6 @@ const BookingPage: React.FC = () => {
                                          <span className="text-[#ff8a00] text-3xl font-extrabold">
                                              {Math.max(0, totalPrice).toLocaleString('vi-VN')}đ
                                          </span>
-                                         <p className="text-[10px] text-[#ddc1ae] uppercase tracking-wider mt-0.5">Backend-calculated ticket price</p>
                                      </div>
                                  </div>
                              </div>

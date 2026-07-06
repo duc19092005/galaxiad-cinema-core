@@ -213,13 +213,9 @@ public class CreateBookingUseCase
             return;
 
         var restrictedSegmentIds = new List<Guid>();
-        if (ageSymbol is "T13" or "T16")
+        // T13, T16, T18: Block Child only (Student/Senior allowed)
+        if (ageSymbol is "T13" or "T16" or "T18")
             restrictedSegmentIds.Add(user_segments_constant.Child);
-        else if (ageSymbol == "T18")
-        {
-            restrictedSegmentIds.Add(user_segments_constant.Child);
-            restrictedSegmentIds.Add(user_segments_constant.Student);
-        }
 
         if (restrictedSegmentIds.Count == 0)
             return;

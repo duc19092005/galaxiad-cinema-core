@@ -215,6 +215,9 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             {
                 MovieName = x.MovieInfoEntity != null ? x.MovieInfoEntity.MovieName : "",
                 MovieVisualFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : "",
+                MovieRequiredAgeSymbol = x.MovieInfoEntity != null && x.MovieInfoEntity.MovieRequiredAgeEntity != null
+                    ? (x.MovieInfoEntity.MovieRequiredAgeEntity.MovieRequiredAgeSymbol ?? string.Empty).Trim()
+                    : string.Empty,
                 AuditoriumName = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.AuditoriumNumber : "",
                 AuditoriumId = x.AuditoriumId.ToString(),
                 StartTime = x.StartTime,
