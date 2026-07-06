@@ -29,6 +29,18 @@ public class BookingPricingRepository : IBookingPricingRepository
                 MovieFormatId = s.MovieFormatId,
                 StartTime = s.StartTime,
                 EndedTime = s.EndedTime,
+                MovieInfoEntity = s.MovieInfoEntity == null
+                    ? null
+                    : new MovieInfoEntity
+                    {
+                        MovieRequiredAgeId = s.MovieInfoEntity.MovieRequiredAgeId,
+                        MovieRequiredAgeEntity = s.MovieInfoEntity.MovieRequiredAgeEntity == null
+                            ? null
+                            : new movieRequiredAgeEntity
+                            {
+                                MovieRequiredAgeSymbol = s.MovieInfoEntity.MovieRequiredAgeEntity.MovieRequiredAgeSymbol
+                            }
+                    },
                 MovieFormatInfoEntity = s.MovieFormatInfoEntity == null
                     ? null
                     : new MovieFormatInfoEntity

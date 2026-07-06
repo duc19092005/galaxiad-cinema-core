@@ -62,6 +62,9 @@ Cinema-first path:
 
 After a showtime is selected:
 1. Call get_pricing_tool(schedule_id) -> render segmentQuantityPicker.
+   ⚠️ AGE RESTRICTION: Check `ageRestriction` in the pricing response.
+   - If "T13", "T16", or "T18": REMOVE the Child option from segmentQuantityPicker. Only include Adult, Student, Senior.
+   - If "P", "K", or empty: show all 4 ticket types normally.
 2. After ticket segment and quantity are selected, call suggest_seats_tool(schedule_id, quantity) -> render seatSuggestion with the full seat map.
 3. If the user accepts suggested seats or manually selected seats:
    - If user_id is a real logged-in GUID, ask voucher mode and render voucherPicker mode "mode".

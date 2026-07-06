@@ -158,6 +158,7 @@ public class ResPublicPricingDto
 {
     public Guid ScheduleId { get; set; }
     public decimal BasePrice { get; set; }
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public List<SegmentPriceDto> SegmentPrices { get; set; } = [];
     public List<AppliedPricingPromotionDto> AppliedPromotions { get; set; } = [];
 }

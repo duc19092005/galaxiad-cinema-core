@@ -69,11 +69,14 @@ public class GetPricingUseCase
             });
         }
 
+        var ageSymbol = schedule.MovieInfoEntity?.MovieRequiredAgeEntity?.MovieRequiredAgeSymbol?.Trim() ?? string.Empty;
+
         var pricing = new ResPublicPricingDto
         {
             ScheduleId = scheduleId,
             BasePrice = basePrice,
-            SegmentPrices = segmentPrices
+            SegmentPrices = segmentPrices,
+            MovieRequiredAgeSymbol = ageSymbol
         };
 
         pricing.AppliedPromotions = pricing.SegmentPrices

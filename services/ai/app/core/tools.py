@@ -250,7 +250,12 @@ async def get_pricing_tool(schedule_id: str) -> str:
     try:
         result = await _get_backend(f"/public/movies/schedules/{schedule_id}/prices")
         pricing = result.get("data") or {}
-        return _json_result({"ok": result["ok"], "type": "pricing", "pricing": pricing})
+        return _json_result({
+            "ok": result["ok"],
+            "type": "pricing",
+            "pricing": pricing,
+            "ageRestriction": pricing.get("movieRequiredAgeSymbol", ""),
+        })
     except Exception as exc:
         logger.error(f"Error loading pricing: {exc}")
         return _json_result({"ok": False, "type": "pricing", "message": str(exc), "pricing": None})
