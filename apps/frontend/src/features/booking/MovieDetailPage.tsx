@@ -169,13 +169,13 @@ const MovieDetailPage: React.FC = () => {
             {/* Redesigned Unified Header */}
             <Header />
 
-            <main className="pt-20">
-                {/* Hero Section */}
-                <section className="relative h-[480px] md:h-[720px] w-full overflow-hidden flex items-end">
+            <main>
+                {/* Hero Section - starts right below fixed header, no gap */}
+                <section className="relative w-full overflow-hidden flex items-end" style={{ marginTop: 56, height: 'min(70vh, 720px)', minHeight: 400 }}>
                     <div className="absolute inset-0 z-0">
                         <img
                             alt={movie.movieName}
-                            className="w-full h-full object-cover object-center filter blur-[1px] brightness-[0.6] scale-105"
+                            className="w-full h-full object-contain object-center"
                             src={movie.movieBannerURL || movie.moviePosterURL}
                             onError={(e) => {
                                 const target = e.currentTarget;
@@ -193,26 +193,26 @@ const MovieDetailPage: React.FC = () => {
                                 }
                             }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A] via-transparent to-transparent"></div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-[#0A0A0A]/20"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A]/80 via-transparent to-transparent"></div>
                     </div>
                     
                     <div className="relative z-10 px-6 md:px-16 pb-20 max-w-7xl mx-auto w-full">
-                        <div className="flex flex-col md:flex-row items-end gap-12">
-                            {/* Movie Poster (Bento feel) */}
-                            <div className="hidden md:block w-64 aspect-[2/3] rounded-xl overflow-hidden glass-card p-2 group cursor-pointer shadow-2xl transition-transform hover:scale-[1.02]">
-                                <img
-                                    alt={movie.movieName}
-                                    className="w-full h-full object-cover rounded-lg"
-                                    src={movie.moviePosterURL}
-                                    onError={(e) => {
-                                        e.currentTarget.onerror = null;
-                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
-                                    }}
-                                />
-                            </div>
-                            
-                            <div className="flex-1">
+                        {/* Movie Poster - always visible, left aligned */}
+                        <div className="w-32 md:w-64 aspect-[2/3] rounded-xl overflow-hidden glass-card p-1.5 md:p-2 group cursor-pointer shadow-2xl transition-transform hover:scale-[1.02] mb-6">
+                            <img
+                                alt={movie.movieName}
+                                className="w-full h-full object-cover rounded-lg"
+                                src={movie.moviePosterURL}
+                                onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
+                                }}
+                            />
+                        </div>
+
+                        {/* Movie Info - below poster */}
+                        <div>
                                 <div className="flex items-center gap-4 mb-4">
                                                                         <span className="bg-[#e9c349] text-[#241a00] px-3 py-1 rounded font-extrabold text-sm">{t('movieDetail.age', 'Age')}: {movie.movieRequiredAge}</span>
                                     <span className="flex items-center gap-1 text-[#ffb77f]">
@@ -224,12 +224,11 @@ const MovieDetailPage: React.FC = () => {
                                     {movie.movieName}
                                 </h1>
                                 <div className="flex flex-wrap gap-6 text-[#ddc1ae] text-sm font-medium">
-                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">schedule</span> {movie.movieDuration} {t('movieDetail.minutes', 'mins')}</span>
-                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">calendar_today</span> {movie.releaseDate ? formatDate(movie.releaseDate) : t('movieDetail.comingSoon', 'Coming Soon')}</span>
-                                                                        <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">theaters</span> {movie.movieFormatInfos || t('movieDetail.formatUpdating', 'Updating')}</span>
+                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">schedule</span> {movie.movieDuration} {t('movieDetail.minutes', 'mins')}</span>
+                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">calendar_today</span> {movie.releaseDate ? formatDate(movie.releaseDate) : t('movieDetail.comingSoon', 'Coming Soon')}</span>
+                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">theaters</span> {movie.movieFormatInfos || t('movieDetail.formatUpdating', 'Updating')}</span>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </section>
 
