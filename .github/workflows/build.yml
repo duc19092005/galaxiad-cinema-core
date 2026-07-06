@@ -89,9 +89,15 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            cd ~/galaxiad-cinema-core
-            git pull origin main
+            cd /var/portainer_data/compose/5
+            if [ ! -d ".git" ]; then
+              git init
+              git remote add origin https://github.com/duc19092005/galaxiad-cinema-core.git
+            fi
+            git fetch origin main
+            git reset --hard origin/main
             docker compose -f docker-compose.prod.yml down
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+
 
 
