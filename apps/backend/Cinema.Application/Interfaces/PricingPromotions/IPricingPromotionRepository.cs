@@ -27,6 +27,14 @@ public interface IPricingPromotionRepository
     Task<List<AuditoriumInfoEntities>> GetAuditoriumsAsync();
     Task<List<Cinema.Domain.Entities.UserInfos.UserSegmentsInfoEntity>> GetUserSegmentsAsync();
     
+    // Conflict detection
+    Task<List<PricingPromotionRuleEntity>> FindConflictingRulesAsync(
+        List<PricingPromotionRuleEntity> newRules,
+        Guid? excludePromotionId,
+        DateTime? promotionStartDate,
+        DateTime? promotionEndDate);
+    Task<List<PricingPromotionRuleEntity>> GetRulesByIdsAsync(List<Guid> ruleIds);
+
     // Calculation
     Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(
         DateTime showDateUtc, 

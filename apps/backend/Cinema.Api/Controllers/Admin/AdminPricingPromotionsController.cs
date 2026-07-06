@@ -21,6 +21,7 @@ public class AdminPricingPromotionsController : ControllerBase
     private readonly UpdatePricingPromotionUseCase _updatePricingPromotionUseCase;
     private readonly TogglePricingPromotionUseCase _togglePricingPromotionUseCase;
     private readonly DeletePricingPromotionUseCase _deletePricingPromotionUseCase;
+    private readonly CheckPricingPromotionConflictsUseCase _checkPricingPromotionConflictsUseCase;
 
     public AdminPricingPromotionsController(
         GetAllPricingPromotionsUseCase getAllPricingPromotionsUseCase,
@@ -29,7 +30,8 @@ public class AdminPricingPromotionsController : ControllerBase
         CreatePricingPromotionUseCase createPricingPromotionUseCase,
         UpdatePricingPromotionUseCase updatePricingPromotionUseCase,
         TogglePricingPromotionUseCase togglePricingPromotionUseCase,
-        DeletePricingPromotionUseCase deletePricingPromotionUseCase)
+        DeletePricingPromotionUseCase deletePricingPromotionUseCase,
+        CheckPricingPromotionConflictsUseCase checkPricingPromotionConflictsUseCase)
     {
         _getAllPricingPromotionsUseCase = getAllPricingPromotionsUseCase;
         _getPricingPromotionOptionsUseCase = getPricingPromotionOptionsUseCase;
@@ -38,6 +40,7 @@ public class AdminPricingPromotionsController : ControllerBase
         _updatePricingPromotionUseCase = updatePricingPromotionUseCase;
         _togglePricingPromotionUseCase = togglePricingPromotionUseCase;
         _deletePricingPromotionUseCase = deletePricingPromotionUseCase;
+        _checkPricingPromotionConflictsUseCase = checkPricingPromotionConflictsUseCase;
     }
 
     [HttpGet]
@@ -56,6 +59,13 @@ public class AdminPricingPromotionsController : ControllerBase
     public async Task<IActionResult> GetById(Guid id)
     {
         return Ok(await _getPricingPromotionByIdUseCase.ExecuteAsync(id));
+    }
+
+    [HttpPost("check-conflicts")]
+    public async Task<IActionResult> CheckConflicts([FromBody] PricingPromotionUpsertDto dto, [FromQuery] Guid? excludeId)
+    {
+        var result = await _checkPricingPromotionConflictsUseCase.ExecuteAsync(dto, excludeId);
+        return Ok(result);
     }
 
     [HttpPost]

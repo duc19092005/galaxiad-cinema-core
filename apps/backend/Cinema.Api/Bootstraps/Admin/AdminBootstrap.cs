@@ -7,7 +7,12 @@ using Cinema.Application.UseCases.Admin.Audit;
 using Cinema.Application.UseCases.Admin.Dashboard;
 using Cinema.Application.UseCases.Admin.Transfers;
 using Cinema.Application.UseCases.Admin.UserManagement;
-using Cinema.Application.UseCases.Admin.ShiftSchedules;
+using Cinema.Application.Interfaces.Banners;
+using Cinema.Infrastructure.Persistence.Repositories.Banners;
+using Cinema.Application.UseCases.Admin.Banners;
+using Cinema.Application.UseCases.Public;
+using Cinema.Infrastructure.BackgroundJobs.Banners;
+using Cinema.Infrastructure.ExternalServices.Cache;
 
 namespace Cinema.Api.Bootstraps.Admin;
 
@@ -21,9 +26,6 @@ public static class AdminBootstrap
         services.AddScoped<IAdminDashboardRepository, AdminDashboardRepository>();
         services.AddScoped<IAdminTransferRepository, AdminTransferRepository>();
         services.AddScoped<IAdminMovieManagementRepository, AdminMovieManagementRepository>();
-
-        // Schedule Jobs
-        services.AddScoped<IAdminReadScheduleBehavior, AdminReadScheduleUseCase>();
 
         // Dashboard Use Case
         services.AddScoped<GetManagementDashboardUseCase>();
@@ -52,6 +54,21 @@ public static class AdminBootstrap
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.GetRolesPermissionsUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.UpdateRolePermissionsUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Admin.UserManagement.AdminUpdateUserProfileUseCase>();
+
+        // Banners
+        services.AddScoped<IBannerRepository, BannerRepository>();
+        services.AddScoped<GetAllBannersUseCase>();
+        services.AddScoped<GetBannerByIdUseCase>();
+        services.AddScoped<CreateBannerUseCase>();
+        services.AddScoped<UpdateBannerUseCase>();
+        services.AddScoped<DeleteBannerUseCase>();
+        services.AddScoped<ToggleBannerUseCase>();
+        services.AddScoped<GetBannerScopeUseCase>();
+        services.AddScoped<GetActiveBannersUseCase>();
+        services.AddScoped<BannerCleanupJob>();
+        services.AddScoped<MovieInterestSyncJob>();
+        services.AddScoped<AutoGenerateBannersJob>();
+        services.AddSingleton<IMovieInterestBuffer, MovieInterestBuffer>();
 
         return services;
     }

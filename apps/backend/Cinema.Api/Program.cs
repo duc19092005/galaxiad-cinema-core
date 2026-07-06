@@ -274,9 +274,15 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
         : []
 });
 
-// Register recurring job for auto-canceling pending orders
+// Register recurring jobs
 var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
 recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
+recurringJobManager.AddBannerCleanupRecurringJob(intervalMinutes: 30);
+recurringJobManager.AddMovieInterestSyncRecurringJob(intervalMinutes: 10);
+
+// Auto-generate banners for all cinemas on startup + every 6 hours
+var backgroundJobClient = app.Services.GetRequiredService<IBackgroundJobClient>();
+recurringJobManager.AddAutoGenerateBannersJob(backgroundJobClient);
 
 app.MapControllers();
 app.MapHub<CinemaHub>("/hubs/cinema");

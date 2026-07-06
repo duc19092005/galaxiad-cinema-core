@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, AlertCircle, Loader2,
-  Sparkles, Play, Ticket,
+  Sparkles, Play, Ticket, Film,
 } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
@@ -82,6 +82,9 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
   const [loadingRecs, setLoadingRecs] = useState(false);
   const [surveyCompleted, setSurveyCompleted] = useState(false);
 
+  // ── Dynamic Banner State ──
+  const [banners, setBanners] = useState<any[]>([]);
+
   useEffect(() => {
     if (isCashierSales && !localStorage.getItem('cashier_shift_session')) {
       navigate('/cashier', { replace: true });
@@ -134,6 +137,24 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
     return () => { cancelled = true; }; // cleanup: cancel stale fetch
   }, [selectedCity, selectedCinemaId]);
 
+  // ── Fetch Banners ──
+  useEffect(() => {
+    let cancelled = false;
+    const fetchBanners = async () => {
+      try {
+        const cinemaId = selectedCinemaId !== 'All' ? selectedCinemaId : undefined;
+        const response = await publicApi.getBanners(cinemaId);
+        if (!cancelled && response.data) {
+          setBanners(response.data);
+        }
+      } catch {
+        // Silent fail — banners are optional
+      }
+    };
+    fetchBanners();
+    return () => { cancelled = true; };
+  }, [selectedCinemaId]);
+
   useEffect(() => {
     fetchTrendingMovies();
   }, [selectedCity, trendingTab]);
@@ -174,7 +195,47 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
     loadRecommendations();
   };
 
-  const heroMovies = useMemo(() => trendingMovies.slice(0, 5), [trendingMovies]);
+  // Merge banner items + trending movies for hero slider
+  const heroMovies = useMemo(() => {
+    // If banners have items, use them (they're curated by admin/system)
+    const bannerItems = banners.flatMap((b: any) => (b.items || []).map((item: any) => ({
+      movieId: item.id,
+      movieName: item.name,
+      movieImageUrl: item.imageUrl,
+      movieBannerUrl: item.imageUrl,
+      movieDescription: item.description,
+      movieDuration: 0,
+      averageRating: 0,
+      viewCount: 0,
+      paidTicketCount: 0,
+      movieRequiredAgeSymbol: '',
+      _fromBanner: true,
+      _bannerTitle: b.title,
+      _bannerType: b.contentType, // 'Trending' | 'Upcoming' | 'HotVouchers' | 'Fixed'
+      _itemExtra: item.extra, // e.g. "5% off" for vouchers
+    })));
+    
+    // If we have banner items, use them; otherwise fall back to trending movies
+    if (bannerItems.length > 0) {
+      return bannerItems.slice(0, 10);
+    }
+    return trendingMovies.slice(0, 5);
+  }, [banners, trendingMovies]);
+
+  // ── Auto-rotate hero slides ──
+  useEffect(() => {
+    if (heroMovies.length <= 1) return;
+    let intervalMs = 5000;
+    try {
+      const cfg = JSON.parse(banners[0]?.contentConfig || '{}');
+      if (cfg.autoRotate === false) return;
+      if (cfg.rotateIntervalMs) intervalMs = cfg.rotateIntervalMs;
+    } catch { /* use default */ }
+    const interval = setInterval(() => {
+      setActiveHeroIndex(prev => (prev + 1) % heroMovies.length);
+    }, intervalMs);
+    return () => clearInterval(interval);
+  }, [heroMovies, banners]);
 
   const activeHeroMovie = heroMovies[activeHeroIndex] ?? heroMovies[0];
   const activeHeroImage = activeHeroMovie?.movieBannerUrl || activeHeroMovie?.movieImageUrl || PLACEHOLDER_POSTER;
@@ -755,7 +816,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
 
 
 
-      {/* ===== HERO SECTION ===== */}
+
       <section className="home-hero-shell">
         <div className="home-hero-bg">
           {activeHeroMovie ? (
@@ -785,47 +846,81 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
               <div key={activeHeroMovie.movieId} className="home-slide-copy">
                 <span className="home-hero-kicker">
                   <Sparkles size={14} />
-                  {t('home.topTrending')}
+                  {activeHeroMovie._bannerTitle || t('home.topTrending')}
                 </span>
                 <h1 className="home-hero-title">{activeHeroMovie.movieName}</h1>
                 <div className="home-hero-meta">
-                  {activeHeroMovie.movieRequiredAgeSymbol && (
-                    <span className="home-hero-chip">{activeHeroMovie.movieRequiredAgeSymbol}</span>
+                  {activeHeroMovie._bannerType === 'HotVouchers' && activeHeroMovie._itemExtra ? (
+                    <span className="home-hero-chip" style={{ background: 'rgba(255,138,0,0.2)', color: '#ff8a00', fontWeight: 800 }}>{activeHeroMovie._itemExtra}</span>
+                  ) : (
+                    <>
+                      {activeHeroMovie.movieRequiredAgeSymbol && (
+                        <span className="home-hero-chip">{activeHeroMovie.movieRequiredAgeSymbol}</span>
+                      )}
+                      {activeHeroMovie.movieDuration > 0 && (
+                        <span className="home-hero-chip">{activeHeroMovie.movieDuration} min</span>
+                      )}
+                      {activeHeroMovie.averageRating > 0 && (
+                        <span className="home-hero-chip">{Number(activeHeroMovie.averageRating || 0).toFixed(1)} rating</span>
+                      )}
+                      {activeHeroMovie.viewCount > 0 && (
+                        <span className="home-hero-chip">{activeHeroMovie.viewCount} views</span>
+                      )}
+                    </>
                   )}
-                  {activeHeroMovie.movieDuration > 0 && (
-                    <span className="home-hero-chip">{activeHeroMovie.movieDuration} min</span>
-                  )}
-                  <span className="home-hero-chip">{Number(activeHeroMovie.averageRating || 0).toFixed(1)} rating</span>
-                  <span className="home-hero-chip">{activeHeroMovie.viewCount} views</span>
                 </div>
                 <p className="home-hero-copy">
-                  {activeHeroMovie.movieDescription || `${activeHeroMovie.paidTicketCount} tickets, ${activeHeroMovie.viewCount} views`}
+                  {activeHeroMovie.movieDescription || ''}
                 </p>
                 <div className="home-hero-actions">
-                  <button
-                    className="btn-primary cta-glow"
-                    style={{
-                      minHeight: 48,
-                      padding: '12px 24px',
-                      borderRadius: 'var(--radius-full)',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      fontSize: 13,
-                      fontWeight: 800,
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => handleMovieClick(activeHeroMovie.movieId)}
-                  >
-                    <Ticket size={16} /> {t('home.bookNowBadge')}
-                  </button>
-                  <button
-                    className="home-hero-secondary"
-                    onClick={() => handleMovieClick(activeHeroMovie.movieId)}
-                  >
-                    <Play size={16} fill="white" /> {t('home.watchTrailer')}
-                  </button>
+                  {activeHeroMovie._bannerType === 'HotVouchers' ? (
+                    <>
+                      <button
+                        className="btn-primary cta-glow"
+                        style={{ minHeight: 48, padding: '12px 24px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer' }}
+                        onClick={() => navigate('/offers')}
+                      >
+                        <Ticket size={16} /> {t('home.exploreNow', 'Tìm hiểu ngay')}
+                      </button>
+                      {activeHeroMovie._itemExtra && (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '10px 20px', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 800, fontSize: 13, backdropFilter: 'blur(8px)' }}>
+                          {activeHeroMovie._itemExtra}
+                        </span>
+                      )}
+                    </>
+                  ) : activeHeroMovie._bannerType === 'Upcoming' ? (
+                    <>
+                      <button
+                        className="btn-primary cta-glow"
+                        style={{ minHeight: 48, padding: '12px 24px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer' }}
+                        onClick={() => handleMovieClick(activeHeroMovie.movieId)}
+                      >
+                        <Film size={16} /> {t('home.viewDetails', 'Xem chi tiết')}
+                      </button>
+                      <button
+                        className="home-hero-secondary"
+                        onClick={() => navigate('/offers')}
+                      >
+                        <Sparkles size={16} /> {t('home.viewAllUpcoming', 'Xem tất cả sắp chiếu')}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="btn-primary cta-glow"
+                        style={{ minHeight: 48, padding: '12px 24px', borderRadius: 'var(--radius-full)', display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 800, border: 'none', cursor: 'pointer' }}
+                        onClick={() => handleMovieClick(activeHeroMovie.movieId)}
+                      >
+                        <Ticket size={16} /> {t('home.bookNowBadge')}
+                      </button>
+                      <button
+                        className="home-hero-secondary"
+                        onClick={() => handleMovieClick(activeHeroMovie.movieId)}
+                      >
+                        <Play size={16} fill="white" /> {t('home.watchTrailer')}
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (

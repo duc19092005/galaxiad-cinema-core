@@ -7,7 +7,6 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.PricingPromotions;
 using Cinema.Domain.Utils;
 using Cinema.Domain.Interfaces.Persistence;
-using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Admin.PricingPromotions;
 
@@ -32,6 +31,30 @@ public class CreatePricingPromotionUseCase
 
     public async Task<PricingPromotionDto> ExecuteAsync(PricingPromotionUpsertDto dto)
     {
+        // Resolve conflicts: deactivate conflicting rules and their parent promotions
+        if (dto.DeactivateRuleIds.Count > 0)
+        {
+            var rulesToDeactivate = await _repository.GetRulesByIdsAsync(dto.DeactivateRuleIds);
+            var promotionIds = new HashSet<Guid>();
+            foreach (var rule in rulesToDeactivate)
+            {
+                rule.IsActive = false;
+                if (rule.PricingPromotionEntity != null)
+                    promotionIds.Add(rule.PricingPromotionId);
+            }
+            // Deactivate parent promotions that had all their rules replaced
+            foreach (var promoId in promotionIds)
+            {
+                var promo = await _repository.GetPromotionByIdAsync(promoId);
+                if (promo != null)
+                {
+                    promo.IsActive = false;
+                    promo.UpdatedAt = DateTime.UtcNow;
+                    _repository.UpdatePromotion(promo);
+                }
+            }
+        }
+
         var userId = TryGetUserId();
         var slug = await PricingPromotionHelper.BuildUniqueSlugAsync(_repository, dto.Slug, dto.Title);
         var promotion = new PricingPromotionEntity
@@ -72,4 +95,3 @@ public class CreatePricingPromotionUseCase
         }
     }
 }
-

@@ -1706,7 +1706,14 @@
     "onLabel": "Вкл",
     "offLabel": "Выкл",
     "chooseAllDays": "Выбрать все",
-    "clearAllDays": "Снять все"
+    "clearAllDays": "Снять все",
+    "conflictDetected": "Обнаружен конфликт правил",
+    "conflictDesc": "Некоторые новые правила конфликтуют с активными правилами из других акций. Выберите способ решения:",
+    "conflictPromotion": "Текущая акция",
+    "keepExisting": "Сохранить текущее",
+    "replaceWithNew": "Заменить новым",
+    "resolveConflicts": "Применить решение",
+    "saveFailed": "Не удалось сохранить акцию."
   },
   "rolePermissions": {
     "title": "Роли и разрешения",

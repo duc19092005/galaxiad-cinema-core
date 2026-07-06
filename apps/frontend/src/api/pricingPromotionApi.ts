@@ -83,6 +83,27 @@ export interface PricingPromotionUpsertDto {
   startDate?: string | null;
   endDate?: string | null;
   rules: PricingPromotionRuleRequestDto[];
+  deactivateRuleIds?: string[];
+}
+
+export interface PricingPromotionConflictDto {
+  conflictRuleId: string;
+  conflictRuleDescription: string;
+  conflictPromotionId: string;
+  conflictPromotionTitle: string;
+  promotionType: PromotionTypeName | string;
+  promotionTypeName: string;
+  adjustmentValue: number;
+  movieFormatName: string | null;
+  cinemaName: string | null;
+  userSegmentName: string | null;
+  daysOfWeekText: string;
+  timeRange: string | null;
+}
+
+export interface ConflictCheckResponse {
+  hasConflicts: boolean;
+  conflicts: PricingPromotionConflictDto[];
 }
 
 const wrapResponse = <T>(data: unknown): ApiSuccessResponse<T> => {
@@ -125,5 +146,10 @@ export const pricingPromotionApi = {
   delete: async (id: string): Promise<ApiSuccessResponse<null>> => {
     const response = await identityAxios.delete<unknown>(`/admin/pricing-promotions/${id}`);
     return wrapResponse<null>(response.data);
+  },
+  checkConflicts: async (dto: PricingPromotionUpsertDto, excludeId?: string): Promise<ApiSuccessResponse<ConflictCheckResponse>> => {
+    const params = excludeId ? `?excludeId=${excludeId}` : '';
+    const response = await identityAxios.post<unknown>(`/admin/pricing-promotions/check-conflicts${params}`, dto);
+    return wrapResponse<ConflictCheckResponse>(response.data);
   },
 };

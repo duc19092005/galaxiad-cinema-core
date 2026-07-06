@@ -25,6 +25,7 @@ import {
   BadgePercent,
   ChevronLeft,
   ChevronRight,
+  Image,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -40,6 +41,7 @@ import EditEmployeeModal from '../../components/EditEmployeeModal';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { VouchersSection } from './components/VouchersSection';
 import { PricingPromotionsSection } from './components/PricingPromotionsSection';
+import { BannersSection } from './components/BannersSection';
 import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
@@ -67,7 +69,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'permissions', 'rights', 'audit', 'shifts']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
 
 const isAccountActive = (status: AdminUserDto['accountStatus']) => {
   if (typeof status === 'number') return status === 1;
@@ -1225,6 +1227,7 @@ const AdminPage: React.FC = () => {
         { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
         { id: 'pricing-promotions', label: t('Pricing Rules'), icon: <BadgePercent size={18} /> },
+        { id: 'banners', label: 'Banners', icon: <Image size={18} /> },
         { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
         { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
         { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
@@ -1407,6 +1410,9 @@ const AdminPage: React.FC = () => {
 
       case 'pricing-promotions':
         return <PricingPromotionsSection />;
+
+      case 'banners':
+        return <BannersSection />;
 
       case 'cinemas':
         return (

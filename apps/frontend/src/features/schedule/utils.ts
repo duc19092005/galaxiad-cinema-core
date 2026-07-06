@@ -6,6 +6,7 @@ export const END_HOUR = 26;    // 2:00 AM next day (24 + 2 = 26)
 export const TOTAL_HOURS = END_HOUR - START_HOUR; // 19 hours
 export const PIXELS_PER_HOUR = 60;
 export const PIXELS_PER_MIN = 2;
+export const CLEANING_TIME_MINUTES = 15; // Buffer between showtimes for auditorium cleanup
 
 export const getPixelsFromTime = (dateStr: string): number => {
     const date = new Date(dateStr);
@@ -37,6 +38,10 @@ export const getTimeFromPixels = (pixels: number, baseDate: Date): Date => {
     return newDate;
 };
 
+/**
+ * Check if a new time range collides with existing slots, including the
+ * CLEANING_TIME_MINUTES buffer zone around each existing slot.
+ */
 export const checkCollision = (
     newStart: Date,
     newEnd: Date,
@@ -45,6 +50,7 @@ export const checkCollision = (
 ): boolean => {
     const newStartMs = newStart.getTime();
     const newEndMs = newEnd.getTime();
+    const bufferMs = CLEANING_TIME_MINUTES * 60000;
 
     return existingSlots.some(slot => {
         if (slot.id === excludeSlotId) return false;
@@ -52,11 +58,15 @@ export const checkCollision = (
         const slotStart = new Date(slot.start).getTime();
         const slotEnd = new Date(slot.end).getTime();
 
-        return (newStartMs < slotEnd) && (newEndMs > slotStart);
+        // Buffer zone: existing slot ± CLEANING_TIME_MINUTES
+        const slotStartWithBuffer = slotStart - bufferMs;
+        const slotEndWithBuffer = slotEnd + bufferMs;
+
+        return (newStartMs < slotEndWithBuffer) && (newEndMs > slotStartWithBuffer);
     });
 };
 
-export const calculateEndTime = (startDate: Date, durationMinutes: number, cleaningTimeMinutes: number = 20): Date => {
+export const calculateEndTime = (startDate: Date, durationMinutes: number, cleaningTimeMinutes: number = CLEANING_TIME_MINUTES): Date => {
     return new Date(startDate.getTime() + (durationMinutes + cleaningTimeMinutes) * 60000);
 };
 

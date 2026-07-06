@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { Movie, ShowTimeSlot, Auditorium } from '../types';
 import { showSuccess, showError } from '../../../utils/ToastUtils';
-import { checkCollision } from '../utils';
+import { checkCollision, CLEANING_TIME_MINUTES } from '../utils';
 
 interface ManualAddModalProps {
     movie: Movie;
@@ -61,9 +61,9 @@ const ManualAddModal: React.FC<ManualAddModalProps> = ({ movie, auditorium, sche
         const startRaw = new Date(`${dateVal}T00:00:00`);
         startRaw.setHours(hours, minutes, 0, 0);
 
-        // Calculate end Date (duration + cleaning time of 20 mins assumed)
+        // Calculate end Date (duration + cleaning time)
         const duration = movie.durationMinutes;
-        const endTimeRaw = new Date(startRaw.getTime() + duration * 60000);
+        const endTimeRaw = new Date(startRaw.getTime() + (duration + CLEANING_TIME_MINUTES) * 60000);
 
         // Collision check
         const isColliding = checkCollision(startRaw, endTimeRaw, scheduleSlots);

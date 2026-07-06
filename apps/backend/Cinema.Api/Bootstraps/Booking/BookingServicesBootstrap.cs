@@ -108,6 +108,7 @@ public static class BookingServicesBootstrap
         services.AddScoped<TogglePricingPromotionUseCase>();
         services.AddScoped<CalculatePricingPromotionUseCase>();
         services.AddScoped<GetPricingPromotionOptionsUseCase>();
+        services.AddScoped<CheckPricingPromotionConflictsUseCase>();
 
         return services;
     }

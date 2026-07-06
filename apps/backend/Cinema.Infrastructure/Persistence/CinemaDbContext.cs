@@ -7,6 +7,7 @@ using Cinema.Domain.Entities.ScheduleJob;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.Vouchers;
+using Cinema.Domain.Entities.Banners;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
 using Cinema.Infrastructure.Persistence.SeedData;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
@@ -120,6 +121,10 @@ public class CinemaDbContext : DbContext
     public DbSet<PricingPromotionRuleEntity> PricingPromotionRuleEntity { get; set; }
 
     public DbSet<HolidayCalendarEntity> HolidayCalendarEntity { get; set; }
+
+    // Banners
+
+    public DbSet<Cinema.Domain.Entities.Banners.BannerEntity> BannerEntity { get; set; }
 
     // Group Booking (Social)
 
@@ -384,6 +389,13 @@ public class CinemaDbContext : DbContext
         {
             entity.HasKey(x => x.HolidayId);
             entity.HasIndex(x => x.Date).IsUnique();
+        });
+
+        modelBuilder.Entity<BannerEntity>(entity =>
+        {
+            entity.HasKey(x => x.BannerId);
+            entity.HasIndex(x => x.DisplayOrder);
+            entity.HasIndex(x => x.IsActive);
         });
         
         // User Infos 

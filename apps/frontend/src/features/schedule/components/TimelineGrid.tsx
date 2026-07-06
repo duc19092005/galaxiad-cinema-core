@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Clock } from 'lucide-react';
 import type { Auditorium, ScheduleData, Movie, ShowTimeSlot } from '../types';
 import {
     getPixelsFromTime,
@@ -7,7 +8,8 @@ import {
     formatTime,
     START_HOUR,
     TOTAL_HOURS,
-    PIXELS_PER_MIN
+    PIXELS_PER_MIN,
+    CLEANING_TIME_MINUTES
 } from '../utils';
 
 interface TimelineGridProps {
@@ -93,6 +95,14 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
     // Live current-time indicator (updates every minute)
     const [nowPixel, setNowPixel] = useState<{ dateKey: string; pixel: number } | null>(null);
 
+    // Buffer zone indicators during drag
+    const [bufferZones, setBufferZones] = useState<Array<{
+        top: number;
+        height: number;
+        isAbove: boolean; // true = buffer before slot, false = buffer after slot
+    }>>([]);
+    const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+
     useEffect(() => {
         const update = () => {
             const nowVN = getNowVietnam();
@@ -147,6 +157,11 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
         isDraggingRef.current = !!(draggingMovie || movingSlot);
     }, [draggingMovie, movingSlot]);
 
+    // Clear buffer zones when schedule data changes (e.g. after fetch)
+    useEffect(() => {
+        setBufferZones([]);
+    }, [scheduleData]);
+
     // Throttled handleDragOver
     const lastDragOverTime = useRef(0);
 
@@ -189,7 +204,7 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
             duration = (en.getTime() - s.getTime()) / 60000;
         }
 
-        const cleaning = draggingMovie ? 20 : 0;
+        const cleaning = draggingMovie ? CLEANING_TIME_MINUTES : 0;
         const effectiveDuration = draggingMovie ? (duration + cleaning) : duration;
         const endTimeLocal = new Date(startTimeLocal.getTime() + effectiveDuration * 60000);
 
@@ -242,7 +257,7 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
             invalidReason = '⚠ Exceeds 02:00 AM';
         } else if (isColliding) {
             isValid = false;
-            invalidReason = '❌ Collides!';
+            invalidReason = `❌ Cần cách ${CLEANING_TIME_MINUTES} phút dọn dẹp`;
         } else if (!isFormatCompatible) {
             isValid = false;
             invalidReason = '⚠ Format mismatch';
@@ -260,6 +275,35 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
             top: snappedPixel,
             height: Math.min(effectiveDuration * PIXELS_PER_MIN, TOTAL_HEIGHT - snappedPixel)
         });
+
+        // Compute buffer zones for visual indicators — only for slots in this column's date
+        const bufferPx = CLEANING_TIME_MINUTES * PIXELS_PER_MIN; // 15 min * 2 px/min = 30 px
+        const zones: Array<{ top: number; height: number; isAbove: boolean }> = [];
+        const columnSlots = existingSlots.filter(s => getLogicalDateKey(s.start) === columnKey);
+        for (const slot of columnSlots) {
+            // Only show buffer zones for slots that haven't ended yet
+            const slotEnd = new Date(slot.end);
+            if (slotEnd <= nowVN) continue;
+
+            const slotTop = getPixelsFromTime(slot.start) + TOP_OFFSET;
+            const slotBottom = getPixelsFromTime(slot.end) + TOP_OFFSET;
+            // Buffer above the slot (only if slot hasn't started yet)
+            if (new Date(slot.start) > nowVN) {
+                zones.push({
+                    top: Math.max(0, slotTop - bufferPx),
+                    height: bufferPx,
+                    isAbove: true,
+                });
+            }
+            // Buffer below the slot
+            zones.push({
+                top: slotBottom,
+                height: bufferPx,
+                isAbove: false,
+            });
+        }
+        setBufferZones(zones);
+        setDragOverColumnId(columnId);
     }, [draggingMovie, movingSlot, auditoriums, scheduleData, TOP_OFFSET, TOTAL_HEIGHT]);
 
     const handleDrop = (e: React.DragEvent, auditoriumId: string) => {
@@ -299,11 +343,15 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
 
         setGhost(null);
         setMovingSlot(null);
+        setBufferZones([]);
+        setDragOverColumnId(null);
         lastMousePosRef.current = null;
     };
 
     const handleDragLeave = () => {
         setGhost(null);
+        setBufferZones([]);
+        setDragOverColumnId(null);
     };
 
     // ─── AUTO-SCROLL via requestAnimationFrame ─────────────────────────────────
@@ -551,13 +599,14 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                                     const top = getPixelsFromTime(slot.start) + TOP_OFFSET;
                                     const bottom = getPixelsFromTime(slot.end) + TOP_OFFSET;
                                     const height = bottom - top;
+                                    const isPast = new Date(slot.end) <= getNowVietnam();
 
                                     return (
                                         <div
                                             key={slot.id}
-                                            className="absolute left-1 right-1 rounded-md shadow-sm border border-black/10 overflow-hidden text-xs p-1.5 text-white hover:z-20 transition-all cursor-move"
+                                            className={`absolute left-1 right-1 rounded-md shadow-sm border border-black/10 overflow-hidden text-xs p-1.5 text-white transition-all ${isPast ? 'opacity-40 cursor-default' : 'hover:z-20 cursor-move'}`}
                                             style={{ top, height, backgroundColor: movie?.color || '#64748b' }}
-                                            draggable
+                                            draggable={!isPast}
                                             onDragStart={(e) => {
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 const offsetY = e.clientY - rect.top;
@@ -580,28 +629,54 @@ const TimelineGrid: React.FC<TimelineGridProps> = ({
                                                 setMovingSlot(null);
                                                 lastMousePosRef.current = null;
                                                 setGhost(null);
+                                                setBufferZones([]);
+                                                setDragOverColumnId(null);
                                             }}
                                         >
                                             <div className="font-bold truncate">{movie?.title || 'Unknown Movie'}</div>
                                             <div className="opacity-90">{formatTime(slot.start)} - {formatTime(slot.end)}</div>
                                             <div className="mt-1 opacity-75 font-bold">{slot.formatName || slot.formatId}</div>
-                                            <div
-                                                className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/20"
-                                                onMouseDown={(e) => {
-                                                    e.stopPropagation();
-                                                    e.preventDefault();
-                                                    setResizingSlot({
-                                                        auditoriumId: aud.id,
-                                                        slotId: slot.id,
-                                                        initialY: e.clientY,
-                                                        initialHeight: height,
-                                                        start: new Date(slot.start)
-                                                    });
-                                                }}
-                                            />
+                                            {isPast && (
+                                                <div className="absolute top-1 right-1 text-[8px] font-black uppercase tracking-wider bg-black/40 text-white/70 px-1.5 py-0.5 rounded">
+                                                    Đã chiếu
+                                                </div>
+                                            )}
+                                            {!isPast && (
+                                                <div
+                                                    className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize hover:bg-black/20"
+                                                    onMouseDown={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        setResizingSlot({
+                                                            auditoriumId: aud.id,
+                                                            slotId: slot.id,
+                                                            initialY: e.clientY,
+                                                            initialHeight: height,
+                                                            start: new Date(slot.start)
+                                                        });
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                     );
                                 })}
+
+                                {/* Buffer Zone Indicators — shown during drag only in the dragged-over column */}
+                                {dragOverColumnId === columnId && bufferZones.length > 0 &&
+                                    bufferZones.map((zone, i) => (
+                                        <div
+                                            key={`buf-${i}`}
+                                            className="absolute left-0 right-0 pointer-events-none z-[4] flex items-center justify-center"
+                                            style={{ top: zone.top, height: zone.height }}
+                                        >
+                                            <div className="absolute inset-0 bg-amber-400/8 border border-dashed border-amber-400/30 rounded-sm" />
+                                            <span className="relative flex items-center gap-0.5 text-[8px] font-bold text-amber-500/60 uppercase tracking-wider select-none">
+                                                <Clock size={8} />
+                                                {CLEANING_TIME_MINUTES}p
+                                            </span>
+                                        </div>
+                                    ))
+                                }
 
                                 {/* Ghost Block */}
                                 {ghost && ghost.columnId === columnId && (

@@ -160,6 +160,133 @@ public class PricingPromotionRepository : IPricingPromotionRepository
             .ToListAsync();
     }
 
+    public async Task<List<PricingPromotionRuleEntity>> FindConflictingRulesAsync(
+        List<PricingPromotionRuleEntity> newRules,
+        Guid? excludePromotionId,
+        DateTime? promotionStartDate,
+        DateTime? promotionEndDate)
+    {
+        // Load all active rules from active promotions (excluding the promotion being edited)
+        var existingRules = await _dbContext.Set<PricingPromotionRuleEntity>()
+            .Include(x => x.PricingPromotionEntity)
+            .Include(x => x.MovieFormatInfoEntity)
+            .Include(x => x.CinemaInfoEntity)
+            .Include(x => x.UserSegmentsInfoEntity)
+            .Where(x => x.IsActive
+                        && x.PricingPromotionEntity.IsActive
+                        && (!excludePromotionId.HasValue || x.PricingPromotionId != excludePromotionId.Value))
+            .AsNoTracking()
+            .ToListAsync();
+
+        var conflictingRuleIds = new HashSet<Guid>();
+
+        foreach (var newRule in newRules)
+        {
+            foreach (var existing in existingRules)
+            {
+                if (conflictingRuleIds.Contains(existing.PricingPromotionRuleId))
+                    continue;
+
+                if (AreRulesConflicting(newRule, existing, promotionStartDate, promotionEndDate))
+                    conflictingRuleIds.Add(existing.PricingPromotionRuleId);
+            }
+        }
+
+        return existingRules.Where(x => conflictingRuleIds.Contains(x.PricingPromotionRuleId)).ToList();
+    }
+
+    public async Task<List<PricingPromotionRuleEntity>> GetRulesByIdsAsync(List<Guid> ruleIds)
+    {
+        return await _dbContext.Set<PricingPromotionRuleEntity>()
+            .Include(x => x.PricingPromotionEntity)
+            .Where(x => ruleIds.Contains(x.PricingPromotionRuleId))
+            .ToListAsync();
+    }
+
+    private static bool AreRulesConflicting(
+        PricingPromotionRuleEntity a,
+        PricingPromotionRuleEntity b,
+        DateTime? aPromoStart,
+        DateTime? aPromoEnd)
+    {
+        // Same promotion type
+        if (a.PromotionType != b.PromotionType)
+            return false;
+
+        // Format overlap: both null (all) OR one null (all) OR same specific
+        if (a.MovieFormatId.HasValue && b.MovieFormatId.HasValue && a.MovieFormatId != b.MovieFormatId)
+            return false;
+
+        // Cinema overlap
+        if (a.CinemaId.HasValue && b.CinemaId.HasValue && a.CinemaId != b.CinemaId)
+            return false;
+
+        // User segment overlap
+        if (a.UserSegmentId.HasValue && b.UserSegmentId.HasValue && a.UserSegmentId != b.UserSegmentId)
+            return false;
+
+        // Days of week overlap (bitwise AND)
+        if ((a.DaysOfWeekMask & b.DaysOfWeekMask) == 0)
+            return false;
+
+        // Time overlap (considering overnight ranges like 22:00–02:00)
+        if (a.TimeFrom.HasValue && a.TimeTo.HasValue && b.TimeFrom.HasValue && b.TimeTo.HasValue)
+        {
+            if (!TimeRangesOverlap(a.TimeFrom.Value, a.TimeTo.Value, b.TimeFrom.Value, b.TimeTo.Value))
+                return false;
+        }
+
+        // Date overlap at rule level
+        if (!DateRangesOverlap(a.StartDate, a.EndDate, b.StartDate, b.EndDate))
+            return false;
+
+        // Date overlap at promotion level (new rule uses passed-in dates, existing rule uses nav property)
+        var bPromoStart = b.PricingPromotionEntity?.StartDate;
+        var bPromoEnd = b.PricingPromotionEntity?.EndDate;
+        if (!DateRangesOverlap(aPromoStart, aPromoEnd, bPromoStart, bPromoEnd))
+            return false;
+
+        return true;
+    }
+
+    private static bool TimeRangesOverlap(TimeSpan fromA, TimeSpan toA, TimeSpan fromB, TimeSpan toB)
+    {
+        // Handle overnight ranges (e.g., 22:00–02:00)
+        if (fromA <= toA && fromB <= toB)
+        {
+            // Both normal ranges
+            return fromA < toB && fromB < toA;
+        }
+
+        if (fromA > toA && fromB > toB)
+        {
+            // Both overnight ranges — always overlap
+            return true;
+        }
+
+        // One overnight, one normal
+        if (fromA > toA)
+        {
+            // A is overnight, B is normal
+            return toA > fromB || fromA < toB;
+        }
+        else
+        {
+            // B is overnight, A is normal
+            return toB > fromA || fromB < toA;
+        }
+    }
+
+    private static bool DateRangesOverlap(DateTime? startA, DateTime? endA, DateTime? startB, DateTime? endB)
+    {
+        var aStart = startA ?? DateTime.MinValue;
+        var aEnd = endA ?? DateTime.MaxValue;
+        var bStart = startB ?? DateTime.MinValue;
+        var bEnd = endB ?? DateTime.MaxValue;
+
+        return aStart <= bEnd && bStart <= aEnd;
+    }
+
     public async Task<List<PricingPromotionRuleEntity>> GetRulesForCalculationAsync(
         DateTime showDateUtc, 
         int showDayMask, 

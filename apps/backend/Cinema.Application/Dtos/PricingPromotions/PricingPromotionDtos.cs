@@ -44,6 +44,7 @@ public class PricingPromotionUpsertDto
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public List<PricingPromotionRuleRequestDto> Rules { get; set; } = [];
+    public List<Guid> DeactivateRuleIds { get; set; } = [];
 }
 
 public class PricingPromotionRuleDto

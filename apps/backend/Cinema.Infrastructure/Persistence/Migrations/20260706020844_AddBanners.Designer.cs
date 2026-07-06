@@ -4,16 +4,19 @@ using Cinema.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Cinema.Infrastructure.Migrations
+namespace Cinema.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260706020844_AddBanners")]
+    partial class AddBanners
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2954,9 +2957,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.Property<DateTime>("EndedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("InterestCount")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -3028,7 +3028,6 @@ namespace Cinema.Infrastructure.Migrations
                             CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
                             Director = "Matt Reeves",
                             EndedDate = new DateTime(2026, 4, 12, 0, 0, 0, 0, DateTimeKind.Utc),
-                            InterestCount = 0,
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,
@@ -3051,7 +3050,6 @@ namespace Cinema.Infrastructure.Migrations
                             CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
                             Director = "Christopher Nolan",
                             EndedDate = new DateTime(2026, 4, 17, 0, 0, 0, 0, DateTimeKind.Utc),
-                            InterestCount = 0,
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,
@@ -3074,7 +3072,6 @@ namespace Cinema.Infrastructure.Migrations
                             CreatedByUserId = new Guid("b2c3d4e5-f6a7-8b9c-d0e1-f2a3b4c5d6e7"),
                             Director = "James Cameron",
                             EndedDate = new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Utc),
-                            InterestCount = 0,
                             IsActive = true,
                             IsCommingSoon = true,
                             IsDeleted = false,

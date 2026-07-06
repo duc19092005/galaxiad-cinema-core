@@ -158,5 +158,18 @@ export const publicApi = {
             params: limit ? { limit } : undefined
         });
         return response.data;
-    }
+    },
+
+    /** Get active banners for home page */
+    getBanners: async (cinemaId?: string): Promise<ApiSuccessResponse<any[]>> => {
+        const params: Record<string, string> = {};
+        if (cinemaId) params.cinemaId = cinemaId;
+        const response = await publicAxios.get<any>('/banners', { params });
+        // Backend returns array directly (not wrapped in isSuccess/data)
+        // Normalize to ApiSuccessResponse format
+        if (Array.isArray(response.data)) {
+            return { isSuccess: true, message: 'Success', data: response.data };
+        }
+        return response.data;
+    },
 };

@@ -40,6 +40,8 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
 
     public bool IsCommingSoon { get; set; } = true;
 
+    public int InterestCount { get; set; } = 0;
+
     public DateTime EndedDate {get;set;}
 
     public Guid? MovieManagerId { get; set; }

@@ -517,6 +517,20 @@ public static class Messages
         public const string ToggledSuccessfully = "Pricing promotion status toggled successfully.";
         public const string InvalidDateRange = "End date must be after start date.";
         public const string CannotDeleteActive = "Cannot delete an active promotion.";
+        public const string ConflictDetected = "Conflicting pricing rules detected. Please review and choose how to resolve.";
+        public const string ConflictResolutionSuccess = "Pricing promotion saved with conflict resolution.";
+    }
+
+    // =============================================================
+    //  BANNERS
+    // =============================================================
+    public static class Banner
+    {
+        public const string NotFound = "Banner not found.";
+        public const string CreatedSuccessfully = "Banner created successfully.";
+        public const string UpdatedSuccessfully = "Banner updated successfully.";
+        public const string DeletedSuccessfully = "Banner deleted successfully.";
+        public const string ToggledSuccessfully = "Banner status toggled successfully.";
     }
 
     // =============================================================

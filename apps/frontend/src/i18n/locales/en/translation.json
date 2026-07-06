@@ -1626,7 +1626,14 @@
     "onLabel": "On",
     "offLabel": "Off",
     "chooseAllDays": "Select All",
-    "clearAllDays": "Deselect All"
+    "clearAllDays": "Deselect All",
+    "conflictDetected": "Rule Conflict Detected",
+    "conflictDesc": "Some new rules conflict with active rules from other promotions. Choose how to resolve:",
+    "conflictPromotion": "Current promotion",
+    "keepExisting": "Keep Existing",
+    "replaceWithNew": "Replace with New",
+    "resolveConflicts": "Apply Resolution",
+    "saveFailed": "Failed to save promotion."
   },
   "rolePermissions": {
     "title": "Roles & Permissions",

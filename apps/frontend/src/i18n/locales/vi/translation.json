@@ -1466,7 +1466,14 @@
     "endDate": "Ngày kết thúc",
     "saveSuccess": "Lưu quy tắc thành công!",
     "deleteSuccess": "Xóa quy tắc thành công!",
-    "deleteConfirm": "Bạn có chắc muốn xóa quy tắc này?"
+    "deleteConfirm": "Bạn có chắc muốn xóa quy tắc này?",
+    "conflictDetected": "Phát hiện xung đột quy tắc",
+    "conflictDesc": "Một số quy tắc mới bị trùng với quy tắc đang hoạt động từ chương trình khác. Chọn cách xử lý:",
+    "conflictPromotion": "Chương trình hiện tại",
+    "keepExisting": "Giữ quy tắc hiện tại",
+    "replaceWithNew": "Thay bằng quy tắc mới",
+    "resolveConflicts": "Áp dụng xử lý",
+    "saveFailed": "Lưu chương trình thất bại."
   },
   "rolePermissions": {
     "title": "Quyền & Vai trò",

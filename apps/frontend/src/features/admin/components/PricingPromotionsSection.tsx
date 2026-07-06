@@ -11,10 +11,12 @@ import {
   type PricingPromotionOptionsDto,
   type PricingPromotionRuleRequestDto,
   type PricingPromotionUpsertDto,
+  type PricingPromotionConflictDto,
   type PromotionTypeName,
 } from '../../../api/pricingPromotionApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
+import { PricingPromotionConflictModal } from './PricingPromotionConflictModal';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -755,6 +757,9 @@ export const PricingPromotionsSection: React.FC = () => {
   const [step, setStep] = useState(0);
   const [editingPromotion, setEditingPromotion] = useState<PricingPromotionDto | null>(null);
   const [form, setForm] = useState<WizardFormState>(createWizardForm);
+  const [conflicts, setConflicts] = useState<PricingPromotionConflictDto[]>([]);
+  const [isConflictModalOpen, setIsConflictModalOpen] = useState(false);
+  const [pendingPayload, setPendingPayload] = useState<PricingPromotionUpsertDto | null>(null);
 
   const activeCount = useMemo(() => promotions.filter(p => p.isActive).length, [promotions]);
 
@@ -798,6 +803,27 @@ export const PricingPromotionsSection: React.FC = () => {
     } catch (e) { showError(getErrorMessage(e, t('pricingPromotions.loadDataFailed'))); }
   };
 
+  const submitWithResolution = async (payload: PricingPromotionUpsertDto, deactivateRuleIds: string[]) => {
+    const finalPayload = { ...payload, deactivateRuleIds };
+    setSubmitting(true);
+    try {
+      const r = editingPromotion
+        ? await pricingPromotionApi.update(editingPromotion.pricingPromotionId, finalPayload)
+        : await pricingPromotionApi.create(finalPayload);
+      if (r.isSuccess) {
+        showSuccess(t('pricingPromotions.saveSuccess'));
+        closeDrawer();
+        fetchData();
+      }
+    } catch (e) {
+      showError(getErrorMessage(e, t('pricingPromotions.saveFailed')));
+    } finally {
+      setSubmitting(false);
+      setIsConflictModalOpen(false);
+      setPendingPayload(null);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) { showError(t('pricingPromotions.fillNameRequired')); return; }
@@ -805,16 +831,33 @@ export const PricingPromotionsSection: React.FC = () => {
     setSubmitting(true);
     try {
       const payload = toPayload(form);
+
+      // Check for conflicts first
+      const conflictRes = await pricingPromotionApi.checkConflicts(
+        payload,
+        editingPromotion?.pricingPromotionId
+      );
+
+      if (conflictRes.isSuccess && conflictRes.data?.hasConflicts) {
+        // Show conflict resolution modal
+        setConflicts(conflictRes.data.conflicts);
+        setPendingPayload(payload);
+        setIsConflictModalOpen(true);
+        setSubmitting(false);
+        return;
+      }
+
+      // No conflicts — save directly
       const r = editingPromotion
         ? await pricingPromotionApi.update(editingPromotion.pricingPromotionId, payload)
         : await pricingPromotionApi.create(payload);
       if (r.isSuccess) {
-        showSuccess(editingPromotion ? t('pricingPromotions.saveSuccess') : t('pricingPromotions.saveSuccess'));
+        showSuccess(t('pricingPromotions.saveSuccess'));
         closeDrawer();
         fetchData();
       }
     } catch (e) {
-      showError(getErrorMessage(e, t('pricingPromotions.saveSuccess')));
+      showError(getErrorMessage(e, t('pricingPromotions.saveFailed')));
     } finally {
       setSubmitting(false);
     }
@@ -987,9 +1030,24 @@ export const PricingPromotionsSection: React.FC = () => {
         document.body
       )}
 
+      {isConflictModalOpen && pendingPayload && (
+        <PricingPromotionConflictModal
+          conflicts={conflicts}
+          onResolve={(deactivateRuleIds) => {
+            setIsConflictModalOpen(false);
+            submitWithResolution(pendingPayload, deactivateRuleIds);
+          }}
+          onCancel={() => {
+            setIsConflictModalOpen(false);
+            setPendingPayload(null);
+          }}
+        />
+      )}
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         @keyframes slideInRight { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes modalIn { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95) } to { opacity: 1; transform: translate(-50%, -50%) scale(1) } }
         @keyframes spin { to { transform: rotate(360deg) } }
       `}</style>
     </>
