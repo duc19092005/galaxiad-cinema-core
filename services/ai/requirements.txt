@@ -11,7 +11,7 @@ qdrant-client==1.12.1
 matplotlib==3.9.2
 
 # CPU version of PyTorch to bypass 3GB+ CUDA wheels (e.g. nvidia-cudnn, nvidia-cublas)
-torch>=2.6.0+cpu
+torch==2.6.0+cpu
 sentence-transformers==3.0.1
 
 # gRPC
