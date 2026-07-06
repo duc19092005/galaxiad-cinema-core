@@ -107,11 +107,20 @@ jobs:
             
             if [ -n "$CHANGES" ]; then
               echo "Phat hien thay doi o Backend/AI/Nginx. Tien hanh build lai container..."
-              docker compose -f docker-compose.prod.yml -p galaxiad-cinema down
-              docker compose -f docker-compose.prod.yml -p galaxiad-cinema up -d --build --remove-orphans
+              
+              # Tự động nhận diện file Env của Portainer (stack.env) hoặc file .env thường
+              if [ -f "stack.env" ]; then
+                ENV_FILE="stack.env"
+              else
+                ENV_FILE=".env"
+              fi
+              
+              docker compose -f docker-compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE down
+              docker compose -f docker-compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE up -d --build --remove-orphans
             else
               echo "Chi co thay doi o Frontend. Bo qua khong build lai VPS."
             fi
+
 
 
 
