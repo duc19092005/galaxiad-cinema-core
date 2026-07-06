@@ -96,8 +96,12 @@ jobs:
             fi
             git fetch origin main
             
-            # Kiểm tra xem có thay đổi nào ở Backend, AI, Nginx hoặc Compose file không
-            CHANGES=$(git diff --name-only HEAD origin/main | grep -E '^(apps/backend/|services/ai/|nginx/|docker-compose.prod.yml)')
+            # Kiểm tra xem đã có commit HEAD chưa (tránh lỗi chạy lần đầu khi mới init git)
+            if git rev-parse --verify HEAD >/dev/null 2>&1; then
+              CHANGES=$(git diff --name-only HEAD origin/main | grep -E '^(apps/backend/|services/ai/|nginx/|docker-compose.prod.yml)')
+            else
+              CHANGES="first_run"
+            fi
             
             git reset --hard origin/main
             
@@ -108,6 +112,7 @@ jobs:
             else
               echo "Chi co thay doi o Frontend. Bo qua khong build lai VPS."
             fi
+
 
 
 
