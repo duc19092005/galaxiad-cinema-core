@@ -45,7 +45,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
           cpus: "1.0"
     restart: unless-stopped
 
@@ -81,8 +81,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
-          cpus: "1.0"
+          memory: 2G
+          cpus: "2.0"
     restart: unless-stopped
     networks:
       - cinema-network
