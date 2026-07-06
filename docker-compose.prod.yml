@@ -58,15 +58,19 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-    env_file:
-      - path: ./services/ai/.env
-        required: false
     environment:
       - ENVIRONMENT=production
       - EMBEDDING_BACKEND=cloud
       - HOST=0.0.0.0
       - PORT=8000
       - EMBEDDING_DIM=768
+      - JINA_API_KEY=${JINA_API_KEY}
+      - QDRANT_URL=${QDRANT_URL}
+      - QDRANT_COLLECTION=${QDRANT_COLLECTION:-cinema_movies}
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 30s
