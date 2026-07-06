@@ -14,7 +14,7 @@ services:
       - Database__AutoMigrate=${DATABASE_AUTO_MIGRATE:-true}
       - ConnectionStrings__DatabaseConnection=${DATABASE_CONNECTION}
       - ConnectionStrings__HangfireConnection=${HANGFIRE_CONNECTION}
-      - ConnectionStrings__RedisConnection=redis:6379,password=${REDIS_PASSWORD},abortConnect=false
+      - ConnectionStrings__RedisConnection=${REDIS_CONNECTION}
       - AllowedOrigins__0=https://galaxiadcine.online
       - AllowedOrigins__1=https://www.galaxiadcine.online
       - FrontendBaseUrl=${FRONTEND_BASE_URL:-https://galaxiadcine.online}
@@ -39,10 +39,6 @@ services:
     networks:
       - cinema-network
     depends_on:
-      mssql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
       ai:
         condition: service_healthy
     deploy:
@@ -86,55 +82,6 @@ services:
     networks:
       - cinema-network
 
-  # ─────────────────────────────────────────
-  # SQL Server 2022
-  # ─────────────────────────────────────────
-  mssql:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    ports:
-      - "1433:1433"
-    volumes:
-      - sqlvolume:/var/opt/mssql
-    env_file:
-      - .env
-    environment:
-      - ACCEPT_EULA=Y
-    healthcheck:
-      test: /opt/mssql-tools*/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1" || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 1.5G
-          cpus: "2.0"
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
-  # Redis cache, seat locks, group-booking state, and rate-limit counters
-  redis:
-    image: redis:7-alpine
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.5"
-    restart: unless-stopped
-    networks:
-      - cinema-network
-
   # Container management UI
   portainer:
     image: portainer/portainer-ce:latest
@@ -152,6 +99,4 @@ networks:
     driver: bridge
 
 volumes:
-  sqlvolume:
-  redis_data:
   portainer_data:
