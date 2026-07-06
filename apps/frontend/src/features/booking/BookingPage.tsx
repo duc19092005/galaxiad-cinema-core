@@ -640,7 +640,7 @@ const BookingPage: React.FC = () => {
                                 ) : (
                                     <>
                                         <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">payments</span>
-                                        <span className="font-display uppercase tracking-wider text-sm font-extrabold">Proceed to Pay</span>
+                                        <span className="font-display uppercase tracking-wider text-sm font-extrabold">{t('booking.proceedToPay')}</span>
                                     </>
                                 )}
                             </button>
@@ -654,8 +654,8 @@ const BookingPage: React.FC = () => {
                                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCf7glp6ITcrfW0hlE9CXfpSZ7AKpilK45LhR60O8k-msYArV6MVcBMije9H5ruQss-UbuC6Gb1YAflcR428UUHyWYRUE37mAUiB7VVcDsku8dh0XkH6TnzJyx6Me9rtBRfmPBYyk05S__h3GC_UA8Zgnje4sA3Shl3oYaIMWBRFe43eWcgqhiiU_iEjv7gWW52Q2ay7rZQda7oW14y08BU8HYg4NYYb7c2oYMFYBIhsC3smbjMPl2266Wx7hu3U6mCtsWUDUQRCE"
                             />
                             <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent flex flex-col justify-center px-6">
-                                <p className="text-[#ff8a00] font-bold text-xs tracking-widest uppercase mb-1">Premier Plus</p>
-                                <p className="text-white font-bold text-lg font-display">Get 20% off popcorn</p>
+                                <p className="text-[#ff8a00] font-bold text-xs tracking-widest uppercase mb-1">{t('booking.premierPlus')}</p>
+                                <p className="text-white font-bold text-lg font-display">{t('booking.promoBannerDesc')}</p>
                             </div>
                         </div>
                     </aside>
@@ -676,10 +676,10 @@ const BookingPage: React.FC = () => {
                     </div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 32, color: 'var(--text-secondary, #a1a1aa)', fontSize: 14 }}>
                         {[
-                            { label: 'Privacy Policy', path: '/privacy-policy' },
-                            { label: 'Terms of Service', path: '/terms-of-service' },
-                            { label: 'Contact Us', path: '/contact-us' },
-                            { label: 'Careers', path: '/careers' }
+                            { label: t('booking.privacyPolicy'), path: '/privacy-policy' },
+                            { label: t('booking.termsOfService'), path: '/terms-of-service' },
+                            { label: t('booking.contactUs'), path: '/contact-us' },
+                            { label: t('booking.careers'), path: '/careers' }
                         ].map(item => (
                             <button key={item.label} onClick={() => navigate(item.path)}
                                 style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', fontFamily: 'inherit', fontSize: 'inherit', transition: 'color 0.2s', whiteSpace: 'nowrap' }}
@@ -691,7 +691,7 @@ const BookingPage: React.FC = () => {
                         ))}
                     </div>
                     <div style={{ color: 'var(--text-secondary, #a1a1aa)', fontSize: 12, letterSpacing: '-0.01em', opacity: 0.5 }}>
-                        © 2026 CINEMA. ALL RIGHTS RESERVED.
+                        © 2026 {t('booking.cinema')}. ALL RIGHTS RESERVED.
                     </div>
                 </div>
             </footer>

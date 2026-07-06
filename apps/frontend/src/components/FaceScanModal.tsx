@@ -6,6 +6,7 @@
  *   - 'clockin': Xác thực điểm danh tại quầy POS (Cashier)
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import * as faceapi from 'face-api.js';
 import { Camera, CheckCircle, Loader2, ScanFace, X, AlertTriangle, RefreshCw } from 'lucide-react';
 import { loadFaceModels } from '../utils/faceApiUtils';
@@ -38,6 +39,7 @@ const SCAN_INTERVAL_MS = 150; // ms mỗi lần detect
 // Component
 // ─────────────────────────────────────────────
 const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescriptor, onClose }) => {
+  const { t } = useTranslation();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -79,7 +81,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
       try {
         await loadFaceModels();
       } catch {
-        if (!cancelled) setCameraError('Không thể tải AI model nhận diện khuôn mặt.');
+        if (!cancelled) setCameraError(t('faceScan.loadModelsError'));
         return;
       }
 
@@ -105,11 +107,11 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
         if (!cancelled) {
           const msg = err instanceof Error ? err.message : String(err);
           if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
-            setCameraError('Trình duyệt chưa cấp quyền camera. Hãy cho phép truy cập camera và thử lại.');
+            setCameraError(t('faceScan.cameraPermissionDenied'));
           } else if (msg.includes('NotFoundError')) {
-            setCameraError('Không tìm thấy camera trên thiết bị này.');
+            setCameraError(t('faceScan.cameraNotFound'));
           } else {
-            setCameraError(`Lỗi camera: ${msg}`);
+            setCameraError(t('faceScan.cameraGenericError', { error: msg }));
           }
           setStatus('camera_error');
         }
@@ -275,19 +277,19 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
   const isLoading = status === 'loading_models' || status === 'requesting_camera';
   const hasFace = status === 'face_found';
   const title = mode === 'register'
-    ? `Đăng ký khuôn mặt${staffName ? ` — ${staffName}` : ''}`
-    : `Xác thực khuôn mặt${staffName ? ` — ${staffName}` : ''}`;
+    ? `${t('faceScan.registerTitle')}${staffName ? ` — ${staffName}` : ''}`
+    : `${t('faceScan.verifyTitle')}${staffName ? ` — ${staffName}` : ''}`;
 
   const statusText = {
-    loading_models: 'Đang tải AI model...',
-    requesting_camera: 'Đang khởi động camera...',
-    camera_error: 'Lỗi camera',
-    scanning: 'Đang tìm khuôn mặt...',
+    loading_models: t('faceScan.loadingModels'),
+    requesting_camera: t('faceScan.requestCamera'),
+    camera_error: t('faceScan.cameraError'),
+    scanning: t('faceScan.scanning'),
     face_found: confidence
-      ? `Phát hiện khuôn mặt — Độ tin cậy: ${(confidence * 100).toFixed(1)}%`
-      : 'Phát hiện khuôn mặt',
-    no_face: 'Không phát hiện khuôn mặt — Hãy nhìn thẳng vào camera',
-    captured: 'Đã chụp! Xác nhận để tiếp tục.',
+      ? `${t('faceScan.faceFound')} — ${t('faceScan.confidence')}: ${(confidence * 100).toFixed(1)}%`
+      : t('faceScan.faceFound'),
+    no_face: t('faceScan.noFace'),
+    captured: t('faceScan.captured'),
   }[status];
 
   return (
@@ -314,7 +316,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
             <div>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{title}</h3>
               <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)' }}>
-                Nhìn thẳng, đủ ánh sáng, cách camera 30–60cm
+                {t('faceScan.guideText')}
               </p>
             </div>
           </div>
@@ -360,11 +362,11 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
             }}>
               <Loader2 size={36} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
               <p style={{ color: '#fff', margin: 0, fontSize: 14, fontWeight: 600 }}>
-                {status === 'loading_models' ? 'Đang tải AI model nhận diện khuôn mặt...' : 'Đang khởi động camera...'}
+                {status === 'loading_models' ? t('faceScan.loadingModels') : t('faceScan.requestCamera')}
               </p>
               {status === 'loading_models' && (
                 <p style={{ color: 'rgba(255,255,255,0.45)', margin: 0, fontSize: 12 }}>
-                  Lần đầu tiên có thể mất 5–10 giây
+                  {t('faceScan.initialLoadHint')}
                 </p>
               )}
             </div>
@@ -381,10 +383,10 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
             }}>
               <AlertTriangle size={40} style={{ color: 'var(--warning)' }} />
               <p style={{ color: '#fff', margin: 0, fontSize: 14, fontWeight: 700, textAlign: 'center' }}>
-                Không thể truy cập camera
+                {t('faceScan.cameraAccessError')}
               </p>
               <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: 12, textAlign: 'center', lineHeight: 1.6 }}>
-                {cameraError || 'Hãy kiểm tra quyền camera trong cài đặt trình duyệt.'}
+                {cameraError || t('faceScan.defaultCameraCheckMessage')}
               </p>
             </div>
           )}
@@ -399,7 +401,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
             }}>
               <CheckCircle size={52} style={{ color: '#22c55e' }} />
               <p style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 700 }}>
-                Đã lưu khuôn mặt
+                {t('faceScan.faceSaved')}
               </p>
             </div>
           )}
@@ -448,17 +450,17 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
             <>
               <button className="btn btn-secondary" onClick={handleRetry}>
                 <RefreshCw size={15} />
-                Quét lại
+                {t('faceScan.rescan')}
               </button>
               <button className="btn btn-primary" onClick={handleConfirm}>
                 <CheckCircle size={15} />
-                {mode === 'register' ? 'Lưu khuôn mặt' : 'Xác nhận điểm danh'}
+                {mode === 'register' ? t('faceScan.saveFace') : t('faceScan.confirmAttendance')}
               </button>
             </>
           ) : (
             <>
               <button className="btn btn-secondary" onClick={onClose}>
-                Hủy
+                {t('faceScan.cancel')}
               </button>
               <button
                 className="btn btn-primary"
@@ -467,7 +469,7 @@ const FaceScanModal: React.FC<FaceScanModalProps> = ({ mode, staffName, onDescri
                 style={{ minWidth: 140 }}
               >
                 <Camera size={15} />
-                {hasFace ? 'Chụp & Xác nhận' : 'Đang chờ mặt...'}
+                {hasFace ? t('faceScan.capture') : t('faceScan.waitingForFace')}
               </button>
             </>
           )}

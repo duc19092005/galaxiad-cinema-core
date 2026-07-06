@@ -1,5 +1,6 @@
 // src/components/SurveyModal.tsx
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import * as Lucide from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -228,6 +229,7 @@ const BearMascot: React.FC<{ state: 'idle' | 'selected' | 'typing' | 'loading' }
 };
 
 const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
+  const { t } = useTranslation();
   const [genres, setGenres] = useState<Array<{ genreId: string; genreName: string }>>([]);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [preference, setPreference] = useState('');
@@ -300,13 +302,13 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
   const getDialogueMessage = () => {
     switch (bearState) {
       case 'loading':
-        return 'Đang phân tích gu xem phim và lập danh sách đề xuất cực phẩm cho bạn đây... Đợi tớ một xíu nhé! 🍿🍿';
+        return t('survey.loadingMessage');
       case 'typing':
-        return 'Tớ đang nghe nè! Tả cụ thể một xíu sở thích xem phim hôm nay (ví dụ: kết buồn, nhiều cú twist) để tớ gợi ý chuẩn đét nha! ✍️🐻';
+        return t('survey.typingMessage');
       case 'selected':
-        return `Tuyệt quá! Đã chọn được ${selectedGenres.length} thể loại rồi. Chọn thêm nữa đi hoặc bấm "Xem Gợi Ý" để nhận phim hay nhé! ✨🎬`;
+        return t('survey.selectedMessage', { count: selectedGenres.length });
       default:
-        return 'Chào bạn! Tớ là Gấu Cinema. Hãy chọn các thể loại phim bạn yêu thích dưới đây để tớ tìm phim chuẩn gu nhất cho bạn nha! 🐻🍿';
+        return t('survey.defaultMessage');
     }
   };
 
@@ -423,7 +425,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                 textTransform: 'uppercase',
               }}
             >
-              Trợ lý cá nhân hóa
+              {t('survey.assistant')}
             </span>
           </div>
 
@@ -544,7 +546,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                       letterSpacing: '-0.02em',
                     }}
                   >
-                    Thể loại yêu thích của bạn?
+                    {t('survey.genreQuestion')}
                   </h2>
                   <p
                     style={{
@@ -555,7 +557,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                       lineHeight: 1.5,
                     }}
                   >
-                    Chọn các thể loại bên dưới để nhận các đề xuất phim chuẩn xác.
+                    {t('survey.genreSubtext')}
                   </p>
                 </div>
 
@@ -573,7 +575,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                         animation: 'spin 0.8s linear infinite',
                       }}
                     />
-                    Đang kết nối kho thể loại phim...
+                    {t('survey.loadingGenres')}
                   </div>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -770,14 +772,14 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                       fontWeight: 500,
                     }}
                   >
-                    Chia sẻ thêm gu phim hôm nay của bạn <span style={{ color: 'var(--text-muted)' }}>(tùy chọn)</span>
+                    {t('survey.sharePreference')} <span style={{ color: 'var(--text-muted)' }}>({t('survey.optional')})</span>
                   </label>
                   <textarea
                     value={preference}
                     onChange={e => setPreference(e.target.value)}
                     onFocus={() => setIsPrefFocused(true)}
                     onBlur={() => setIsPrefFocused(false)}
-                    placeholder="Ví dụ: Thích xem phim trinh thám hack não, nhịp độ nhanh, kịch tính, kết thúc bất ngờ..."
+                    placeholder={t('survey.preferencePlaceholder')}
                     rows={2.5}
                     style={{
                       width: '100%',
@@ -840,7 +842,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                   fontFamily: "'Outfit', sans-serif",
                 }}
               >
-                Đã chọn {selectedGenres.length} thể loại phim
+                {t('survey.selectedCount', { count: selectedGenres.length })}
               </span>
             )}
 
@@ -868,7 +870,7 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
                 e.currentTarget.style.borderColor = 'var(--border-color)';
               }}
             >
-              Bỏ qua
+              {t('survey.skip')}
             </button>
 
             <button
@@ -906,10 +908,10 @@ const SurveyModal: React.FC<SurveyModalProps> = ({ onClose, onComplete }) => {
               }}
             >
               {loading ? (
-                <>Đang lưu...</>
+                <>{t('survey.saving')}</>
               ) : (
                 <>
-                  Xem Gợi Ý <ChevronRight size={15} />
+                  {t('survey.seeSuggestions')} <ChevronRight size={15} />
                 </>
               )}
             </button>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertCircle, Building2, CalendarDays, Check, CheckCircle2,
   Clock4, Loader2, MapPin, Phone, Search, Shield, User, X, Camera,
@@ -36,6 +37,7 @@ interface EditEmployeeModalProps {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, user, onSuccess }) => {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('info');
 
   // ── Basic info state
@@ -197,7 +199,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
   const toggleRole = (role: RoleDto) => {
     const stored = JSON.parse(localStorage.getItem('user_info') || '{}');
     if (stored.userId === user.userId && role.roleName === 'Admin' && selectedRoleIds.includes(role.roleId)) {
-      showError('Không thể tự xóa quyền Admin của chính mình.'); return;
+      showError(t('editEmployee.cannotRemoveOwnAdmin')); return;
     }
     setSelectedRoleIds(prev =>
       prev.includes(role.roleId) ? prev.filter(id => id !== role.roleId) : [...prev, role.roleId],
@@ -213,19 +215,19 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
     setPortraitLoading(true);
 
     try {
-      showSuccess('Đang quét khuôn mặt trong ảnh...');
+      showSuccess(t('editEmployee.scanningFace'));
       const descriptor = await detectFaceDescriptor(file);
       if (!descriptor) {
-        showError('Không tìm thấy khuôn mặt trong ảnh. Hãy sử dụng ảnh chân dung rõ nét, nhìn thẳng.');
+        showError(t('editEmployee.noFaceFound'));
         setPortraitFile(null);
         setPortraitPreview(null);
         setFaceVector(null);
       } else {
         setFaceVector(Array.from(descriptor));
-        showSuccess('Quét và trích xuất khuôn mặt thành công!');
+        showSuccess(t('editEmployee.faceScanSuccess'));
       }
     } catch (err) {
-      showError('Lỗi trích xuất khuôn mặt. Vui lòng thử lại.');
+      showError(t('editEmployee.faceExtractError'));
       setPortraitFile(null);
       setPortraitPreview(null);
       setFaceVector(null);
@@ -239,9 +241,9 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
     try {
       await adminApi.updateUserStatus(user.userId, accountActive ? 2 : 1);
       setAccountActive(prev => !prev);
-      showSuccess(accountActive ? 'Đã khóa tài khoản.' : 'Đã kích hoạt tài khoản.');
+      showSuccess(accountActive ? t('editEmployee.accountLocked') : t('editEmployee.accountActivated'));
     } catch (err) {
-      showError(getApiError(err, 'Không thể cập nhật trạng thái.'));
+      showError(getApiError(err, t('editEmployee.statusUpdateFailed')));
     } finally {
       setStatusChanging(false);
     }
@@ -264,7 +266,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
           });
           anySuccess = true;
         } catch (err) {
-          errors.push(`Thông tin cơ bản: ${getApiError(err, 'Lỗi không xác định')}`);
+          errors.push(t('editEmployee.basicInfoError', { error: getApiError(err, t('editEmployee.unknownError')) }));
         }
       }
 
@@ -285,7 +287,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
           // If current user modified their own roles, log out
           const stored = JSON.parse(localStorage.getItem('user_info') || '{}');
           if (stored.userId === user.userId) {
-            showSuccess('Quyền thay đổi. Đang đăng xuất...', { duration: 2000 });
+            showSuccess(t('editEmployee.rolesChangedLogout'), { duration: 2000 });
             setTimeout(() => {
               localStorage.removeItem('user_info');
               document.cookie = 'X-Access-Token=; Max-Age=0; path=/;';
@@ -294,7 +296,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
             return;
           }
         } catch (err) {
-          errors.push(`Phân quyền & Rạp: ${getApiError(err, 'Lỗi không xác định')}`);
+          errors.push(t('editEmployee.rolesCinemaError', { error: getApiError(err, t('editEmployee.unknownError')) }));
         }
       }
 
@@ -306,7 +308,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
             await adminApi.assignTheaterManager(selectedCinemaId, user.userId);
             anySuccess = true;
           } catch (err) {
-            errors.push(`Gán quản lý rạp: ${getApiError(err, 'Lỗi không xác định')}`);
+            errors.push(t('editEmployee.assignManagerError', { error: getApiError(err, t('editEmployee.unknownError')) }));
           }
         }
       }
@@ -318,7 +320,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
           await staffShiftApi.registerFace(user.userId, { faceVector });
           anySuccess = true;
         } catch (err) {
-          errors.push(`Cập nhật ảnh & khuôn mặt: ${getApiError(err, 'Lỗi không xác định')}`);
+          errors.push(t('editEmployee.updatePortraitError', { error: getApiError(err, t('editEmployee.unknownError')) }));
         }
       }
     } finally {
@@ -327,7 +329,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
 
     if (errors.length > 0) errors.forEach(e => showError(e));
     if (anySuccess) {
-      showSuccess('Cập nhật nhân viên thành công!');
+      showSuccess(t('editEmployee.saveSuccess'));
       onSuccess();
       onClose();
     }
@@ -352,7 +354,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               <User size={20} style={{ color: 'var(--accent)' }} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Chỉnh sửa nhân viên</h2>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>{t('editEmployee.title')}</h2>
               <p style={{ margin: '3px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>{user.userEmail}</p>
             </div>
           </div>
@@ -371,7 +373,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               }}
             >
               {statusChanging ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : null}
-              {accountActive ? 'Khóa TK' : 'Kích hoạt'}
+              {accountActive ? t('editEmployee.lockAccount') : t('editEmployee.activateAccount')}
             </button>
             <button className="btn-icon" onClick={onClose}><X size={16} /></button>
           </div>
@@ -380,9 +382,9 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
         {/* ── Tabs ── */}
         <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', padding: '0 24px', flexShrink: 0 }}>
           {([
-            { key: 'info', label: 'Thông tin', icon: <User size={14} /> },
-            { key: 'roles', label: 'Phân quyền', icon: <Shield size={14} /> },
-            { key: 'cinema', label: 'Nơi làm việc', icon: <Building2 size={14} /> },
+            { key: 'info', label: t('editEmployee.tabInfo'), icon: <User size={14} /> },
+            { key: 'roles', label: t('editEmployee.tabRoles'), icon: <Shield size={14} /> },
+            { key: 'cinema', label: t('editEmployee.tabWorkplace'), icon: <Building2 size={14} /> },
           ] as { key: Tab; label: string; icon: React.ReactNode }[]).map(({ key, label, icon }) => {
             const active = tab === key;
             const hasBadge =
@@ -455,7 +457,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                 </div>
                 <label className="btn btn-secondary" style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 12px' }}>
                   <Camera size={14} />
-                  Thay ảnh chân dung (Quét khuôn mặt)
+                  {t('editEmployee.changePortrait')}
                   <input
                     type="file"
                     accept="image/*"
@@ -469,7 +471,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {/* Email (read-only) */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                  Email (không thể chỉnh)
+                  {t('editEmployee.emailReadonly')}
                 </label>
                 <div className="input" style={{ display: 'flex', alignItems: 'center', gap: 8, opacity: 0.6, cursor: 'not-allowed' }}>
                   <User size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
@@ -480,14 +482,14 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {/* Full name */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                  Họ và tên
+                  {t('editEmployee.fullName')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <User size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     className="input"
                     style={{ paddingLeft: 36 }}
-                    placeholder="Nhập họ và tên"
+                    placeholder={t('editEmployee.fullNamePlaceholder')}
                     value={userName}
                     onChange={e => setUserName(e.target.value)}
                   />
@@ -497,14 +499,14 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {/* Phone */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                  Số điện thoại
+                  {t('editEmployee.phoneNumber')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <Phone size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                   <input
                     className="input"
                     style={{ paddingLeft: 36 }}
-                    placeholder="10 chữ số"
+                    placeholder={t('editEmployee.phonePlaceholder')}
                     maxLength={10}
                     value={phoneNumber}
                     onChange={e => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
@@ -515,7 +517,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {/* Date of birth */}
               <div>
                 <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 6 }}>
-                  Ngày sinh
+                  {t('editEmployee.dateOfBirth')}
                 </label>
                 <div style={{ position: 'relative' }}>
                   <CalendarDays size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
@@ -533,7 +535,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {user.cinemaName && (
                 <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(255,138,0,0.06)', border: '1px solid rgba(255,138,0,0.2)', display: 'flex', gap: 10, alignItems: 'center' }}>
                   <MapPin size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Rạp hiện tại: <strong style={{ color: 'var(--text-primary)' }}>{user.cinemaName}</strong> {user.departmentName && <span> - Phòng ban: <strong style={{ color: 'var(--text-primary)' }}>{user.departmentName}</strong></span>}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('editEmployee.currentCinema')} <strong style={{ color: 'var(--text-primary)' }}>{user.cinemaName}</strong> {user.departmentName && <span> {t('editEmployee.departmentLabel')} <strong style={{ color: 'var(--text-primary)' }}>{user.departmentName}</strong></span>}</span>
                 </div>
               )}
 
@@ -541,7 +543,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               <div style={{ padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(14,165,233,0.06)', border: '1px solid rgba(14,165,233,0.15)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <AlertCircle size={14} style={{ color: '#0ea5e9', flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                  Username và mật khẩu không thể thay đổi từ trang quản trị. Nhân viên tự thay đổi qua trang hồ sơ cá nhân.
+                  {t('editEmployee.readonlyNote')}
                 </span>
               </div>
             </div>
@@ -553,16 +555,16 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {rolesLoading ? (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12, color: 'var(--text-muted)' }}>
                   <Loader2 size={22} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
-                  Đang tải quyền...
+                  {t('editEmployee.loadingRoles')}
                 </div>
               ) : (
                 <>
                   {/* Current roles */}
                   <div>
-                    <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Quyền hiện tại</p>
+                    <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t('editEmployee.currentRoles')}</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {currentRoleList.length === 0 ? (
-                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>Chưa có quyền nào.</span>
+                        <span style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>{t('editEmployee.noRolesYet')}</span>
                       ) : currentRoleList.map(role => {
                         const isSelf = JSON.parse(localStorage.getItem('user_info') || '{}').userId === user.userId;
                         const isProtected = isSelf && role.roleName === 'Admin';
@@ -592,7 +594,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                   {/* Add roles */}
                   {availableRoleList.length > 0 && (
                     <div>
-                      <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Thêm quyền</p>
+                      <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t('editEmployee.addRoles')}</p>
                       <div style={{ display: 'grid', gap: 8 }}>
                         {availableRoleList.map(role => (
                           <button
@@ -619,12 +621,12 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                   {isCashierSelected && (
                     <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 18 }}>
                       <p style={{ margin: '0 0 12px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                        Loại hình nhân viên (Cashier)
+                        {t('editEmployee.employeeType')}
                       </p>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                         {([
-                          { value: 1, label: 'Full-time', icon: <CalendarDays size={14} />, desc: 'Ca 8h, đăng ký linh hoạt hơn', color: '#10b981' },
-                          { value: 2, label: 'Part-time', icon: <Clock4 size={14} />, desc: 'Chỉ đăng ký ca ≤ 4h', color: '#0ea5e9' },
+                          { value: 1, label: t('editEmployee.ftLabel'), icon: <CalendarDays size={14} />, desc: t('editEmployee.ftDesc'), color: '#10b981' },
+                          { value: 2, label: t('editEmployee.ptLabel'), icon: <Clock4 size={14} />, desc: t('editEmployee.ptDesc'), color: '#0ea5e9' },
                         ] as const).map(opt => {
                           const sel = employeeType === opt.value;
                           return (
@@ -661,7 +663,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
             <div style={{ display: 'grid', gap: 20 }}>
               {/* Cinema Selector */}
               <div>
-                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Rạp làm việc</p>
+                <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t('editEmployee.workplace')}</p>
                 
                 {/* Search */}
                 <div style={{ position: 'relative', marginBottom: 12 }}>
@@ -669,7 +671,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                   <input
                     className="input"
                     style={{ paddingLeft: 36 }}
-                    placeholder="Tìm tên rạp hoặc địa chỉ..."
+                    placeholder={t('editEmployee.searchCinema')}
                     value={cinemaSearch}
                     onChange={e => setCinemaSearch(e.target.value)}
                   />
@@ -680,10 +682,10 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                   {cinemasLoading ? (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 30, gap: 12 }}>
                       <Loader2 size={18} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
-                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Đang tải danh sách rạp...</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t('editEmployee.loadingCinemas')}</span>
                     </div>
                   ) : filteredCinemas.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>Không tìm thấy rạp.</div>
+                    <div style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)', fontSize: 12 }}>{t('editEmployee.noCinemasFound')}</div>
                   ) : filteredCinemas.map(cinema => {
                     const isSelected = selectedCinemaId === cinema.cinemaId;
                     return (
@@ -717,16 +719,16 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
               {/* Department Selector */}
               {selectedCinemaId && (
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 16 }}>
-                  <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Phòng ban gán làm việc</p>
+                  <p style={{ margin: '0 0 10px', fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{t('editEmployee.departmentAssignment')}</p>
                   
                   {departmentsLoading ? (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: 12 }}>
                       <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', color: 'var(--accent)' }} />
-                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Đang tải danh sách phòng ban...</span>
+                      <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{t('editEmployee.loadingDepartments')}</span>
                     </div>
                   ) : departments.length === 0 ? (
                     <div style={{ padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)', border: '1px dashed var(--border-color)', fontSize: 12, color: 'var(--text-muted)', textAlign: 'center' }}>
-                      Rạp này chưa cấu hình phòng ban nào.
+                      {t('editEmployee.noDepartments')}
                     </div>
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -742,8 +744,8 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                         }}
                       >
                         <div>
-                          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: !selectedDepartmentId ? 'var(--accent)' : 'var(--text-primary)' }}>Không gán phòng ban</p>
-                          <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>Chỉ gán rạp chung</p>
+                          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: !selectedDepartmentId ? 'var(--accent)' : 'var(--text-primary)' }}>{t('editEmployee.noDepartment')}</p>
+                          <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>{t('editEmployee.noDepartmentDesc')}</p>
                         </div>
                         {!selectedDepartmentId && <Check size={14} style={{ color: 'var(--accent)' }} />}
                       </button>
@@ -764,7 +766,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
                           >
                             <div>
                               <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: isSelected ? 'var(--accent)' : 'var(--text-primary)' }}>{dept.departmentName}</p>
-                              <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>Phòng ban thuộc rạp</p>
+                              <p style={{ margin: '2px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>{t('editEmployee.departmentBelongsTo')}</p>
                             </div>
                             {isSelected && <Check size={14} style={{ color: 'var(--accent)' }} />}
                           </button>
@@ -781,7 +783,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
         {/* ── Footer ── */}
         <div className="modal-footer" style={{ flexShrink: 0 }}>
           <button className="btn btn-secondary" onClick={onClose} disabled={saving}>
-            Hủy
+            {t('editEmployee.cancel')}
           </button>
           <button
             className="btn btn-primary"
@@ -790,8 +792,8 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
             style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 120 }}
           >
             {saving
-              ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Đang lưu...</>
-              : <><Check size={15} /> {hasAnyChange ? 'Lưu thay đổi' : 'Không có thay đổi'}</>}
+              ? <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> {t('editEmployee.saving')}</>
+              : <><Check size={15} /> {hasAnyChange ? t('editEmployee.saveChanges') : t('editEmployee.noChanges')}</>}
           </button>
         </div>
       </div>

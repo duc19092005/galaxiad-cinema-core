@@ -92,11 +92,11 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                         gap: 12, marginBottom: 24,
                     }}>
                         {[
-                            { icon: <Clock size={14} />, label: 'Duration', value: `${movie.duration} min` },
-                            { icon: <Calendar size={14} />, label: 'Start Date', value: formatDate(movie.startedDate) },
-                            { icon: <Calendar size={14} />, label: 'End Date', value: formatDate(movie.endedDate) },
+                            { icon: <Clock size={14} />, label: t('movieManager.duration'), value: `${movie.duration} ${t('movieManager.minutes')}` },
+                            { icon: <Calendar size={14} />, label: t('movieManager.startDate'), value: formatDate(movie.startedDate) },
+                            { icon: <Calendar size={14} />, label: t('movieManager.endDate'), value: formatDate(movie.endedDate) },
                             {
-                                icon: <Tag size={14} />, label: 'Formats',
+                                icon: <Tag size={14} />, label: t('movieManager.formats'),
                                 value: (movie.movieVisualFormatInfos || []).join(', ') || 'N/A',
                             },
                         ].map((item, i) => (
@@ -114,10 +114,10 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
 
                     <div>
                         <h3 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            Description
+                            {t('movieManager.description')}
                         </h3>
                         <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
-                            {movie.movieDescriptions || 'No description available.'}
+                            {movie.movieDescriptions || t('movieManager.noDescription')}
                         </p>
                     </div>
 
@@ -126,7 +126,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                             {movie.director && (
                                 <div>
                                     <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: 2 }}>
-                                        Director
+                                        {t('movieManager.director')}
                                     </p>
                                     <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, margin: 0 }}>{movie.director}</p>
                                 </div>
@@ -134,7 +134,7 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                             {movie.actors && (
                                 <div>
                                     <p style={{ fontSize: 10, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600, marginBottom: 2 }}>
-                                        Actors
+                                        {t('movieManager.actors')}
                                     </p>
                                     <p style={{ fontSize: 13, color: 'var(--text-primary)', fontWeight: 500, margin: 0 }}>{movie.actors}</p>
                                 </div>
@@ -291,54 +291,54 @@ const SelectableOption: React.FC<{
     </button>
 );
 
-const PosterUploadBox: React.FC<{
-    imagePreview: string | null;
-    label: string;
-    onClick: () => void;
-}> = ({ imagePreview, label, onClick }) => (
-    <div
-        onClick={onClick}
-        className="upload-zone"
-        style={{
-            minHeight: 230,
-            border: imagePreview ? '1px solid rgba(255,138,0,0.55)' : '1px dashed rgba(255,255,255,0.18)',
-            background: imagePreview ? 'rgba(255,138,0,0.055)' : 'rgba(255,255,255,0.025)',
-            borderRadius: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            position: 'relative',
-        }}
-    >
-        {imagePreview ? (
-            <>
-                <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[220px] h-52 object-contain object-center rounded-lg mx-auto" />
-                <span
-                    style={{
-                        position: 'absolute',
-                        right: 12,
-                        bottom: 12,
-                        borderRadius: 999,
-                        padding: '7px 12px',
-                        background: '#ff8a00',
-                        color: '#111',
-                        fontSize: 12,
-                        fontWeight: 900,
-                    }}
-                >
-                    Change poster
-                </span>
-            </>
-        ) : (
-            <div style={{ textAlign: 'center', padding: 20 }}>
-                <Image size={42} style={{ color: '#ffb77f', marginBottom: 10 }} />
-                <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800, margin: 0 }}>{label}</p>
-                <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0' }}>PNG, JPG or WebP poster image</p>
-            </div>
-        )}
-    </div>
-);
+const PosterUploadBox: React.FC<{ imagePreview: string | null; label: string; onClick: () => void }> = ({ imagePreview, label, onClick }) => {
+    const { t } = useTranslation();
+    return (
+        <div
+            onClick={onClick}
+            className="border-2 border-dashed rounded-xl cursor-pointer interactive"
+            style={{
+                borderColor: imagePreview ? 'rgba(255,138,0,0.3)' : 'rgba(255,255,255,0.1)',
+                background: imagePreview ? 'rgba(255,138,0,0.04)' : 'rgba(255,255,255,0.02)',
+                padding: imagePreview ? 16 : 32,
+                minHeight: imagePreview ? undefined : 160,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                position: 'relative',
+            }}
+        >
+            {imagePreview ? (
+                <>
+                    <img src={imagePreview} alt="Preview" className="w-[80%] max-w-[220px] h-52 object-contain object-center rounded-lg mx-auto" />
+                    <span
+                        style={{
+                            position: 'absolute',
+                            right: 12,
+                            bottom: 12,
+                            borderRadius: 999,
+                            padding: '7px 12px',
+                            background: '#ff8a00',
+                            color: '#111',
+                            fontSize: 12,
+                            fontWeight: 900,
+                        }}
+                    >
+                        {t('movieManager.changePoster')}
+                    </span>
+                </>
+            ) : (
+                <div style={{ textAlign: 'center', padding: 20 }}>
+                    <Image size={42} style={{ color: '#ffb77f', marginBottom: 10 }} />
+                    <p style={{ fontSize: 14, color: 'var(--text-primary)', fontWeight: 800, margin: 0 }}>{label}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '6px 0 0' }}>{t('movieManager.imageHint')}</p>
+                </div>
+            )}
+        </div>
+    );
+};
 
 const notifyFormError = (
     message: string,
@@ -363,6 +363,7 @@ const sameStringSet = (left: string[], right: string[]) => {
 };
 
 const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -447,18 +448,18 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         setError(null);
         setSuccess(false);
 
-        if (!formData.movieName.trim()) { notifyFormError('Please enter movie name', setError); return; }
-        if (!formData.movieImage) { notifyFormError('Please select a movie poster image', setError); return; }
-        if (!formData.movieBanner) { notifyFormError('Please select a movie banner image', setError); return; }
-        if (!formData.startedDate) { notifyFormError('Please select start date', setError); return; }
-        if (!formData.endedDate) { notifyFormError('Please select end date', setError); return; }
-        if (!formData.duration || parseInt(formData.duration) <= 0) { notifyFormError('Please enter valid duration', setError); return; }
-        if (formData.movieFormatIds.length === 0) { notifyFormError('Please select at least one format', setError); return; }
-        if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError('Please select a required age rating', setError); return; }
-        if (formData.cinemaIds.length === 0) { notifyFormError('Please select at least one cinema', setError); return; }
+        if (!formData.movieName.trim()) { notifyFormError(t('movieManager.pleaseEnterName'), setError); return; }
+        if (!formData.movieImage) { notifyFormError(t('movieManager.pleaseSelectPoster'), setError); return; }
+        if (!formData.movieBanner) { notifyFormError(t('movieManager.pleaseSelectBanner'), setError); return; }
+        if (!formData.startedDate) { notifyFormError(t('movieManager.pleaseSelectStartDate'), setError); return; }
+        if (!formData.endedDate) { notifyFormError(t('movieManager.pleaseSelectEndDate'), setError); return; }
+        if (!formData.duration || parseInt(formData.duration) <= 0) { notifyFormError(t('movieManager.pleaseEnterDuration'), setError); return; }
+        if (formData.movieFormatIds.length === 0) { notifyFormError(t('movieManager.pleaseSelectFormat'), setError); return; }
+        if (formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError(t('movieManager.pleaseSelectAge'), setError); return; }
+        if (formData.cinemaIds.length === 0) { notifyFormError(t('movieManager.pleaseSelectCinema'), setError); return; }
 
         setLoading(true);
-        const toastId = showLoading('Creating movie...');
+        const toastId = showLoading(t('movieManager.creating'));
         try {
             const submissionData = {
                 movieRequiredAgeId: formData.movieRequiredAgeId,
@@ -480,12 +481,12 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
             await movieApi.createMovie(submissionData);
             dismissToast(toastId);
             setSuccess(true);
-            showSuccess('Movie added successfully!');
+            showSuccess(t('movieManager.addSuccess'));
             onSuccess();
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             dismissToast(toastId);
-            const message = getMovieManagerError(err, 'Failed to create movie');
+            const message = getMovieManagerError(err, t('movieManager.failCreate'));
             setError(message);
             showError(message, { duration: 4800 });
         } finally { setLoading(false); }
@@ -503,7 +504,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                         }}>
                             <Plus className="w-5 h-5 text-white" />
                         </div>
-                        <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)', margin: 0 }}>Add New Movie</h2>
+                        <h2 className="text-xl font-black" style={{ color: 'var(--text-primary)', margin: 0 }}>{t('movieManager.addNewMovie')}</h2>
                     </div>
                     {!loading && (
                         <button onClick={onClose} className="btn-icon">
@@ -516,7 +517,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                     {success && (
                         <div className="alert alert-success">
                             <CheckCircle size={16} />
-                            <span>Movie added successfully!</span>
+                            <span>{t('movieManager.addSuccess')}</span>
                         </div>
                     )}
                     {error && (
@@ -534,19 +535,19 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Poster Image <RequiredMark /></label>
+                                <label className="input-label">{t('movieManager.posterImage')} <RequiredMark /></label>
                                 <PosterUploadBox
                                     imagePreview={imagePreview}
-                                    label="Upload poster image"
+                                    label={t('movieManager.uploadPosterImage')}
                                     onClick={() => fileInputRef.current?.click()}
                                 />
                                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                             </div>
                             <div>
-                                <label className="input-label">Banner Image <RequiredMark /></label>
+                                <label className="input-label">{t('movieManager.bannerImage')} <RequiredMark /></label>
                                 <PosterUploadBox
                                     imagePreview={bannerPreview}
-                                    label="Upload banner image"
+                                    label={t('movieManager.uploadBannerImage')}
                                     onClick={() => bannerFileInputRef.current?.click()}
                                 />
                                 <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
@@ -555,45 +556,45 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Start Date <RequiredMark /></label>
+                                <label className="input-label">{t('movieManager.startDate')} <RequiredMark /></label>
                                 <input type="datetime-local" name="startedDate" value={formData.startedDate} onChange={handleInputChange} className="input" />
                             </div>
                             <div>
-                                <label className="input-label">End Date <RequiredMark /></label>
+                                <label className="input-label">{t('movieManager.endDate')} <RequiredMark /></label>
                                 <input type="datetime-local" name="endedDate" value={formData.endedDate} onChange={handleInputChange} className="input" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="input-label">Duration (minutes) <RequiredMark /></label>
+                            <label className="input-label">{t('movieManager.duration')} <RequiredMark /></label>
                             <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
                         </div>
 
                         <div>
-                            <label className="input-label">Description</label>
-                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder="Enter movie description" maxLength={200} />
+                            <label className="input-label">{t('movieManager.description')}</label>
+                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder={t('movieManager.description')} maxLength={200} />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Trailer URL</label>
+                                <label className="input-label">{t('movieManager.trailerUrl')}</label>
                                 <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
                             </div>
                             <div>
-                                <label className="input-label">Director</label>
+                                <label className="input-label">{t('movieManager.director')}</label>
                                 <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="input-label">Actors</label>
+                            <label className="input-label">{t('movieManager.actors')}</label>
                             <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
                         </div>
 
                         <div>
-                            <label className="input-label">Required Age <RequiredMark /></label>
+                            <label className="input-label">{t('movieManager.requiredAgeRating')} <RequiredMark /></label>
                             <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
-                                <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
+                                <option value="00000000-0000-0000-0000-000000000000" disabled>{t('movieManager.selectAgeRating')}</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
                                     <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
                                         {age.movieRequiredAgeSymbol} - {age.movieRequiredAgeDescription}
@@ -606,9 +607,9 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             label="Visual Formats"
                             required
                             selectedCount={formData.movieFormatIds.length}
-                            helper="Select every screening format that this movie can use."
+                            helper={t('movieManager.formatHelper')}
                             isEmpty={formats.length === 0}
-                            empty="No formats available."
+                            empty={t('movieManager.noFormats')}
                         >
                             {formats.map((f: MovieFormat) => (
                                 <SelectableOption
@@ -624,9 +625,9 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                         <ChoiceGroup
                             label="Genres"
                             selectedCount={formData.movieGenreIds.length}
-                            helper="Selected genres are highlighted and will appear on public movie cards."
+                            helper={t('movieManager.genreHelper')}
                             isEmpty={genres.length === 0}
-                            empty="No genres available."
+                            empty={t('movieManager.noGenres')}
                         >
                             {genres.map((g: MovieGenre) => (
                                 <SelectableOption
@@ -643,9 +644,9 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             label="Authorized Cinemas"
                             required
                             selectedCount={formData.cinemaIds.length}
-                            helper="Only selected cinemas can schedule and sell tickets for this movie."
+                            helper={t('movieManager.cinemaHelper')}
                             isEmpty={cinemas.length === 0}
-                            empty="No cinemas available."
+                            empty={t('movieManager.noCinemas')}
                         >
                             {cinemas.map((c: Cinema) => (
                                 <SelectableOption
@@ -660,10 +661,10 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
                         <div className="flex justify-end gap-3 pt-4">
                             <button type="button" onClick={onClose} disabled={loading} className="btn btn-secondary">
-                                Cancel
+                                                                {t('common.cancel')}
                             </button>
                             <button type="submit" disabled={loading} className="btn btn-primary">
-                                {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> Creating...</> : <><Plus size={14} /> Create Movie</>}
+                                {loading ? <><Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> {t('movieManager.creating')}</> : <><Plus size={14} /> {t('movieManager.createMovie')}</>}
                             </button>
                         </div>
                     </form>
@@ -689,6 +690,7 @@ interface UpdateMovieModalProps {
 }
 
 const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onClose, onSuccess, formats, requiredAges, genres, cinemas }) => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
 
     const formatDateForInput = toVietnamDateTimeLocalValue;
@@ -795,17 +797,17 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         const actorsChanged = formData.actors.trim() !== initialFormData.actors.trim();
         const cinemaChanged = !sameStringSet(formData.cinemaIds, initialFormData.cinemaIds);
 
-        if (movieNameChanged && !formData.movieName.trim()) { notifyFormError('Please enter movie name', setError); return; }
-        if (startedDateChanged && !formData.startedDate) { notifyFormError('Please select start date', setError); return; }
-        if (endedDateChanged && !formData.endedDate) { notifyFormError('Please select end date', setError); return; }
+        if (movieNameChanged && !formData.movieName.trim()) { notifyFormError(t('movieManager.pleaseEnterName'), setError); return; }
+        if (startedDateChanged && !formData.startedDate) { notifyFormError(t('movieManager.pleaseSelectStartDate'), setError); return; }
+        if (endedDateChanged && !formData.endedDate) { notifyFormError(t('movieManager.pleaseSelectEndDate'), setError); return; }
         if ((startedDateChanged || endedDateChanged) && formData.startedDate && formData.endedDate && formData.startedDate >= formData.endedDate) {
             notifyFormError('Started Date must be lower than the ended date.', setError);
             return;
         }
-        if (durationChanged && (!formData.duration || parseInt(formData.duration) <= 0)) { notifyFormError('Please enter valid duration', setError); return; }
-        if (formatChanged && formData.movieFormatIds.length === 0) { notifyFormError('Please select at least one format', setError); return; }
-        if (requiredAgeChanged && formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError('Please select a required age rating', setError); return; }
-        if (cinemaChanged && formData.cinemaIds.length === 0) { notifyFormError('Please select at least one cinema', setError); return; }
+        if (durationChanged && (!formData.duration || parseInt(formData.duration) <= 0)) { notifyFormError(t('movieManager.pleaseEnterDuration'), setError); return; }
+        if (formatChanged && formData.movieFormatIds.length === 0) { notifyFormError(t('movieManager.pleaseSelectFormat'), setError); return; }
+        if (requiredAgeChanged && formData.movieRequiredAgeId === '00000000-0000-0000-0000-000000000000') { notifyFormError(t('movieManager.pleaseSelectAge'), setError); return; }
+        if (cinemaChanged && formData.cinemaIds.length === 0) { notifyFormError(t('movieManager.pleaseSelectCinema'), setError); return; }
 
         const submissionData: UpdateMovieFormData = {};
         if (requiredAgeChanged) submissionData.movieRequiredAgeId = formData.movieRequiredAgeId;
@@ -834,12 +836,12 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
             await movieApi.updateMovie(movie.movieId!, submissionData);
             dismissToast(toastId);
             setSuccess(true);
-            showSuccess('Movie updated successfully!');
+            showSuccess(t('movieManager.updateSuccess'));
             onSuccess();
             setTimeout(() => onClose(), 1200);
         } catch (err) {
             dismissToast(toastId);
-            const message = getMovieManagerError(err, 'Failed to update movie');
+            const message = getMovieManagerError(err, t('movieManager.failUpdate'));
             setError(message);
             showError(message, { duration: 4800 });
         } finally { setLoading(false); }
@@ -870,7 +872,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                     {success && (
                         <div className="alert alert-success">
                             <CheckCircle size={16} />
-                            <span>Movie updated successfully!</span>
+                            <span>{t('movieManager.updateSuccess')}</span>
                         </div>
                     )}
                     {error && (
@@ -891,7 +893,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                                 <label className="input-label">Poster Image</label>
                                 <PosterUploadBox
                                     imagePreview={imagePreview}
-                                    label="Upload a new poster image"
+                                    label={t('movieManager.uploadNewPosterImage')}
                                     onClick={() => fileInputRef.current?.click()}
                                 />
                                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -900,7 +902,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                                 <label className="input-label">Banner Image</label>
                                 <PosterUploadBox
                                     imagePreview={bannerPreview}
-                                    label="Upload a new banner image"
+                                    label={t('movieManager.uploadNewBannerImage')}
                                     onClick={() => bannerFileInputRef.current?.click()}
                                 />
                                 <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
@@ -919,35 +921,35 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                         </div>
 
                         <div>
-                            <label className="input-label">Duration (minutes) <RequiredMark /></label>
+                            <label className="input-label">{t('movieManager.duration')} <RequiredMark /></label>
                             <input type="number" name="duration" value={formData.duration} onChange={handleInputChange} className="input" placeholder="e.g. 120" min={1} />
                         </div>
 
                         <div>
-                            <label className="input-label">Description</label>
-                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder="Enter movie description" maxLength={200} />
+                            <label className="input-label">{t('movieManager.description')}</label>
+                            <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder={t('movieManager.description')} maxLength={200} />
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             <div>
-                                <label className="input-label">Trailer URL</label>
+                                <label className="input-label">{t('movieManager.trailerUrl')}</label>
                                 <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
                             </div>
                             <div>
-                                <label className="input-label">Director</label>
+                                <label className="input-label">{t('movieManager.director')}</label>
                                 <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
                             </div>
                         </div>
 
                         <div>
-                            <label className="input-label">Actors</label>
+                            <label className="input-label">{t('movieManager.actors')}</label>
                             <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
                         </div>
 
                         <div>
-                            <label className="input-label">Required Age <RequiredMark /></label>
+                            <label className="input-label">{t('movieManager.requiredAgeRating')} <RequiredMark /></label>
                             <select name="movieRequiredAgeId" value={formData.movieRequiredAgeId} onChange={handleInputChange as any} className="input select">
-                                <option value="00000000-0000-0000-0000-000000000000" disabled>Select required age rating</option>
+                                <option value="00000000-0000-0000-0000-000000000000" disabled>{t('movieManager.selectAgeRating')}</option>
                                 {requiredAges.map((age: MovieRequiredAge) => (
                                     <option key={age.movieRequiredAgeSymbolId} value={age.movieRequiredAgeSymbolId} title={age.movieRequiredAgeDescription}>
                                         {age.movieRequiredAgeSymbol} - {age.movieRequiredAgeDescription}
@@ -960,9 +962,9 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             label="Visual Formats"
                             required
                             selectedCount={formData.movieFormatIds.length}
-                            helper="Select every screening format that this movie can use."
+                            helper={t('movieManager.formatHelper')}
                             isEmpty={formats.length === 0}
-                            empty="No formats available."
+                            empty={t('movieManager.noFormats')}
                         >
                             {formats.map((f: MovieFormat) => (
                                 <SelectableOption
@@ -978,9 +980,9 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                         <ChoiceGroup
                             label="Genres"
                             selectedCount={formData.movieGenreIds.length}
-                            helper="Selected genres are highlighted and will appear on public movie cards."
+                            helper={t('movieManager.genreHelper')}
                             isEmpty={genres.length === 0}
-                            empty="No genres available."
+                            empty={t('movieManager.noGenres')}
                         >
                             {genres.map((g: MovieGenre) => (
                                 <SelectableOption
@@ -997,9 +999,9 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             label="Authorized Cinemas"
                             required
                             selectedCount={formData.cinemaIds.length}
-                            helper="Only selected cinemas can schedule and sell tickets for this movie."
+                            helper={t('movieManager.cinemaHelper')}
                             isEmpty={cinemas.length === 0}
-                            empty="No cinemas available."
+                            empty={t('movieManager.noCinemas')}
                         >
                             {cinemas.map((c: Cinema) => (
                                 <SelectableOption

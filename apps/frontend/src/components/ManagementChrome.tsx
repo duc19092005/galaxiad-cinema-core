@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Menu, Building2, ChevronDown } from 'lucide-react';
 import LanguageSwitcher from './LanguageSwitcher';
 
@@ -17,6 +18,7 @@ interface ManagementChromeProps {
 }
 
 const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSidebarToggle, cinemaSelector }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,7 +33,7 @@ const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSide
   }, []);
 
   const selectedCinema = cinemaSelector?.cinemas.find(c => c.cinemaId === cinemaSelector.activeCinemaId);
-  const currentLabel = selectedCinema ? selectedCinema.cinemaName : 'Select Theater';
+  const currentLabel = selectedCinema ? selectedCinema.cinemaName : t('managementChrome.selectTheater');
 
   return (
     <>
@@ -50,8 +52,8 @@ const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSide
             type="button"
             className="management-icon-button"
             onClick={onSidebarToggle}
-            aria-label="Open sidebar"
-            title="Open sidebar"
+            aria-label={t('managementChrome.openSidebar')}
+            title={t('managementChrome.openSidebar')}
             style={{
               width: 38,
               height: 38,
@@ -194,7 +196,7 @@ const ManagementChrome: React.FC<ManagementChromeProps> = ({ sidebarOpen, onSide
                     }
                   }}
                 >
-                  -- Chọn Rạp --
+                  {t('managementChrome.selectTheater')}
                 </button>
 
                 {cinemaSelector.cinemas.map(c => {
