@@ -5,10 +5,12 @@ using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Engagement;
 
 [ApiController]
+[EnableRateLimiting("CommentPolicy")]
 [Route("api/v1/comments")]
 [Tags("Customer - Movie Comments")]
 [ApiExplorerSettings(GroupName = "v1-user")]

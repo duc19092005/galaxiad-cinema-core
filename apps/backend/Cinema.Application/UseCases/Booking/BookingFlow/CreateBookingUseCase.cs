@@ -6,6 +6,7 @@ using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.UseCases.Booking.Services;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Constants;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Utils;
@@ -67,6 +68,7 @@ public class CreateBookingUseCase
 
             var schedule = await ValidateScheduleAsync(request.ScheduleId);
             await ValidateSeatsAsync(schedule, request);
+            ValidateAgeRestrictions(schedule, request);
             var customerProfile = await GetCustomerProfileAsync(orderUserId);
 
             var orderId = Guid.NewGuid();
@@ -202,6 +204,32 @@ public class CreateBookingUseCase
             throw new BadRequestException(seatSelectionErrors, "BK10");
 
         await ValidateRedisSeatLocksAsync(request.ScheduleId, seatIds, request.SeatLockOwnerToken);
+    }
+
+    private static void ValidateAgeRestrictions(MovieScheduleInfoEntity schedule, ReqCreateBookingDto request)
+    {
+        var ageSymbol = schedule.MovieInfoEntity?.MovieRequiredAgeEntity?.MovieRequiredAgeSymbol?.Trim();
+        if (string.IsNullOrEmpty(ageSymbol) || ageSymbol == "P" || ageSymbol == "K")
+            return;
+
+        var restrictedSegmentIds = new List<Guid>();
+        if (ageSymbol is "T13" or "T16")
+            restrictedSegmentIds.Add(user_segments_constant.Child);
+        else if (ageSymbol == "T18")
+        {
+            restrictedSegmentIds.Add(user_segments_constant.Child);
+            restrictedSegmentIds.Add(user_segments_constant.Student);
+        }
+
+        if (restrictedSegmentIds.Count == 0)
+            return;
+
+        var violations = request.SeatSelections
+            .Where(s => restrictedSegmentIds.Contains(s.UserSegmentId))
+            .ToList();
+
+        if (violations.Count > 0)
+            throw new BadRequestException(Messages.Booking.AgeRestrictionViolation, "BK13");
     }
 
     private async Task ValidateRedisSeatLocksAsync(Guid scheduleId, List<Guid> seatIds, string? ownerToken)

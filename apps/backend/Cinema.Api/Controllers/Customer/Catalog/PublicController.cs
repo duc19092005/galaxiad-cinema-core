@@ -5,10 +5,12 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.UseCases.Customer.Catalog;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Catalog;
 
 [ApiController]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/[controller]/")]
 public class PublicController : ControllerBase
 {

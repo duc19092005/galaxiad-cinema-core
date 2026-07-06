@@ -4,6 +4,7 @@ using Cinema.Application.UseCases.Booking.Showtimes;
 using Cinema.Application.UseCases.Booking.BookingFlow;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Booking;
 
@@ -12,6 +13,7 @@ namespace Cinema.Api.Controllers.Customer.Booking;
 // ==========================================
 
 [ApiController]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/public/movies")]
 [Tags("Public - Movies & Booking")]
 [ApiExplorerSettings(GroupName = "v1-user")]

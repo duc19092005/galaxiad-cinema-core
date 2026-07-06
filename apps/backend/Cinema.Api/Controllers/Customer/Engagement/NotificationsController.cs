@@ -6,11 +6,13 @@ using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Engagement;
 
 [ApiController]
 [Authorize]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/notifications")]
 [Tags("Customer - Notifications")]
 [ApiExplorerSettings(GroupName = "v1-user")]

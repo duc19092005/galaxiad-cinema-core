@@ -74,6 +74,7 @@ export interface PublicSeatMap {
     scheduleId: string;
     auditoriumName: string;
     movieName: string;
+    movieRequiredAgeSymbol?: string;
     movieVisualFormatName: string;
     startTime: string;
     seatMap: PublicSeat[];

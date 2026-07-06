@@ -1899,6 +1899,7 @@ const ChatBot: React.FC = () => {
         {isOpen && (
           <motion.div
             ref={panelRef}
+            className="chatbot-panel"
             initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
@@ -1910,7 +1911,7 @@ const ChatBot: React.FC = () => {
               zIndex: 9998,
               width: 'calc(100vw - 32px)',
               maxWidth: 430,
-              height: 660,
+              height: 'min(660px, calc(100vh - 170px))',
               maxHeight: 'calc(100vh - 120px)',
               display: 'flex',
               flexDirection: 'column',
@@ -1921,7 +1922,7 @@ const ChatBot: React.FC = () => {
               boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
             }}
           >
-            <div style={{
+            <div className="chatbot-header" style={{
               flexShrink: 0,
               padding: '16px 18px',
               display: 'flex',
@@ -1934,7 +1935,7 @@ const ChatBot: React.FC = () => {
                 <Bot size={21} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 900, fontSize: 16 }}>CinemaPro AI</div>
+                <div className="chatbot-header-title" style={{ fontWeight: 900, fontSize: 16 }}>CinemaPro AI</div>
                 <div style={{ fontSize: 11, opacity: 0.86, fontWeight: 700, textTransform: 'uppercase' }}>{t('chatbot.subtitle')}</div>
               </div>
               <button onClick={() => setIsOpen(false)} style={{ ...baseButton, width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.12)', color: '#fff' }} title={t('chatbot.close')}>
@@ -1947,6 +1948,7 @@ const ChatBot: React.FC = () => {
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
                 style={{ height: '100%', overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}
+                className="chatbot-messages"
               >
                 {messages.map(message => (
                   <ChatMessageBubble key={message.id} message={message}>
@@ -2097,6 +2099,25 @@ const ChatBot: React.FC = () => {
         @media (min-width: 768px) {
           .chatbot-trigger-btn {
             bottom: 24px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .chatbot-panel {
+            right: 8px !important;
+            bottom: 84px !important;
+            width: calc(100vw - 16px) !important;
+            border-radius: 14px !important;
+          }
+          .chatbot-header {
+            padding: 10px 12px !important;
+            gap: 8px !important;
+          }
+          .chatbot-header-title {
+            font-size: 14px !important;
+          }
+          .chatbot-messages {
+            padding: 10px !important;
+            gap: 10px !important;
           }
         }
       `}} />

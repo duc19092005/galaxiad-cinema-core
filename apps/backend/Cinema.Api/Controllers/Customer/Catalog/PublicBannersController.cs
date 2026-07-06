@@ -3,10 +3,12 @@ using System.Threading.Tasks;
 using Cinema.Application.UseCases.Public;
 using Cinema.Infrastructure.ExternalServices.Cache;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Catalog;
 
 [ApiController]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/Public/banners")]
 [Tags("Public - Banners")]
 [ApiExplorerSettings(GroupName = "v1-user")]

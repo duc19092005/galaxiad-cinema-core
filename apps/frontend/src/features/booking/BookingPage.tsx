@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Loader2, AlertCircle, Users
@@ -119,6 +119,18 @@ const BookingPage: React.FC = () => {
 
     const selectedVoucher = myVouchers.find(v => v.voucherId === selectedVoucherId);
 
+    const ageSymbol = seatMap?.movieRequiredAgeSymbol?.trim();
+    const allowedSegments = useMemo(() => {
+        if (!pricing?.segmentPrices) return [];
+        if (!ageSymbol || ageSymbol === 'P' || ageSymbol === 'K') return pricing.segmentPrices;
+        return pricing.segmentPrices.filter(s => {
+            const name = s.segmentName.toLowerCase();
+            if (ageSymbol === 'T13' || ageSymbol === 'T16') return !name.includes('child') && !name.includes('trẻ em');
+            if (ageSymbol === 'T18') return !name.includes('child') && !name.includes('trẻ em') && !name.includes('student') && !name.includes('học sinh');
+            return true;
+        });
+    }, [pricing?.segmentPrices, ageSymbol]);
+
     const fetchData = async () => {
         setLoading(true); setError(null);
         try {
@@ -144,8 +156,8 @@ const BookingPage: React.FC = () => {
         } else {
             if (selectedSeats.length >= 10) { showError(t('toast.maxSeats', 'You can select up to 10 tickets per order.')); return; }
             setSelectedSeats(prev => [...prev, seat]);
-            if (pricing && pricing.segmentPrices.length > 0) {
-                setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
+            if (allowedSegments.length > 0) {
+                setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: allowedSegments[0].userSegmentId }));
             }
             const success = await lockSeat(seat.seatId, userName);
             if (!success) {
@@ -461,6 +473,16 @@ const BookingPage: React.FC = () => {
                                     <span className="text-zinc-400 text-xs uppercase tracking-wider font-semibold">Format</span>
                                     <span className="text-white font-semibold">{seatMap.movieVisualFormatName || '2D'}</span>
                                 </div>
+                                {ageSymbol && ageSymbol !== 'P' && ageSymbol !== 'K' && (
+                                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                                        <AlertCircle size={16} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                                        <span className="text-amber-200 text-xs leading-relaxed">
+                                            {ageSymbol === 'T18'
+                                                ? `Phim ${ageSymbol} — Chỉ bán vé cho người lớn và học sinh/sinh viên. Không áp dụng cho trẻ em.`
+                                                : `Phim ${ageSymbol} — Không bán vé cho trẻ em.`}
+                                        </span>
+                                    </div>
+                                )}
                                 
                                 {/* Selected Seats */}
                                 <div className="pt-6 border-t border-white/5">
@@ -492,7 +514,7 @@ const BookingPage: React.FC = () => {
                                                             onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
                                                             className="w-full bg-zinc-900 text-zinc-300 text-xs p-2 rounded border border-white/5 outline-none cursor-pointer"
                                                         >
-                                                            {pricing?.segmentPrices.map(segmentPrice => (
+                                                            {allowedSegments.map(segmentPrice => (
                                                                 <option key={segmentPrice.userSegmentId} value={segmentPrice.userSegmentId} className="bg-zinc-950 text-white">
                                                                     {segmentPrice.segmentName}
                                                                 </option>

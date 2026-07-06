@@ -35,6 +35,7 @@ public class GetSeatMapUseCase
             ScheduleId = schedule.ScheduleId,
             AuditoriumNumber = schedule.AuditoriumNumber,
             MovieName = schedule.MovieName,
+            MovieRequiredAgeSymbol = schedule.MovieRequiredAgeSymbol,
             FormatName = schedule.FormatName,
             StartTime = schedule.StartTime,
             CenterRowStart = schedule.CenterRowStart,

@@ -260,7 +260,6 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
       if (direction === 'prev') {
         return current === 0 ? heroMovies.length - 1 : current - 1;
       }
-
       return (current + 1) % heroMovies.length;
     });
   };
@@ -447,6 +446,9 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         }
         .home-hero-secondary:active {
           transform: translateY(1px);
+        }
+        .home-hero-counter {
+          display: none;
         }
         .home-hero-thumbs {
           display: flex;
@@ -710,20 +712,69 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
             padding-bottom: 40px;
           }
           .home-hero-thumbs {
-            align-items: stretch;
+            position: relative;
+            width: 100%;
+            padding: 0 48px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 120px;
           }
           .home-hero-nav {
-            display: none;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            z-index: 2;
+          }
+          .home-hero-nav:nth-of-type(1) {
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+          .home-hero-nav:nth-of-type(2) {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+          .home-hero-nav svg {
+            transform: none !important;
           }
           .home-hero-thumb-list {
-            flex-direction: row;
-            max-height: none;
-            overflow-x: auto;
+            width: 180px;
+            max-width: 180px;
+            min-width: 180px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding-bottom: 4px;
           }
           .home-hero-thumb {
-            width: min(34vw, 142px);
+            width: 100%;
+            max-width: 180px;
+            aspect-ratio: 3/4;
             flex: 0 0 auto;
+          }
+          .home-hero-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+          }
+          .home-hero-thumb:not(.is-active) {
+            display: none;
+          }
+          .home-hero-counter {
+            display: block;
           }
         }
         @media (max-width: 768px) {
@@ -762,7 +813,11 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           .home-trending-list {
             min-height: auto !important;
             max-width: 100%;
-            overflow: hidden;
+          }
+          .home-trending-list {
+            overflow-y: auto;
+            max-height: 400px;
+            -webkit-overflow-scrolling: touch;
           }
           .home-trending-feature {
             aspect-ratio: 16 / 12;
@@ -932,6 +987,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           </div>
 
           {heroMovies.length > 1 && (
+            <>
             <div className="home-hero-thumbs" aria-label="Trending movie list">
               <button
                 className="home-hero-nav"
@@ -975,6 +1031,11 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                 <ChevronRight size={20} style={{ transform: 'rotate(90deg)' }} />
               </button>
             </div>
+            {/* Mobile counter */}
+            <div className="home-hero-counter" style={{ textAlign: 'center', marginTop: 8, color: 'rgba(255,255,255,0.5)', fontSize: 12, fontWeight: 700, letterSpacing: '0.1em' }}>
+              {activeHeroIndex + 1} / {heroMovies.length}
+            </div>
+          </>
           )}
         </div>
       </section>
@@ -1215,6 +1276,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                       overflowX: 'auto',
                       scrollSnapType: 'x mandatory',
                       scrollBehavior: 'smooth',
+                      WebkitOverflowScrolling: 'touch',
                       padding: '10px 4px',
                     }}
                   >
@@ -1339,6 +1401,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                     padding: '10px 4px',
                     scrollSnapType: 'x mandatory',
                     scrollBehavior: 'smooth',
+                    WebkitOverflowScrolling: 'touch',
                   }}
                 >
                   {recommendations.map(movie => (
@@ -1427,6 +1490,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                       overflowX: 'auto',
                       scrollSnapType: 'x mandatory',
                       scrollBehavior: 'smooth',
+                      WebkitOverflowScrolling: 'touch',
                       padding: '10px 4px',
                     }}
                   >

@@ -3,11 +3,13 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Booking;
 using Cinema.Infrastructure.ExternalServices.Notifications;
 using Cinema.Application.UseCases.Booking.SocialBooking;
+using Microsoft.AspNetCore.RateLimiting;
 using Cinema.Api.Hubs;
 
 namespace Cinema.Api.Controllers.Customer.Booking;
 
 [ApiController]
+[EnableRateLimiting("BookingCreatePolicy")]
 [Route("api/v1/booking/group")]
 [Tags("Booking - Social Group")]
 [ApiExplorerSettings(GroupName = "v1-user")]

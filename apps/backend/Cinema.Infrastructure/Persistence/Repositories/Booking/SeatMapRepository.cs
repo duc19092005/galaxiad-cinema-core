@@ -29,6 +29,9 @@ public class SeatMapRepository : ISeatMapRepository
                 ScheduleId = s.MovieScheduleInfoId,
                 AuditoriumNumber = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.AuditoriumNumber : string.Empty,
                 MovieName = s.MovieInfoEntity != null ? s.MovieInfoEntity.MovieName : string.Empty,
+                MovieRequiredAgeSymbol = s.MovieInfoEntity != null && s.MovieInfoEntity.MovieRequiredAgeEntity != null
+                    ? (s.MovieInfoEntity.MovieRequiredAgeEntity.MovieRequiredAgeSymbol ?? string.Empty).Trim()
+                    : string.Empty,
                 FormatName = s.MovieFormatInfoEntity != null ? s.MovieFormatInfoEntity.MovieFormatName : string.Empty,
                 StartTime = s.StartTime,
                 CenterRowStart = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CenterRowStart : 0,

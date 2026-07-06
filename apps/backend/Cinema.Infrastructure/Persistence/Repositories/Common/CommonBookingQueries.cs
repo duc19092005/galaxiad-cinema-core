@@ -48,7 +48,7 @@ public class CommonBookingQueries : ICommonBookingQueries
     {
         return await _dbContext.Set<MovieScheduleInfoEntity>()
             .Include(s => s.MovieFormatInfoEntity)
-            .Include(s => s.MovieInfoEntity)
+            .Include(s => s.MovieInfoEntity).ThenInclude(m => m.MovieRequiredAgeEntity)
             .Include(s => s.AuditoriumInfoEntities)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.MovieScheduleInfoId == scheduleId && !s.IsDeleted);

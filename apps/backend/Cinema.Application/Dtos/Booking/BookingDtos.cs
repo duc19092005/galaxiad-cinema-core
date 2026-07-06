@@ -79,6 +79,7 @@ public class ResPublicSeatMapDto
     public Guid ScheduleId { get; set; }
     public string AuditoriumNumber { get; set; } = string.Empty;
     public string MovieName { get; set; } = string.Empty;
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public string FormatName { get; set; } = string.Empty;
     public DateTime StartTime { get; set; }
     public List<SeatDto> Seats { get; set; } = [];
@@ -390,6 +391,7 @@ public class SeatMapScheduleQueryDto
     public Guid ScheduleId { get; set; }
     public string AuditoriumNumber { get; set; } = string.Empty;
     public string MovieName { get; set; } = string.Empty;
+    public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public string FormatName { get; set; } = string.Empty;
     public DateTime StartTime { get; set; }
     public int CenterRowStart { get; set; }

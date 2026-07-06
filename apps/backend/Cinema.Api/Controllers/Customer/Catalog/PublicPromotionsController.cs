@@ -1,10 +1,12 @@
 using System.Threading.Tasks;
 using Cinema.Application.UseCases.Admin.PricingPromotions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Catalog;
 
 [ApiController]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/promotions")]
 [Tags("Public - Promotions")]
 [ApiExplorerSettings(GroupName = "v1-user")]

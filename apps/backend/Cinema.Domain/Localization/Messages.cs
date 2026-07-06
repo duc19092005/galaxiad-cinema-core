@@ -240,6 +240,7 @@ public static class Messages
         public const string PaymentFailed = "Payment failed";
         public const string OrderNotFound = "Order not found";
         public const string TicketNotFoundOrNotPaid = "Ticket not found or order has not been paid successfully.";
+        public const string AgeRestrictionViolation = "The selected ticket type is not allowed for this movie's age rating.";
     }
 
     public static class RequiredAge

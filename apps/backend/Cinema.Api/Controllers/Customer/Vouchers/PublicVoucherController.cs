@@ -5,6 +5,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.UseCases.Admin.Vouchers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Cinema.Application.Exceptions;
 
 
@@ -12,6 +13,7 @@ namespace Cinema.Api.Controllers.Customer.Vouchers;
 
 [ApiController]
 [Authorize]
+[EnableRateLimiting("VoucherPolicy")]
 [Route("api/v1/public/vouchers")]
 [Tags("Public - Voucher Store & Wallet")]
 [ApiExplorerSettings(GroupName = "v1-user")]

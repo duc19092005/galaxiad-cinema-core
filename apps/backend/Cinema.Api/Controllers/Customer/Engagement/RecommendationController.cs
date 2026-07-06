@@ -5,10 +5,12 @@ using Cinema.Application.Dtos.Public.Responses;
 using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Cinema.Api.Controllers.Customer.Engagement;
 
 [ApiController]
+[EnableRateLimiting("PublicReadPolicy")]
 [Route("api/v1/[controller]/")]
 [ApiExplorerSettings(GroupName = "v1-user")]
 public class RecommendationController : ControllerBase

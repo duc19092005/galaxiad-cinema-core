@@ -7,6 +7,7 @@ using Cinema.Application.UseCases.IdentityAccess;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Api.Controllers.Identity;
@@ -14,6 +15,7 @@ namespace Cinema.Api.Controllers.Identity;
 [Route("api/v1/[controller]/")]
 [Tags("Identity Access")]
 [ApiController]
+[EnableRateLimiting("AuthPolicy")]
 public class IdentityAccessController : ControllerBase
 {
     private readonly IdentityAccessRegularRegisterUseCase _registerUseCase;
