@@ -89,7 +89,9 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
-            cd /var/portainer_data/compose/5
+            cd ~/galaxiad-cinema-core
             git pull origin main
+            docker compose -f docker-compose.prod.yml down
             docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+
 
