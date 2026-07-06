@@ -151,69 +151,121 @@ const StatCard: React.FC<{
 const AdminRevenueChart: React.FC<{ data?: ManagementDashboardDto | null }> = ({ data }) => {
   const revenueRows = data?.revenueByDay?.length
     ? data.revenueByDay
-    : Array.from({ length: 7 }, (_, index) => ({
-      date: '',
-      dateLabel: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
-      revenue: 0,
-      ticketCount: 0,
+    : Array.from({ length: 7 }, (_, i) => ({
+      date: '', dateLabel: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i], revenue: 0, ticketCount: 0,
     }));
-  const maxRevenue = Math.max(...revenueRows.map((row) => row.revenue), 1);
+
+  const now = new Date();
+  const dow = now.getDay();
+  const monOff = dow === 0 ? -6 : 1 - dow;
+  const mon = new Date(now);
+  mon.setDate(now.getDate() + monOff);
+  const weekLabels = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    return `${['MON','TUE','WED','THU','FRI','SAT','SUN'][i]} ${d.getDate()}`;
+  });
+
+  const revVals = revenueRows.map(r => r.revenue);
+  const ticketVals = revenueRows.map(r => r.ticketCount);
+  const maxRev = Math.max(...revVals, 1);
+  const maxTic = Math.max(...ticketVals, 1);
+  const n = 7;
+
+  // Fixed pixel SVG
+  const W = 840, H = 300;
+  const pL = 20, pR = 40, pT = 16, pB = 44;
+  const cW = W - pL - pR, cH = H - pT - pB;
+
+  const gx = (i: number) => pL + (i / (n - 1)) * cW;
+  const ry = (v: number) => pT + cH - (v / maxRev) * cH;
+  const ty = (v: number) => pT + cH - (v / maxTic) * cH;
+
+  const smooth = (getY: (v: number) => number, vals: number[]) => {
+    const pts = vals.map((v, i) => [gx(i), getY(v)]);
+    let d = `M${pts[0][0]},${pts[0][1]}`;
+    for (let i = 1; i < pts.length; i++) {
+      const [px, py] = pts[i - 1], [cx, cy] = pts[i];
+      const c1x = px + (cx - px) * 0.35, c2x = cx - (cx - px) * 0.35;
+      d += `C${c1x},${py} ${c2x},${cy} ${cx},${cy}`;
+    }
+    return d;
+  };
+
+  const rLine = smooth(ry, revVals);
+  const tLine = smooth(ty, ticketVals);
+  const rArea = `${rLine}L${gx(n - 1)},${pT + cH}L${gx(0)},${pT + cH}Z`;
+  const tArea = `${tLine}L${gx(n - 1)},${pT + cH}L${gx(0)},${pT + cH}Z`;
+
+  const gridYs = [0.25, 0.5, 0.75].map(p => pT + cH * (1 - p));
 
   return (
-    <section className="admin-dashboard-card" style={{ padding: 24, minHeight: 420 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+    <section className="admin-dashboard-card" style={{ padding: '24px 20px 16px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 12 }}>
         <div>
-          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, letterSpacing: '-0.01em' }}>Revenue Overview</h3>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: '#ccc' }}>
-            Daily gross revenue comparison across all regions.
-          </p>
+          <h3 style={{ margin: 0, fontSize: 20, fontWeight: 800, color: '#fff' }}>Tổng Quan Doanh Thu</h3>
+          <p style={{ margin: '4px 0 0', fontSize: 13, color: '#999' }}>Doanh thu gross và số vé bán trong tuần hiện tại.</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 11, color: '#bbb', flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--accent)' }} /> Revenue</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><i style={{ width: 8, height: 8, borderRadius: 999, background: 'var(--success)' }} /> Tickets</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, color: '#bbb' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: '#ff8a00', display: 'inline-block' }} /> Gross Revenue
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ width: 10, height: 10, borderRadius: 999, background: '#22c55e', display: 'inline-block' }} /> Ticket Sales
+          </span>
         </div>
       </div>
 
-      <div style={{
-        height: 300,
-        display: 'grid',
-        gridTemplateColumns: `repeat(${revenueRows.length}, minmax(34px, 1fr))`,
-        alignItems: 'end',
-        gap: 14,
-        padding: '24px 4px 0',
-        borderBottom: '1px solid var(--border-color)',
-        backgroundImage: 'linear-gradient(to top, rgba(255,255,255,0.06) 1px, transparent 1px)',
-        backgroundSize: '100% 25%',
-      }}>
-        {revenueRows.map((row) => {
-          const revenueHeight = Math.max(4, Math.round((row.revenue / maxRevenue) * 100));
-          const ticketHeight = Math.max(4, Math.min(100, row.ticketCount * 8));
-          return (
-            <div key={`${row.dateLabel}-${row.date}`} style={{ height: '100%', display: 'grid', alignItems: 'end', gap: 10 }}>
-              <div style={{ height: '100%', display: 'flex', alignItems: 'end', justifyContent: 'center', gap: 5 }}>
-                <div title={`Revenue ${row.revenue.toLocaleString('vi-VN')} VND`} style={{
-                  width: '38%',
-                  maxWidth: 30,
-                  height: `${revenueHeight}%`,
-                  borderRadius: '8px 8px 2px 2px',
-                  background: 'linear-gradient(180deg, #ffc174, #ff8a00)',
-                  boxShadow: '0 10px 24px rgba(255,138,0,0.24)',
-                }} />
-                <div title={`${row.ticketCount} tickets`} style={{
-                  width: '26%',
-                  maxWidth: 20,
-                  height: `${ticketHeight}%`,
-                  borderRadius: '8px 8px 2px 2px',
-                  background: 'rgba(34,197,94,0.78)',
-                }} />
-              </div>
-              <span style={{ textAlign: 'center', fontSize: 10, color: '#aaa', fontFamily: "'JetBrains Mono', monospace", textTransform: 'uppercase' }}>
-                {row.dateLabel}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+        <defs>
+          <linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#ff8a00" stopOpacity={0.35} />
+            <stop offset="100%" stopColor="#ff8a00" stopOpacity={0} />
+          </linearGradient>
+          <linearGradient id="tg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#22c55e" stopOpacity={0.25} />
+            <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines */}
+        {gridYs.map((y, i) => (
+          <line key={i} x1={pL} y1={y} x2={W - pR} y2={y} stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+        ))}
+        <line x1={pL} y1={pT + cH} x2={W - pR} y2={pT + cH} stroke="rgba(255,255,255,0.12)" strokeWidth={1} />
+
+        {/* Area fills */}
+        <path d={rArea} fill="url(#rg)" />
+        <path d={tArea} fill="url(#tg)" />
+
+        {/* Lines */}
+        <path d={rLine} fill="none" stroke="#ff8a00" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+        <path d={tLine} fill="none" stroke="#22c55e" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Dots — revenue */}
+        {revVals.map((v, i) => (
+          <g key={`r${i}`}>
+            <circle cx={gx(i)} cy={ry(v)} r={6} fill="#ff8a00" opacity={0.4} />
+            <circle cx={gx(i)} cy={ry(v)} r={4} fill="#ff8a00" />
+            <circle cx={gx(i)} cy={ry(v)} r={2} fill="#131316" />
+          </g>
+        ))}
+
+        {/* Dots — tickets */}
+        {ticketVals.map((v, i) => (
+          <g key={`t${i}`}>
+            <circle cx={gx(i)} cy={ty(v)} r={6} fill="#22c55e" opacity={0.4} />
+            <circle cx={gx(i)} cy={ty(v)} r={4} fill="#22c55e" />
+            <circle cx={gx(i)} cy={ty(v)} r={2} fill="#131316" />
+          </g>
+        ))}
+
+        {/* X-axis labels */}
+        {weekLabels.map((lbl, i) => (
+          <text key={i} x={gx(i)} y={H - 8} textAnchor="middle" fill="#aaa" fontSize={13} fontFamily="'JetBrains Mono',monospace" fontWeight={700}>
+            {lbl}
+          </text>
+        ))}
+      </svg>
     </section>
   );
 };
@@ -1337,7 +1389,7 @@ const AdminPage: React.FC = () => {
 
             <section style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(320px, 1fr)', gap: 16 }} className="admin-dashboard-main-grid">
               <AdminRevenueChart data={dashboardData} />
-              <div className="admin-dashboard-card" style={{ padding: 24, minHeight: 420 }}>
+              <div className="admin-dashboard-card" style={{ padding: 24 }}>
               <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 16px' }}>
                 {t('Recent Activity')}
               </h3>
