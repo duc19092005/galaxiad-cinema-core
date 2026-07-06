@@ -7,8 +7,9 @@ services:
       context: ./apps/backend
       dockerfile: Cinema.Api/Dockerfile
       target: final
-    ports:
-      - "8080:8080"
+    # Ports mapping is commented out for security. Traffic should go through Nginx.
+    # ports:
+    #   - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - Database__AutoMigrate=${DATABASE_AUTO_MIGRATE:-true}
@@ -85,6 +86,23 @@ services:
     restart: unless-stopped
     networks:
       - cinema-network
+
+  # ─────────────────────────────────────────
+  # Nginx Reverse Proxy
+  # ─────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    restart: unless-stopped
+    networks:
+      - cinema-network
+    depends_on:
+      - api
 
   # Container management UI
   portainer:
