@@ -299,14 +299,21 @@ const AccountPage: React.FC = () => {
                         </p>
                         {accountInfo?.rewardPoints !== undefined && (
                             <p style={{ color: 'var(--primary, #ff8a00)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 'bold', margin: '6px 0 0' }}>
-                                <Sparkles size={16} /> Điểm đổi voucher: {accountInfo.rewardPoints.toLocaleString('vi-VN')}
+                                <Sparkles size={16} /> {t('account.voucherPoints', { points: accountInfo.rewardPoints.toLocaleString('vi-VN') })}
                             </p>
                         )}
                         {accountInfo?.totalPoint !== undefined && (
-                            <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 700, margin: '6px 0 0' }}>
-                                <Trophy size={16} style={{ color: 'var(--accent)' }} />
-                                Hạng {getMembershipRankLabel(accountInfo.membershipRank)} · Điểm nâng hạng: {accountInfo.totalPoint.toLocaleString('vi-VN')}
-                            </p>
+                            <>
+                                <p style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '8px', fontSize: 14, fontWeight: 700, margin: '6px 0 0' }}>
+                                    <Trophy size={16} style={{ color: 'var(--accent)' }} />
+                                    {t('account.rankInfo', { rank: getMembershipRankLabel(accountInfo.membershipRank), points: accountInfo.totalPoint.toLocaleString('vi-VN') })}
+                                </p>
+                                {/* Rank Progress Bar */}
+                                <RankProgressBar
+                                    currentPoints={accountInfo.totalPoint}
+                                    currentRank={getMembershipRankLabel(accountInfo.membershipRank)}
+                                />
+                            </>
                         )}
                     </div>
                 </div>
@@ -449,8 +456,11 @@ const AccountPage: React.FC = () => {
                                                 {getAiringStatusIcon(item.movieAiringStatus)}
                                                 {item.movieAiringStatus}
                                             </div>
-                                            <button style={{ fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                                                {t('common.viewDetails')} <ExternalLink size={14} />
+                                            <button
+                                                onClick={() => navigate(`/booking/success?orderId=${item.orderId}`)}
+                                                style={{ fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 4, textTransform: 'uppercase', letterSpacing: '0.05em', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent)' }}
+                                            >
+                                                {t('booking.viewTicket')} <ExternalLink size={14} />
                                             </button>
                                         </div>
                                     </div>
@@ -511,7 +521,9 @@ const EditableProfileCard: React.FC<{
     type?: string; isEditing: boolean; tempValue: string;
     onChange: (v: string) => void; onSave: () => void; onCancel: () => void;
     onStart: () => void; updating: boolean;
-}> = ({ icon, label, value, field, type = 'text', isEditing, tempValue, onChange, onSave, onCancel, onStart, updating }) => (
+}> = ({ icon, label, value, field, type = 'text', isEditing, tempValue, onChange, onSave, onCancel, onStart, updating }) => {
+    const { t } = useTranslation();
+    return (
     <div style={{
         padding: '24px', borderRadius: 'var(--radius-lg)',
         backgroundColor: 'var(--bg-elevated)', border: isEditing ? '1px solid var(--accent)' : '1px solid var(--border-color)',
@@ -527,7 +539,7 @@ const EditableProfileCard: React.FC<{
             </div>
             {!isEditing && (
                 <button onClick={onStart} className="glass-card interactive" style={{ padding: '6px 12px', borderRadius: 'var(--radius-sm)', cursor: 'pointer', border: '1px solid var(--border-color)', background: 'rgba(255,255,255,0.03)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    <Edit2 size={14} /> Edit
+                    <Edit2 size={14} /> {t('common.edit')}
                 </button>
             )}
         </div>
@@ -571,6 +583,81 @@ const EditableProfileCard: React.FC<{
             </div>
         )}
     </div>
-);
+    );
+};
+
+// ===== Rank Progress Bar Component =====
+const RANK_THRESHOLDS = [
+    { rank: 'Standard', minPoints: 0, maxPoints: 1000, color: '#6b7280' },
+    { rank: 'VIP', minPoints: 1000, maxPoints: 5000, color: '#ff8a00' },
+];
+
+const RankProgressBar: React.FC<{ currentPoints: number; currentRank: string }> = ({ currentPoints, currentRank }) => {
+    const { t } = useTranslation();
+
+    const currentThreshold = RANK_THRESHOLDS.find(r => r.rank === currentRank) || RANK_THRESHOLDS[0];
+    const nextThreshold = RANK_THRESHOLDS.find(r => r.minPoints > currentPoints);
+
+    const progressStart = currentThreshold.minPoints;
+    const progressEnd = nextThreshold ? nextThreshold.minPoints : currentThreshold.maxPoints;
+    const progressRange = progressEnd - progressStart;
+    const currentProgress = Math.min(currentPoints - progressStart, progressRange);
+    const progressPercent = Math.min((currentProgress / progressRange) * 100, 100);
+    const pointsNeeded = nextThreshold ? Math.max(nextThreshold.minPoints - currentPoints, 0) : 0;
+
+    return (
+        <div style={{
+            marginTop: 12, padding: '16px', borderRadius: 12,
+            background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-color)',
+        }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                    {t('account.rankProgress', 'Tiến Trình Hạng')}
+                </span>
+                {nextThreshold && (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)' }}>
+                        {t('account.pointsToNext', { points: pointsNeeded.toLocaleString('vi-VN'), nextRank: nextThreshold.rank })}
+                    </span>
+                )}
+            </div>
+
+            {/* Progress Bar */}
+            <div style={{
+                position: 'relative', height: 12, borderRadius: 6,
+                background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
+            }}>
+                <div style={{
+                    position: 'absolute', left: 0, top: 0, bottom: 0,
+                    width: `${progressPercent}%`,
+                    background: `linear-gradient(90deg, ${currentThreshold.color}, ${nextThreshold?.color || currentThreshold.color})`,
+                    borderRadius: 6,
+                    transition: 'width 0.8s ease',
+                }} />
+            </div>
+
+            {/* Labels */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 600, color: currentThreshold.color }}>
+                    {currentThreshold.rank} ({currentThreshold.minPoints.toLocaleString('vi-VN')})
+                </span>
+                {nextThreshold && (
+                    <span style={{ fontSize: 10, fontWeight: 600, color: nextThreshold.color }}>
+                        {nextThreshold.rank} ({nextThreshold.minPoints.toLocaleString('vi-VN')})
+                    </span>
+                )}
+            </div>
+
+            {/* Current Points Display */}
+            <div style={{ textAlign: 'center', marginTop: 12 }}>
+                <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--accent)' }}>
+                    {currentPoints.toLocaleString('vi-VN')}
+                </span>
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>
+                    / {progressEnd.toLocaleString('vi-VN')} {t('account.points', 'điểm')}
+                </span>
+            </div>
+        </div>
+    );
+};
 
 export default AccountPage;

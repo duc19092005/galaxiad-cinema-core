@@ -632,11 +632,11 @@
     "noTrendingData": "Chưa có dữ liệu thịnh hành.",
     "noTrendingDesc": "Dữ liệu sẽ xuất hiện khi có lượt xem, đánh giá hoặc vé thanh toán thành công.",
     "noNowShowing": "Không có phim nào đang chiếu tại rạp này.",
-    "forYou": "✨ Dành Riêng Cho Bạn",
+    "forYou": "Dành Riêng Cho Bạn",
     "personalizedRecs": "Gợi Ý Phim Cá Nhân Hóa",
     "updatePreferences": "Cập nhật sở thích",
     "noRecsYet": "Chưa có gợi ý. AI đang xử lý sở thích của bạn...",
-    "aiPick": "✨ AI Pick"
+    "aiPick": "AI Pick"
   },
   "allmovies": {
     "title": "Tất Cả Phim",
@@ -1258,7 +1258,23 @@
     "careers": "Tuyển dụng",
     "feedback": "Phản hồi",
     "cinema": "CINEMA",
-    "helpSupport": "Trợ giúp & Hỗ trợ"
+    "helpSupport": "Trợ giúp & Hỗ trợ",
+    "payment_failed": "Thanh Toán Thất Bại",
+    "try_again": "Thử Lại",
+    "return_home": "Về Trang Chủ",
+    "processing_error_title": "Lỗi Xử Lý",
+    "processing_error_msg": "Có lỗi xảy ra khi xử lý thanh toán. Ghế của bạn đã được giải phóng.",
+    "processing_error_detail": "Hệ thống gặp lỗi khi xử lý thanh toán của bạn. Vui lòng kiểm tra lịch sử đặt vé để xem đặt vé có thành công không.",
+    "payment_interrupted_title": "Thanh Toán Bị Gián Đoạn",
+    "payment_interrupted_msg": "Thanh toán của bạn chưa hoàn tất. Không có khoản phí nào được tính.",
+    "payment_interrupted_detail": "Phiên thanh toán của bạn bị gián đoạn hoặc hủy. Bạn có thể thử đặt lại.",
+    "need_help": "Cần Trợ Giúp?",
+    "support_msg": "Liên hệ đội hỗ trợ với mã đơn hàng nếu bạn bị tính phí.",
+    "available": "Còn trống",
+    "center": "Vùng trung tâm (Góc đẹp)",
+    "selected": "Đã chọn",
+    "locked": "Đã được đặt (người khác)",
+    "occupied": "Đã bán"
   },
   "notifications": {
     "shiftApproved": "Ca làm đã được phê duyệt",
@@ -2038,5 +2054,50 @@
     "getOffer": "Nhận ưu đãi",
     "limitedTime": "Ưu đãi có thời hạn",
     "exclusive": "Độc quyền"
+  },
+  "account": {
+    "myAccount": "Tài Khoản Của Tôi",
+    "profileInfo": "Thông Tin Cá Nhân",
+    "bookingHistory": "Lịch Sử Đặt Vé",
+    "email": "Email",
+    "phone": "Số Điện Thoại",
+    "identityCode": "CMND/CCCD",
+    "dob": "Ngày Sinh",
+    "changePassword": "Đổi Mật Khẩu",
+    "noBookings": "Chưa có đặt vé nào",
+    "failedToLoad": "Không thể tải thông tin tài khoản",
+    "updateSuccess": "Cập nhật thành công",
+    "updateFailed": "Cập nhật thất bại",
+    "voucherPoints": "Điểm đổi voucher: {{points}}",
+    "rankInfo": "Hạng {{rank}} · Điểm nâng hạng: {{points}}",
+    "rankStandard": "Thường",
+    "rankVIP": "VIP",
+    "rankProgress": "Tiến Trình Hạng",
+    "pointsToNext": "Còn {{points}} điểm lên {{nextRank}}",
+    "points": "điểm"
+  },
+  "booking": {
+    "bookingDate": "Ngày Đặt",
+    "showtime": "Suất Chiếu",
+    "seats": "Ghế",
+    "amount": "Tổng Tiền",
+    "viewTicket": "Xem Vé"
+  },
+  "validation": {
+    "phoneLength": "Số điện thoại phải có 10 chữ số",
+    "idLength": "CMND/CCCD phải có 12 chữ số",
+    "nameSpecialChar": "Tên không được chứa ký tự đặc biệt",
+    "dobRequired": "Vui lòng nhập ngày sinh",
+    "dobInvalidFormat": "Định dạng ngày không hợp lệ (DD/MM/YYYY)",
+    "dobInvalidDate": "Ngày không hợp lệ",
+    "ageLimit": "Tuổi phải từ 16 đến 80"
+  },
+  "common": {
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "goHome": "Về Trang Chủ",
+    "viewDetails": "Xem Chi Tiết",
+    "loading": "Đang tải..."
   }
 }

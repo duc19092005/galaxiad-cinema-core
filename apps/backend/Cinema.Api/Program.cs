@@ -291,7 +291,12 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseRateLimiter();
+// Disable rate limiting in Development/Docker to avoid 429 errors during development
+var envName = app.Environment.EnvironmentName;
+if (envName != "Development" && envName != "Docker")
+{
+    app.UseRateLimiter();
+}
 
 if (app.Environment.IsProduction())
 {

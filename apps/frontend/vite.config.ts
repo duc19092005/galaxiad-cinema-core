@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 const faceApiSourcemapStripper = () => ({
   name: 'strip-face-api-sourcemaps',
@@ -18,9 +19,13 @@ const faceApiSourcemapStripper = () => ({
   },
 })
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [faceApiSourcemapStripper(), react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
   optimizeDeps: {
     exclude: ['face-api.js'],
   },

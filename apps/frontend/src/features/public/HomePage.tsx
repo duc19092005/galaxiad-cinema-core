@@ -523,11 +523,14 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           box-shadow: 0 16px 38px rgba(0,0,0,0.28);
           cursor: pointer;
           animation: homeFeatureSlide 0.16s ease-out both;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .home-trending-feature img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           display: block;
           transition: none;
         }
@@ -839,6 +842,10 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         @media (max-width: 640px) {
           .home-trending-feature {
             aspect-ratio: 3 / 4;
+            max-height: 70vh;
+          }
+          .home-trending-feature img {
+            max-height: 70vh;
           }
           .home-trending-rank {
             top: 18px;
@@ -1354,7 +1361,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 'clamp(16px, 3vw, 32px)', flexWrap: 'wrap', gap: 12 }}>
                 <div>
                   <span style={{ fontSize: 'clamp(10px, 1.5vw, 11px)', color: 'var(--accent)', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 600, display: 'block', marginBottom: 12 }}>
-                    ✨ {t('home.forYou')}
+                    {t('home.forYou')}
                   </span>
                   <h2 style={{ fontFamily: "'Montserrat', sans-serif", fontSize: 'clamp(1.25rem, 4vw, 2rem)', fontWeight: 700, margin: 0 }}>
                     {t('home.personalizedRecs')}
@@ -1425,7 +1432,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
                         fontSize: 10, fontWeight: 800, color: 'black',
                         boxShadow: '0 2px 8px rgba(255,138,0,0.4)',
                       }}>
-                        ✨ {t('home.aiPick')}
+                        {t('home.aiPick')}
                       </div>
                       <div style={{ position: 'relative', width: '100%', paddingTop: '140%' }}>
                         <img

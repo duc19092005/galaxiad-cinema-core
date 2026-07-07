@@ -6,6 +6,7 @@ import {
   ArrowDown,
   Bot,
   Check,
+  CheckCircle,
   Clock,
   CreditCard,
   Download,
@@ -223,10 +224,101 @@ const stripInternalChatMarkup = (value?: string) => {
   const visible = tagIndex >= 0 ? value.slice(0, tagIndex) : value;
   return visible
     .replace(/```json[\s\S]*?```/gi, '')
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
     .replace(/\|\s*(movieId|cinemaId|scheduleId|userSegmentId|seatIds|voucherId|genreId|bookingPath|discoveryMode)\s*=[^\n|]+/gi, '')
     .trim();
+};
+
+// Simple markdown renderer for chat messages
+const renderMarkdown = (text: string): React.ReactNode => {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Check for markdown table
+    if (line.includes('|') && i + 1 < lines.length && lines[i + 1]?.match(/^\|[\s\-:|]+\|$/)) {
+      const tableLines: string[] = [line];
+      let j = i + 1;
+      while (j < lines.length && lines[j]?.includes('|')) {
+        tableLines.push(lines[j]);
+        j++;
+      }
+
+      // Parse table
+      const headerCells = tableLines[0].split('|').filter(c => c.trim()).map(c => c.trim());
+      const bodyRows = tableLines.slice(2).map(row =>
+        row.split('|').filter(c => c.trim()).map(c => c.trim())
+      );
+
+      elements.push(
+        <table key={`table-${i}`} style={{
+          width: '100%', borderCollapse: 'collapse', margin: '10px 0',
+          fontSize: 12, background: 'rgba(255,255,255,0.03)', borderRadius: 8, overflow: 'hidden',
+        }}>
+          <thead>
+            <tr>
+              {headerCells.map((cell, ci) => (
+                <th key={ci} style={{
+                  padding: '8px 12px', textAlign: 'left', fontWeight: 800,
+                  borderBottom: `1px solid ${theme.border}`, color: theme.accent,
+                  fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em',
+                }}>
+                  {cell.replace(/\*\*/g, '')}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bodyRows.map((row, ri) => (
+              <tr key={ri} style={{ borderBottom: ri < bodyRows.length - 1 ? `1px solid ${theme.border}` : 'none' }}>
+                {row.map((cell, ci) => (
+                  <td key={ci} style={{
+                    padding: '8px 12px', color: theme.text,
+                    fontWeight: ci === 0 ? 700 : 500,
+                  }}>
+                    {cell.replace(/\*\*/g, '').replace(/\*([^*]+)\*/g, '$1')}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+
+      i = j;
+      continue;
+    }
+
+    // Bold text
+    if (line.includes('**')) {
+      const parts = line.split(/(\*\*[^*]+\*\*)/g);
+      elements.push(
+        <p key={`line-${i}`} style={{ margin: '4px 0', lineHeight: 1.6 }}>
+          {parts.map((part, pi) => {
+            if (part.startsWith('**') && part.endsWith('**')) {
+              return <strong key={pi} style={{ color: theme.accent }}>{part.slice(2, -2)}</strong>;
+            }
+            return part;
+          })}
+        </p>
+      );
+      i++;
+      continue;
+    }
+
+    // Regular text
+    if (line.trim()) {
+      elements.push(<p key={`line-${i}`} style={{ margin: '4px 0', lineHeight: 1.6 }}>{line}</p>);
+    }
+
+    i++;
+  }
+
+  return <>{elements}</>;
 };
 
 const buildBookingState = (draft: BookingDraft, patch: Partial<BookingDraft> = {}) => {
@@ -401,6 +493,7 @@ const ChatMessageBubble: React.FC<{
       <div style={{
         maxWidth: isUser ? '78%' : '86%',
         minWidth: 0,
+        overflow: 'hidden',
         color: isUser ? '#fff' : theme.text,
       }}>
         <div style={{
@@ -409,11 +502,12 @@ const ChatMessageBubble: React.FC<{
           background: isUser ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})` : theme.surfaceHigh,
           border: isUser ? 'none' : `1px solid ${theme.border}`,
           fontSize: 12,
-          lineHeight: 1.5,
+          lineHeight: 1.6,
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
           whiteSpace: 'pre-wrap',
-          overflowWrap: 'anywhere',
         }}>
-          {message.text}
+          {isUser ? message.text : renderMarkdown(message.text)}
         </div>
         {children}
       </div>
@@ -443,6 +537,8 @@ const ActionShell: React.FC<{ title: string; icon: React.ReactNode; children: Re
     borderRadius: 12,
     background: 'rgba(255,255,255,0.045)',
     border: `1px solid ${theme.border}`,
+    overflow: 'hidden',
+    minWidth: 0,
   }}>
     <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8, color: theme.muted, fontSize: 11, fontWeight: 800, textTransform: 'uppercase' }}>
       {icon}
@@ -451,6 +547,132 @@ const ActionShell: React.FC<{ title: string; icon: React.ReactNode; children: Re
     {children}
   </div>
 );
+
+// ===== Typing Indicator Component =====
+const TypingIndicator: React.FC<{ statusText?: string }> = ({ statusText }) => (
+  <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-start' }}>
+    <div style={{
+      width: 30, height: 30, borderRadius: 10,
+      background: theme.accentSoft, border: `1px solid ${theme.border}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
+    }}>
+      <Bot size={15} color={theme.accent} />
+    </div>
+    <div style={{
+      padding: '12px 16px', borderRadius: '16px 16px 16px 4px',
+      background: theme.surfaceHigh, border: `1px solid ${theme.border}`,
+      display: 'flex', alignItems: 'center', gap: 8,
+    }}>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {[0, 1, 2].map(i => (
+          <motion.div
+            key={i}
+            animate={{ y: [0, -4, 0] }}
+            transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
+            style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent, opacity: 0.7 }}
+          />
+        ))}
+      </div>
+      {statusText && <span style={{ fontSize: 11, color: theme.muted, fontWeight: 600 }}>{statusText}</span>}
+    </div>
+  </div>
+);
+
+// ===== Booking Progress Stepper =====
+interface BookingStep {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+}
+
+const BOOKING_STEPS: BookingStep[] = [
+  { key: 'movie', label: 'Phim', icon: <Film size={11} /> },
+  { key: 'date', label: 'Ngày', icon: <Clock size={11} /> },
+  { key: 'cinema', label: 'Rạp', icon: <MapPin size={11} /> },
+  { key: 'showtime', label: 'Suất', icon: <Ticket size={11} /> },
+  { key: 'seat', label: 'Ghế', icon: <Armchair size={11} /> },
+  { key: 'payment', label: 'Thanh toán', icon: <CreditCard size={11} /> },
+];
+
+const getBookingStepIndex = (draft: BookingDraft): number => {
+  if (draft.paymentUrl || draft.ticket) return 5;
+  if (draft.seatMap || draft.suggestedSeats.length > 0) return 4;
+  if (draft.showtime) return 3;
+  if (draft.cinema) return 2;
+  if (draft.date) return 1;
+  if (draft.movie) return 0;
+  if (draft.bookingPath) return 0;
+  return -1;
+};
+
+const BookingProgressStepper: React.FC<{ activeStep: number }> = ({ activeStep }) => {
+  if (activeStep < 0) return null;
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 2, padding: '10px 14px',
+      background: 'rgba(255,255,255,0.03)', borderBottom: `1px solid ${theme.border}`,
+      overflowX: 'auto', flexShrink: 0,
+    }}>
+      {BOOKING_STEPS.map((step, idx) => {
+        const isActive = idx === activeStep;
+        const isDone = idx < activeStep;
+        return (
+          <React.Fragment key={step.key}>
+            {idx > 0 && <div style={{ width: 12, height: 1, background: isDone ? theme.accent : theme.border, flexShrink: 0 }} />}
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '4px 8px', borderRadius: 8,
+              background: isActive ? theme.accentSoft : 'transparent',
+              border: isActive ? `1px solid ${theme.accent}33` : '1px solid transparent',
+              flexShrink: 0,
+            }}>
+              {isDone ? <CheckCircle size={12} color={theme.accent} /> : step.icon}
+              <span style={{
+                fontSize: 10, fontWeight: isActive ? 900 : 700,
+                color: isActive ? theme.accent : isDone ? theme.text : theme.muted,
+                whiteSpace: 'nowrap',
+              }}>{step.label}</span>
+            </div>
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+// ===== Quick Reply Chips =====
+interface QuickReply {
+  label: string;
+  value: string;
+  icon?: React.ReactNode;
+}
+
+const QuickReplyChips: React.FC<{ replies: QuickReply[]; onSelect: (value: string) => void }> = ({ replies, onSelect }) => {
+  if (!replies.length) return null;
+  return (
+    <div style={{
+      display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8, paddingLeft: 40,
+    }}>
+      {replies.map(reply => (
+        <button
+          key={reply.label}
+          onClick={() => onSelect(reply.value)}
+          style={{
+            ...ghostButton,
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            padding: '6px 10px', fontSize: 11, fontWeight: 700,
+            background: 'rgba(255,255,255,0.06)', color: theme.text,
+            border: `1px solid ${theme.border}`, borderRadius: 8,
+            whiteSpace: 'nowrap', cursor: 'pointer',
+          }}
+        >
+          {reply.icon}
+          {reply.label}
+        </button>
+      ))}
+    </div>
+  );
+};
 
 const ChoicePicker: React.FC<{
   title: string;
@@ -514,7 +736,30 @@ const DatePicker: React.FC<{
   onPick: (date: string) => void;
 }> = ({ dates, onPick }) => {
   const { t } = useTranslation();
-  const suggestedDates = dates.slice(0, 7);
+
+  // Phan chia ngay theo thang/nam
+  const groupedByMonth = useMemo(() => {
+    const groups: { label: string; dates: string[] }[] = [];
+    const monthNames = [
+      'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+      'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12',
+    ];
+
+    for (const date of dates) {
+      const d = new Date(date);
+      if (isNaN(d.getTime())) continue;
+      const monthLabel = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
+
+      let group = groups.find(g => g.label === monthLabel);
+      if (!group) {
+        group = { label: monthLabel, dates: [] };
+        groups.push(group);
+      }
+      group.dates.push(date);
+    }
+    return groups;
+  }, [dates]);
+
   return (
     <ActionShell title={t('chatbot.datePicker')} icon={<Clock size={13} />}>
       <input
@@ -532,12 +777,25 @@ const DatePicker: React.FC<{
           fontFamily: 'inherit',
         }}
       />
-      {suggestedDates.length > 0 && (
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginTop: 8, paddingBottom: 2 }}>
-          {suggestedDates.map(date => (
-            <button key={date} onClick={() => onPick(date.slice(0, 10))} style={{ ...ghostButton, whiteSpace: 'nowrap', fontSize: 12 }}>
-              {formatDate(date)}
-            </button>
+      {groupedByMonth.length > 0 && (
+        <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {groupedByMonth.map(group => (
+            <div key={group.label}>
+              <div style={{
+                fontSize: 10, fontWeight: 900, color: theme.accent,
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+                marginBottom: 6, fontFamily: "'JetBrains Mono', monospace",
+              }}>
+                {group.label}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {group.dates.map(date => (
+                  <button key={date} onClick={() => onPick(date.slice(0, 10))} style={{ ...ghostButton, whiteSpace: 'nowrap', fontSize: 12 }}>
+                    {formatDate(date)}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -1249,6 +1507,8 @@ const optionButtonStyle: React.CSSProperties = {
   padding: '10px 11px',
   color: theme.text,
   fontSize: 12,
+  overflow: 'hidden',
+  minWidth: 0,
 };
 
 const RequestLocationCard: React.FC<{
@@ -1405,6 +1665,28 @@ const ChatBot: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Toggle body class when chatbot opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('chatbot-open');
+    } else {
+      document.body.classList.remove('chatbot-open');
+    }
+    return () => document.body.classList.remove('chatbot-open');
+  }, [isOpen]);
+
+  // Auto-resize textarea when input changes
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
+      textarea.style.height = Math.min(scrollHeight, 120) + 'px';
+    }
+  }, [input]);
+
   const paymentWindowRef = useRef<Window | null>(null);
   const chatSessionIdRef = useRef(getChatSessionId());
 
@@ -1929,6 +2211,7 @@ const ChatBot: React.FC = () => {
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
+              overflowX: 'hidden',
               borderRadius: 20,
               background: theme.surface,
               border: `1px solid ${theme.border}`,
@@ -1956,11 +2239,14 @@ const ChatBot: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+            {/* Booking Progress Stepper */}
+            <BookingProgressStepper activeStep={getBookingStepIndex(draft)} />
+
+            <div style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden', minWidth: 0 }}>
               <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                style={{ height: '100%', overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}
+                style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 14, wordBreak: 'break-word' }}
                 className="chatbot-messages"
               >
                 {messages.map(message => (
@@ -1995,7 +2281,7 @@ const ChatBot: React.FC = () => {
                     ))}
                     {message.movies && message.movies.length > 0 && (
                       <ActionShell title={t('chatbot.relatedMovies')} icon={<Film size={13} />}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 6, overflowX: 'auto', flexWrap: 'nowrap', paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
                           {message.movies.map(movie => (
                             <button key={movie.movieId} onClick={() => { setIsOpen(false); navigate(`/movie/${movie.movieId}`); }} style={{ ...ghostButton, fontSize: 12 }}>
                               {movie.movieName}
@@ -2007,13 +2293,26 @@ const ChatBot: React.FC = () => {
                   </ChatMessageBubble>
                 ))}
                 {isLoading && (
-                  <ChatMessageBubble message={{ id: 'loading', role: 'bot', text: streamStatus || t('chatbot.loading'), createdAt: new Date().toISOString() }}>
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, color: theme.muted, fontSize: 11 }}>
-                      <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                      <span>{t('chatbot.loadingData')}</span>
-                    </div>
-                  </ChatMessageBubble>
+                  <TypingIndicator statusText={streamStatus || t('chatbot.processing')} />
                 )}
+                {/* Quick Reply Suggestions */}
+                {messages.length > 0 && !isLoading && (() => {
+                  const lastBotMsg = [...messages].reverse().find(m => m.role === 'bot' && m.actions && m.actions.length > 0);
+                  if (!lastBotMsg) return null;
+                  const replies: QuickReply[] = [];
+                  const hasAction = lastBotMsg.actions?.some(a => a.type === 'bookingPathPicker');
+                  if (hasAction) {
+                    replies.push({ label: 'Chọn phim trước', value: 'Tôi muốn chọn phim trước', icon: <Film size={11} /> });
+                    replies.push({ label: 'Chọn rạp trước', value: 'Tôi muốn chọn rạp trước', icon: <MapPin size={11} /> });
+                  }
+                  const hasShowtimePref = lastBotMsg.actions?.some(a => a.type === 'showtimePreferencePicker');
+                  if (hasShowtimePref) {
+                    replies.push({ label: 'Theo khung giờ', value: 'Tôi muốn chọn suất theo khung giờ', icon: <Clock size={11} /> });
+                    replies.push({ label: 'Theo định dạng', value: 'Tôi muốn chọn suất theo định dạng', icon: <Ticket size={11} /> });
+                  }
+                  if (replies.length === 0) return null;
+                  return <QuickReplyChips replies={replies} onSelect={(v) => { setInput(v); void handleSend(); }} />;
+                })()}
                 <div ref={messagesEndRef} />
               </div>
               {showScrollButton && (
@@ -2045,7 +2344,7 @@ const ChatBot: React.FC = () => {
               )}
             </div>
 
-            <div style={{ flexShrink: 0, padding: '8px 14px 0', display: 'flex', gap: 7, overflowX: 'auto' }}>
+            <div style={{ flexShrink: 0, padding: '8px 14px 0', display: 'flex', gap: 7, overflowX: 'auto', minWidth: 0 }}>
               {quickActions.map(action => (
                 <button
                   key={action.label}
@@ -2058,25 +2357,34 @@ const ChatBot: React.FC = () => {
               ))}
             </div>
 
-            <div style={{ flexShrink: 0, padding: 14 }}>
+            <div style={{ flexShrink: 0, padding: 14, minWidth: 0 }}>
               <div style={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'flex-end',
                 gap: 8,
                 background: 'rgba(255,255,255,0.055)',
                 border: `1px solid ${theme.border}`,
                 borderRadius: 14,
                 padding: '4px 4px 4px 12px',
               }}>
-                <input
+                <textarea
+                  ref={textareaRef}
                   value={input}
                   disabled={isLoading}
                   onChange={event => setInput(event.target.value)}
                   onKeyDown={event => {
-                    if (event.key === 'Enter' && !event.shiftKey) void handleSend();
+                    if (event.key === 'Enter' && !event.shiftKey) {
+                      event.preventDefault();
+                      void handleSend();
+                    }
                   }}
                   placeholder={t('chatbot.placeholder')}
-                  style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none', color: theme.text, fontSize: 14, padding: '10px 0' }}
+                  rows={1}
+                  style={{
+                    flex: 1, minWidth: 0, background: 'transparent', border: 'none', outline: 'none',
+                    color: theme.text, fontSize: 14, padding: '10px 0', resize: 'none',
+                    maxHeight: 120, lineHeight: '20px', fontFamily: 'inherit', overflow: 'auto',
+                  }}
                 />
                 <button
                   disabled={!input.trim() || isLoading}
@@ -2101,6 +2409,43 @@ const ChatBot: React.FC = () => {
       </AnimatePresence>
 
       <style dangerouslySetInnerHTML={{__html: `
+        .chatbot-panel {
+          overflow-x: hidden !important;
+          overflow-wrap: break-word !important;
+          word-break: break-word !important;
+        }
+        .chatbot-panel * {
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+        }
+        .chatbot-panel div,
+        .chatbot-panel span,
+        .chatbot-panel p,
+        .chatbot-panel h3,
+        .chatbot-panel button,
+        .chatbot-panel input,
+        .chatbot-panel textarea {
+          overflow-wrap: break-word !important;
+          word-break: break-word !important;
+        }
+        .chatbot-panel img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        .chatbot-panel button {
+          white-space: normal !important;
+        }
+        .chatbot-panel textarea {
+          scrollbar-width: thin !important;
+          scrollbar-color: rgba(255,255,255,0.2) transparent !important;
+        }
+        .chatbot-panel textarea::-webkit-scrollbar {
+          width: 4px !important;
+        }
+        .chatbot-panel textarea::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.2) !important;
+          border-radius: 2px !important;
+        }
         .chatbot-trigger-btn {
           bottom: 92px !important;
         }

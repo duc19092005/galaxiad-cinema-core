@@ -56,7 +56,14 @@ const MovieDetailPage: React.FC = () => {
                 try {
                     const similarRes = await publicApi.getSimilarMovies(movieId!);
                     if (similarRes?.data && similarRes.data.length > 0) {
-                        setRecommendedMovies(similarRes.data);
+                        // Map backend field names to frontend expectations
+                        const mapped = similarRes.data.map((m: any) => ({
+                            ...m,
+                            moviePosterURL: m.moviePosterURL || m.movieImageUrl || '',
+                            movieFormatInfos: m.movieFormatInfos || m.movieFormats?.join(', ') || '',
+                            movieCategoryInfos: m.movieCategoryInfos || m.movieGenres?.join(', ') || '',
+                        }));
+                        setRecommendedMovies(mapped);
                     } else {
                         setRecommendedMovies([]);
                     }
@@ -449,9 +456,9 @@ const MovieDetailPage: React.FC = () => {
                                     <div
                                         key={recMovie.movieId}
                                         onClick={() => navigate(`/movie/${recMovie.movieId}`)}
-                                        className="min-w-[280px] group cursor-pointer"
+                                        className="w-[200px] flex-shrink-0 group cursor-pointer"
                                     >
-                                        <div className="aspect-[2/3] rounded-xl overflow-hidden mb-4 relative shadow-lg">
+                                        <div className="w-[200px] h-[300px] rounded-xl overflow-hidden mb-4 relative shadow-lg">
                                             <img
                                                 src={recMovie.moviePosterURL}
                                                 alt={recMovie.movieName}
