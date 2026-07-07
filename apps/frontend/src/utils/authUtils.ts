@@ -145,3 +145,25 @@ export const hasPermission = (requiredPermission: string): boolean => {
     return false;
   }
 };
+
+/**
+ * Lấy user info từ localStorage (alias ngắn gọn cho getUserInfoFromStorage)
+ */
+export const getUserInfo = (): { userId: string; username: string; roles: string[]; permissions?: string[]; portraitImageUrl?: string | null } | null => {
+  try {
+    const stored = localStorage.getItem('user_info');
+    if (!stored) return null;
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Xoá auth data khỏi localStorage và cookies
+ */
+export const clearAuth = (): void => {
+  localStorage.removeItem('user_info');
+  // Remove cookie by setting expiry to past date
+  document.cookie = 'X-Access-Token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+};

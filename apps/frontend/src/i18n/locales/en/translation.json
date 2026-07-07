@@ -651,11 +651,11 @@
     "noTrendingData": "No trending data available.",
     "noTrendingDesc": "Data will appear when there are views, ratings or successful ticket payments.",
     "noNowShowing": "No movies currently showing at this theater.",
-    "forYou": "✨ For You",
+    "forYou": "For You",
     "personalizedRecs": "Personalized Movie Suggestions",
     "updatePreferences": "Update Preferences",
     "noRecsYet": "No suggestions yet. AI is processing your preferences...",
-    "aiPick": "✨ AI Pick"
+    "aiPick": "AI Pick"
   },
   "allmovies": {
     "title": "All Movies",
@@ -1235,7 +1235,23 @@
     "careers": "Careers",
     "feedback": "Feedback",
     "cinema": "CINEMA",
-    "helpSupport": "Help & Support"
+    "helpSupport": "Help & Support",
+    "payment_failed": "Payment Failed",
+    "try_again": "Try Again",
+    "return_home": "Return to Home",
+    "processing_error_title": "Processing Error",
+    "processing_error_msg": "There was an error processing your payment. Your seats have been released.",
+    "processing_error_detail": "The system encountered an error while processing your payment. Please check your order history to see if the booking was successful.",
+    "payment_interrupted_title": "Payment Interrupted",
+    "payment_interrupted_msg": "Your payment was not completed. No charge has been made.",
+    "payment_interrupted_detail": "Your payment session was interrupted or cancelled. You can try booking again.",
+    "need_help": "Need Help?",
+    "support_msg": "Contact our support team with your Order ID if you were charged.",
+    "available": "Available",
+    "center": "Center Zone (Best View)",
+    "selected": "Selected",
+    "locked": "Locked (by others)",
+    "occupied": "Occupied"
   },
   "notifications": {
     "shiftApproved": "Shift approved",
@@ -2268,5 +2284,50 @@
     "getOffer": "Get Offer",
     "limitedTime": "Limited time offer",
     "exclusive": "Exclusive"
+  },
+  "account": {
+    "myAccount": "My Account",
+    "profileInfo": "Profile Information",
+    "bookingHistory": "Booking History",
+    "email": "Email",
+    "phone": "Phone Number",
+    "identityCode": "ID Card",
+    "dob": "Date of Birth",
+    "changePassword": "Change Password",
+    "noBookings": "No bookings yet",
+    "failedToLoad": "Failed to load account information",
+    "updateSuccess": "Updated successfully",
+    "updateFailed": "Update failed",
+    "voucherPoints": "Voucher points: {{points}}",
+    "rankInfo": "Rank {{rank}} · Upgrade points: {{points}}",
+    "rankStandard": "Standard",
+    "rankVIP": "VIP",
+    "rankProgress": "Rank Progress",
+    "pointsToNext": "{{points}} points to reach {{nextRank}}",
+    "points": "pts"
+  },
+  "booking": {
+    "bookingDate": "Booking Date",
+    "showtime": "Showtime",
+    "seats": "Seats",
+    "amount": "Total Amount",
+    "viewTicket": "View Ticket"
+  },
+  "validation": {
+    "phoneLength": "Phone number must be 10 digits",
+    "idLength": "ID card must be 12 digits",
+    "nameSpecialChar": "Name cannot contain special characters",
+    "dobRequired": "Please enter date of birth",
+    "dobInvalidFormat": "Invalid date format (DD/MM/YYYY)",
+    "dobInvalidDate": "Invalid date",
+    "ageLimit": "Age must be between 16 and 80"
+  },
+  "common": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "goHome": "Go Home",
+    "viewDetails": "View Details",
+    "loading": "Loading..."
   }
 }

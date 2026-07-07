@@ -29,6 +29,9 @@ const BackToTop: React.FC = () => {
             right: 88px !important;
           }
         }
+        body.chatbot-open .back-to-top-btn {
+          display: none !important;
+        }
       `}} />
 
       <button

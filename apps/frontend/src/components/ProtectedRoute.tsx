@@ -16,25 +16,31 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
 
   useEffect(() => {
     const checkAuth = async () => {
-      const userInfo = await verifyAuthAndGetUser();
+      try {
+        const userInfo = await verifyAuthAndGetUser();
 
-      if (!userInfo) {
-        setIsAuthenticated(false);
-        setIsChecking(false);
-        return;
-      }
-
-      if (requiredRole) {
-        const roles = userInfo.roles || [];
-        if (!roles.includes(requiredRole) && !roles.includes('Admin')) {
+        if (!userInfo) {
           setIsAuthenticated(false);
           setIsChecking(false);
           return;
         }
-      }
 
-      setIsAuthenticated(true);
-      setIsChecking(false);
+        if (requiredRole) {
+          const roles = userInfo.roles || [];
+          if (!roles.includes(requiredRole) && !roles.includes('Admin')) {
+            setIsAuthenticated(false);
+            setIsChecking(false);
+            return;
+          }
+        }
+
+        setIsAuthenticated(true);
+        setIsChecking(false);
+      } catch (error) {
+        console.error('[ProtectedRoute] Auth verification failed:', error);
+        setIsAuthenticated(false);
+        setIsChecking(false);
+      }
     };
 
     checkAuth();
