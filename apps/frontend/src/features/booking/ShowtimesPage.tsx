@@ -179,7 +179,7 @@ export const ShowtimesPage: React.FC = () => {
   const initialParams = getInitialParams();
 
   // Filter States
-  const [selectedDate, setSelectedDate] = useState<string>(initialParams.date);
+  const [selectedDate, setSelectedDate] = useState<string>(initialParams.date || new Date().toISOString().slice(0, 10));
   const [selectedCinemaId, setSelectedCinemaId] = useState<string>(initialParams.cinema);
   const [selectedMovieId, setSelectedMovieId] = useState<string>(initialParams.movie);
 
@@ -233,10 +233,10 @@ export const ShowtimesPage: React.FC = () => {
       const month = String(d.getMonth() + 1).padStart(2, '0');
       const dateVal = String(d.getDate()).padStart(2, '0');
       const valueStr = `${year}-${month}-${dateVal}`;
-      
+
       let dayName = d.toLocaleDateString('vi-VN', { weekday: 'short' });
       if (i === 0) dayName = t('showtimesPage.today');
-      
+
       dates.push({
         label: `${d.getDate()}/${d.getMonth() + 1}`,
         value: valueStr,
@@ -244,17 +244,15 @@ export const ShowtimesPage: React.FC = () => {
       });
     }
 
-    // Filter to only keep dates that exist in availableDates
-    const filteredDates = dates.filter(d => availableDates.includes(d.value));
-    
-    const finalDates = filteredDates;
-    
+    // If availableDates is empty (API not loaded yet), still show all dates
+    const finalDates = availableDates.length > 0
+      ? dates.filter(d => availableDates.includes(d.value))
+      : dates;
+
     setDateList(finalDates);
-    if (finalDates.length > 0) {
+    if (finalDates.length > 0 && !selectedDate) {
+      // URL param co truoc, chi set mac dinh khi chua co gi
       setSelectedDate(finalDates[0].value);
-    } else {
-      setSelectedDate('');
-      setScheduleResults([]);
     }
   }, [availableDates]);
 

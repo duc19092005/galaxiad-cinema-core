@@ -632,11 +632,11 @@
     "noTrendingData": "Chưa có dữ liệu thịnh hành.",
     "noTrendingDesc": "Dữ liệu sẽ xuất hiện khi có lượt xem, đánh giá hoặc vé thanh toán thành công.",
     "noNowShowing": "Không có phim nào đang chiếu tại rạp này.",
-    "forYou": "✨ Dành Riêng Cho Bạn",
+    "forYou": "Dành Riêng Cho Bạn",
     "personalizedRecs": "Gợi Ý Phim Cá Nhân Hóa",
     "updatePreferences": "Cập nhật sở thích",
     "noRecsYet": "Chưa có gợi ý. AI đang xử lý sở thích của bạn...",
-    "aiPick": "✨ AI Pick"
+    "aiPick": "AI Pick"
   },
   "allmovies": {
     "title": "Tất Cả Phim",
@@ -2054,5 +2054,50 @@
     "getOffer": "Nhận ưu đãi",
     "limitedTime": "Ưu đãi có thời hạn",
     "exclusive": "Độc quyền"
+  },
+  "account": {
+    "myAccount": "Tài Khoản Của Tôi",
+    "profileInfo": "Thông Tin Cá Nhân",
+    "bookingHistory": "Lịch Sử Đặt Vé",
+    "email": "Email",
+    "phone": "Số Điện Thoại",
+    "identityCode": "CMND/CCCD",
+    "dob": "Ngày Sinh",
+    "changePassword": "Đổi Mật Khẩu",
+    "noBookings": "Chưa có đặt vé nào",
+    "failedToLoad": "Không thể tải thông tin tài khoản",
+    "updateSuccess": "Cập nhật thành công",
+    "updateFailed": "Cập nhật thất bại",
+    "voucherPoints": "Điểm đổi voucher: {{points}}",
+    "rankInfo": "Hạng {{rank}} · Điểm nâng hạng: {{points}}",
+    "rankStandard": "Thường",
+    "rankVIP": "VIP",
+    "rankProgress": "Tiến Trình Hạng",
+    "pointsToNext": "Còn {{points}} điểm lên {{nextRank}}",
+    "points": "điểm"
+  },
+  "booking": {
+    "bookingDate": "Ngày Đặt",
+    "showtime": "Suất Chiếu",
+    "seats": "Ghế",
+    "amount": "Tổng Tiền",
+    "viewTicket": "Xem Vé"
+  },
+  "validation": {
+    "phoneLength": "Số điện thoại phải có 10 chữ số",
+    "idLength": "CMND/CCCD phải có 12 chữ số",
+    "nameSpecialChar": "Tên không được chứa ký tự đặc biệt",
+    "dobRequired": "Vui lòng nhập ngày sinh",
+    "dobInvalidFormat": "Định dạng ngày không hợp lệ (DD/MM/YYYY)",
+    "dobInvalidDate": "Ngày không hợp lệ",
+    "ageLimit": "Tuổi phải từ 16 đến 80"
+  },
+  "common": {
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "goHome": "Về Trang Chủ",
+    "viewDetails": "Xem Chi Tiết",
+    "loading": "Đang tải..."
   }
 }

@@ -64,27 +64,19 @@ export const publicApi = {
 
     /** 5. Get Active Cinemas */
     getActiveCinemas: async (): Promise<ApiSuccessResponse<ActiveCinema[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<ActiveCinema[]>>('/movies/active-cinemas', {
-            baseURL: `${API_BASE_URL}/api/v1/public`
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveCinema[]>>('/movies/active-cinemas');
         return response.data;
     },
 
     /** 6. Get Active Movies */
     getActiveMovies: async (): Promise<ApiSuccessResponse<ActiveMovie[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<ActiveMovie[]>>('/movies/active-movies', {
-            baseURL: `${API_BASE_URL}/api/v1/public`
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<ActiveMovie[]>>('/movies/active-movies');
         return response.data;
     },
 
     /** 7. Search Schedules (Advanced Search) */
     searchSchedules: async (date?: string, movieId?: string, cinemaId?: string): Promise<ApiSuccessResponse<SearchScheduleResult[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
         const response = await publicAxios.get<ApiSuccessResponse<SearchScheduleResult[]>>('/movies/search-schedules', {
-            baseURL: `${API_BASE_URL}/api/v1/public`,
             params: { date, movieId, cinemaId }
         });
         return response.data;
@@ -98,37 +90,25 @@ export const publicApi = {
 
     /** 9. Get Pricing Info */
     getPricing: async (scheduleId: string): Promise<ApiSuccessResponse<PublicPricing>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`, {
-            baseURL: `${API_BASE_URL}/api/v1/public`
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPricing>>(`/movies/schedules/${scheduleId}/prices`);
         return response.data;
     },
 
     /** 9.1 Get public automatic pricing promotions */
     getPromotions: async (): Promise<ApiSuccessResponse<PublicPromotion[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion[]>>('/promotions', {
-            baseURL: `${API_BASE_URL}/api/v1`
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion[]>>('/promotions');
         return response.data;
     },
 
     /** 9.2 Get public automatic pricing promotion detail */
     getPromotionBySlug: async (slug: string): Promise<ApiSuccessResponse<PublicPromotion>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion>>(`/promotions/${slug}`, {
-            baseURL: `${API_BASE_URL}/api/v1`
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPromotion>>(`/promotions/${slug}`);
         return response.data;
     },
 
     /** 10. Get Movie Genres */
     getMovieGenres: async (): Promise<ApiSuccessResponse<PublicGenre[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
-        const response = await publicAxios.get<ApiSuccessResponse<PublicGenre[]>>('/movies/genres', { 
-            baseURL: `${API_BASE_URL}/api/v1/public` 
-        });
+        const response = await publicAxios.get<ApiSuccessResponse<PublicGenre[]>>('/movies/genres');
         return response.data;
     },
 
@@ -142,9 +122,7 @@ export const publicApi = {
 
     /** 12. Get Nearest Cinemas based on location */
     getNearestCinemas: async (latitude: number, longitude: number): Promise<ApiSuccessResponse<NearestCinema[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
         const response = await publicAxios.get<ApiSuccessResponse<NearestCinema[]>>('/movies/nearest-cinemas', {
-            baseURL: `${API_BASE_URL}/api/v1/public`,
             params: { latitude, longitude }
         });
         return response.data;
@@ -152,9 +130,7 @@ export const publicApi = {
 
     /** 13. Get Similar Movies (More Like This) */
     getSimilarMovies: async (movieId: string, limit?: number): Promise<ApiSuccessResponse<PublicMovieListItem[]>> => {
-        const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'http://localhost:5032' : '');
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieListItem[]>>(`/movies/${movieId}/similar`, {
-            baseURL: `${API_BASE_URL}/api/v1/public`,
             params: limit ? { limit } : undefined
         });
         return response.data;

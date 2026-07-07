@@ -36,7 +36,14 @@ const SimilarMoviesPage: React.FC = () => {
                 publicApi.getSimilarMovies(movieId!, 20),
             ]);
             setSourceMovie(detailRes.data);
-            setMovies(similarRes.data || []);
+            // Map backend field names to frontend expectations
+            const mapped = (similarRes.data || []).map((m: any) => ({
+                ...m,
+                moviePosterURL: m.moviePosterURL || m.movieImageUrl || '',
+                movieFormatInfos: m.movieFormatInfos || m.movieFormats?.join(', ') || '',
+                movieCategoryInfos: m.movieCategoryInfos || m.movieGenres?.join(', ') || '',
+            }));
+            setMovies(mapped);
         } catch (err) {
             console.error('Failed to load similar movies:', err);
             setError(t('movieDetail.loadError', 'Failed to load. Please try again.'));

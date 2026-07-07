@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { X, Lock, Eye, EyeOff, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { authApi } from '../../../api/authApi';
 import { showSuccess } from '../../../utils/ToastUtils';
@@ -15,6 +16,7 @@ interface ChangePasswordModalProps {
 const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
     const { theme } = useTheme();
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -60,11 +62,14 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
         try {
             await authApi.changePassword(formData);
             setSuccess(true);
-            showSuccess(t('toast.passwordChanged'));
+            showSuccess(t('toast.passwordChanged') || 'Đổi mật khẩu thành công');
             setTimeout(() => {
+                // Auto-logout: xóa dữ liệu và chuyển về trang đăng nhập
+                localStorage.removeItem('user_info');
+                document.cookie = 'X-Access-Token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+                window.dispatchEvent(new Event('user_info_updated'));
                 onClose();
-                setFormData({ oldPassword: '', newPassword: '', renewPassword: '' });
-                setSuccess(false);
+                navigate('/login');
             }, 1500);
         } catch (err: any) {
             if (axios.isAxiosError(err) && err.response) {

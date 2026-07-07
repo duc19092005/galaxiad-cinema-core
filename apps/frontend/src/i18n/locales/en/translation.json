@@ -651,11 +651,11 @@
     "noTrendingData": "No trending data available.",
     "noTrendingDesc": "Data will appear when there are views, ratings or successful ticket payments.",
     "noNowShowing": "No movies currently showing at this theater.",
-    "forYou": "✨ For You",
+    "forYou": "For You",
     "personalizedRecs": "Personalized Movie Suggestions",
     "updatePreferences": "Update Preferences",
     "noRecsYet": "No suggestions yet. AI is processing your preferences...",
-    "aiPick": "✨ AI Pick"
+    "aiPick": "AI Pick"
   },
   "allmovies": {
     "title": "All Movies",
@@ -2284,5 +2284,50 @@
     "getOffer": "Get Offer",
     "limitedTime": "Limited time offer",
     "exclusive": "Exclusive"
+  },
+  "account": {
+    "myAccount": "My Account",
+    "profileInfo": "Profile Information",
+    "bookingHistory": "Booking History",
+    "email": "Email",
+    "phone": "Phone Number",
+    "identityCode": "ID Card",
+    "dob": "Date of Birth",
+    "changePassword": "Change Password",
+    "noBookings": "No bookings yet",
+    "failedToLoad": "Failed to load account information",
+    "updateSuccess": "Updated successfully",
+    "updateFailed": "Update failed",
+    "voucherPoints": "Voucher points: {{points}}",
+    "rankInfo": "Rank {{rank}} · Upgrade points: {{points}}",
+    "rankStandard": "Standard",
+    "rankVIP": "VIP",
+    "rankProgress": "Rank Progress",
+    "pointsToNext": "{{points}} points to reach {{nextRank}}",
+    "points": "pts"
+  },
+  "booking": {
+    "bookingDate": "Booking Date",
+    "showtime": "Showtime",
+    "seats": "Seats",
+    "amount": "Total Amount",
+    "viewTicket": "View Ticket"
+  },
+  "validation": {
+    "phoneLength": "Phone number must be 10 digits",
+    "idLength": "ID card must be 12 digits",
+    "nameSpecialChar": "Name cannot contain special characters",
+    "dobRequired": "Please enter date of birth",
+    "dobInvalidFormat": "Invalid date format (DD/MM/YYYY)",
+    "dobInvalidDate": "Invalid date",
+    "ageLimit": "Age must be between 16 and 80"
+  },
+  "common": {
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "goHome": "Go Home",
+    "viewDetails": "View Details",
+    "loading": "Loading..."
   }
 }
