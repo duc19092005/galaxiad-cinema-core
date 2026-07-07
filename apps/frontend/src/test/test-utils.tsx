@@ -4,14 +4,19 @@ import { BrowserRouter } from 'react-router-dom'
 import { I18nextProvider } from 'react-i18next'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
+import enTranslations from '@/i18n/locales/en/translation.json'
 
-// Initialize a minimal i18n for tests
-i18n.use(initReactI18next).init({
-  lng: 'en',
-  fallbackLng: 'en',
-  resources: { en: { translation: {} } },
-  interpolation: { escapeValue: false },
-})
+// Initialize i18n with real English translations for tests
+if (!i18n.isInitialized) {
+  i18n.use(initReactI18next).init({
+    lng: 'en',
+    fallbackLng: 'en',
+    resources: {
+      en: { translation: enTranslations },
+    },
+    interpolation: { escapeValue: false },
+  })
+}
 
 function AllProviders({ children }: { children: React.ReactNode }) {
   return (

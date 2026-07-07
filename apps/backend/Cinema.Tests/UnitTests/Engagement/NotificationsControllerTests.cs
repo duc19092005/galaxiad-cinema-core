@@ -3,20 +3,20 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Customer.Engagement;
 using Cinema.Application.Dtos;
-using Cinema.Application.UseCases.Notifications;
+using Cinema.Application.UseCases.Customer.Engagement.Comments;
 
 namespace Cinema.Tests.UnitTests.Engagement;
 
 public class NotificationsControllerTests
 {
-    private readonly Mock<GetUserNotificationsUseCase> _getNotificationsUseCase;
-    private readonly Mock<MarkNotificationReadUseCase> _markReadUseCase;
+    private readonly Mock<GetMyNotificationsUseCase> _getNotificationsUseCase;
+    private readonly Mock<MarkNotificationAsReadUseCase> _markReadUseCase;
     private readonly NotificationsController _controller;
 
     public NotificationsControllerTests()
     {
-        _getNotificationsUseCase = new Mock<GetUserNotificationsUseCase>();
-        _markReadUseCase = new Mock<MarkNotificationReadUseCase>();
+        _getNotificationsUseCase = new Mock<GetMyNotificationsUseCase>();
+        _markReadUseCase = new Mock<MarkNotificationAsReadUseCase>();
         _controller = new NotificationsController(
             _getNotificationsUseCase.Object,
             _markReadUseCase.Object);

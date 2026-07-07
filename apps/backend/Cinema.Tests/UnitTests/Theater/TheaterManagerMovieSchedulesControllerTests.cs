@@ -11,18 +11,18 @@ namespace Cinema.Tests.UnitTests.Theater;
 
 public class TheaterManagerMovieSchedulesControllerTests
 {
-    private readonly Mock<CreateShowtimeUseCase> _createShowtimeUseCase;
-    private readonly Mock<GetShowtimesUseCase> _getShowtimesUseCase;
-    private readonly Mock<DeleteShowtimeUseCase> _deleteShowtimeUseCase;
-    private readonly Mock<CheckShowtimeConflictUseCase> _checkConflictUseCase;
+    private readonly Mock<CreateMovieScheduleUseCase> _createShowtimeUseCase;
+    private readonly Mock<GetCinemaShowtimesUseCase> _getShowtimesUseCase;
+    private readonly Mock<DeleteMovieScheduleUseCase> _deleteShowtimeUseCase;
+    private readonly Mock<ReadMovieSchedules> _checkConflictUseCase;
     private readonly TheaterManagerMovieSchedulesController _controller;
 
     public TheaterManagerMovieSchedulesControllerTests()
     {
-        _createShowtimeUseCase = new Mock<CreateShowtimeUseCase>();
-        _getShowtimesUseCase = new Mock<GetShowtimesUseCase>();
-        _deleteShowtimeUseCase = new Mock<DeleteShowtimeUseCase>();
-        _checkConflictUseCase = new Mock<CheckShowtimeConflictUseCase>();
+        _createShowtimeUseCase = new Mock<CreateMovieScheduleUseCase>();
+        _getShowtimesUseCase = new Mock<GetCinemaShowtimesUseCase>();
+        _deleteShowtimeUseCase = new Mock<DeleteMovieScheduleUseCase>();
+        _checkConflictUseCase = new Mock<ReadMovieSchedules>();
         _controller = new TheaterManagerMovieSchedulesController(
             _createShowtimeUseCase.Object,
             _getShowtimesUseCase.Object,

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Admin;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.PricingPromotions;
-using Cinema.Application.UseCases.PricingPromotions;
+using Cinema.Application.UseCases.Admin.PricingPromotions;
 
 namespace Cinema.Tests.UnitTests.Admin;
 

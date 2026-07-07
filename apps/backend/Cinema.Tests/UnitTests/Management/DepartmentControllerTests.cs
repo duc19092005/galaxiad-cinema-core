@@ -3,8 +3,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Management.Facilities;
 using Cinema.Application.Dtos;
-using Cinema.Application.Dtos.Facilities;
-using Cinema.Application.UseCases.Facilities;
+using Cinema.Application.Dtos.FacilitiesManager;
+using Cinema.Application.UseCases.FacilitiesManager;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Management;

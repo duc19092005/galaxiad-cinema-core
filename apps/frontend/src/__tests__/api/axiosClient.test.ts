@@ -14,7 +14,7 @@ describe('axiosClient', () => {
     expect(axiosClient.publicAxios).toBeDefined()
     expect(axiosClient.movieAxios).toBeDefined()
     expect(axiosClient.facilitiesAxios).toBeDefined()
-    expect(axiosClient.scheduleAxios).toBeDefined()
+    expect(axiosClient.theaterAxios).toBeDefined()
     expect(axiosClient.shiftAxios).toBeDefined()
   })
 

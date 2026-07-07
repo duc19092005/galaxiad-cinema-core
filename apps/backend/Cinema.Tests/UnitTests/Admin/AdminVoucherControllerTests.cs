@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Admin;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Vouchers;
-using Cinema.Application.UseCases.Vouchers;
+using Cinema.Application.UseCases.Admin.Vouchers;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Admin;

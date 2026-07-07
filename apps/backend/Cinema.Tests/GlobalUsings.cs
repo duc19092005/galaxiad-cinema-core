@@ -1,1 +1,16 @@
 global using Xunit;
+global using Cinema.Application.Interfaces.Booking;
+global using Cinema.Application.UseCases.Admin.Banners;
+global using Cinema.Application.UseCases.Admin.PricingPromotions;
+global using Cinema.Application.UseCases.Admin.UserManagement;
+global using Cinema.Application.UseCases.Admin.Vouchers;
+global using Cinema.Application.UseCases.Booking.BookingFlow;
+global using Cinema.Application.UseCases.Booking.Showtimes;
+global using Cinema.Application.UseCases.Customer.Engagement.Comments;
+global using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
+global using Cinema.Application.UseCases.FacilitiesManager.Auditoriums;
+global using Cinema.Application.UseCases.FacilitiesManager.Cinemas;
+global using Cinema.Application.UseCases.FacilitiesManager.MovieFormat;
+global using Cinema.Application.UseCases.MovieManager.MovieInfos;
+global using Cinema.Application.UseCases.Staff;
+global using Cinema.Application.UseCases.TheaterManager.MovieSchedules;

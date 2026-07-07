@@ -13,21 +13,21 @@ namespace Cinema.Tests.UnitTests.Admin;
 public class AdminManageUsersControllerTests
 {
     private readonly Mock<GetAllUsersUseCase> _getAllUsersUseCase;
-    private readonly Mock<GetUserDetailUseCase> _getUserDetailUseCase;
-    private readonly Mock<CreateStaffAccountUseCase> _createStaffAccountUseCase;
-    private readonly Mock<UpdateUserRoleUseCase> _updateUserRoleUseCase;
-    private readonly Mock<SearchUsersUseCase> _searchUsersUseCase;
-    private readonly Mock<AssignCinemaToStaffUseCase> _assignCinemaToStaffUseCase;
+    private readonly Mock<GetUserRolesUseCase> _getUserDetailUseCase;
+    private readonly Mock<CreateUserUseCase> _createStaffAccountUseCase;
+    private readonly Mock<AssignRoleToUserUseCase> _updateUserRoleUseCase;
+    private readonly Mock<GetAllUsersUseCase> _searchUsersUseCase;
+    private readonly Mock<AssignCinemaToManagerUseCase> _assignCinemaToStaffUseCase;
     private readonly AdminManageUsersController _controller;
 
     public AdminManageUsersControllerTests()
     {
         _getAllUsersUseCase = new Mock<GetAllUsersUseCase>();
-        _getUserDetailUseCase = new Mock<GetUserDetailUseCase>();
-        _createStaffAccountUseCase = new Mock<CreateStaffAccountUseCase>();
-        _updateUserRoleUseCase = new Mock<UpdateUserRoleUseCase>();
-        _searchUsersUseCase = new Mock<SearchUsersUseCase>();
-        _assignCinemaToStaffUseCase = new Mock<AssignCinemaToStaffUseCase>();
+        _getUserDetailUseCase = new Mock<GetUserRolesUseCase>();
+        _createStaffAccountUseCase = new Mock<CreateUserUseCase>();
+        _updateUserRoleUseCase = new Mock<AssignRoleToUserUseCase>();
+        _searchUsersUseCase = new Mock<GetAllUsersUseCase>();
+        _assignCinemaToStaffUseCase = new Mock<AssignCinemaToManagerUseCase>();
         _controller = new AdminManageUsersController(
             _getAllUsersUseCase.Object,
             _getUserDetailUseCase.Object,

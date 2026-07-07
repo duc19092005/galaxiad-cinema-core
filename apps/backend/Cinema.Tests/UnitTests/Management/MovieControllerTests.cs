@@ -3,8 +3,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Management.Movies;
 using Cinema.Application.Dtos;
-using Cinema.Application.Dtos.Movies;
-using Cinema.Application.UseCases.Movies;
+using Cinema.Application.Dtos.MovieManager;
+using Cinema.Application.UseCases.MovieManager.MovieInfos;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Management;
@@ -14,8 +14,8 @@ public class MovieControllerTests
     private readonly Mock<CreateMovieUseCase> _createMovieUseCase;
     private readonly Mock<UpdateMovieUseCase> _updateMovieUseCase;
     private readonly Mock<DeleteMovieUseCase> _deleteMovieUseCase;
-    private readonly Mock<GetAllMoviesAdminUseCase> _getAllMoviesUseCase;
-    private readonly Mock<UploadMovieImageUseCase> _uploadImageUseCase;
+    private readonly Mock<GetMovieInfosUseCase> _getAllMoviesUseCase;
+    private readonly Mock<SetMovieActiveUseCase> _uploadImageUseCase;
     private readonly MovieController _controller;
 
     public MovieControllerTests()
@@ -23,8 +23,8 @@ public class MovieControllerTests
         _createMovieUseCase = new Mock<CreateMovieUseCase>();
         _updateMovieUseCase = new Mock<UpdateMovieUseCase>();
         _deleteMovieUseCase = new Mock<DeleteMovieUseCase>();
-        _getAllMoviesUseCase = new Mock<GetAllMoviesAdminUseCase>();
-        _uploadImageUseCase = new Mock<UploadMovieImageUseCase>();
+        _getAllMoviesUseCase = new Mock<GetMovieInfosUseCase>();
+        _uploadImageUseCase = new Mock<SetMovieActiveUseCase>();
         _controller = new MovieController(
             _createMovieUseCase.Object,
             _updateMovieUseCase.Object,

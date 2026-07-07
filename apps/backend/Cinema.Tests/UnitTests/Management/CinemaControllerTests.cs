@@ -3,8 +3,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Management.Facilities;
 using Cinema.Application.Dtos;
-using Cinema.Application.Dtos.Facilities;
-using Cinema.Application.UseCases.Facilities;
+using Cinema.Application.Dtos.FacilitiesManager;
+using Cinema.Application.UseCases.FacilitiesManager;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Management;
@@ -14,7 +14,7 @@ public class CinemaControllerTests
     private readonly Mock<CreateCinemaUseCase> _createCinemaUseCase;
     private readonly Mock<UpdateCinemaUseCase> _updateCinemaUseCase;
     private readonly Mock<GetAllCinemasUseCase> _getAllCinemasUseCase;
-    private readonly Mock<GetCinemaDetailUseCase> _getCinemaDetailUseCase;
+    private readonly Mock<GetCinemaByIdUseCase> _getCinemaDetailUseCase;
     private readonly CinemaController _controller;
 
     public CinemaControllerTests()
@@ -22,7 +22,7 @@ public class CinemaControllerTests
         _createCinemaUseCase = new Mock<CreateCinemaUseCase>();
         _updateCinemaUseCase = new Mock<UpdateCinemaUseCase>();
         _getAllCinemasUseCase = new Mock<GetAllCinemasUseCase>();
-        _getCinemaDetailUseCase = new Mock<GetCinemaDetailUseCase>();
+        _getCinemaDetailUseCase = new Mock<GetCinemaByIdUseCase>();
         _controller = new CinemaController(
             _createCinemaUseCase.Object,
             _updateCinemaUseCase.Object,

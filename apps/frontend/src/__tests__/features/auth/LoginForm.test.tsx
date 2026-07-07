@@ -79,7 +79,7 @@ describe('LoginForm', () => {
     await user.click(screen.getByRole('button', { name: /login|sign in/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/cannot connect|error/i)).toBeInTheDocument()
+      expect(screen.getByText(/cannot connect|unable to connect|error/i)).toBeInTheDocument()
     })
   })
 

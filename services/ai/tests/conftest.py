@@ -1,3 +1,16 @@
+import sys
+import os
+
+# Add the services/ai root (/app) to sys.path so 'app' package is importable as 'app.*'
+_ai_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # /app/
+if _ai_root not in sys.path:
+    sys.path.insert(0, _ai_root)
+
+# Also add /app/app to sys.path so internal imports like 'from config import ...' work
+_app_dir = os.path.join(_ai_root, 'app')
+if _app_dir not in sys.path:
+    sys.path.insert(0, _app_dir)
+
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch

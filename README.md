@@ -213,10 +213,9 @@ python main.py
 - 🇬🇧 [English](readme.en.md)
 - 🇷🇺 [Русский](readme.ru.md)
 
-## 📚 Tài Liệu Chi Tiết
-
 | Tài Liệu | Mô Tả |
 |---|---|
+| [docs/test/README.md](docs/test/README.md) | Báo cáo chi tiết kịch bản test & trạng thái kiểm thử (Tiếng Việt) |
 | [docs/features/](docs/features/) | Tài liệu chi tiết từng tính năng |
 | [docs/algorithms/](docs/algorithms/) | Thuật toán (tìm phim, giá vé, khóa ghế, cache) |
 | [docs/business/](docs/business/) | Quy tắc kinh doanh |

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Admin;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Banners;
-using Cinema.Application.UseCases.Banners;
+using Cinema.Application.UseCases.Admin.Banners;
 
 namespace Cinema.Tests.UnitTests.Admin;
 

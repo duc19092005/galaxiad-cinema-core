@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Staff;
 using Cinema.Application.Dtos;
-using Cinema.Application.Dtos.Staff;
+using Cinema.Application.Dtos.Shifts;
 using Cinema.Application.UseCases.Staff;
 using Cinema.Application.Exceptions;
 
@@ -13,14 +13,14 @@ public class StaffShiftControllerTests
 {
     private readonly Mock<RegisterShiftUseCase> _registerShiftUseCase;
     private readonly Mock<ClockInUseCase> _clockInUseCase;
-    private readonly Mock<GetStaffShiftsUseCase> _getStaffShiftsUseCase;
+    private readonly Mock<GetAvailableShiftsUseCase> _getStaffShiftsUseCase;
     private readonly StaffShiftController _controller;
 
     public StaffShiftControllerTests()
     {
         _registerShiftUseCase = new Mock<RegisterShiftUseCase>();
         _clockInUseCase = new Mock<ClockInUseCase>();
-        _getStaffShiftsUseCase = new Mock<GetStaffShiftsUseCase>();
+        _getStaffShiftsUseCase = new Mock<GetAvailableShiftsUseCase>();
         _controller = new StaffShiftController(
             _registerShiftUseCase.Object,
             _clockInUseCase.Object,

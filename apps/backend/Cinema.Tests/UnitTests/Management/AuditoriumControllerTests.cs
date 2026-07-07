@@ -3,8 +3,8 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Management.Facilities;
 using Cinema.Application.Dtos;
-using Cinema.Application.Dtos.Facilities;
-using Cinema.Application.UseCases.Facilities;
+using Cinema.Application.Dtos.FacilitiesManager;
+using Cinema.Application.UseCases.FacilitiesManager;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Management;
@@ -12,7 +12,7 @@ namespace Cinema.Tests.UnitTests.Management;
 public class AuditoriumControllerTests
 {
     private readonly Mock<CreateAuditoriumUseCase> _createAuditoriumUseCase;
-    private readonly Mock<GetAuditoriumsByCinemaUseCase> _getAuditoriumsUseCase;
+    private readonly Mock<GetAuditoriumsByCinemaIdUseCase> _getAuditoriumsUseCase;
     private readonly Mock<UpdateAuditoriumUseCase> _updateAuditoriumUseCase;
     private readonly Mock<DeleteAuditoriumUseCase> _deleteAuditoriumUseCase;
     private readonly AuditoriumController _controller;
@@ -20,7 +20,7 @@ public class AuditoriumControllerTests
     public AuditoriumControllerTests()
     {
         _createAuditoriumUseCase = new Mock<CreateAuditoriumUseCase>();
-        _getAuditoriumsUseCase = new Mock<GetAuditoriumsByCinemaUseCase>();
+        _getAuditoriumsUseCase = new Mock<GetAuditoriumsByCinemaIdUseCase>();
         _updateAuditoriumUseCase = new Mock<UpdateAuditoriumUseCase>();
         _deleteAuditoriumUseCase = new Mock<DeleteAuditoriumUseCase>();
         _controller = new AuditoriumController(

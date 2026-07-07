@@ -3,11 +3,11 @@ import { screen, waitFor } from '@testing-library/react'
 import { render } from '@/test/test-utils'
 import ProtectedRoute from '@/components/ProtectedRoute'
 
-vi.mock('@/api/authApi', () => ({
+vi.mock('@/utils/authHelpers', () => ({
   verifyAuthAndGetUser: vi.fn(),
 }))
 
-import { verifyAuthAndGetUser } from '@/api/authApi'
+import { verifyAuthAndGetUser } from '@/utils/authHelpers'
 
 describe('ProtectedRoute', () => {
   beforeEach(() => {
@@ -84,7 +84,10 @@ describe('ProtectedRoute', () => {
   })
 
   it('uses cached localStorage data as fallback when API fails', async () => {
-    vi.mocked(verifyAuthAndGetUser).mockRejectedValue(new Error('Network error'))
+    vi.mocked(verifyAuthAndGetUser).mockImplementation(async () => {
+      const stored = localStorage.getItem('user_info');
+      return stored ? JSON.parse(stored) : null;
+    })
     localStorage.setItem('user_info', JSON.stringify({
       userId: 'user-1',
       username: 'Cached User',

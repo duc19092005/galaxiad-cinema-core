@@ -3,21 +3,21 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Customer.Engagement;
 using Cinema.Application.Dtos;
-using Cinema.Application.UseCases.Recommendations;
+using Cinema.Application.UseCases.Customer.Engagement.Recommendation;
 
 namespace Cinema.Tests.UnitTests.Engagement;
 
 public class RecommendationControllerTests
 {
-    private readonly Mock<GetMovieRecommendationsUseCase> _getRecommendationsUseCase;
-    private readonly Mock<SubmitGenreSurveyUseCase> _submitSurveyUseCase;
+    private readonly Mock<GetRecommendationsUseCase> _getRecommendationsUseCase;
+    private readonly Mock<SaveSurveyUseCase> _submitSurveyUseCase;
     private readonly Mock<GetTrendingMoviesUseCase> _getTrendingUseCase;
     private readonly RecommendationController _controller;
 
     public RecommendationControllerTests()
     {
-        _getRecommendationsUseCase = new Mock<GetMovieRecommendationsUseCase>();
-        _submitSurveyUseCase = new Mock<SubmitGenreSurveyUseCase>();
+        _getRecommendationsUseCase = new Mock<GetRecommendationsUseCase>();
+        _submitSurveyUseCase = new Mock<SaveSurveyUseCase>();
         _getTrendingUseCase = new Mock<GetTrendingMoviesUseCase>();
         _controller = new RecommendationController(
             _getRecommendationsUseCase.Object,

@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Cinema.Api.Controllers.Customer.Booking;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Public;
-using Cinema.Application.UseCases.Public;
+using Cinema.Application.UseCases.Booking.Showtimes;
 using Microsoft.AspNetCore.Http;
 
 namespace Cinema.Tests.UnitTests.Public;
@@ -19,11 +19,11 @@ public class PublicMovieControllerTests
     private readonly Mock<GetActiveCinemasUseCase> _activeCinemasUseCase;
     private readonly Mock<GetNearestCinemasUseCase> _nearestCinemasUseCase;
     private readonly Mock<GetActiveMoviesUseCase> _activeMoviesUseCase;
-    private readonly Mock<SearchSchedulesUseCase> _searchSchedulesUseCase;
+    private readonly Mock<GetAdvancedSearchSchedulesUseCase> _searchSchedulesUseCase;
     private readonly Mock<GetMovieDetailUseCase> _movieDetailUseCase;
     private readonly Mock<GetSimilarMoviesUseCase> _similarMoviesUseCase;
-    private readonly Mock<GetShowtimesUseCase> _showtimesUseCase;
-    private readonly Mock<GetSeatLayoutUseCase> _seatLayoutUseCase;
+    private readonly Mock<GetCinemaShowtimesUseCase> _showtimesUseCase;
+    private readonly Mock<GetSeatMapUseCase> _seatLayoutUseCase;
     private readonly Mock<GetPricingUseCase> _pricingUseCase;
     private readonly Mock<ILogger<PublicMovieController>> _logger;
     private readonly PublicMovieController _controller;
@@ -37,11 +37,11 @@ public class PublicMovieControllerTests
         _activeCinemasUseCase = new Mock<GetActiveCinemasUseCase>();
         _nearestCinemasUseCase = new Mock<GetNearestCinemasUseCase>();
         _activeMoviesUseCase = new Mock<GetActiveMoviesUseCase>();
-        _searchSchedulesUseCase = new Mock<SearchSchedulesUseCase>();
+        _searchSchedulesUseCase = new Mock<GetAdvancedSearchSchedulesUseCase>();
         _movieDetailUseCase = new Mock<GetMovieDetailUseCase>();
         _similarMoviesUseCase = new Mock<GetSimilarMoviesUseCase>();
-        _showtimesUseCase = new Mock<GetShowtimesUseCase>();
-        _seatLayoutUseCase = new Mock<GetSeatLayoutUseCase>();
+        _showtimesUseCase = new Mock<GetCinemaShowtimesUseCase>();
+        _seatLayoutUseCase = new Mock<GetSeatMapUseCase>();
         _pricingUseCase = new Mock<GetPricingUseCase>();
         _logger = new Mock<ILogger<PublicMovieController>>();
 

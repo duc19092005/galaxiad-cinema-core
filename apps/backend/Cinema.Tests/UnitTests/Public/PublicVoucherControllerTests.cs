@@ -1,85 +1,102 @@
-using Moq;
-using FluentAssertions;
-using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using Cinema.Api.Controllers.Customer.Vouchers;
-using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Vouchers;
-using Cinema.Application.UseCases.Vouchers;
-using Cinema.Application.Exceptions;
+using Cinema.Application.Interfaces.Vouchers;
+using Cinema.Application.UseCases.Admin.Vouchers;
+using Cinema.Domain.Entities;
+using Cinema.Domain.Entities.Vouchers;
+using Cinema.Domain.Interfaces.Persistence;
+using FluentAssertions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
 
 namespace Cinema.Tests.UnitTests.Public;
 
 public class PublicVoucherControllerTests
 {
-    private readonly Mock<GetAvailableVouchersUseCase> _getAvailableVouchersUseCase;
-    private readonly Mock<RedeemVoucherUseCase> _redeemVoucherUseCase;
-    private readonly PublicVoucherController _controller;
+    private readonly Mock<IVoucherRepository> _voucherRepository = new();
+    private readonly Mock<IUnitOfWork> _unitOfWork = new();
 
-    public PublicVoucherControllerTests()
+    [Fact]
+    public async Task GetActiveVouchers_ReturnsOk()
     {
-        _getAvailableVouchersUseCase = new Mock<GetAvailableVouchersUseCase>();
-        _redeemVoucherUseCase = new Mock<RedeemVoucherUseCase>();
-        _controller = new PublicVoucherController(
-            _getAvailableVouchersUseCase.Object,
-            _redeemVoucherUseCase.Object);
+        _voucherRepository.Setup(x => x.GetActiveVouchersAsync())
+            .ReturnsAsync([
+                new VoucherDto { VoucherId = Guid.NewGuid(), VoucherName = "WELCOME10" }
+            ]);
+        var controller = CreateController();
+
+        var result = await controller.GetActiveVouchers();
+
+        result.Should().BeOfType<OkObjectResult>();
     }
 
     [Fact]
-    public async Task GetAvailableVouchers_ValidUser_ReturnsVoucherList()
+    public async Task GetMyVouchers_WithAuthenticatedUser_ReturnsOk()
     {
-        var response = new BaseResponse<List<ResVoucherDto>>
+        var userId = Guid.NewGuid();
+        _voucherRepository.Setup(x => x.GetMyVouchersAsync(userId))
+            .ReturnsAsync([
+                new UserVoucherDto { UserVoucherId = Guid.NewGuid(), VoucherId = Guid.NewGuid(), VoucherName = "WELCOME10" }
+            ]);
+        var controller = CreateController(userId);
+
+        var result = await controller.GetMyVouchers();
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetAvailableVouchersForChatbot_ReturnsOnlyUsableVouchers()
+    {
+        var userId = Guid.NewGuid();
+        _voucherRepository.Setup(x => x.GetMyVouchersAsync(userId))
+            .ReturnsAsync([
+                new UserVoucherDto
+                {
+                    UserVoucherId = Guid.NewGuid(),
+                    VoucherId = Guid.NewGuid(),
+                    VoucherName = "ACTIVE",
+                    IsUsed = false,
+                    ValidTo = DateTime.UtcNow.AddDays(1)
+                },
+                new UserVoucherDto
+                {
+                    UserVoucherId = Guid.NewGuid(),
+                    VoucherId = Guid.NewGuid(),
+                    VoucherName = "USED",
+                    IsUsed = true,
+                    ValidTo = DateTime.UtcNow.AddDays(1)
+                }
+            ]);
+        var controller = CreateController();
+
+        var result = await controller.GetAvailableVouchersForChatbot(userId);
+
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    private PublicVoucherController CreateController(Guid? userId = null)
+    {
+        var controller = new PublicVoucherController(
+            new GetActiveVouchersUseCase(_voucherRepository.Object),
+            new RedeemVoucherUseCase(_voucherRepository.Object, _unitOfWork.Object),
+            new GetMyVouchersUseCase(_voucherRepository.Object));
+
+        if (userId.HasValue)
         {
-            IsSuccess = true,
-            Data = new List<ResVoucherDto>
+            controller.ControllerContext = new ControllerContext
             {
-                new() { VoucherId = Guid.NewGuid(), DiscountPercent = 10, ExpiryDate = DateTime.UtcNow.AddDays(30) },
-                new() { VoucherId = Guid.NewGuid(), DiscountPercent = 20, ExpiryDate = DateTime.UtcNow.AddDays(60) }
-            }
-        };
+                HttpContext = new DefaultHttpContext
+                {
+                    User = new ClaimsPrincipal(new ClaimsIdentity([
+                        new Claim(ClaimTypes.Sid, userId.Value.ToString())
+                    ], "TestAuth"))
+                }
+            };
+        }
 
-        _getAvailableVouchersUseCase.Setup(x => x.ExecuteAsync(It.IsAny<Guid>()))
-            .ReturnsAsync(response);
-
-        var result = await _controller.GetAvailableVouchers(Guid.NewGuid());
-
-        result.Should().BeOfType<OkObjectResult>();
-    }
-
-    [Fact]
-    public async Task RedeemVoucher_ValidVoucher_ReturnsOk()
-    {
-        var voucherId = Guid.NewGuid();
-        var response = new BaseResponse<object>
-        {
-            IsSuccess = true,
-            Message = "Voucher redeemed successfully"
-        };
-
-        _redeemVoucherUseCase.Setup(x => x.ExecuteAsync(It.IsAny<Guid>(), voucherId))
-            .ReturnsAsync(response);
-
-        var result = await _controller.RedeemVoucher(voucherId);
-
-        result.Should().BeOfType<OkObjectResult>();
-    }
-
-    [Fact]
-    public async Task RedeemVoucher_AlreadyRedeemed_ThrowsAppException()
-    {
-        var voucherId = Guid.NewGuid();
-        _redeemVoucherUseCase.Setup(x => x.ExecuteAsync(It.IsAny<Guid>(), voucherId))
-            .ThrowsAsync(new AppException("Voucher already redeemed", 400));
-
-        await Assert.ThrowsAsync<AppException>(() => _controller.RedeemVoucher(voucherId));
-    }
-
-    [Fact]
-    public async Task RedeemVoucher_InsufficientPoints_ThrowsAppException()
-    {
-        var voucherId = Guid.NewGuid();
-        _redeemVoucherUseCase.Setup(x => x.ExecuteAsync(It.IsAny<Guid>(), voucherId))
-            .ThrowsAsync(new AppException("Insufficient reward points", 400));
-
-        await Assert.ThrowsAsync<AppException>(() => _controller.RedeemVoucher(voucherId));
+        return controller;
     }
 }

@@ -6,9 +6,9 @@ class TestPydanticModels:
     """Tests for Pydantic request/response models."""
 
     def test_embed_movies_request_valid(self):
-        from app.models import EmbedMoviesRequest
+        from app.models import EmbedMoviesRequest, MovieItem
         request = EmbedMoviesRequest(movies=[
-            {"movieId": "m1", "title": "Movie 1", "description": "Desc"}
+            MovieItem(movie_id="m1", embedding_text="Action movie about heroes")
         ])
         assert len(request.movies) == 1
 
@@ -19,14 +19,16 @@ class TestPydanticModels:
 
     def test_recommend_request_valid(self):
         from app.models import RecommendRequest
-        request = RecommendRequest(query="action movies", limit=5)
-        assert request.query == "action movies"
-        assert request.limit == 5
+        # RecommendRequest uses user_text (not query) and top_k (not limit)
+        request = RecommendRequest(user_text="action movies", top_k=5)
+        assert request.user_text == "action movies"
+        assert request.top_k == 5
 
     def test_recommend_request_default_limit(self):
         from app.models import RecommendRequest
-        request = RecommendRequest(query="comedy")
-        assert request.limit > 0
+        request = RecommendRequest(user_text="comedy")
+        # Default top_k should be positive
+        assert request.top_k > 0
 
     def test_classify_intent_request_valid(self):
         from app.models import ClassifyIntentRequest
@@ -35,24 +37,33 @@ class TestPydanticModels:
 
     def test_chat_request_valid(self):
         from app.models import ChatLlmRequest
+        # ChatLlmRequest uses user_prompt (not message), and optional session_id
         request = ChatLlmRequest(
-            message="I want to book a movie",
+            user_prompt="I want to book a movie",
             session_id="session-123"
         )
-        assert request.message == "I want to book a movie"
+        assert request.user_prompt == "I want to book a movie"
         assert request.session_id == "session-123"
 
     def test_health_response(self):
         from app.models import HealthResponse
-        response = HealthResponse(status="ok", version="1.0.0")
+        # HealthResponse has status, embedded_movies_count, model, vector_store
+        response = HealthResponse(
+            status="ok",
+            embedded_movies_count=42,
+            model="sentence-transformers/all-MiniLM-L6-v2"
+        )
         assert response.status == "ok"
+        assert response.embedded_movies_count == 42
 
     def test_moderation_request_valid(self):
         from app.models import ModerationRequest
-        request = ModerationRequest(text="This is a nice comment")
-        assert request.text == "This is a nice comment"
+        # ModerationRequest uses `content` (not `text`)
+        request = ModerationRequest(content="This is a nice comment")
+        assert request.content == "This is a nice comment"
 
     def test_guard_request_valid(self):
         from app.models import GuardRequest
-        request = GuardRequest(input_text="Hello, what movies are showing?")
-        assert "movies" in request.input_text
+        # GuardRequest uses `message` (not `input_text`)
+        request = GuardRequest(message="Hello, what movies are showing?")
+        assert "movies" in request.message

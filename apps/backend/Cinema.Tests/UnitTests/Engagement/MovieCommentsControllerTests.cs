@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Cinema.Api.Controllers.Customer.Engagement;
 using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.Comments;
-using Cinema.Application.UseCases.Comments;
+using Cinema.Application.UseCases.Customer.Engagement.Comments;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Tests.UnitTests.Engagement;
@@ -12,15 +12,15 @@ namespace Cinema.Tests.UnitTests.Engagement;
 public class MovieCommentsControllerTests
 {
     private readonly Mock<GetMovieCommentsUseCase> _getCommentsUseCase;
-    private readonly Mock<PostCommentUseCase> _postCommentUseCase;
-    private readonly Mock<DeleteCommentUseCase> _deleteCommentUseCase;
+    private readonly Mock<CreateMovieCommentUseCase> _postCommentUseCase;
+    private readonly Mock<DeleteOwnCommentUseCase> _deleteCommentUseCase;
     private readonly MovieCommentsController _controller;
 
     public MovieCommentsControllerTests()
     {
         _getCommentsUseCase = new Mock<GetMovieCommentsUseCase>();
-        _postCommentUseCase = new Mock<PostCommentUseCase>();
-        _deleteCommentUseCase = new Mock<DeleteCommentUseCase>();
+        _postCommentUseCase = new Mock<CreateMovieCommentUseCase>();
+        _deleteCommentUseCase = new Mock<DeleteOwnCommentUseCase>();
         _controller = new MovieCommentsController(
             _getCommentsUseCase.Object,
             _postCommentUseCase.Object,

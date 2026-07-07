@@ -107,6 +107,28 @@ public class ChatbotOrchestrator
             // 1. Phân loại ý định (Intent Classification)
             var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
 
+            if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
+            {
+                var isAuthorized = await _policyService.IsAuthorizedAsync(intentResult.Intent);
+                if (!isAuthorized)
+                {
+                    stopwatch.Stop();
+                    return new BaseResponse<ChatbotResponseDto>
+                    {
+                        IsSuccess = true,
+                        Data = new ChatbotResponseDto
+                        {
+                            Response = GetAuthorizationRefusal(intentResult.Intent, userId),
+                            Intent = intentResult.Intent,
+                            IsAuthorized = false,
+                            ProcessingPath = "policyDenied",
+                            ElapsedMs = stopwatch.ElapsedMilliseconds,
+                            IsAuthenticated = userId != "N/A"
+                        }
+                    };
+                }
+            }
+
             // 2. Resolve deterministic C# context before handing the message to the Python LangChain agent.
             string supportingContext = string.Empty;
             if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
@@ -251,6 +273,32 @@ public class ChatbotOrchestrator
 
             await onStatus("Phân loại ý định...");
             var intentResult = await _intentClassifier.ClassifyIntentAsync(requestDto.Message);
+            var (userRoles, userId) = GetCurrentUserContext();
+            var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
+
+            if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
+            {
+                var isAuthorized = await _policyService.IsAuthorizedAsync(intentResult.Intent);
+                if (!isAuthorized)
+                {
+                    var refusal = GetAuthorizationRefusal(intentResult.Intent, userId);
+                    await onToken(refusal);
+                    stopwatch.Stop();
+                    return new BaseResponse<ChatbotResponseDto>
+                    {
+                        IsSuccess = true,
+                        Data = new ChatbotResponseDto
+                        {
+                            Response = refusal,
+                            Intent = intentResult.Intent,
+                            IsAuthorized = false,
+                            ProcessingPath = "policyDenied",
+                            ElapsedMs = stopwatch.ElapsedMilliseconds,
+                            IsAuthenticated = userId != "N/A"
+                        }
+                    };
+                }
+            }
 
             string supportingContext = string.Empty;
             if (intentResult != null && !string.IsNullOrEmpty(intentResult.Intent))
@@ -269,9 +317,6 @@ public class ChatbotOrchestrator
                     }
                 }
             }
-
-            var (userRoles, userId) = GetCurrentUserContext();
-            var sessionId = requestDto.SessionId ?? (userId != "N/A" ? userId : Guid.NewGuid().ToString());
 
             await onStatus("AI đang xử lý yêu cầu...");
 
@@ -359,6 +404,18 @@ public class ChatbotOrchestrator
         }
 
         return (userRoles, userId);
+    }
+
+    private static string GetAuthorizationRefusal(string intent, string userId)
+    {
+        if (userId == "N/A" &&
+            (intent == ChatbotConstants.Intents.GetMyBookings ||
+             intent == ChatbotConstants.Intents.GetBookingStatus))
+        {
+            return ChatbotResponseMessages.Refusals.RequireLogin;
+        }
+
+        return ChatbotResponseMessages.Refusals.Unauthorized;
     }
 
     private static bool IsStructuredUserSelection(string message)

@@ -9,7 +9,9 @@ describe('BookingFailedPage', () => {
 
     render(<BookingFailedPage />)
 
-    expect(screen.getByText(/failed|that bai|error/i)).toBeInTheDocument()
+    // "Payment Failed" comes from t('booking.payment_failed')
+    const failElements = screen.getAllByText(/payment failed|that bai|error/i)
+    expect(failElements.length).toBeGreaterThan(0)
   })
 
   it('shows processing error message when error param is processing_error', () => {
@@ -17,7 +19,9 @@ describe('BookingFailedPage', () => {
 
     render(<BookingFailedPage />)
 
-    expect(screen.getByText(/processing|xu ly|error/i)).toBeInTheDocument()
+    // "Processing Error" comes from t('booking.processing_error_title')
+    const processingElements = screen.getAllByText(/processing|xu ly|error/i)
+    expect(processingElements.length).toBeGreaterThan(0)
   })
 
   it('renders retry button', () => {
@@ -25,7 +29,8 @@ describe('BookingFailedPage', () => {
 
     render(<BookingFailedPage />)
 
-    expect(screen.getByText(/retry|thu lai|try again/i)).toBeInTheDocument()
+    // "Try Again" comes from t('booking.try_again')
+    expect(screen.getByText(/try again|retry|thu lai/i)).toBeInTheDocument()
   })
 
   it('renders back to home button', () => {
@@ -33,6 +38,7 @@ describe('BookingFailedPage', () => {
 
     render(<BookingFailedPage />)
 
-    expect(screen.getByText(/home|trang chu|movies/i)).toBeInTheDocument()
+    // "Return to Home" comes from t('booking.return_home')
+    expect(screen.getByText(/return to home|home|trang chu|movies/i)).toBeInTheDocument()
   })
 })
