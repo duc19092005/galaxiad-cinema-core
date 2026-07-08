@@ -585,13 +585,13 @@ interface BookingStep {
   icon: React.ReactNode;
 }
 
-const BOOKING_STEPS: BookingStep[] = [
-  { key: 'movie', label: 'Phim', icon: <Film size={11} /> },
-  { key: 'date', label: 'Ngày', icon: <Clock size={11} /> },
-  { key: 'cinema', label: 'Rạp', icon: <MapPin size={11} /> },
-  { key: 'showtime', label: 'Suất', icon: <Ticket size={11} /> },
-  { key: 'seat', label: 'Ghế', icon: <Armchair size={11} /> },
-  { key: 'payment', label: 'Thanh toán', icon: <CreditCard size={11} /> },
+const BOOKING_STEPS = (t: (key: string) => string): BookingStep[] => [
+  { key: 'movie', label: t('chatbot.bookingStepMovie'), icon: <Film size={11} /> },
+  { key: 'date', label: t('chatbot.bookingStepDate'), icon: <Clock size={11} /> },
+  { key: 'cinema', label: t('chatbot.bookingStepCinema'), icon: <MapPin size={11} /> },
+  { key: 'showtime', label: t('chatbot.bookingStepShowtime'), icon: <Ticket size={11} /> },
+  { key: 'seat', label: t('chatbot.bookingStepSeat'), icon: <Armchair size={11} /> },
+  { key: 'payment', label: t('chatbot.bookingStepPayment'), icon: <CreditCard size={11} /> },
 ];
 
 const getBookingStepIndex = (draft: BookingDraft): number => {
@@ -606,14 +606,16 @@ const getBookingStepIndex = (draft: BookingDraft): number => {
 };
 
 const BookingProgressStepper: React.FC<{ activeStep: number }> = ({ activeStep }) => {
+  const { t } = useTranslation();
   if (activeStep < 0) return null;
+  const steps = BOOKING_STEPS(t);
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 2, padding: '10px 14px',
       background: 'rgba(255,255,255,0.03)', borderBottom: `1px solid ${theme.border}`,
       overflowX: 'auto', flexShrink: 0,
     }}>
-      {BOOKING_STEPS.map((step, idx) => {
+      {steps.map((step, idx) => {
         const isActive = idx === activeStep;
         const isDone = idx < activeStep;
         return (
@@ -1045,6 +1047,7 @@ const SeatMapBoard: React.FC<{
   interactive?: boolean;
   onToggleSeat?: (seat: NormalizedSeat) => void;
 }> = ({ seatMap, highlightedSeats, selectedSeats = [], interactive, onToggleSeat }) => {
+  const { t } = useTranslation();
   const seats = normalizeSeatMap(seatMap);
   const { maxCol, maxRow } = getSeatGridMetrics(seats);
   const highlightedIds = new Set(highlightedSeats.map(seat => seat.seatId));
@@ -1147,10 +1150,10 @@ const SeatMapBoard: React.FC<{
         </div>
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8, color: theme.muted, fontSize: 10, fontWeight: 800 }}>
-        <span><span style={{ color: theme.text }}>■</span> Trống</span>
-        <span><span style={{ color: theme.accent }}>■</span> Trung tâm</span>
-        <span><span style={{ color: theme.success }}>■</span> Gợi ý</span>
-        <span><span style={{ color: 'rgba(255,255,255,0.35)' }}>■</span> Đã đặt</span>
+        <span><span style={{ color: theme.text }}>■</span> {t('chatbot.seatLegendAvailable')}</span>
+        <span><span style={{ color: theme.accent }}>■</span> {t('chatbot.seatLegendCenter')}</span>
+        <span><span style={{ color: theme.success }}>■</span> {t('chatbot.seatLegendSuggested')}</span>
+        <span><span style={{ color: 'rgba(255,255,255,0.35)' }}>■</span> {t('chatbot.seatLegendOccupied')}</span>
       </div>
     </div>
   );
