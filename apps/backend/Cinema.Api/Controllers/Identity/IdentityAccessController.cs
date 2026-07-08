@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Configuration;
 using Cinema.Application.Exceptions;
 
 namespace Cinema.Api.Controllers.Identity;
@@ -25,6 +26,7 @@ public class IdentityAccessController : ControllerBase
     private readonly GetProfileUseCase _getProfileUseCase;
     private readonly ChangePasswordUseCase _changePasswordUseCase;
     private readonly UpdateUserProfileUseCase _updateUserProfileUseCase;
+    private readonly IConfiguration _configuration;
 
     public IdentityAccessController(
         IdentityAccessRegularRegisterUseCase registerUseCase,
@@ -33,7 +35,8 @@ public class IdentityAccessController : ControllerBase
         GoogleLoginCallbackUseCase googleLoginCallbackUseCase,
         GetProfileUseCase getProfileUseCase,
         ChangePasswordUseCase changePasswordUseCase,
-        UpdateUserProfileUseCase updateUserProfileUseCase)
+        UpdateUserProfileUseCase updateUserProfileUseCase,
+        IConfiguration configuration)
     {
         _registerUseCase = registerUseCase;
         _loginUseCase = loginUseCase;
@@ -42,6 +45,7 @@ public class IdentityAccessController : ControllerBase
         _getProfileUseCase = getProfileUseCase;
         _changePasswordUseCase = changePasswordUseCase;
         _updateUserProfileUseCase = updateUserProfileUseCase;
+        _configuration = configuration;
     }
 
     [HttpPost("regular-register")]
@@ -96,12 +100,26 @@ public class IdentityAccessController : ControllerBase
         };
         Response.Cookies.Append("X-Access-Token", results.Data?.AccessToken ?? "", cookieOptions);
 
+        var frontendBaseUrl = _configuration["FrontendBaseUrl"] 
+                              ?? "https://galaxiadcine.online";
+        
+        var queryParams = System.Web.HttpUtility.ParseQueryString(string.Empty);
+        queryParams["success"] = results.IsSuccess.ToString().ToLower();
         if (results.Data != null)
         {
-            results.Data.AccessToken = null;
+            queryParams["userId"] = results.Data.UserId.ToString();
+            queryParams["username"] = results.Data.Username;
+            queryParams["email"] = results.Data.Email;
+            queryParams["roles"] = string.Join(",", results.Data.Roles ?? []);
+            queryParams["isNewAccount"] = results.Data.IsNewAccount.ToString().ToLower();
+        }
+        if (!results.IsSuccess)
+        {
+            queryParams["error"] = results.Message;
         }
 
-        return Ok(results);
+        var redirectUrl = $"{frontendBaseUrl}/auth/google-callback?{queryParams}";
+        return Redirect(redirectUrl);
     }
 
     [HttpGet("google-callback-mobile")]
@@ -119,6 +137,7 @@ public class IdentityAccessController : ControllerBase
         };
         Response.Cookies.Append("X-Access-Token", results.Data?.AccessToken ?? "", cookieOptions);
 
+        // Mobile: return JSON (mobile app handles its own navigation)
         if (results.Data != null)
         {
             results.Data.AccessToken = null;
