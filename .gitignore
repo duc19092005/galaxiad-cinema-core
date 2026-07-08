@@ -36,3 +36,13 @@ services/ai/app/pb/ai_service_pb2_grpc.py
 .DS_Store
 Thumbs.db
 .mimocode/
+
+# Temp/scratch folders
+apps/frontend/scratch/
+apps/frontend/test-results/
+apps/frontend/playwright-report/
+
+# Temp/scratch folders
+apps/frontend/scratch/
+apps/frontend/test-results/
+apps/frontend/playwright-report/
