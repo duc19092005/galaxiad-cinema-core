@@ -35,8 +35,8 @@ services:
       - VNPay__ReturnUrl=${VNPAY_RETURN_URL}
       - Google__ClientId=${GOOGLE_CLIENT_ID}
       - Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
-      - Google__WebCallbackUrl=${GOOGLE_WEB_CALLBACK_URL:-https://galaxiadcine.online/auth/google-callback}
-      - Google__MobileCallbackUrl=${GOOGLE_MOBILE_CALLBACK_URL:-https://galaxiadcine.online/auth/google-callback-mobile}
+      - Google__WebCallbackUrl=${GOOGLE_WEB_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-web}
+      - Google__MobileCallbackUrl=${GOOGLE_MOBILE_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-mobile}
       - SeedAccounts__ProductionManagerPasswordHash=${PRODUCTION_MANAGER_PASSWORD_HASH}
     networks:
       - cinema-network
