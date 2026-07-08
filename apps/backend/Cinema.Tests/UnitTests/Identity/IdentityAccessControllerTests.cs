@@ -8,6 +8,7 @@ using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Cinema.Application.UseCases.IdentityAccess;
 using Cinema.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 namespace Cinema.Tests.UnitTests.Identity;
 
@@ -20,6 +21,7 @@ public class IdentityAccessControllerTests
     private readonly Mock<GetProfileUseCase> _getProfileUseCase;
     private readonly Mock<ChangePasswordUseCase> _changePasswordUseCase;
     private readonly Mock<UpdateUserProfileUseCase> _updateUserProfileUseCase;
+    private readonly Mock<IConfiguration> _configuration;
     private readonly IdentityAccessController _controller;
 
     public IdentityAccessControllerTests()
@@ -31,6 +33,8 @@ public class IdentityAccessControllerTests
         _getProfileUseCase = new Mock<GetProfileUseCase>();
         _changePasswordUseCase = new Mock<ChangePasswordUseCase>();
         _updateUserProfileUseCase = new Mock<UpdateUserProfileUseCase>();
+        _configuration = new Mock<IConfiguration>();
+        _configuration.Setup(c => c["FrontendBaseUrl"]).Returns("http://localhost:5173");
         _controller = new IdentityAccessController(
             _registerUseCase.Object,
             _loginUseCase.Object,
@@ -38,7 +42,8 @@ public class IdentityAccessControllerTests
             _googleLoginCallbackUseCase.Object,
             _getProfileUseCase.Object,
             _changePasswordUseCase.Object,
-            _updateUserProfileUseCase.Object);
+            _updateUserProfileUseCase.Object,
+            _configuration.Object);
     }
 
     [Fact]

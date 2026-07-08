@@ -242,9 +242,9 @@ public class GoogleLoginCallbackUseCase
         return platform.ToLower() switch
         {
             "web" => _configuration["Google:WebCallbackUrl"]
-                     ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback",
+                     ?? "https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-web",
             "mobile" => _configuration["Google:MobileCallbackUrl"]
-                         ?? "https://renewcinemaprojectfrontend.vercel.app/auth/google-callback-mobile",
+                         ?? "https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-mobile",
             _ => throw new AppException(Messages.Platform.InvalidPlatform, 400, "G05")
         };
     }
