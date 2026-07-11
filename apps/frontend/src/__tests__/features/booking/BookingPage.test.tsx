@@ -117,7 +117,7 @@ describe('BookingPage', () => {
     })
   })
 
-  it('shows total price / pricing info when seats are selected', async () => {
+  it('shows ticket type picker and segment pricing from the start', async () => {
     vi.mocked(publicApi.getSeatMap).mockResolvedValue({
       isSuccess: true,
       data: mockSeatMap,
@@ -128,21 +128,13 @@ describe('BookingPage', () => {
       data: mockPricing,
     })
 
-    const { fireEvent } = await import('@/test/test-utils')
-
     render(<BookingPage />)
 
-    // Wait for the seat to render
     await waitFor(() => {
       expect(screen.getByText('A1')).toBeInTheDocument()
-    })
-
-    // Click on A1 to select it
-    fireEvent.click(screen.getByText('A1'))
-
-    await waitFor(() => {
-      // Adult pricing segment option should appear in select dropdown for selected seat
+      // Segment picker shows all ticket types (Adult) with unit price before seat selection
       expect(screen.getByText(/adult/i)).toBeInTheDocument()
+      expect(screen.getByText(/select ticket types|chọn loại vé/i)).toBeInTheDocument()
     })
   })
 

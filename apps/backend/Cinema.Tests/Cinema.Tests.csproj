@@ -42,6 +42,8 @@
     <Compile Remove="UnitTests\Admin\**\*.cs" />
     <Compile Remove="UnitTests\BackgroundJobs\**\*.cs" />
     <Compile Remove="UnitTests\Booking\**\*.cs" />
+    <!-- Policy is pure domain logic — keep its unit tests active -->
+    <Compile Include="UnitTests\Booking\BookingSeatSelectionPolicyTests.cs" />
     <Compile Remove="UnitTests\Engagement\**\*.cs" />
     <Compile Remove="UnitTests\Identity\**\*.cs" />
     <Compile Remove="UnitTests\Management\**\*.cs" />

@@ -14,6 +14,21 @@ import Cookies from 'js-cookie';
 import type { SearchScheduleResult, PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
 import type { CashierShiftSession } from '../../types/shift.types';
 import { showError, showSuccess } from '../../utils/ToastUtils';
+import {
+  canAddSeat,
+  createsIsolatedEmptySeat,
+  normalizeSeatId,
+  occupiedIdsFromSeatMap,
+} from '../../utils/seatSelectionPolicy';
+import SegmentQuantityPicker from '../../components/SegmentQuantityPicker';
+import {
+  assignSegmentsToSeats,
+  buildSegmentLineSummaries,
+  emptySegmentCounts,
+  totalFromSegmentCounts,
+  totalTicketQuantity,
+  type SegmentCounts,
+} from '../../utils/segmentQuantity';
 
 const CashierSalesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -39,7 +54,7 @@ const CashierSalesPage: React.FC = () => {
   const [pricing, setPricing] = useState<PublicPricing | null>(null);
   const [loadingSeats, setLoadingSeats] = useState(false);
   const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
-  const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
+  const [segmentCounts, setSegmentCounts] = useState<SegmentCounts>({});
 
   // Checkout State
   const [customerEmail, setCustomerEmail] = useState('');
@@ -109,7 +124,7 @@ const CashierSalesPage: React.FC = () => {
   const fetchSeatData = useCallback(async (scheduleId: string) => {
     setLoadingSeats(true);
     setSelectedSeats([]);
-    setSeatSegmentMap({});
+    setSegmentCounts({});
     try {
       const [seatRes, pricingRes] = await Promise.all([
         publicApi.getSeatMap(scheduleId),
@@ -117,15 +132,8 @@ const CashierSalesPage: React.FC = () => {
       ]);
       setSeatMap(seatRes.data);
       setPricing(pricingRes.data);
-
-      // Pre-select first customer segment for each seat
       if (pricingRes.data?.segmentPrices?.length > 0) {
-        const defaultSegmentId = pricingRes.data.segmentPrices[0].userSegmentId;
-        const initialSegments: Record<string, string> = {};
-        seatRes.data?.seatMap?.forEach(seat => {
-          initialSegments[seat.seatId] = defaultSegmentId;
-        });
-        setSeatSegmentMap(initialSegments);
+        setSegmentCounts(emptySegmentCounts(pricingRes.data.segmentPrices));
       }
     } catch (err) {
       showError(t('cashierSales.errorLoadingSeatMap'));
@@ -170,6 +178,41 @@ const CashierSalesPage: React.FC = () => {
     }
   };
 
+  const allowedSegments = useMemo(() => pricing?.segmentPrices || [], [pricing?.segmentPrices]);
+  const ticketQuantity = totalTicketQuantity(segmentCounts);
+  const segmentLines = useMemo(
+    () => buildSegmentLineSummaries(allowedSegments, segmentCounts),
+    [allowedSegments, segmentCounts]
+  );
+
+  const layoutSeats = useMemo(
+    () => (seatMap?.seatMap || []).map(s => ({
+      seatId: s.seatId,
+      rowIndex: s.rowIndex,
+      colIndex: s.colIndex,
+    })),
+    [seatMap]
+  );
+
+  const occupiedSeatIds = useMemo(() => {
+    const booked = occupiedIdsFromSeatMap(seatMap?.seatMap || []);
+    const lockedByOthers = Object.keys(lockedSeats).filter(
+      id => !selectedSeats.some(s => normalizeSeatId(s.seatId) === normalizeSeatId(id))
+    );
+    const unavailable = Object.keys(unavailableSeats);
+    return [...booked, ...lockedByOthers, ...unavailable];
+  }, [seatMap, lockedSeats, unavailableSeats, selectedSeats]);
+
+  const trimSeatsToQuantity = async (nextCounts: SegmentCounts) => {
+    const maxSeats = totalTicketQuantity(nextCounts);
+    setSegmentCounts(nextCounts);
+    if (selectedSeats.length <= maxSeats) return;
+    const keep = selectedSeats.slice(0, maxSeats);
+    const remove = selectedSeats.slice(maxSeats);
+    setSelectedSeats(keep);
+    await Promise.all(remove.map((s) => unlockSeat(s.seatId)));
+  };
+
   // Toggle seat selection
   const toggleSeat = async (seat: PublicSeat) => {
     if (seat.isBooked || unavailableSeats[seat.seatId.toLowerCase()]) return;
@@ -182,34 +225,73 @@ const CashierSalesPage: React.FC = () => {
     if (isCurrentlySelected) {
       setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
       await unlockSeat(seat.seatId);
-    } else {
-      if (selectedSeats.length >= 10) {
+      return;
+    }
+
+    if (ticketQuantity <= 0) {
+      showError(t('toast.selectTicketTypesFirst', 'Vui lòng chọn số lượng loại vé trước khi chọn ghế.'));
+      return;
+    }
+    if (selectedSeats.length >= ticketQuantity) {
+      showError(t('toast.seatQuotaFull', 'Bạn đã chọn đủ {{count}} ghế theo số vé đã chọn.', { count: ticketQuantity }));
+      return;
+    }
+
+    const check = canAddSeat(
+      layoutSeats,
+      seat.seatId,
+      selectedSeats.map(s => s.seatId),
+      occupiedSeatIds
+    );
+    if (!check.ok) {
+      if (check.reason === 'max') {
         showError(t('cashierSales.errorMaxSeats'));
-        return;
+      } else if (check.reason === 'isolated') {
+        showError(t(
+          'toast.isolatedSeat',
+          'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng.'
+        ));
       }
-      setSelectedSeats(prev => [...prev, seat]);
-      const success = await lockSeat(seat.seatId, cashierName);
-      if (!success) {
-        setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-        showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
-      }
+      return;
+    }
+
+    setSelectedSeats(prev => [...prev, seat]);
+    const success = await lockSeat(seat.seatId, cashierName);
+    if (!success) {
+      setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+      showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
     }
   };
 
-  // Dynamic price calculation
-  const totalPrice = useMemo(() => {
-    return selectedSeats.reduce((sum, seat) => {
-      const segmentId = seatSegmentMap[seat.seatId];
-      const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-      return sum + (segment?.finalPrice || 0);
-    }, 0);
-  }, [selectedSeats, seatSegmentMap, pricing]);
+  const totalPrice = useMemo(
+    () => totalFromSegmentCounts(allowedSegments, segmentCounts),
+    [allowedSegments, segmentCounts]
+  );
 
   // Handle Checkout / Booking
   const handleCheckout = async () => {
     if (!selectedScheduleId) return;
+    if (ticketQuantity <= 0) {
+      showError(t('toast.selectTicketTypesFirst', 'Vui lòng chọn số lượng loại vé trước khi chọn ghế.'));
+      return;
+    }
     if (selectedSeats.length === 0) {
       showError(t('cashierSales.errorSelectAtLeastOneSeat'));
+      return;
+    }
+    if (selectedSeats.length !== ticketQuantity) {
+      showError(t(
+        'toast.seatCountMismatch',
+        'Bạn đã chọn {{selected}}/{{required}} ghế. Vui lòng chọn đúng số ghế theo số vé.',
+        { selected: selectedSeats.length, required: ticketQuantity }
+      ));
+      return;
+    }
+    if (createsIsolatedEmptySeat(layoutSeats, selectedSeats.map(s => s.seatId), occupiedSeatIds)) {
+      showError(t(
+        'toast.isolatedSeat',
+        'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng.'
+      ));
       return;
     }
 
@@ -222,6 +304,11 @@ const CashierSalesPage: React.FC = () => {
 
     setBookingLoading(true);
     try {
+      const seatSegmentMap = assignSegmentsToSeats(
+        selectedSeats.map(s => s.seatId),
+        allowedSegments,
+        segmentCounts
+      );
       const payload = {
         scheduleId: selectedScheduleId,
         seatSelections: selectedSeats.map(s => ({
@@ -322,6 +409,7 @@ const CashierSalesPage: React.FC = () => {
   // Reset fields to start a new transaction
   const handleNewTransaction = () => {
     setSelectedSeats([]);
+    setSegmentCounts(emptySegmentCounts(allowedSegments));
     setCustomerEmail('');
     setCustomerName('');
     setCustomerPhone('');
@@ -688,45 +776,61 @@ const CashierSalesPage: React.FC = () => {
               </div>
             )}
 
-            {/* Selected Seats Listing */}
+            {/* Ticket types first */}
+            {seatMap && (
+              <div className="p-3 bg-[#161622] border border-white/5 rounded-xl">
+                <SegmentQuantityPicker
+                  segments={allowedSegments}
+                  counts={segmentCounts}
+                  onChange={(next) => { void trimSeatsToQuantity(next); }}
+                  title={t('booking.selectTicketTypes', 'Chọn loại vé')}
+                  hint={t('booking.selectTicketTypesHint', 'Chọn số lượng từng loại vé trước, sau đó chọn đúng số ghế trên sơ đồ.')}
+                />
+              </div>
+            )}
+
+            {/* Selected seats + segment breakdown */}
             <div>
-              <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block mb-2">{t('cashierSales.selectedSeatsCount', { count: selectedSeats.length })}</label>
-              {selectedSeats.length === 0 ? (
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block m-0">
+                  {t('booking.selectedSeats', 'Ghế đã chọn')}
+                </label>
+                <span className={`text-[11px] font-bold ${selectedSeats.length === ticketQuantity && ticketQuantity > 0 ? 'text-emerald-400' : 'text-[#ff8a00]'}`}>
+                  {selectedSeats.length}/{ticketQuantity || 0}
+                </span>
+              </div>
+              {ticketQuantity === 0 ? (
                 <div className="text-center py-6 border border-dashed border-white/5 rounded-xl text-zinc-500 text-xs italic">
-                  {t('cashierSales.noSeatsSelected')}
+                  {t('booking.pickTicketsFirst', 'Hãy chọn số lượng loại vé trước')}
+                </div>
+              ) : selectedSeats.length === 0 ? (
+                <div className="text-center py-6 border border-dashed border-white/5 rounded-xl text-zinc-500 text-xs italic">
+                  {t('booking.pickSeatsOnMap', 'Chọn ghế trên sơ đồ ({{count}} ghế)', { count: ticketQuantity })}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {selectedSeats.map(seat => {
-                    const segmentId = seatSegmentMap[seat.seatId];
-                    const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-                    return (
-                      <div key={seat.seatId} className="p-3 bg-[#161622] border border-white/5 rounded-xl flex flex-col gap-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-bold text-[#ff8a00] text-sm">{t('cashierSales.seat')} {seat.seatName}</span>
-                          <span className="font-extrabold text-white text-sm">
-                            {(segment?.finalPrice || 0).toLocaleString('vi-VN')} đ
-                          </span>
-                        </div>
-                        
-                        {/* Segment selector (Adult, student etc.) */}
-                        <div className="flex gap-2 items-center">
-                          <span className="text-[10px] text-zinc-400">{t('cashierSales.ticketType')}:</span>
-                          <select
-                            value={seatSegmentMap[seat.seatId] || ''}
-                            onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
-                            className="flex-1 bg-black/40 text-zinc-300 text-xs py-1.5 px-2 rounded border border-white/5 outline-none cursor-pointer"
-                          >
-                            {pricing?.segmentPrices.map(sp => (
-                              <option key={sp.userSegmentId} value={sp.userSegmentId} className="bg-[#0f0f15] text-white">
-                                {sp.segmentName} ({(sp.finalPrice).toLocaleString('vi-VN')}đ)
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {selectedSeats.map((seat) => (
+                    <span key={seat.seatId} className="px-2.5 py-1 rounded-lg bg-[#ff8a00]/15 border border-[#ff8a00]/40 text-[#ff8a00] text-xs font-bold">
+                      {seat.seatName}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {segmentLines.length > 0 && (
+                <div className="space-y-1.5 mt-2 pt-2 border-t border-white/5">
+                  {segmentLines.map((line) => (
+                    <div key={line.userSegmentId} className="flex justify-between text-xs gap-2">
+                      <span className="text-zinc-300 truncate">
+                        {line.segmentName} × {line.quantity}
+                        <span className="text-zinc-500"> · {line.unitPrice.toLocaleString('vi-VN')}đ</span>
+                      </span>
+                      <span className="font-bold text-white shrink-0">{line.lineTotal.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-[11px] text-zinc-400 pt-1">
+                    <span>{t('booking.totalSeats', 'Tổng số ghế')}</span>
+                    <span className="text-white font-semibold">{ticketQuantity}</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -829,9 +933,9 @@ const CashierSalesPage: React.FC = () => {
 
             <button
               onClick={handleCheckout}
-              disabled={selectedSeats.length === 0 || bookingLoading}
+              disabled={ticketQuantity <= 0 || selectedSeats.length !== ticketQuantity || bookingLoading}
               className={`w-full h-12 rounded-xl font-bold flex items-center justify-center gap-2 border-none transition-all active:scale-98 ${
-                selectedSeats.length === 0
+                ticketQuantity <= 0 || selectedSeats.length !== ticketQuantity
                   ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                   : bookingLoading
                   ? 'bg-[#ff8a00]/70 text-black cursor-wait'

@@ -440,8 +440,12 @@ const AccountPage: React.FC = () => {
                                                         <p style={{ fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><Calendar size={14} style={{ color: 'var(--accent)' }} /> {formatDate(item.startTime)}</p>
                                                     </div>
                                                     <div>
-                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.seats')}</p>
-                                                        <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)' }}>{item.seats.join(', ')}</p>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.totalSeats', 'Tổng số ghế')}</p>
+                                                        <p style={{ fontSize: 15, fontWeight: 800, color: 'var(--accent)' }}>{item.seats?.length || 0}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.selectedSeats', 'Ghế đã chọn')}</p>
+                                                        <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', wordBreak: 'break-word' }}>{(item.seats || []).join(', ') || '—'}</p>
                                                     </div>
                                                     <div>
                                                         <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 'var(--space-4)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>{t('booking.amount')}</p>

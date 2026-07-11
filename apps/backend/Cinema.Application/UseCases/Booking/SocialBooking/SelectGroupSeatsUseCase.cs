@@ -3,6 +3,7 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.UseCases.Booking.BookingFlow;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Enums;
 using Microsoft.Extensions.Logging;
@@ -72,6 +73,30 @@ public class SelectGroupSeatsUseCase
                 else if (sel.MemberId != member.MemberId)
                     throw new BadRequestException("Seat already selected by another member in your group", "GBK25");
             }
+        }
+
+        if (seatIds.Count > 0)
+        {
+            var auditoriumId = session.MovieScheduleInfoEntity?.AuditoriumId ?? Guid.Empty;
+            var auditoriumSeats = await _groupBookingRepository.GetAuditoriumSeatsAsync(auditoriumId);
+            var occupiedOutsideGroup = await _groupBookingRepository.GetOccupiedSeatIdsAsync(
+                session.MovieScheduleId,
+                session.GroupSessionId);
+
+            var otherMemberSeatIds = activeSelections
+                .Where(s => s.Value.GroupSessionId == session.GroupSessionId
+                            && s.Value.MemberId != member.MemberId
+                            && Guid.TryParse(s.Key, out _))
+                .Select(s => Guid.Parse(s.Key))
+                .ToList();
+
+            var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(
+                auditoriumSeats,
+                seatIds,
+                occupiedOutsideGroup.Concat(otherMemberSeatIds));
+
+            if (seatSelectionErrors.Count > 0)
+                throw new BadRequestException(seatSelectionErrors, "GBK36");
         }
 
         // Calculate changes in selections for detailed chat notification

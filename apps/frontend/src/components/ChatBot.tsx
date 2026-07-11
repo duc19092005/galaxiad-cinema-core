@@ -182,19 +182,46 @@ const CHAT_DRAFT_STORAGE_KEY = 'cinemapro_agentic_booking_draft_v2';
 const CHAT_SESSION_STORAGE_KEY = 'cinemapro_agentic_chat_session_id_v2';
 const MAX_TICKETS = 10;
 
+/** Soft Liquid Glass — lower glare / less specular */
 const theme = {
-  accent: '#f57c00',
-  accentHover: '#e67300',
-  accentSoft: 'rgba(245,124,0,0.16)',
-  surface: '#131313',
-  surfaceLow: '#1b1b1c',
-  surfaceHigh: '#252525',
-  surfaceHighest: '#343434',
-  border: 'rgba(255,255,255,0.11)',
-  text: '#f5f1ed',
-  muted: '#d6bba9',
-  success: '#22c55e',
-  danger: '#ef4444',
+  accent: '#e8890b',
+  accentHover: '#f0a020',
+  accentSoft: 'rgba(232,137,11,0.12)',
+  surface: 'rgba(22,22,24,0.72)',
+  surfaceLow: 'rgba(18,18,20,0.65)',
+  surfaceHigh: 'rgba(255,255,255,0.06)',
+  surfaceHighest: 'rgba(255,255,255,0.09)',
+  glass: 'rgba(255,255,255,0.05)',
+  glassStrong: 'rgba(255,255,255,0.08)',
+  border: 'rgba(255,255,255,0.12)',
+  borderSoft: 'rgba(255,255,255,0.08)',
+  highlight: 'rgba(255,255,255,0.2)',
+  text: '#ececef',
+  muted: 'rgba(235,235,245,0.48)',
+  success: '#30d158',
+  danger: '#ff453a',
+  blur: 'blur(28px) saturate(120%)',
+  blurSoft: 'blur(16px) saturate(110%)',
+};
+
+const glassPanel: React.CSSProperties = {
+  background: 'linear-gradient(165deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.03) 40%, rgba(16,16,18,0.78) 100%)',
+  backdropFilter: theme.blur,
+  WebkitBackdropFilter: theme.blur,
+  border: `1px solid ${theme.border}`,
+  boxShadow: `
+    0 1px 0 0 rgba(255,255,255,0.1) inset,
+    0 18px 48px rgba(0,0,0,0.4),
+    0 6px 16px rgba(0,0,0,0.22)
+  `,
+};
+
+const glassChip: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.06)',
+  backdropFilter: theme.blurSoft,
+  WebkitBackdropFilter: theme.blurSoft,
+  border: `1px solid ${theme.borderSoft}`,
+  boxShadow: '0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 12px rgba(0,0,0,0.14)',
 };
 
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -445,24 +472,25 @@ const baseButton: React.CSSProperties = {
   border: 'none',
   cursor: 'pointer',
   fontFamily: 'inherit',
-  transition: 'transform 0.15s ease, border-color 0.15s ease, background 0.15s ease',
+  transition: 'transform 0.2s cubic-bezier(0.22,1,0.36,1), border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease',
 };
 
 const primaryButton: React.CSSProperties = {
   ...baseButton,
-  background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
-  color: '#fff',
-  borderRadius: 10,
+  background: `linear-gradient(145deg, rgba(240,160,32,0.88) 0%, ${theme.accent} 55%, #c97408 100%)`,
+  color: '#1c1c1e',
+  borderRadius: 14,
   padding: '10px 12px',
   fontWeight: 800,
+  border: '1px solid rgba(255,255,255,0.18)',
+  boxShadow: '0 1px 0 rgba(255,255,255,0.15) inset, 0 6px 14px rgba(232,137,11,0.18)',
 };
 
 const ghostButton: React.CSSProperties = {
   ...baseButton,
-  background: 'rgba(255,255,255,0.06)',
+  ...glassChip,
   color: theme.text,
-  border: `1px solid ${theme.border}`,
-  borderRadius: 10,
+  borderRadius: 14,
   padding: '10px 12px',
   fontWeight: 700,
 };
@@ -475,12 +503,15 @@ const ChatMessageBubble: React.FC<{
   return (
     <div style={{ display: 'flex', gap: 10, justifyContent: isUser ? 'flex-end' : 'flex-start' }}>
       {!isUser && (
-        <div style={{
-          width: 30,
-          height: 30,
-          borderRadius: 10,
-          background: theme.accentSoft,
+        <div className="liquid-glass-avatar" style={{
+          width: 32,
+          height: 32,
+          borderRadius: 12,
+          background: 'linear-gradient(145deg, rgba(255,255,255,0.22), rgba(255,159,10,0.18))',
           border: `1px solid ${theme.border}`,
+          boxShadow: '0 1px 0 rgba(255,255,255,0.35) inset, 0 6px 14px rgba(0,0,0,0.2)',
+          backdropFilter: theme.blurSoft,
+          WebkitBackdropFilter: theme.blurSoft,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -494,13 +525,21 @@ const ChatMessageBubble: React.FC<{
         maxWidth: isUser ? '78%' : '86%',
         minWidth: 0,
         overflow: 'hidden',
-        color: isUser ? '#fff' : theme.text,
+        color: theme.text,
       }}>
-        <div style={{
-          padding: '11px 13px',
-          borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-          background: isUser ? `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})` : theme.surfaceHigh,
-          border: isUser ? 'none' : `1px solid ${theme.border}`,
+        <div className={isUser ? 'liquid-glass-bubble-user' : 'liquid-glass-bubble-bot'} style={{
+          padding: '12px 14px',
+          borderRadius: isUser ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
+          background: isUser
+            ? `linear-gradient(145deg, rgba(232,137,11,0.82), rgba(200,110,8,0.78))`
+            : 'linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
+          border: isUser ? '1px solid rgba(255,255,255,0.16)' : `1px solid ${theme.borderSoft}`,
+          boxShadow: isUser
+            ? '0 1px 0 rgba(255,255,255,0.12) inset, 0 6px 14px rgba(0,0,0,0.16)'
+            : '0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 12px rgba(0,0,0,0.12)',
+          backdropFilter: isUser ? undefined : theme.blurSoft,
+          WebkitBackdropFilter: isUser ? undefined : theme.blurSoft,
+          color: isUser ? '#1c1c1e' : theme.text,
           fontSize: 12,
           lineHeight: 1.6,
           wordBreak: 'break-word',
@@ -513,10 +552,12 @@ const ChatMessageBubble: React.FC<{
       </div>
       {isUser && (
         <div style={{
-          width: 30,
-          height: 30,
-          borderRadius: 10,
-          background: 'rgba(255,255,255,0.08)',
+          width: 32,
+          height: 32,
+          borderRadius: 12,
+          background: 'rgba(255,255,255,0.12)',
+          border: `1px solid ${theme.borderSoft}`,
+          boxShadow: '0 1px 0 rgba(255,255,255,0.25) inset',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -531,12 +572,15 @@ const ChatMessageBubble: React.FC<{
 };
 
 const ActionShell: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-  <div style={{
+  <div className="liquid-glass-card" style={{
     marginTop: 10,
-    padding: 10,
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.045)',
-    border: `1px solid ${theme.border}`,
+    padding: 12,
+    borderRadius: 16,
+    background: 'linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.05) 100%)',
+    border: `1px solid ${theme.borderSoft}`,
+    boxShadow: '0 1px 0 rgba(255,255,255,0.16) inset, 0 8px 22px rgba(0,0,0,0.16)',
+    backdropFilter: theme.blurSoft,
+    WebkitBackdropFilter: theme.blurSoft,
     overflow: 'hidden',
     minWidth: 0,
   }}>
@@ -552,24 +596,30 @@ const ActionShell: React.FC<{ title: string; icon: React.ReactNode; children: Re
 const TypingIndicator: React.FC<{ statusText?: string }> = ({ statusText }) => (
   <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-start' }}>
     <div style={{
-      width: 30, height: 30, borderRadius: 10,
-      background: theme.accentSoft, border: `1px solid ${theme.border}`,
+      width: 32, height: 32, borderRadius: 12,
+      background: 'linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,159,10,0.16))',
+      border: `1px solid ${theme.border}`,
+      boxShadow: '0 1px 0 rgba(255,255,255,0.3) inset',
       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
     }}>
       <Bot size={15} color={theme.accent} />
     </div>
     <div style={{
-      padding: '12px 16px', borderRadius: '16px 16px 16px 4px',
-      background: theme.surfaceHigh, border: `1px solid ${theme.border}`,
+      padding: '12px 16px', borderRadius: '20px 20px 20px 6px',
+      background: 'linear-gradient(160deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.06) 100%)',
+      border: `1px solid ${theme.border}`,
+      boxShadow: '0 1px 0 rgba(255,255,255,0.2) inset, 0 8px 18px rgba(0,0,0,0.15)',
+      backdropFilter: theme.blurSoft,
+      WebkitBackdropFilter: theme.blurSoft,
       display: 'flex', alignItems: 'center', gap: 8,
     }}>
       <div style={{ display: 'flex', gap: 4 }}>
         {[0, 1, 2].map(i => (
           <motion.div
             key={i}
-            animate={{ y: [0, -4, 0] }}
-            transition={{ duration: 0.5, repeat: Infinity, delay: i * 0.15 }}
-            style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent, opacity: 0.7 }}
+            animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+            transition={{ duration: 0.7, repeat: Infinity, delay: i * 0.14, ease: 'easeInOut' }}
+            style={{ width: 6, height: 6, borderRadius: '50%', background: theme.accent }}
           />
         ))}
       </div>
@@ -612,20 +662,25 @@ const BookingProgressStepper: React.FC<{ activeStep: number }> = ({ activeStep }
   return (
     <div style={{
       display: 'flex', alignItems: 'center', gap: 2, padding: '10px 14px',
-      background: 'rgba(255,255,255,0.03)', borderBottom: `1px solid ${theme.border}`,
-      overflowX: 'auto', flexShrink: 0,
+      background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+      borderBottom: `1px solid ${theme.borderSoft}`,
+      overflowX: 'auto',
+      flex: '0 0 auto',
+      backdropFilter: theme.blurSoft,
+      WebkitBackdropFilter: theme.blurSoft,
     }}>
       {steps.map((step, idx) => {
         const isActive = idx === activeStep;
         const isDone = idx < activeStep;
         return (
           <React.Fragment key={step.key}>
-            {idx > 0 && <div style={{ width: 12, height: 1, background: isDone ? theme.accent : theme.border, flexShrink: 0 }} />}
+            {idx > 0 && <div style={{ width: 12, height: 1, background: isDone ? theme.accent : theme.borderSoft, flexShrink: 0 }} />}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 4,
-              padding: '4px 8px', borderRadius: 8,
-              background: isActive ? theme.accentSoft : 'transparent',
-              border: isActive ? `1px solid ${theme.accent}33` : '1px solid transparent',
+              padding: '4px 8px', borderRadius: 10,
+              background: isActive ? 'rgba(255,159,10,0.16)' : 'transparent',
+              border: isActive ? `1px solid rgba(255,159,10,0.35)` : '1px solid transparent',
+              boxShadow: isActive ? '0 1px 0 rgba(255,255,255,0.15) inset' : undefined,
               flexShrink: 0,
             }}>
               {isDone ? <CheckCircle size={12} color={theme.accent} /> : step.icon}
@@ -1499,15 +1554,14 @@ const TextInput: React.FC<{ value: string; onChange: (value: string) => void; pl
 
 const optionButtonStyle: React.CSSProperties = {
   ...baseButton,
+  ...glassChip,
   width: '100%',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: 10,
-  background: 'rgba(255,255,255,0.055)',
-  border: `1px solid ${theme.border}`,
-  borderRadius: 10,
-  padding: '10px 11px',
+  borderRadius: 14,
+  padding: '10px 12px',
   color: theme.text,
   fontSize: 12,
   overflow: 'hidden',
@@ -2197,47 +2251,76 @@ const ChatBot: React.FC = () => {
         {isOpen && (
           <motion.div
             ref={panelRef}
-            className="chatbot-panel"
-            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
+            className="chatbot-panel liquid-glass-panel"
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.96 }}
-            transition={{ duration: 0.14, ease: 'easeOut' }}
+            exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             style={{
               position: 'fixed',
               right: 24,
-              bottom: 92,
+              /* Pin to bottom — do not use filter/blur on this node (causes jump) */
+              bottom: 'max(24px, calc(76px + env(safe-area-inset-bottom, 0px)))',
+              top: 'auto',
+              left: 'auto',
               zIndex: 9998,
-              width: 'calc(100vw - 32px)',
+              width: 'min(430px, calc(100vw - 32px))',
               maxWidth: 430,
-              height: 'min(660px, calc(100vh - 170px))',
-              maxHeight: 'calc(100vh - 120px)',
+              /* Fixed height via dvh so keyboard/layout reflow doesn't lift the panel */
+              height: 'min(640px, calc(100dvh - 110px))',
+              maxHeight: 'min(640px, calc(100dvh - 110px))',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              overflowX: 'hidden',
-              borderRadius: 20,
-              background: theme.surface,
-              border: `1px solid ${theme.border}`,
-              boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
+              borderRadius: 28,
+              transformOrigin: 'bottom right',
+              willChange: 'opacity, transform',
+              ...glassPanel,
             }}
           >
-            <div className="chatbot-header" style={{
+            <div className="chatbot-header liquid-glass-header" style={{
               flexShrink: 0,
-              padding: '16px 18px',
+              padding: '14px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: 12,
-              background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
-              color: '#fff',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 100%)',
+              borderBottom: `1px solid ${theme.borderSoft}`,
+              color: theme.text,
+              backdropFilter: theme.blurSoft,
+              WebkitBackdropFilter: theme.blurSoft,
             }}>
-              <div style={{ width: 40, height: 40, borderRadius: 12, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.14)' }}>
-                <Bot size={21} />
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: 12,
+                display: 'grid',
+                placeItems: 'center',
+                background: 'linear-gradient(145deg, rgba(232,137,11,0.28), rgba(232,137,11,0.12))',
+                border: '1px solid rgba(255,255,255,0.14)',
+                boxShadow: '0 1px 0 rgba(255,255,255,0.12) inset',
+                flexShrink: 0,
+              }}>
+                <Sparkles size={18} color={theme.accent} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="chatbot-header-title" style={{ fontWeight: 900, fontSize: 16 }}>CinemaPro AI</div>
-                <div style={{ fontSize: 11, opacity: 0.86, fontWeight: 700, textTransform: 'uppercase' }}>{t('chatbot.subtitle')}</div>
+                <div className="chatbot-header-title" style={{ fontWeight: 900, fontSize: 16, letterSpacing: '-0.02em' }}>CinemaPro AI</div>
+                <div style={{ fontSize: 11, color: theme.muted, fontWeight: 700, letterSpacing: '0.04em' }}>{t('chatbot.subtitle')}</div>
               </div>
-              <button onClick={() => setIsOpen(false)} style={{ ...baseButton, width: 34, height: 34, borderRadius: 10, display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.12)', color: '#fff' }} title={t('chatbot.close')}>
+              <button
+                onClick={() => setIsOpen(false)}
+                style={{
+                  ...baseButton,
+                  ...glassChip,
+                  width: 34,
+                  height: 34,
+                  borderRadius: 12,
+                  display: 'grid',
+                  placeItems: 'center',
+                  color: theme.text,
+                }}
+                title={t('chatbot.close')}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -2245,11 +2328,21 @@ const ChatBot: React.FC = () => {
             {/* Booking Progress Stepper */}
             <BookingProgressStepper activeStep={getBookingStepIndex(draft)} />
 
-            <div style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden', minWidth: 0 }}>
+            <div style={{ position: 'relative', flex: '1 1 auto', minHeight: 0, overflow: 'hidden', minWidth: 0 }}>
               <div
                 ref={scrollContainerRef}
                 onScroll={handleScroll}
-                style={{ height: '100%', overflowY: 'auto', overflowX: 'hidden', padding: 16, display: 'flex', flexDirection: 'column', gap: 14, wordBreak: 'break-word' }}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  padding: 16,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 14,
+                  wordBreak: 'break-word',
+                }}
                 className="chatbot-messages"
               >
                 {messages.map(message => (
@@ -2347,7 +2440,7 @@ const ChatBot: React.FC = () => {
               )}
             </div>
 
-            <div style={{ flexShrink: 0, padding: '8px 14px 0', display: 'flex', gap: 7, overflowX: 'auto', minWidth: 0 }}>
+            <div style={{ flex: '0 0 auto', padding: '8px 14px 0', display: 'flex', gap: 7, overflowX: 'auto', minWidth: 0 }}>
               {quickActions.map(action => (
                 <button
                   key={action.label}
@@ -2360,15 +2453,18 @@ const ChatBot: React.FC = () => {
               ))}
             </div>
 
-            <div style={{ flexShrink: 0, padding: 14, minWidth: 0 }}>
-              <div style={{
+            <div style={{ flex: '0 0 auto', padding: 14, minWidth: 0 }}>
+              <div className="liquid-glass-input" style={{
                 display: 'flex',
                 alignItems: 'flex-end',
                 gap: 8,
-                background: 'rgba(255,255,255,0.055)',
-                border: `1px solid ${theme.border}`,
-                borderRadius: 14,
+                background: 'linear-gradient(160deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.03) 100%)',
+                border: `1px solid ${theme.borderSoft}`,
+                borderRadius: 18,
                 padding: '4px 4px 4px 12px',
+                boxShadow: '0 1px 0 rgba(255,255,255,0.08) inset, 0 4px 12px rgba(0,0,0,0.12)',
+                backdropFilter: theme.blurSoft,
+                WebkitBackdropFilter: theme.blurSoft,
               }}>
                 <textarea
                   ref={textareaRef}
@@ -2392,11 +2488,13 @@ const ChatBot: React.FC = () => {
                 <button
                   disabled={!input.trim() || isLoading}
                   onClick={() => void handleSend()}
+                  className="liquid-glass-send"
                   style={{
                     ...primaryButton,
                     width: 40,
                     height: 40,
                     padding: 0,
+                    borderRadius: 14,
                     display: 'grid',
                     placeItems: 'center',
                     opacity: input.trim() && !isLoading ? 1 : 0.45,
@@ -2412,10 +2510,28 @@ const ChatBot: React.FC = () => {
       </AnimatePresence>
 
       <style dangerouslySetInnerHTML={{__html: `
-        .chatbot-panel {
+        .liquid-glass-panel {
           overflow-x: hidden !important;
           overflow-wrap: break-word !important;
           word-break: break-word !important;
+          isolation: isolate;
+          /* Keep panel glued to bottom; prevent layout thrash after messages */
+          transform: translateZ(0);
+        }
+        .liquid-glass-panel::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: inherit;
+          pointer-events: none;
+          z-index: 0;
+          background:
+            radial-gradient(120% 70% at 12% -8%, rgba(255,255,255,0.07) 0%, transparent 40%),
+            radial-gradient(80% 50% at 100% 0%, rgba(232,137,11,0.05) 0%, transparent 42%);
+        }
+        .liquid-glass-panel > * {
+          position: relative;
+          z-index: 1;
         }
         .chatbot-panel * {
           max-width: 100% !important;
@@ -2440,34 +2556,44 @@ const ChatBot: React.FC = () => {
         }
         .chatbot-panel textarea {
           scrollbar-width: thin !important;
-          scrollbar-color: rgba(255,255,255,0.2) transparent !important;
+          scrollbar-color: rgba(255,255,255,0.25) transparent !important;
         }
         .chatbot-panel textarea::-webkit-scrollbar {
           width: 4px !important;
         }
         .chatbot-panel textarea::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.2) !important;
+          background: rgba(255,255,255,0.25) !important;
           border-radius: 2px !important;
         }
         .chatbot-trigger-btn {
-          bottom: 92px !important;
+          bottom: max(24px, calc(76px + env(safe-area-inset-bottom, 0px))) !important;
+        }
+        /* Hide floating FAB when chat is open — header already has close */
+        .chatbot-trigger-btn.is-open {
+          display: none !important;
         }
         @media (max-width: 768px) {
-          .chatbot-trigger-btn.is-open {
-            display: none !important;
+          .chatbot-panel {
+            right: 12px !important;
+            bottom: max(84px, calc(72px + env(safe-area-inset-bottom, 0px))) !important;
+            width: calc(100vw - 24px) !important;
+            height: min(640px, calc(100dvh - 120px)) !important;
+            max-height: min(640px, calc(100dvh - 120px)) !important;
           }
         }
         @media (min-width: 768px) {
           .chatbot-trigger-btn {
             bottom: 24px !important;
           }
+          .chatbot-panel {
+            bottom: 24px !important;
+          }
         }
         @media (max-width: 480px) {
           .chatbot-panel {
             right: 8px !important;
-            bottom: 84px !important;
             width: calc(100vw - 16px) !important;
-            border-radius: 14px !important;
+            border-radius: 22px !important;
           }
           .chatbot-header {
             padding: 10px 12px !important;
@@ -2488,25 +2614,27 @@ const ChatBot: React.FC = () => {
         onClick={() => setIsOpen(value => !value)}
         aria-label="Open CinemaPro AI"
         className={`chatbot-trigger-btn ${isOpen ? 'is-open' : ''}`}
-        whileHover={shouldReduceMotion ? {} : { scale: 1.02 }}
-        whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+        whileHover={shouldReduceMotion ? {} : { scale: 1.04 }}
+        whileTap={shouldReduceMotion ? {} : { scale: 0.97 }}
         style={{
           position: 'fixed',
           right: 24,
           zIndex: 9999,
-          width: 56,
-          height: 56,
+          width: 54,
+          height: 54,
           borderRadius: '50%',
-          border: 'none',
+          border: '1px solid rgba(255,255,255,0.2)',
           cursor: 'pointer',
-          background: `linear-gradient(135deg, ${theme.accent}, ${theme.accentHover})`,
-          color: '#fff',
+          background: 'linear-gradient(145deg, rgba(232,137,11,0.88) 0%, rgba(200,110,8,0.9) 100%)',
+          color: '#1c1c1e',
           display: 'grid',
           placeItems: 'center',
-          boxShadow: `0 12px 34px ${theme.accentSoft}`,
+          boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 8px 20px rgba(0,0,0,0.28)',
+          backdropFilter: 'blur(10px) saturate(120%)',
+          WebkitBackdropFilter: 'blur(10px) saturate(120%)',
         }}
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        <MessageCircle size={22} />
       </motion.button>
     </>
   );
