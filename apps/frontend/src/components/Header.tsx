@@ -10,8 +10,9 @@ import LanguageSwitcher from './LanguageSwitcher';
 // import CinemaSelector from './CinemaSelector';
 import LogoutModal from './LogoutModal';
 import PublicCitySelector from '../features/public/components/PublicCitySelector';
+import MovieSearchBar from './MovieSearchBar';
 import { 
-  Menu, Search, MapPin, User, LayoutDashboard, 
+  Menu, MapPin, User, LayoutDashboard, 
   ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText, Bell
 } from 'lucide-react';
 
@@ -208,15 +209,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
 
           <div className="flex items-center gap-1.5 md:gap-2.5 flex-shrink-0">
-            {/* Search Input Box */}
-            <div className="hidden xl:flex items-center bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
-              <Search size={15} className="text-[#ddc1ae] flex-shrink-0" />
-              <input 
-                className="bg-transparent border-none focus:outline-none text-white text-xs ml-2 w-36 placeholder:text-[#ddc1ae]/50" 
-                placeholder="Search movies..." 
-                type="text"
-              />
-            </div>
+            <MovieSearchBar />
 
             <div className="flex gap-1 md:gap-2 items-center">
               {/* Language Switcher */}

@@ -98,7 +98,7 @@ describe('BookingSuccessPage', () => {
     render(<BookingSuccessPage />)
 
     await waitFor(() => {
-      expect(screen.getByText(/download|pdf|tai ve/i)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /tải vé pdf|download|pdf/i })).toBeInTheDocument()
     })
   })
 })
