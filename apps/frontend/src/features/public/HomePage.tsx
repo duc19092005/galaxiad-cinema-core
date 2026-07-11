@@ -325,10 +325,13 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         }
         .home-hero-shell {
           position: relative;
-          min-height: min(760px, 96dvh);
+          /* Reserve header height so banner image lives fully below fixed header */
+          --hero-header-offset: 72px;
+          min-height: calc(var(--hero-header-offset) + clamp(420px, 46vw, 580px));
+          max-height: 88vh;
           display: flex;
           align-items: stretch;
-          overflow: visible;
+          overflow: hidden;
           isolation: isolate;
         }
         .home-hero-bg {
@@ -336,24 +339,58 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           inset: 0;
           z-index: 0;
           overflow: hidden;
-          background: var(--bg-base);
+          background: #1c1612;
         }
-        .home-hero-bg img {
+        /* Blur fill: same photo, full shell — NO solid black letterbox */
+        .home-hero-bg-fill {
+          position: absolute;
+          inset: -16%;
+          width: 132%;
+          height: 132%;
+          object-fit: cover;
+          object-position: center center;
+          display: block;
+          filter: blur(40px) saturate(1.35) brightness(0.62);
+          transform: scale(1.15);
+          pointer-events: none;
+          user-select: none;
+        }
+        /* Stage starts UNDER header — image never covered by header */
+        .home-hero-stage {
+          position: absolute;
+          top: var(--hero-header-offset);
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        /* Full banner content, fit inside stage only */
+        .home-hero-bg-main {
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          filter: saturate(1.05) brightness(0.72);
-          transform: scale(1.02);
-          transition: opacity 0.16s ease;
-          animation: homeBgSlide 0.18s ease-out both;
+          max-width: 100%;
+          max-height: 100%;
+          object-fit: contain;
+          object-position: center center;
+          display: block;
+          filter: saturate(1.06) brightness(0.96);
+          transition: opacity 0.25s ease;
+          animation: homeBgSlide 0.25s ease-out both;
         }
         .home-hero-bg::after {
           content: "";
           position: absolute;
           inset: 0;
+          z-index: 1;
+          pointer-events: none;
+          /* Soft vignette for text — not black side panels */
           background:
-            linear-gradient(90deg, rgba(19,19,22,0.96) 0%, rgba(19,19,22,0.64) 46%, rgba(19,19,22,0.86) 100%),
-            linear-gradient(0deg, var(--bg-base) 0%, rgba(19,19,22,0) 34%, rgba(19,19,22,0.34) 100%);
+            linear-gradient(90deg, rgba(19,19,22,0.78) 0%, rgba(19,19,22,0.15) 30%, rgba(19,19,22,0.08) 55%, rgba(19,19,22,0.35) 100%),
+            linear-gradient(180deg, rgba(19,19,22,0.5) 0%, rgba(19,19,22,0.06) 14%, rgba(19,19,22,0.04) 60%, rgba(19,19,22,0.72) 100%);
         }
         .home-hero-content {
           position: relative;
@@ -361,7 +398,7 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           width: 100%;
           max-width: 1280px;
           margin: 0 auto;
-          padding: clamp(96px, 12vw, 132px) clamp(16px, 4vw, 24px) clamp(88px, 12vw, 124px);
+          padding: calc(var(--hero-header-offset) + 20px) clamp(16px, 4vw, 24px) clamp(40px, 5vw, 64px);
           display: grid;
           grid-template-columns: minmax(0, 1fr) 150px;
           gap: clamp(24px, 6vw, 72px);
@@ -707,11 +744,16 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         }
         @media (max-width: 900px) {
           .home-hero-shell {
-            min-height: auto;
+            --hero-header-offset: 64px;
+            min-height: calc(var(--hero-header-offset) + clamp(340px, 54vw, 480px));
+            max-height: none;
+          }
+          .home-hero-stage {
+            top: var(--hero-header-offset);
           }
           .home-hero-content {
             grid-template-columns: 1fr;
-            padding-top: 100px;
+            padding-top: calc(var(--hero-header-offset) + 12px);
             padding-bottom: 40px;
           }
           .home-hero-thumbs {
@@ -882,17 +924,43 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
       <section className="home-hero-shell">
         <div className="home-hero-bg">
           {activeHeroMovie ? (
-            <img
-              key={activeHeroMovie.movieId}
-              alt={activeHeroMovie.movieName}
-              src={activeHeroImage}
-              onError={(event) => {
-                event.currentTarget.onerror = null;
-                event.currentTarget.src = PLACEHOLDER_POSTER;
-              }}
-            />
+            <>
+              {/* Soft photo wash — no black letterbox */}
+              <img
+                key={`fill-${activeHeroMovie.movieId}-${activeHeroImage}`}
+                className="home-hero-bg-fill"
+                src={activeHeroImage}
+                alt=""
+                aria-hidden
+                onError={(event) => {
+                  event.currentTarget.onerror = null;
+                  event.currentTarget.src = PLACEHOLDER_POSTER;
+                }}
+              />
+              {/* Full image only in area below fixed header */}
+              <div className="home-hero-stage">
+                <img
+                  key={`main-${activeHeroMovie.movieId}-${activeHeroImage}`}
+                  className="home-hero-bg-main"
+                  src={activeHeroImage}
+                  alt={activeHeroMovie.movieName}
+                  decoding="async"
+                  fetchPriority="high"
+                  sizes="100vw"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = PLACEHOLDER_POSTER;
+                  }}
+                />
+              </div>
+            </>
           ) : (
-            <img alt="Cinema theater" src={HERO_IMG} />
+            <>
+              <img className="home-hero-bg-fill" src={HERO_IMG} alt="" aria-hidden />
+              <div className="home-hero-stage">
+                <img className="home-hero-bg-main" src={HERO_IMG} alt="Cinema theater" />
+              </div>
+            </>
           )}
         </div>
 

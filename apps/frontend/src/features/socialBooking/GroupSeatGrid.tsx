@@ -7,6 +7,21 @@ import { useSeatWs } from '../../hooks/useSeatWs';
 import { showError, showSuccess } from '../../utils/ToastUtils';
 import type { GroupBookingState } from '../../types/socialBooking.types';
 import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/public.types';
+import {
+  canAddSeat,
+  createsIsolatedEmptySeat,
+  normalizeSeatId,
+  occupiedIdsFromSeatMap,
+} from '../../utils/seatSelectionPolicy';
+import SegmentQuantityPicker from '../../components/SegmentQuantityPicker';
+import {
+  assignSegmentsToSeats,
+  buildSegmentLineSummaries,
+  emptySegmentCounts,
+  totalFromSegmentCounts,
+  totalTicketQuantity,
+  type SegmentCounts,
+} from '../../utils/segmentQuantity';
 
 interface Props {
   groupState: GroupBookingState;
@@ -25,7 +40,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
   const [confirming, setConfirming] = useState(false);
   const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
   const [pricing, setPricing] = useState<PublicPricing | null>(null);
-  const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
+  const [segmentCounts, setSegmentCounts] = useState<SegmentCounts>({});
   const [loading, setLoading] = useState(true);
 
   const { lockedSeats, unavailableSeats } = useSeatWs(scheduleId, { ignoreGroupSessionId: groupState.groupSessionId });
@@ -44,7 +59,12 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
           publicApi.getPricing(scheduleId).catch(() => null),
         ]);
         setSeatMap(seatRes.data);
-        if (priceRes?.isSuccess) setPricing(priceRes.data);
+        if (priceRes?.isSuccess) {
+          setPricing(priceRes.data);
+          if (priceRes.data?.segmentPrices?.length) {
+            setSegmentCounts(emptySegmentCounts(priceRes.data.segmentPrices));
+          }
+        }
       } catch {
         console.error('Failed to load seat map');
       } finally {
@@ -53,6 +73,25 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
     };
     if (scheduleId) fetchSeatMap();
   }, [scheduleId]);
+
+  const ageSymbol = seatMap?.movieRequiredAgeSymbol?.trim();
+  const allowedSegments = useMemo(() => {
+    if (!pricing?.segmentPrices) return [];
+    if (!ageSymbol || ageSymbol === 'P' || ageSymbol === 'K') return pricing.segmentPrices;
+    return pricing.segmentPrices.filter(s => {
+      const name = s.segmentName.toLowerCase();
+      if (ageSymbol === 'T13' || ageSymbol === 'T16' || ageSymbol === 'T18') {
+        return !name.includes('child') && !name.includes('trẻ em');
+      }
+      return true;
+    });
+  }, [pricing?.segmentPrices, ageSymbol]);
+
+  const ticketQuantity = totalTicketQuantity(segmentCounts);
+  const segmentLines = useMemo(
+    () => buildSegmentLineSummaries(allowedSegments, segmentCounts),
+    [allowedSegments, segmentCounts]
+  );
 
   const getMemberColor = (memberId?: string) => {
     if (!memberId) return '#666';
@@ -63,6 +102,31 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
   const getGroupSeatForMember = (seatId: string) => {
     return groupState.allGroupSeats?.find(s => s.seatId.toLowerCase() === seatId.toLowerCase());
   };
+
+  const layoutSeats = useMemo(
+    () => (seatMap?.seatMap || []).map(s => ({
+      seatId: s.seatId,
+      rowIndex: s.rowIndex,
+      colIndex: s.colIndex,
+    })),
+    [seatMap]
+  );
+
+  const occupiedSeatIds = useMemo(() => {
+    const booked = occupiedIdsFromSeatMap(seatMap?.seatMap || []);
+    const teammateSeats = (groupState.allGroupSeats || [])
+      .filter(s => s.memberId && s.memberId.toLowerCase() !== myMember?.memberId?.toLowerCase())
+      .map(s => s.seatId);
+    const lockedByOthers = Object.keys(lockedSeats).filter(id => {
+      const mine = myConfirmedSeats.some(s => normalizeSeatId(s) === normalizeSeatId(id));
+      const groupOwned = (groupState.allGroupSeats || []).some(
+        g => normalizeSeatId(g.seatId) === normalizeSeatId(id)
+      );
+      return !mine && !groupOwned;
+    });
+    const unavailable = Object.keys(unavailableSeats);
+    return [...booked, ...teammateSeats, ...lockedByOthers, ...unavailable];
+  }, [seatMap, groupState.allGroupSeats, myMember?.memberId, lockedSeats, unavailableSeats, myConfirmedSeats]);
 
   const toggleSeat = async (seat: PublicSeat) => {
     if (!isMember || seat.isBooked || submitting) return;
@@ -85,24 +149,39 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
     let newSeatIds: string[];
     if (isCurrentlySelected) {
       newSeatIds = myConfirmedSeats.filter(id => id !== seat.seatId);
-      setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
     } else {
-      if (myConfirmedSeats.length >= 10) {
-        showError(t('socialBooking.seat.maxReached', 'Bạn có thể chọn tối đa 10 ghế.'));
+      if (ticketQuantity <= 0) {
+        showError(t('toast.selectTicketTypesFirst', 'Vui lòng chọn số lượng loại vé trước khi chọn ghế.'));
+        return;
+      }
+      if (myConfirmedSeats.length >= ticketQuantity) {
+        showError(t('toast.seatQuotaFull', 'Bạn đã chọn đủ {{count}} ghế theo số vé đã chọn.', { count: ticketQuantity }));
+        return;
+      }
+      const check = canAddSeat(layoutSeats, seat.seatId, myConfirmedSeats, occupiedSeatIds);
+      if (!check.ok) {
+        if (check.reason === 'max') {
+          showError(t('socialBooking.seat.maxReached', 'Bạn có thể chọn tối đa 10 ghế.'));
+        } else if (check.reason === 'isolated') {
+          showError(t(
+            'toast.isolatedSeat',
+            'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng.'
+          ));
+        }
         return;
       }
       newSeatIds = [...myConfirmedSeats, seat.seatId];
-      if (pricing && pricing.segmentPrices.length > 0) {
-        setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: pricing.segmentPrices[0].userSegmentId }));
-      }
     }
+
+    const seatSegmentMap = assignSegmentsToSeats(newSeatIds, allowedSegments, segmentCounts);
+    const fallbackSegment = allowedSegments[0]?.userSegmentId || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7';
 
     setSubmitting(true);
     try {
       const result = await socialBookingApi.selectSeats(groupState.groupSessionId, {
         seatSelections: newSeatIds.map(id => ({
           seatId: id,
-          userSegmentId: seatSegmentMap[id] || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7'
+          userSegmentId: seatSegmentMap[id] || fallbackSegment,
         }))
       });
       if (result.isSuccess) {
@@ -117,8 +196,49 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
     }
   };
 
+  const handleSegmentCountsChange = async (next: SegmentCounts) => {
+    const maxSeats = totalTicketQuantity(next);
+    setSegmentCounts(next);
+    if (myConfirmedSeats.length <= maxSeats || isMyStatusConfirmed) return;
+
+    const trimmed = myConfirmedSeats.slice(0, maxSeats);
+    const seatSegmentMap = assignSegmentsToSeats(trimmed, allowedSegments, next);
+    const fallbackSegment = allowedSegments[0]?.userSegmentId || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7';
+    setSubmitting(true);
+    try {
+      const result = await socialBookingApi.selectSeats(groupState.groupSessionId, {
+        seatSelections: trimmed.map(id => ({
+          seatId: id,
+          userSegmentId: seatSegmentMap[id] || fallbackSegment,
+        })),
+      });
+      if (result.isSuccess) onRefresh();
+    } catch {
+      /* ignore */
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleConfirmSeats = async () => {
     if (!isMember || myConfirmedSeats.length === 0 || confirming || isMyStatusConfirmed) return;
+    if (ticketQuantity <= 0 || myConfirmedSeats.length !== ticketQuantity) {
+      showError(t(
+        'toast.seatCountMismatch',
+        'Bạn đã chọn {{selected}}/{{required}} ghế. Vui lòng chọn đúng số ghế theo số vé.',
+        { selected: myConfirmedSeats.length, required: ticketQuantity }
+      ));
+      return;
+    }
+    if (createsIsolatedEmptySeat(layoutSeats, myConfirmedSeats, occupiedSeatIds)) {
+      showError(t(
+        'toast.isolatedSeat',
+        'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng.'
+      ));
+      return;
+    }
+    const seatSegmentMap = assignSegmentsToSeats(myConfirmedSeats, allowedSegments, segmentCounts);
+    const fallbackSegment = allowedSegments[0]?.userSegmentId || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7';
     setConfirming(true);
     try {
       const result = await socialBookingApi.confirmSeats(
@@ -126,7 +246,7 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
         myConfirmedSeats,
         myConfirmedSeats.map(seatId => ({
           seatId,
-          userSegmentId: seatSegmentMap[seatId] || pricing?.segmentPrices?.[0]?.userSegmentId || '7b2e1a9d-3f5c-4e8b-91d2-a6b3c4d5e6f7'
+          userSegmentId: seatSegmentMap[seatId] || fallbackSegment,
         }))
       );
       if (result.isSuccess) {
@@ -274,41 +394,62 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
         ))}
       </div>
 
-      {/* Segment Selector for Selected Seats */}
-      {isMember && myConfirmedSeats.length > 0 && !isMyStatusConfirmed && pricing && pricing.segmentPrices.length > 1 && (
-        <div className="mt-5 bg-[#0d0e12]/40 border border-[#554334]/10 rounded-xl p-4">
-          <p className="text-[10px] font-bold text-[#dbc2ad]/50 uppercase tracking-wider mb-3">{t('socialBooking.seat.selectSegment', 'Chọn danh đối cho từng ghế')}</p>
-          <div className="flex flex-col gap-2">
-            {myConfirmedSeats.map(seatId => {
-              const groupSeat = getGroupSeatForMember(seatId);
-              const seatName = groupSeat?.seatNumber || seatId.slice(-3);
-              return (
-                <div key={seatId} className="flex items-center gap-3">
-                  <span className="text-[12px] font-bold text-[#ffbd7f] w-12">{seatName}</span>
-                  <select
-                    value={seatSegmentMap[seatId] || pricing.segmentPrices[0].userSegmentId}
-                    onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seatId]: e.target.value }))}
-                    className="flex-1 bg-[#343539]/60 border border-[#554334]/30 text-[#e3e2e7] text-[12px] px-3 py-1.5 rounded-lg outline-none cursor-pointer focus:border-[#ff9500]/50 transition-colors"
-                  >
-                    {pricing.segmentPrices.map(sp => (
-                      <option key={sp.userSegmentId} value={sp.userSegmentId} className="bg-[#1a1b1f]">
-                        {sp.segmentName}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              );
-            })}
+      {/* Ticket types first + summary */}
+      {isMember && !isMyStatusConfirmed && (
+        <div className="mt-5 bg-[#0d0e12]/40 border border-[#554334]/10 rounded-xl p-4 space-y-4">
+          <SegmentQuantityPicker
+            segments={allowedSegments}
+            counts={segmentCounts}
+            onChange={(next) => { void handleSegmentCountsChange(next); }}
+            disabled={submitting || confirming}
+            title={t('booking.selectTicketTypes', 'Chọn loại vé')}
+            hint={t('booking.selectTicketTypesHint', 'Chọn số lượng từng loại vé trước, sau đó chọn đúng số ghế trên sơ đồ.')}
+            compact
+          />
+          <div className="flex items-center justify-between text-xs border-t border-[#554334]/20 pt-3">
+            <span className="text-[#dbc2ad]/60 font-medium">{t('booking.selectedSeats', 'Ghế đã chọn')}</span>
+            <span className={`font-bold ${myConfirmedSeats.length === ticketQuantity && ticketQuantity > 0 ? 'text-emerald-400' : 'text-[#ff9500]'}`}>
+              {myConfirmedSeats.length}/{ticketQuantity || 0}
+            </span>
           </div>
+          {segmentLines.length > 0 && (
+            <div className="space-y-1.5">
+              {segmentLines.map((line) => (
+                <div key={line.userSegmentId} className="flex justify-between text-[12px] gap-2">
+                  <span className="text-[#dbc2ad]/80 truncate">
+                    {line.segmentName} × {line.quantity}
+                    <span className="text-[#dbc2ad]/45"> · {line.unitPrice.toLocaleString('vi-VN')}đ</span>
+                  </span>
+                  <span className="font-bold text-[#ffbd7f] shrink-0">{line.lineTotal.toLocaleString('vi-VN')}đ</span>
+                </div>
+              ))}
+              <div className="flex justify-between text-[11px] text-[#dbc2ad]/50 pt-1">
+                <span>{t('booking.totalSeats', 'Tổng số ghế')}</span>
+                <span className="text-[#e3e2e7] font-semibold">{ticketQuantity}</span>
+              </div>
+              <div className="flex justify-between text-sm font-bold pt-1">
+                <span className="text-[#e3e2e7]">{t('booking.amount', 'Tổng tiền')}</span>
+                <span className="text-[#ff9500]">{totalFromSegmentCounts(allowedSegments, segmentCounts).toLocaleString('vi-VN')}đ</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       {/* Confirm Button */}
-      {isMember && myConfirmedSeats.length > 0 && (
+      {isMember && (
         <div className="mt-5">
           <button
             onClick={handleConfirmSeats}
-            disabled={isMyStatusConfirmed || confirming || groupState.status === 'Confirming' || groupState.status === 'Paying' || groupState.status === 'Completed'}
+            disabled={
+              isMyStatusConfirmed
+              || confirming
+              || ticketQuantity <= 0
+              || myConfirmedSeats.length !== ticketQuantity
+              || groupState.status === 'Confirming'
+              || groupState.status === 'Paying'
+              || groupState.status === 'Completed'
+            }
             className={`w-full py-3.5 rounded-full font-semibold text-sm flex items-center justify-center gap-2.5 transition-all duration-200 ${
               isMyStatusConfirmed
                 ? 'bg-[#34C759]/15 text-[#34C759] border border-[#34C759]/30 cursor-default'

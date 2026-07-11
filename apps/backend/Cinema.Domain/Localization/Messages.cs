@@ -236,7 +236,7 @@ public static class Messages
         public const string AtLeastOneSeatMustBeSelected = "At least one seat must be selected.";
         public const string MaxTenTicketsPerOrder = "You can select up to 10 tickets per order.";
         public const string DuplicateSelectedSeats = "Duplicate selected seats are not allowed.";
-        public const string SelectionLeavesIsolatedSeat = "Your seat selection leaves an isolated empty seat. Please choose an adjacent seat or select another row.";
+        public const string SelectionLeavesIsolatedSeat = "Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng. Hãy chọn ghế liền kề hoặc chọn đúng ghế lẻ đó.";
         public const string PaymentFailed = "Payment failed";
         public const string OrderNotFound = "Order not found";
         public const string TicketNotFoundOrNotPaid = "Ticket not found or order has not been paid successfully.";

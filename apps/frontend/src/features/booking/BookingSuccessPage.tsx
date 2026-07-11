@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     CheckCircle, Home, Download, Loader2, AlertCircle,
@@ -9,6 +9,7 @@ import type { TicketInfo } from '../../types/booking.types';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import { useTranslation } from 'react-i18next';
 import { downloadTicketAsPdf } from '../../utils/ticketPdfGenerator';
+import { groupTicketSeatsBySegment } from '../../utils/segmentQuantity';
 
 const BookingSuccessPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -20,6 +21,11 @@ const BookingSuccessPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
+
+    const segmentSummary = useMemo(
+        () => (ticketInfo?.seats ? groupTicketSeatsBySegment(ticketInfo.seats) : []),
+        [ticketInfo]
+    );
 
     useEffect(() => {
         if (!orderId) {
@@ -191,7 +197,7 @@ const BookingSuccessPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Seats Table */}
+                {/* Order summary by ticket type */}
                 <div style={{
                     padding: '16px', borderRadius: 'var(--radius-lg)', marginBottom: '24px',
                     backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)',
@@ -199,30 +205,66 @@ const BookingSuccessPage: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Armchair size={16} style={{ color: 'var(--primary)' }} />
-                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>Tickets</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                                {t('booking.orderSummary', 'Tóm tắt đơn')}
+                            </span>
                         </div>
                         <span style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: "'JetBrains Mono', monospace" }}>ID: {orderId?.substring(0, 8)}...</span>
                     </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, fontSize: 13 }}>
+                        <span style={{ color: 'var(--text-secondary)' }}>{t('booking.totalSeats', 'Tổng số ghế')}</span>
+                        <span style={{ fontWeight: 800, color: 'var(--text-primary)' }}>{ticketInfo.seats.length}</span>
+                    </div>
+
+                    <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: 6 }}>
+                            {t('booking.selectedSeats', 'Ghế đã chọn')}
+                        </p>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {ticketInfo.seats.map((seat, idx) => (
+                                <span key={idx} style={{
+                                    padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 800,
+                                    background: 'rgba(255,138,0,0.12)', color: 'var(--primary)', border: '1px solid rgba(255,138,0,0.3)',
+                                }}>
+                                    {seat.seatNumber}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {ticketInfo.seats.map((seat, idx) => (
-                            <div key={idx} style={{
-                                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                        <p style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', margin: 0 }}>
+                            {t('booking.priceBySegment', 'Chi tiết theo loại vé')}
+                        </p>
+                        {segmentSummary.map((line) => (
+                            <div key={line.segmentName} style={{
+                                display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12,
+                                padding: '10px 12px', borderRadius: 'var(--radius-sm)',
                                 backgroundColor: 'var(--bg-base)', border: '1px solid var(--border-color)',
                             }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--primary)' }}>{seat.seatNumber}</span>
-                                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{seat.segmentName}</span>
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
+                                        {line.segmentName} × {line.quantity}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                                        {t('booking.unitPrice', 'Đơn giá')}: {line.unitPrice.toLocaleString('vi-VN')}đ
+                                    </div>
+                                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
+                                        {line.seatNumbers.join(', ')}
+                                    </div>
                                 </div>
-                                <span style={{ fontWeight: 600, fontSize: 13, color: 'var(--text-primary)' }}>{seat.priceEach.toLocaleString('vi-VN')}đ</span>
+                                <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+                                    {line.lineTotal.toLocaleString('vi-VN')}đ
+                                </span>
                             </div>
                         ))}
                     </div>
-                    {/* Total */}
+
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '16px', paddingTop: '12px', borderTop: '1px dashed var(--border-color)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <Receipt size={16} style={{ color: 'var(--primary)' }} />
-                            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Total Paid</span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{t('booking.amount', 'Tổng tiền')}</span>
                         </div>
                         <span style={{ fontSize: 24, fontWeight: 800, color: 'var(--primary)' }}>
                             {ticketInfo.totalPrice.toLocaleString('vi-VN')}đ
@@ -237,21 +279,41 @@ const BookingSuccessPage: React.FC = () => {
 
                 {/* Actions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{
+                        padding: '14px 16px',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid rgba(255,138,0,0.25)',
+                        background: 'rgba(255,138,0,0.08)',
+                        marginBottom: 4,
+                    }}>
+                        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55 }}>
+                            Vé PDF đã được thiết kế dạng e-ticket (mã QR, ghế, loại vé, tổng tiền).
+                            Mang file PDF hoặc mã đặt vé khi đến rạp.
+                        </p>
+                    </div>
                     <button
                         onClick={handleGeneratePdf}
                         disabled={pdfLoading}
                         className="btn btn-primary cta-glow"
-                        style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 15, fontWeight: 700, gap: '8px' }}
+                        style={{
+                            width: '100%',
+                            padding: '16px 20px',
+                            justifyContent: 'center',
+                            fontSize: 15,
+                            fontWeight: 800,
+                            gap: '10px',
+                            letterSpacing: '0.02em',
+                        }}
                     >
-                        {pdfLoading ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Download size={16} />}
-                        Tải vé PDF
+                        {pdfLoading ? <Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> : <Download size={18} />}
+                        {pdfLoading ? 'Đang tạo vé PDF…' : 'Tải vé PDF'}
                     </button>
                     <button
                         onClick={() => navigate('/home')}
                         className="btn btn-ghost"
                         style={{ width: '100%', padding: '14px 20px', justifyContent: 'center', fontSize: 14, gap: '8px' }}
                     >
-                        <Home size={16} /> Return to Home
+                        <Home size={16} /> Về trang chủ
                     </button>
                 </div>
             </div>
