@@ -17,7 +17,6 @@ import {
   Search,
   Loader2,
   RefreshCw,
-  UserCircle,
   CheckCircle,
   XCircle,
   UserPlus,
@@ -26,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Image,
+  Brain,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -46,6 +46,8 @@ import CinemaManagement from '../facilities/components/CinemaManagement';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
 import AdminShiftApprovalSection from './components/AdminShiftApprovalSection';
+import UsersSection from './components/UsersSection';
+import BusinessIntelligenceSection from './components/BusinessIntelligenceSection';
 import { useCinema } from '../../contexts/CinemaContext';
 
 // ============================================
@@ -69,20 +71,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
-
-const isAccountActive = (status: AdminUserDto['accountStatus']) => {
-  if (typeof status === 'number') return status === 1;
-  return status.toLowerCase() === 'active';
-};
-
-const getAccountStatusLabel = (status: AdminUserDto['accountStatus']) => {
-  if (isAccountActive(status)) return 'Active';
-  if (typeof status === 'string') return status;
-  if (status === 0) return 'Pending';
-  if (status === 2) return 'Banned';
-  return 'Locked';
-};
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts', 'business-intel']);
 
 const createFaceVectorFromImage = async (file: File): Promise<number[] | null> => {
   try {
@@ -322,256 +311,11 @@ const AdminOpsTiles: React.FC<{ data?: ManagementDashboardDto | null }> = ({ dat
   );
 };
 
-// ============================================
-// STATUS BADGE
-// ============================================
-const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
-  const color =
-    status === 'Active' || status === 'Success' ? 'var(--success)' :
-    status === 'Pending' || status === 'Pending' ? '#f59e0b' :
-    'var(--danger)';
-
-  const bg =
-    status === 'Active' || status === 'Success' ? 'rgba(34, 197, 94, 0.1)' :
-    status === 'Pending' ? 'rgba(245, 158, 11, 0.1)' :
-    'rgba(239, 68, 68, 0.1)';
-
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-      padding: '2px 10px', borderRadius: 999,
-      fontSize: 11, fontWeight: 600,
-      fontFamily: "'JetBrains Mono', monospace",
-      background: bg, color,
-    }}>
-      <span style={{ width: 5, height: 5, borderRadius: '50%', background: color }} />
-      {status}
-    </span>
-  );
-};
-
-const UserPortrait: React.FC<{ src?: string | null; name?: string; size?: number }> = ({ src, name, size = 32 }) => (
-  <div style={{
-    width: size,
-    height: size,
-    borderRadius: '50%',
-    overflow: 'hidden',
-    background: 'var(--accent-soft)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    border: '1px solid var(--border-color)',
-  }}>
-    {src ? (
-      <img
-        src={src}
-        alt={name ? `${name} portrait` : 'User portrait'}
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-      />
-    ) : (
-      <UserCircle size={Math.max(16, size * 0.52)} style={{ color: 'var(--accent)' }} />
-    )}
-  </div>
-);
-
 // Database-backed real Admin Page
 
 // ============================================
 // SECTION COMPONENTS
 // ============================================
-
-interface UsersSectionProps {
-  users: AdminUserDto[];
-  loading: boolean;
-  onEditUser: (user: AdminUserDto) => void;
-  onCreateUser: () => void;
-}
-
-const UsersSection: React.FC<UsersSectionProps> = ({
-  users,
-  loading,
-  onEditUser,
-  onCreateUser,
-}) => {
-  const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('');
-  const [sortOrder, setSortOrder] = useState('nameAsc');
-
-  const filteredAndSorted = useMemo(() => {
-    let result = users.filter(u => {
-      const email = (u.userEmail || '').toLowerCase();
-      const fullName = (u.fullName || '').toLowerCase();
-      const userName = (u.userName || '').toLowerCase();
-      const phone = (u.phoneNumber || '').toLowerCase();
-      const query = searchQuery.toLowerCase();
-      return email.includes(query) || fullName.includes(query) || userName.includes(query) || phone.includes(query);
-    });
-
-    if (roleFilter) {
-      result = result.filter(u => {
-        const roles = (u.userRoles || '').split(',').map(r => r.trim()).filter(Boolean);
-        if (roleFilter === 'Customer') {
-          return roles.includes('Customer') || roles.length === 0;
-        }
-        return roles.includes(roleFilter);
-      });
-    }
-
-    result.sort((a, b) => {
-      const nameA = (a.fullName || a.userName || '').trim().toLowerCase();
-      const nameB = (b.fullName || b.userName || '').trim().toLowerCase();
-      
-      if (sortOrder === 'nameAsc') {
-        return nameA.localeCompare(nameB, 'vi');
-      } else {
-        return nameB.localeCompare(nameA, 'vi');
-      }
-    });
-
-    return result;
-  }, [users, searchQuery, roleFilter, sortOrder]);
-
-  return (
-    <div className="animate-in">
-      {/* Header */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 16, marginBottom: 20 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('User Management')}</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0' }}>{t('Manage system users and their roles')}</p>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-          <div className="relative">
-            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="text"
-              placeholder={t('Search users...')}
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="input"
-              style={{ paddingLeft: 32, width: 200, height: 38 }}
-            />
-          </div>
-
-          <select
-            value={roleFilter}
-            onChange={e => setRoleFilter(e.target.value)}
-            className="input select"
-            style={{ width: 150, fontSize: 13, height: 38, minHeight: 0 }}
-          >
-            <option value="">{t('All Roles', 'Tất cả vai trò')}</option>
-            <option value="Admin">Admin</option>
-            <option value="Cashier">Cashier</option>
-            <option value="MovieManager">Movie Manager</option>
-            <option value="TheaterManager">Theater Manager</option>
-            <option value="FacilitiesManager">Facilities Manager</option>
-            <option value="Customer">Customer</option>
-          </select>
-
-          <select
-            value={sortOrder}
-            onChange={e => setSortOrder(e.target.value)}
-            className="input select"
-            style={{ width: 150, fontSize: 13, height: 38, minHeight: 0 }}
-          >
-            <option value="nameAsc">{t('Name: A to Z', 'Tên: A đến Z')}</option>
-            <option value="nameDesc">{t('Name: Z to A', 'Tên: Z đến A')}</option>
-          </select>
-
-          <button
-            onClick={onCreateUser}
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', height: 38 }}
-          >
-            <UserPlus size={16} />
-            {t('Add User')}
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="table-container">
-        {loading ? (
-          <div className="state-center" style={{ minHeight: '30vh' }}>
-            <Loader2 size={32} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-            <p style={{ fontSize: 13, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
-              {t('Loading users...')}
-            </p>
-          </div>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>{t('Name')}</th>
-                <th>{t('Email')}</th>
-                <th>{t('Role')}</th>
-                <th>{t('cinema')}</th>
-                <th>{t('Status')}</th>
-                <th style={{ width: 120 }}>{t('Actions')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSorted.map((user) => {
-                return (
-                <tr key={user.userId}>
-                  <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <UserPortrait src={user.portraitImageUrl} name={user.fullName || user.userName} />
-                      <span style={{ fontWeight: 600 }}>{user.fullName || user.userName || 'N/A'}</span>
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{user.userEmail}</td>
-                  <td>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {(user.userRoles || '').split(',').filter(Boolean).map((role, idx) => (
-                        <span key={idx} className={`badge ${role.trim() === 'Admin' ? 'badge-accent' : role.trim() === 'MovieManager' || role.trim() === 'TheaterManager' ? 'badge-warning' : 'badge-success'}`}>
-                          {role.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>
-                    {user.cinemaName || 'N/A'}
-                  </td>
-                  <td>
-                    <StatusBadge status={getAccountStatusLabel(user.accountStatus)} />
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button
-                        onClick={() => onEditUser(user)}
-                        className="btn"
-                        style={{
-                          padding: '4px 12px', fontSize: 12, height: 28, minHeight: 0,
-                          borderColor: 'var(--accent)', color: 'var(--accent)',
-                          background: 'var(--accent-soft)',
-                          fontWeight: 700
-                        }}
-                      >
-                        Sửa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                );
-              })}
-              {filteredAndSorted.length === 0 && (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
-                    {t('No users found.')}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        )}
-      </div>
-    </div>
-  );
-};
-
-
 
 interface AuditSectionProps {
   auditLogs: AuditLogDto[];
@@ -1275,6 +1019,7 @@ const AdminPage: React.FC = () => {
     {
       items: [
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
+        { id: 'business-intel', label: t('adminBi.sidebar', 'Phân tích KD'), icon: <Brain size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
         { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
@@ -1447,11 +1192,15 @@ const AdminPage: React.FC = () => {
           </div>
         );
 
+      case 'business-intel':
+        return <BusinessIntelligenceSection />;
+
       case 'users':
         return (
           <UsersSection
             users={users}
             loading={usersLoading}
+            cinemas={cinemas}
             onEditUser={handleOpenEditModal}
             onCreateUser={handleOpenCreateUser}
           />

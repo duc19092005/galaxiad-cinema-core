@@ -1,169 +1,311 @@
-import React, { useState } from 'react';
-import { BarChart3, Download, Calendar, TrendingUp, TrendingDown } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  BarChart3,
+  Building2,
+  Loader2,
+  Monitor,
+  RefreshCw,
+  Users,
+} from 'lucide-react';
 import { useTheme } from '../../../contexts/ThemeContext';
+import { useCinema } from '../../../contexts/CinemaContext';
+import { facilitiesApi } from '../../../api/facilitiesApi';
+import type { Auditorium, Cinema } from '../../../types/facilities.types';
 
-const SeatReport: React.FC = () => {
+interface SeatReportProps {
+  /** When set, report focuses on this cinema; otherwise uses active cinema or all managed cinemas. */
+  cinemaId?: string | null;
+  cinemaName?: string | null;
+}
+
+const SeatReport: React.FC<SeatReportProps> = ({ cinemaId, cinemaName }) => {
   const { theme } = useTheme();
-  const [selectedPeriod, setSelectedPeriod] = useState('month');
+  const { activeCinemaId, activeCinemaName, managedCinemas } = useCinema();
+  const [cinemas, setCinemas] = useState<Cinema[]>([]);
+  const [auditoriums, setAuditoriums] = useState<Auditorium[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const isDark = theme === 'dark';
   const isModern = theme === 'modern';
 
-  const reports = [
-    { id: 1, period: 'Tháng 12/2024', totalSeats: 5000, availableSeats: 3500, occupiedSeats: 1500, utilizationRate: 30, status: 'good' },
-    { id: 2, period: 'Tháng 11/2024', totalSeats: 5000, availableSeats: 2800, occupiedSeats: 2200, utilizationRate: 44, status: 'good' },
-    { id: 3, period: 'Tháng 10/2024', totalSeats: 5000, availableSeats: 3200, occupiedSeats: 1800, utilizationRate: 36, status: 'warning' },
-  ];
-  const currentReport = reports[0];
+  const resolvedCinemaId = cinemaId || activeCinemaId || null;
+  const resolvedCinemaName =
+    cinemaName ||
+    activeCinemaName ||
+    managedCinemas.find((c) => c.cinemaId === resolvedCinemaId)?.cinemaName ||
+    null;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const cinemaRes = await facilitiesApi.getCinemaList();
+      const cinemaList = cinemaRes.data || [];
+      setCinemas(cinemaList);
+
+      if (resolvedCinemaId) {
+        const audRes = await facilitiesApi.getAuditoriumsByCinema(resolvedCinemaId);
+        setAuditoriums(audRes.data || []);
+      } else {
+        // Admin / no selection: aggregate auditoriums for all listed cinemas
+        const all = await Promise.all(
+          cinemaList.map(async (c) => {
+            try {
+              const res = await facilitiesApi.getAuditoriumsByCinema(c.cinemaId);
+              return res.data || [];
+            } catch {
+              return [] as Auditorium[];
+            }
+          }),
+        );
+        setAuditoriums(all.flat());
+      }
+    } catch {
+      setError('Không thể tải dữ liệu ghế / phòng chiếu từ máy chủ.');
+      setCinemas([]);
+      setAuditoriums([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [resolvedCinemaId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const scopedCinemas = useMemo(() => {
+    if (resolvedCinemaId) {
+      return cinemas.filter((c) => c.cinemaId === resolvedCinemaId);
+    }
+    return cinemas;
+  }, [cinemas, resolvedCinemaId]);
+
+  const totalRoomsFromCinemas = scopedCinemas.reduce(
+    (sum, c) => sum + (c.totalRooms || 0),
+    0,
+  );
+  const totalSeatsFromCinemas = scopedCinemas.reduce(
+    (sum, c) => sum + (c.totalSeats ?? 0),
+    0,
+  );
+  const totalSeatsFromAuditoriums = auditoriums.reduce(
+    (sum, a) => sum + (a.totalSeats || 0),
+    0,
+  );
+  // Prefer seat sum from auditorium list (detailed); fall back to cinema aggregate
+  const totalSeats =
+    totalSeatsFromAuditoriums > 0 ? totalSeatsFromAuditoriums : totalSeatsFromCinemas;
+  const totalRooms =
+    auditoriums.length > 0 ? auditoriums.length : totalRoomsFromCinemas;
+  const avgSeatsPerRoom =
+    totalRooms > 0 ? Math.round(totalSeats / totalRooms) : 0;
+  const roomsWithSeats = auditoriums.filter((a) => (a.totalSeats || 0) > 0).length;
+
+  const cardClass = isDark
+    ? 'bg-[#1a1a20] border-[#2e2e38]'
+    : isModern
+      ? 'bg-[rgba(15,23,42,0.5)] border-[rgba(99,102,241,0.1)] backdrop-blur-sm'
+      : 'bg-white border-gray-200';
+
+  if (loading) {
+    return (
+      <div className="state-center" style={{ minHeight: 280 }}>
+        <Loader2 size={28} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
+        <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Đang tải báo cáo ghế…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`rounded-xl p-8 border text-center ${cardClass}`}>
+        <AlertCircle size={32} className="mx-auto mb-3" style={{ color: 'var(--danger)' }} />
+        <p style={{ color: 'var(--text-secondary)', marginBottom: 12 }}>{error}</p>
+        <button type="button" className="btn btn-secondary" onClick={load}>
+          <RefreshCw size={14} /> Thử lại
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className={`text-2xl font-extrabold mb-1 border-l-4 pl-4`}
-              style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}>
-            Báo Cáo Ghế
+          <h1
+            className="text-2xl font-extrabold mb-1 border-l-4 pl-4"
+            style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}
+          >
+            Báo cáo ghế (sức chứa)
           </h1>
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            Theo dõi và phân tích tình trạng sử dụng ghế
+            Dữ liệu thật từ phòng chiếu
+            {resolvedCinemaName ? ` · ${resolvedCinemaName}` : ' · tất cả rạp được gán'}
           </p>
         </div>
-        <div className="flex gap-2">
-          <select
-            value={selectedPeriod}
-            onChange={(e) => setSelectedPeriod(e.target.value)}
-            className="input h-9 text-xs cursor-pointer select"
-          >
-            <option value="week" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Tuần này</option>
-            <option value="month" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Tháng này</option>
-            <option value="quarter" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Quý này</option>
-            <option value="year" style={{ backgroundColor: 'var(--bg-surface)', color: 'var(--text-primary)' }}>Năm nay</option>
-          </select>
-          <button
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-[0.97]"
-            style={{ background: 'var(--primary)', color: '#000' }}
-          >
-            <Download className="w-4 h-4" />
-            Xuất Báo Cáo
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={load}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all active:scale-[0.97]"
+          style={{ background: 'var(--primary)', color: '#000' }}
+        >
+          <RefreshCw className="w-4 h-4" />
+          Làm mới
+        </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Real capacity stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Tổng số ghế', value: currentReport.totalSeats.toLocaleString(), sub: 'Tất cả các rạp', icon: <BarChart3 size={20} style={{ color: 'var(--primary)' }} />, change: null },
-          { label: 'Ghế trống', value: currentReport.availableSeats.toLocaleString(), sub: '+5% so với tháng trước', icon: <TrendingUp size={20} style={{ color: '#22c55e' }} />, change: 'up' },
-          { label: 'Ghế đã sử dụng', value: currentReport.occupiedSeats.toLocaleString(), sub: '-2% so với tháng trước', icon: <TrendingDown size={20} style={{ color: '#ef4444' }} />, change: 'down' },
-          { label: 'Tỷ lệ sử dụng', value: `${currentReport.utilizationRate}%`, sub: null, icon: <Calendar size={20} style={{ color: 'var(--text-muted)', opacity: 0.6 }} />, change: null },
-        ].map((item, idx) => (
-          <div key={idx}
-            className={`rounded-xl p-5 border ${isDark ? 'bg-[#1a1a20] border-[#2e2e38]' : isModern ? 'bg-[rgba(15,23,42,0.5)] border-[rgba(99,102,241,0.1)] backdrop-blur-sm' : 'bg-white border-gray-200'}`}
-          >
+          {
+            label: 'Tổng số ghế',
+            value: totalSeats.toLocaleString('vi-VN'),
+            sub: resolvedCinemaName ? 'Theo rạp đang chọn' : 'Tổng các rạp trong phạm vi',
+            icon: <Users size={20} style={{ color: 'var(--primary)' }} />,
+          },
+          {
+            label: 'Phòng chiếu',
+            value: totalRooms.toLocaleString('vi-VN'),
+            sub: `${roomsWithSeats} phòng đã có sơ đồ ghế`,
+            icon: <Monitor size={20} style={{ color: '#3b82f6' }} />,
+          },
+          {
+            label: 'TB ghế / phòng',
+            value: avgSeatsPerRoom.toLocaleString('vi-VN'),
+            sub: totalRooms === 0 ? 'Chưa có phòng' : 'Tính từ dữ liệu hiện tại',
+            icon: <BarChart3 size={20} style={{ color: '#22c55e' }} />,
+          },
+          {
+            label: 'Cụm rạp',
+            value: String(scopedCinemas.length || (resolvedCinemaId ? 1 : 0)),
+            sub: 'Trong phạm vi báo cáo',
+            icon: <Building2 size={20} style={{ color: 'var(--text-muted)' }} />,
+          },
+        ].map((item) => (
+          <div key={item.label} className={`rounded-xl p-5 border ${cardClass}`}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.label}</span>
-              <div className={`p-2 rounded-lg ${isModern ? 'bg-[rgba(99,102,241,0.1)]' : 'bg-[rgba(255,138,0,0.08)]'}`}>{item.icon}</div>
+              <div className={`p-2 rounded-lg ${isModern ? 'bg-[rgba(99,102,241,0.1)]' : 'bg-[rgba(255,138,0,0.08)]'}`}>
+                {item.icon}
+              </div>
             </div>
             <p className={`text-2xl font-extrabold mb-1 ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
               {item.value}
             </p>
-            {item.sub && (
-              <p className="text-xs" style={{ color: idx === 1 ? '#22c55e' : idx === 2 ? '#ef4444' : 'var(--text-muted)' }}>
-                {item.sub}
-              </p>
-            )}
-            {idx === 3 && (
-              <div className={`w-full rounded-full h-2 mt-3 ${isDark ? 'bg-[#2e2e38]' : 'bg-gray-200'}`}>
-                <div className="h-2 rounded-full transition-all" style={{ width: `${currentReport.utilizationRate}%`, background: 'var(--primary)' }} />
-              </div>
-            )}
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{item.sub}</p>
           </div>
         ))}
       </div>
 
-      {/* Historical Reports */}
-      <div className={`rounded-xl p-6 border ${isDark ? 'bg-[#1a1a20] border-[#2e2e38]' : isModern ? 'bg-[rgba(15,23,42,0.5)] border-[rgba(99,102,241,0.1)] backdrop-blur-sm' : 'bg-white border-gray-200'}`}>
-        <h2 className={`text-lg font-bold mb-5 border-l-4 pl-4`}
-            style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}>
-          Lịch Sử Báo Cáo
-        </h2>
-        <div className="space-y-3">
-          {reports.map((report) => (
-            <div key={report.id}
-              className={`flex flex-col lg:flex-row lg:items-center justify-between p-5 rounded-2xl border transition-all duration-200 ${
-                isDark
-                  ? 'bg-[#131316] border-[#2e2e38] hover:border-[rgba(255,138,0,0.2)]'
-                  : isModern
-                    ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)] hover:border-[rgba(99,102,241,0.2)]'
-                    : 'bg-white border-gray-100 hover:border-orange-300 shadow-sm hover:shadow-md'
-              }`}
-            >
-              <div className="flex-1">
-                <div className="flex items-center gap-4 mb-3 lg:mb-0">
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                    isModern ? 'bg-[rgba(99,102,241,0.1)]' : 'bg-[rgba(255,138,0,0.1)]'
-                  }`}>
-                    <Calendar className="w-5 h-5" style={{ color: 'var(--primary)' }} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-3">
-                      <h3 className={`font-bold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
-                        {report.period}
-                      </h3>
-                      {report.status === 'warning' && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest bg-amber-500/10 text-amber-500 border border-amber-500/20">
-                          Cần Chú Ý
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1">
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Tổng: <strong className={isDark || isModern ? 'text-gray-300' : 'text-gray-700'}>{report.totalSeats.toLocaleString()}</strong>
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Đã dùng: <strong className={isDark || isModern ? 'text-gray-300' : 'text-gray-700'}>{report.occupiedSeats.toLocaleString()}</strong>
-                      </span>
-                      <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        Hiệu suất: <strong className={report.utilizationRate > 40 ? 'text-emerald-500' : 'text-amber-500'}>{report.utilizationRate}%</strong>
-                      </span>
-                    </div>
-                  </div>
+      {/* Per-cinema capacity (when viewing all) */}
+      {!resolvedCinemaId && scopedCinemas.length > 0 && (
+        <div className={`rounded-xl p-6 border ${cardClass}`}>
+          <h2
+            className="text-lg font-bold mb-5 border-l-4 pl-4"
+            style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}
+          >
+            Sức chứa theo rạp
+          </h2>
+          <div className="space-y-3">
+            {scopedCinemas.map((cinema) => (
+              <div
+                key={cinema.cinemaId}
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border ${
+                  isDark ? 'bg-[#131316] border-[#2e2e38]' : isModern ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)]' : 'bg-gray-50 border-gray-100'
+                }`}
+              >
+                <div>
+                  <p className={`font-bold text-sm ${isDark || isModern ? 'text-white' : 'text-gray-900'}`}>
+                    {cinema.cinemaName}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {cinema.cinemaCity || cinema.cinemaLocation}
+                  </p>
+                </div>
+                <div className="flex gap-6 mt-2 sm:mt-0 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  <span>
+                    Phòng: <strong>{cinema.totalRooms || 0}</strong>
+                  </span>
+                  <span>
+                    Ghế: <strong>{(cinema.totalSeats ?? 0).toLocaleString('vi-VN')}</strong>
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 self-end lg:self-center">
-                <button
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all"
-                  style={{
-                    background: isModern ? 'rgba(99,102,241,0.1)' : 'var(--bg-elevated)',
-                    color: 'var(--text-secondary)',
-                    border: `1px solid ${isModern ? 'rgba(99,102,241,0.15)' : 'var(--border-color)'}`,
-                  }}
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  Tải Xuống
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Chart Placeholder */}
-      <div className={`rounded-xl p-6 border ${isDark ? 'bg-[#1a1a20] border-[#2e2e38]' : isModern ? 'bg-[rgba(15,23,42,0.5)] border-[rgba(99,102,241,0.1)] backdrop-blur-sm' : 'bg-white border-gray-200'}`}>
-        <h2 className={`text-lg font-bold mb-5 border-l-4 pl-4`}
-            style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}>
-          Biểu Đồ Sử Dụng Ghế
-        </h2>
-        <div className={`h-64 flex items-center justify-center rounded-lg border ${isDark ? 'bg-[#131316] border-[#2e2e38]' : isModern ? 'bg-[rgba(15,23,42,0.3)] border-[rgba(99,102,241,0.08)]' : 'bg-gray-50 border-gray-200'}`}>
-          <div className="text-center">
-            <BarChart3 className="w-12 h-12 mx-auto mb-2" style={{ color: 'var(--text-muted)', opacity: 0.3 }} />
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-              Biểu đồ sẽ được hiển thị ở đây
-            </p>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Per-auditorium breakdown */}
+      <div className={`rounded-xl p-6 border ${cardClass}`}>
+        <h2
+          className="text-lg font-bold mb-5 border-l-4 pl-4"
+          style={{ borderColor: 'var(--primary)', color: isDark || isModern ? 'var(--text-primary)' : '#09090b' }}
+        >
+          Chi tiết theo phòng chiếu
+        </h2>
+        {auditoriums.length === 0 ? (
+          <div className="text-center py-10" style={{ color: 'var(--text-muted)' }}>
+            <Monitor size={40} className="mx-auto mb-3 opacity-40" />
+            <p className="text-sm">Chưa có phòng chiếu hoặc chưa gán rạp.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ color: 'var(--text-muted)', textAlign: 'left' }}>
+                  <th className="pb-3 font-semibold">Phòng</th>
+                  <th className="pb-3 font-semibold">Rạp</th>
+                  <th className="pb-3 font-semibold">Định dạng</th>
+                  <th className="pb-3 font-semibold text-right">Số ghế</th>
+                </tr>
+              </thead>
+              <tbody>
+                {auditoriums
+                  .slice()
+                  .sort((a, b) => (b.totalSeats || 0) - (a.totalSeats || 0))
+                  .map((aud) => (
+                    <tr
+                      key={aud.auditoriumId}
+                      className="border-t"
+                      style={{ borderColor: 'var(--border-color)' }}
+                    >
+                      <td className="py-3 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                        {aud.auditoriumNumber}
+                      </td>
+                      <td className="py-3" style={{ color: 'var(--text-secondary)' }}>
+                        {aud.cinemaName || '—'}
+                      </td>
+                      <td className="py-3" style={{ color: 'var(--text-secondary)' }}>
+                        {(aud.formatInfos || []).map((f) => f.formatName).join(', ') || '—'}
+                      </td>
+                      <td className="py-3 text-right font-bold" style={{ color: 'var(--text-primary)' }}>
+                        {(aud.totalSeats || 0).toLocaleString('vi-VN')}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t" style={{ borderColor: 'var(--border-color)' }}>
+                  <td colSpan={3} className="pt-3 font-bold" style={{ color: 'var(--text-secondary)' }}>
+                    Tổng
+                  </td>
+                  <td className="pt-3 text-right font-black" style={{ color: 'var(--accent)' }}>
+                    {totalSeats.toLocaleString('vi-VN')}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        )}
       </div>
+
+      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        * Báo cáo hiển thị <strong>sức chứa ghế cấu hình</strong> (inventory) từ hệ thống.
+        Tỷ lệ lấp đầy theo lịch sử bán vé chưa có API riêng nên không hiển thị số ảo.
+      </p>
     </div>
   );
 };

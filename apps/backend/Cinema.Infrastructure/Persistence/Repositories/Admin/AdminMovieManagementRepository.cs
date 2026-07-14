@@ -51,6 +51,7 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 TrailerUrl = x.TrailerUrl,
                 Director = x.Director,
                 Actors = x.Actors,
+                MovieRequiredAgeId = x.MovieRequiredAgeId,
                 MovieRequiredAgeSymbol = x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
                 MovieManagerName = x.MovieManager != null ? x.MovieManager.UserName : "Chưa có"
             })
@@ -92,6 +93,7 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 TrailerUrl = m.TrailerUrl,
                 Director = m.Director,
                 Actors = m.Actors,
+                MovieRequiredAgeId = m.MovieRequiredAgeId,
                 MovieRequiredAgeSymbol = m.MovieRequiredAgeEntity.MovieRequiredAgeSymbol.Trim(),
                 MovieManagerName = m.MovieManager != null ? m.MovieManager.UserName : "Chưa có"
             })

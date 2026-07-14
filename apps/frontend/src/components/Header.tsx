@@ -125,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({
       case 'Admin': return '/admin';
       case 'MovieManager': return '/movie-manager';
       case 'TheaterManager': return '/theater-manager';
-      case 'FacilitiesManager': return '/facilities-manager';
+      case 'FacilitiesManager': return '/facilities-manager/dashboard';
       case 'Cashier': return user?.isSharedPosAccount ? '/cashier' : '/staff';
       default: return null;
     }

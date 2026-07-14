@@ -300,16 +300,21 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
         }
       }
 
-      // 3. Cinema assignment for managers (updating TheaterManager / FacilitiesManager links on the Cinema object itself)
-      if (cinemaChanged && selectedCinemaId) {
-        const hasManagerRole = currentRoleList.some(r => r.roleName === 'TheaterManager' || r.roleName === 'FacilitiesManager');
-        if (hasManagerRole) {
-          try {
-            await adminApi.assignTheaterManager(selectedCinemaId, user.userId);
-            anySuccess = true;
-          } catch (err) {
-            errors.push(t('editEmployee.assignManagerError', { error: getApiError(err, t('editEmployee.unknownError')) }));
-          }
+      // 3. Cinema assignment for managers (TheaterManager / FacilitiesManager FKs on Cinema).
+      // Call when cinema changes OR manager role is newly granted (not only cinemaChanged).
+      const selectedRoles = allRoles.filter(r => selectedRoleIds.includes(r.roleId));
+      const hasManagerRole = selectedRoles.some(r => r.roleName === 'TheaterManager' || r.roleName === 'FacilitiesManager');
+      const hadManagerRole = initialRoleIds.some(id => {
+        const role = allRoles.find(r => r.roleId === id);
+        return role?.roleName === 'TheaterManager' || role?.roleName === 'FacilitiesManager';
+      });
+      const managerRoleGranted = hasManagerRole && (!hadManagerRole || rolesChanged);
+      if (selectedCinemaId && hasManagerRole && (cinemaChanged || managerRoleGranted)) {
+        try {
+          await adminApi.assignTheaterManager(selectedCinemaId, user.userId);
+          anySuccess = true;
+        } catch (err) {
+          errors.push(t('editEmployee.assignManagerError', { error: getApiError(err, t('editEmployee.unknownError')) }));
         }
       }
 

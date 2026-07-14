@@ -1,8 +1,8 @@
 // src/features/facilities/FacilitiesManagerPage.tsx
-// Complete redesign with dark cinema theme
+// Facilities manager with feature routes: /facilities-manager/:tab
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertCircle, Loader2,
   LayoutDashboard, Building2, BarChart3, Monitor,
@@ -23,11 +23,14 @@ import LogoutModal from '../../components/LogoutModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import Cookies from 'js-cookie';
 
+const FACILITIES_TABS = new Set(['dashboard', 'auditoriums', 'seat-reports']);
+
 const FacilitiesManagerPage: React.FC = () => {
   const navigate = useNavigate();
+  const { tab } = useParams<{ tab?: string }>();
+  const activeTab = tab && FACILITIES_TABS.has(tab) ? tab : 'dashboard';
 
   const { managedCinemas, activeCinemaId, activeCinemaName, setActiveCinemaId, loading: cinemaContextLoading } = useCinema();
-  const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,52 +39,66 @@ const FacilitiesManagerPage: React.FC = () => {
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const storedUser = localStorage.getItem('user_info');
   const userRoles = storedUser ? JSON.parse(storedUser).roles || [] : [];
   const { t } = useTranslation();
   const isAdmin = userRoles.includes('Admin');
 
+  // Normalize unknown / missing tab → /facilities-manager/dashboard
   useEffect(() => {
-    const handleClickOutside = (_event: MouseEvent) => {
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    if (!tab || !FACILITIES_TABS.has(tab)) {
+      navigate('/facilities-manager/dashboard', { replace: true });
+    }
+  }, [tab, navigate]);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user_info');
-    if (!storedUser) { navigate('/login'); return; }
+    const stored = localStorage.getItem('user_info');
+    if (!stored) { navigate('/login'); return; }
     try {
-      const parsed = JSON.parse(storedUser) as { username: string; roles?: string[]; selectedRole?: string };
+      const parsed = JSON.parse(stored) as { username: string; roles?: string[]; selectedRole?: string };
       const roles = parsed.roles || [];
-      if (!roles.includes('FacilitiesManager') && !roles.includes('Admin')) { navigate('/role-selection'); return; }
-      setUser(parsed);
+      if (!roles.includes('FacilitiesManager') && !roles.includes('Admin')) {
+        navigate('/role-selection');
+        return;
+      }
       fetchCinemas();
-    } catch { navigate('/login'); }
+    } catch {
+      navigate('/login');
+    }
   }, [navigate]);
 
   useEffect(() => {
-    if (activeTab === 'cinemas' && cinemas.length === 0 && !loading) fetchCinemas();
+    if (activeTab === 'auditoriums' && cinemas.length === 0 && !loading) fetchCinemas();
   }, [activeTab]);
 
   const fetchCinemas = async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
       const res = await facilitiesApi.getCinemaList();
       setCinemas(res.data || []);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
         const data = err.response.data as ApiErrorResponse;
-        if (data.statusCode === 401) { localStorage.removeItem('user_info'); Cookies.remove('X-Access-Token'); navigate('/login'); return; }
+        if (data.statusCode === 401) {
+          localStorage.removeItem('user_info');
+          Cookies.remove('X-Access-Token');
+          navigate('/login');
+          return;
+        }
         setError(data.message || 'Cannot load cinemas list.');
-      } else { setError('Cannot connect to server.'); }
-    } finally { setLoading(false); }
+      } else {
+        setError('Cannot connect to server.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogoutConfirm = async () => {
-    setLogoutError(null); setLogoutLoading(true);
+    setLogoutError(null);
+    setLogoutLoading(true);
     try {
       await authApi.logout();
       localStorage.removeItem('user_info');
@@ -91,28 +108,36 @@ const FacilitiesManagerPage: React.FC = () => {
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
         setLogoutError((error.response.data as ApiErrorResponse).message || 'Logout failed.');
-      } else { setLogoutError('Unable to connect to server.'); }
-    } finally { setLogoutLoading(false); }
+      } else {
+        setLogoutError('Unable to connect to server.');
+      }
+    } finally {
+      setLogoutLoading(false);
+    }
+  };
+
+  const handleTabChange = (nextTab: string) => {
+    navigate(`/facilities-manager/${nextTab}`);
   };
 
   const sidebarSections: SidebarSection[] = [
     {
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-        { id: 'auditoriums', label: 'Auditoriums', icon: <Monitor size={18} /> },
-        { id: 'seat-reports', label: 'Seat Reports', icon: <BarChart3 size={18} /> },
+        { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={18} /> },
+        { id: 'auditoriums', label: t('sidebar.auditoriums', 'Phòng chiếu'), icon: <Monitor size={18} /> },
+        { id: 'seat-reports', label: t('sidebar.seatReports', 'Báo cáo ghế'), icon: <BarChart3 size={18} /> },
       ],
     },
   ];
 
   const renderContent = () => {
-    const isAdmin = user?.roles?.includes('Admin') ?? false;
-
     if (cinemaContextLoading) {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Loading Cinema Context...</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+            Loading Cinema Context...
+          </span>
         </div>
       );
     }
@@ -121,7 +146,9 @@ const FacilitiesManagerPage: React.FC = () => {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <AlertCircle size={40} style={{ color: 'var(--danger)' }} />
-          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '12px 0 4px' }}>Access Restricted</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', margin: '12px 0 4px' }}>
+            Access Restricted
+          </h2>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', maxWidth: 400 }}>
             {t('facilitiesManager.noCinemaAssigned')}
           </p>
@@ -133,13 +160,16 @@ const FacilitiesManagerPage: React.FC = () => {
       return (
         <div className="state-center" style={{ minHeight: 200 }}>
           <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>Initializing Cinema Selection...</span>
+          <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>
+            Initializing Cinema Selection...
+          </span>
         </div>
       );
     }
 
     switch (activeTab) {
-      case 'dashboard': return <ManagementDashboard role="facilities" />;
+      case 'dashboard':
+        return <ManagementDashboard role="facilities" />;
       case 'auditoriums':
         return activeCinemaId ? (
           <AuditoriumListView cinemaId={activeCinemaId} cinemaName={activeCinemaName || ''} />
@@ -147,12 +177,21 @@ const FacilitiesManagerPage: React.FC = () => {
           <div className="state-center" style={{ minHeight: 160 }}>
             <Building2 size={40} style={{ color: 'var(--text-muted)', opacity: 0.4 }} />
             <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 8 }}>
-              {isAdmin ? 'Please select a cinema from the top-right selector.' : 'No cinema assigned. Please contact an admin.'}
+              {isAdmin
+                ? 'Please select a cinema from the top-right selector.'
+                : 'No cinema assigned. Please contact an admin.'}
             </p>
           </div>
         );
-      case 'seat-reports': return <SeatReport />;
-      default: return <ManagementDashboard role="facilities" />;
+      case 'seat-reports':
+        return (
+          <SeatReport
+            cinemaId={activeCinemaId}
+            cinemaName={activeCinemaName}
+          />
+        );
+      default:
+        return <ManagementDashboard role="facilities" />;
     }
   };
 
@@ -162,7 +201,7 @@ const FacilitiesManagerPage: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((open) => !open)}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
         sections={sidebarSections}
         role="Facilities Manager"
         collapsibleDesktop

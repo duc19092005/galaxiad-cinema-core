@@ -25,7 +25,7 @@ public class CinemaRepository : ICinemaRepository
 
     public async Task<List<ResFacilitiesManagerCinema>> GetAllCinemasAsync(Guid userId, bool isAdmin, bool isFacilitiesManager, bool isTheaterManager)
     {
-        var query = _dbContext.Set<CinemaInfoEntity>().AsQueryable();
+        var query = _dbContext.Set<CinemaInfoEntity>().Where(x => !x.IsDeleted);
 
         if (!isAdmin)
         {
@@ -35,24 +35,34 @@ public class CinemaRepository : ICinemaRepository
             );
         }
 
-        return await query.Select(x => new ResFacilitiesManagerCinema
-        {
-            CinemaId = x.CinemaId,
-            CinemaLocation = x.CinemaLocation,
-            CinemaDescription = x.CinemaDescription,
-            CinemaName = x.CinemaName,
-            CinemaHotlineNumber = x.CinemaHotLineNumber,
-            Latitude = x.Latitude,
-            Longitude = x.Longitude,
-            TotalRooms = x.AuditoriumInfoEntities.Count(a => !a.IsDeleted),
-            TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
-            FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
-        }).ToListAsync();
+        return await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new ResFacilitiesManagerCinema
+            {
+                CinemaId = x.CinemaId,
+                CinemaLocation = x.CinemaLocation,
+                CinemaDescription = x.CinemaDescription,
+                CinemaName = x.CinemaName,
+                CinemaHotlineNumber = x.CinemaHotLineNumber,
+                CinemaCity = x.CinemaCity,
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
+                TotalRooms = x.AuditoriumInfoEntities.Count(a => !a.IsDeleted),
+                TotalSeats = x.AuditoriumInfoEntities
+                    .Where(a => !a.IsDeleted)
+                    .SelectMany(a => a.SeatsInfoEntity)
+                    .Count(),
+                IsActive = x.IsActive,
+                CreatedAt = x.CreatedAt,
+                TheaterManagerId = x.TheaterManagerId,
+                TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
+                FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
+            }).ToListAsync();
     }
 
     public async Task<ResFacilitiesManagerCinema?> GetCinemaByIdAsync(Guid id, Guid userId, bool isAdmin, bool isFacilitiesManager, bool isTheaterManager)
     {
-        var query = _dbContext.Set<CinemaInfoEntity>().Where(x => x.CinemaId == id);
+        var query = _dbContext.Set<CinemaInfoEntity>().Where(x => x.CinemaId == id && !x.IsDeleted);
 
         if (!isAdmin)
         {
@@ -69,9 +79,17 @@ public class CinemaRepository : ICinemaRepository
             CinemaDescription = x.CinemaDescription,
             CinemaLocation = x.CinemaLocation,
             CinemaHotlineNumber = x.CinemaHotLineNumber,
+            CinemaCity = x.CinemaCity,
             Latitude = x.Latitude,
             Longitude = x.Longitude,
             TotalRooms = x.AuditoriumInfoEntities.Count(a => !a.IsDeleted),
+            TotalSeats = x.AuditoriumInfoEntities
+                .Where(a => !a.IsDeleted)
+                .SelectMany(a => a.SeatsInfoEntity)
+                .Count(),
+            IsActive = x.IsActive,
+            CreatedAt = x.CreatedAt,
+            TheaterManagerId = x.TheaterManagerId,
             TheaterManagerName = x.TheaterManager != null ? x.TheaterManager.UserName ?? "Chưa có" : "Chưa có",
             FacilitiesManagerName = x.FacilitiesManager != null ? x.FacilitiesManager.UserName ?? "Chưa có" : "Chưa có"
         }).FirstOrDefaultAsync();

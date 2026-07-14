@@ -96,6 +96,10 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                             { icon: <Calendar size={14} />, label: t('movieManager.startDate'), value: formatDate(movie.startedDate) },
                             { icon: <Calendar size={14} />, label: t('movieManager.endDate'), value: formatDate(movie.endedDate) },
                             {
+                                icon: <Tag size={14} />, label: t('movieManager.requiredAgeRating'),
+                                value: movie.movieRequiredAgeSymbol || 'N/A',
+                            },
+                            {
                                 icon: <Tag size={14} />, label: t('movieManager.formats'),
                                 value: (movie.movieVisualFormatInfos || []).join(', ') || 'N/A',
                             },
@@ -715,7 +719,10 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         movieGenreIds: genres
             .filter((g: MovieGenre) => (movie.movieGenresInfos || []).includes(g.movieGenreName))
             .map((g: MovieGenre) => g.movieGenreId),
-        movieRequiredAgeId: requiredAges.find((a: MovieRequiredAge) => (movie.movieVisualFormatInfos || []).some((info: string) => info.includes(a.movieRequiredAgeSymbol)))?.movieRequiredAgeSymbolId || '00000000-0000-0000-0000-000000000000',
+        movieRequiredAgeId:
+            movie.movieRequiredAgeId
+            || requiredAges.find((a: MovieRequiredAge) => a.movieRequiredAgeSymbol === movie.movieRequiredAgeSymbol)?.movieRequiredAgeSymbolId
+            || '00000000-0000-0000-0000-000000000000',
         trailerUrl: movie.trailerUrl || '',
         director: movie.director || '',
         actors: movie.actors || '',

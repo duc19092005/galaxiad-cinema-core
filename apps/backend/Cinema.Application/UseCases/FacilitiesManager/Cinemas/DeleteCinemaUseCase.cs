@@ -47,6 +47,15 @@ public class DeleteCinemaUseCase
                     StatusCodes.Status404NotFound, "C01");
             }
 
+            var hasBookedBookings = await _repository.HasBookedBookingForCinemaAsync(itemId);
+            if (hasBookedBookings)
+            {
+                throw new AppException(
+                    Messages.Cinema.CannotDeleteActiveBookings,
+                    StatusCodes.Status409Conflict,
+                    "C03");
+            }
+
             findCinema.IsDeleted = true;
             findCinema.DeletedAt = DateTime.UtcNow;
             findCinema.DeletedByUserId = userId;

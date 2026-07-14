@@ -325,10 +325,12 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
         }
         .home-hero-shell {
           position: relative;
-          /* Reserve header height so banner image lives fully below fixed header */
+          /* Header + tall ~16:9 stage so banner cover fills the frame */
           --hero-header-offset: 72px;
-          min-height: calc(var(--hero-header-offset) + clamp(420px, 46vw, 580px));
-          max-height: 88vh;
+          --hero-stage-h: max(520px, min(56.25vw, 760px, calc(92vh - 72px)));
+          height: calc(var(--hero-header-offset) + var(--hero-stage-h));
+          min-height: calc(var(--hero-header-offset) + 520px);
+          max-height: 96vh;
           display: flex;
           align-items: stretch;
           overflow: hidden;
@@ -339,23 +341,23 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           inset: 0;
           z-index: 0;
           overflow: hidden;
-          background: #1c1612;
+          background: #120f0d;
         }
-        /* Blur fill: same photo, full shell — NO solid black letterbox */
+        /* Soft fill if image edges need blend */
         .home-hero-bg-fill {
           position: absolute;
-          inset: -16%;
-          width: 132%;
-          height: 132%;
+          inset: 0;
+          width: 100%;
+          height: 100%;
           object-fit: cover;
           object-position: center center;
           display: block;
-          filter: blur(40px) saturate(1.35) brightness(0.62);
-          transform: scale(1.15);
+          filter: blur(24px) saturate(1.15) brightness(0.45);
+          transform: scale(1.04);
           pointer-events: none;
           user-select: none;
         }
-        /* Stage starts UNDER header — image never covered by header */
+        /* Stage under header — full width × tall height */
         .home-hero-stage {
           position: absolute;
           top: var(--hero-header-offset);
@@ -363,23 +365,18 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           right: 0;
           bottom: 0;
           z-index: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
           overflow: hidden;
         }
-        /* Full banner content, fit inside stage only */
+        /* Cover full stage (no letterbox); taller shell = less crop zoom */
         .home-hero-bg-main {
           width: 100%;
           height: 100%;
-          max-width: 100%;
-          max-height: 100%;
-          object-fit: contain;
+          object-fit: cover;
           object-position: center center;
           display: block;
-          filter: saturate(1.06) brightness(0.96);
-          transition: opacity 0.25s ease;
-          animation: homeBgSlide 0.25s ease-out both;
+          filter: saturate(1.06) brightness(0.95);
+          transition: opacity 0.28s ease;
+          animation: homeBgSlide 0.28s ease-out both;
         }
         .home-hero-bg::after {
           content: "";
@@ -387,10 +384,9 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           inset: 0;
           z-index: 1;
           pointer-events: none;
-          /* Soft vignette for text — not black side panels */
           background:
-            linear-gradient(90deg, rgba(19,19,22,0.78) 0%, rgba(19,19,22,0.15) 30%, rgba(19,19,22,0.08) 55%, rgba(19,19,22,0.35) 100%),
-            linear-gradient(180deg, rgba(19,19,22,0.5) 0%, rgba(19,19,22,0.06) 14%, rgba(19,19,22,0.04) 60%, rgba(19,19,22,0.72) 100%);
+            linear-gradient(100deg, rgba(12,10,12,0.78) 0%, rgba(12,10,12,0.38) 32%, rgba(12,10,12,0.1) 55%, rgba(12,10,12,0.3) 100%),
+            linear-gradient(180deg, rgba(12,10,12,0.4) 0%, rgba(12,10,12,0.06) 26%, rgba(12,10,12,0.14) 62%, rgba(12,10,12,0.72) 100%);
         }
         .home-hero-content {
           position: relative;
@@ -403,12 +399,23 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           grid-template-columns: minmax(0, 1fr) 150px;
           gap: clamp(24px, 6vw, 72px);
           align-items: center;
+          box-sizing: border-box;
+          min-width: 0;
         }
         .home-hero-main {
           max-width: 720px;
+          min-width: 0;
         }
+        /* Glass panel for title / labels — blur so text stays readable on busy banners */
         .home-slide-copy {
           animation: homeCopySlide 0.16s ease-out both;
+          padding: clamp(16px, 2.4vw, 28px);
+          border-radius: 22px;
+          background: linear-gradient(145deg, rgba(18,14,16,0.52), rgba(18,14,16,0.28));
+          border: 1px solid rgba(255,255,255,0.12);
+          box-shadow: 0 18px 48px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.06);
+          backdrop-filter: blur(18px) saturate(1.2);
+          -webkit-backdrop-filter: blur(18px) saturate(1.2);
         }
         .home-hero-kicker {
           display: inline-flex;
@@ -416,59 +423,66 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           gap: 8px;
           padding: 7px 12px;
           border-radius: 999px;
-          color: var(--accent);
-          background: rgba(255,138,0,0.12);
-          border: 1px solid rgba(255,138,0,0.24);
+          color: #ffb04a;
+          background: rgba(255,138,0,0.18);
+          border: 1px solid rgba(255,138,0,0.32);
           font-size: 11px;
           font-weight: 800;
           letter-spacing: 0.12em;
           text-transform: uppercase;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
         }
         .home-hero-title {
-          margin: 18px 0 0;
+          margin: 16px 0 0;
           color: #fff;
           font-family: 'Montserrat', sans-serif;
-          font-size: clamp(2.35rem, 7vw, 5.25rem);
-          line-height: 1.02;
+          font-size: clamp(2.1rem, 6.2vw, 4.6rem);
+          line-height: 1.05;
           font-weight: 800;
           letter-spacing: 0;
           text-transform: uppercase;
           text-wrap: balance;
+          text-shadow: 0 2px 18px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.55);
         }
         .home-hero-meta {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          margin-top: 20px;
+          margin-top: 18px;
         }
         .home-hero-chip {
           padding: 7px 11px;
           border-radius: 999px;
-          color: rgba(255,255,255,0.82);
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.1);
+          color: rgba(255,255,255,0.92);
+          background: rgba(0,0,0,0.28);
+          border: 1px solid rgba(255,255,255,0.14);
           font-size: 12px;
           font-weight: 700;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.18);
         }
         .home-hero-copy {
-          margin: 22px 0 0;
+          margin: 18px 0 0;
           max-width: 620px;
-          color: rgba(255,255,255,0.74);
+          color: rgba(255,255,255,0.88);
           font-size: clamp(14px, 2vw, 16px);
-          line-height: 1.75;
+          line-height: 1.7;
+          text-shadow: 0 1px 8px rgba(0,0,0,0.35);
         }
         .home-hero-actions {
           display: flex;
           flex-wrap: wrap;
           gap: 12px;
-          margin-top: 30px;
+          margin-top: 24px;
         }
         .home-hero-secondary {
           min-height: 48px;
           padding: 12px 22px;
           border-radius: var(--radius-full);
-          border: 1px solid rgba(255,255,255,0.14);
-          background: rgba(255,255,255,0.07);
+          border: 1px solid rgba(255,255,255,0.16);
+          background: rgba(0,0,0,0.28);
           color: white;
           display: inline-flex;
           align-items: center;
@@ -477,6 +491,8 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
           font-weight: 800;
           cursor: pointer;
           transition: transform 0.2s ease, background 0.2s ease;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
         }
         .home-hero-secondary:hover {
           background: rgba(255,255,255,0.12);
@@ -742,111 +758,225 @@ const HomePage: React.FC<HomePageProps> = ({ mode = 'public' }) => {
             flex: 0 0 140px;
           }
         }
+        /* ── Tablet / mobile hero ── */
         @media (max-width: 900px) {
           .home-hero-shell {
             --hero-header-offset: 64px;
-            min-height: calc(var(--hero-header-offset) + clamp(340px, 54vw, 480px));
+            /* Auto height: grow with copy + thumbs — no fixed height clipping */
+            height: auto;
+            min-height: calc(var(--hero-header-offset) + min(52vh, 420px));
             max-height: none;
+            overflow: hidden;
+          }
+          .home-hero-bg,
+          .home-hero-stage {
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
           }
           .home-hero-stage {
-            top: var(--hero-header-offset);
+            /* Keep image full-bleed behind content */
+            top: 0;
+          }
+          .home-hero-bg-main {
+            object-fit: cover;
+            object-position: center 30%;
+          }
+          .home-hero-bg::after {
+            background:
+              linear-gradient(180deg, rgba(12,10,12,0.55) 0%, rgba(12,10,12,0.2) 28%, rgba(12,10,12,0.45) 55%, rgba(12,10,12,0.88) 100%),
+              linear-gradient(90deg, rgba(12,10,12,0.55) 0%, rgba(12,10,12,0.15) 50%, rgba(12,10,12,0.4) 100%);
           }
           .home-hero-content {
             grid-template-columns: 1fr;
-            padding-top: calc(var(--hero-header-offset) + 12px);
-            padding-bottom: 40px;
-          }
-          .home-hero-thumbs {
-            position: relative;
+            gap: 14px;
             width: 100%;
-            padding: 0 48px;
+            max-width: 100%;
             box-sizing: border-box;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 120px;
+            padding:
+              calc(var(--hero-header-offset) + 12px)
+              16px
+              18px;
+            align-items: stretch;
+            align-content: end;
           }
-          .home-hero-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            z-index: 2;
-          }
-          .home-hero-nav:nth-of-type(1) {
-            position: absolute;
-            left: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-          }
-          .home-hero-nav:nth-of-type(2) {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-          }
-          .home-hero-nav svg {
-            transform: none !important;
-          }
-          .home-hero-thumb-list {
-            width: 180px;
-            max-width: 180px;
-            min-width: 180px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-bottom: 4px;
-          }
-          .home-hero-thumb {
+          .home-hero-main {
+            max-width: 100%;
             width: 100%;
-            max-width: 180px;
-            aspect-ratio: 3/4;
-            flex: 0 0 auto;
+            min-width: 0;
           }
-          .home-hero-thumb img {
+          .home-slide-copy {
             width: 100%;
-            height: 100%;
-            object-fit: contain;
-            display: block;
-            background: rgba(0,0,0,0.3);
-            border-radius: 12px;
-          }
-          .home-hero-thumb:not(.is-active) {
-            display: none;
-          }
-          .home-hero-counter {
-            display: block;
-          }
-        }
-        @media (max-width: 768px) {
-          .home-hero-content {
-            padding-top: 90px;
-            padding-bottom: 24px;
-            padding-left: 16px;
-            padding-right: 16px;
+            max-width: 100%;
+            box-sizing: border-box;
+            padding: 14px 14px 16px;
+            border-radius: 16px;
           }
           .home-hero-title {
-            font-size: clamp(1.8rem, 8vw, 3rem);
+            font-size: clamp(1.45rem, 6.5vw, 2.15rem);
+            line-height: 1.12;
+            margin-top: 10px;
+            word-break: break-word;
+          }
+          .home-hero-meta {
+            margin-top: 12px;
+            gap: 6px;
+          }
+          .home-hero-chip {
+            font-size: 11px;
+            padding: 5px 9px;
           }
           .home-hero-copy {
+            margin-top: 12px;
             font-size: 13px;
-            line-height: 1.6;
+            line-height: 1.55;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
           }
           .home-hero-actions {
-            margin-top: 20px;
+            margin-top: 14px;
+            gap: 8px;
           }
-          .home-hero-actions button {
+          .home-hero-actions button,
+          .home-hero-secondary {
             font-size: 12px !important;
-            padding: 10px 18px !important;
-            min-height: 42px !important;
+            padding: 10px 16px !important;
+            min-height: 40px !important;
+          }
+          /* Thumbs: compact horizontal control under copy */
+          .home-hero-thumbs {
+            position: relative;
+            width: 100%;
+            max-width: 100%;
+            min-height: 0;
+            padding: 0 40px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+          }
+          .home-hero-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            z-index: 2;
+            flex-shrink: 0;
+          }
+          .home-hero-nav:nth-of-type(1) {
+            left: 0;
+            right: auto;
+          }
+          .home-hero-nav:nth-of-type(2) {
+            right: 0;
+            left: auto;
+          }
+          .home-hero-nav svg {
+            transform: none !important;
+          }
+          .home-hero-thumb-list {
+            width: min(160px, 42vw);
+            max-width: min(160px, 42vw);
+            min-width: 0;
+            max-height: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            padding: 0;
+          }
+          .home-hero-thumb {
+            width: 100%;
+            max-width: 160px;
+            aspect-ratio: 16 / 10;
+            flex: 0 0 auto;
+            border-radius: 10px;
+          }
+          .home-hero-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 10px;
+          }
+          .home-hero-thumb:not(.is-active) {
+            display: none;
+          }
+          .home-hero-counter {
+            display: none;
+          }
+        }
+        @media (max-width: 640px) {
+          .home-hero-shell {
+            --hero-header-offset: 56px;
+            min-height: calc(var(--hero-header-offset) + min(48vh, 360px));
+          }
+          .home-hero-content {
+            padding:
+              calc(var(--hero-header-offset) + 10px)
+              12px
+              14px;
+            gap: 12px;
+          }
+          .home-slide-copy {
+            padding: 12px;
+            border-radius: 14px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+          }
+          .home-hero-kicker {
+            font-size: 10px;
+            padding: 5px 10px;
+            letter-spacing: 0.08em;
+          }
+          .home-hero-title {
+            font-size: clamp(1.35rem, 7vw, 1.85rem);
+            margin-top: 8px;
+          }
+          .home-hero-copy {
+            -webkit-line-clamp: 2;
+            font-size: 12px;
+          }
+          .home-hero-actions {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .home-hero-actions button,
+          .home-hero-secondary {
+            width: 100%;
+            justify-content: center;
+          }
+          .home-hero-thumbs {
+            padding: 0 36px;
+          }
+          .home-hero-thumb-list {
+            width: min(140px, 48vw);
+            max-width: min(140px, 48vw);
+          }
+          .home-hero-thumb {
+            max-width: 140px;
+            aspect-ratio: 16 / 10;
+          }
+        }
+        @media (max-width: 380px) {
+          .home-hero-title {
+            font-size: 1.25rem;
+          }
+          .home-hero-meta {
+            gap: 4px;
+          }
+          .home-hero-chip {
+            font-size: 10px;
+            padding: 4px 8px;
           }
         }
         @media (max-width: 980px) {

@@ -81,6 +81,7 @@ public static class Messages
         // Errors
         public const string NotFound = "Sorry, We can not find the cinema";
         public const string CannotEditActiveBookings = "Cannot edit this cinema because it has active Booked bookings. Please wait until all bookings are completed.";
+        public const string CannotDeleteActiveBookings = "Cannot delete this cinema because it has active Booked bookings. Please wait until all bookings are completed.";
 
         // Dynamic errors (with parameters)
         public static string AlreadyExistsName(string name) =>
@@ -116,6 +117,7 @@ public static class Messages
         public const string NotFound = "Auditorium not found.";
         public const string CannotFind = "Auditorium not found.";
         public const string CannotEditActiveBookings = "Cannot edit this auditorium because it has active Booked bookings. Please wait until all bookings are completed.";
+        public const string CannotDeleteActiveBookings = "Cannot delete this auditorium because it has active Booked bookings. Please wait until all bookings are completed.";
         public const string CannotEditHasOrderHistory = "Cannot edit seat layout because seats have been used in orders.";
         public const string SeatLayoutMustHaveSeats = "The auditorium must have at least one seat.";
         public const string SeatLayoutIndexesMustBeNonNegative = "Seat row and column indexes must be non-negative.";

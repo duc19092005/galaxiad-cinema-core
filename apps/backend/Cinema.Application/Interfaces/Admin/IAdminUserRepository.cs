@@ -27,4 +27,10 @@ public interface IAdminUserRepository
     Task<DepartmentEntity?> FindActiveDepartmentAsync(Guid departmentId);
     Task<CinemaInfoEntity?> FindActiveCinemaAsync(Guid cinemaId);
     Task<CinemaInfoEntity?> FindFirstActiveCinemaAsync();
+
+    /// <summary>
+    /// Sync TheaterManagerId / FacilitiesManagerId on cinemas for this user.
+    /// Clears previous manager links, then assigns the target cinema when roles apply.
+    /// </summary>
+    Task SyncCinemaManagerLinksAsync(Guid userId, Guid? cinemaId, bool isTheaterManager, bool isFacilitiesManager);
 }

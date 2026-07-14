@@ -98,7 +98,9 @@ public class CreateShiftScheduleUseCase
                     ShiftScheduleId = Guid.NewGuid(),
                     CinemaId = dto.CinemaId,
                     DepartmentId = dto.DepartmentId,
-                    Date = utcStart.Date,
+                    // Persist the business calendar day the manager selected (not UTC day of start),
+                    // so date-range filters match the day shown on the schedule UI.
+                    Date = targetDate.Date,
                     ShiftName = shiftItem.ShiftName,
                     StartTime = utcStart.TimeOfDay,
                     EndTime = utcEnd.TimeOfDay,

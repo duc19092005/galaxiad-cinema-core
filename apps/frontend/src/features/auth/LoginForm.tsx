@@ -39,7 +39,7 @@ const LoginForm: React.FC = () => {
           } else if (userInfo.roles.length === 1) {
             const roleConfig: Record<string, string> = {
               Customer: '/home', Cashier: userInfo.isSharedPosAccount ? '/cashier' : '/staff', Admin: '/admin',
-              MovieManager: '/movie-manager', TheaterManager: '/theater-manager', FacilitiesManager: '/facilities-manager',
+              MovieManager: '/movie-manager', TheaterManager: '/theater-manager/dashboard', FacilitiesManager: '/facilities-manager/dashboard',
             };
             navigate(roleConfig[userInfo.roles[0]] || '/role-selection', { replace: true });
           } else { navigate('/role-selection', { replace: true }); }
@@ -71,8 +71,8 @@ const LoginForm: React.FC = () => {
             Cashier: res.data.isSharedPosAccount ? '/cashier' : '/staff',
             Admin: '/admin',
             MovieManager: '/movie-manager',
-            TheaterManager: '/theater-manager',
-            FacilitiesManager: '/facilities-manager',
+            TheaterManager: '/theater-manager/dashboard',
+            FacilitiesManager: '/facilities-manager/dashboard',
           };
           navigate(roleConfig[res.data.roles[0]] || '/role-selection');
         } else {

@@ -35,6 +35,8 @@ public class ResGetMovieInfosMovieManagerDto
     public string Director { get; set; } = string.Empty;
     
     public string Actors { get; set; } = string.Empty;
+
+    public Guid MovieRequiredAgeId { get; set; }
     
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
     public string MovieManagerName { get; set; } = string.Empty;
