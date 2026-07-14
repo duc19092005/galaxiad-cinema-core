@@ -16,6 +16,7 @@ public class AuditoriumController : ControllerBase
 {
     private readonly CreateAuditoriumUseCase _createUseCase;
     private readonly UpdateAuditoriumUseCase _updateUseCase;
+    private readonly DeleteAuditoriumUseCase _deleteUseCase;
     private readonly GetAllAuditoriumsUseCase _getAllUseCase;
     private readonly GetAuditoriumByIdUseCase _getByIdUseCase;
     private readonly GetAuditoriumsByCinemaIdUseCase _getByCinemaIdUseCase;
@@ -23,12 +24,14 @@ public class AuditoriumController : ControllerBase
     public AuditoriumController(
         CreateAuditoriumUseCase createUseCase,
         UpdateAuditoriumUseCase updateUseCase,
+        DeleteAuditoriumUseCase deleteUseCase,
         GetAllAuditoriumsUseCase getAllUseCase,
         GetAuditoriumByIdUseCase getByIdUseCase,
         GetAuditoriumsByCinemaIdUseCase getByCinemaIdUseCase)
     {
         _createUseCase = createUseCase;
         _updateUseCase = updateUseCase;
+        _deleteUseCase = deleteUseCase;
         _getAllUseCase = getAllUseCase;
         _getByIdUseCase = getByIdUseCase;
         _getByCinemaIdUseCase = getByCinemaIdUseCase;
@@ -45,6 +48,13 @@ public class AuditoriumController : ControllerBase
     public async Task<IActionResult> EditAuditorium(Guid id, EditReqAuditoriumDto request)
     {
         var results = await _updateUseCase.ExecuteAsync(id, request);
+        return Ok(results);
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAuditorium(Guid id)
+    {
+        var results = await _deleteUseCase.ExecuteAsync(id);
         return Ok(results);
     }
 

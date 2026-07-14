@@ -193,4 +193,51 @@ public class AdminUserRepository : IAdminUserRepository
         return await _dbContext.Set<CinemaInfoEntity>()
             .FirstOrDefaultAsync(c => !c.IsDeleted);
     }
+
+    public async Task SyncCinemaManagerLinksAsync(Guid userId, Guid? cinemaId, bool isTheaterManager, bool isFacilitiesManager)
+    {
+        var theaterManaged = await _dbContext.Set<CinemaInfoEntity>()
+            .Where(c => !c.IsDeleted && c.TheaterManagerId == userId)
+            .ToListAsync();
+        foreach (var cinema in theaterManaged)
+        {
+            if (!isTheaterManager || !cinemaId.HasValue || cinema.CinemaId != cinemaId.Value)
+            {
+                cinema.TheaterManagerId = null;
+            }
+        }
+
+        var facilitiesManaged = await _dbContext.Set<CinemaInfoEntity>()
+            .Where(c => !c.IsDeleted && c.FacilitiesManagerId == userId)
+            .ToListAsync();
+        foreach (var cinema in facilitiesManaged)
+        {
+            if (!isFacilitiesManager || !cinemaId.HasValue || cinema.CinemaId != cinemaId.Value)
+            {
+                cinema.FacilitiesManagerId = null;
+            }
+        }
+
+        if (!cinemaId.HasValue || (!isTheaterManager && !isFacilitiesManager))
+        {
+            return;
+        }
+
+        var target = await _dbContext.Set<CinemaInfoEntity>()
+            .FirstOrDefaultAsync(c => c.CinemaId == cinemaId.Value && !c.IsDeleted);
+        if (target == null)
+        {
+            return;
+        }
+
+        if (isTheaterManager)
+        {
+            target.TheaterManagerId = userId;
+        }
+
+        if (isFacilitiesManager)
+        {
+            target.FacilitiesManagerId = userId;
+        }
+    }
 }

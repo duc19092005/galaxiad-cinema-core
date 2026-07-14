@@ -44,12 +44,12 @@ public class AssignCinemaToManagerUseCase
 
         if (isManager)
         {
-            var isTheaterManager = userRoleNames.Contains("TheaterManager");
-            if (isTheaterManager)
+            // A user can hold both manager roles — set each FK independently.
+            if (userRoleNames.Contains("TheaterManager"))
             {
                 cinema.TheaterManagerId = managerId;
             }
-            else
+            if (userRoleNames.Contains("FacilitiesManager"))
             {
                 cinema.FacilitiesManagerId = managerId;
             }

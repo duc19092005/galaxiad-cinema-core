@@ -44,7 +44,7 @@ public class DeleteAuditoriumUseCase
             if (hasBookedBookings)
             {
                 throw new AppException(
-                    Messages.Auditorium.CannotEditActiveBookings,
+                    Messages.Auditorium.CannotDeleteActiveBookings,
                     409,
                     "D02");
             }

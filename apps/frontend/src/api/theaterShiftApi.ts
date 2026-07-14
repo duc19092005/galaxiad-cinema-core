@@ -120,8 +120,15 @@ export const theaterShiftApi = {
 
   /** GET /api/v1/TheaterManager/Shifts/schedules */
   getShiftSchedules: async (cinemaId: string, departmentId?: string, startDate?: string, endDate?: string): Promise<ApiSuccessResponse<ShiftScheduleDto[]>> => {
+    // Send date-only (YYYY-MM-DD) so backend filters by business calendar day, not UTC midnight.
+    const toDateOnly = (value?: string) => (value ? value.slice(0, 10) : undefined);
     const response = await shiftAxios.get<ServerResponse<ShiftScheduleDto[]>>('/TheaterManager/Shifts/schedules', {
-      params: { cinemaId, departmentId, startDate, endDate },
+      params: {
+        cinemaId,
+        departmentId: departmentId || undefined,
+        startDate: toDateOnly(startDate),
+        endDate: toDateOnly(endDate),
+      },
     });
     return normalizeSuccessResponse<ShiftScheduleDto[]>(response);
   },

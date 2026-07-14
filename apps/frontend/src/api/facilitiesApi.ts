@@ -78,6 +78,14 @@ export const facilitiesApi = {
     return normalizeSuccessResponse(response);
   },
 
+  /** DELETE /api/facilities/cinema/{cinemaId} */
+  deleteCinema: async (cinemaId: string): Promise<ApiSuccessResponse> => {
+    const response = await facilitiesAxios.delete<any>(
+      `/facilities/cinema/${cinemaId}`
+    );
+    return normalizeSuccessResponse(response);
+  },
+
   // =============================================
   // AUDITORIUM APIs
   // =============================================
@@ -120,6 +128,14 @@ export const facilitiesApi = {
     const response = await facilitiesAxios.put<any>(
       `/facilities/auditorium/${auditoriumId}`,
       data
+    );
+    return normalizeSuccessResponse(response);
+  },
+
+  /** DELETE /api/facilities/auditorium/{id} */
+  deleteAuditorium: async (auditoriumId: string): Promise<ApiSuccessResponse> => {
+    const response = await facilitiesAxios.delete<any>(
+      `/facilities/auditorium/${auditoriumId}`
     );
     return normalizeSuccessResponse(response);
   },

@@ -17,7 +17,7 @@ const roleConfig: Record<string, { icon: React.ElementType; label: string; route
   Admin: { icon: Shield, label: 'roles.admin', route: '/admin', description: 'Full system administration', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
   MovieManager: { icon: Film, label: 'roles.movieManager', route: '/movie-manager', description: 'Manage movie listings', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
   TheaterManager: { icon: Building2, label: 'roles.theaterManager', route: '/theater-manager', description: 'Manage theater schedules', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
-  FacilitiesManager: { icon: Wrench, label: 'roles.facilitiesManager', route: '/facilities-manager', description: 'Manage cinemas and facilities', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  FacilitiesManager: { icon: Wrench, label: 'roles.facilitiesManager', route: '/facilities-manager/dashboard', description: 'Manage cinemas and facilities', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
 };
 
 const RoleSelectionPage: React.FC = () => {

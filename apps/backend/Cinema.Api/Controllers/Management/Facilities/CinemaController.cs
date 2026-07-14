@@ -14,17 +14,20 @@ public class CinemaController : ControllerBase
 {
     private readonly CreateCinemaUseCase _createUseCase;
     private readonly UpdateCinemaUseCase _updateUseCase;
+    private readonly DeleteCinemaUseCase _deleteUseCase;
     private readonly GetAllCinemasUseCase _getAllUseCase;
     private readonly GetCinemaByIdUseCase _getByIdUseCase;
 
     public CinemaController(
         CreateCinemaUseCase createUseCase,
         UpdateCinemaUseCase updateUseCase,
+        DeleteCinemaUseCase deleteUseCase,
         GetAllCinemasUseCase getAllUseCase,
         GetCinemaByIdUseCase getByIdUseCase)
     {
         _createUseCase = createUseCase;
         _updateUseCase = updateUseCase;
+        _deleteUseCase = deleteUseCase;
         _getAllUseCase = getAllUseCase;
         _getByIdUseCase = getByIdUseCase;
     }
@@ -66,6 +69,15 @@ public class CinemaController : ControllerBase
     public async Task<IActionResult> EditCinema(Guid cinemaId, EditCinemaReqDto editCinemaReqDto)
     {
         var results = await _updateUseCase.ExecuteAsync(cinemaId, editCinemaReqDto);
+        return Ok(results);
+    }
+
+    [HttpDelete("{cinemaId}")]
+    [Authorize(Policy = "FacilitiesManager")]
+    [Description("API to soft-delete a cinema")]
+    public async Task<IActionResult> DeleteCinema(Guid cinemaId)
+    {
+        var results = await _deleteUseCase.ExecuteAsync(cinemaId);
         return Ok(results);
     }
 }

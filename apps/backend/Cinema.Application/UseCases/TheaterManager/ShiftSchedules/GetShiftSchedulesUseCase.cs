@@ -24,14 +24,21 @@ public class GetShiftSchedulesUseCase
 
     public async Task<BaseResponse<List<ResShiftScheduleDto>>> ExecuteAsync(Guid cinemaId, Guid? departmentId, DateTime startDate, DateTime endDate)
     {
-        var startUtc = DateTimeHelper.NormalizeIncoming(startDate);
-        var endUtc = DateTimeHelper.NormalizeIncoming(endDate);
+        // FE sends business calendar dates (YYYY-MM-DD). Compare date-only — do NOT
+        // run NormalizeIncoming here or midnight VN becomes previous UTC day and drops rows.
+        var startOnly = startDate.Date;
+        var endOnly = endDate.Date;
+        if (endOnly < startOnly)
+        {
+            (startOnly, endOnly) = (endOnly, startOnly);
+        }
 
-        var list = await _repository.GetShiftSchedulesAsync(cinemaId, departmentId, startUtc, endUtc);
+        var list = await _repository.GetShiftSchedulesAsync(cinemaId, departmentId, startOnly, endOnly);
 
         var dtos = list.Select(s => {
-            var utcStart = s.Date.Date + s.StartTime;
-            var utcEnd = s.Date.Date + s.EndTime;
+            // Date is the business calendar day; Start/End times are stored as UTC TimeOfDay.
+            var utcStart = DateTime.SpecifyKind(s.Date.Date + s.StartTime, DateTimeKind.Utc);
+            var utcEnd = DateTime.SpecifyKind(s.Date.Date + s.EndTime, DateTimeKind.Utc);
             if (s.EndTime <= s.StartTime)
             {
                 utcEnd = utcEnd.AddDays(1);
@@ -46,7 +53,8 @@ public class GetShiftSchedulesUseCase
                 CinemaId = s.CinemaId,
                 DepartmentId = s.DepartmentId,
                 DepartmentName = s.DepartmentEntity != null ? s.DepartmentEntity.DepartmentName : "",
-                Date = localStart.Date,
+                // Keep the stored business date so FE filters align with DB range queries.
+                Date = s.Date.Date,
                 ShiftName = s.ShiftName,
                 StartTime = localStart.TimeOfDay,
                 EndTime = localEnd.TimeOfDay,

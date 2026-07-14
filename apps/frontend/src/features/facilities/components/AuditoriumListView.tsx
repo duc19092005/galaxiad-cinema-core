@@ -59,7 +59,7 @@ const AuditoriumListView: React.FC<AuditoriumListViewProps> = ({ cinemaId, cinem
     if (!window.confirm('Are you sure you want to delete this auditorium?')) return;
     setDeletingId(auditoriumId);
     try {
-      await facilitiesApi.updateAuditorium(auditoriumId, { isDeleted: true } as any);
+      await facilitiesApi.deleteAuditorium(auditoriumId);
       showSuccess('Auditorium deleted');
       fetchAuditoriums();
     } catch (err: any) {

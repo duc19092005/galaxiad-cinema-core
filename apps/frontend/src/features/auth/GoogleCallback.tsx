@@ -49,7 +49,7 @@ const GoogleCallback: React.FC = () => {
           Admin: '/admin',
           MovieManager: '/movie-manager',
           TheaterManager: '/theater-manager',
-          FacilitiesManager: '/facilities-manager',
+          FacilitiesManager: '/facilities-manager/dashboard',
         };
         navigate(roleConfig[roles[0]] || '/role-selection', { replace: true });
       } else {

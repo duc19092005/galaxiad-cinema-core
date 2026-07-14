@@ -87,33 +87,74 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
   const storedUser = localStorage.getItem('user_info');
   const isAdmin = storedUser ? JSON.parse(storedUser).roles?.includes('Admin') : false;
 
-  const filteredCinemas = cinemas.filter(
-    (cinema) =>
-      cinema.cinemaName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cinema.cinemaLocation.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const getRegionForCinema = (cinema: Cinema): 'north' | 'central' | 'south' | null => {
+    const city = (cinema.cinemaCity || cinema.cinemaLocation || '').toLowerCase();
+    if (!city) return null;
+    const north = ['hà nội', 'ha noi', 'hải phòng', 'hai phong', 'quảng ninh', 'quang ninh'];
+    const central = ['đà nẵng', 'da nang', 'khánh hòa', 'khanh hoa', 'huế', 'hue', 'nghệ an', 'nghe an'];
+    const south = ['hồ chí minh', 'ho chi minh', 'sài gòn', 'sai gon', 'cần thơ', 'can tho', 'bình dương', 'binh duong', 'đồng nai', 'dong nai', 'bà rịa', 'ba ria', 'vũng tàu', 'vung tau'];
+    if (north.some((k) => city.includes(k))) return 'north';
+    if (central.some((k) => city.includes(k))) return 'central';
+    if (south.some((k) => city.includes(k))) return 'south';
+    return null;
+  };
+
+  const hasManager = (cinema: Cinema) =>
+    Boolean(
+      (cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có') ||
+      (cinema.facilitiesManagerName && cinema.facilitiesManagerName !== 'Chưa có') ||
+      cinema.theaterManagerId,
+    );
+
+  const filteredCinemas = cinemas.filter((cinema) => {
+    const q = searchTerm.toLowerCase();
+    const matchesSearch =
+      !q ||
+      cinema.cinemaName.toLowerCase().includes(q) ||
+      (cinema.cinemaLocation || '').toLowerCase().includes(q) ||
+      (cinema.cinemaCity || '').toLowerCase().includes(q);
+
+    if (!matchesSearch) return false;
+    if (!regionFilter) return true;
+    return getRegionForCinema(cinema) === regionFilter;
+  });
 
   const sortCinemas = (list: Cinema[]) => {
     const sorted = [...list];
     switch (sortBy) {
-      case 'name-asc': sorted.sort((a, b) => a.cinemaName.localeCompare(b.cinemaName)); break;
-      case 'name-desc': sorted.sort((a, b) => b.cinemaName.localeCompare(a.cinemaName)); break;
-      case 'newest': break;
-      case 'oldest': sorted.reverse(); break;
+      case 'name-asc':
+        sorted.sort((a, b) => a.cinemaName.localeCompare(b.cinemaName, 'vi'));
+        break;
+      case 'name-desc':
+        sorted.sort((a, b) => b.cinemaName.localeCompare(a.cinemaName, 'vi'));
+        break;
+      case 'oldest':
+        sorted.sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return ta - tb;
+        });
+        break;
+      case 'newest':
+      default:
+        sorted.sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return tb - ta;
+        });
+        break;
     }
     return sorted;
   };
 
   const displayCinemas = sortCinemas(filteredCinemas);
 
-  // Stats
+  // Real stats from API data (no seed / approximation)
   const totalCinemas = cinemas.length;
   const totalRooms = cinemas.reduce((acc, c) => acc + (c.totalRooms || 0), 0);
-  const totalSeats = totalRooms * 150; // Approximate seats
-  const activeCinemas = cinemas.filter(c => 
-    (c.theaterManagerName && c.theaterManagerName !== 'Chưa có') || 
-    (c.facilitiesManagerName && c.facilitiesManagerName !== 'Chưa có')
-  ).length;
+  const totalSeats = cinemas.reduce((acc, c) => acc + (c.totalSeats ?? 0), 0);
+  const activeCinemas = cinemas.filter((c) => c.isActive === true || (c.isActive === undefined && hasManager(c))).length;
+  const managedCinemas = cinemas.filter(hasManager).length;
 
 
 
@@ -194,7 +235,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
     if (!deleteConfirmCinemaId) return;
     setDeleting(true);
     try {
-      await facilitiesApi.updateCinema(deleteConfirmCinemaId, { isDeleted: true } as any);
+      await facilitiesApi.deleteCinema(deleteConfirmCinemaId);
       showSuccess('Cinema deleted successfully');
       setDeleteConfirmCinemaId(null);
       if (onRefresh) onRefresh();
@@ -234,23 +275,18 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
 
   return (
     <div className="animate-fade-in">
-      {/* ========== STATS BENTO GRID ========== */}
+      {/* ========== STATS BENTO GRID (real data only) ========== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {/* Card: Tổng cụm rạp */}
         <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 relative overflow-hidden shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
           <div className="flex justify-between items-start mb-4">
             <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
               <Store size={24} />
             </div>
-            <span className="text-[10px] bg-green-500/20 text-green-400 px-2 py-1 rounded-full font-bold">
-              +2 {t('cinemaManagement.thisMonth')}
-            </span>
           </div>
           <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.totalCinemas')}</h3>
           <p className="text-3xl font-bold mt-1 text-cinema-text">{totalCinemas}</p>
         </div>
 
-        {/* Card: Rạp đang hoạt động */}
         <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
           <div className="flex justify-between items-start mb-4">
             <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
@@ -262,9 +298,11 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
           </div>
           <h3 className="text-cinema-text-muted text-xs font-medium uppercase tracking-wider">{t('cinemaManagement.activeCinemas')}</h3>
           <p className="text-3xl font-bold mt-1 text-cinema-text">{activeCinemas}</p>
+          <p className="text-[11px] text-cinema-text-muted mt-1">
+            {t('cinemaManagement.managedCount', '{{count}} rạp đã gán quản lý', { count: managedCinemas })}
+          </p>
         </div>
 
-        {/* Card: Tổng số phòng chiếu */}
         <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
           <div className="flex justify-between items-start mb-4">
             <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
@@ -275,7 +313,6 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
           <p className="text-3xl font-bold mt-1 text-cinema-text">{totalRooms}</p>
         </div>
 
-        {/* Card: Tổng số ghế */}
         <div className="bg-cinema-surface p-6 rounded-2xl border border-cinema-border/50 shadow-sm hover:border-cinema-accent/30 transition-all duration-200">
           <div className="flex justify-between items-start mb-4">
             <div className="bg-cinema-accent/10 p-3 rounded-xl text-cinema-accent">
@@ -383,7 +420,12 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
       {!loading && !error && displayCinemas.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
           {displayCinemas.map(cinema => {
-            const hasTheaterManager = cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có';
+            const hasTheaterManager = Boolean(
+              cinema.theaterManagerId ||
+              (cinema.theaterManagerName && cinema.theaterManagerName !== 'Chưa có'),
+            );
+            const cinemaSeats = cinema.totalSeats ?? 0;
+            const isCinemaActive = cinema.isActive !== false;
             return (
               <div
                 key={cinema.cinemaId}
@@ -391,13 +433,18 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
               >
                 <div className="flex justify-between items-start">
                   <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest ${
-                    hasTheaterManager ? 'text-green-500' : 'text-rose-500'
+                    isCinemaActive ? 'text-green-500' : 'text-rose-500'
                   }`}>
                     <div className={`w-1.5 h-1.5 rounded-full ${
-                      hasTheaterManager ? 'bg-green-500 animate-pulse' : 'bg-rose-500'
+                      isCinemaActive ? 'bg-green-500 animate-pulse' : 'bg-rose-500'
                     }`}></div>
-                    {hasTheaterManager ? t('cinemaManagement.active') : t('cinemaManagement.noManager')}
+                    {isCinemaActive ? t('cinemaManagement.active') : t('cinemaManagement.inactive', 'Ngừng hoạt động')}
                   </div>
+                  {!hasTheaterManager && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      {t('cinemaManagement.noManager')}
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-4">
@@ -430,22 +477,7 @@ const CinemaManagement: React.FC<CinemaManagementProps> = ({ cinemas, loading = 
                   </div>
                   <div className="bg-cinema-bg/50 p-4 rounded-2xl border border-cinema-border/50">
                     <span className="text-[10px] text-cinema-text-muted uppercase font-semibold">{t('cinemaManagement.totalSeatsLabel')}</span>
-                    <p className="text-xl font-bold text-cinema-text">{((cinema.totalRooms || 0) * 150).toLocaleString('vi-VN')}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-[10px] font-medium">
-                    <span className="text-cinema-text-muted">{t('cinemaManagement.occupancyRate')}</span>
-                    <span className="text-cinema-text">
-                      {hasTheaterManager ? `${Math.round(70 + Math.random() * 25)}%` : '—'}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-cinema-border/50 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-cinema-accent rounded-full transition-all duration-500"
-                      style={{ width: hasTheaterManager ? `${70 + Math.random() * 25}%` : '0%' }}
-                    ></div>
+                    <p className="text-xl font-bold text-cinema-text">{cinemaSeats.toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
 

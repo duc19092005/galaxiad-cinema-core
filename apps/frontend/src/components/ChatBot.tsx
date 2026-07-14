@@ -2259,8 +2259,8 @@ const ChatBot: React.FC = () => {
             style={{
               position: 'fixed',
               right: 24,
-              /* Pin to bottom — do not use filter/blur on this node (causes jump) */
-              bottom: 'max(24px, calc(76px + env(safe-area-inset-bottom, 0px)))',
+              /* Overridden by CSS media queries for mobile nav clearance */
+              bottom: 24,
               top: 'auto',
               left: 'auto',
               zIndex: 9998,
@@ -2565,8 +2565,15 @@ const ChatBot: React.FC = () => {
           background: rgba(255,255,255,0.25) !important;
           border-radius: 2px !important;
         }
+        /*
+          Align with BackToTop + clear BottomNavBar on mobile.
+          BottomNav ≈ 76px (App.tsx body padding-bottom on ≤768px).
+        */
         .chatbot-trigger-btn {
-          bottom: max(24px, calc(76px + env(safe-area-inset-bottom, 0px))) !important;
+          right: 24px !important;
+          bottom: calc(76px + 12px + env(safe-area-inset-bottom, 0px)) !important;
+          width: 52px !important;
+          height: 52px !important;
         }
         /* Hide floating FAB when chat is open — header already has close */
         .chatbot-trigger-btn.is-open {
@@ -2575,21 +2582,33 @@ const ChatBot: React.FC = () => {
         @media (max-width: 768px) {
           .chatbot-panel {
             right: 12px !important;
-            bottom: max(84px, calc(72px + env(safe-area-inset-bottom, 0px))) !important;
+            /* Panel above bottom nav + small gap */
+            bottom: calc(76px + 8px + env(safe-area-inset-bottom, 0px)) !important;
             width: calc(100vw - 24px) !important;
-            height: min(640px, calc(100dvh - 120px)) !important;
-            max-height: min(640px, calc(100dvh - 120px)) !important;
+            height: min(560px, calc(100dvh - 76px - 24px - env(safe-area-inset-bottom, 0px))) !important;
+            max-height: min(560px, calc(100dvh - 76px - 24px - env(safe-area-inset-bottom, 0px))) !important;
           }
         }
         @media (min-width: 768px) {
+          /* Bottom nav hidden on md+ */
           .chatbot-trigger-btn {
+            right: 24px !important;
             bottom: 24px !important;
+            width: 52px !important;
+            height: 52px !important;
           }
           .chatbot-panel {
             bottom: 24px !important;
+            right: 24px !important;
           }
         }
         @media (max-width: 480px) {
+          .chatbot-trigger-btn {
+            right: 16px !important;
+            bottom: calc(76px + 12px + env(safe-area-inset-bottom, 0px)) !important;
+            width: 48px !important;
+            height: 48px !important;
+          }
           .chatbot-panel {
             right: 8px !important;
             width: calc(100vw - 16px) !important;
@@ -2619,9 +2638,10 @@ const ChatBot: React.FC = () => {
         style={{
           position: 'fixed',
           right: 24,
+          /* bottom set via .chatbot-trigger-btn CSS (clears bottom nav on mobile) */
           zIndex: 9999,
-          width: 54,
-          height: 54,
+          width: 52,
+          height: 52,
           borderRadius: '50%',
           border: '1px solid rgba(255,255,255,0.2)',
           cursor: 'pointer',

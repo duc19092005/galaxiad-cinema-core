@@ -13,6 +13,7 @@ public class CinemaControllerTests
 {
     private readonly Mock<CreateCinemaUseCase> _createCinemaUseCase;
     private readonly Mock<UpdateCinemaUseCase> _updateCinemaUseCase;
+    private readonly Mock<DeleteCinemaUseCase> _deleteCinemaUseCase;
     private readonly Mock<GetAllCinemasUseCase> _getAllCinemasUseCase;
     private readonly Mock<GetCinemaByIdUseCase> _getCinemaDetailUseCase;
     private readonly CinemaController _controller;
@@ -21,11 +22,13 @@ public class CinemaControllerTests
     {
         _createCinemaUseCase = new Mock<CreateCinemaUseCase>();
         _updateCinemaUseCase = new Mock<UpdateCinemaUseCase>();
+        _deleteCinemaUseCase = new Mock<DeleteCinemaUseCase>();
         _getAllCinemasUseCase = new Mock<GetAllCinemasUseCase>();
         _getCinemaDetailUseCase = new Mock<GetCinemaByIdUseCase>();
         _controller = new CinemaController(
             _createCinemaUseCase.Object,
             _updateCinemaUseCase.Object,
+            _deleteCinemaUseCase.Object,
             _getAllCinemasUseCase.Object,
             _getCinemaDetailUseCase.Object);
     }
