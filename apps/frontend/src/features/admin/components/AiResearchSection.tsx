@@ -434,7 +434,6 @@ const AiResearchSection = () => {
                           >
                             <ExternalLink size={11} style={{ verticalAlign: '-1px', marginRight: 5 }} />
                             {evidence.title} · {evidence.sourceDomain}
-                            {evidence.sourceType === 'seeded_demo' ? ' · DEMO DATA' : ''}
                           </a>
                         ))}
                       </article>

@@ -8,7 +8,6 @@ import httpx
 from loguru import logger
 
 from config import (
-    BUSINESS_RESEARCH_ALLOW_DEMO,
     BUSINESS_RESEARCH_MAX_RESULTS,
     BUSINESS_RESEARCH_TIMEOUT_SECONDS,
     TAVILY_API_KEY,
@@ -58,24 +57,19 @@ def _parse_date(value: object) -> datetime | None:
 
 
 class TavilyMcpSearchProvider:
-    """Tavily MCP client owned by the Python service, with HTTP and demo fallbacks."""
+    """Tavily MCP client owned by the Python service, with a live HTTP fallback."""
 
     async def search(self, query: str, iteration: int) -> list[Evidence]:
+        if not TAVILY_API_KEY:
+            raise RuntimeError("TAVILY_API_KEY is required for business research.")
+
         if TAVILY_API_KEY and ClientSession and streamablehttp_client:
             try:
                 return await self._search_mcp(query, iteration)
             except Exception as exc:
                 logger.warning(f"Tavily MCP search failed, using Tavily HTTP fallback: {exc}")
-        if TAVILY_API_KEY:
-            try:
-                return await self._search_http(query, iteration)
-            except Exception as exc:
-                logger.warning(f"Tavily HTTP search failed, using demo evidence: {exc}")
-        if not BUSINESS_RESEARCH_ALLOW_DEMO:
-            raise RuntimeError(
-                "TAVILY_API_KEY is required when BUSINESS_RESEARCH_ALLOW_DEMO=false."
-            )
-        return self._demo_evidence(query, iteration)
+
+        return await self._search_http(query, iteration)
 
     async def _search_mcp(self, query: str, iteration: int) -> list[Evidence]:
         endpoint = TAVILY_MCP_URL or f"https://mcp.tavily.com/mcp/?tavilyApiKey={TAVILY_API_KEY}"
@@ -135,24 +129,3 @@ class TavilyMcpSearchProvider:
                 )
             )
         return mapped
-
-    def _demo_evidence(self, query: str, iteration: int) -> list[Evidence]:
-        sources = [
-            ("https://www.cgv.vn/default/cinemas/prices.html", "CGV Việt Nam", "Bảng giá và chính sách giá được công bố bởi chuỗi rạp."),
-            ("https://www.lottecinemavn.com/LCHS/Contents/Cinema", "Lotte Cinema Việt Nam", "Thông tin hệ thống rạp và giá tham khảo theo cụm rạp."),
-            ("https://tphcm.chinhphu.vn/", "Cổng thông tin TPHCM", "Nguồn chính thống dùng để kiểm tra chính sách và thông tin quy hoạch."),
-        ]
-        return [
-            Evidence(
-                url=url,
-                title=title,
-                snippet=f"[DEMO DATA] {snippet} Query: {query}",
-                extracted_content=f"[DEMO DATA] {snippet}",
-                query_used=query,
-                source_domain=_domain(url),
-                source_type="seeded_demo",
-                domain_trust_tier=_trust_tier(_domain(url)),
-                iteration_added=iteration,
-            )
-            for url, title, snippet in sources[: max(1, min(2, BUSINESS_RESEARCH_MAX_RESULTS))]
-        ]
