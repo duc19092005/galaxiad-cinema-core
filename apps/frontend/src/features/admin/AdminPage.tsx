@@ -26,6 +26,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Image,
+  Bot,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -47,6 +48,7 @@ import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
 import AdminShiftApprovalSection from './components/AdminShiftApprovalSection';
 import { useCinema } from '../../contexts/CinemaContext';
+import AiResearchSection from './components/AiResearchSection';
 
 // ============================================
 // CONSTANTS
@@ -69,7 +71,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
+const adminTabIds = new Set(['dashboard', 'ai', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
 
 const isAccountActive = (status: AdminUserDto['accountStatus']) => {
   if (typeof status === 'number') return status === 1;
@@ -1275,6 +1277,7 @@ const AdminPage: React.FC = () => {
     {
       items: [
         { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
+        { id: 'ai', label: 'AI', icon: <Bot size={18} /> },
         { id: 'users', label: t('Users'), icon: <Users size={18} /> },
         { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
         { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
@@ -1446,6 +1449,9 @@ const AdminPage: React.FC = () => {
             <AdminOpsTiles data={dashboardData} />
           </div>
         );
+
+      case 'ai':
+        return <AiResearchSection />;
 
       case 'users':
         return (

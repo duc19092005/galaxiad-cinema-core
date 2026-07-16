@@ -13,6 +13,8 @@ using Cinema.Application.UseCases.Admin.Banners;
 using Cinema.Application.UseCases.Public;
 using Cinema.Infrastructure.BackgroundJobs.Banners;
 using Cinema.Infrastructure.ExternalServices.Cache;
+using Cinema.Application.Interfaces.AiResearch;
+using Cinema.Infrastructure.ExternalServices.Ai;
 
 namespace Cinema.Api.Bootstraps.Admin;
 
@@ -69,6 +71,10 @@ public static class AdminBootstrap
         services.AddScoped<MovieInterestSyncJob>();
         services.AddScoped<AutoGenerateBannersJob>();
         services.AddSingleton<IMovieInterestBuffer, MovieInterestBuffer>();
+
+        // AI business research
+        services.AddScoped<IAiResearchService, AiResearchService>();
+        services.AddScoped<AiResearchService>();
 
         return services;
     }
