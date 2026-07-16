@@ -168,7 +168,7 @@ public sealed class AiResearchService : IAiResearchService
 
             var client = _httpClientFactory.CreateClient();
             client.Timeout = Timeout.InfiniteTimeSpan;
-            var baseUrl = (_configuration["AiService:RestUrl"] ?? "http://cinema-ai-service:8000").TrimEnd('/');
+            var baseUrl = (_configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000").TrimEnd('/');
             var request = new
             {
                 jobId = job.JobId.ToString(),

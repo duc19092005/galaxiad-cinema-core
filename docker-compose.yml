@@ -25,7 +25,6 @@ services:
       - DOTNET_USE_POLLING_FILE_WATCHER=false
       - ASPNETCORE_ENVIRONMENT=Docker
       - AiService__BaseUrl=http://ai:8000
-      - AiService__RestUrl=http://ai:8000
       - AiService__GrpcUrl=http://ai:50051
     networks:
       - cinema-network
