@@ -88,14 +88,26 @@ public sealed class AiResearchController : ControllerBase
     {
         Response.StatusCode = StatusCodes.Status200OK;
         Response.ContentType = "text/event-stream; charset=utf-8";
-        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.CacheControl = "no-cache, no-transform";
         Response.Headers.Connection = "keep-alive";
         Response.Headers["X-Accel-Buffering"] = "no";
 
+        // Prevent Kestrel/middleware from buffering SSE frames.
+        var bufferingFeature = HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>();
+        bufferingFeature?.DisableBuffering();
+
         var lastEventId = afterEventId;
         var lastHeartbeatAt = DateTime.UtcNow;
+        var idleRounds = 0;
         try
         {
+            // Immediate hello so the client can show "connected" without waiting for the first DB poll.
+            await Response.WriteAsync("event: connected\n", HttpContext.RequestAborted);
+            await Response.WriteAsync(
+                $"data: {JsonSerializer.Serialize(new { jobId, status = "connected", message = "SSE connected" }, SseJsonOptions)}\n\n",
+                HttpContext.RequestAborted);
+            await Response.Body.FlushAsync(HttpContext.RequestAborted);
+
             while (!HttpContext.RequestAborted.IsCancellationRequested)
             {
                 var events = await _service.GetEventsAfterAsync(
@@ -104,14 +116,25 @@ public sealed class AiResearchController : ControllerBase
                     GetUserId(),
                     User.IsInRole("Admin"),
                     HttpContext.RequestAborted);
+                if (events.Count == 0)
+                {
+                    idleRounds++;
+                }
+                else
+                {
+                    idleRounds = 0;
+                }
+
                 foreach (var item in events)
                 {
                     lastEventId = item.EventId;
+                    // Payload is already a JSON object (JsonElement). Write raw text to avoid double-encoding quirks.
+                    var dataJson = item.Payload.ValueKind is JsonValueKind.Object or JsonValueKind.Array
+                        ? item.Payload.GetRawText()
+                        : JsonSerializer.Serialize(item.Payload, SseJsonOptions);
                     await Response.WriteAsync($"id: {item.EventId}\n", HttpContext.RequestAborted);
                     await Response.WriteAsync($"event: {item.EventType}\n", HttpContext.RequestAborted);
-                    await Response.WriteAsync(
-                        $"data: {JsonSerializer.Serialize(item.Payload, SseJsonOptions)}\n\n",
-                        HttpContext.RequestAborted);
+                    await Response.WriteAsync($"data: {dataJson}\n\n", HttpContext.RequestAborted);
                     await Response.Body.FlushAsync(HttpContext.RequestAborted);
                     if (item.EventType is "done" or "failed" or "cancelled")
                     {
@@ -119,13 +142,16 @@ public sealed class AiResearchController : ControllerBase
                     }
                 }
 
-                if ((DateTime.UtcNow - lastHeartbeatAt).TotalSeconds >= 15)
+                if ((DateTime.UtcNow - lastHeartbeatAt).TotalSeconds >= 10)
                 {
-                    await Response.WriteAsync(": heartbeat\n\n", HttpContext.RequestAborted);
+                    await Response.WriteAsync($": heartbeat {DateTime.UtcNow:O}\n\n", HttpContext.RequestAborted);
                     await Response.Body.FlushAsync(HttpContext.RequestAborted);
                     lastHeartbeatAt = DateTime.UtcNow;
                 }
-                await Task.Delay(750, HttpContext.RequestAborted);
+
+                // Poll faster while the pipeline is active; ease off after long idle.
+                var delayMs = idleRounds > 40 ? 1500 : 400;
+                await Task.Delay(delayMs, HttpContext.RequestAborted);
             }
         }
         catch (OperationCanceledException)

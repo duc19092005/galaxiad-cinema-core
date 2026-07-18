@@ -22,10 +22,15 @@ const parseSseBlock = (block: string): AiResearchSseEvent | null => {
   for (const line of block.split(/\r?\n/)) {
     if (line.startsWith('id:')) id = line.slice(3).trim();
     else if (line.startsWith('event:')) event = line.slice(6).trim();
-    else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim());
+    else if (line.startsWith('data:')) dataLines.push(line.slice(5).trimStart());
   }
   if (dataLines.length === 0) return null;
-  return { id, event, data: JSON.parse(dataLines.join('\n')) as AiResearchProgress };
+  const raw = dataLines.join('\n');
+  try {
+    return { id, event, data: JSON.parse(raw) as AiResearchProgress };
+  } catch {
+    return null;
+  }
 };
 
 export const aiResearchApi = {
@@ -33,6 +38,8 @@ export const aiResearchApi = {
     const response = await identityAxios.post<ApiSuccessResponse<AiResearchJobSummary>>(
       '/admin/ai-research/jobs',
       request,
+      // Job create is fast; pipeline runs in Hangfire.
+      { timeout: 30000 },
     );
     return unwrap(response.data);
   },
@@ -55,42 +62,97 @@ export const aiResearchApi = {
     await identityAxios.post(`/admin/ai-research/jobs/${jobId}/cancel`);
   },
 
+  /**
+   * Long-lived SSE reader with automatic resume after disconnect.
+   * Uses cookie auth (credentials: include) same as the rest of the admin app.
+   */
   streamEvents: async (
     jobId: string,
     onEvent: (event: AiResearchSseEvent) => void,
     signal: AbortSignal,
     afterEventId = 0,
   ): Promise<void> => {
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${afterEventId}`,
-      {
-        method: 'GET',
-        credentials: 'include',
-        headers: { Accept: 'text/event-stream' },
-        signal,
-      },
-    );
-    if (!response.ok || !response.body) {
-      throw new Error(`SSE connection failed (${response.status}).`);
-    }
+    let cursor = afterEventId;
+    let attempt = 0;
 
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    while (true) {
-      const { value, done } = await reader.read();
-      buffer += decoder.decode(value, { stream: !done }).replace(/\r\n/g, '\n');
-      let boundary = buffer.indexOf('\n\n');
-      while (boundary >= 0) {
-        const block = buffer.slice(0, boundary).trim();
-        buffer = buffer.slice(boundary + 2);
-        if (block && !block.startsWith(':')) {
-          const parsed = parseSseBlock(block);
-          if (parsed) onEvent(parsed);
+    while (!signal.aborted) {
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${cursor}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+              Accept: 'text/event-stream',
+              'Cache-Control': 'no-cache',
+            },
+            signal,
+          },
+        );
+        if (!response.ok || !response.body) {
+          throw new Error(`SSE connection failed (${response.status}).`);
         }
-        boundary = buffer.indexOf('\n\n');
+
+        attempt = 0;
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (!signal.aborted) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+          let boundary = buffer.indexOf('\n\n');
+          while (boundary >= 0) {
+            const block = buffer.slice(0, boundary).trim();
+            buffer = buffer.slice(boundary + 2);
+            if (block && !block.startsWith(':')) {
+              const parsed = parseSseBlock(block);
+              if (parsed) {
+                if (parsed.id) {
+                  const numericId = Number(parsed.id);
+                  if (Number.isFinite(numericId)) cursor = Math.max(cursor, numericId);
+                }
+                onEvent(parsed);
+                if (parsed.event === 'done' || parsed.event === 'failed' || parsed.event === 'cancelled') {
+                  return;
+                }
+              }
+            }
+            boundary = buffer.indexOf('\n\n');
+          }
+        }
+
+        // Stream ended without a terminal event — resume after a short backoff.
+        attempt += 1;
+        if (signal.aborted) return;
+        await sleep(Math.min(4000, 500 * attempt), signal);
+      } catch (error) {
+        if (signal.aborted) return;
+        attempt += 1;
+        if (attempt > 12) {
+          throw error instanceof Error ? error : new Error('Mất kết nối SSE.');
+        }
+        await sleep(Math.min(5000, 600 * attempt), signal);
       }
-      if (done) break;
     }
   },
 };
+
+const sleep = (ms: number, signal: AbortSignal) =>
+  new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(new DOMException('Aborted', 'AbortError'));
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      signal.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = () => {
+      window.clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+  });

@@ -49,8 +49,26 @@ export interface AiResearchClaim {
   evidence: AiResearchEvidence[];
 }
 
+export interface AiResearchIeeeReference {
+  id: number;
+  title: string;
+  url: string;
+  domain?: string;
+  sourceType?: string;
+  trust?: string;
+  ieeeText?: string;
+}
+
+export interface AiResearchReportAuthor {
+  name: string;
+  affiliation?: string;
+  email?: string;
+}
+
 export interface AiResearchReport {
   generatedAt: string;
+  title?: string;
+  reportStyle?: string;
   sections: Array<{
     module: string;
     claims: Array<{
@@ -59,14 +77,45 @@ export interface AiResearchReport {
       status: string;
       classification: string;
       confidence: number;
-      citations: Array<{ title: string; url: string; sourceType: string }>;
+      citations: Array<{ title: string; url: string; sourceType: string; domain?: string }>;
     }>;
   }>;
+  /** IEEE paper body + claim counters live here (stored as SummaryJson). */
   summary: {
     totalClaims?: number;
     resolvedClaims?: number;
     insufficientClaims?: number;
     conflictingClaims?: number;
+    avgConfidence?: number;
+    referenceCount?: number;
+    reportStyle?: string;
+    title?: string;
+    authors?: AiResearchReportAuthor[];
+    abstract?: string;
+    keywords?: string[];
+    introduction?: string;
+    relatedWork?: string;
+    methodology?: string;
+    resultsAndDiscussion?: string;
+    conclusion?: string;
+    appendix?: string;
+    claimMatrix?: Array<{
+      claimCode?: string;
+      text?: string;
+      status?: string;
+      classification?: string;
+      confidence?: number;
+      citations?: string;
+    }>;
+    references?: AiResearchIeeeReference[];
+    /** Backward-compatible fields from older executive-brief jobs */
+    headline?: string;
+    executiveSummary?: string;
+    keyFindings?: string[];
+    recommendations?: string[];
+    risksAndUnknowns?: string[];
+    confidenceOverall?: 'high' | 'medium' | 'low' | string;
+    confidenceNote?: string;
   };
 }
 
@@ -88,6 +137,16 @@ export interface AiResearchProgress {
   budgetUsed: number;
   budgetCap: number;
   message?: string;
+  /** Model / pipeline chain-of-thought line for the live timeline. */
+  thought?: string;
+}
+
+export interface AiResearchTimelineItem {
+  id: string;
+  event: string;
+  message: string;
+  thought?: string;
+  at: number;
 }
 
 export interface AiResearchSseEvent {

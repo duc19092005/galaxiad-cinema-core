@@ -24,6 +24,9 @@ except ImportError:  # pragma: no cover - optional in lightweight local environm
     streamablehttp_client = None
 
 
+# Official remote MCP tool names use underscores (list_tools → tavily_search, ...).
+TAVILY_MCP_SEARCH_TOOL = "tavily_search"
+
 HIGH_TRUST_DOMAINS = {
     "chinhphu.vn",
     "hanoi.gov.vn",
@@ -56,16 +59,50 @@ def _parse_date(value: object) -> datetime | None:
         return None
 
 
+def _extract_result_rows(payload: object) -> list[dict]:
+    """Normalize Tavily MCP / HTTP payloads into a list of result dicts."""
+    if payload is None:
+        return []
+    if isinstance(payload, list):
+        return [item for item in payload if isinstance(item, dict)]
+    if not isinstance(payload, dict):
+        return []
+
+    for key in ("results", "data", "items"):
+        rows = payload.get(key)
+        if isinstance(rows, list):
+            return [item for item in rows if isinstance(item, dict)]
+
+    # Some MCP wrappers nest under "result"
+    nested = payload.get("result")
+    if isinstance(nested, dict):
+        return _extract_result_rows(nested)
+    if isinstance(nested, list):
+        return [item for item in nested if isinstance(item, dict)]
+    return []
+
+
 class TavilyMcpSearchProvider:
-    """Tavily MCP client owned by the Python service, with a live HTTP fallback."""
+    """Tavily search via remote MCP, with HTTP API fallback.
+
+    Important: empty MCP results must fall back to HTTP. The previous bug called
+    tool name ``tavily-search`` (hyphen) while Tavily exposes ``tavily_search``
+    (underscore), so MCP returned a text error that was silently mapped to [].
+    """
 
     async def search(self, query: str, iteration: int) -> list[Evidence]:
         if not TAVILY_API_KEY:
             raise RuntimeError("TAVILY_API_KEY is required for business research.")
 
-        if TAVILY_API_KEY and ClientSession and streamablehttp_client:
+        if ClientSession and streamablehttp_client:
             try:
-                return await self._search_mcp(query, iteration)
+                mcp_results = await self._search_mcp(query, iteration)
+                if mcp_results:
+                    return mcp_results
+                logger.warning(
+                    "Tavily MCP returned 0 results for query={!r}; falling back to HTTP Search API.",
+                    query[:120],
+                )
             except Exception as exc:
                 logger.warning(f"Tavily MCP search failed, using Tavily HTTP fallback: {exc}")
 
@@ -77,19 +114,34 @@ class TavilyMcpSearchProvider:
             async with ClientSession(read_stream, write_stream) as session:
                 await session.initialize()
                 result = await session.call_tool(
-                    "tavily-search",
-                    arguments={"query": query, "max_results": BUSINESS_RESEARCH_MAX_RESULTS},
+                    TAVILY_MCP_SEARCH_TOOL,
+                    arguments={
+                        "query": query,
+                        "max_results": BUSINESS_RESEARCH_MAX_RESULTS,
+                        "search_depth": "advanced",
+                    },
                 )
+
         payloads: list[dict] = []
         for content in result.content:
-            text = getattr(content, "text", "")
+            text = getattr(content, "text", "") or ""
             if not text:
                 continue
+            # Surface MCP tool errors instead of treating them as empty success.
+            lowered = text.lower()
+            if "unknown tool" in lowered or text.startswith("Not found:"):
+                raise RuntimeError(f"Tavily MCP tool error: {text}")
             try:
                 parsed = json.loads(text)
-                payloads.extend(parsed.get("results", parsed if isinstance(parsed, list) else []))
             except json.JSONDecodeError:
+                logger.debug("Tavily MCP non-JSON content: {}", text[:200])
                 continue
+            payloads.extend(_extract_result_rows(parsed))
+
+        is_error = getattr(result, "isError", False)
+        if is_error and not payloads:
+            raise RuntimeError(f"Tavily MCP call_tool isError with content={result.content!r}")
+
         return self._map_results(payloads, query, iteration, "tavily_mcp")
 
     async def _search_http(self, query: str, iteration: int) -> list[Evidence]:
@@ -105,7 +157,11 @@ class TavilyMcpSearchProvider:
                 },
             )
             response.raise_for_status()
-        return self._map_results(response.json().get("results", []), query, iteration, "tavily_http_fallback")
+            body = response.json()
+        rows = _extract_result_rows(body)
+        if not rows:
+            logger.warning("Tavily HTTP Search returned 0 results for query={!r}", query[:120])
+        return self._map_results(rows, query, iteration, "tavily_http")
 
     def _map_results(self, results: list[dict], query: str, iteration: int, source_type: str) -> list[Evidence]:
         mapped: list[Evidence] = []

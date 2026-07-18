@@ -18,6 +18,7 @@ async def run_business_research_stream(request: BusinessResearchRequest):
     async def generate():
         try:
             async for item in orchestrator.stream(request):
+                # NDJSON line + flush-friendly newline so C# StreamReader gets events immediately.
                 yield json.dumps(item, ensure_ascii=False) + "\n"
         except Exception as exc:
             logger.exception(f"Business research job {request.job_id} failed")
@@ -34,7 +35,14 @@ async def run_business_research_stream(request: BusinessResearchRequest):
                 ensure_ascii=False,
             ) + "\n"
 
-    return StreamingResponse(generate(), media_type="application/x-ndjson")
+    return StreamingResponse(
+        generate(),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post("/run")

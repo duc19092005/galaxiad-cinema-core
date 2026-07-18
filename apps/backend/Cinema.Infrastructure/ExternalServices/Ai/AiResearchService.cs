@@ -163,7 +163,21 @@ public sealed class AiResearchService : IAiResearchService
 
         try
         {
+            // Drop any half-written report/claims from a previous Hangfire retry.
+            await ClearJobArtifactsAsync(job.JobId);
+
             job.Status = "planning";
+            job.ErrorMessage = null;
+            job.CompletedAt = null;
+            job.BudgetUsed = 0;
+            AddEvent(job.JobId, "planning", new
+            {
+                jobId = job.JobId,
+                status = "planning",
+                budgetUsed = 0,
+                budgetCap = job.BudgetCap,
+                message = "Bắt đầu pipeline research (planner → search → arbitrator)"
+            });
             await _dbContext.SaveChangesAsync();
 
             var client = _httpClientFactory.CreateClient();
@@ -187,18 +201,27 @@ public sealed class AiResearchService : IAiResearchService
             await using var stream = await response.Content.ReadAsStreamAsync();
             using var reader = new StreamReader(stream, Encoding.UTF8);
 
-            while (!reader.EndOfStream)
+            while (true)
             {
                 var line = await reader.ReadLineAsync();
+                if (line is null)
+                {
+                    break;
+                }
                 if (string.IsNullOrWhiteSpace(line))
                 {
                     continue;
                 }
-                await _dbContext.Entry(job).ReloadAsync();
-                if (job.Status == "cancelled")
+
+                // Fresh read of cancel flag without poisoning the tracked graph.
+                var cancelled = await _dbContext.AiResearchJobEntity
+                    .AsNoTracking()
+                    .AnyAsync(item => item.JobId == jobId && item.Status == "cancelled");
+                if (cancelled)
                 {
                     return;
                 }
+
                 using var document = JsonDocument.Parse(line);
                 var root = document.RootElement;
                 var kind = root.GetProperty("kind").GetString();
@@ -206,8 +229,9 @@ public sealed class AiResearchService : IAiResearchService
                 {
                     var eventType = root.GetProperty("eventType").GetString() ?? "researching";
                     var payload = root.GetProperty("payload").Clone();
-                    job.Status = eventType;
-                    if (payload.TryGetProperty("budgetUsed", out var budgetUsed))
+                    // Map pipeline stages to a compact job status for the list UI.
+                    job.Status = NormalizeJobStatus(eventType);
+                    if (payload.TryGetProperty("budgetUsed", out var budgetUsed) && budgetUsed.ValueKind == JsonValueKind.Number)
                     {
                         job.BudgetUsed = budgetUsed.GetInt32();
                     }
@@ -231,19 +255,21 @@ public sealed class AiResearchService : IAiResearchService
         catch (Exception ex)
         {
             _logger.LogError(ex, "AI research job {JobId} failed", jobId);
-            await _dbContext.Entry(job).ReloadAsync();
-            if (job.Status != "cancelled")
+            // Drop any failed claim/report graph so we can still mark the job failed.
+            _dbContext.ChangeTracker.Clear();
+            var failedJob = await _dbContext.AiResearchJobEntity.FirstOrDefaultAsync(item => item.JobId == jobId);
+            if (failedJob is not null && failedJob.Status != "cancelled")
             {
-                job.Status = "failed";
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-                AddEvent(job.JobId, "failed", new
+                failedJob.Status = "failed";
+                failedJob.ErrorMessage = Truncate(ex.Message, 2000);
+                failedJob.CompletedAt = DateTime.UtcNow;
+                AddEvent(failedJob.JobId, "failed", new
                 {
                     jobId,
                     status = "failed",
-                    budgetUsed = job.BudgetUsed,
-                    budgetCap = job.BudgetCap,
-                    message = ex.Message
+                    budgetUsed = failedJob.BudgetUsed,
+                    budgetCap = failedJob.BudgetCap,
+                    message = Truncate(ex.Message, 500)
                 });
                 await _dbContext.SaveChangesAsync();
             }
@@ -252,6 +278,23 @@ public sealed class AiResearchService : IAiResearchService
 
     private async Task PersistResultAsync(AiResearchJobEntity job, PythonResearchResult result)
     {
+        await ClearJobArtifactsAsync(job.JobId);
+
+        // Detach leftover navigation items so EF does not try to UPDATE ghost claims.
+        foreach (var entry in _dbContext.ChangeTracker.Entries<AiResearchClaimEntity>()
+                     .Where(e => e.Entity.JobId == job.JobId)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+        foreach (var entry in _dbContext.ChangeTracker.Entries<AiResearchReportEntity>()
+                     .Where(e => e.Entity.JobId == job.JobId)
+                     .ToList())
+        {
+            entry.State = EntityState.Detached;
+        }
+
+        var claimEntities = new List<AiResearchClaimEntity>();
         foreach (var claim in result.Claims)
         {
             var claimId = Guid.TryParse(claim.Id, out var parsedClaimId) ? parsedClaimId : Guid.NewGuid();
@@ -259,13 +302,13 @@ public sealed class AiResearchService : IAiResearchService
             {
                 ClaimId = claimId,
                 JobId = job.JobId,
-                Text = claim.Text,
-                Category = claim.Category,
+                Text = Truncate(claim.Text, 1000),
+                Category = Truncate(claim.Category, 80),
                 IsCritical = claim.IsCritical,
-                Status = claim.Status,
+                Status = Truncate(claim.Status, 40),
                 IterationCount = claim.IterationCount,
-                Confidence = Convert.ToDecimal(claim.Confidence),
-                Classification = claim.Classification,
+                Confidence = Math.Clamp(Convert.ToDecimal(claim.Confidence), 0m, 1m),
+                Classification = Truncate(claim.Classification, 40),
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -275,48 +318,101 @@ public sealed class AiResearchService : IAiResearchService
                 {
                     EvidenceId = Guid.NewGuid(),
                     ClaimId = claimId,
-                    Url = evidence.Url,
-                    Title = evidence.Title,
-                    Snippet = evidence.Snippet,
-                    ExtractedContent = evidence.ExtractedContent,
+                    Url = Truncate(evidence.Url, 2048),
+                    Title = Truncate(evidence.Title, 500),
+                    Snippet = evidence.Snippet ?? string.Empty,
+                    ExtractedContent = evidence.ExtractedContent ?? string.Empty,
                     PublishedDate = evidence.PublishedDate,
-                    QueryUsed = evidence.QueryUsed,
-                    SourceDomain = evidence.SourceDomain,
-                    SourceType = evidence.SourceType,
-                    DomainTrustTier = evidence.DomainTrustTier,
-                    Relation = evidence.Relation,
+                    QueryUsed = Truncate(evidence.QueryUsed, 1000),
+                    SourceDomain = Truncate(evidence.SourceDomain, 255),
+                    SourceType = Truncate(evidence.SourceType, 80),
+                    DomainTrustTier = Truncate(evidence.DomainTrustTier, 20),
+                    Relation = Truncate(string.IsNullOrWhiteSpace(evidence.Relation) ? "supports" : evidence.Relation, 20),
                     IterationAdded = evidence.IterationAdded,
                     CreatedAt = DateTime.UtcNow
                 });
             }
-            job.Claims.Add(claimEntity);
+            claimEntities.Add(claimEntity);
         }
 
-        var sections = result.Report.TryGetProperty("sections", out var sectionsElement)
+        _dbContext.AiResearchClaimEntity.AddRange(claimEntities);
+
+        var sections = result.Report.ValueKind != JsonValueKind.Undefined
+                       && result.Report.TryGetProperty("sections", out var sectionsElement)
             ? sectionsElement.GetRawText()
             : "[]";
-        var summary = result.Report.TryGetProperty("summary", out var summaryElement)
+        var summary = result.Report.ValueKind != JsonValueKind.Undefined
+                      && result.Report.TryGetProperty("summary", out var summaryElement)
             ? summaryElement.GetRawText()
             : "{}";
-        job.Report = new AiResearchReportEntity
+
+        _dbContext.AiResearchReportEntity.Add(new AiResearchReportEntity
         {
             JobId = job.JobId,
             GeneratedAt = DateTime.UtcNow,
             SectionsJson = sections,
             SummaryJson = summary
-        };
+        });
+
         job.Status = "done";
         job.BudgetUsed = result.BudgetUsed;
         job.CompletedAt = DateTime.UtcNow;
+        job.ErrorMessage = null;
         AddEvent(job.JobId, "done", new
         {
             jobId = job.JobId,
             status = "done",
             budgetUsed = job.BudgetUsed,
             budgetCap = job.BudgetCap,
+            resolvedClaims = claimEntities.Count(c => c.Status == "resolved"),
+            totalClaims = claimEntities.Count,
             message = "Báo cáo đã hoàn thành"
         });
         await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task ClearJobArtifactsAsync(Guid jobId)
+    {
+        var claimIds = await _dbContext.AiResearchClaimEntity
+            .AsNoTracking()
+            .Where(item => item.JobId == jobId)
+            .Select(item => item.ClaimId)
+            .ToListAsync();
+        if (claimIds.Count > 0)
+        {
+            await _dbContext.AiResearchEvidenceEntity
+                .Where(item => claimIds.Contains(item.ClaimId))
+                .ExecuteDeleteAsync();
+            await _dbContext.AiResearchClaimEntity
+                .Where(item => item.JobId == jobId)
+                .ExecuteDeleteAsync();
+        }
+
+        await _dbContext.AiResearchReportEntity
+            .Where(item => item.JobId == jobId)
+            .ExecuteDeleteAsync();
+    }
+
+    private static string NormalizeJobStatus(string eventType) => eventType switch
+    {
+        "queued" => "queued",
+        "planning" or "claim_created" or "thought" => "planning",
+        "researching" or "evidence_found" => "researching",
+        "arbitrating" or "claim_resolved" or "claim_insufficient" => "arbitrating",
+        "synthesizing" => "synthesizing",
+        "done" => "done",
+        "failed" => "failed",
+        "cancelled" => "cancelled",
+        _ => eventType
+    };
+
+    private static string Truncate(string? value, int maxLength)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return string.Empty;
+        }
+        return value.Length <= maxLength ? value : value[..maxLength];
     }
 
     private IQueryable<AiResearchJobEntity> AuthorizedJobs(Guid userId, bool isAdmin)
