@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { 
-  ChevronLeft, Server, Megaphone, Monitor, Users, Code, Palette,
+  Server, Megaphone, Monitor, Users, Code, Palette,
   MapPin, Clock, DollarSign, Briefcase, CheckCircle, Upload, FileText, X
 } from 'lucide-react';
 import Header from '../../components/Header';
