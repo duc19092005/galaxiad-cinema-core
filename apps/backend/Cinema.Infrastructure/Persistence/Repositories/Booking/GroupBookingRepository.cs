@@ -78,6 +78,14 @@ public class GroupBookingRepository : IGroupBookingRepository
     public Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds)
         => _common.GetValidSeatsAsync(auditoriumId, seatIds);
 
+    public async Task<List<SeatsInfoEntity>> GetAuditoriumSeatsAsync(Guid auditoriumId)
+    {
+        return await _dbContext.Set<SeatsInfoEntity>()
+            .Where(s => s.AuditoriumId == auditoriumId)
+            .AsNoTracking()
+            .ToListAsync();
+    }
+
     public Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId)
         => _common.GetScheduleByIdAsync(scheduleId);
 

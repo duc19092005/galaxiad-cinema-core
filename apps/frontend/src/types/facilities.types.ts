@@ -14,6 +14,10 @@ export interface Cinema {
     latitude?: number;
     longitude?: number;
     totalRooms: number;
+    /** Real seat count from backend (auditorium seats). */
+    totalSeats?: number;
+    isActive?: boolean;
+    createdAt?: string;
     theaterManagerId?: string | null;
     theaterManagerName?: string | null;
     facilitiesManagerName?: string | null;

@@ -13,6 +13,21 @@ import Header from '../../components/Header';
 import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
 import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
+import {
+    canAddSeat,
+    createsIsolatedEmptySeat,
+    normalizeSeatId,
+    occupiedIdsFromSeatMap,
+} from '../../utils/seatSelectionPolicy';
+import SegmentQuantityPicker from '../../components/SegmentQuantityPicker';
+import {
+    assignSegmentsToSeats,
+    buildSegmentLineSummaries,
+    emptySegmentCounts,
+    totalFromSegmentCounts,
+    totalTicketQuantity,
+    type SegmentCounts,
+} from '../../utils/segmentQuantity';
 
 const BookingPage: React.FC = () => {
     const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -21,7 +36,7 @@ const BookingPage: React.FC = () => {
 
     const [seatMap, setSeatMap] = useState<PublicSeatMap | null>(null);
     const [selectedSeats, setSelectedSeats] = useState<PublicSeat[]>([]);
-    const [seatSegmentMap, setSeatSegmentMap] = useState<Record<string, string>>({});
+    const [segmentCounts, setSegmentCounts] = useState<SegmentCounts>({});
     const [loading, setLoading] = useState(true);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -134,12 +149,30 @@ const BookingPage: React.FC = () => {
         });
     }, [pricing?.segmentPrices, ageSymbol]);
 
-    // Check if any selected seat uses Student segment on T18 movie
-    const hasStudentOnT18 = ageSymbol === 'T18' && selectedSeats.some(s => {
-        const segId = seatSegmentMap[s.seatId];
-        const seg = pricing?.segmentPrices.find(sp => sp.userSegmentId === segId);
-        return seg?.segmentName.toLowerCase().includes('student');
-    });
+    // Init / sync segment counters when pricing loads
+    useEffect(() => {
+        if (allowedSegments.length === 0) {
+            setSegmentCounts({});
+            return;
+        }
+        setSegmentCounts((prev) => {
+            const next = emptySegmentCounts(allowedSegments);
+            for (const seg of allowedSegments) {
+                next[seg.userSegmentId] = prev[seg.userSegmentId] || 0;
+            }
+            return next;
+        });
+    }, [allowedSegments]);
+
+    const ticketQuantity = totalTicketQuantity(segmentCounts);
+    const segmentLines = useMemo(
+        () => buildSegmentLineSummaries(allowedSegments, segmentCounts),
+        [allowedSegments, segmentCounts]
+    );
+
+    const hasStudentOnT18 = ageSymbol === 'T18' && segmentLines.some((line) =>
+        line.segmentName.toLowerCase().includes('student')
+    );
 
     const fetchData = async () => {
         setLoading(true); setError(null);
@@ -154,6 +187,44 @@ const BookingPage: React.FC = () => {
         finally { setLoading(false); }
     };
 
+    const trimSeatsToQuantity = async (nextCounts: SegmentCounts) => {
+        const maxSeats = totalTicketQuantity(nextCounts);
+        setSegmentCounts(nextCounts);
+        if (selectedSeats.length <= maxSeats) return;
+
+        const keep = selectedSeats.slice(0, maxSeats);
+        const remove = selectedSeats.slice(maxSeats);
+        setSelectedSeats(keep);
+        await Promise.all(remove.map((s) => unlockSeat(s.seatId)));
+    };
+
+    const layoutSeats = useMemo(
+        () => (seatMap?.seatMap || []).map(s => ({
+            seatId: s.seatId,
+            rowIndex: s.rowIndex,
+            colIndex: s.colIndex,
+        })),
+        [seatMap]
+    );
+
+    const occupiedSeatIds = useMemo(() => {
+        const booked = occupiedIdsFromSeatMap(seatMap?.seatMap || []);
+        const lockedByOthers = Object.keys(lockedSeats).filter(
+            id => !selectedSeats.some(s => normalizeSeatId(s.seatId) === normalizeSeatId(id))
+        );
+        const unavailable = Object.keys(unavailableSeats);
+        return [...booked, ...lockedByOthers, ...unavailable];
+    }, [seatMap, lockedSeats, unavailableSeats, selectedSeats]);
+
+    const selectionCreatesIsolation = useMemo(
+        () => createsIsolatedEmptySeat(
+            layoutSeats,
+            selectedSeats.map(s => s.seatId),
+            occupiedSeatIds
+        ),
+        [layoutSeats, selectedSeats, occupiedSeatIds]
+    );
+
     const toggleSeat = async (seat: PublicSeat) => {
         if (seat.isBooked || unavailableSeats[seat.seatId.toLowerCase()]) return;
         const isCurrentlySelected = selectedSeats.find(s => s.seatId === seat.seatId);
@@ -161,25 +232,66 @@ const BookingPage: React.FC = () => {
 
         if (isCurrentlySelected) {
             setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-            setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
             await unlockSeat(seat.seatId);
-        } else {
-            if (selectedSeats.length >= 10) { showError(t('toast.maxSeats', 'You can select up to 10 tickets per order.')); return; }
-            setSelectedSeats(prev => [...prev, seat]);
-            if (allowedSegments.length > 0) {
-                setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: allowedSegments[0].userSegmentId }));
+            return;
+        }
+
+        if (ticketQuantity <= 0) {
+            showError(t('toast.selectTicketTypesFirst', 'Vui lòng chọn số lượng loại vé trước khi chọn ghế.'));
+            return;
+        }
+        if (selectedSeats.length >= ticketQuantity) {
+            showError(t('toast.seatQuotaFull', 'Bạn đã chọn đủ {{count}} ghế theo số vé đã chọn.', { count: ticketQuantity }));
+            return;
+        }
+
+        const check = canAddSeat(
+            layoutSeats,
+            seat.seatId,
+            selectedSeats.map(s => s.seatId),
+            occupiedSeatIds
+        );
+        if (!check.ok) {
+            if (check.reason === 'max') {
+                showError(t('toast.maxSeats', 'You can select up to 10 tickets per order.'));
+            } else if (check.reason === 'isolated') {
+                showError(t(
+                    'toast.isolatedSeat',
+                    'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng. Hãy chọn ghế liền kề hoặc chọn đúng ghế lẻ đó.'
+                ));
             }
-            const success = await lockSeat(seat.seatId, userName);
-            if (!success) {
-                setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
-                setSeatSegmentMap(prev => { const next = { ...prev }; delete next[seat.seatId]; return next; });
-                showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
-            }
+            return;
+        }
+
+        setSelectedSeats(prev => [...prev, seat]);
+        const success = await lockSeat(seat.seatId, userName);
+        if (!success) {
+            setSelectedSeats(prev => prev.filter(s => s.seatId !== seat.seatId));
+            showError(t('toast.seatLockFailed', 'Không thể chọn ghế này. Ghế đã bị chọn hoặc thao tác quá nhanh.'));
         }
     };
 
     const handleBooking = async () => {
+        if (ticketQuantity <= 0) {
+            showError(t('toast.selectTicketTypesFirst', 'Vui lòng chọn số lượng loại vé trước khi chọn ghế.'));
+            return;
+        }
         if (selectedSeats.length === 0) { showError(t('toast.selectSeat')); return; }
+        if (selectedSeats.length !== ticketQuantity) {
+            showError(t(
+                'toast.seatCountMismatch',
+                'Bạn đã chọn {{selected}}/{{required}} ghế. Vui lòng chọn đúng số ghế theo số vé.',
+                { selected: selectedSeats.length, required: ticketQuantity }
+            ));
+            return;
+        }
+        if (selectionCreatesIsolation) {
+            showError(t(
+                'toast.isolatedSeat',
+                'Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng. Hãy chọn ghế liền kề hoặc chọn đúng ghế lẻ đó.'
+            ));
+            return;
+        }
         if (!isLoggedIn || isCashierMode) {
             if (isCashierMode && (!customerInfo.name.trim() || !customerInfo.phone.trim())) {
                 showError('Vui lòng nhập tên và số điện thoại khách hàng. Email có thể để trống.'); return;
@@ -199,6 +311,11 @@ const BookingPage: React.FC = () => {
                 } catch { /* ignore */ }
             }
 
+            const seatSegmentMap = assignSegmentsToSeats(
+                selectedSeats.map(s => s.seatId),
+                allowedSegments,
+                segmentCounts
+            );
             const payload: any = {
                 scheduleId: scheduleId!.trim(),
                 seatSelections: selectedSeats.map(s => ({ seatId: s.seatId, userSegmentId: seatSegmentMap[s.seatId] })),
@@ -220,39 +337,33 @@ const BookingPage: React.FC = () => {
         } finally { setBookingLoading(false); }
     };
 
-    const totalPrice = selectedSeats.reduce((sum, seat) => {
-        const segmentId = seatSegmentMap[seat.seatId];
-        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-        return sum + (segment?.finalPrice || 0);
-    }, 0);
+    const totalPrice = totalFromSegmentCounts(allowedSegments, segmentCounts);
 
-    const totalBeforePromotions = selectedSeats.reduce((sum, seat) => {
-        const segmentId = seatSegmentMap[seat.seatId];
-        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-        if (!segment) return sum;
-        const discountAmount = segment.appliedPromotions
+    const totalBeforePromotions = segmentLines.reduce((sum, line) => {
+        const seg = allowedSegments.find(s => s.userSegmentId === line.userSegmentId);
+        if (!seg) return sum + line.lineTotal;
+        const discountAmount = (seg.appliedPromotions || [])
             .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
             .reduce((s, p) => s + p.amountChanged, 0);
-        return sum + (segment.finalPrice - discountAmount);
+        return sum + line.quantity * (seg.finalPrice - discountAmount);
     }, 0);
 
-    const totalPromotionAdjustment = selectedSeats.reduce((sum, seat) => {
-        const segmentId = seatSegmentMap[seat.seatId];
-        const segment = pricing?.segmentPrices.find(s => s.userSegmentId === segmentId);
-        if (!segment) return sum;
-        const discountAmount = segment.appliedPromotions
+    const totalPromotionAdjustment = segmentLines.reduce((sum, line) => {
+        const seg = allowedSegments.find(s => s.userSegmentId === line.userSegmentId);
+        if (!seg) return sum;
+        const discountAmount = (seg.appliedPromotions || [])
             .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
             .reduce((s, p) => s + p.amountChanged, 0);
-        return sum + discountAmount;
+        return sum + line.quantity * discountAmount;
     }, 0);
 
     const selectedAppliedPromotions = Array.from(new Map(
-        selectedSeats.flatMap((seat) => {
-            const segmentId = seatSegmentMap[seat.seatId];
-            return pricing?.segmentPrices.find(s => s.userSegmentId === segmentId)?.appliedPromotions || [];
+        segmentLines.flatMap((line) => {
+            const seg = allowedSegments.find(s => s.userSegmentId === line.userSegmentId);
+            return (seg?.appliedPromotions || [])
+                .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
+                .map((promotion) => [promotion.ruleId, promotion] as const);
         })
-        .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
-        .map((promotion) => [promotion.ruleId, promotion])
     ).values());
 
     if (loading) {
@@ -354,10 +465,53 @@ const BookingPage: React.FC = () => {
 
                 {/* Seat and Summary Area */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-                    {/* Left: Seat Selection */}
+                    {/* Left: Ticket types + Seat Selection */}
                     <div className="lg:col-span-8 flex flex-col items-center">
+                        {/* Step 1: Ticket types — ABOVE seat map */}
+                        <div className="w-full max-w-3xl mb-8 glass-card rounded-2xl p-5 md:p-6 border border-white/10">
+                            <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                <div className="flex items-center gap-2">
+                                    <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-[#ff8a00] text-black text-xs font-extrabold">1</span>
+                                    <h3 className="text-base md:text-lg font-bold text-white m-0">
+                                        {t('booking.selectTicketTypes', 'Chọn loại vé')}
+                                    </h3>
+                                </div>
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${ticketQuantity > 0 ? 'bg-[#ff8a00]/15 text-[#ff8a00]' : 'bg-white/5 text-zinc-500'}`}>
+                                    {ticketQuantity > 0
+                                        ? t('booking.pickSeatsOnMap', 'Chọn ghế trên sơ đồ ({{count}} ghế)', { count: ticketQuantity })
+                                        : t('booking.pickTicketsFirst', 'Hãy chọn số lượng loại vé trước')}
+                                </span>
+                            </div>
+                            <p className="text-[11px] text-zinc-500 mb-4 leading-relaxed">
+                                {t(
+                                    'booking.selectTicketTypesHint',
+                                    'Chọn số lượng từng loại vé trước, sau đó chọn đúng số ghế trên sơ đồ.'
+                                )}
+                            </p>
+                            <SegmentQuantityPicker
+                                segments={allowedSegments}
+                                counts={segmentCounts}
+                                onChange={(next) => { void trimSeatsToQuantity(next); }}
+                                title=""
+                                layout="grid"
+                                showTotalBadge
+                                compact
+                            />
+                        </div>
+
+                        {/* Step 2 label */}
+                        <div className="w-full max-w-3xl mb-6 flex items-center gap-2">
+                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-extrabold ${ticketQuantity > 0 ? 'bg-[#ff8a00] text-black' : 'bg-zinc-800 text-zinc-500'}`}>2</span>
+                            <h3 className={`text-base md:text-lg font-bold m-0 ${ticketQuantity > 0 ? 'text-white' : 'text-zinc-500'}`}>
+                                {t('booking.selectSeatsStep', 'Chọn ghế')}
+                            </h3>
+                            <span className={`ml-auto text-xs font-bold ${selectedSeats.length === ticketQuantity && ticketQuantity > 0 ? 'text-emerald-400' : 'text-[#ff8a00]'}`}>
+                                {selectedSeats.length}/{ticketQuantity || 0}
+                            </span>
+                        </div>
+
                         {/* Screen curve */}
-                        <div className="w-full max-w-2xl mb-16 relative">
+                        <div className={`w-full max-w-2xl mb-12 relative transition-opacity ${ticketQuantity > 0 ? 'opacity-100' : 'opacity-50'}`}>
                             <div className="screen-curve"></div>
                             <p className="text-center text-[#ddc1ae] text-[10px] tracking-[0.4em] uppercase mt-4">Screen</p>
                         </div>
@@ -403,8 +557,8 @@ const BookingPage: React.FC = () => {
                                 const seatUnavailable = unavailableSeats[seat.seatId.toLowerCase()];
                                 const lockedBy = lockedSeats[seat.seatId.toLowerCase()];
                                 const isLockedByOther = lockedBy && !isSelected;
-                                
-                                const isCenterSeat = 
+
+                                const isCenterSeat =
                                     seatMap.centerRowStart !== undefined &&
                                     seatMap.centerRowEnd !== undefined &&
                                     seatMap.centerColStart !== undefined &&
@@ -413,6 +567,10 @@ const BookingPage: React.FC = () => {
                                     seat.rowIndex <= seatMap.centerRowEnd &&
                                     seat.colIndex >= seatMap.centerColStart &&
                                     seat.colIndex <= seatMap.centerColEnd;
+
+                                const title = isLockedByOther
+                                    ? `Selected by ${lockedBy}`
+                                    : seat.seatName;
 
                                 return (
                                     <button
@@ -434,7 +592,7 @@ const BookingPage: React.FC = () => {
                                                 ? 'bg-zinc-800 text-[#ff8a00] hover:bg-zinc-700 hover:text-white border-[#ff8a00]/60 shadow-[0_0_6px_rgba(255,138,0,0.25)] cursor-pointer'
                                                 : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white cursor-pointer border-zinc-700/50'
                                         }`}
-                                        title={isLockedByOther ? `Selected by ${lockedBy}` : seat.seatName}
+                                        title={title}
                                     >
                                         {seat.seatName}
                                     </button>
@@ -443,7 +601,7 @@ const BookingPage: React.FC = () => {
                         </div>
 
                         {/* Legend */}
-                        <div className="flex flex-wrap justify-center gap-8 px-6 py-4 rounded-full glass-card">
+                        <div className="flex flex-wrap justify-center gap-6 px-6 py-4 rounded-full glass-card">
                             <div className="flex items-center gap-2">
                                 <div className="w-4 h-4 rounded-sm bg-zinc-800 border border-zinc-700/50"></div>
                                 <span className="text-xs text-[#ddc1ae]">{t('booking.available', 'Available')}</span>
@@ -465,6 +623,9 @@ const BookingPage: React.FC = () => {
                                 <span className="text-xs text-[#ddc1ae]">{t('booking.occupied', 'Occupied')}</span>
                             </div>
                         </div>
+                        <p className="mt-4 text-center text-[11px] text-[#ddc1ae]/70 max-w-xl">
+                            {t('booking.isolatedRuleHint', 'Không để trống 1 ghế lẻ giữa hai ghế đã chọn/đã bán trong cùng hàng. Khách đi lẻ 1 ghế vẫn được.')}
+                        </p>
 
                     </div>
 
@@ -509,49 +670,66 @@ const BookingPage: React.FC = () => {
                                         </span>
                                     </div>
                                 )}
-                                
-                                {/* Selected Seats */}
+
+                                {/* Selected seats + ticket qty summary */}
                                 <div className="pt-6 border-t border-white/5">
-                                    <span className="text-[#ddc1ae] text-xs uppercase tracking-wider block mb-3 font-bold">Selected Seats</span>
-                                    <div className="flex flex-wrap gap-2">
-                                        {selectedSeats.length === 0 ? (
-                                            <span className="text-zinc-500 italic text-sm">No seats selected yet</span>
-                                        ) : (
-                                            selectedSeats.map(seat => {
-                                                const segment = pricing?.segmentPrices.find(s => s.userSegmentId === seatSegmentMap[seat.seatId]);
-                                                return (
-                                                    <div key={seat.seatId} className="flex flex-col gap-2 p-3 bg-white/5 border border-white/10 rounded-xl w-full">
-                                                        <div className="flex justify-between items-center">
-                                                            <span className="font-bold text-[#ff8a00]">Seat {seat.seatName}</span>
-                                                            <span className="font-bold text-white">
-                                                                {(segment?.finalPrice || 0).toLocaleString('vi-VN')}đ
-                                                            </span>
-                                                        </div>
-                                                        {segment && segment.appliedPromotions.filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0).length > 0 && (
-                                                             <div className="text-[11px] text-emerald-300 leading-relaxed">
-                                                                 {segment.appliedPromotions
-                                                                     .filter(p => p.promotionTypeName !== 'Surcharge' && p.amountChanged < 0)
-                                                                     .map((promotion) => promotion.title)
-                                                                     .join(', ')}
-                                                             </div>
-                                                         )}
-                                                        <select
-                                                            value={seatSegmentMap[seat.seatId] || ''}
-                                                            onChange={(e) => setSeatSegmentMap(prev => ({ ...prev, [seat.seatId]: e.target.value }))}
-                                                            className="w-full bg-zinc-900 text-zinc-300 text-xs p-2 rounded border border-white/5 outline-none cursor-pointer"
-                                                        >
-                                                            {allowedSegments.map(segmentPrice => (
-                                                                <option key={segmentPrice.userSegmentId} value={segmentPrice.userSegmentId} className="bg-zinc-950 text-white">
-                                                                    {segmentPrice.segmentName}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                );
-                                            })
-                                        )}
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[#ddc1ae] text-xs uppercase tracking-wider font-bold">
+                                            {t('booking.selectedSeats', 'Ghế đã chọn')}
+                                        </span>
+                                        <span className={`text-xs font-bold ${selectedSeats.length === ticketQuantity && ticketQuantity > 0 ? 'text-emerald-400' : 'text-[#ff8a00]'}`}>
+                                            {selectedSeats.length}/{ticketQuantity || 0}
+                                        </span>
                                     </div>
+                                    {ticketQuantity === 0 ? (
+                                        <span className="text-zinc-500 italic text-sm">
+                                            {t('booking.pickTicketsFirst', 'Hãy chọn số lượng loại vé trước')}
+                                        </span>
+                                    ) : selectedSeats.length === 0 ? (
+                                        <span className="text-zinc-500 italic text-sm">
+                                            {t('booking.pickSeatsOnMap', 'Chọn ghế trên sơ đồ ({{count}} ghế)', { count: ticketQuantity })}
+                                        </span>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2">
+                                            {selectedSeats.map((seat) => (
+                                                <span
+                                                    key={seat.seatId}
+                                                    className="px-3 py-1.5 rounded-lg bg-[#ff8a00]/15 border border-[#ff8a00]/40 text-[#ff8a00] text-sm font-bold"
+                                                >
+                                                    {seat.seatName}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Segment price breakdown */}
+                                {segmentLines.length > 0 && (
+                                    <div className="pt-4 border-t border-white/5 space-y-2">
+                                        <span className="text-[#ddc1ae] text-xs uppercase tracking-wider font-bold block mb-2">
+                                            {t('booking.priceBySegment', 'Chi tiết theo loại vé')}
+                                        </span>
+                                        {segmentLines.map((line) => (
+                                            <div key={line.userSegmentId} className="flex justify-between gap-3 text-sm">
+                                                <div className="min-w-0">
+                                                    <div className="text-white font-semibold truncate">
+                                                        {line.segmentName} × {line.quantity}
+                                                    </div>
+                                                    <div className="text-[11px] text-zinc-500">
+                                                        {line.unitPrice.toLocaleString('vi-VN')}đ / vé
+                                                    </div>
+                                                </div>
+                                                <span className="font-bold text-white shrink-0">
+                                                    {line.lineTotal.toLocaleString('vi-VN')}đ
+                                                </span>
+                                            </div>
+                                        ))}
+                                        <div className="flex justify-between text-xs text-zinc-400 pt-1">
+                                            <span>{t('booking.totalSeats', 'Tổng số ghế')}</span>
+                                            <span className="font-semibold text-white">{ticketQuantity}</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             {/* Voucher Selector Dropdown */}
                              {isLoggedIn && !isCashierMode && (
@@ -678,7 +856,12 @@ const BookingPage: React.FC = () => {
 
                             {/* Pay Button */}
                             <button
-                                disabled={selectedSeats.length === 0 || bookingLoading}
+                                disabled={
+                                    ticketQuantity <= 0
+                                    || selectedSeats.length !== ticketQuantity
+                                    || bookingLoading
+                                    || selectionCreatesIsolation
+                                }
                                 onClick={handleBooking}
                                 className="w-full bg-[#ff8a00] text-black h-14 rounded-xl font-bold flex items-center justify-center gap-3 hover:shadow-[0_0_25px_rgba(255,138,0,0.4)] transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed group border-none cursor-pointer"
                             >

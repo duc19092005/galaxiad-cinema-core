@@ -154,6 +154,10 @@ public static class AdminUserManagementHelper
         string? encryptedFaceVector,
         EmployeeWorkType? employeeType = null)
     {
+        var isTheaterManager = roleIds.Contains(userRoles.TheaterManager);
+        var isFacilitiesManager = roleIds.Contains(userRoles.FacilitiesManager);
+        Guid? resolvedCinemaId = null;
+
         var staffProfile = await adminUserRepository.FindStaffProfileAsync(userId);
 
         if (staffProfile != null)
@@ -163,12 +167,17 @@ public static class AdminUserManagementHelper
             {
                 var targetCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
                 staffProfile.CinemaId = targetCinema.CinemaId;
+                resolvedCinemaId = targetCinema.CinemaId;
+            }
+            else
+            {
+                resolvedCinemaId = staffProfile.CinemaId;
             }
             if (departmentId.HasValue)
             {
                 staffProfile.DepartmentId = departmentId.Value == Guid.Empty ? null : departmentId;
             }
-            staffProfile.IsCinemaManager = roleIds.Contains(userRoles.TheaterManager);
+            staffProfile.IsCinemaManager = isTheaterManager;
             if (employeeType.HasValue)
             {
                 staffProfile.EmployeeType = employeeType.Value;
@@ -178,20 +187,29 @@ public static class AdminUserManagementHelper
                 staffProfile.FaceVector = encryptedFaceVector;
             }
             unitOfWork.Repository<StaffProfileEntity>().Update(staffProfile);
-            return;
+        }
+        else
+        {
+            var resolvedCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
+            resolvedCinemaId = resolvedCinema.CinemaId;
+            await unitOfWork.Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
+            {
+                UserId = userId,
+                WorkingStatus = true,
+                CinemaId = resolvedCinema.CinemaId,
+                DepartmentId = departmentId == Guid.Empty ? null : departmentId,
+                IsCinemaManager = isTheaterManager,
+                FaceVector = encryptedFaceVector,
+                EmployeeType = employeeType ?? EmployeeWorkType.PartTime
+            });
         }
 
-        var resolvedCinema = await ResolveTargetCinemaAsync(adminUserRepository, cinemaId);
-        await unitOfWork.Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
-        {
-            UserId = userId,
-            WorkingStatus = true,
-            CinemaId = resolvedCinema.CinemaId,
-            DepartmentId = departmentId == Guid.Empty ? null : departmentId,
-            IsCinemaManager = roleIds.Contains(userRoles.TheaterManager),
-            FaceVector = encryptedFaceVector,
-            EmployeeType = employeeType ?? EmployeeWorkType.PartTime
-        });
+        // Keep CinemaInfo manager FKs in sync with staff roles (not only StaffProfile.CinemaId).
+        await adminUserRepository.SyncCinemaManagerLinksAsync(
+            userId,
+            resolvedCinemaId,
+            isTheaterManager,
+            isFacilitiesManager);
     }
 
     public static async Task ReplaceStaffRolesAsync(
@@ -230,7 +248,8 @@ public static class AdminUserManagementHelper
                 unitOfWork.Repository<StaffProfileEntity>().Update(staffProfile);
             }
 
-            // No staff roles → revert to Customer
+            // No staff roles → clear cinema manager FKs and revert to Customer
+            await adminUserRepository.SyncCinemaManagerLinksAsync(userId, null, false, false);
             await UpdateUserTypeAsync(adminUserRepository, userId, UserTypeEnum.Customer);
         }
     }

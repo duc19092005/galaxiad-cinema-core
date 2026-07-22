@@ -3,10 +3,12 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.UseCases.Booking.BookingFlow;
 using Cinema.Application.UseCases.Booking.Services;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Domain.Localization;
 
 namespace Cinema.Application.UseCases.Booking.SocialBooking;
 
@@ -85,6 +87,8 @@ public class ConfirmGroupMemberSeatsUseCase
         if (session.MovieScheduleInfoEntity == null)
             throw new BadRequestException("Schedule information is missing", "GBK35");
 
+        await ValidateSeatSelectionPolicyAsync(session, member, seatSelections.Select(s => s.SeatId).ToList());
+
         var (pricedDetails, totalPrice) = await _bookingPricingService.CalculateSeatPricesAsync(
             session.MovieScheduleInfoEntity,
             seatSelections,
@@ -160,5 +164,37 @@ public class ConfirmGroupMemberSeatsUseCase
             },
             Message = "Seats confirmed successfully"
         };
+    }
+
+    /// <summary>
+    /// Enforce BS30 against occupied seats (outside this group) plus all group seats
+    /// (other members' confirmed/DB seats + this member's confirming seats).
+    /// </summary>
+    private async Task ValidateSeatSelectionPolicyAsync(
+        GroupBookingSessionEntity session,
+        GroupBookingMemberEntity member,
+        List<Guid> confirmingSeatIds)
+    {
+        var auditoriumId = session.MovieScheduleInfoEntity!.AuditoriumId;
+        var auditoriumSeats = await _groupBookingRepository.GetAuditoriumSeatsAsync(auditoriumId);
+        var occupiedOutsideGroup = await _groupBookingRepository.GetOccupiedSeatIdsAsync(
+            session.MovieScheduleId,
+            session.GroupSessionId);
+
+        var otherMemberSeatIds = session.Members
+            .Where(m => m.Status != GroupMemberStatusEnum.Removed && m.MemberId != member.MemberId)
+            .SelectMany(m => m.SelectedSeats ?? [])
+            .Select(s => s.SeatId)
+            .ToList();
+
+        // Treat other members' seats as already occupied; validate this member's block.
+        var occupiedForPolicy = occupiedOutsideGroup.Concat(otherMemberSeatIds);
+        var errors = BookingSeatSelectionPolicy.ValidateSeatSelection(
+            auditoriumSeats,
+            confirmingSeatIds,
+            occupiedForPolicy);
+
+        if (errors.Count > 0)
+            throw new BadRequestException(errors, "GBK36");
     }
 }

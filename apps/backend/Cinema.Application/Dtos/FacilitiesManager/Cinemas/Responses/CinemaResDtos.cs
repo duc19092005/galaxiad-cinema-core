@@ -7,9 +7,14 @@ public class ResFacilitiesManagerCinema
     public string CinemaDescription { get; set; } = string.Empty;
     public string CinemaHotlineNumber { get; set; } = String.Empty;
     public string CinemaLocation { get; set; } = String.Empty;
+    public string CinemaCity { get; set; } = string.Empty;
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public int TotalRooms { get; set; }
+    public int TotalSeats { get; set; }
+    public bool IsActive { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public Guid? TheaterManagerId { get; set; }
     public string TheaterManagerName { get; set; } = string.Empty;
     public string FacilitiesManagerName { get; set; } = string.Empty;
 }

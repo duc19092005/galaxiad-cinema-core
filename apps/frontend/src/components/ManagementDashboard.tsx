@@ -128,13 +128,21 @@ const ManagementDashboard: React.FC<ManagementDashboardProps> = ({ role }) => {
     return base;
   }, [dashboard, role, t]);
 
-  const shortcuts = [
-    { label: t('Manage Movies'), icon: <Film size={18} />, path: '/movie-manager', color: '#ff8a00' },
-    { label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} />, path: '/schedule', color: '#22c55e' },
-    { label: t('Theaters'), icon: <Building2 size={18} />, path: '/theater-manager', color: '#3b82f6' },
-    { label: t('Facilities'), icon: <Activity size={18} />, path: '/facilities-manager', color: '#a855f7' },
-  ].filter(item => {
-    if (role === 'admin' && item.path === '/facilities-manager') return false;
+  const shortcuts = (
+    role === 'facilities'
+      ? [
+          { label: t('sidebar.dashboard', 'Tổng quan'), icon: <Activity size={18} />, path: '/facilities-manager/dashboard', color: '#a855f7' },
+          { label: t('sidebar.auditoriums', 'Phòng chiếu'), icon: <Building2 size={18} />, path: '/facilities-manager/auditoriums', color: '#3b82f6' },
+          { label: t('sidebar.seatReports', 'Báo cáo ghế'), icon: <Ticket size={18} />, path: '/facilities-manager/seat-reports', color: '#22c55e' },
+        ]
+      : [
+          { label: t('Manage Movies'), icon: <Film size={18} />, path: '/movie-manager', color: '#ff8a00' },
+          { label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Calendar size={18} />, path: '/schedule', color: '#22c55e' },
+          { label: t('Theaters'), icon: <Building2 size={18} />, path: '/theater-manager/dashboard', color: '#3b82f6' },
+          { label: t('Facilities'), icon: <Activity size={18} />, path: '/facilities-manager/dashboard', color: '#a855f7' },
+        ]
+  ).filter((item) => {
+    if (role === 'admin' && item.path.startsWith('/facilities-manager')) return false;
     return true;
   });
 

@@ -10,7 +10,7 @@ const roleRouteMap: Record<string, string> = {
   Admin: '/admin',
   MovieManager: '/movie-manager',
   TheaterManager: '/theater-manager',
-  FacilitiesManager: '/facilities-manager',
+  FacilitiesManager: '/facilities-manager/dashboard',
 };
 
 const NotFound: React.FC = () => {

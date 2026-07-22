@@ -1,5 +1,5 @@
 // src/api/publicApi.ts
-import { publicAxios } from './axiosClient';
+import { publicAxios, shiftAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
     PublicMovieListItem,
@@ -14,7 +14,22 @@ import type {
     SearchScheduleResult,
     NearestCinema,
     PublicPersonDetail,
+    PaginatedResponse,
 } from '../types/public.types';
+
+/** Movie row from /api/v1/public/movies/now-showing|coming-soon */
+export interface PublicMovieSearchItem {
+    movieId: string;
+    movieName: string;
+    movieImageUrl: string;
+    movieDescription: string;
+    movieDuration: number;
+    startedDate?: string;
+    endedDate?: string;
+    movieRequiredAgeSymbol?: string;
+    movieGenres?: string[];
+    movieFormats?: string[];
+}
 
 export const publicApi = {
     /** 1. Get Now Showing Movies */
@@ -31,6 +46,66 @@ export const publicApi = {
             params: { ...params, status: 'coming-soon' }
         });
         return response.data;
+    },
+
+    /**
+     * Paged movie search (rate-limited PublicReadPolicy on backend).
+     * GET /api/v1/public/movies/now-showing|coming-soon
+     */
+    searchMoviesPaged: async (params: {
+        keyword?: string;
+        status?: 'now-showing' | 'coming-soon';
+        pageIndex?: number;
+        pageSize?: number;
+    }): Promise<ApiSuccessResponse<PaginatedResponse<PublicMovieSearchItem>>> => {
+        const status = params.status || 'now-showing';
+        const path = status === 'coming-soon'
+            ? '/public/movies/coming-soon'
+            : '/public/movies/now-showing';
+        const response = await shiftAxios.get<ApiSuccessResponse<{
+            items: PublicMovieSearchItem[];
+            totalCount: number;
+            pageIndex: number;
+            pageSize: number;
+            totalPages: number;
+            hasPreviousPage: boolean;
+            hasNextPage: boolean;
+        }>>(path, {
+            params: {
+                keyword: params.keyword || undefined,
+                pageIndex: params.pageIndex ?? 1,
+                pageSize: params.pageSize ?? 5,
+            },
+        });
+        const body: any = response.data;
+        const data = body?.data ?? body?.Data;
+        const raw: any = data || {};
+        const rawItems: any[] = raw.items ?? raw.Items ?? [];
+        const items: PublicMovieSearchItem[] = rawItems.map((m) => ({
+            movieId: String(m.movieId ?? m.MovieId ?? ''),
+            movieName: m.movieName ?? m.MovieName ?? '',
+            movieImageUrl: m.movieImageUrl ?? m.MovieImageUrl ?? '',
+            movieDescription: m.movieDescription ?? m.MovieDescription ?? '',
+            movieDuration: m.movieDuration ?? m.MovieDuration ?? 0,
+            startedDate: m.startedDate ?? m.StartedDate,
+            endedDate: m.endedDate ?? m.EndedDate,
+            movieRequiredAgeSymbol: m.movieRequiredAgeSymbol ?? m.MovieRequiredAgeSymbol ?? '',
+            movieGenres: m.movieGenres ?? m.MovieGenres ?? [],
+            movieFormats: m.movieFormats ?? m.MovieFormats ?? [],
+        }));
+        return {
+            isSuccess: body?.isSuccess ?? body?.IsSuccess ?? true,
+            message: body?.message ?? body?.Message ?? '',
+            data: {
+                items,
+                totalCount: raw.totalCount ?? raw.TotalCount ?? items.length,
+                pageIndex: raw.pageIndex ?? raw.PageIndex ?? params.pageIndex ?? 1,
+                pageSize: raw.pageSize ?? raw.PageSize ?? params.pageSize ?? 5,
+                totalPages: raw.totalPages ?? raw.TotalPages ?? 1,
+                hasPreviousPage: raw.hasPreviousPage ?? raw.HasPreviousPage ?? false,
+                hasNextPage: raw.hasNextPage ?? raw.HasNextPage ?? false,
+            },
+        };
     },
 
     /** 2.1 Get All Movies */

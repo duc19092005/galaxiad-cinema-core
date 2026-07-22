@@ -12,6 +12,7 @@ import RoleSelectionPage from './features/auth/RoleSelectionPage';
 import HomePage from './features/public/HomePage';
 import AllMoviesPage from './features/public/AllMoviesPage';
 import PersonDetailPage from './features/public/PersonDetailPage';
+import MovieSearchPage from './features/public/MovieSearchPage';
 import FacilitiesManagerPage from './features/facilities/FacilitiesManagerPage';
 import MovieManagerPage from './features/movie/MovieManagerPage';
 import NotFound from './features/misc/NotFound';
@@ -65,6 +66,7 @@ function AppRoutes() {
         <Route path="/role-selection" element={<ProtectedRoute><PageTransition><RoleSelectionPage /></PageTransition></ProtectedRoute>} />
         <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/movies" element={<PageTransition><AllMoviesPage /></PageTransition>} />
+        <Route path="/movies/search" element={<PageTransition><MovieSearchPage /></PageTransition>} />
         <Route path="/person/:role" element={<PageTransition><PersonDetailPage /></PageTransition>} />
         {/* Legacy path with name in URL segment */}
         <Route path="/person/:role/:personName" element={<PageTransition><PersonDetailPage /></PageTransition>} />
@@ -83,6 +85,7 @@ function AppRoutes() {
         <Route path="/theater-manager" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/theater-manager/:tab" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/facilities-manager/:tab" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><PageTransition><ScheduleManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie/:movieId" element={<PageTransition><MovieDetailPage /></PageTransition>} />
         <Route path="/movie/:movieId/similar" element={<PageTransition><SimilarMoviesPage /></PageTransition>} />

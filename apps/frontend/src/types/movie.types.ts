@@ -87,6 +87,8 @@ export interface Movie {
     trailerUrl?: string;
     director?: string;
     actors?: string;
+    movieRequiredAgeId?: string;
+    movieRequiredAgeSymbol?: string;
     managerId?: string | null;
     managerName?: string | null;
     movieCinemas: MovieCinema[];

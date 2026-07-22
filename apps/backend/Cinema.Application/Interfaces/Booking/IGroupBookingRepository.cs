@@ -15,6 +15,7 @@ public interface IGroupBookingRepository
     Task<List<GroupBookingSeatEntity>> GetMemberSeatsAsync(Guid memberId);
     Task<List<Guid>> GetOccupiedSeatIdsAsync(Guid scheduleId, Guid excludeGroupSessionId);
     Task<List<SeatsInfoEntity>> GetValidSeatsAsync(Guid auditoriumId, List<Guid> seatIds);
+    Task<List<SeatsInfoEntity>> GetAuditoriumSeatsAsync(Guid auditoriumId);
     Task<MovieScheduleInfoEntity?> GetScheduleByIdAsync(Guid scheduleId);
     Task<UserInfoEntity?> FindUserByIdAsync(Guid userId);
     Task<UserInfoEntity?> FindUserByEmailAsync(string email);

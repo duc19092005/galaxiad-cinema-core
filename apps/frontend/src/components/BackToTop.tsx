@@ -1,6 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowUp } from 'lucide-react';
 
+/**
+ * Align with ChatBot FAB.
+ * Mobile: sit ABOVE BottomNavBar (~76px) + 12px gap.
+ * Desktop (md+): bottom nav hidden → bottom 24px.
+ * Horizontal: left of chat with 12px gap.
+ */
+const FAB_SIZE = 52;
+const FAB_SIZE_SM = 48;
+const FAB_RIGHT = 24;
+const FAB_RIGHT_SM = 16;
+const FAB_GAP = 12;
+const BACK_RIGHT = FAB_RIGHT + FAB_SIZE + FAB_GAP; // 88
+const BACK_RIGHT_SM = FAB_RIGHT_SM + FAB_SIZE_SM + FAB_GAP; // 76
+/** BottomNavBar ≈ 76px (see App.tsx body padding-bottom) */
+const MOBILE_NAV_H = 76;
+const MOBILE_FAB_GAP = 12;
+
 const BackToTop: React.FC = () => {
   const [visible, setVisible] = useState(false);
 
@@ -8,6 +25,7 @@ const BackToTop: React.FC = () => {
     const handleScroll = () => {
       setVisible(window.scrollY > 200);
     };
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -18,55 +36,61 @@ const BackToTop: React.FC = () => {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .back-to-top-btn {
-          bottom: 98px !important;
-          right: 92px !important;
+          position: fixed !important;
+          right: ${BACK_RIGHT}px !important;
+          /* Default = mobile: clear bottom nav */
+          bottom: calc(${MOBILE_NAV_H}px + ${MOBILE_FAB_GAP}px + env(safe-area-inset-bottom, 0px)) !important;
+          width: ${FAB_SIZE}px !important;
+          height: ${FAB_SIZE}px !important;
+          z-index: 9998 !important;
         }
         @media (min-width: 768px) {
           .back-to-top-btn {
-            bottom: 30px !important;
-            right: 88px !important;
+            bottom: 24px !important;
+            right: ${BACK_RIGHT}px !important;
+            width: ${FAB_SIZE}px !important;
+            height: ${FAB_SIZE}px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .back-to-top-btn {
+            right: ${BACK_RIGHT_SM}px !important;
+            width: ${FAB_SIZE_SM}px !important;
+            height: ${FAB_SIZE_SM}px !important;
+            bottom: calc(${MOBILE_NAV_H}px + ${MOBILE_FAB_GAP}px + env(safe-area-inset-bottom, 0px)) !important;
           }
         }
         body.chatbot-open .back-to-top-btn {
           display: none !important;
         }
-      `}} />
+      `}}
+      />
 
       <button
+        type="button"
         onClick={scrollToTop}
         aria-label="Scroll to top"
+        className="interactive back-to-top-btn"
         style={{
-          position: 'fixed',
-          width: 44,
-          height: 44,
           borderRadius: '50%',
           background: 'linear-gradient(135deg, var(--accent), #ff6b00)',
-          border: 'none',
+          border: '1px solid rgba(255,255,255,0.2)',
           color: '#000',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: '0 4px 20px rgba(255,138,0,0.3)',
-          transition: 'all 0.3s cubic-bezier(0.16,1,0.3,1)',
-          transform: visible ? 'scale(1) translateY(0)' : 'scale(0) translateY(20px)',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.18) inset, 0 8px 20px rgba(0,0,0,0.28)',
+          transition: 'opacity 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1), box-shadow 0.25s ease',
+          transform: visible ? 'scale(1) translateY(0)' : 'scale(0.6) translateY(12px)',
           opacity: visible ? 1 : 0,
           pointerEvents: visible ? 'auto' : 'none',
-          zIndex: 10001,
-        }}
-        className="interactive back-to-top-btn"
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.boxShadow = '0 6px 28px rgba(255,138,0,0.5)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.boxShadow = '0 4px 20px rgba(255,138,0,0.3)';
         }}
       >
-        <ArrowUp size={22} style={{ strokeWidth: 2.5 }} />
+        <ArrowUp size={20} style={{ strokeWidth: 2.5 }} />
       </button>
     </>
   );

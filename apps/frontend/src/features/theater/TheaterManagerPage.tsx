@@ -144,7 +144,14 @@ const TheaterManagerPage: React.FC = () => {
       case 'employees':
         return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="management" mode="staff-only" />;
       case 'employees-schedule':
-        return <EmployeesShiftWorkspace cinemaId={activeCinemaId} defaultTab="scheduling" mode="shift-management" />;
+        return (
+          <EmployeesShiftWorkspace
+            cinemaId={activeCinemaId}
+            defaultTab="scheduling"
+            mode="shift-management"
+            lockToDefaultTab
+          />
+        );
       case 'schedule':
         return (
           <div className="animate-in" style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
