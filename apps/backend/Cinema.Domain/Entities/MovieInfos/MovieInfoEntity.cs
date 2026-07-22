@@ -60,5 +60,7 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     public List<MovieCommentEntity> MovieCommentEntities { get; set; } = [];
 
     public List<MovieViewEntity> MovieViewEntities { get; set; } = [];
+
+    public List<MovieCoverImageEntity> MovieCoverImageEntities { get; set; } = [];
 }
 

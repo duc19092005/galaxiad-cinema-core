@@ -13,7 +13,8 @@ import PublicCitySelector from '../features/public/components/PublicCitySelector
 import MovieSearchBar from './MovieSearchBar';
 import { 
   Menu, MapPin, User, LayoutDashboard, 
-  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText, Bell
+  ArrowLeftRight, LogOut, LogIn, X, Ticket, Calendar, Film, HelpCircle, FileText, Bell,
+  ChevronDown, ChevronRight, Compass, LifeBuoy, Settings2
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -38,10 +39,23 @@ const Header: React.FC<HeaderProps> = ({
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>(() => localStorage.getItem('user_selected_city') || '');
+  /** Accordion groups in the mobile drawer — compact like admin AppSidebar. */
+  const [mobileExpanded, setMobileExpanded] = useState<Set<string>>(() => new Set(['explore', 'account']));
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+  const toggleMobileGroup = (key: string) => {
+    setMobileExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -77,6 +91,16 @@ const Header: React.FC<HeaderProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Prevent background scroll while mobile drawer is open
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isMobileMenuOpen]);
 
   useEffect(() => {
     if (!user) return;
@@ -412,156 +436,169 @@ const Header: React.FC<HeaderProps> = ({
       </header>
 
       {/* ============================================
-          MOBILE SIDEBAR DRAWER MENU
+          MOBILE SIDEBAR DRAWER (accordion groups)
           ============================================ */}
-      {/* Overlay backdrop */}
       {isMobileMenuOpen && (
         <div
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm transition-all duration-300"
+          onClick={closeMobileMenu}
+          className="fixed inset-0 z-[1000] bg-black/60 backdrop-blur-sm md:hidden"
+          aria-hidden
         />
       )}
 
-      {/* Drawer Panel */}
-      <div 
-        className="fixed top-0 left-0 h-full w-[280px] bg-[#111114] border-r border-white/5 shadow-2xl flex flex-col z-[1001] transition-transform duration-300 ease-out"
-        style={{
-          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'
-        }}
+      <div
+        className="fixed top-0 left-0 h-full w-[min(300px,86vw)] bg-[#111114] border-r border-white/5 shadow-2xl flex flex-col z-[1001] transition-transform duration-300 ease-out md:hidden"
+        style={{ transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)' }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Mobile navigation"
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-white/5">
-          <span 
-            className="font-bold text-xl tracking-tighter text-[#ffb77f]"
+          <button
+            type="button"
+            onClick={() => { navigate('/home'); closeMobileMenu(); }}
+            className="font-bold text-xl tracking-tighter text-[#ffb77f] bg-transparent border-none cursor-pointer p-0"
             style={{ fontFamily: "'Montserrat', sans-serif" }}
           >
             CINEMA
-          </span>
+          </button>
           <button
-            onClick={() => setIsMobileMenuOpen(false)}
+            type="button"
+            onClick={closeMobileMenu}
             className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-zinc-400 hover:text-white flex items-center justify-center border-none cursor-pointer"
+            aria-label="Close menu"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-          {/* Main Navigation Links */}
-          <MobileNavItem icon={<Film size={18} />} label={t('home.moviesNav', 'Movies')} onClick={() => { navigate('/home'); setIsMobileMenuOpen(false); }} active={location.pathname === '/home' || location.pathname === '/'} />
-          <MobileNavItem icon={<Calendar size={18} />} label={t('home.showtimesNav', 'Showtimes')} onClick={() => { navigate('/showtimes'); setIsMobileMenuOpen(false); }} active={location.pathname === '/showtimes'} />
-          <MobileNavItem icon={<MapPin size={18} />} label={t('home.theatersNav', 'Theaters')} onClick={() => { navigate('/theaters'); setIsMobileMenuOpen(false); }} active={location.pathname === '/theaters'} />
-          <MobileNavItem icon={<Ticket size={18} />} label={t('home.offersNav', 'Offers')} onClick={() => { navigate('/offers'); setIsMobileMenuOpen(false); }} active={location.pathname === '/offers'} />
-          {user?.isSharedPosAccount && (
-            <MobileNavItem 
-              icon={<Ticket size={18} style={{ color: '#ff8a00' }} />} 
-              label={t('POS Terminal', 'Vào quầy POS')} 
-              onClick={() => { navigate('/cashier'); setIsMobileMenuOpen(false); }} 
-              active={location.pathname.startsWith('/cashier')} 
-            />
-          )}
+        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1">
+          {/* Group: Explore */}
+          <MobileAccordionGroup
+            open={mobileExpanded.has('explore')}
+            onToggle={() => toggleMobileGroup('explore')}
+            icon={<Compass size={18} />}
+            label={t('header.navExplore', 'Khám phá')}
+            description={t('header.navExploreDesc', 'Phim, suất chiếu, rạp & ưu đãi')}
+          >
+            <MobileNavItem icon={<Film size={16} />} label={t('home.moviesNav', 'Movies')} onClick={() => { navigate('/home'); closeMobileMenu(); }} active={location.pathname === '/home' || location.pathname === '/'} />
+            <MobileNavItem icon={<Calendar size={16} />} label={t('home.showtimesNav', 'Showtimes')} onClick={() => { navigate('/showtimes'); closeMobileMenu(); }} active={location.pathname === '/showtimes'} />
+            <MobileNavItem icon={<MapPin size={16} />} label={t('home.theatersNav', 'Theaters')} onClick={() => { navigate('/theaters'); closeMobileMenu(); }} active={location.pathname === '/theaters'} />
+            <MobileNavItem icon={<Ticket size={16} />} label={t('home.offersNav', 'Offers')} onClick={() => { navigate('/offers'); closeMobileMenu(); }} active={location.pathname === '/offers'} />
+            {user?.isSharedPosAccount && (
+              <MobileNavItem
+                icon={<Ticket size={16} style={{ color: '#ff8a00' }} />}
+                label={t('POS Terminal', 'Vào quầy POS')}
+                onClick={() => { navigate('/cashier'); closeMobileMenu(); }}
+                active={location.pathname.startsWith('/cashier')}
+              />
+            )}
+          </MobileAccordionGroup>
 
-          <div className="h-px bg-white/5 my-2" />
+          {/* Group: Support */}
+          <MobileAccordionGroup
+            open={mobileExpanded.has('support')}
+            onToggle={() => toggleMobileGroup('support')}
+            icon={<LifeBuoy size={18} />}
+            label={t('header.navSupport', 'Hỗ trợ')}
+            description={t('header.navSupportDesc', 'Dịch vụ & trợ giúp')}
+          >
+            <MobileNavItem icon={<HelpCircle size={16} />} label={t('servicesTitle', 'Services')} onClick={() => { navigate('/services'); closeMobileMenu(); }} active={location.pathname === '/services'} />
+            <MobileNavItem icon={<FileText size={16} />} label={t('helpTitle', 'Help')} onClick={() => { navigate('/help'); closeMobileMenu(); }} active={location.pathname === '/help'} />
+          </MobileAccordionGroup>
 
-          <MobileNavItem icon={<HelpCircle size={18} />} label={t('servicesTitle', 'Services')} onClick={() => { navigate('/services'); setIsMobileMenuOpen(false); }} active={location.pathname === '/services'} />
-          <MobileNavItem icon={<FileText size={18} />} label={t('helpTitle', 'Help')} onClick={() => { navigate('/help'); setIsMobileMenuOpen(false); }} active={location.pathname === '/help'} />
-
-          <div className="h-px bg-white/5 my-2" />
-
-          {/* User Account / Auth Section */}
-          {!user ? (
-            <div className="flex flex-col gap-2 pt-2">
-              <button 
-                onClick={() => { navigate('/login'); setIsMobileMenuOpen(false); }}
-                className="w-full py-2.5 bg-gradient-to-r from-[#ff8a00] to-[#ea580c] hover:brightness-110 text-white font-bold text-sm rounded-xl border-none cursor-pointer transition-all active:scale-95"
-              >
-                {t('header.login', 'Sign In')}
-              </button>
-              <button 
-                onClick={() => { navigate('/register'); setIsMobileMenuOpen(false); }}
-                className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm rounded-xl border border-white/10 cursor-pointer transition-all"
-              >
-                {t('header.register', 'Register')}
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {/* User profile card */}
-              <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-[#ffb77f] border border-white/10">
-                  <User size={20} />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-zinc-500 font-mono m-0 uppercase tracking-wider">Signed in as</p>
-                  <p className="text-sm font-bold text-white m-0 truncate">{user.username}</p>
-                </div>
+          {/* Group: Account */}
+          <MobileAccordionGroup
+            open={mobileExpanded.has('account')}
+            onToggle={() => toggleMobileGroup('account')}
+            icon={<Settings2 size={18} />}
+            label={t('header.navAccount', 'Tài khoản')}
+            description={user ? t('header.navAccountDescUser', 'Hồ sơ & đăng xuất') : t('header.navAccountDescGuest', 'Đăng nhập / đăng ký')}
+          >
+            {!user ? (
+              <div className="flex flex-col gap-2 px-1 pt-1 pb-2">
+                <button
+                  type="button"
+                  onClick={() => { navigate('/login'); closeMobileMenu(); }}
+                  className="w-full py-2.5 bg-gradient-to-r from-[#ff8a00] to-[#ea580c] hover:brightness-110 text-black font-bold text-sm rounded-xl border-none cursor-pointer transition-all active:scale-95"
+                >
+                  {t('header.login', 'Sign In')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { navigate('/register'); closeMobileMenu(); }}
+                  className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm rounded-xl border border-white/10 cursor-pointer transition-all"
+                >
+                  {t('header.register', 'Register')}
+                </button>
               </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <div className="p-3 mx-1 mb-1 bg-white/5 rounded-xl border border-white/5 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-[#ffb77f] border border-white/10 flex-shrink-0">
+                    <User size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] text-zinc-500 font-mono m-0 uppercase tracking-wider">Signed in</p>
+                    <p className="text-sm font-bold text-white m-0 truncate">{user.username}</p>
+                  </div>
+                </div>
 
-              {user.selectedRole && user.selectedRole !== 'Customer' && (
-                <MobileNavItem
-                  icon={<LayoutDashboard size={18} />}
-                  label={t('Dashboard')}
-                  onClick={() => {
-                    const route = getRoleDashboardRoute(user.selectedRole);
-                    if (route) navigate(route);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  active={false}
-                />
-              )}
-
-              {user.roles && user.roles.length > 1 ? (
-                <>
+                {user.selectedRole && user.selectedRole !== 'Customer' && (
                   <MobileNavItem
-                    icon={<User size={18} />}
-                    label={t('Account Info')}
-                    onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
-                    active={location.pathname === '/account'}
-                  />
-
-                  <MobileNavItem
-                    icon={<ArrowLeftRight size={18} />}
-                    label={t('Switch Role')}
-                    onClick={() => { navigate('/role-selection'); setIsMobileMenuOpen(false); }}
+                    icon={<LayoutDashboard size={16} />}
+                    label={t('Dashboard')}
+                    onClick={() => {
+                      const route = getRoleDashboardRoute(user.selectedRole);
+                      if (route) navigate(route);
+                      closeMobileMenu();
+                    }}
                     active={false}
                   />
-                </>
-              ) : (
+                )}
+
                 <MobileNavItem
-                  icon={<User size={18} />}
-                  label={t('header.myProfile', 'My profile')}
-                  onClick={() => { navigate('/account'); setIsMobileMenuOpen(false); }}
+                  icon={<User size={16} />}
+                  label={user.roles && user.roles.length > 1 ? t('Account Info') : t('header.myProfile', 'My profile')}
+                  onClick={() => { navigate('/account'); closeMobileMenu(); }}
                   active={location.pathname === '/account'}
                 />
-              )}
 
-              <div className="h-px bg-white/5 my-2" />
+                {user.roles && user.roles.length > 1 && (
+                  <MobileNavItem
+                    icon={<ArrowLeftRight size={16} />}
+                    label={t('Switch Role')}
+                    onClick={() => { navigate('/role-selection'); closeMobileMenu(); }}
+                    active={false}
+                  />
+                )}
 
-              <button
-                onClick={() => { setIsMobileMenuOpen(false); setIsLogoutModalOpen(true); }}
-                className="w-full py-3 px-4 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-bold transition-colors text-left"
-              >
-                <LogOut size={18} />
-                <span>{t('header.logout', 'Logout')}</span>
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => { closeMobileMenu(); setIsLogoutModalOpen(true); }}
+                  className="w-full py-3 px-4 rounded-xl hover:bg-red-500/10 text-red-400 hover:text-red-300 flex items-center gap-3 text-sm border-none bg-transparent cursor-pointer font-bold transition-colors text-left"
+                >
+                  <LogOut size={16} />
+                  <span>{t('header.logout', 'Logout')}</span>
+                </button>
+              </div>
+            )}
+          </MobileAccordionGroup>
 
-          {/* Spacer */}
-          <div className="flex-1 min-h-[20px]" />
+          <div className="flex-1 min-h-[12px]" />
 
-          {/* Language Selection */}
-          <div className="border-t border-white/5 pt-4">
-            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">{t('sidebar.language')}</p>
-            <div className="px-1">
+          {/* Prefs — always visible, compact */}
+          <div className="border-t border-white/5 pt-3 mt-1 px-1 space-y-3">
+            <div>
+              <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">
+                {t('sidebar.language')}
+              </p>
               <LanguageSwitcher />
             </div>
-          </div>
-
-          {/* City Selection */}
-          <div className="border-t border-white/5 pt-4">
-            <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">City</p>
-            <div className="px-1">
+            <div>
+              <p className="text-[10px] text-zinc-500 font-mono m-0 mb-2 uppercase tracking-wider px-2">
+                {t('header.city', 'City')}
+              </p>
               <PublicCitySelector selectedCity={selectedCity} onCityChange={handleCityChange} />
             </div>
           </div>
@@ -579,6 +616,47 @@ const Header: React.FC<HeaderProps> = ({
   );
 };
 
+/* Accordion group for mobile drawer */
+const MobileAccordionGroup: React.FC<{
+  open: boolean;
+  onToggle: () => void;
+  icon: React.ReactNode;
+  label: string;
+  description?: string;
+  children: React.ReactNode;
+}> = ({ open, onToggle, icon, label, description, children }) => (
+  <div className="mb-1">
+    <button
+      type="button"
+      onClick={onToggle}
+      className={`w-full py-3 px-3 rounded-xl flex items-start gap-3 text-sm border-none cursor-pointer transition-colors text-left ${
+        open ? 'bg-[#ff8a00]/10 text-[#ffb77f]' : 'bg-transparent text-zinc-300 hover:bg-white/5'
+      }`}
+      aria-expanded={open}
+    >
+      <span className="mt-0.5 flex-shrink-0 text-[#ffb77f]">{icon}</span>
+      <span className="flex-1 min-w-0">
+        <span className="block font-bold text-[13px]">{label}</span>
+        {description && (
+          <span className="block text-[10.5px] text-zinc-500 font-medium mt-0.5 leading-snug">
+            {description}
+          </span>
+        )}
+      </span>
+      {open ? (
+        <ChevronDown size={16} className="mt-0.5 flex-shrink-0 opacity-80" />
+      ) : (
+        <ChevronRight size={16} className="mt-0.5 flex-shrink-0 opacity-80" />
+      )}
+    </button>
+    {open && (
+      <div className="mt-1 ml-2 pl-2 border-l border-white/10 flex flex-col gap-0.5">
+        {children}
+      </div>
+    )}
+  </div>
+);
+
 /* Mobile nav item helper */
 const MobileNavItem: React.FC<{
   icon: React.ReactNode;
@@ -587,10 +665,11 @@ const MobileNavItem: React.FC<{
   active: boolean;
 }> = ({ icon, label, onClick, active }) => (
   <button
+    type="button"
     onClick={onClick}
-    className={`w-full py-3 px-4 rounded-xl flex items-center gap-3 text-sm border-none cursor-pointer transition-colors text-left font-medium ${
-      active 
-        ? 'bg-[#ff8a00]/10 text-[#ffb77f] font-bold border border-[#ff8a00]/20' 
+    className={`w-full py-2.5 px-3 rounded-xl flex items-center gap-3 text-sm border-none cursor-pointer transition-colors text-left font-medium ${
+      active
+        ? 'bg-[#ff8a00]/10 text-[#ffb77f] font-bold'
         : 'bg-transparent text-zinc-400 hover:bg-white/5 hover:text-white'
     }`}
   >

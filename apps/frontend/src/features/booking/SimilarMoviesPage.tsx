@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, AlertCircle, Zap } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { PublicMovieListItem, PublicMovieDetail } from '../../types/public.types';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import BackToTop from '../../components/BackToTop';
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
@@ -67,7 +68,7 @@ const SimilarMoviesPage: React.FC = () => {
             {/* Hero Banner */}
             <section style={{
                 position: 'relative',
-                paddingTop: 140,
+                paddingTop: 120,
                 paddingBottom: 56,
                 textAlign: 'center',
                 overflow: 'hidden',
@@ -79,28 +80,17 @@ const SimilarMoviesPage: React.FC = () => {
                     pointerEvents: 'none',
                 }} />
 
-                {/* Back button */}
-                <div style={{ position: 'absolute', top: 96, left: 'clamp(16px, 4vw, 64px)', zIndex: 10 }}>
-                    <button
-                        onClick={() => navigate(`/movie/${movieId}`)}
-                        style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.12)',
-                            borderRadius: 12,
-                            color: 'rgba(255,255,255,0.8)',
-                            padding: '10px 18px',
-                            fontSize: 13, fontWeight: 600,
-                            cursor: 'pointer',
-                            backdropFilter: 'blur(8px)',
-                            transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,138,0,0.12)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                    >
-                        <ArrowLeft size={16} />
-                        {t('common.back', 'Back')}
-                    </button>
+                <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(16px, 4vw, 64px)', textAlign: 'left', marginBottom: 16, position: 'relative', zIndex: 10 }}>
+                    <PublicBreadcrumb
+                        items={[
+                            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+                            { label: t('breadcrumb.movies', 'Phim'), path: '/movies' },
+                            ...(sourceMovie
+                                ? [{ label: sourceMovie.movieName, path: `/movie/${movieId}` }]
+                                : []),
+                            { label: t('breadcrumb.similar', 'Phim tương tự') },
+                        ]}
+                    />
                 </div>
 
                 {/* Vector icon + label */}

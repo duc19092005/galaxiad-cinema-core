@@ -50,14 +50,14 @@ public class ModerateMovieCommentUseCase
 
             await _commentRepository.CreateNotificationAsync(
                 comment.UserId,
-                "Binh luan da bi go",
+                "Bình luận đã bị gỡ",
                 moderation.Reason,
                 "CommentRejected",
                 comment.CommentId,
                 comment.MovieId);
 
             await _unitOfWork.SaveChangesAsync();
-            await _sseNotificationService.SendNotificationAsync(comment.UserId, "Binh luan da bi go", moderation.Reason, "CommentRejected");
+            await _sseNotificationService.SendNotificationAsync(comment.UserId, "Bình luận đã bị gỡ", moderation.Reason, "CommentRejected");
             return;
         }
 
@@ -72,8 +72,8 @@ public class ModerateMovieCommentUseCase
             var movieName = comment.MovieInfoEntity?.MovieName ?? "phim";
             await _commentRepository.CreateNotificationAsync(
                 comment.ParentComment!.UserId,
-                "Co nguoi phan hoi binh luan cua ban",
-                $"{comment.UserInfoEntity.UserName} da phan hoi binh luan cua ban ve {movieName}.",
+                "Có người phản hồi bình luận của bạn",
+                $"{comment.UserInfoEntity.UserName} đã phản hồi bình luận của bạn về {movieName}.",
                 "CommentReply",
                 comment.CommentId,
                 comment.MovieId);
@@ -93,8 +93,8 @@ public class ModerateMovieCommentUseCase
         {
             await _sseNotificationService.SendNotificationAsync(
                 comment.ParentComment!.UserId,
-                "Co nguoi phan hoi binh luan cua ban",
-                $"{comment.UserInfoEntity.UserName} da phan hoi binh luan cua ban.",
+                "Có người phản hồi bình luận của bạn",
+                $"{comment.UserInfoEntity.UserName} đã phản hồi bình luận của bạn.",
                 "CommentReply");
         }
     }

@@ -11,6 +11,8 @@ public class ResGetMovieInfosMovieManagerDto
     public string MovieImageUrl { get; set; } = string.Empty;
 
     public string MovieBannerUrl { get; set; } = string.Empty;
+
+    public List<ResMovieCoverImageDto> CoverImages { get; set; } = [];
     
     public DateTime EndedDate { get; set; }
     
@@ -48,4 +50,20 @@ public class ResMovieCinemaDto
 {
     public Guid CinemaId { get; set; }
     public string CinemaName { get; set; } = string.Empty;
+}
+
+public class ResMovieCoverImageDto
+{
+    public Guid MovieCoverImageId { get; set; }
+    public string ImageUrl { get; set; } = string.Empty;
+    public int SortOrder { get; set; }
+    public bool IsPrimary { get; set; }
+    public string? Caption { get; set; }
+}
+
+/// <summary>Distinct directors / actors from catalog for manager autocomplete.</summary>
+public class ResMoviePeopleDto
+{
+    public List<string> Directors { get; set; } = [];
+    public List<string> Actors { get; set; } = [];
 }

@@ -24,12 +24,12 @@ public class GetCommentEligibilityUseCase
         var userId = _userContextService.TryGetUserId();
         if (userId == null)
         {
-            return Eligibility(CommentEligibilityStatusEnum.NotLoggedIn, false, "Ban can dang nhap de binh luan.");
+            return Eligibility(CommentEligibilityStatusEnum.NotLoggedIn, false, "Bạn cần đăng nhập để bình luận.");
         }
 
         if (!_userContextService.IsInRole("Customer"))
         {
-            return Eligibility(CommentEligibilityStatusEnum.NotCustomer, false, "Chi khach hang moi co the binh luan phim.");
+            return Eligibility(CommentEligibilityStatusEnum.NotCustomer, false, "Chỉ khách hàng mới có thể bình luận phim.");
         }
 
         var paidOrder = await _commentRepository.FindEligibleViewedOrderAsync(userId.Value, movieId);
@@ -38,18 +38,18 @@ public class GetCommentEligibilityUseCase
         {
             var hasFuturePaidTicket = await _commentRepository.HasFuturePaidTicketAsync(userId.Value, movieId);
             return hasFuturePaidTicket
-                ? Eligibility(CommentEligibilityStatusEnum.ShowtimeNotFinished, false, "Ban co the binh luan sau khi suat chieu ket thuc.")
-                : Eligibility(CommentEligibilityStatusEnum.NoPaidTicket, false, "Ban can mua ve phim nay de binh luan.");
+                ? Eligibility(CommentEligibilityStatusEnum.ShowtimeNotFinished, false, "Bạn có thể bình luận sau khi suất chiếu kết thúc.")
+                : Eligibility(CommentEligibilityStatusEnum.NoPaidTicket, false, "Bạn cần mua vé phim này để bình luận.");
         }
 
         var alreadyReviewed = await _commentRepository.HasAlreadyReviewedAsync(userId.Value, movieId);
 
         if (alreadyReviewed)
         {
-            return Eligibility(CommentEligibilityStatusEnum.AlreadyReviewed, false, "Ban da danh gia phim nay roi.");
+            return Eligibility(CommentEligibilityStatusEnum.AlreadyReviewed, false, "Bạn đã đánh giá phim này rồi.");
         }
 
-        return Eligibility(CommentEligibilityStatusEnum.Allowed, true, "Ban co the binh luan phim nay.", paidOrder!.OrderId);
+        return Eligibility(CommentEligibilityStatusEnum.Allowed, true, "Bạn có thể bình luận phim này.", paidOrder!.OrderId);
     }
 
     private static BaseResponse<ResCommentEligibilityDto> Eligibility(

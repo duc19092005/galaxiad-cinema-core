@@ -15,6 +15,15 @@ public class LocalizationMiddleware
 
     public async Task Invoke(HttpContext httpContext)
     {
+        // SSE / long-lived streams must write directly to the network.
+        // Buffering into MemoryStream would hold frames until the action ends
+        // (which for Events/Notifications is often "never" while a job is live).
+        if (IsStreamingRequest(httpContext))
+        {
+            await _next(httpContext);
+            return;
+        }
+
         var localizationService = httpContext.RequestServices.GetRequiredService<ILocalizationService>();
 
         // Capture the original response body
@@ -26,6 +35,16 @@ public class LocalizationMiddleware
         try
         {
             await _next(httpContext);
+
+            // If the action switched to a streaming content type, flush the buffer as-is.
+            // (Prefer IsStreamingRequest above; this is a safety net.)
+            if (IsStreamingContentType(httpContext.Response.ContentType))
+            {
+                httpContext.Response.Body = originalBodyStream;
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                await memoryStream.CopyToAsync(originalBodyStream);
+                return;
+            }
 
             // Only translate JSON responses
             if (httpContext.Response.ContentType?.Contains("application/json") == true && !httpContext.Response.HasStarted)
@@ -68,6 +87,25 @@ public class LocalizationMiddleware
             httpContext.Response.Body = originalBodyStream;
         }
     }
+
+    private static bool IsStreamingRequest(HttpContext context)
+    {
+        var accept = context.Request.Headers.Accept.ToString();
+        if (accept.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        var path = context.Request.Path.Value ?? string.Empty;
+        return path.EndsWith("/events", StringComparison.OrdinalIgnoreCase)
+               || path.EndsWith("/sse", StringComparison.OrdinalIgnoreCase)
+               || path.Contains("/stream", StringComparison.OrdinalIgnoreCase)
+               || path.Contains("/chat/stream", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsStreamingContentType(string? contentType) =>
+        !string.IsNullOrEmpty(contentType)
+        && contentType.Contains("text/event-stream", StringComparison.OrdinalIgnoreCase);
 
     private static string TranslateJsonResponse(string jsonBody, ILocalizationService localizationService)
     {

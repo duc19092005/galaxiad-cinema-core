@@ -1,15 +1,156 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Play, Loader2, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Play, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
-import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
+import type {
+    PublicMovieDetail,
+    PublicCinemaShowtimes,
+    PublicMovieListItem,
+    PublicMoviePerson,
+} from '../../types/public.types';
 import Header from '../../components/Header';
+import PublicFooter from '../../components/PublicFooter';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import MovieCommentsSection from './components/MovieCommentsSection';
 
+const FALLBACK_COVER =
+    'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80';
 
+const personAvatar = (name: string, profileUrl?: string | null) =>
+    profileUrl?.trim() ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1a1a20&color=ffb77f&size=256&bold=true&format=svg`;
+
+const splitPeopleCsv = (raw?: string | null): PublicMoviePerson[] => {
+    if (!raw?.trim()) return [];
+    return raw
+        .split(/[,;|]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => ({ name }));
+};
+
+/** Horizontal drag-scroll row with hidden x-scrollbar; click opens person detail */
+const PeopleRow: React.FC<{
+    people: PublicMoviePerson[];
+    role: 'actor' | 'director';
+}> = ({ people, role }) => {
+    const scrollerRef = useRef<HTMLDivElement>(null);
+    const drag = useRef<{
+        pointerId: number | null;
+        startX: number;
+        scrollLeft: number;
+        moved: boolean;
+    }>({ pointerId: null, startX: 0, scrollLeft: 0, moved: false });
+
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        // Only left mouse / primary touch; do not steal focus from keyboard
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const el = scrollerRef.current;
+        if (!el) return;
+        drag.current = {
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            scrollLeft: el.scrollLeft,
+            moved: false,
+        };
+    };
+
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        const el = scrollerRef.current;
+        if (!el || drag.current.pointerId !== e.pointerId) return;
+        const dx = e.clientX - drag.current.startX;
+        // Only treat as drag after a small threshold so taps still open detail
+        if (!drag.current.moved && Math.abs(dx) < 8) return;
+        if (!drag.current.moved) {
+            drag.current.moved = true;
+            el.classList.add('mdp-people-dragging');
+            try {
+                el.setPointerCapture(e.pointerId);
+            } catch {
+                /* ignore */
+            }
+        }
+        el.scrollLeft = drag.current.scrollLeft - dx;
+        // Prevent text selection / accidental link activation while dragging
+        e.preventDefault();
+    };
+
+    const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+        const el = scrollerRef.current;
+        if (!el || drag.current.pointerId !== e.pointerId) return;
+        const wasDragging = drag.current.moved;
+        drag.current.pointerId = null;
+        el.classList.remove('mdp-people-dragging');
+        try {
+            if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
+        } catch {
+            /* ignore */
+        }
+        // Keep moved flag until click handlers run (same event turn), then clear
+        if (wasDragging) {
+            window.setTimeout(() => {
+                drag.current.moved = false;
+            }, 0);
+        } else {
+            drag.current.moved = false;
+        }
+    };
+
+    if (people.length === 0) return null;
+
+    return (
+        <div
+            ref={scrollerRef}
+            className="mdp-people-scroll flex gap-4 overflow-x-auto pb-1 select-none"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+        >
+            {people.map((person) => {
+                // Query param avoids RR double-encoding of spaces/unicode in path segments
+                const href = `/person/${role}?name=${encodeURIComponent(person.name)}`;
+                return (
+                    <Link
+                        key={`${person.tmdbId ?? ''}-${person.name}`}
+                        to={href}
+                        draggable={false}
+                        className="mdp-surface rounded-xl p-4 flex flex-col items-center text-center group shrink-0 w-[132px] md:w-[148px] transition-colors duration-300 no-underline"
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => {
+                            // Suppress navigation if user was drag-scrolling
+                            if (drag.current.moved) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        }}
+                    >
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 border-2 border-transparent group-hover:border-[rgba(255,138,0,0.5)] transition-colors duration-300 bg-[var(--bg-base)]">
+                            <img
+                                src={personAvatar(person.name, person.profileUrl)}
+                                alt={person.name}
+                                className="w-full h-full object-cover pointer-events-none"
+                                draggable={false}
+                                loading="lazy"
+                                onError={(e) => {
+                                    const img = e.currentTarget;
+                                    const fallback = personAvatar(person.name);
+                                    if (img.src !== fallback) img.src = fallback;
+                                }}
+                            />
+                        </div>
+                        <p className="text-sm font-bold text-[var(--text-primary)] leading-snug group-hover:text-[#ffb77f] transition-colors line-clamp-2">
+                            {person.name}
+                        </p>
+                    </Link>
+                );
+            })}
+        </div>
+    );
+};
 
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
@@ -21,21 +162,18 @@ const MovieDetailPage: React.FC = () => {
     const [movie, setMovie] = useState<PublicMovieDetail | null>(null);
     const [cities, setCities] = useState<string[]>([]);
     const [selectedCity, setSelectedCity] = useState<string>('');
-
     const [selectedDate, setSelectedDate] = useState<string>('');
     const [scheduleDates, setScheduleDates] = useState<string[]>([]);
     const [selectedMonth, setSelectedMonth] = useState<string>('');
     const [showtimes, setShowtimes] = useState<PublicCinemaShowtimes[]>([]);
     const [recommendedMovies, setRecommendedMovies] = useState<PublicMovieListItem[]>([]);
-
     const [loading, setLoading] = useState(true);
     const [loadingShowtimes, setLoadingShowtimes] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [heroIndex, setHeroIndex] = useState(0);
 
     useEffect(() => {
-        if (movieId) {
-            fetchData();
-        }
+        if (movieId) fetchData();
     }, [movieId, isPosMode]);
 
     const fetchData = async () => {
@@ -44,19 +182,17 @@ const MovieDetailPage: React.FC = () => {
         try {
             const movieRes = await publicApi.getMovieDetail(movieId!);
             setMovie(movieRes.data);
+            setHeroIndex(0);
             commentApi.trackMovieView(movieId!).catch(() => undefined);
 
-            // Hardcoded cities
             const commonCities = ['Hồ Chí Minh', 'Hà Nội'];
             setCities(commonCities);
             setSelectedCity(commonCities[0]);
 
             if (!isPosMode) {
-                // Fetch similar movies (More Like This)
                 try {
                     const similarRes = await publicApi.getSimilarMovies(movieId!);
                     if (similarRes?.data && similarRes.data.length > 0) {
-                        // Map backend field names to frontend expectations
                         const mapped = similarRes.data.map((m: any) => ({
                             ...m,
                             moviePosterURL: m.moviePosterURL || m.movieImageUrl || '',
@@ -80,11 +216,43 @@ const MovieDetailPage: React.FC = () => {
         }
     };
 
-    // Month grouping for schedule dates
+    const coverUrls = useMemo(() => {
+        if (!movie) return [FALLBACK_COVER];
+        const fromApi = (movie.coverImages || [])
+            .slice()
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((c) => c.imageUrl)
+            .filter(Boolean);
+        if (fromApi.length > 0) return fromApi;
+        if (movie.movieBannerURL) return [movie.movieBannerURL];
+        if (movie.moviePosterURL) return [movie.moviePosterURL];
+        return [FALLBACK_COVER];
+    }, [movie]);
+
+    useEffect(() => {
+        if (coverUrls.length <= 1) return;
+        const id = window.setInterval(() => {
+            setHeroIndex((i) => (i + 1) % coverUrls.length);
+        }, 6000);
+        return () => window.clearInterval(id);
+    }, [coverUrls.length]);
+
+    const directors = useMemo((): PublicMoviePerson[] => {
+        if (!movie) return [];
+        if (movie.directors && movie.directors.length > 0) return movie.directors;
+        return splitPeopleCsv(movie.director);
+    }, [movie]);
+
+    const cast = useMemo((): PublicMoviePerson[] => {
+        if (!movie) return [];
+        if (movie.cast && movie.cast.length > 0) return movie.cast;
+        return splitPeopleCsv(movie.actor).slice(0, 12);
+    }, [movie]);
+
     const monthGroups = useMemo(() => {
         const groups: Record<string, string[]> = {};
-        scheduleDates.forEach(date => {
-            const key = date.substring(0, 7); // "YYYY-MM"
+        scheduleDates.forEach((date) => {
+            const key = date.substring(0, 7);
             if (!groups[key]) groups[key] = [];
             groups[key].push(date);
         });
@@ -92,9 +260,8 @@ const MovieDetailPage: React.FC = () => {
     }, [scheduleDates]);
 
     const monthKeys = Object.keys(monthGroups).sort();
-    const filteredDates = selectedMonth ? (monthGroups[selectedMonth] || []) : scheduleDates;
+    const filteredDates = selectedMonth ? monthGroups[selectedMonth] || [] : scheduleDates;
 
-    // Auto-select current month when dates load
     useEffect(() => {
         if (monthKeys.length > 0 && !monthKeys.includes(selectedMonth)) {
             setSelectedMonth(monthKeys[0]);
@@ -102,9 +269,7 @@ const MovieDetailPage: React.FC = () => {
     }, [monthKeys, selectedMonth]);
 
     useEffect(() => {
-        if (movieId && selectedCity) {
-            fetchScheduleDates();
-        }
+        if (movieId && selectedCity) fetchScheduleDates();
     }, [movieId, selectedCity]);
 
     const fetchScheduleDates = async () => {
@@ -113,13 +278,11 @@ const MovieDetailPage: React.FC = () => {
             const dates = res.data || [];
             setScheduleDates(dates);
             if (dates.length > 0) {
-                if (!dates.includes(selectedDate)) {
-                    setSelectedDate(dates[0]);
-                }
+                if (!dates.includes(selectedDate)) setSelectedDate(dates[0]);
             } else {
                 setSelectedDate('');
             }
-        } catch (err) {
+        } catch {
             console.error('Failed to load schedule dates');
             setScheduleDates([]);
             setSelectedDate('');
@@ -139,219 +302,369 @@ const MovieDetailPage: React.FC = () => {
         try {
             const res = await publicApi.getShowtimes(movieId!, selectedCity, selectedDate);
             setShowtimes(res.data || []);
-        } catch (err) {
+        } catch {
             console.error('Failed to load showtimes');
         } finally {
             setLoadingShowtimes(false);
         }
     };
 
-    const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('vi-VN', {
-            day: '2-digit', month: 'short', year: 'numeric'
+    const formatDate = (dateStr: string) =>
+        new Date(dateStr).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
         });
-    };
+
+    const releaseYear = movie?.releaseDate ? new Date(movie.releaseDate).getFullYear() : null;
+
+    const goHero = useCallback(
+        (dir: -1 | 1) => {
+            setHeroIndex((i) => (i + dir + coverUrls.length) % coverUrls.length);
+        },
+        [coverUrls.length]
+    );
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center">
-                <Loader2 size={48} className="text-[#ff8a00] animate-spin" />
+            <div className="min-h-[100dvh] bg-[var(--bg-base)] flex items-center justify-center">
+                <Loader2 size={48} className="text-[var(--accent)] animate-spin" />
             </div>
         );
     }
 
     if (error || !movie) {
         return (
-            <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center p-6 text-center">
+            <div className="min-h-[100dvh] bg-[var(--bg-base)] flex flex-col items-center justify-center p-6 text-center">
                 <AlertCircle size={64} className="text-red-400 mb-4" />
-                                <p className="text-2xl font-bold text-white mb-6">{error || t('movieDetail.movieNotFound', 'Movie not found')}</p>
-                <button className="px-6 py-3 rounded-xl font-bold text-black bg-[#ff8a00] border-none cursor-pointer" onClick={() => navigate('/home')}>{t("movieDetail.goHome", "Go Home")}</button>
+                <p className="text-2xl font-bold text-white mb-6">{error || t('movieDetail.movieNotFound', 'Movie not found')}</p>
+                <button
+                    className="px-6 py-3 rounded-xl font-bold text-black bg-[var(--accent)] border-none cursor-pointer"
+                    onClick={() => navigate('/home')}
+                >
+                    {t('movieDetail.goHome', 'Go Home')}
+                </button>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#0A0A0A] text-[#e5e2e1] font-sans selection:bg-[#ff8a00]/30 selection:text-[#ffb77f]">
+        <div className="min-h-[100dvh] bg-[var(--bg-base)] text-[var(--text-primary)] font-sans antialiased selection:bg-[var(--accent-soft)] selection:text-[#ffb77f] overflow-x-hidden">
             <style>{`
-                .glass-card {
-                    background: rgba(255, 255, 255, 0.05);
-                    backdrop-filter: blur(32px);
-                    border-top: 1px solid rgba(255, 255, 255, 0.1);
-                    border-left: 1px solid rgba(255, 255, 255, 0.1);
+                .mdp-surface {
+                    background: var(--bg-surface);
+                    border: 1px solid var(--border-color);
                 }
-                .orange-glow {
-                    box-shadow: 0 0 20px rgba(255, 138, 0, 0.15);
+                .mdp-surface-elevated {
+                    background: var(--bg-elevated);
+                    border: 1px solid var(--border-color);
                 }
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 4px;
-                    height: 4px;
+                .mdp-surface:hover {
+                    border-color: rgba(255, 138, 0, 0.22);
                 }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(0,0,0,0.1);
+                .mdp-btn-primary {
+                    background-color: var(--accent);
+                    color: #111;
+                    transition: box-shadow 0.3s ease, transform 0.3s ease;
                 }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: #ffb77f;
-                    border-radius: 10px;
+                .mdp-btn-primary:hover {
+                    box-shadow: 0 4px 20px var(--accent-glow);
+                    transform: translateY(-1px);
+                }
+                .mdp-btn-primary:active {
+                    transform: translateY(0) scale(0.98);
+                }
+                .mdp-btn-glass {
+                    background: rgba(255, 255, 255, 0.07);
+                    border: 1px solid rgba(255, 255, 255, 0.12);
+                    color: #fff;
+                    backdrop-filter: blur(8px);
+                    transition: background 0.2s ease, border-color 0.2s ease;
+                }
+                .mdp-btn-glass:hover {
+                    background: rgba(255, 255, 255, 0.12);
+                    border-color: rgba(255, 138, 0, 0.35);
+                    color: #ffb77f;
+                }
+                .mdp-hero-scrim-bottom {
+                    background: linear-gradient(0deg, var(--bg-base) 0%, rgba(19,19,22,0) 55%);
+                }
+                .mdp-hero-scrim-left {
+                    background: linear-gradient(90deg, var(--bg-base) 0%, rgba(19,19,22,0.55) 42%, transparent 72%);
+                }
+                .mdp-text-glow {
+                    text-shadow: 0 0 18px var(--accent-glow);
+                }
+                .mdp-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+                .mdp-scroll::-webkit-scrollbar-track { background: var(--bg-base); }
+                .mdp-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; opacity: 0.7; }
+                /* Hide horizontal scrollbar (cover filmstrip, people row, etc.) */
+                .mdp-hide-x-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .mdp-hide-x-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+                /* People carousel: hide horizontal scrollbar, allow drag */
+                .mdp-people-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                    cursor: grab;
+                    touch-action: pan-x;
+                }
+                .mdp-people-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+                .mdp-people-scroll.mdp-people-dragging { cursor: grabbing; }
+                @media (prefers-reduced-motion: reduce) {
+                    .mdp-btn-primary:hover { transform: none; }
                 }
             `}</style>
 
-            {/* Redesigned Unified Header */}
             <Header />
 
-            <main>
-                {/* Hero Section - starts right below fixed header, no gap */}
-                <section className="relative w-full overflow-hidden flex items-end" style={{ marginTop: 56, height: 'min(70vh, 720px)', minHeight: 400 }}>
-                    <div className="absolute inset-0 z-0">
-                        <img
-                            alt={movie.movieName}
-                            className="w-full h-full object-contain object-center"
-                            src={movie.movieBannerURL || movie.moviePosterURL}
-                            onError={(e) => {
-                                const target = e.currentTarget;
-                                target.onerror = null;
-                                const fallback = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
-                                const poster = movie.moviePosterURL;
-                                if (poster && !target.src.endsWith(poster)) {
-                                    target.src = poster;
-                                    target.onerror = () => {
-                                        target.onerror = null;
-                                        target.src = fallback;
-                                    };
-                                } else {
-                                    target.src = fallback;
-                                }
-                            }}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/60 to-[#0A0A0A]/20"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0A0A0A]/80 via-transparent to-transparent"></div>
-                    </div>
-                    
-                    <div className="relative z-10 px-6 md:px-16 pb-20 max-w-7xl mx-auto w-full">
-                        {/* Movie Poster - always visible, left aligned */}
-                        <div className="w-32 md:w-64 aspect-[2/3] rounded-xl overflow-hidden glass-card p-1.5 md:p-2 group cursor-pointer shadow-2xl transition-transform hover:scale-[1.02] mb-6">
-                            <img
-                                alt={movie.movieName}
-                                className="w-full h-full object-cover rounded-lg"
-                                src={movie.moviePosterURL}
-                                onError={(e) => {
-                                    e.currentTarget.onerror = null;
-                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
-                                }}
+            <main className="relative z-10">
+                {/* Fullscreen cinematic cover hero (HTML mock style) */}
+                <section className="relative w-full h-[100dvh] min-h-[720px] md:min-h-[800px] flex items-end pb-20 md:pb-[10vh]">
+                    <div className="absolute top-[88px] md:top-[100px] left-0 right-0 z-20 pointer-events-none">
+                        <div className="max-w-[1440px] mx-auto px-5 md:px-16 pointer-events-auto">
+                            <PublicBreadcrumb
+                                variant="overlay"
+                                items={[
+                                    { label: t('breadcrumb.home', 'Home'), path: '/home' },
+                                    { label: t('breadcrumb.movies', 'Phim'), path: '/movies' },
+                                    { label: movie.movieName },
+                                ]}
                             />
                         </div>
-
-                        {/* Movie Info - below poster */}
-                        <div>
-                                <div className="flex items-center gap-4 mb-4">
-                                                                        <span className="bg-[#e9c349] text-[#241a00] px-3 py-1 rounded font-extrabold text-sm">{t('movieDetail.age', 'Age')}: {movie.movieRequiredAge}</span>
-                                    <span className="flex items-center gap-1 text-[#ffb77f]">
-                                        <span className="material-symbols-outlined text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                                        <span className="font-semibold text-sm">{t("movieDetail.mustWatch", "Must Watch")}</span>
-                                    </span>
-                                </div>
-                                <h1 className="font-bold text-4xl md:text-6xl text-white mb-6 tracking-tighter" style={{ fontFamily: "'Montserrat', sans-serif" }}>
-                                    {movie.movieName}
-                                </h1>
-                                <div className="flex flex-wrap gap-6 text-[#ddc1ae] text-sm font-medium">
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">schedule</span> {movie.movieDuration} {t('movieDetail.minutes', 'mins')}</span>
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">calendar_today</span> {movie.releaseDate ? formatDate(movie.releaseDate) : t('movieDetail.comingSoon', 'Coming Soon')}</span>
-                                    <span className="flex items-center gap-2"><span className="material-symbols-outlined text-[#ffb77f]">theaters</span> {movie.movieFormatInfos || t('movieDetail.formatUpdating', 'Updating')}</span>
-                                </div>
-                            </div>
                     </div>
-                </section>
+                    <div className="absolute inset-0 z-0 overflow-hidden">
+                        {coverUrls.map((url, idx) => (
+                            <div
+                                key={`${url}-${idx}`}
+                                className="absolute inset-0 transition-opacity duration-[1200ms] ease-out"
+                                style={{
+                                    opacity: idx === heroIndex ? 1 : 0,
+                                    backgroundImage: `url('${url}')`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center center',
+                                    backgroundRepeat: 'no-repeat',
+                                }}
+                                role="img"
+                                aria-label={t('movieDetail.heroCoverAlt', 'Movie cover')}
+                                aria-hidden={idx !== heroIndex}
+                            />
+                        ))}
+                        {/* Bottom fade into page bg (same recipe as Home hero) */}
+                        <div className="absolute inset-0 mdp-hero-scrim-bottom" />
+                        {/* Left scrim for title readability */}
+                        <div className="absolute inset-0 mdp-hero-scrim-left" />
+                        {/* Subtle top dim under header */}
+                        <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[var(--bg-base)]/70 to-transparent" />
+                    </div>
 
-                {/* Main Content (Two Columns) */}
-                <section className="px-6 md:px-16 py-20 max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
-                        {/* Left Column: Storyline & Details */}
-                        <div className="lg:col-span-7 space-y-12">
-                            <div>
-                                <div className="flex items-center gap-3 mb-6">
-                                    <span className="material-symbols-outlined text-[#ffb77f] text-[28px]">info</span>
-                                                                        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.storyline", "Storyline")}</h2>
-                                </div>
-                                <p className="text-lg text-white/80 leading-relaxed break-words">
-                                                                        {movie.movieDescription || t('movieDetail.noDescription', 'No storyline details available.')}
-                                </p>
+                    <div className="relative z-10 w-full max-w-[1440px] mx-auto px-5 md:px-16 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                        <div className="lg:col-span-7 flex flex-col gap-5 md:gap-6">
+                            <div className="flex flex-wrap items-center gap-3">
+                                {movie.movieFormatInfos && (
+                                    <span className="px-3 py-1 bg-[var(--accent)]/20 border border-[var(--accent)]/50 text-[#ffb77f] text-[12px] font-bold tracking-widest uppercase rounded-sm">
+                                        {movie.movieFormatInfos}
+                                    </span>
+                                )}
+                                {releaseYear && (
+                                    <span className="px-3 py-1 bg-white/10 border border-white/20 text-white text-[12px] font-bold tracking-widest rounded-sm">
+                                        {releaseYear}
+                                    </span>
+                                )}
+                                {movie.movieRequiredAge && (
+                                    <span className="px-2 py-0.5 border border-red-400/50 text-red-300 text-[12px] font-bold rounded-sm">
+                                        {movie.movieRequiredAge}
+                                    </span>
+                                )}
                             </div>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/10">
-                                <div className="space-y-1">
-                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.director", "Director")}</p>
-                                    <p className="text-xl font-bold text-white">{movie.director || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.cast", "Cast")}</p>
-                                    <p className="text-xl font-bold text-white">{movie.actor || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                                                        <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.genres", "Genres")}</p>
-                                    <p className="text-xl font-bold text-white">{movie.movieCategoryInfos || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">{t("movieDetail.language", "Language")}</p>
-                                    <p className="text-xl font-bold text-white">English, Vietnamese</p>
-                                </div>
+
+                            <h1
+                                className="text-[40px] md:text-[64px] font-extrabold text-white uppercase tracking-tighter leading-none mdp-text-glow drop-shadow-2xl"
+                                style={{ fontFamily: "'Montserrat', 'Plus Jakarta Sans', sans-serif" }}
+                            >
+                                {movie.movieName}
+                            </h1>
+
+                            <div className="flex flex-wrap items-center gap-3 md:gap-5 text-[14px] font-semibold text-[var(--text-secondary)]">
+                                <span className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[20px]">schedule</span>
+                                    {movie.movieDuration} {t('movieDetail.minutes', 'mins')}
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-white/30" />
+                                <span className="flex items-center gap-2">
+                                    <span className="material-symbols-outlined text-[20px]">movie</span>
+                                    {movie.movieCategoryInfos || t('movieDetail.formatUpdating', 'Updating')}
+                                </span>
+                                {movie.releaseDate && (
+                                    <>
+                                        <span className="w-1 h-1 rounded-full bg-white/30" />
+                                        <span className="flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+                                            {formatDate(movie.releaseDate)}
+                                        </span>
+                                    </>
+                                )}
                             </div>
-                            
-                            {movie.trailerUrl && (
-                                <div className="pt-4">
+
+                            <p className="text-[16px] md:text-[18px] leading-7 text-white/80 max-w-2xl line-clamp-3 mt-1">
+                                {movie.movieDescription || t('movieDetail.noDescription', 'No storyline details available.')}
+                            </p>
+
+                            {movie.trailerUrl ? (
+                                <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-4">
                                     <a
                                         href={movie.trailerUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 hover:border-[#ffb77f]/50 transition-all font-semibold text-white no-underline"
+                                        className="mdp-btn-primary px-8 py-4 rounded-lg text-[14px] font-semibold flex items-center gap-2 uppercase tracking-wide no-underline"
                                     >
-                                        <Play size={18} className="text-[#ffb77f] fill-[#ffb77f]" />                                        {t('movieDetail.watchTrailer', 'Watch Trailer')}
+                                        <Play size={18} className="fill-[#111]" />
+                                        {t('movieDetail.watchTrailer', 'Watch Trailer')}
                                     </a>
+                                </div>
+                            ) : null}
+
+                            {/* Cover filmstrip inside hero (multi banner) */}
+                            {coverUrls.length > 1 && (
+                                <div className="mt-6 flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => goHero(-1)}
+                                        className="w-9 h-9 rounded-full mdp-btn-glass flex items-center justify-center cursor-pointer shrink-0"
+                                        aria-label="Previous cover"
+                                    >
+                                        <ChevronLeft size={16} />
+                                    </button>
+                                    <div className="flex gap-2 overflow-x-auto mdp-hide-x-scroll pb-1 max-w-full">
+                                        {coverUrls.map((url, idx) => (
+                                            <button
+                                                key={`hero-thumb-${idx}`}
+                                                type="button"
+                                                onClick={() => setHeroIndex(idx)}
+                                                className={`relative flex-shrink-0 w-20 md:w-28 aspect-video rounded-lg overflow-hidden border-2 cursor-pointer p-0 transition-all ${
+                                                    idx === heroIndex
+                                                        ? 'border-[var(--accent)] shadow-[0_0_14px_var(--accent-glow)] scale-[1.03]'
+                                                        : 'border-white/15 hover:border-white/40 opacity-75 hover:opacity-100'
+                                                }`}
+                                                aria-label={`${t('movieDetail.heroCoverAlt', 'Movie cover')} ${idx + 1}`}
+                                            >
+                                                <span
+                                                    className="absolute inset-0 block bg-cover bg-center"
+                                                    style={{ backgroundImage: `url('${url}')` }}
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => goHero(1)}
+                                        className="w-9 h-9 rounded-full mdp-btn-glass flex items-center justify-center cursor-pointer shrink-0"
+                                        aria-label="Next cover"
+                                    >
+                                        <ChevronRight size={16} />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Content + booking: solid dark, slight pull-up over hero */}
+                <section
+                    id="movie-booking"
+                    className="relative z-20 w-full bg-[var(--bg-base)] -mt-16 md:-mt-20 pt-6"
+                >
+                    <div className="max-w-[1440px] mx-auto px-5 md:px-16 py-10 md:py-14">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6">
+                        {/* Left: director, cast */}
+                        <div className="lg:col-span-8 flex flex-col gap-12 md:gap-14">
+                            {directors.length > 0 && (
+                                <div>
+                                    <h2
+                                        className="text-2xl font-semibold text-white mb-6 md:mb-8 border-l-4 border-[var(--accent)] pl-4"
+                                        style={{ fontFamily: "'Montserrat', sans-serif" }}
+                                    >
+                                        {t('movieDetail.director', 'Đạo diễn')}
+                                    </h2>
+                                    <PeopleRow people={directors} role="director" />
+                                </div>
+                            )}
+
+                            {cast.length > 0 && (
+                                <div>
+                                    <h2
+                                        className="text-2xl font-semibold text-white mb-6 md:mb-8 border-l-4 border-[var(--accent)] pl-4"
+                                        style={{ fontFamily: "'Montserrat', sans-serif" }}
+                                    >
+                                        {t('movieDetail.mainCast', 'Diễn viên chính')}
+                                    </h2>
+                                    <PeopleRow people={cast} role="actor" />
                                 </div>
                             )}
                         </div>
 
-                        {/* Right Column: Booking */}
-                        <div className="lg:col-span-5">
-                            <div className="glass-card p-8 rounded-2xl border border-white/5 orange-glow sticky top-32">
-                                <h2 className="text-2xl font-bold text-white mb-8" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.bookTickets", "Book Tickets")}</h2>
-                                <div className="space-y-8">
-                                    {/* City Selection */}
+                        {/* Right: sticky booking panel */}
+                        <div className="lg:col-span-4">
+                            <div className="mdp-surface p-6 md:p-8 rounded-2xl sticky top-28">
+                                <h2
+                                    className="text-2xl font-bold text-white mb-6"
+                                    style={{ fontFamily: "'Montserrat', sans-serif" }}
+                                >
+                                    {t('movieDetail.bookTickets', 'Book Tickets')}
+                                </h2>
+
+                                <div className="flex flex-col gap-6">
                                     <div>
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectCity", "SELECT CITY")}</label>
+                                        <label className="text-[12px] text-[var(--text-secondary)] font-bold block mb-2 uppercase tracking-widest">
+                                            {t('movieDetail.selectCity', 'SELECT CITY')}
+                                        </label>
                                         <div className="relative">
-                                            <span className="material-symbols-outlined text-[#ffb77f] absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">location_on</span>
+                                            <span className="material-symbols-outlined text-[#ffb77f] absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-[20px]">
+                                                location_on
+                                            </span>
                                             <select
                                                 value={selectedCity}
                                                 onChange={(e) => setSelectedCity(e.target.value)}
-                                                className="w-full bg-[#201f1f] text-white p-4 pl-12 rounded-xl border border-white/5 font-semibold appearance-none outline-none focus:border-[#ff8a00] transition-colors cursor-pointer"
+                                                className="w-full bg-[var(--bg-base)] text-white p-3.5 pl-11 rounded-xl border border-[var(--border-color)] font-semibold appearance-none outline-none focus:border-[var(--accent)] transition-colors cursor-pointer"
                                             >
-                                                {cities.map(cityName => (
-                                                    <option key={cityName} value={cityName} className="bg-[#1c1b1b] text-white">{cityName}</option>
+                                                {cities.map((cityName) => (
+                                                    <option key={cityName} value={cityName} className="bg-[var(--bg-elevated)]">
+                                                        {cityName}
+                                                    </option>
                                                 ))}
                                             </select>
-                                            <span className="material-symbols-outlined text-[#ddc1ae] absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                                            <span className="material-symbols-outlined text-[var(--text-secondary)] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-[20px]">
+                                                expand_more
+                                            </span>
                                         </div>
                                     </div>
-                                    
-                                    {/* Date Selection */}
+
                                     <div>
-                                        {/* Month Tabs */}
                                         {monthKeys.length > 1 && (
-                                            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 custom-scrollbar">
-                                                {monthKeys.map(key => {
+                                            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 mdp-scroll">
+                                                {monthKeys.map((key) => {
                                                     const d = new Date(key + '-01');
-                                                    const label = d.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US', { month: 'short', year: 'numeric' }).toUpperCase();
+                                                    const label = d
+                                                        .toLocaleDateString(
+                                                            i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US',
+                                                            { month: 'short', year: 'numeric' }
+                                                        )
+                                                        .toUpperCase();
                                                     const isActive = selectedMonth === key;
                                                     return (
                                                         <button
                                                             key={key}
+                                                            type="button"
                                                             onClick={() => {
                                                                 setSelectedMonth(key);
                                                                 setSelectedDate('');
                                                             }}
-                                                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border cursor-pointer whitespace-nowrap ${
+                                                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all border cursor-pointer whitespace-nowrap ${
                                                                 isActive
-                                                                    ? 'bg-[#ff8a00] text-black border-[#ff8a00]'
-                                                                    : 'bg-[#201f1f] text-[#ddc1ae] border-white/5 hover:bg-[#2a2a2a]'
+                                                                    ? 'bg-[var(--accent)] text-black border-[var(--accent)]'
+                                                                    : 'bg-[var(--bg-base)] text-[var(--text-secondary)] border-[var(--border-color)] hover:bg-[var(--bg-elevated)]'
                                                             }`}
                                                         >
                                                             {label}
@@ -361,62 +674,87 @@ const MovieDetailPage: React.FC = () => {
                                             </div>
                                         )}
 
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectDate", "SELECT DATE")}</label>
-                                        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                                        <label className="text-[12px] text-[var(--text-secondary)] font-bold block mb-2 uppercase tracking-widest">
+                                            {t('movieDetail.selectDate', 'SELECT DATE')}
+                                        </label>
+                                        <div className="flex gap-2 overflow-x-auto pb-1 mdp-scroll">
                                             {filteredDates.length === 0 ? (
-                                                <div className="text-sm text-zinc-500 py-4 w-full text-center">{t("movieDetail.noDates", "No dates available")}</div>
+                                                <div className="text-sm text-zinc-500 py-3 w-full text-center">
+                                                    {t('movieDetail.noDates', 'No dates available')}
+                                                </div>
                                             ) : (
-                                                filteredDates.map(date => {
+                                                filteredDates.map((date) => {
                                                     const d = new Date(date);
                                                     const isSelected = selectedDate === date;
-                                                    const month = d.toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US', { month: 'short' }).toUpperCase();
-                                                    const dayNum = d.getDate();
+                                                    const month = d
+                                                        .toLocaleDateString(
+                                                            i18n.language === 'vi' ? 'vi-VN' : i18n.language === 'ru' ? 'ru-RU' : 'en-US',
+                                                            { month: 'short' }
+                                                        )
+                                                        .toUpperCase();
                                                     return (
                                                         <button
                                                             key={date}
+                                                            type="button"
                                                             onClick={() => setSelectedDate(date)}
-                                                            className={`flex flex-col items-center justify-center min-w-[70px] h-20 rounded-xl transition-all duration-300 border cursor-pointer ${
+                                                            className={`flex flex-col items-center justify-center min-w-[64px] h-[72px] rounded-xl transition-all border cursor-pointer ${
                                                                 isSelected
-                                                                    ? 'bg-[#ff8a00] text-black border-[#ff8a00] shadow-[0_0_15px_rgba(255,138,0,0.3)]'
-                                                                    : 'bg-[#201f1f] text-white border-white/5 hover:bg-[#2a2a2a]'
+                                                                    ? 'bg-[var(--accent)] text-black border-[var(--accent)] shadow-[0_0_12px_var(--accent-glow)]'
+                                                                    : 'bg-[var(--bg-base)] text-white border-[var(--border-color)] hover:bg-[var(--bg-elevated)]'
                                                             }`}
                                                         >
-                                                            <span className={`text-[10px] font-bold ${isSelected ? 'text-black/80' : 'text-[#ddc1ae]'}`}>{month}</span>
-                                                            <span className="text-2xl font-bold">{dayNum}</span>
+                                                            <span className={`text-[10px] font-bold ${isSelected ? 'text-black/80' : 'text-[var(--text-secondary)]'}`}>
+                                                                {month}
+                                                            </span>
+                                                            <span className="text-xl font-bold">{d.getDate()}</span>
                                                         </button>
                                                     );
                                                 })
                                             )}
                                         </div>
                                     </div>
-                                    
-                                    {/* Location & Time */}
+
                                     <div>
-                                        <label className="text-xs text-[#ddc1ae] font-bold block mb-3 uppercase tracking-wider">{t("movieDetail.selectCinemaTime", "SELECT CINEMA & TIME")}</label>
-                                        <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                                        <label className="text-[12px] text-[var(--text-secondary)] font-bold block mb-2 uppercase tracking-widest">
+                                            {t('movieDetail.selectCinemaTime', 'SELECT CINEMA & TIME')}
+                                        </label>
+                                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1 mdp-scroll">
                                             {loadingShowtimes ? (
                                                 <div className="flex items-center justify-center py-8">
-                                                    <Loader2 className="animate-spin text-[#ff8a00]" size={24} />
+                                                    <Loader2 className="animate-spin text-[var(--accent)]" size={24} />
                                                 </div>
                                             ) : showtimes.length === 0 ? (
-                                                <div className="text-center py-8 text-zinc-500 text-sm">                                                    {t('movieDetail.noSchedules', 'No schedules found for this date.')}
+                                                <div className="text-center py-6 text-zinc-500 text-sm">
+                                                    {t('movieDetail.noSchedules', 'No schedules found for this date.')}
                                                 </div>
                                             ) : (
                                                 showtimes.map((cinema, idx) => (
-                                                    <div key={idx} className="bg-[#1c1b1b] p-4 rounded-xl border border-white/5">
-                                                        <div className="mb-4">
-                                                            <h4 className="font-bold text-white text-md">{cinema.cinemaName}</h4>
-                                                            <p className="text-[11px] text-[#ddc1ae]/70 mt-0.5">{cinema.cinemaAddress}</p>
+                                                    <div key={idx} className="bg-[var(--bg-base)] p-3.5 rounded-xl border border-[var(--border-color)]">
+                                                        <div className="mb-3">
+                                                            <h4 className="font-bold text-white text-sm">{cinema.cinemaName}</h4>
+                                                            <p className="text-[11px] text-[var(--text-secondary)]/70 mt-0.5">{cinema.cinemaAddress}</p>
                                                         </div>
-                                                        <span className="block text-[10px] font-bold text-[#ff8a00] uppercase tracking-wider mb-2">{cinema.movieFormatName}</span>
+                                                        <span className="block text-[10px] font-bold text-[var(--accent)] uppercase tracking-wider mb-2">
+                                                            {cinema.movieFormatName}
+                                                        </span>
                                                         <div className="flex flex-wrap gap-2">
                                                             {(cinema.scheduleTimesInfos || []).map((showtime) => (
                                                                 <button
                                                                     key={showtime.scheduleId}
-                                                                    onClick={() => navigate(isPosMode ? `/booking/${showtime.scheduleId}?pos=1` : `/booking/${showtime.scheduleId}`)}
-                                                                    className="px-6 py-2 rounded-lg bg-[#353534] text-white border border-[#ffb77f]/20 hover:bg-[#ff8a00] hover:text-black transition-all font-semibold text-sm cursor-pointer"
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        navigate(
+                                                                            isPosMode
+                                                                                ? `/booking/${showtime.scheduleId}?pos=1`
+                                                                                : `/booking/${showtime.scheduleId}`
+                                                                        )
+                                                                    }
+                                                                    className="px-4 py-2 rounded-lg bg-[var(--bg-elevated)] text-white border border-[var(--border-color)] hover:bg-[var(--accent)] hover:text-black hover:border-[var(--accent)] transition-all font-semibold text-sm cursor-pointer"
                                                                 >
-                                                                    {new Date(showtime.showTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                                    {new Date(showtime.showTime).toLocaleTimeString('vi-VN', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit',
+                                                                    })}
                                                                 </button>
                                                             ))}
                                                         </div>
@@ -425,119 +763,91 @@ const MovieDetailPage: React.FC = () => {
                                             )}
                                         </div>
                                     </div>
+
+                                    {showtimes.length > 0 && (
+                                        <p className="text-[11px] text-[var(--text-secondary)]/70 text-center">
+                                            {t('movieDetail.continueSelectSeats', 'Continue to seats')} → {t('movieDetail.selectCinemaTime', 'pick a showtime')}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </section>
 
                 <MovieCommentsSection movieId={movie.movieId} />
 
-                {/* Recommended Movies */}
                 {!isPosMode && (
-                <section className="bg-[#0e0e0e] py-20 overflow-hidden">
-                    <div className="px-6 md:px-16 max-w-7xl mx-auto">
-                        <div className="flex justify-between items-end mb-10">
-                            <div>
-                                <h2 className="text-3xl font-bold text-white mb-2" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t("movieDetail.moreLikeThis", "More Like This")}</h2>
-                                <p className="text-sm text-[#ddc1ae]/80">{t("movieDetail.recommendationDesc", "Curated cinematic events you might enjoy.")}</p>
-                            </div>
-                            <button
-                                onClick={() => navigate(`/movie/${movieId}/similar`)}
-                                className="group flex items-center gap-1 bg-transparent border-none cursor-pointer text-[#ffb77f] font-semibold text-sm"
-                            >
-                                <span className="group-hover:underline">{t('movieDetail.viewAll', 'View All')}</span>
-                                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
-                            </button>
-                        </div>
-                        {recommendedMovies.length > 0 ? (
-                            <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth">
-                                {recommendedMovies.slice(0, 5).map((recMovie) => (
-                                    <div
-                                        key={recMovie.movieId}
-                                        onClick={() => navigate(`/movie/${recMovie.movieId}`)}
-                                        className="w-[200px] flex-shrink-0 group cursor-pointer"
+                    <section className="bg-[var(--bg-base)] py-16 overflow-hidden border-t border-[var(--border-color)]">
+                        <div className="px-5 md:px-16 max-w-[1440px] mx-auto">
+                            <div className="flex justify-between items-end mb-8">
+                                <div>
+                                    <h2
+                                        className="text-2xl md:text-3xl font-bold text-white mb-1"
+                                        style={{ fontFamily: "'Montserrat', sans-serif" }}
                                     >
-                                        <div className="w-[200px] h-[300px] rounded-xl overflow-hidden mb-4 relative shadow-lg">
-                                            <img
-                                                src={recMovie.moviePosterURL}
-                                                alt={recMovie.movieName}
-                                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                                onError={(e) => {
-                                                    e.currentTarget.onerror = null;
-                                                    e.currentTarget.src = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
-                                                }}
-                                            />
-                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                                <button className="bg-[#ff8a00] text-black px-6 py-2 rounded-full font-bold text-sm border-none cursor-pointer">
-                                                    {t('movieDetail.quickBook', 'Quick Book')}
-                                                </button>
+                                        {t('movieDetail.moreLikeThis', 'More Like This')}
+                                    </h2>
+                                    <p className="text-sm text-[var(--text-secondary)]/80">
+                                        {t('movieDetail.recommendationDesc', 'Curated cinematic events you might enjoy.')}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate(`/movie/${movieId}/similar`)}
+                                    className="group flex items-center gap-1 bg-transparent border-none cursor-pointer text-[#ffb77f] font-semibold text-sm"
+                                >
+                                    <span className="group-hover:underline">{t('movieDetail.viewAll', 'View All')}</span>
+                                    <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                                </button>
+                            </div>
+                            {recommendedMovies.length > 0 ? (
+                                <div className="flex gap-5 overflow-x-auto pb-6 mdp-scroll scroll-smooth">
+                                    {recommendedMovies.slice(0, 5).map((recMovie) => (
+                                        <div
+                                            key={recMovie.movieId}
+                                            onClick={() => navigate(`/movie/${recMovie.movieId}`)}
+                                            className="w-[180px] flex-shrink-0 group cursor-pointer"
+                                        >
+                                            <div className="w-[180px] h-[270px] rounded-xl overflow-hidden mb-3 relative shadow-lg border border-[var(--border-color)]">
+                                                <img
+                                                    src={recMovie.moviePosterURL}
+                                                    alt={recMovie.movieName}
+                                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                    onError={(e) => {
+                                                        e.currentTarget.onerror = null;
+                                                        e.currentTarget.src = FALLBACK_COVER;
+                                                    }}
+                                                />
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                    <span className="bg-[var(--accent)] text-black px-4 py-1.5 rounded-full font-bold text-xs">
+                                                        {t('movieDetail.quickBook', 'Quick Book')}
+                                                    </span>
+                                                </div>
                                             </div>
+                                            <h3 className="font-bold text-sm text-white group-hover:text-[var(--accent)] transition-colors truncate">
+                                                {recMovie.movieName}
+                                            </h3>
+                                            <p className="text-xs text-[var(--text-secondary)] mt-1">
+                                                {recMovie.movieCategoryInfos || t('movieDetail.movie', 'Movie')} · {recMovie.movieDuration}{' '}
+                                                {t('movieDetail.minutes', 'mins')}
+                                            </p>
                                         </div>
-                                        <h3 className="font-bold text-md text-white group-hover:text-[#ff8a00] transition-colors truncate">{recMovie.movieName}</h3>
-                                        <p className="text-xs text-[#ddc1ae] mt-1">{recMovie.movieCategoryInfos || t('movieDetail.movie', 'Movie')} • {recMovie.movieDuration} phút</p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 rounded-xl border border-zinc-800/40 bg-zinc-950/20 backdrop-blur-sm">
-                                <span className="material-symbols-outlined text-4xl text-[#ddc1ae]/40 mb-3 block">movie</span>
-                                <p className="text-sm text-[#ddc1ae]/60">{t("movieDetail.noSimilarMovies", "No similar movies found.")}</p>
-                            </div>
-                        )}
-                    </div>
-                </section>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 rounded-xl border border-[var(--border-color)] bg-[var(--bg-surface)]">
+                                    <span className="material-symbols-outlined text-4xl text-[var(--text-secondary)]/40 mb-2 block">movie</span>
+                                    <p className="text-sm text-[var(--text-secondary)]/60">{t('movieDetail.noSimilarMovies', 'No similar movies found.')}</p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
                 )}
             </main>
 
-            {/* Footer */}
-            <footer className="w-full pt-20 pb-10 bg-[#0e0e0e] border-t border-white/5">
-                <div className="flex flex-col md:flex-row justify-between items-start px-6 md:px-16 max-w-7xl mx-auto gap-8">
-                    <div className="space-y-6">
-                        <a className="font-bold text-2xl text-[#ffb77f] no-underline" href="#" style={{ fontFamily: "'Montserrat', sans-serif" }}>CINEMA</a>
-                        <p className="text-sm text-[#ddc1ae] max-w-xs leading-relaxed">
-                            The Ultimate Cinematic Experience. Redefining how you experience films with state-of-the-art technology and luxury comfort.
-                        </p>
-                        <div className="flex gap-4">
-                            <span className="material-symbols-outlined text-[#ffb77f] cursor-pointer hover:scale-110 transition-transform">face_nod</span>
-                            <span className="material-symbols-outlined text-[#ffb77f] cursor-pointer hover:scale-110 transition-transform">movie</span>
-                            <span className="material-symbols-outlined text-[#ffb77f] cursor-pointer hover:scale-110 transition-transform">theaters</span>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
-                        <div className="space-y-4">
-                            <h5 className="text-white font-bold text-sm uppercase tracking-wider">Quick Links</h5>
-                            <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/privacy-policy')}>Privacy Policy</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/terms-of-service')}>Terms of Service</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/contact-us')}>Contact Us</a></li>
-                            </ul>
-                        </div>
-                        <div className="space-y-4">
-                            <h5 className="text-white font-bold text-sm uppercase tracking-wider">Company</h5>
-                            <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/careers')}>Careers</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/contact-us')}>Feedback</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/about-us')}>About Us</a></li>
-                            </ul>
-                        </div>
-                        <div className="hidden md:block space-y-4">
-                            <h5 className="text-white font-bold text-sm uppercase tracking-wider">Legal</h5>
-                            <ul className="space-y-2 text-[#ddc1ae] text-sm list-none p-0 m-0">
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/cookie-policy')}>Cookie Policy</a></li>
-                                <li><a className="hover:text-[#ffb77f] transition-colors no-underline cursor-pointer" onClick={() => navigate('/safety-rules')}>Safety Rules</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div className="px-6 md:px-16 max-w-7xl mx-auto mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[#ddc1ae] text-xs">
-                    <p>© 2026 CINEMA. The Ultimate Cinematic Experience.</p>
-                    <div className="flex gap-6">
-                        <span>Designed for Cinephiles</span>
-                        <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">bolt</span> Powered by IMAX</span>
-                    </div>
-                </div>
-            </footer>
+            <PublicFooter />
         </div>
     );
 };

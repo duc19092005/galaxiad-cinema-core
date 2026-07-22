@@ -31,42 +31,42 @@ public class GetTicketDataUseCase
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("==============================================");
-        sb.AppendLine("           VE XEM PHIM / MOVIE TICKET         ");
+        sb.AppendLine("           VÉ XEM PHIM / MOVIE TICKET         ");
         sb.AppendLine("==============================================");
         sb.AppendLine();
-        sb.AppendLine($"Ma don hang:    {ticket.OrderId}");
-        sb.AppendLine($"Ngay dat:       {ticket.OrderDate:dd/MM/yyyy HH:mm}");
-        sb.AppendLine($"Ma giao dich:   {ticket.VnPayTransactionId ?? "N/A"}");
+        sb.AppendLine($"Mã đơn hàng:    {ticket.OrderId}");
+        sb.AppendLine($"Ngày đặt:       {ticket.OrderDate:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Mã giao dịch:   {ticket.VnPayTransactionId ?? "N/A"}");
         sb.AppendLine();
         sb.AppendLine("----------------------------------------------");
-        sb.AppendLine("THONG TIN KHACH HANG");
+        sb.AppendLine("THÔNG TIN KHÁCH HÀNG");
         sb.AppendLine("----------------------------------------------");
-        sb.AppendLine($"Ho ten:         {ticket.CustomerName ?? "N/A"}");
+        sb.AppendLine($"Họ tên:         {ticket.CustomerName ?? "N/A"}");
         sb.AppendLine($"Email:          {ticket.CustomerEmail ?? "N/A"}");
         sb.AppendLine();
         sb.AppendLine("----------------------------------------------");
-        sb.AppendLine("THONG TIN PHIM");
+        sb.AppendLine("THÔNG TIN PHIM");
         sb.AppendLine("----------------------------------------------");
         sb.AppendLine($"Phim:           {ticket.MovieName}");
-        sb.AppendLine($"Dinh dang:      {ticket.FormatName}");
-        sb.AppendLine($"Rap:            {ticket.CinemaName}");
-        sb.AppendLine($"Dia chi:        {ticket.CinemaAddress}");
-        sb.AppendLine($"Phong:          {ticket.AuditoriumNumber}");
-        sb.AppendLine($"Gio chieu:      {ticket.ShowTime:dd/MM/yyyy HH:mm}");
-        sb.AppendLine($"Gio ket thuc:   {ticket.EndedTime:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Định dạng:      {ticket.FormatName}");
+        sb.AppendLine($"Rạp:            {ticket.CinemaName}");
+        sb.AppendLine($"Địa chỉ:        {ticket.CinemaAddress}");
+        sb.AppendLine($"Phòng:          {ticket.AuditoriumNumber}");
+        sb.AppendLine($"Giờ chiếu:      {ticket.ShowTime:dd/MM/yyyy HH:mm}");
+        sb.AppendLine($"Giờ kết thúc:   {ticket.EndedTime:dd/MM/yyyy HH:mm}");
         sb.AppendLine();
         sb.AppendLine("----------------------------------------------");
-        sb.AppendLine("CHI TIET GHE");
+        sb.AppendLine("CHI TIẾT GHẾ");
         sb.AppendLine("----------------------------------------------");
         foreach (var seat in ticket.Seats)
         {
-            sb.AppendLine($"  Ghe {seat.SeatNumber,-8} | {seat.SegmentName,-15} | {seat.PriceEach:N0} VND");
+            sb.AppendLine($"  Ghế {seat.SeatNumber,-8} | {seat.SegmentName,-15} | {seat.PriceEach:N0} VND");
         }
         sb.AppendLine();
         sb.AppendLine("----------------------------------------------");
-        sb.AppendLine($"TONG TIEN:      {ticket.TotalPrice:N0} VND");
+        sb.AppendLine($"TỔNG TIỀN:      {ticket.TotalPrice:N0} VND");
         sb.AppendLine("==============================================");
-        sb.AppendLine("Cam on quy khach! Chuc quy khach xem phim vui ve!");
+        sb.AppendLine("Cảm ơn quý khách! Chúc quý khách xem phim vui vẻ!");
         sb.AppendLine();
 
         return System.Text.Encoding.UTF8.GetBytes(sb.ToString());

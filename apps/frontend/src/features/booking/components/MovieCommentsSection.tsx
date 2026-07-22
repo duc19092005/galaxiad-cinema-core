@@ -97,16 +97,17 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
   const eligibilityMessage = eligibility?.message || t('movieComment.checkingEligibility', 'Checking comment eligibility.');
 
   return (
-    <section className="px-6 md:px-16 pb-20 max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-8 lg:gap-12">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-6 md:p-8 h-fit">
+    <section className="w-full bg-[var(--bg-base)] border-t border-[var(--border-color)]">
+      <div className="px-5 md:px-16 py-12 md:py-14 max-w-[1440px] mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)] gap-6 lg:gap-8">
+        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-6 md:p-8 h-fit">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-11 h-11 rounded-xl bg-[#ff8a00]/15 border border-[#ff8a00]/25 flex items-center justify-center text-[#ffb77f]">
+            <div className="w-11 h-11 rounded-xl bg-[var(--accent-soft)] border border-[var(--accent)]/25 flex items-center justify-center text-[#ffb77f]">
               <Star size={22} fill="currentColor" />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white m-0" style={{ fontFamily: "'Montserrat', sans-serif" }}>{t('movieComment.ratingTitle', 'Movie Rating')}</h2>
-              <p className="text-sm text-[#ddc1ae]/75 m-0">{t('movieComment.ratingSubtitle', 'Reviews from customers who have watched the movie.')}</p>
+              <p className="text-sm text-[var(--text-secondary)]/75 m-0">{t('movieComment.ratingSubtitle', 'Reviews from customers who have watched the movie.')}</p>
             </div>
           </div>
 
@@ -114,7 +115,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
             <span className="text-5xl font-black text-white leading-none">{summary.averageRating.toFixed(1)}</span>
             <div className="pb-1">
               <StarRow value={Math.round(summary.averageRating)} readOnly />
-              <p className="text-xs text-[#ddc1ae]/70 mt-1">{summary.reviewCount} {t('movieComment.reviewCount', 'reviews')}</p>
+              <p className="text-xs text-[var(--text-secondary)]/70 mt-1">{summary.reviewCount} {t('movieComment.reviewCount', 'reviews')}</p>
             </div>
           </div>
 
@@ -125,25 +126,25 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
                 value={content}
                 onChange={(event) => setContent(event.target.value)}
                 placeholder={t('movieComment.ratingPlaceholder', 'Share your thoughts about the movie...')}
-                className="w-full min-h-[130px] resize-none rounded-xl bg-[#171616] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-[#ddc1ae]/45 outline-none focus:border-[#ff8a00]/70 transition-colors"
+                className="w-full min-h-[130px] resize-none rounded-xl bg-[var(--bg-base)] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/45 outline-none focus:border-[var(--accent)]/70 transition-colors"
                 maxLength={1000}
               />
               <button
                 onClick={handleSubmit}
                 disabled={submitting}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff8a00] px-5 py-3 text-sm font-bold text-black border-none cursor-pointer transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-bold text-black border-none cursor-pointer transition-transform active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {submitting ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                 {t("movieComment.submitRating", "Submit Rating")}
               </button>
             </div>
           ) : (
-            <div className="rounded-xl border border-white/10 bg-[#171616] p-4">
-              <p className="text-sm text-[#ddc1ae] leading-relaxed m-0">{eligibilityMessage}</p>
+            <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-base)] p-4">
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed m-0">{eligibilityMessage}</p>
               {eligibility?.status === 'NotLoggedIn' && (
                 <button
                   onClick={() => navigate('/login')}
-                  className="mt-4 rounded-xl bg-[#ff8a00] px-4 py-2 text-sm font-bold text-black border-none cursor-pointer active:scale-[0.98]"
+                  className="mt-4 rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-bold text-black border-none cursor-pointer active:scale-[0.98]"
                 >
                   {t("movieComment.login", "Sign In")}
                 </button>
@@ -152,7 +153,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
           )}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 md:p-6">
+        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-surface)] p-4 md:p-6">
           <div className="flex items-center justify-between gap-4 mb-5">
             <div className="flex items-center gap-3">
               <MessageCircle size={22} className="text-[#ffb77f]" />
@@ -160,7 +161,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
             </div>
             <button
               onClick={fetchAll}
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[#ddc1ae] hover:text-white hover:bg-white/10 cursor-pointer"
+              className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-base)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] hover:text-white hover:border-[var(--accent)]/30 cursor-pointer"
             >
               {t("movieComment.refresh", "Refresh")}
             </button>
@@ -169,10 +170,10 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
           {loading ? (
             <CommentSkeleton />
           ) : visibleAndPending.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-white/10 bg-[#131212] py-12 px-5 text-center">
+            <div className="rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-base)] py-12 px-5 text-center">
               <MessageCircle size={32} className="mx-auto text-[#ffb77f]/70 mb-3" />
               <p className="text-white font-semibold m-0">{t('movieComment.noComments', 'No comments yet.')}</p>
-              <p className="text-sm text-[#ddc1ae]/70 mt-2 mb-0">{t('movieComment.noCommentsDesc', 'Be the first to share your thoughts after watching the movie.')}</p>
+              <p className="text-sm text-[var(--text-secondary)]/70 mt-2 mb-0">{t('movieComment.noCommentsDesc', 'Be the first to share your thoughts after watching the movie.')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -182,6 +183,7 @@ const MovieCommentsSection: React.FC<MovieCommentsSectionProps> = ({ movieId }) 
             </div>
           )}
         </div>
+      </div>
       </div>
     </section>
   );
@@ -238,10 +240,10 @@ const CommentNode: React.FC<{
   const replies = [...comment.replies, ...localReplies];
 
   return (
-    <div className={`${depth > 0 ? 'ml-5 md:ml-8 border-l border-white/10 pl-4 md:pl-5' : ''}`}>
-      <article className={`rounded-xl border p-4 transition-opacity ${isPending ? 'border-[#ff8a00]/25 bg-[#ff8a00]/5 opacity-80' : 'border-white/10 bg-[#151414]'}`}>
+    <div className={`${depth > 0 ? 'ml-5 md:ml-8 border-l border-[var(--border-color)] pl-4 md:pl-5' : ''}`}>
+      <article className={`rounded-xl border p-4 transition-opacity ${isPending ? 'border-[var(--accent)]/25 bg-[var(--bg-surface)] opacity-90' : 'border-[var(--border-color)] bg-[var(--bg-base)]'}`}>
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-[#252321] border border-white/10 flex items-center justify-center text-[#ffb77f] font-bold shrink-0">
+          <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-elevated)] border border-[var(--border-color)] flex items-center justify-center text-[#ffb77f] font-bold shrink-0">
             {comment.userAvatarUrl ? <img src={comment.userAvatarUrl} alt={comment.userName} className="w-full h-full object-cover" /> : comment.userName.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
@@ -249,17 +251,17 @@ const CommentNode: React.FC<{
               <span className="text-sm font-bold text-white">{comment.userName}</span>
               {comment.rating ? <StarRow value={comment.rating} readOnly compact /> : null}
               {isPending && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[#ff8a00]/25 bg-[#ff8a00]/10 px-2 py-0.5 text-[11px] font-semibold text-[#ffb77f]">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--accent)]/25 bg-[var(--accent-soft)] px-2 py-0.5 text-[11px] font-semibold text-[#ffb77f]">
                   <Loader2 size={12} className="animate-spin" />
                     {t("movieComment.pending", "Pending")}
                 </span>
               )}
             </div>
-            <p className="mt-2 mb-3 text-sm leading-relaxed text-[#e5e2e1] whitespace-pre-wrap break-words">{comment.content}</p>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[#ddc1ae]/65">
+            <p className="mt-2 mb-3 text-sm leading-relaxed text-[var(--text-primary)] whitespace-pre-wrap break-words">{comment.content}</p>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-secondary)]/65">
               <span>{formatCommentDate(comment.createdAt)}</span>
               {!isPending && (
-                <button onClick={() => setReplying(prev => !prev)} className="inline-flex items-center gap-1 text-[#ffb77f] hover:text-[#ff8a00] bg-transparent border-none cursor-pointer p-0 font-semibold">
+                <button onClick={() => setReplying(prev => !prev)} className="inline-flex items-center gap-1 text-[#ffb77f] hover:text-[var(--accent)] bg-transparent border-none cursor-pointer p-0 font-semibold">
                   <Reply size={14} />
                     {t("movieComment.reply", "Reply")}
                 </button>
@@ -280,12 +282,12 @@ const CommentNode: React.FC<{
               value={replyText}
               onChange={(event) => setReplyText(event.target.value)}
               placeholder={t('movieComment.replyPlaceholder', 'Write a reply...')}
-              className="w-full min-h-[86px] resize-none rounded-xl bg-[#1d1b1a] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-[#ddc1ae]/45 outline-none focus:border-[#ff8a00]/70"
+              className="w-full min-h-[86px] resize-none rounded-xl bg-[var(--bg-base)] border border-[var(--border-color)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/45 outline-none focus:border-[var(--accent)]/70"
               maxLength={1000}
             />
             <div className="mt-2 flex justify-end gap-2">
-              <button onClick={() => setReplying(false)} className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[#ddc1ae] cursor-pointer">{t('movieComment.cancel', 'Cancel')}</button>
-              <button onClick={submitReply} disabled={submittingReply} className="inline-flex items-center gap-2 rounded-lg bg-[#ff8a00] px-3 py-2 text-xs font-bold text-black border-none cursor-pointer disabled:opacity-70">
+              <button onClick={() => setReplying(false)} className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-surface)] px-3 py-2 text-xs font-semibold text-[var(--text-secondary)] cursor-pointer">{t('movieComment.cancel', 'Cancel')}</button>
+              <button onClick={submitReply} disabled={submittingReply} className="inline-flex items-center gap-2 rounded-lg bg-[var(--accent)] px-3 py-2 text-xs font-bold text-black border-none cursor-pointer disabled:opacity-70">
                 {submittingReply ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
                 {t("movieComment.send", "Send")}
               </button>
@@ -331,13 +333,13 @@ const StarRow: React.FC<{ value: number; onChange?: (value: number) => void; rea
 const CommentSkeleton = () => (
   <div className="space-y-4">
     {[1, 2, 3].map(item => (
-      <div key={item} className="rounded-xl border border-white/10 bg-[#151414] p-4 animate-pulse">
+      <div key={item} className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-base)] p-4 animate-pulse">
         <div className="flex gap-3">
-          <div className="w-10 h-10 rounded-full bg-white/10" />
+          <div className="w-10 h-10 rounded-full bg-[var(--bg-elevated)]" />
           <div className="flex-1 space-y-3">
-            <div className="h-3 w-32 rounded bg-white/10" />
-            <div className="h-3 w-full rounded bg-white/10" />
-            <div className="h-3 w-2/3 rounded bg-white/10" />
+            <div className="h-3 w-32 rounded bg-[var(--bg-elevated)]" />
+            <div className="h-3 w-full rounded bg-[var(--bg-elevated)]" />
+            <div className="h-3 w-2/3 rounded bg-[var(--bg-elevated)]" />
           </div>
         </div>
       </div>

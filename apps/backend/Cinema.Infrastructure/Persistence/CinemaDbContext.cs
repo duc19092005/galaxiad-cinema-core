@@ -8,6 +8,7 @@ using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Entities.Banners;
+using Cinema.Domain.Entities.AiResearch;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
 using Cinema.Infrastructure.Persistence.SeedData;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
@@ -92,6 +93,8 @@ public class CinemaDbContext : DbContext
 
     public DbSet<MovieViewEntity> MovieViewEntity { get; set; }
 
+    public DbSet<MovieCoverImageEntity> MovieCoverImageEntity { get; set; }
+
     public DbSet<ShowtimeRecommendationBatchEntity> ShowtimeRecommendationBatchEntity { get; set; }
 
     public DbSet<ShowtimeRecommendationItemEntity> ShowtimeRecommendationItemEntity { get; set; }
@@ -133,6 +136,13 @@ public class CinemaDbContext : DbContext
     public DbSet<GroupBookingMemberEntity> GroupBookingMemberEntity { get; set; }
 
     public DbSet<GroupBookingSeatEntity> GroupBookingSeatEntity { get; set; }
+
+    // AI Business Research
+    public DbSet<AiResearchJobEntity> AiResearchJobEntity { get; set; }
+    public DbSet<AiResearchClaimEntity> AiResearchClaimEntity { get; set; }
+    public DbSet<AiResearchEvidenceEntity> AiResearchEvidenceEntity { get; set; }
+    public DbSet<AiResearchReportEntity> AiResearchReportEntity { get; set; }
+    public DbSet<AiResearchEventEntity> AiResearchEventEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -397,6 +407,48 @@ public class CinemaDbContext : DbContext
             entity.HasIndex(x => x.DisplayOrder);
             entity.HasIndex(x => x.IsActive);
         });
+
+        modelBuilder.Entity<AiResearchJobEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.CreatedByUserId, x.CreatedAt });
+            entity.HasIndex(x => x.Status);
+        });
+
+        modelBuilder.Entity<AiResearchClaimEntity>(entity =>
+        {
+            entity.Property(x => x.Confidence).HasPrecision(5, 4);
+            entity.HasIndex(x => new { x.JobId, x.Category, x.Status });
+            entity.HasOne(x => x.Job)
+                .WithMany(x => x.Claims)
+                .HasForeignKey(x => x.JobId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiResearchEvidenceEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.ClaimId, x.SourceDomain });
+            entity.HasOne(x => x.Claim)
+                .WithMany(x => x.Evidence)
+                .HasForeignKey(x => x.ClaimId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiResearchReportEntity>(entity =>
+        {
+            entity.HasOne(x => x.Job)
+                .WithOne(x => x.Report)
+                .HasForeignKey<AiResearchReportEntity>(x => x.JobId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AiResearchEventEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.JobId, x.EventId });
+            entity.HasOne(x => x.Job)
+                .WithMany(x => x.Events)
+                .HasForeignKey(x => x.JobId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
         
         // User Infos 
         
@@ -637,6 +689,9 @@ public class CinemaDbContext : DbContext
 
         // Seeds Cinema, Auditorium, Seats, Movie, Schedule (For Booking Flow)
         CinemaAndMovieSeedData.AddSeedData(modelBuilder);
+
+        // Seeds multi cover / banner images for movie detail hero
+        MovieCoverImageSeedData.AddMovieCoverImageSeedData(modelBuilder);
         
         // Seeds Cinema Surcharges for User Segments
         CinemaSurchargeSeedData.AddCinemaSurchargeSeedData(modelBuilder);
@@ -646,6 +701,8 @@ public class CinemaDbContext : DbContext
 
         // Seeds Vouchers
         VoucherSeedData.AddVoucherSeedData(modelBuilder);
+
+        AiResearchSeedData.AddAiResearchSeedData(modelBuilder);
 
         // Group Booking (Social)
 

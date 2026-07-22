@@ -10,6 +10,7 @@ import type { ApiErrorResponse } from '../../types/auth.types';
 import type { PublicMovieListItem } from '../../types/public.types';
 import Header from '../../components/Header';
 import BackToTop from '../../components/BackToTop';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 
 const PLACEHOLDER_POSTER = 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=500';
 
@@ -104,12 +105,20 @@ const AllMoviesPage: React.FC = () => {
       {/* Banner / Title Area */}
       <section style={{
         position: 'relative',
-        paddingTop: 140,
+        paddingTop: 120,
         paddingBottom: 40,
         textAlign: 'center',
         background: 'linear-gradient(to bottom, rgba(5,20,36,0.3) 0%, var(--bg-base) 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.05)'
       }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 clamp(16px, 4vw, 24px)', textAlign: 'left' }}>
+          <PublicBreadcrumb
+            items={[
+              { label: t('breadcrumb.home', 'Home'), path: '/home' },
+              { label: t('breadcrumb.movies', 'Phim') },
+            ]}
+          />
+        </div>
         <h1 style={{
           fontFamily: "'Montserrat', sans-serif",
           fontSize: 'clamp(24px, 5vw, 36px)',

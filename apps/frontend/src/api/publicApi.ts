@@ -13,6 +13,7 @@ import type {
     ActiveMovie,
     SearchScheduleResult,
     NearestCinema,
+    PublicPersonDetail,
     PaginatedResponse,
 } from '../types/public.types';
 
@@ -118,6 +119,27 @@ export const publicApi = {
     /** 3. Get Movie Detail */
     getMovieDetail: async (movieId: string): Promise<ApiSuccessResponse<PublicMovieDetail>> => {
         const response = await publicAxios.get<ApiSuccessResponse<PublicMovieDetail>>(`/MovieDetail/${movieId}`);
+        return response.data;
+    },
+
+    /**
+     * Actor/director detail. Movies come from internal catalog only (paginated).
+     * role: actor | director
+     */
+    getPersonDetail: async (params: {
+        name: string;
+        role: 'actor' | 'director';
+        pageIndex?: number;
+        pageSize?: number;
+    }): Promise<ApiSuccessResponse<PublicPersonDetail>> => {
+        const response = await publicAxios.get<ApiSuccessResponse<PublicPersonDetail>>('/People/Detail', {
+            params: {
+                name: params.name,
+                role: params.role,
+                pageIndex: params.pageIndex ?? 1,
+                pageSize: params.pageSize ?? 12,
+            },
+        });
         return response.data;
     },
 

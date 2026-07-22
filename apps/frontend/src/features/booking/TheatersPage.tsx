@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, Phone, Clock, Loader2, Sparkles, Navigation } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import type { ActiveCinema, SearchScheduleResult } from '../../types/public.types';
+import { useTranslation } from 'react-i18next';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import { showError } from '../../utils/ToastUtils';
 
 interface CinemaDetails {
@@ -54,6 +56,7 @@ function getCinemaInfo(name: string, id: string): CinemaDetails & { city: string
 
 export const TheatersPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [selectedCinema, setSelectedCinema] = useState<ActiveCinema | null>(null);
   const [schedules, setSchedules] = useState<SearchScheduleResult[]>([]);
@@ -165,7 +168,13 @@ export const TheatersPage: React.FC = () => {
       <Header />
 
       <main style={{ paddingTop: '100px', paddingBottom: '60px', maxWidth: '1200px', margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' }}>
-        
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.theaters', 'Rạp') },
+          ]}
+        />
+
         {/* Title */}
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <span style={{

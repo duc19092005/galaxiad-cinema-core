@@ -910,6 +910,41 @@
     "aiPick": "Выбор ИИ",
     "ranking": "Рейтинг"
   },
+  "breadcrumb": {
+    "home": "Главная",
+    "movies": "Фильмы",
+    "showtimes": "Сеансы",
+    "theaters": "Кинотеатры",
+    "offers": "Акции",
+    "services": "Услуги",
+    "help": "Помощь",
+    "about": "О нас",
+    "contact": "Контакты",
+    "careers": "Карьера",
+    "privacy": "Конфиденциальность",
+    "terms": "Условия",
+    "cookies": "Cookie",
+    "safety": "Безопасность",
+    "legal": "Правовая информация",
+    "similar": "Похожие фильмы",
+    "booking": "Бронирование",
+    "director": "Режиссёр",
+    "actor": "Актёр"
+  },
+  "personDetail": {
+    "roleActor": "Актёр",
+    "roleDirector": "Режиссёр",
+    "filmCount": "{{count}} фильмов в каталоге",
+    "actedMovies": "Фильмография",
+    "directedMovies": "Фильмы режиссёра",
+    "noMovies": "В нашем каталоге пока нет фильмов с этим человеком.",
+    "notFound": "Человек не найден.",
+    "loadError": "Не удалось загрузить данные. Попробуйте снова."
+  },
+  "pagination": {
+    "prev": "Назад",
+    "next": "Далее"
+  },
   "movieDetail": {
     "age": "Возраст",
     "mustWatch": "Обязательно к просмотру",
@@ -937,7 +972,16 @@
     "goHome": "На главную",
     "movieNotFound": "Фильм не найден",
     "loadError": "Не удалось загрузить информацию о фильме. Пожалуйста, попробуйте позже.",
-    "noSimilarMovies": "Похожих фильмов не найдено."
+    "noSimilarMovies": "Похожих фильмов не найдено.",
+    "mainCast": "В главных ролях",
+    "continueSelectSeats": "Перейти к выбору мест",
+    "selectFormat": "Формат",
+    "showtimes": "Сеансы",
+    "studio": "Студия",
+    "coverGallery": "Обложки",
+    "heroCoverAlt": "Обложка фильма",
+    "details": "Детали",
+    "scrollToBooking": "Купить билет"
   },
   "similarMovies": {
     "vectorSimilarity": "Поиск по векторному сходству",
@@ -2409,6 +2453,26 @@
     "rankProgress": "Прогресс Ранга",
     "pointsToNext": "{{points}} баллов до {{nextRank}}",
     "points": "баллов"
+  },
+  "publicFooter": {
+    "brand": "CINEMA PRO",
+    "tagline": "Волшебство кино рядом с вами. Премиальный опыт и незабываемые истории.",
+    "quickLinks": "Быстрые ссылки",
+    "privacyPolicy": "Политика конфиденциальности",
+    "termsOfService": "Условия использования",
+    "contactUs": "Связаться с нами",
+    "company": "Компания",
+    "careers": "Карьера",
+    "feedback": "Обратная связь",
+    "aboutUs": "О нас",
+    "legal": "Правовая информация",
+    "cookiePolicy": "Политика cookie",
+    "safetyRules": "Правила безопасности",
+    "contact": "Контакты",
+    "email": "support@cinemapro.com",
+    "phone": "1800-123-456",
+    "address": "123 Cinema Boulevard",
+    "copyright": "© 2024 CinemaPro. Все права защищены."
   },
   "footer": {
     "brandDesc": "Место для любителей кино. Тщательно подобранные впечатления, атмосферные показы, незабываемые вечера.",
