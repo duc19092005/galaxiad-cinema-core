@@ -11,6 +11,7 @@ import GoogleCallback from './features/auth/GoogleCallback';
 import RoleSelectionPage from './features/auth/RoleSelectionPage';
 import HomePage from './features/public/HomePage';
 import AllMoviesPage from './features/public/AllMoviesPage';
+import PersonDetailPage from './features/public/PersonDetailPage';
 import MovieSearchPage from './features/public/MovieSearchPage';
 import FacilitiesManagerPage from './features/facilities/FacilitiesManagerPage';
 import MovieManagerPage from './features/movie/MovieManagerPage';
@@ -19,6 +20,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ScheduleManagerPage from './features/schedule/ScheduleManagerPage';
 import TheaterManagerPage from './features/theater/TheaterManagerPage';
 import AdminPage from './features/admin/AdminPage';
+import AdminAiPage from './features/admin/AdminAiPage';
 import MovieDetailPage from './features/booking/MovieDetailPage';
 import SimilarMoviesPage from './features/booking/SimilarMoviesPage';
 import BookingPage from './features/booking/BookingPage';
@@ -65,6 +67,9 @@ function AppRoutes() {
         <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/movies" element={<PageTransition><AllMoviesPage /></PageTransition>} />
         <Route path="/movies/search" element={<PageTransition><MovieSearchPage /></PageTransition>} />
+        <Route path="/person/:role" element={<PageTransition><PersonDetailPage /></PageTransition>} />
+        {/* Legacy path with name in URL segment */}
+        <Route path="/person/:role/:personName" element={<PageTransition><PersonDetailPage /></PageTransition>} />
         <Route path="/showtimes" element={<PageTransition><ShowtimesPage /></PageTransition>} />
         <Route path="/theaters" element={<PageTransition><TheatersPage /></PageTransition>} />
         <Route path="/offers" element={<PageTransition><OffersPage /></PageTransition>} />
@@ -72,6 +77,8 @@ function AppRoutes() {
         <Route path="/cashier/sales" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierSalesPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff/:tab" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/ai" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/ai/:module" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />

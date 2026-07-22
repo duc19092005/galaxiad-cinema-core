@@ -6,6 +6,7 @@ import {
   Users, Code, Palette, MapPin, Clock, DollarSign, Search
 } from 'lucide-react';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 
 interface JobPosition {
   id: string;
@@ -121,6 +122,12 @@ const CareersPage: React.FC = () => {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Header />
       <main className="page-enter" style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.careers', 'Tuyển dụng') },
+          ]}
+        />
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
           <button onClick={() => navigate('/')}

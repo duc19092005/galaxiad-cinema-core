@@ -6,6 +6,7 @@ import { Film, MapPin, Search, Loader2, Sparkles, ChevronDown, Users } from 'luc
 import { publicApi } from '../../api/publicApi';
 import type { ActiveCinema, ActiveMovie, SearchScheduleResult } from '../../types/public.types';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import { showError } from '../../utils/ToastUtils';
 import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
 
@@ -362,7 +363,13 @@ export const ShowtimesPage: React.FC = () => {
       <Header />
       
       <main style={{ paddingTop: '100px', paddingBottom: '60px', maxWidth: '1200px', margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' }}>
-        
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.showtimes', 'Lịch chiếu') },
+          ]}
+        />
+
         {/* Title */}
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <span style={{

@@ -27,6 +27,18 @@ public static class MovieInfoRelationshipsKeys
             .WithMany(x => x.MovieCinemaEntities)
             .HasForeignKey(x => x.CinemaId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MovieCoverImageEntity>(entity =>
+        {
+            entity.HasKey(x => x.MovieCoverImageId);
+            entity.HasIndex(x => new { x.MovieId, x.SortOrder });
+            entity.HasIndex(x => new { x.MovieId, x.IsPrimary });
+
+            entity.HasOne(x => x.MovieInfoEntity)
+                .WithMany(x => x.MovieCoverImageEntities)
+                .HasForeignKey(x => x.MovieId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     public static void AddMovieInfoKeys(ModelBuilder modelBuilder)

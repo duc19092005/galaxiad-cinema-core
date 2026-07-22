@@ -19,7 +19,11 @@ public class ReqAddMovieManagerMovieDto
     [Required(ErrorMessage = "Movie Image is required")]
     public IFormFile MovieImage { get; set; } = null!;
 
+    /// <summary>Legacy single banner (optional if MovieBanners is provided).</summary>
     public IFormFile? MovieBanner { get; set; }
+
+    /// <summary>Multiple cover/banner images (hero carousel).</summary>
+    public List<IFormFile>? MovieBanners { get; set; }
 
     [Required(ErrorMessage = "Movie Ended Date is required")]
     public DateTime EndedDate { get; set; }
@@ -63,7 +67,14 @@ public class ReqEditMovieManagerMovieDto
 
     public IFormFile? MovieImage { get; set; }
 
+    /// <summary>Legacy single banner replace (optional).</summary>
     public IFormFile? MovieBanner { get; set; }
+
+    /// <summary>Append additional cover/banner images.</summary>
+    public List<IFormFile>? MovieBanners { get; set; }
+
+    /// <summary>Remove existing cover images by id.</summary>
+    public List<Guid>? RemoveCoverImageIds { get; set; }
 
     public DateTime? EndedDate { get; set; }
     

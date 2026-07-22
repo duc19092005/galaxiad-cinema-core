@@ -22,6 +22,466 @@ namespace Cinema.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchClaimEntity", b =>
+                {
+                    b.Property<Guid>("ClaimId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Classification")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<decimal>("Confidence")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCritical")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("IterationCount")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ClaimId");
+
+                    b.HasIndex("JobId", "Category", "Status");
+
+                    b.ToTable("AiResearchClaimEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            ClaimId = new Guid("a1000002-0001-4000-8000-000000000001"),
+                            Category = "pricing",
+                            Classification = "fact",
+                            Confidence = 0.90m,
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 5, 0, 0, DateTimeKind.Utc),
+                            IsCritical = true,
+                            IterationCount = 2,
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            Status = "resolved",
+                            Text = "Khung giá vé 2D cuối tuần tại TPHCM của chuỗi rạp lớn",
+                            UpdatedAt = new DateTime(2026, 7, 10, 8, 15, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ClaimId = new Guid("a1000002-0001-4000-8000-000000000002"),
+                            Category = "pricing",
+                            Classification = "fact",
+                            Confidence = 0.85m,
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 6, 0, 0, DateTimeKind.Utc),
+                            IsCritical = true,
+                            IterationCount = 1,
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            Status = "resolved",
+                            Text = "Mức phụ thu định dạng IMAX/4DX phổ biến cuối tuần",
+                            UpdatedAt = new DateTime(2026, 7, 10, 8, 14, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ClaimId = new Guid("a1000002-0002-4000-8000-000000000001"),
+                            Category = "real_estate_price",
+                            Classification = "fact",
+                            Confidence = 0.88m,
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 38, 0, 0, DateTimeKind.Utc),
+                            IsCritical = true,
+                            IterationCount = 2,
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            Status = "resolved",
+                            Text = "Biên độ giá thuê mặt bằng thương mại khu Đông TPHCM",
+                            UpdatedAt = new DateTime(2026, 7, 12, 9, 50, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ClaimId = new Guid("a1000002-0002-4000-8000-000000000002"),
+                            Category = "infrastructure_trend",
+                            Classification = "fact",
+                            Confidence = 0.82m,
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 39, 0, 0, DateTimeKind.Utc),
+                            IsCritical = false,
+                            IterationCount = 2,
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            Status = "resolved",
+                            Text = "Tác động metro/vành đai tới footfall khu vực tăng trưởng",
+                            UpdatedAt = new DateTime(2026, 7, 12, 9, 52, 0, 0, DateTimeKind.Utc)
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchEventEntity", b =>
+                {
+                    b.Property<long>("EventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("EventId"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("EventId");
+
+                    b.HasIndex("JobId", "EventId");
+
+                    b.ToTable("AiResearchEventEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            EventId = 900001L,
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 0, 0, 0, DateTimeKind.Utc),
+                            EventType = "queued",
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            PayloadJson = "{\"jobId\":\"a1000001-0001-4000-8000-000000000001\",\"status\":\"queued\",\"message\":\"Seed: job vào hàng đợi\"}"
+                        },
+                        new
+                        {
+                            EventId = 900002L,
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 18, 0, 0, DateTimeKind.Utc),
+                            EventType = "done",
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            PayloadJson = "{\"jobId\":\"a1000001-0001-4000-8000-000000000001\",\"status\":\"done\",\"budgetUsed\":12,\"budgetCap\":30,\"message\":\"Seed: báo cáo pricing hoàn thành\"}"
+                        },
+                        new
+                        {
+                            EventId = 900003L,
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 30, 0, 0, DateTimeKind.Utc),
+                            EventType = "queued",
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            PayloadJson = "{\"jobId\":\"a1000001-0001-4000-8000-000000000002\",\"status\":\"queued\",\"message\":\"Seed: job site feasibility\"}"
+                        },
+                        new
+                        {
+                            EventId = 900004L,
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 56, 0, 0, DateTimeKind.Utc),
+                            EventType = "done",
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            PayloadJson = "{\"jobId\":\"a1000001-0001-4000-8000-000000000002\",\"status\":\"done\",\"budgetUsed\":18,\"budgetCap\":40,\"message\":\"Seed: báo cáo site feasibility hoàn thành\"}"
+                        },
+                        new
+                        {
+                            EventId = 900005L,
+                            CreatedAt = new DateTime(2026, 7, 22, 3, 0, 0, 0, DateTimeKind.Utc),
+                            EventType = "queued",
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000003"),
+                            PayloadJson = "{\"jobId\":\"a1000001-0001-4000-8000-000000000003\",\"status\":\"queued\",\"message\":\"Seed: demo queued job\"}"
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchEvidenceEntity", b =>
+                {
+                    b.Property<Guid>("EvidenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClaimId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DomainTrustTier")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("ExtractedContent")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("IterationAdded")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PublishedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("QueryUsed")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Relation")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Snippet")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SourceDomain")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.HasKey("EvidenceId");
+
+                    b.HasIndex("ClaimId", "SourceDomain");
+
+                    b.ToTable("AiResearchEvidenceEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            EvidenceId = new Guid("a1000003-0001-4000-8000-000000000001"),
+                            ClaimId = new Guid("a1000002-0001-4000-8000-000000000001"),
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 8, 0, 0, DateTimeKind.Utc),
+                            DomainTrustTier = "medium",
+                            ExtractedContent = "",
+                            IterationAdded = 1,
+                            PublishedDate = new DateTime(2026, 6, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QueryUsed = "giá vé 2D TPHCM cuối tuần",
+                            Relation = "supports",
+                            Snippet = "Khung giá tham chiếu cuối tuần cho suất 2D tại TPHCM (dữ liệu seed).",
+                            SourceDomain = "example.com",
+                            SourceType = "seed",
+                            Title = "Seed · Giá vé 2D TPHCM (demo)",
+                            Url = "https://example.com/seed/pricing-hcm-2d"
+                        },
+                        new
+                        {
+                            EvidenceId = new Guid("a1000003-0001-4000-8000-000000000002"),
+                            ClaimId = new Guid("a1000002-0001-4000-8000-000000000002"),
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 9, 0, 0, DateTimeKind.Utc),
+                            DomainTrustTier = "medium",
+                            ExtractedContent = "",
+                            IterationAdded = 1,
+                            PublishedDate = new DateTime(2026, 6, 5, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QueryUsed = "phụ thu IMAX rạp TPHCM",
+                            Relation = "supports",
+                            Snippet = "Phụ thu định dạng đặc biệt cuối tuần (dữ liệu seed).",
+                            SourceDomain = "example.com",
+                            SourceType = "seed",
+                            Title = "Seed · Phụ thu IMAX (demo)",
+                            Url = "https://example.com/seed/pricing-imax"
+                        },
+                        new
+                        {
+                            EvidenceId = new Guid("a1000003-0002-4000-8000-000000000001"),
+                            ClaimId = new Guid("a1000002-0002-4000-8000-000000000001"),
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 40, 0, 0, DateTimeKind.Utc),
+                            DomainTrustTier = "medium",
+                            ExtractedContent = "",
+                            IterationAdded = 1,
+                            PublishedDate = new DateTime(2026, 5, 20, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QueryUsed = "giá thuê mặt bằng khu Đông TPHCM",
+                            Relation = "supports",
+                            Snippet = "Biên độ thuê mặt bằng thương mại khu Đông (dữ liệu seed).",
+                            SourceDomain = "example.com",
+                            SourceType = "seed",
+                            Title = "Seed · Giá thuê khu Đông (demo)",
+                            Url = "https://example.com/seed/lease-east-hcm"
+                        },
+                        new
+                        {
+                            EvidenceId = new Guid("a1000003-0002-4000-8000-000000000002"),
+                            ClaimId = new Guid("a1000002-0002-4000-8000-000000000002"),
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 41, 0, 0, DateTimeKind.Utc),
+                            DomainTrustTier = "medium",
+                            ExtractedContent = "",
+                            IterationAdded = 1,
+                            PublishedDate = new DateTime(2026, 5, 28, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QueryUsed = "metro TPHCM footfall TTTM",
+                            Relation = "supports",
+                            Snippet = "Tín hiệu footfall quanh tuyến metro (dữ liệu seed).",
+                            SourceDomain = "example.com",
+                            SourceType = "seed",
+                            Title = "Seed · Metro & footfall (demo)",
+                            Url = "https://example.com/seed/metro-footfall"
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchJobEntity", b =>
+                {
+                    b.Property<Guid>("JobId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AnalysisType")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int>("BudgetCap")
+                        .HasColumnType("int");
+
+                    b.Property<int>("BudgetUsed")
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RunMode")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("SelectedModulesJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.HasKey("JobId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("CreatedByUserId", "CreatedAt");
+
+                    b.ToTable("AiResearchJobEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            AnalysisType = "PricingAnalysis",
+                            BudgetCap = 30,
+                            BudgetUsed = 12,
+                            City = "HCM",
+                            CompletedAt = new DateTime(2026, 7, 10, 8, 18, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 7, 10, 8, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Notes = "Seed demo · khung giá vé TPHCM cuối tuần",
+                            RunMode = "RunAll",
+                            SelectedModulesJson = "[\"pricing\",\"promotion\",\"competition\",\"trend_demand\",\"background\"]",
+                            Status = "done"
+                        },
+                        new
+                        {
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            AnalysisType = "SiteLocationFeasibility",
+                            BudgetCap = 40,
+                            BudgetUsed = 18,
+                            City = "HCM",
+                            CompletedAt = new DateTime(2026, 7, 12, 9, 56, 0, 0, DateTimeKind.Utc),
+                            CreatedAt = new DateTime(2026, 7, 12, 9, 30, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Notes = "Seed demo · shortlist mặt bằng khu Đông",
+                            RunMode = "SelectedModules",
+                            SelectedModulesJson = "[\"zoning_policy\",\"real_estate_price\",\"lease_cost\",\"infrastructure_trend\"]",
+                            Status = "done"
+                        },
+                        new
+                        {
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000003"),
+                            AnalysisType = "PricingAnalysis",
+                            BudgetCap = 20,
+                            BudgetUsed = 0,
+                            City = "HN",
+                            CreatedAt = new DateTime(2026, 7, 22, 3, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Notes = "Seed demo · job mẫu đang chờ (không auto-run)",
+                            RunMode = "SelectedModules",
+                            SelectedModulesJson = "[\"pricing\",\"competition\"]",
+                            Status = "queued"
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchReportEntity", b =>
+                {
+                    b.Property<Guid>("JobId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SectionsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SummaryJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("JobId");
+
+                    b.ToTable("AiResearchReportEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
+                            GeneratedAt = new DateTime(2026, 7, 10, 8, 18, 0, 0, DateTimeKind.Utc),
+                            SectionsJson = "[]",
+                            SummaryJson = "{\n  \"reportStyle\": \"executive_feasibility\",\n  \"title\": \"BÁO CÁO SEED · ĐÁNH GIÁ KHẢ THI GIÁ VÉ TPHCM (DEMO)\",\n  \"abstract\": \"Báo cáo seed demo cho Admin AI Workspace. Dữ liệu minh họa khung giá vé 2D và phụ thu định dạng tại TPHCM, phục vụ demo UI Business Research.\",\n  \"executiveSummary\": \"Seed demo: khung giá 2D cuối tuần và phụ thu IMAX tại TPHCM đủ để minh họa shortlist quyết định giá. Cần báo giá thực tế trước khi chốt policy.\",\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\n  \"totalClaims\": 2,\n  \"resolvedClaims\": 2,\n  \"insufficientClaims\": 0,\n  \"referenceCount\": 2,\n  \"keyFindings\": [\n    \"Seed: Giá vé 2D cuối tuần tại TPHCM có biên độ tham chiếu từ nguồn demo [1].\",\n    \"Seed: Phụ thu IMAX/4DX là đòn bẩy doanh thu suất cao cấp [2].\"\n  ],\n  \"recommendations\": [\n    \"P0 (Hành động ngay): Rà soát bảng giá 2D cuối tuần theo cụm rạp TPHCM.\",\n    \"P1 (Thẩm định chuyên sâu): Thu thập bảng giá chuỗi đối thủ trước khi chỉnh phụ thu IMAX.\",\n    \"P2 (Theo dõi chiến lược): Theo dõi conversion suất midweek sau khi thử khuyến mãi.\"\n  ],\n  \"risksAndUnknowns\": [\n    \"Dữ liệu seed chỉ mang tính minh họa UI, không dùng cho quyết định đầu tư thật.\"\n  ],\n  \"resultsAndDiscussion\": \"### B. Chi phí & định giá (seed)\\n\\n- **Thực trạng thị trường:** Khung giá 2D và phụ thu định dạng tại TPHCM (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Mức độ tin cậy trung bình (seed data).\\n- **Tác động tới Galaxy Cinema (CapEx/OpEx/Doanh thu):** Dùng để demo luồng báo cáo điều hành trên Admin AI.\",\n  \"conclusion\": \"Seed demo hoàn tất. Chạy job live để có báo cáo multi-agent thật.\",\n  \"references\": [\n    {\n      \"id\": 1,\n      \"title\": \"Seed · Giá vé 2D TPHCM (demo)\",\n      \"url\": \"https://example.com/seed/pricing-hcm-2d\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[1] \\\"Seed · Giá vé 2D TPHCM (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-hcm-2d\"\n    },\n    {\n      \"id\": 2,\n      \"title\": \"Seed · Phụ thu IMAX (demo)\",\n      \"url\": \"https://example.com/seed/pricing-imax\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[2] \\\"Seed · Phụ thu IMAX (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-imax\"\n    }\n  ]\n}"
+                        },
+                        new
+                        {
+                            JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
+                            GeneratedAt = new DateTime(2026, 7, 12, 9, 56, 0, 0, DateTimeKind.Utc),
+                            SectionsJson = "[]",
+                            SummaryJson = "{\n  \"reportStyle\": \"executive_feasibility\",\n  \"title\": \"BÁO CÁO SEED · KHẢ THI ĐỊA ĐIỂM KHU ĐÔNG TPHCM (DEMO)\",\n  \"abstract\": \"Báo cáo seed demo shortlist mặt bằng khu Đông TPHCM: biên độ thuê và tín hiệu footfall metro.\",\n  \"executiveSummary\": \"Seed demo: khu Đông có tín hiệu footfall và biên độ thuê tham chiếu. Cần site visit + báo giá độc lập trước IC.\",\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\n  \"totalClaims\": 2,\n  \"resolvedClaims\": 2,\n  \"insufficientClaims\": 0,\n  \"referenceCount\": 2,\n  \"keyFindings\": [\n    \"Seed: Biên độ thuê mặt bằng khu Đông mang tính tham chiếu [1].\",\n    \"Seed: Metro/vành đai hỗ trợ kỳ vọng footfall dài hạn [2].\"\n  ],\n  \"recommendations\": [\n    \"P0 (Hành động ngay): Lập shortlist 3-5 mặt bằng khu Đông 1.500-3.000m².\",\n    \"P1 (Thẩm định chuyên sâu): Kiểm tra PCCC, tải trọng sàn, điều khoản fit-out.\",\n    \"P2 (Theo dõi chiến lược): Bám tiến độ metro quanh shortlist.\"\n  ],\n  \"risksAndUnknowns\": [\n    \"Seed data không thay thế thẩm định pháp lý và khảo sát hiện trường.\"\n  ],\n  \"resultsAndDiscussion\": \"### A. Quy hoạch & địa điểm (seed)\\n\\n- **Thực trạng thị trường:** Biên độ thuê và footfall khu Đông (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Trung bình (seed).\\n- **Tác động tới Galaxy Cinema:** Demo báo cáo khả thi C-level trên Admin AI.\",\n  \"conclusion\": \"Seed demo site feasibility. Chạy pipeline live để cập nhật số liệu thị trường thật.\",\n  \"references\": [\n    {\n      \"id\": 1,\n      \"title\": \"Seed · Giá thuê khu Đông (demo)\",\n      \"url\": \"https://example.com/seed/lease-east-hcm\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[1] \\\"Seed · Giá thuê khu Đông (demo)\\\", example.com, [Online]. Available: https://example.com/seed/lease-east-hcm\"\n    },\n    {\n      \"id\": 2,\n      \"title\": \"Seed · Metro & footfall (demo)\",\n      \"url\": \"https://example.com/seed/metro-footfall\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[2] \\\"Seed · Metro & footfall (demo)\\\", example.com, [Online]. Available: https://example.com/seed/metro-footfall\"\n    }\n  ]\n}"
+                        });
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.AuditLogs.AuditLogEntity", b =>
                 {
                     b.Property<Guid>("AuditLogId")
@@ -2648,6 +3108,155 @@ namespace Cinema.Infrastructure.Migrations
                     b.ToTable("MovieCommentEntity");
                 });
 
+            modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCoverImageEntity", b =>
+                {
+                    b.Property<Guid>("MovieCoverImageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Caption")
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("MovieCoverImageId");
+
+                    b.HasIndex("MovieId", "IsPrimary");
+
+                    b.HasIndex("MovieId", "SortOrder");
+
+                    b.ToTable("MovieCoverImageEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000001"),
+                            Caption = "Gotham rain",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = true,
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000002"),
+                            Caption = "Cinema noir",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000003"),
+                            Caption = "Night streets",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000004"),
+                            Caption = "Auditorium glow",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000001"),
+                            Caption = "Atomic horizon",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = true,
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000002"),
+                            Caption = "Desert sky",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000003"),
+                            Caption = "Earth light",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000001"),
+                            Caption = "Biolume forest",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = true,
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000002"),
+                            Caption = "Ocean world",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000003"),
+                            Caption = "Planet glow",
+                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ImageUrl = "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=1920&q=80",
+                            IsActive = true,
+                            IsPrimary = false,
+                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
+                            SortOrder = 2
+                        });
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieFormatInfoEntity", b =>
                 {
                     b.Property<Guid>("MovieFormatId")
@@ -5219,6 +5828,50 @@ namespace Cinema.Infrastructure.Migrations
                     b.ToTable("VoucherMembershipRankEntity");
                 });
 
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchClaimEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.AiResearch.AiResearchJobEntity", "Job")
+                        .WithMany("Claims")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchEventEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.AiResearch.AiResearchJobEntity", "Job")
+                        .WithMany("Events")
+                        .HasForeignKey("JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchEvidenceEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.AiResearch.AiResearchClaimEntity", "Claim")
+                        .WithMany("Evidence")
+                        .HasForeignKey("ClaimId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Claim");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchReportEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.AiResearch.AiResearchJobEntity", "Job")
+                        .WithOne("Report")
+                        .HasForeignKey("Cinema.Domain.Entities.AiResearch.AiResearchReportEntity", "JobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Job");
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.CinemaInfos.AuditoriumFormatInfos", b =>
                 {
                     b.HasOne("Cinema.Domain.Entities.CinemaInfos.AuditoriumInfoEntities", "AuditoriumInfoEntities")
@@ -5505,6 +6158,17 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("ParentComment");
 
                     b.Navigation("UserInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCoverImageEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.MovieInfos.MovieInfoEntity", "MovieInfoEntity")
+                        .WithMany("MovieCoverImageEntities")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MovieInfoEntity");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieGenreMovieInfoEntity", b =>
@@ -6038,6 +6702,20 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("VoucherInfoEntity");
                 });
 
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchClaimEntity", b =>
+                {
+                    b.Navigation("Evidence");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.AiResearch.AiResearchJobEntity", b =>
+                {
+                    b.Navigation("Claims");
+
+                    b.Navigation("Events");
+
+                    b.Navigation("Report");
+                });
+
             modelBuilder.Entity("Cinema.Domain.Entities.CinemaInfos.AuditoriumInfoEntities", b =>
                 {
                     b.Navigation("AuditoriumFormatInfosList");
@@ -6115,6 +6793,8 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("MovieCinemaEntities");
 
                     b.Navigation("MovieCommentEntities");
+
+                    b.Navigation("MovieCoverImageEntities");
 
                     b.Navigation("MovieFormatMovieInfoEntity");
 

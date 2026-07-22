@@ -23,9 +23,17 @@ apps/backend/Cinema.Infrastructure/obj/
 apps/frontend/node_modules/
 apps/frontend/dist/
 
-# Python cache
-services/ai/__pycache__/
-services/ai/*.pyc
+# Python cache (all nested packages under services/ai and elsewhere)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # gRPC generated stubs
 services/ai/app/pb/ai_service_pb2.py

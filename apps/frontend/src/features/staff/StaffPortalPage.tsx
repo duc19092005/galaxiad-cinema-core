@@ -100,7 +100,12 @@ const StaffPortalPage: React.FC = () => {
 
   const sidebarSections: SidebarSection[] = [
     {
-      label: 'Personal',
+      id: 'staff-menu',
+      label: 'Chức năng',
+      description: 'Cá nhân & ca làm',
+      icon: <LayoutDashboard size={18} />,
+      defaultOpen: true,
+      collapsible: true,
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
         { id: 'schedule', label: t('staffPortal.schedule'), icon: <CalendarDays size={16} /> },

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Wifi, Coffee, Gift, Accessibility, Car, Shirt, Star, Check, ChevronDown } from 'lucide-react';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 
 interface ServiceItem {
   icon: React.ReactNode;
@@ -96,6 +97,12 @@ const ServicesPage: React.FC = () => {
       <Header />
 
       <main className="page-enter" style={{ maxWidth: 1000, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.services', 'Dịch vụ') },
+          ]}
+        />
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 40 }}>
           <button

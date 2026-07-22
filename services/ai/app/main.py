@@ -22,7 +22,8 @@ from routes import (
     guard,
     classification,
     moderation,
-    chat
+    chat,
+    business_research
 )
 
 @asynccontextmanager
@@ -70,6 +71,7 @@ app.include_router(guard.router, tags=["Guard"])
 app.include_router(classification.router, tags=["Classification"])
 app.include_router(moderation.router, tags=["Moderation"])
 app.include_router(chat.router, tags=["Chat"])
+app.include_router(business_research.router, tags=["Business Research"])
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host=HOST, port=PORT, reload=True)

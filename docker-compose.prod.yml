@@ -28,7 +28,8 @@ services:
       - Cloudinary__CloudName=${CLOUDINARY_CLOUD_NAME}
       - Cloudinary__ApiKey=${CLOUDINARY_API_KEY}
       - Cloudinary__ApiSecret=${CLOUDINARY_API_SECRET}
-      - DeepSeek__ApiKey=${DEEPSEEK_API_KEY}
+      - AiService__BaseUrl=${AI_SERVICE_REST_URL:-http://cinema-ai-service:8000}
+      - AiService__GrpcUrl=${AI_SERVICE_GRPC_URL:-http://cinema-ai-service:50051}
       - VNPay__TmnCode=${VNPAY_TMN_CODE}
       - VNPay__HashSecret=${VNPAY_HASH_SECRET}
       - VNPay__PayUrl=${VNPAY_PAY_URL}
@@ -37,6 +38,8 @@ services:
       - Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - Google__WebCallbackUrl=${GOOGLE_WEB_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-web}
       - Google__MobileCallbackUrl=${GOOGLE_MOBILE_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-mobile}
+      - Tmdb__ApiKey=${TMDB_API_KEY}
+      - Tmdb__ImageBaseUrl=${TMDB_IMAGE_BASE_URL:-https://image.tmdb.org/t/p/w185}
       - SeedAccounts__ProductionManagerPasswordHash=${PRODUCTION_MANAGER_PASSWORD_HASH}
     networks:
       - cinema-network
@@ -73,6 +76,10 @@ services:
       - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
       - DEEPSEEK_BASE_URL=${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
       - DEEPSEEK_MODEL=${DEEPSEEK_MODEL:-deepseek-chat}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:?TAVILY_API_KEY is required}
+      - TAVILY_MCP_URL=${TAVILY_MCP_URL:-}
+      - BUSINESS_RESEARCH_MAX_RESULTS=${BUSINESS_RESEARCH_MAX_RESULTS:-5}
+      - BUSINESS_RESEARCH_TIMEOUT_SECONDS=${BUSINESS_RESEARCH_TIMEOUT_SECONDS:-45}
       - BACKEND_API_URL=${BACKEND_API_URL:-http://api:8080/api/v1}
       - REDIS_CONNECTION=${REDIS_CONNECTION}
     healthcheck:

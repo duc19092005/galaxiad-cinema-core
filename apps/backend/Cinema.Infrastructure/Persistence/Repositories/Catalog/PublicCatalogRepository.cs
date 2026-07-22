@@ -111,17 +111,35 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 MovieDescription = x.MovieDescription,
                 MoviePosterURL = x.MovieImageUrl,
                 MovieBannerURL = x.MovieBannerUrl,
+                TrailerUrl = x.TrailerUrl,
                 MovieRequiredAge = x.MovieRequiredAgeEntity != null ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol : string.Empty,
                 MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 IsCommingSoon = x.IsCommingSoon,
                 MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 ReleaseDate = x.ActiveAt,
                 Actor = x.Actors,
-                Director = x.Director
+                Director = x.Director,
+                CoverImages = x.MovieCoverImageEntities
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.SortOrder)
+                    .Select(c => new MovieCoverImageRes
+                    {
+                        MovieCoverImageId = c.MovieCoverImageId,
+                        ImageUrl = c.ImageUrl,
+                        SortOrder = c.SortOrder,
+                        IsPrimary = c.IsPrimary,
+                        Caption = c.Caption
+                    })
+                    .ToList()
             })
             .FirstOrDefaultAsync();
 
         if (rawMovie == null) return null;
+
+        var coverImages = rawMovie.CoverImages;
+        var primaryBanner = coverImages.FirstOrDefault(c => c.IsPrimary)?.ImageUrl
+            ?? coverImages.FirstOrDefault()?.ImageUrl
+            ?? rawMovie.MovieBannerURL;
 
         return new MovieDetailInfoRes
         {
@@ -130,14 +148,16 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             MovieDuration = rawMovie.MovieDuration,
             MovieDescription = rawMovie.MovieDescription,
             MoviePosterURL = rawMovie.MoviePosterURL,
-            MovieBannerURL = rawMovie.MovieBannerURL,
+            MovieBannerURL = primaryBanner,
+            TrailerUrl = rawMovie.TrailerUrl,
             MovieRequiredAge = (rawMovie.MovieRequiredAge ?? string.Empty).Trim(),
             MovieFormatInfos = string.Join(", ", rawMovie.MovieFormats),
             IsCommingSoon = rawMovie.IsCommingSoon,
             MovieCategoryInfos = string.Join(", ", rawMovie.MovieCategories),
             ReleaseDate = rawMovie.ReleaseDate,
             Actor = rawMovie.Actor,
-            Director = rawMovie.Director
+            Director = rawMovie.Director,
+            CoverImages = coverImages
         };
     }
 
@@ -273,5 +293,117 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             .Where(m => !m.IsDeleted && ids.Contains(m.MovieId))
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<(List<string> Directors, List<string> Actors)> GetMoviePeopleAsync()
+    {
+        var rows = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => new { x.Director, x.Actors })
+            .ToListAsync();
+
+        static IEnumerable<string> SplitPeople(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) yield break;
+            foreach (var part in raw.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!string.IsNullOrWhiteSpace(part))
+                    yield return part.Trim();
+            }
+        }
+
+        var directors = rows
+            .SelectMany(r => SplitPeople(r.Director))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        var actors = rows
+            .SelectMany(r => SplitPeople(r.Actors))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        return (directors, actors);
+    }
+
+    public async Task<(List<MovieInfoRes> Items, int TotalCount)> GetMoviesByPersonAsync(
+        string personName,
+        string role,
+        int pageIndex,
+        int pageSize)
+    {
+        var name = (personName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return ([], 0);
+
+        pageIndex = pageIndex < 1 ? 1 : pageIndex;
+        pageSize = pageSize is < 1 or > 48 ? 12 : pageSize;
+
+        var roleNorm = (role ?? "actor").Trim().ToLowerInvariant();
+        var isDirector = roleNorm is "director" or "directing" or "dao-dien" or "đạo-diễn";
+
+        // Broad SQL filter (Contains), then exact token match in memory so "Lee" != "Lee Byung-hun"
+        var candidates = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && (x.IsActive || x.IsCommingSoon))
+            .Where(x => isDirector
+                ? (x.Director != null && x.Director.Contains(name))
+                : (x.Actors != null && x.Actors.Contains(name)))
+            .Select(x => new
+            {
+                x.MovieId,
+                x.MovieName,
+                x.MovieDuration,
+                MoviePosterURL = x.MovieImageUrl,
+                MovieBannerURL = x.MovieBannerUrl,
+                MovieRequiredAge = x.MovieRequiredAgeEntity != null
+                    ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol
+                    : string.Empty,
+                MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
+                x.IsCommingSoon,
+                ExpectedReleaseDate = x.ActiveAt,
+                x.Director,
+                x.Actors,
+                x.ActiveAt
+            })
+            .ToListAsync();
+
+        static bool HasExactPerson(string? raw, string person)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            return raw
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(p => string.Equals(p, person, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var matched = candidates
+            .Where(x => isDirector ? HasExactPerson(x.Director, name) : HasExactPerson(x.Actors, name))
+            .OrderByDescending(x => x.ActiveAt)
+            .ThenBy(x => x.MovieName)
+            .ToList();
+
+        var total = matched.Count;
+        var page = matched
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new MovieInfoRes
+            {
+                MovieId = x.MovieId,
+                MovieName = x.MovieName,
+                MovieDuration = x.MovieDuration,
+                MoviePosterURL = x.MoviePosterURL,
+                MovieBannerURL = x.MovieBannerURL,
+                MovieRequiredAge = (x.MovieRequiredAge ?? string.Empty).Trim(),
+                MovieFormatInfos = string.Join(", ", x.MovieFormats),
+                MovieCategoryInfos = string.Join(", ", x.MovieCategories),
+                IsCommingSoon = x.IsCommingSoon,
+                ExpectedReleaseDate = x.ExpectedReleaseDate
+            })
+            .ToList();
+
+        return (page, total);
     }
 }

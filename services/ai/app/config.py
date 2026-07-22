@@ -46,3 +46,9 @@ else:
 # Backend C# API base URL for agent tool retrieval
 BACKEND_API_URL = os.getenv("BACKEND_API_URL", "http://localhost:8080/api/v1")
 
+# Business research / MCP
+TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
+TAVILY_MCP_URL = os.getenv("TAVILY_MCP_URL", "")
+BUSINESS_RESEARCH_MAX_RESULTS = int(os.getenv("BUSINESS_RESEARCH_MAX_RESULTS", "5"))
+BUSINESS_RESEARCH_TIMEOUT_SECONDS = float(os.getenv("BUSINESS_RESEARCH_TIMEOUT_SECONDS", "45"))
+

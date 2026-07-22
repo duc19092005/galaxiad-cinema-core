@@ -57,10 +57,15 @@ const ScheduleManagerPage: React.FC<ScheduleManagerPageProps> = ({ isEmbedded = 
 
     const sidebarSections: SidebarSection[] = [
       {
-        label: t('Management'),
+        id: 'schedule-menu',
+        label: t('Management', 'Chức năng'),
+        description: t('Schedules & movies', 'Lịch chiếu & phim'),
+        icon: <Calendar size={18} />,
+        defaultOpen: true,
+        collapsible: true,
         items: [
-          { id: 'schedule', label: t('Schedules'), icon: <Calendar size={18} /> },
-          { id: 'movies', label: t('Movies'), icon: <Film size={18} /> },
+          { id: 'schedule', label: t('Schedules'), icon: <Calendar size={16} /> },
+          { id: 'movies', label: t('Movies'), icon: <Film size={16} /> },
         ],
       },
     ];
