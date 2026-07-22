@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+﻿import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   CheckCircle2,
@@ -62,61 +62,33 @@ const statusLabel = (status: string) =>
 
 const cityLabel = (city: AiResearchCity) => (city === 'HCM' ? 'TPHCM' : 'Hà Nội');
 
-/** Lightweight Markdown subset for IEEE body: tables + paragraphs (no raw URL requirement in body). */
-const renderIeeeMarkdown = (raw: string) => {
+const renderCitationText = (text: string, onCitationClick: (id: number) => void) =>
+  text.split(/(\[\d+\])/g).map((part, index) => {
+    const match = /^\[(\d+)\]$/.exec(part);
+    if (!match) return <Fragment key={`${part}-${index}`}>{part.replace(/\*\*/g, '')}</Fragment>;
+    const referenceId = Number(match[1]);
+    return (
+      <button key={`${part}-${index}`} type="button" className="ai-research-inline-citation" onClick={() => onCitationClick(referenceId)}>
+        {part}
+      </button>
+    );
+  });
+
+/** Lightweight Markdown subset for IEEE body: tables, prose, and clickable [n] citations. */
+const renderIeeeMarkdown = (raw: string, onCitationClick: (id: number) => void) => {
   const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/);
   return blocks.map((block, blockIndex) => {
     const lines = block.split('\n').map((line) => line.trimEnd());
-    const isTable =
-      lines.length >= 2 &&
-      lines[0].includes('|') &&
-      lines.some((line) => /^\|?\s*:?-{3,}/.test(line.replace(/\s/g, '')) || line.includes('---'));
-
+    const isTable = lines.length >= 2 && lines[0].includes('|') && lines.some((line) => /^\|?\s*:?-{3,}/.test(line.replace(/\s/g, '')) || line.includes('---'));
     if (isTable) {
-      const tableLines = lines.filter((line) => line.includes('|'));
-      const rows = tableLines
-        .filter((line) => !/^\|?\s*[:\-| ]+\|?\s*$/.test(line))
-        .map((line) =>
-          line
-            .replace(/^\|/, '')
-            .replace(/\|$/, '')
-            .split('|')
-            .map((cell) => cell.trim()),
-        );
-      if (rows.length === 0) return null;
+      const rows = lines.filter((line) => line.includes('|')).filter((line) => !/^\|?\s*[:\-| ]+\|?\s*$/.test(line)).map((line) => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()));
+      if (!rows.length) return null;
       const [header, ...body] = rows;
-      return (
-        <div key={`md-table-${blockIndex}`} className="ai-research-ieee-table-wrap">
-          <table className="ai-research-ieee-table">
-            <thead>
-              <tr>
-                {header.map((cell) => (
-                  <th key={cell}>{cell.replace(/\*\*/g, '')}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {body.map((row, rowIndex) => (
-                <tr key={`r-${rowIndex}`}>
-                  {row.map((cell, cellIndex) => (
-                    <td key={`${rowIndex}-${cellIndex}`}>{cell.replace(/\*\*/g, '')}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      );
+      return <div key={`md-table-${blockIndex}`} className="ai-research-ieee-table-wrap"><table className="ai-research-ieee-table"><thead><tr>{header.map((cell, index) => <th key={`${cell}-${index}`}>{renderCitationText(cell, onCitationClick)}</th>)}</tr></thead><tbody>{body.map((row, rowIndex) => <tr key={`r-${rowIndex}`}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{renderCitationText(cell, onCitationClick)}</td>)}</tr>)}</tbody></table></div>;
     }
-
-    return (
-      <p key={`md-p-${blockIndex}`} className="ai-research-ieee-prose">
-        {block}
-      </p>
-    );
+    return <p key={`md-p-${blockIndex}`} className="ai-research-ieee-prose">{renderCitationText(block, onCitationClick)}</p>;
   });
 };
-
 const mergeProgress = (
   previous: AiResearchProgress | null,
   next: Partial<AiResearchProgress> & { status?: string },
@@ -134,7 +106,14 @@ const mergeProgress = (
   budgetUsed: next.budgetUsed ?? previous?.budgetUsed ?? 0,
   budgetCap: next.budgetCap ?? previous?.budgetCap ?? fallbackBudgetCap,
   message: next.message ?? previous?.message,
-  thought: next.thought ?? previous?.thought,
+  phase: next.phase ?? previous?.phase,
+  agent: next.agent ?? previous?.agent,
+  activity: next.activity ?? previous?.activity,
+  iteration: next.iteration ?? previous?.iteration,
+  query: next.query ?? previous?.query,
+  evidenceCount: next.evidenceCount ?? previous?.evidenceCount,
+  sourceDomains: next.sourceDomains ?? previous?.sourceDomains,
+  verdict: next.verdict ?? previous?.verdict,
 });
 
 const AiResearchSection = () => {
@@ -150,12 +129,14 @@ const AiResearchSection = () => {
   const [activeJob, setActiveJob] = useState<AiResearchJobDetail | null>(null);
   const [progress, setProgress] = useState<AiResearchProgress | null>(null);
   const [timeline, setTimeline] = useState<AiResearchTimelineItem[]>([]);
-  const [sseState, setSseState] = useState<'idle' | 'connecting' | 'live' | 'error'>('idle');
+  const [sseState, setSseState] = useState<'idle' | 'connecting' | 'live' | 'reconnecting' | 'degraded' | 'completed' | 'failed'>('idle');
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [creating, setCreating] = useState(false);
   const streamAbortRef = useRef<AbortController | null>(null);
   const timelineEndRef = useRef<HTMLDivElement | null>(null);
   const eventSeqRef = useRef(0);
+  const lastEventIdRef = useRef(0);
+  const seenEventIdsRef = useRef(new Set<number>());
 
   const modules = templates[analysisType];
   const isRunning = Boolean(activeJob && !terminalStatuses.has(activeJob.status));
@@ -202,17 +183,18 @@ const AiResearchSection = () => {
       setSseState('live');
       return;
     }
-    const message = data.message || data.thought || statusLabel(event);
+    const message = data.message || data.activity || statusLabel(event);
     eventSeqRef.current += 1;
     setTimeline((current) => {
       const next: AiResearchTimelineItem = {
         id: `${data.jobId}-${eventSeqRef.current}-${event}`,
         event,
         message,
-        thought: data.thought,
+        activity: data.activity,
+        agent: data.agent,
         at: Date.now(),
       };
-      // Newest at bottom for natural reading of chain-of-thought.
+      // Newest at bottom for a readable agent-activity audit trail.
       return [...current, next].slice(-80);
     });
   }, []);
@@ -224,13 +206,21 @@ const AiResearchSection = () => {
       streamAbortRef.current = controller;
       setTimeline([]);
       eventSeqRef.current = 0;
+      lastEventIdRef.current = 0;
+      seenEventIdsRef.current.clear();
       setSseState('connecting');
 
       try {
         await aiResearchApi.streamEvents(
           jobId,
           (event) => {
-            setSseState('live');
+            const numericEventId = event.id ? Number(event.id) : NaN;
+            if (Number.isFinite(numericEventId)) {
+              if (numericEventId <= lastEventIdRef.current || seenEventIdsRef.current.has(numericEventId)) return;
+              lastEventIdRef.current = numericEventId;
+              seenEventIdsRef.current.add(numericEventId);
+            }
+            setSseState(['done', 'failed', 'cancelled'].includes(event.event) ? (event.event === 'done' ? 'completed' : 'failed') : 'live');
             const payload = event.data || ({} as AiResearchProgress);
             const status = payload.status || event.event;
 
@@ -288,10 +278,11 @@ const AiResearchSection = () => {
             }
           },
           controller.signal,
+          lastEventIdRef.current,
         );
       } catch (error) {
         if (!controller.signal.aborted) {
-          setSseState('error');
+          setSseState('degraded');
           showError(error instanceof Error ? error.message : 'Mất kết nối SSE.');
         }
       }
@@ -406,6 +397,9 @@ const AiResearchSection = () => {
   };
 
   const summary = activeJob?.report?.summary;
+  const scrollToReference = useCallback((referenceId: number) => {
+    document.getElementById(`ai-research-reference-${referenceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, []);
   const reportModules = useMemo(
     () => Array.from(new Set(activeJob?.claims.map((claim) => claim.category) || [])),
     [activeJob],
@@ -618,7 +612,7 @@ const AiResearchSection = () => {
               <strong>Tiến độ realtime</strong>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <span
-                  className={`ai-research-badge ${sseState === 'live' ? 'resolved' : sseState === 'error' ? 'conflicting' : ''}`}
+                  className={`ai-research-badge ${sseState === 'live' ? 'resolved' : (sseState === 'degraded' || sseState === 'failed') ? 'conflicting' : ''}`}
                   title="Trạng thái kênh SSE"
                 >
                   <Radio size={11} style={{ marginRight: 4 }} />
@@ -626,8 +620,8 @@ const AiResearchSection = () => {
                     ? 'SSE live'
                     : sseState === 'connecting'
                       ? 'Đang nối SSE'
-                      : sseState === 'error'
-                        ? 'SSE lỗi'
+                      : sseState === 'degraded' || sseState === 'failed'
+                        ? 'SSE đang khôi phục'
                         : 'SSE idle'}
                 </span>
                 {activeJob && (
@@ -702,10 +696,22 @@ const AiResearchSection = () => {
                     </div>
                   </div>
 
+                  <div className="ai-research-phase-stepper" aria-label="Tiến trình multi-agent">
+                    {(['planning', 'researching', 'arbitrating', 'synthesizing'] as const).map((phase) => (
+                      <span key={phase} className={progress?.phase === phase ? 'active' : ''}>{statusLabel(phase)}</span>
+                    ))}
+                  </div>
+                  <div className="ai-research-live-context">
+                    <div><small>Agent</small><strong>{progress?.agent || '-'}</strong></div>
+                    <div><small>Claim</small><strong>{progress?.currentClaimId ? progress.currentClaimId.slice(0, 8) : '-'}</strong></div>
+                    <div><small>Evidence</small><strong>{progress?.evidenceCount ?? 0}</strong></div>
+                    <div><small>Verdict</small><strong>{progress?.verdict?.status || '-'}</strong></div>
+                    {progress?.query && <p><small>Truy vấn hiện tại:</small> {progress.query}</p>}
+                  </div>
                   <div className="ai-research-cot">
                     <div className="ai-research-cot-header">
                       <Sparkles size={14} />
-                      <strong>Chain of thought (live)</strong>
+                      <strong>Hoạt động agent (live)</strong>
                       <span className="ai-research-badge">{timeline.length}</span>
                     </div>
                     <div className="ai-research-cot-stream">
@@ -725,8 +731,8 @@ const AiResearchSection = () => {
                             </span>
                           </div>
                           <div className="ai-research-cot-message">{item.message}</div>
-                          {item.thought && item.thought !== item.message && (
-                            <div className="ai-research-cot-thought">{item.thought}</div>
+                          {item.activity && item.activity !== item.message && (
+                            <div className="ai-research-cot-thought">Agent: {item.agent || '-'} · {item.activity}</div>
                           )}
                         </div>
                       ))}
@@ -807,7 +813,7 @@ const AiResearchSection = () => {
                       <section className="ai-research-ieee-section">
                         <h2>I. MỞ ĐẦU (INTRODUCTION)</h2>
                         <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.introduction)}
+                          {renderIeeeMarkdown(summary.introduction, scrollToReference)}
                         </div>
                       </section>
                     )}
@@ -816,7 +822,7 @@ const AiResearchSection = () => {
                       <section className="ai-research-ieee-section">
                         <h2>II. TỔNG QUAN NGHIÊN CỨU (RELATED WORK)</h2>
                         <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.relatedWork)}
+                          {renderIeeeMarkdown(summary.relatedWork, scrollToReference)}
                         </div>
                       </section>
                     )}
@@ -825,7 +831,7 @@ const AiResearchSection = () => {
                       <section className="ai-research-ieee-section">
                         <h2>III. PHƯƠNG PHÁP NGHIÊN CỨU (METHODOLOGY)</h2>
                         <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.methodology)}
+                          {renderIeeeMarkdown(summary.methodology, scrollToReference)}
                         </div>
                       </section>
                     )}
@@ -834,7 +840,7 @@ const AiResearchSection = () => {
                       <section className="ai-research-ieee-section">
                         <h2>IV. THỰC NGHIỆM VÀ KẾT QUẢ (RESULTS &amp; DISCUSSION)</h2>
                         <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.resultsAndDiscussion)}
+                          {renderIeeeMarkdown(summary.resultsAndDiscussion, scrollToReference)}
                         </div>
                       </section>
                     )}
@@ -843,7 +849,7 @@ const AiResearchSection = () => {
                       <section className="ai-research-ieee-section">
                         <h2>V. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN (CONCLUSION &amp; FUTURE WORK)</h2>
                         <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.conclusion)}
+                          {renderIeeeMarkdown(summary.conclusion, scrollToReference)}
                         </div>
                       </section>
                     )}
@@ -853,7 +859,7 @@ const AiResearchSection = () => {
                         <h2>TÀI LIỆU THAM KHẢO (REFERENCES)</h2>
                         <ol className="ai-research-ieee-refs">
                           {summary.references.map((ref) => (
-                            <li key={ref.id} value={ref.id}>
+                            <li id={`ai-research-reference-${ref.id}`} key={ref.id} value={ref.id}>
                               {ref.ieeeText ? (
                                 <span>
                                   {ref.ieeeText.replace(/^\s*\[\d+\]\s*/, '')}
@@ -870,6 +876,33 @@ const AiResearchSection = () => {
                       </section>
                     )}
 
+                    {summary?.provenance && (
+                      <section className="ai-research-ieee-section">
+                        <h2>NGUỒN DỮ LIỆU VÀ PHƯƠNG PHÁP</h2>
+                        <div className="ai-research-provenance">
+                          <p><strong>Phạm vi:</strong> {summary.provenance.analysisType} tại {summary.provenance.city} · {summary.provenance.claimCount} claim · {summary.provenance.referenceCount} tài liệu.</p>
+                          {summary.provenance.managerNotes && <p><strong>Ghi chú quản lý:</strong> {summary.provenance.managerNotes}</p>}
+                          <p><strong>Pipeline:</strong> {summary.provenance.pipeline.join(' → ')}.</p>
+                          <p><strong>Nguồn:</strong> {summary.provenance.sourceDomains.join(', ') || 'Chưa có nguồn hợp lệ'}.</p>
+                        </div>
+                      </section>
+                    )}
+
+                    {!!summary?.decisionBasis?.length && (
+                      <section className="ai-research-ieee-section">
+                        <h2>CƠ SỞ CỦA KẾT LUẬN</h2>
+                        <div className="ai-research-decision-list">
+                          {summary.decisionBasis.map((decision) => (
+                            <article className="ai-research-decision" key={decision.claimCode}>
+                              <div className="ai-research-decision-head"><strong>{decision.claimCode}</strong><span>{Math.round(decision.confidence * 100)}%</span></div>
+                              <p>{decision.claim}</p>
+                              <small>Kết luận: {decision.status} · {decision.classification} · {decision.supports} nguồn hỗ trợ · {decision.contradicts} nguồn mâu thuẫn · {decision.evidenceCount} evidence.</small>
+                              <div>{decision.citationIds.map((id) => <button type="button" className="ai-research-inline-citation" key={id} onClick={() => scrollToReference(id)}>[{id}]</button>)}</div>
+                            </article>
+                          ))}
+                        </div>
+                      </section>
+                    )}
                     {summary?.appendix && (
                       <section className="ai-research-ieee-section">
                         <h2>PHỤ LỤC (APPENDIX) — RAW AUDIT MATRIX</h2>

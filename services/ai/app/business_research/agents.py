@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
@@ -32,6 +32,14 @@ def _strip_urls(text: str) -> str:
     cleaned = re.sub(r"https?://\S+", "", text)
     cleaned = re.sub(r"\s{2,}", " ", cleaned)
     return cleaned.strip()
+
+
+def _valid_citations(text: str, valid_ids: set[int]) -> str:
+    """Keep only IEEE [n] citations that exist in the reference registry."""
+    def replace(match: re.Match[str]) -> str:
+        return match.group(0) if int(match.group(1)) in valid_ids else ""
+
+    return re.sub(r"\[(\d+)\]", replace, text or "")
 
 
 class PlannerAgent:
@@ -230,6 +238,7 @@ class ReportSynthesizerAgent:
                         stats,
                         city_label,
                         template_label,
+                        notes,
                         claim_rows,
                     )
                     if paper.get("abstract") and paper.get("resultsAndDiscussion"):
@@ -292,12 +301,41 @@ class ReportSynthesizerAgent:
                     "classification": claim.classification,
                     "confidence": claim.confidence,
                     "isCritical": claim.is_critical,
-                    "citationIds": ref_ids[:6],
+"citationIds": ref_ids[:6],
                     "citations": citation_text,
+                    "evidenceCount": len(claim.evidence),
+                    "supports": sum(item.relation == "supports" for item in claim.evidence),
+                    "contradicts": sum(item.relation == "contradicts" for item in claim.evidence),
+                    "sourceDomains": list(dict.fromkeys(item.source_domain for item in claim.evidence if item.source_domain))[:6],
                 }
             )
         return rows
 
+    def _build_provenance(self, city_label: str, template_label: str, notes: str, claim_rows: list[dict], bibliography: list[dict]) -> dict:
+        trust_tiers: dict[str, int] = {}
+        for entry in bibliography:
+            tier = entry.get("trust") or "unknown"
+            trust_tiers[tier] = trust_tiers.get(tier, 0) + 1
+        return {
+            "city": city_label,
+            "analysisType": template_label,
+            "managerNotes": _strip_urls(notes),
+            "pipeline": ["Planner", "Research/Tavily", "Arbitrator", "Synthesizer"],
+            "claimCount": len(claim_rows),
+            "referenceCount": len(bibliography),
+            "sourceTrustTiers": trust_tiers,
+            "sourceDomains": list(dict.fromkeys(entry.get("domain", "web") for entry in bibliography))[:20],
+        }
+
+    @staticmethod
+    def _build_decision_basis(claim_rows: list[dict]) -> list[dict]:
+        return [{
+            "claimCode": row["claimCode"], "claim": row["text"], "status": row["status"],
+            "classification": row["classification"], "confidence": row["confidence"],
+            "supports": row["supports"], "contradicts": row["contradicts"],
+            "evidenceCount": row["evidenceCount"], "sourceDomains": row["sourceDomains"],
+            "citationIds": row["citationIds"],
+        } for row in claim_rows]
     def _build_claim_matrix_markdown(self, claim_rows: list[dict]) -> str:
         lines = [
             "### BẢNG I: MA TRẬN ĐÁNH GIÁ VÀ KIỂM CHỨNG CÁC GIẢ THUYẾT VỊ TRÍ (CLAIM EVALUATION MATRIX)",
@@ -324,6 +362,7 @@ class ReportSynthesizerAgent:
         stats: dict,
         city_label: str,
         template_label: str,
+        notes: str,
         claim_rows: list[dict],
     ) -> dict:
         def text(*keys: str) -> str:
@@ -398,6 +437,14 @@ class ReportSynthesizerAgent:
 
         id_to_entry = {entry["id"]: entry for entry in bibliography}
         references = [id_to_entry[i] for i in ordered_ids if i in id_to_entry]
+        introduction = _valid_citations(introduction, valid_ids)
+        related = _valid_citations(related, valid_ids)
+        methodology = _valid_citations(methodology, valid_ids)
+        results = _valid_citations(results, valid_ids)
+        conclusion = _valid_citations(conclusion, valid_ids)
+        appendix = _valid_citations(appendix, valid_ids)
+        provenance = self._build_provenance(city_label, template_label, notes, claim_rows, references)
+        decision_basis = self._build_decision_basis(claim_rows)
 
         confidence = (
             "high"
@@ -428,6 +475,8 @@ class ReportSynthesizerAgent:
             "conclusion": conclusion,
             "appendix": appendix,
             "claimMatrix": claim_rows,
+            "provenance": provenance,
+            "decisionBasis": decision_basis,
             "references": references,
             "headline": title,
             "executiveSummary": abstract,
@@ -561,6 +610,8 @@ class ReportSynthesizerAgent:
             "conclusion": conclusion,
             "appendix": appendix,
             "claimMatrix": claim_rows,
+            "provenance": self._build_provenance(city_label, template_label, notes, claim_rows, bibliography),
+            "decisionBasis": self._build_decision_basis(claim_rows),
             "references": bibliography,
             "headline": title,
             "executiveSummary": abstract,

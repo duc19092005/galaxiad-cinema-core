@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from collections.abc import AsyncIterator
 from datetime import datetime, timezone
@@ -274,4 +274,23 @@ class BusinessResearchOrchestrator:
                 for key, value in payload.items()
             }
         )
+        stage = {
+            "planning": ("planning", "Planner", "Lập claim có thể kiểm chứng."),
+            "claim_created": ("planning", "Planner", "Đã tạo claim mới."),
+            "researching": ("researching", "Research", "Đang tìm evidence web."),
+            "evidence_found": ("researching", "Research", "Đã nhận evidence mới."),
+            "arbitrating": ("arbitrating", "Arbitrator", "Đang đối chiếu evidence."),
+            "claim_resolved": ("arbitrating", "Arbitrator", "Đã kết luận claim."),
+            "claim_insufficient": ("arbitrating", "Arbitrator", "Claim chưa đủ evidence."),
+            "synthesizing": ("synthesizing", "Synthesizer", "Đang dựng báo cáo IEEE."),
+        }.get(event_type)
+        if stage:
+            base.setdefault("phase", stage[0])
+            base.setdefault("agent", stage[1])
+            base.setdefault("activity", stage[2])
+        if event_type == "researching" and not base.get("query"):
+            message = str(base.get("message") or "")
+            base["query"] = message.split(":", 1)[-1].strip() if ":" in message else message
+        # Progress is audit activity, never raw model chain-of-thought.
+        base.pop("thought", None)
         return {"kind": "event", "eventType": event_type, "payload": base}

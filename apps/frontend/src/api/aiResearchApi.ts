@@ -1,4 +1,4 @@
-import { API_BASE_URL, identityAxios } from './axiosClient';
+﻿import { API_BASE_URL, identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
   AiResearchJobDetail,
@@ -74,72 +74,58 @@ export const aiResearchApi = {
   ): Promise<void> => {
     let cursor = afterEventId;
     let attempt = 0;
+    const emittedIds = new Set<number>();
+    const processBlock = (block: string) => {
+      if (!block || block.startsWith(':')) return false;
+      const parsed = parseSseBlock(block);
+      if (!parsed) return false;
+      const numericId = parsed.id ? Number(parsed.id) : NaN;
+      if (Number.isFinite(numericId)) {
+        if (numericId <= cursor || emittedIds.has(numericId)) return false;
+        cursor = numericId;
+        emittedIds.add(numericId);
+      }
+      onEvent(parsed);
+      return ['done', 'failed', 'cancelled'].includes(parsed.event);
+    };
 
     while (!signal.aborted) {
       try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${cursor}`,
-          {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              Accept: 'text/event-stream',
-              'Cache-Control': 'no-cache',
-            },
-            signal,
-          },
-        );
-        if (!response.ok || !response.body) {
-          throw new Error(`SSE connection failed (${response.status}).`);
-        }
-
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${cursor}`, {
+          method: 'GET', credentials: 'include',
+          headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' }, signal,
+        });
+        if (!response.ok || !response.body) throw new Error(`SSE connection failed (${response.status}).`);
         attempt = 0;
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
-
+        let terminal = false;
         while (!signal.aborted) {
           const { value, done } = await reader.read();
-          if (done) break;
-
-          buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+          if (value) buffer += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
           let boundary = buffer.indexOf('\n\n');
           while (boundary >= 0) {
-            const block = buffer.slice(0, boundary).trim();
+            terminal = processBlock(buffer.slice(0, boundary).trim()) || terminal;
             buffer = buffer.slice(boundary + 2);
-            if (block && !block.startsWith(':')) {
-              const parsed = parseSseBlock(block);
-              if (parsed) {
-                if (parsed.id) {
-                  const numericId = Number(parsed.id);
-                  if (Number.isFinite(numericId)) cursor = Math.max(cursor, numericId);
-                }
-                onEvent(parsed);
-                if (parsed.event === 'done' || parsed.event === 'failed' || parsed.event === 'cancelled') {
-                  return;
-                }
-              }
-            }
             boundary = buffer.indexOf('\n\n');
           }
+          if (done) break;
         }
-
-        // Stream ended without a terminal event — resume after a short backoff.
+        buffer += decoder.decode();
+        if (buffer.trim()) terminal = processBlock(buffer.trim()) || terminal;
+        if (terminal || signal.aborted) return;
         attempt += 1;
-        if (signal.aborted) return;
         await sleep(Math.min(4000, 500 * attempt), signal);
       } catch (error) {
         if (signal.aborted) return;
         attempt += 1;
-        if (attempt > 12) {
-          throw error instanceof Error ? error : new Error('Mất kết nối SSE.');
-        }
+        if (attempt > 12) throw error instanceof Error ? error : new Error('Mất kết nối SSE.');
         await sleep(Math.min(5000, 600 * attempt), signal);
       }
     }
   },
 };
-
 const sleep = (ms: number, signal: AbortSignal) =>
   new Promise<void>((resolve, reject) => {
     if (signal.aborted) {

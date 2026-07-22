@@ -575,3 +575,48 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.ai-research-inline-citation {
+  display: inline;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ai-research-inline-citation:hover { text-decoration: underline; }
+
+.ai-research-provenance,
+.ai-research-decision {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-elevated);
+}
+
+.ai-research-provenance p,
+.ai-research-decision p { margin: 0 0 8px; line-height: 1.55; }
+.ai-research-provenance p:last-child,
+.ai-research-decision p:last-child { margin-bottom: 0; }
+.ai-research-decision-list { display: grid; gap: 10px; }
+.ai-research-decision-head { display: flex; justify-content: space-between; gap: 12px; color: var(--accent); }
+.ai-research-decision small { color: var(--text-secondary); display: block; margin-bottom: 6px; }
+
+.ai-research-phase-stepper,
+.ai-research-live-context {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.ai-research-phase-stepper { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ai-research-phase-stepper span { padding: 7px; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-muted); font-size: 11px; text-align: center; }
+.ai-research-phase-stepper span.active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 800; }
+.ai-research-live-context { grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-elevated); }
+.ai-research-live-context div { display: grid; gap: 3px; min-width: 0; }
+.ai-research-live-context small { color: var(--text-muted); font-size: 10px; text-transform: uppercase; }
+.ai-research-live-context strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.ai-research-live-context p { grid-column: 1 / -1; margin: 2px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.45; }

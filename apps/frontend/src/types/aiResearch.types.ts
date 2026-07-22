@@ -1,4 +1,4 @@
-export type AiResearchCity = 'HCM' | 'HN';
+﻿export type AiResearchCity = 'HCM' | 'HN';
 export type AiResearchAnalysisType = 'PricingAnalysis' | 'SiteLocationFeasibility';
 export type AiResearchRunMode = 'RunAll' | 'SelectedModules';
 
@@ -65,6 +65,30 @@ export interface AiResearchReportAuthor {
   email?: string;
 }
 
+export interface AiResearchDecisionBasis {
+  claimCode: string;
+  claim: string;
+  status: string;
+  classification: string;
+  confidence: number;
+  supports: number;
+  contradicts: number;
+  evidenceCount: number;
+  sourceDomains: string[];
+  citationIds: number[];
+}
+
+export interface AiResearchProvenance {
+  city: string;
+  analysisType: string;
+  managerNotes?: string;
+  pipeline: string[];
+  claimCount: number;
+  referenceCount: number;
+  sourceTrustTiers: Record<string, number>;
+  sourceDomains: string[];
+}
+
 export interface AiResearchReport {
   generatedAt: string;
   title?: string;
@@ -80,7 +104,6 @@ export interface AiResearchReport {
       citations: Array<{ title: string; url: string; sourceType: string; domain?: string }>;
     }>;
   }>;
-  /** IEEE paper body + claim counters live here (stored as SummaryJson). */
   summary: {
     totalClaims?: number;
     resolvedClaims?: number;
@@ -99,16 +122,10 @@ export interface AiResearchReport {
     resultsAndDiscussion?: string;
     conclusion?: string;
     appendix?: string;
-    claimMatrix?: Array<{
-      claimCode?: string;
-      text?: string;
-      status?: string;
-      classification?: string;
-      confidence?: number;
-      citations?: string;
-    }>;
+    claimMatrix?: Array<{ claimCode?: string; text?: string; status?: string; classification?: string; confidence?: number; citations?: string }>;
+    provenance?: AiResearchProvenance;
+    decisionBasis?: AiResearchDecisionBasis[];
     references?: AiResearchIeeeReference[];
-    /** Backward-compatible fields from older executive-brief jobs */
     headline?: string;
     executiveSummary?: string;
     keyFindings?: string[];
@@ -128,8 +145,16 @@ export interface AiResearchJobDetail extends AiResearchJobSummary {
 export interface AiResearchProgress {
   jobId: string;
   status: string;
+  phase?: 'planning' | 'researching' | 'arbitrating' | 'synthesizing' | string;
+  agent?: string;
+  activity?: string;
   currentModule?: string;
   currentClaimId?: string;
+  iteration?: number;
+  query?: string;
+  evidenceCount?: number;
+  sourceDomains?: string[];
+  verdict?: { status?: string; classification?: string; confidence?: number; supports?: number; contradicts?: number; irrelevant?: number };
   resolvedClaims?: number;
   totalClaims?: number;
   criticalResolved?: number;
@@ -137,15 +162,14 @@ export interface AiResearchProgress {
   budgetUsed: number;
   budgetCap: number;
   message?: string;
-  /** Model / pipeline chain-of-thought line for the live timeline. */
-  thought?: string;
 }
 
 export interface AiResearchTimelineItem {
   id: string;
   event: string;
   message: string;
-  thought?: string;
+  activity?: string;
+  agent?: string;
   at: number;
 }
 
