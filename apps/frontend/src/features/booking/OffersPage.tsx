@@ -7,6 +7,7 @@ import { voucherApi, type VoucherDto, type UserVoucherDto } from '../../api/vouc
 import { bookingApi } from '../../api/bookingApi';
 import { publicApi } from '../../api/publicApi';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import { showSuccess, showError } from '../../utils/ToastUtils';
 import type { PublicPromotion } from '../../types/public.types';
 
@@ -175,7 +176,13 @@ export const OffersPage: React.FC = () => {
       <Header />
 
       <main style={{ paddingTop: '100px', paddingBottom: '60px', maxWidth: '1200px', margin: '0 auto', paddingLeft: '24px', paddingRight: '24px' }}>
-        
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.offers', 'Ưu đãi') },
+          ]}
+        />
+
         {/* Page Banner Header */}
         <div style={{ marginBottom: '40px', textAlign: 'center' }}>
           <span style={{

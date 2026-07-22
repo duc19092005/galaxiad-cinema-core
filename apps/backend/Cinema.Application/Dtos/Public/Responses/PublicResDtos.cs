@@ -1,3 +1,5 @@
+using Cinema.Application.Dtos;
+
 namespace Cinema.Application.Dtos.Public.Responses;
 
 public class MovieInfoRes : BaseMovieInfoRes
@@ -17,12 +19,45 @@ public class MovieDetailInfoRes : BaseMovieInfoRes
 
     public string Director {get;set;} = string.Empty;
 
+    /// <summary>Directors with optional TMDB profile photos (enriched server-side).</summary>
+    public List<MoviePersonRes> Directors { get; set; } = [];
+
+    /// <summary>Cast with optional TMDB profile photos (enriched server-side).</summary>
+    public List<MoviePersonRes> Cast { get; set; } = [];
+
     public bool IsCommingSoon { get; set; }
 
     public string TrailerUrl { get; set; } = string.Empty;
 
     /// <summary>Multiple cover / banner images for hero carousel.</summary>
     public List<MovieCoverImageRes> CoverImages { get; set; } = [];
+}
+
+public class MoviePersonRes
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string? ProfileUrl { get; set; }
+
+    public int? TmdbId { get; set; }
+}
+
+/// <summary>Public person (actor/director) detail. Filmography is internal catalog only.</summary>
+public class MoviePersonDetailRes
+{
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>actor | director</summary>
+    public string Role { get; set; } = "actor";
+
+    public string? ProfileUrl { get; set; }
+
+    public int? TmdbId { get; set; }
+
+    public string? KnownForDepartment { get; set; }
+
+    /// <summary>Movies from this cinema catalog (not external TMDB filmography).</summary>
+    public PagedResult<MovieInfoRes> Movies { get; set; } = new();
 }
 
 public class MovieCoverImageRes

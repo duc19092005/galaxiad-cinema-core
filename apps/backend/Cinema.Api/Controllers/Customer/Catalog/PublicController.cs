@@ -23,6 +23,7 @@ public class PublicController : ControllerBase
     private readonly GetAuditoriumDetailsUseCase _getAuditoriumDetailsUseCase;
     private readonly GetAllUpcomingDatesUseCase _getAllUpcomingDatesUseCase;
     private readonly GetMoviePeopleUseCase _getMoviePeopleUseCase;
+    private readonly GetMoviePersonDetailUseCase _getMoviePersonDetailUseCase;
 
     public PublicController(
         GetMovieFormatsUseCase getMovieFormatsUseCase,
@@ -33,7 +34,8 @@ public class PublicController : ControllerBase
         GetScheduleDetailsUseCase getScheduleDetailsUseCase,
         GetAuditoriumDetailsUseCase getAuditoriumDetailsUseCase,
         GetAllUpcomingDatesUseCase getAllUpcomingDatesUseCase,
-        GetMoviePeopleUseCase getMoviePeopleUseCase)
+        GetMoviePeopleUseCase getMoviePeopleUseCase,
+        GetMoviePersonDetailUseCase getMoviePersonDetailUseCase)
     {
         _getMovieFormatsUseCase = getMovieFormatsUseCase;
         _getMovieRequiredAgeUseCase = getMovieRequiredAgeUseCase;
@@ -44,6 +46,7 @@ public class PublicController : ControllerBase
         _getAuditoriumDetailsUseCase = getAuditoriumDetailsUseCase;
         _getAllUpcomingDatesUseCase = getAllUpcomingDatesUseCase;
         _getMoviePeopleUseCase = getMoviePeopleUseCase;
+        _getMoviePersonDetailUseCase = getMoviePersonDetailUseCase;
     }
 
     [HttpGet("MovieFormats")]
@@ -110,6 +113,23 @@ public class PublicController : ControllerBase
     public async Task<IActionResult> GetMoviePeople()
     {
         var result = await _getMoviePeopleUseCase.ExecuteAsync();
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Public actor/director detail. Movies are from internal catalog only (paginated).
+    /// role: actor | director
+    /// </summary>
+    [HttpGet("People/Detail")]
+    public async Task<IActionResult> GetPersonDetail(
+        [FromQuery] string name,
+        [FromQuery] string role = "actor",
+        [FromQuery] int pageIndex = 1,
+        [FromQuery] int pageSize = 12)
+    {
+        var result = await _getMoviePersonDetailUseCase.ExecuteAsync(name, role, pageIndex, pageSize);
+        if (!result.IsSuccess)
+            return BadRequest(result);
         return Ok(result);
     }
 }

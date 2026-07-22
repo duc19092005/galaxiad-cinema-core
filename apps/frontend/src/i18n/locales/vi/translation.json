@@ -672,6 +672,37 @@
     "prev": "Trước",
     "next": "Sau"
   },
+  "breadcrumb": {
+    "home": "Home",
+    "movies": "Phim",
+    "showtimes": "Lịch chiếu",
+    "theaters": "Rạp",
+    "offers": "Ưu đãi",
+    "services": "Dịch vụ",
+    "help": "Trợ giúp",
+    "about": "Về chúng tôi",
+    "contact": "Liên hệ",
+    "careers": "Tuyển dụng",
+    "privacy": "Chính sách bảo mật",
+    "terms": "Điều khoản",
+    "cookies": "Cookie",
+    "safety": "An toàn",
+    "legal": "Pháp lý",
+    "similar": "Phim tương tự",
+    "booking": "Đặt vé",
+    "director": "Đạo diễn",
+    "actor": "Diễn viên"
+  },
+  "personDetail": {
+    "roleActor": "Diễn viên",
+    "roleDirector": "Đạo diễn",
+    "filmCount": "{{count}} phim trong hệ thống",
+    "actedMovies": "Phim tham gia",
+    "directedMovies": "Phim đạo diễn",
+    "noMovies": "Chưa có phim nào trong hệ thống cho người này.",
+    "notFound": "Không tìm thấy người này.",
+    "loadError": "Không thể tải thông tin. Vui lòng thử lại."
+  },
   "proximity": {
     "title": "Chọn Rạp & Vị Trí",
     "findNearest": "Tìm Rạp Gần Nhất (GPS)",

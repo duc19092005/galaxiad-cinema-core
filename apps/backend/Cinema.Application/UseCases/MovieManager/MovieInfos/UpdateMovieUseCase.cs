@@ -72,7 +72,9 @@ public class UpdateMovieUseCase
 
                 var hasSuccessfulBooking = await _adminRepository.HasSuccessfulBookingAsync(itemId);
 
-                if (hasSuccessfulBooking)
+                // Booked movies: still allow poster / banner / multi-cover image updates.
+                // Block only non-media structural fields that would affect sold tickets/schedules.
+                if (hasSuccessfulBooking && HasNonMediaFieldChanges(request))
                 {
                     throw new BadRequestException(Messages.Movie.CannotEditActiveShowtimes, "E03");
                 }
@@ -381,5 +383,26 @@ public class UpdateMovieUseCase
             _logger.LogError(ex, "There's a error while edit movie");
             throw CustomSystemException.SystemExceptionCaller();
         }
+    }
+
+    /// <summary>
+    /// True when the request tries to change anything other than poster/banner/covers.
+    /// Media-only updates remain allowed even if the movie already has successful bookings.
+    /// </summary>
+    private static bool HasNonMediaFieldChanges(ReqEditMovieManagerMovieDto request)
+    {
+        if (!string.IsNullOrEmpty(request.MovieName)) return true;
+        if (!string.IsNullOrEmpty(request.MovieDescription)) return true;
+        if (request.Duration != null) return true;
+        if (request.StartedDate != null) return true;
+        if (request.EndedDate != null) return true;
+        if (request.MovieRequiredAgeId != null) return true;
+        if (!string.IsNullOrEmpty(request.TrailerUrl)) return true;
+        if (!string.IsNullOrEmpty(request.Director)) return true;
+        if (!string.IsNullOrEmpty(request.Actors)) return true;
+        if (request.MovieFormatIds != null && request.MovieFormatIds.Count > 0) return true;
+        if (request.MovieGenreIds != null && request.MovieGenreIds.Count > 0) return true;
+        if (request.CinemaIds != null && request.CinemaIds.Count > 0) return true;
+        return false;
     }
 }

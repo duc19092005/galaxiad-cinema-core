@@ -8,6 +8,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 
 interface FaqItem {
   q: string;
@@ -49,6 +50,12 @@ const HelpPage: React.FC = () => {
       <Header />
 
       <main className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.help', 'Trợ giúp') },
+          ]}
+        />
         {/* Back + Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
           <button

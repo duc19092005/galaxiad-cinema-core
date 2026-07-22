@@ -16,4 +16,7 @@ public interface ITmdbMovieClient
     Task<List<ExternalPersonSearchItemDto>> SearchPeopleAsync(string query, CancellationToken ct = default);
 
     Task<List<ExternalPersonSearchItemDto>> GetPopularPeopleAsync(CancellationToken ct = default);
+
+    /// <summary>Best-effort lookup of a person by display name (exact match preferred).</summary>
+    Task<ExternalPersonSearchItemDto?> FindPersonByNameAsync(string name, CancellationToken ct = default);
 }

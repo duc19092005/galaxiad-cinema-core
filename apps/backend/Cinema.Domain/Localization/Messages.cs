@@ -149,7 +149,7 @@ public static class Messages
         public const string InvalidDuration = "Movie Duration Is Invalid Must be Higher than 0 and Lower than 500";
         public const string AlreadyDeleted = "This movie has already been deleted.";
         public const string DeletedSuccessfully = "Movie deleted successfully.";
-        public const string CannotEditActiveShowtimes = "Cannot edit movie when there are active showtimes or bookings.";
+        public const string CannotEditActiveShowtimes = "Cannot edit movie details when there are active showtimes or bookings. Poster and cover images can still be updated.";
         public const string BannerUploadError = "Failed to upload banner image";
 
         // Dynamic errors (with parameters)

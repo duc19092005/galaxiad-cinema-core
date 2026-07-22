@@ -787,6 +787,41 @@
     "close": "Close",
     "noData": "No room information"
   },
+  "breadcrumb": {
+    "home": "Home",
+    "movies": "Movies",
+    "showtimes": "Showtimes",
+    "theaters": "Theaters",
+    "offers": "Offers",
+    "services": "Services",
+    "help": "Help",
+    "about": "About us",
+    "contact": "Contact",
+    "careers": "Careers",
+    "privacy": "Privacy policy",
+    "terms": "Terms of service",
+    "cookies": "Cookie policy",
+    "safety": "Safety rules",
+    "legal": "Legal",
+    "similar": "Similar movies",
+    "booking": "Booking",
+    "director": "Director",
+    "actor": "Actor"
+  },
+  "personDetail": {
+    "roleActor": "Actor",
+    "roleDirector": "Director",
+    "filmCount": "{{count}} movies in catalog",
+    "actedMovies": "Filmography",
+    "directedMovies": "Directed films",
+    "noMovies": "No movies in our catalog for this person yet.",
+    "notFound": "Person not found.",
+    "loadError": "Could not load person details. Please try again."
+  },
+  "pagination": {
+    "prev": "Prev",
+    "next": "Next"
+  },
   "movieDetail": {
     "age": "Age",
     "mustWatch": "Must Watch",

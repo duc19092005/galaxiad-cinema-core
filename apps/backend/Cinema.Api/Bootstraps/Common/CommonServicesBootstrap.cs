@@ -143,6 +143,7 @@ public static class CommonServicesBootstrap
         services.AddScoped<GetMoviesUseCase>();
         services.AddScoped<GetMovieDetailUseCase>();
         services.AddScoped<GetMoviePeopleUseCase>();
+        services.AddScoped<GetMoviePersonDetailUseCase>();
         services.AddScoped<Cinema.Application.UseCases.Booking.Showtimes.GetSimilarMoviesUseCase>();
         services.AddScoped<GetScheduleDatesUseCase>();
         services.AddScoped<GetScheduleDetailsUseCase>();

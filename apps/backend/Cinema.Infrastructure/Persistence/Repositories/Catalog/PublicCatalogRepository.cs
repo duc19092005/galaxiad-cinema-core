@@ -327,4 +327,83 @@ public class PublicCatalogRepository : IPublicCatalogRepository
 
         return (directors, actors);
     }
+
+    public async Task<(List<MovieInfoRes> Items, int TotalCount)> GetMoviesByPersonAsync(
+        string personName,
+        string role,
+        int pageIndex,
+        int pageSize)
+    {
+        var name = (personName ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(name))
+            return ([], 0);
+
+        pageIndex = pageIndex < 1 ? 1 : pageIndex;
+        pageSize = pageSize is < 1 or > 48 ? 12 : pageSize;
+
+        var roleNorm = (role ?? "actor").Trim().ToLowerInvariant();
+        var isDirector = roleNorm is "director" or "directing" or "dao-dien" or "đạo-diễn";
+
+        // Broad SQL filter (Contains), then exact token match in memory so "Lee" != "Lee Byung-hun"
+        var candidates = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted && (x.IsActive || x.IsCommingSoon))
+            .Where(x => isDirector
+                ? (x.Director != null && x.Director.Contains(name))
+                : (x.Actors != null && x.Actors.Contains(name)))
+            .Select(x => new
+            {
+                x.MovieId,
+                x.MovieName,
+                x.MovieDuration,
+                MoviePosterURL = x.MovieImageUrl,
+                MovieBannerURL = x.MovieBannerUrl,
+                MovieRequiredAge = x.MovieRequiredAgeEntity != null
+                    ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol
+                    : string.Empty,
+                MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
+                MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
+                x.IsCommingSoon,
+                ExpectedReleaseDate = x.ActiveAt,
+                x.Director,
+                x.Actors,
+                x.ActiveAt
+            })
+            .ToListAsync();
+
+        static bool HasExactPerson(string? raw, string person)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            return raw
+                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Any(p => string.Equals(p, person, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var matched = candidates
+            .Where(x => isDirector ? HasExactPerson(x.Director, name) : HasExactPerson(x.Actors, name))
+            .OrderByDescending(x => x.ActiveAt)
+            .ThenBy(x => x.MovieName)
+            .ToList();
+
+        var total = matched.Count;
+        var page = matched
+            .Skip((pageIndex - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new MovieInfoRes
+            {
+                MovieId = x.MovieId,
+                MovieName = x.MovieName,
+                MovieDuration = x.MovieDuration,
+                MoviePosterURL = x.MoviePosterURL,
+                MovieBannerURL = x.MovieBannerURL,
+                MovieRequiredAge = (x.MovieRequiredAge ?? string.Empty).Trim(),
+                MovieFormatInfos = string.Join(", ", x.MovieFormats),
+                MovieCategoryInfos = string.Join(", ", x.MovieCategories),
+                IsCommingSoon = x.IsCommingSoon,
+                ExpectedReleaseDate = x.ExpectedReleaseDate
+            })
+            .ToList();
+
+        return (page, total);
+    }
 }

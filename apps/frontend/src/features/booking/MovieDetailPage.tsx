@@ -1,20 +1,156 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Play, Loader2, AlertCircle, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { Play, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n/config';
 import { publicApi } from '../../api/publicApi';
 import { commentApi } from '../../api/commentApi';
-import type { PublicMovieDetail, PublicCinemaShowtimes, PublicMovieListItem } from '../../types/public.types';
+import type {
+    PublicMovieDetail,
+    PublicCinemaShowtimes,
+    PublicMovieListItem,
+    PublicMoviePerson,
+} from '../../types/public.types';
 import Header from '../../components/Header';
 import PublicFooter from '../../components/PublicFooter';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import MovieCommentsSection from './components/MovieCommentsSection';
 
 const FALLBACK_COVER =
     'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=1920&q=80';
 
-const actorAvatar = (name: string) =>
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1a1a20&color=ffb77f&size=128&bold=true&format=svg`;
+const personAvatar = (name: string, profileUrl?: string | null) =>
+    profileUrl?.trim() ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1a1a20&color=ffb77f&size=256&bold=true&format=svg`;
+
+const splitPeopleCsv = (raw?: string | null): PublicMoviePerson[] => {
+    if (!raw?.trim()) return [];
+    return raw
+        .split(/[,;|]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((name) => ({ name }));
+};
+
+/** Horizontal drag-scroll row with hidden x-scrollbar; click opens person detail */
+const PeopleRow: React.FC<{
+    people: PublicMoviePerson[];
+    role: 'actor' | 'director';
+}> = ({ people, role }) => {
+    const scrollerRef = useRef<HTMLDivElement>(null);
+    const drag = useRef<{
+        pointerId: number | null;
+        startX: number;
+        scrollLeft: number;
+        moved: boolean;
+    }>({ pointerId: null, startX: 0, scrollLeft: 0, moved: false });
+
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        // Only left mouse / primary touch; do not steal focus from keyboard
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        const el = scrollerRef.current;
+        if (!el) return;
+        drag.current = {
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            scrollLeft: el.scrollLeft,
+            moved: false,
+        };
+    };
+
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        const el = scrollerRef.current;
+        if (!el || drag.current.pointerId !== e.pointerId) return;
+        const dx = e.clientX - drag.current.startX;
+        // Only treat as drag after a small threshold so taps still open detail
+        if (!drag.current.moved && Math.abs(dx) < 8) return;
+        if (!drag.current.moved) {
+            drag.current.moved = true;
+            el.classList.add('mdp-people-dragging');
+            try {
+                el.setPointerCapture(e.pointerId);
+            } catch {
+                /* ignore */
+            }
+        }
+        el.scrollLeft = drag.current.scrollLeft - dx;
+        // Prevent text selection / accidental link activation while dragging
+        e.preventDefault();
+    };
+
+    const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+        const el = scrollerRef.current;
+        if (!el || drag.current.pointerId !== e.pointerId) return;
+        const wasDragging = drag.current.moved;
+        drag.current.pointerId = null;
+        el.classList.remove('mdp-people-dragging');
+        try {
+            if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
+        } catch {
+            /* ignore */
+        }
+        // Keep moved flag until click handlers run (same event turn), then clear
+        if (wasDragging) {
+            window.setTimeout(() => {
+                drag.current.moved = false;
+            }, 0);
+        } else {
+            drag.current.moved = false;
+        }
+    };
+
+    if (people.length === 0) return null;
+
+    return (
+        <div
+            ref={scrollerRef}
+            className="mdp-people-scroll flex gap-4 overflow-x-auto pb-1 select-none"
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+        >
+            {people.map((person) => {
+                // Query param avoids RR double-encoding of spaces/unicode in path segments
+                const href = `/person/${role}?name=${encodeURIComponent(person.name)}`;
+                return (
+                    <Link
+                        key={`${person.tmdbId ?? ''}-${person.name}`}
+                        to={href}
+                        draggable={false}
+                        className="mdp-surface rounded-xl p-4 flex flex-col items-center text-center group shrink-0 w-[132px] md:w-[148px] transition-colors duration-300 no-underline"
+                        style={{ cursor: 'pointer' }}
+                        onClick={(e) => {
+                            // Suppress navigation if user was drag-scrolling
+                            if (drag.current.moved) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        }}
+                    >
+                        <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 border-2 border-transparent group-hover:border-[rgba(255,138,0,0.5)] transition-colors duration-300 bg-[var(--bg-base)]">
+                            <img
+                                src={personAvatar(person.name, person.profileUrl)}
+                                alt={person.name}
+                                className="w-full h-full object-cover pointer-events-none"
+                                draggable={false}
+                                loading="lazy"
+                                onError={(e) => {
+                                    const img = e.currentTarget;
+                                    const fallback = personAvatar(person.name);
+                                    if (img.src !== fallback) img.src = fallback;
+                                }}
+                            />
+                        </div>
+                        <p className="text-sm font-bold text-[var(--text-primary)] leading-snug group-hover:text-[#ffb77f] transition-colors line-clamp-2">
+                            {person.name}
+                        </p>
+                    </Link>
+                );
+            })}
+        </div>
+    );
+};
 
 const MovieDetailPage: React.FC = () => {
     const { movieId } = useParams<{ movieId: string }>();
@@ -101,14 +237,17 @@ const MovieDetailPage: React.FC = () => {
         return () => window.clearInterval(id);
     }, [coverUrls.length]);
 
-    const castNames = useMemo(() => {
-        if (!movie?.actor) return [] as string[];
-        return movie.actor
-            .split(/[,;|]/)
-            .map((s) => s.trim())
-            .filter(Boolean)
-            .slice(0, 8);
-    }, [movie?.actor]);
+    const directors = useMemo((): PublicMoviePerson[] => {
+        if (!movie) return [];
+        if (movie.directors && movie.directors.length > 0) return movie.directors;
+        return splitPeopleCsv(movie.director);
+    }, [movie]);
+
+    const cast = useMemo((): PublicMoviePerson[] => {
+        if (!movie) return [];
+        if (movie.cast && movie.cast.length > 0) return movie.cast;
+        return splitPeopleCsv(movie.actor).slice(0, 12);
+    }, [movie]);
 
     const monthGroups = useMemo(() => {
         const groups: Record<string, string[]> = {};
@@ -186,10 +325,6 @@ const MovieDetailPage: React.FC = () => {
         [coverUrls.length]
     );
 
-    const scrollToBooking = () => {
-        document.getElementById('movie-booking')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
     if (loading) {
         return (
             <div className="min-h-[100dvh] bg-[var(--bg-base)] flex items-center justify-center">
@@ -263,6 +398,21 @@ const MovieDetailPage: React.FC = () => {
                 .mdp-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
                 .mdp-scroll::-webkit-scrollbar-track { background: var(--bg-base); }
                 .mdp-scroll::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; opacity: 0.7; }
+                /* Hide horizontal scrollbar (cover filmstrip, people row, etc.) */
+                .mdp-hide-x-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                }
+                .mdp-hide-x-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+                /* People carousel: hide horizontal scrollbar, allow drag */
+                .mdp-people-scroll {
+                    scrollbar-width: none;
+                    -ms-overflow-style: none;
+                    cursor: grab;
+                    touch-action: pan-x;
+                }
+                .mdp-people-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+                .mdp-people-scroll.mdp-people-dragging { cursor: grabbing; }
                 @media (prefers-reduced-motion: reduce) {
                     .mdp-btn-primary:hover { transform: none; }
                 }
@@ -273,6 +423,18 @@ const MovieDetailPage: React.FC = () => {
             <main className="relative z-10">
                 {/* Fullscreen cinematic cover hero (HTML mock style) */}
                 <section className="relative w-full h-[100dvh] min-h-[720px] md:min-h-[800px] flex items-end pb-20 md:pb-[10vh]">
+                    <div className="absolute top-[88px] md:top-[100px] left-0 right-0 z-20 pointer-events-none">
+                        <div className="max-w-[1440px] mx-auto px-5 md:px-16 pointer-events-auto">
+                            <PublicBreadcrumb
+                                variant="overlay"
+                                items={[
+                                    { label: t('breadcrumb.home', 'Home'), path: '/home' },
+                                    { label: t('breadcrumb.movies', 'Phim'), path: '/movies' },
+                                    { label: movie.movieName },
+                                ]}
+                            />
+                        </div>
+                    </div>
                     <div className="absolute inset-0 z-0 overflow-hidden">
                         {coverUrls.map((url, idx) => (
                             <div
@@ -350,8 +512,8 @@ const MovieDetailPage: React.FC = () => {
                                 {movie.movieDescription || t('movieDetail.noDescription', 'No storyline details available.')}
                             </p>
 
-                            <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-4">
-                                {movie.trailerUrl ? (
+                            {movie.trailerUrl ? (
+                                <div className="flex flex-wrap items-center gap-3 md:gap-4 mt-4">
                                     <a
                                         href={movie.trailerUrl}
                                         target="_blank"
@@ -361,16 +523,8 @@ const MovieDetailPage: React.FC = () => {
                                         <Play size={18} className="fill-[#111]" />
                                         {t('movieDetail.watchTrailer', 'Watch Trailer')}
                                     </a>
-                                ) : null}
-                                <button
-                                    type="button"
-                                    onClick={scrollToBooking}
-                                    className="mdp-btn-glass px-6 py-4 rounded-lg text-[14px] font-semibold flex items-center gap-2 cursor-pointer"
-                                >
-                                    {t('movieDetail.scrollToBooking', 'Book now')}
-                                    <ArrowRight size={16} />
-                                </button>
-                            </div>
+                                </div>
+                            ) : null}
 
                             {/* Cover filmstrip inside hero (multi banner) */}
                             {coverUrls.length > 1 && (
@@ -383,7 +537,7 @@ const MovieDetailPage: React.FC = () => {
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
-                                    <div className="flex gap-2 overflow-x-auto mdp-scroll pb-1 max-w-full">
+                                    <div className="flex gap-2 overflow-x-auto mdp-hide-x-scroll pb-1 max-w-full">
                                         {coverUrls.map((url, idx) => (
                                             <button
                                                 key={`hero-thumb-${idx}`}
@@ -424,76 +578,31 @@ const MovieDetailPage: React.FC = () => {
                 >
                     <div className="max-w-[1440px] mx-auto px-5 md:px-16 py-10 md:py-14">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6">
-                        {/* Left: cast, storyline */}
+                        {/* Left: director, cast */}
                         <div className="lg:col-span-8 flex flex-col gap-12 md:gap-14">
-                            {castNames.length > 0 && (
+                            {directors.length > 0 && (
                                 <div>
                                     <h2
                                         className="text-2xl font-semibold text-white mb-6 md:mb-8 border-l-4 border-[var(--accent)] pl-4"
                                         style={{ fontFamily: "'Montserrat', sans-serif" }}
                                     >
-                                        {t('movieDetail.mainCast', 'Main cast')}
+                                        {t('movieDetail.director', 'Đạo diễn')}
                                     </h2>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                        {castNames.map((name) => (
-                                            <div
-                                                key={name}
-                                                className="mdp-surface rounded-xl p-4 flex flex-col items-center text-center group cursor-default transition-colors duration-300"
-                                            >
-                                                <div className="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden mb-3 border-2 border-transparent group-hover:border-[rgba(255,138,0,0.5)] transition-colors duration-300 bg-[var(--bg-base)]">
-                                                    <img
-                                                        src={actorAvatar(name)}
-                                                        alt={name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                <p className="text-sm font-bold text-[var(--text-primary)] leading-snug group-hover:text-[#ffb77f] transition-colors">
-                                                    {name}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
+                                    <PeopleRow people={directors} role="director" />
                                 </div>
                             )}
 
-                            <div>
-                                <h2
-                                    className="text-2xl font-semibold text-white mb-4 border-l-4 border-[var(--accent)] pl-4"
-                                    style={{ fontFamily: "'Montserrat', sans-serif" }}
-                                >
-                                    {t('movieDetail.storyline', 'Storyline')}
-                                </h2>
-                                <p className="text-lg text-white/80 leading-relaxed max-w-3xl break-words">
-                                    {movie.movieDescription || t('movieDetail.noDescription', 'No storyline details available.')}
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 border-t border-[var(--border-color)]">
-                                <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">
-                                        {t('movieDetail.director', 'Director')}
-                                    </p>
-                                    <p className="text-xl font-bold text-white">{movie.director || 'N/A'}</p>
+                            {cast.length > 0 && (
+                                <div>
+                                    <h2
+                                        className="text-2xl font-semibold text-white mb-6 md:mb-8 border-l-4 border-[var(--accent)] pl-4"
+                                        style={{ fontFamily: "'Montserrat', sans-serif" }}
+                                    >
+                                        {t('movieDetail.mainCast', 'Diễn viên chính')}
+                                    </h2>
+                                    <PeopleRow people={cast} role="actor" />
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">
-                                        {t('movieDetail.genres', 'Genres')}
-                                    </p>
-                                    <p className="text-xl font-bold text-white">{movie.movieCategoryInfos || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">
-                                        {t('movieDetail.cast', 'Cast')}
-                                    </p>
-                                    <p className="text-xl font-bold text-white">{movie.actor || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-xs text-[#ffb77f] tracking-widest uppercase font-semibold">
-                                        {t('movieDetail.selectFormat', 'Format')}
-                                    </p>
-                                    <p className="text-xl font-bold text-white">{movie.movieFormatInfos || 'N/A'}</p>
-                                </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Right: sticky booking panel */}

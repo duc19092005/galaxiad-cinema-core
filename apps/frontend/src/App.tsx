@@ -11,6 +11,7 @@ import GoogleCallback from './features/auth/GoogleCallback';
 import RoleSelectionPage from './features/auth/RoleSelectionPage';
 import HomePage from './features/public/HomePage';
 import AllMoviesPage from './features/public/AllMoviesPage';
+import PersonDetailPage from './features/public/PersonDetailPage';
 import FacilitiesManagerPage from './features/facilities/FacilitiesManagerPage';
 import MovieManagerPage from './features/movie/MovieManagerPage';
 import NotFound from './features/misc/NotFound';
@@ -64,6 +65,9 @@ function AppRoutes() {
         <Route path="/role-selection" element={<ProtectedRoute><PageTransition><RoleSelectionPage /></PageTransition></ProtectedRoute>} />
         <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
         <Route path="/movies" element={<PageTransition><AllMoviesPage /></PageTransition>} />
+        <Route path="/person/:role" element={<PageTransition><PersonDetailPage /></PageTransition>} />
+        {/* Legacy path with name in URL segment */}
+        <Route path="/person/:role/:personName" element={<PageTransition><PersonDetailPage /></PageTransition>} />
         <Route path="/showtimes" element={<PageTransition><ShowtimesPage /></PageTransition>} />
         <Route path="/theaters" element={<PageTransition><TheatersPage /></PageTransition>} />
         <Route path="/offers" element={<PageTransition><OffersPage /></PageTransition>} />

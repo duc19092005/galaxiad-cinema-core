@@ -33,10 +33,40 @@ export interface PublicMovieCoverImage {
     caption?: string | null;
 }
 
+export interface PublicMoviePerson {
+    name: string;
+    profileUrl?: string | null;
+    tmdbId?: number | null;
+}
+
+export interface PublicPersonMoviesPage {
+    items: PublicMovieListItem[];
+    totalCount: number;
+    pageIndex: number;
+    pageSize: number;
+    totalPages: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+/** Actor/director detail — filmography is internal catalog only */
+export interface PublicPersonDetail {
+    name: string;
+    role: 'actor' | 'director' | string;
+    profileUrl?: string | null;
+    tmdbId?: number | null;
+    knownForDepartment?: string | null;
+    movies: PublicPersonMoviesPage;
+}
+
 export interface PublicMovieDetail extends PublicMovieListItem {
     trailerUrl?: string;
     director: string;
     actor: string;
+    /** Enriched directors with optional TMDB profile photos */
+    directors?: PublicMoviePerson[];
+    /** Enriched cast with optional TMDB profile photos */
+    cast?: PublicMoviePerson[];
     movieDescription: string;
     movieBannerURL?: string;
     coverImages?: PublicMovieCoverImage[];

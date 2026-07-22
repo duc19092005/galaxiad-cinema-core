@@ -115,6 +115,27 @@ public class TmdbMovieClient : ITmdbMovieClient
         return MapPeople(payload?.Results);
     }
 
+    public async Task<ExternalPersonSearchItemDto?> FindPersonByNameAsync(string name, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return null;
+        if (string.IsNullOrWhiteSpace(_apiKey)) return null;
+
+        try
+        {
+            var results = await SearchPeopleAsync(name.Trim(), ct);
+            if (results.Count == 0) return null;
+
+            var exact = results.FirstOrDefault(p =>
+                string.Equals(p.Name, name.Trim(), StringComparison.OrdinalIgnoreCase));
+            return exact ?? results[0];
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "TMDB person lookup failed for {Name}", name);
+            return null;
+        }
+    }
+
     private List<ExternalPersonSearchItemDto> MapPeople(List<TmdbPersonResult>? results) =>
         (results ?? [])
             .Where(p => !string.IsNullOrWhiteSpace(p.Name))
@@ -125,7 +146,8 @@ public class TmdbMovieClient : ITmdbMovieClient
                 TmdbId = p.Id,
                 Name = p.Name!.Trim(),
                 KnownForDepartment = p.KnownForDepartment,
-                ProfileUrl = ToImageUrl(p.ProfilePath),
+                // Larger profile still looks crisp in detail cards
+                ProfileUrl = ToImageUrl(p.ProfilePath, "w342"),
                 Popularity = p.Popularity
             })
             .ToList();
@@ -139,10 +161,12 @@ public class TmdbMovieClient : ITmdbMovieClient
         }
     }
 
-    private string? ToImageUrl(string? path)
+    private string? ToImageUrl(string? path, string? size = null)
     {
         if (string.IsNullOrWhiteSpace(path)) return null;
-        return $"{_imageBase}/{path.TrimStart('/')}";
+        if (string.IsNullOrWhiteSpace(size))
+            return $"{_imageBase}/{path.TrimStart('/')}";
+        return $"https://image.tmdb.org/t/p/{size}/{path.TrimStart('/')}";
     }
 
     private async Task<T?> GetAsync<T>(string relativeUrl, CancellationToken ct)

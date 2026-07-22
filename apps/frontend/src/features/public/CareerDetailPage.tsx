@@ -6,6 +6,7 @@ import {
   MapPin, Clock, DollarSign, Briefcase, CheckCircle, Upload, FileText, X
 } from 'lucide-react';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 
 const jobIcons: Record<string, React.ReactNode> = {
   backend: <Server size={28} />,
@@ -88,11 +89,13 @@ const CareerDetailPage: React.FC = () => {
     <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg-base)', color: 'var(--text-primary)' }}>
       <Header />
       <main className="page-enter" style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(88px, 12vw, 112px) clamp(16px, 4vw, 24px) clamp(48px, 6vw, 64px)' }}>
-        {/* Back */}
-        <button onClick={() => navigate('/careers')}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 13, marginBottom: 24, padding: 0 }}>
-          <ChevronLeft size={16} /> {t('careers.backToJobs', 'Back to Careers')}
-        </button>
+        <PublicBreadcrumb
+          items={[
+            { label: t('breadcrumb.home', 'Home'), path: '/home' },
+            { label: t('breadcrumb.careers', 'Tuyển dụng'), path: '/careers' },
+            { label: t(`careers.${jobId}Title`) },
+          ]}
+        />
 
         {/* Job Header Card */}
         <div className="page-enter-d1" style={{ background: 'var(--bg-elevated)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border-color)', padding: 'clamp(24px, 4vw, 36px)', marginBottom: 24 }}>

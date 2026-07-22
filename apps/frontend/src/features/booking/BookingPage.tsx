@@ -10,6 +10,7 @@ import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/publi
 import { useTranslation } from 'react-i18next';
 import { showError } from '../../utils/ToastUtils';
 import Header from '../../components/Header';
+import PublicBreadcrumb from '../../components/PublicBreadcrumb';
 import { voucherApi, type UserVoucherDto } from '../../api/voucherApi';
 import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
 
@@ -316,7 +317,15 @@ const BookingPage: React.FC = () => {
 
             {/* Main Content */}
             <main className="pt-32 pb-24 px-6 md:px-16 max-w-7xl mx-auto">
-                {/* Movie Info Breadcrumb */}
+                <PublicBreadcrumb
+                    items={[
+                        { label: t('breadcrumb.home', 'Home'), path: '/home' },
+                        { label: t('breadcrumb.movies', 'Phim'), path: '/movies' },
+                        { label: seatMap.movieName },
+                        { label: t('breadcrumb.booking', 'Đặt vé') },
+                    ]}
+                />
+                {/* Movie Info */}
                 <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6 border-l-4 border-[#ff8a00] pl-6">
                     <div>
                         <h1 className="text-3xl md:text-5xl font-extrabold text-white mb-2 leading-tight">{seatMap.movieName}</h1>
