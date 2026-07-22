@@ -1,7 +1,17 @@
 // src/api/movieApi.ts
 import { movieAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
-import type { Movie, MovieRequiredAge, MovieGenre, CreateMovieFormData, UpdateMovieFormData } from '../types/movie.types';
+import type {
+    Movie,
+    MovieRequiredAge,
+    MovieGenre,
+    CreateMovieFormData,
+    UpdateMovieFormData,
+    MoviePeople,
+    ExternalMovieSearchItem,
+    ExternalMovieCredits,
+    ExternalPersonSearchItem,
+} from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
 
 const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
@@ -43,6 +53,43 @@ export const movieApi = {
         return response.data;
     },
 
+    /** GET /api/v1/Public/MoviePeople — distinct directors & actors from local catalog (legacy) */
+    getMoviePeople: async (): Promise<ApiSuccessResponse<MoviePeople>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<MoviePeople>>(
+            `/v1/Public/MoviePeople`
+        );
+        return response.data;
+    },
+
+    /** TMDB: search movies by title (external public API via backend proxy) */
+    searchExternalMovies: async (q: string): Promise<ApiSuccessResponse<ExternalMovieSearchItem[]>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<ExternalMovieSearchItem[]>>(
+            `/movieManager/external/movies/search`,
+            { params: { q } }
+        );
+        return response.data;
+    },
+
+    /** TMDB: get directors + cast for a movie */
+    getExternalMovieCredits: async (tmdbId: number): Promise<ApiSuccessResponse<ExternalMovieCredits>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<ExternalMovieCredits>>(
+            `/movieManager/external/movies/${tmdbId}/credits`
+        );
+        return response.data;
+    },
+
+    /** TMDB: search people by name (empty q = popular). role: director | actor */
+    searchExternalPeople: async (
+        q: string,
+        role?: 'director' | 'actor'
+    ): Promise<ApiSuccessResponse<ExternalPersonSearchItem[]>> => {
+        const response = await movieAxios.get<ApiSuccessResponse<ExternalPersonSearchItem[]>>(
+            `/movieManager/external/people/search`,
+            { params: { q, role } }
+        );
+        return response.data;
+    },
+
     /** GET /api/movieManager/movies/{id} */
     getMovieDetail: async (movieId: string): Promise<ApiSuccessResponse<Movie>> => {
         const response = await movieAxios.get<ApiSuccessResponse<Movie>>(
@@ -59,6 +106,9 @@ export const movieApi = {
         formData.append('movieDescription', data.movieDescription);
         formData.append('movieImage', data.movieImage);
         if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
+        if (data.movieBanners?.length) {
+            data.movieBanners.forEach((file) => formData.append('MovieBanners', file));
+        }
         formData.append('EndedDate', data.endedDate);
         formData.append('StartedDate', data.startedDate);
         formData.append('duration', data.duration.toString());
@@ -100,6 +150,12 @@ export const movieApi = {
         if (data.movieDescription !== undefined) formData.append('movieDescription', data.movieDescription);
         if (data.movieImage) formData.append('movieImage', data.movieImage);
         if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
+        if (data.movieBanners?.length) {
+            data.movieBanners.forEach((file) => formData.append('MovieBanners', file));
+        }
+        if (data.removeCoverImageIds?.length) {
+            data.removeCoverImageIds.forEach((id) => formData.append('RemoveCoverImageIds', id));
+        }
         if (data.endedDate !== undefined && data.endedDate !== null) formData.append('EndedDate', data.endedDate);
         if (data.startedDate !== undefined && data.startedDate !== null) formData.append('StartedDate', data.startedDate);
         if (data.duration !== undefined) formData.append('duration', data.duration.toString());

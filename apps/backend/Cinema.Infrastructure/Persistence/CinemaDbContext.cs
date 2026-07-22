@@ -93,6 +93,8 @@ public class CinemaDbContext : DbContext
 
     public DbSet<MovieViewEntity> MovieViewEntity { get; set; }
 
+    public DbSet<MovieCoverImageEntity> MovieCoverImageEntity { get; set; }
+
     public DbSet<ShowtimeRecommendationBatchEntity> ShowtimeRecommendationBatchEntity { get; set; }
 
     public DbSet<ShowtimeRecommendationItemEntity> ShowtimeRecommendationItemEntity { get; set; }
@@ -687,6 +689,9 @@ public class CinemaDbContext : DbContext
 
         // Seeds Cinema, Auditorium, Seats, Movie, Schedule (For Booking Flow)
         CinemaAndMovieSeedData.AddSeedData(modelBuilder);
+
+        // Seeds multi cover / banner images for movie detail hero
+        MovieCoverImageSeedData.AddMovieCoverImageSeedData(modelBuilder);
         
         // Seeds Cinema Surcharges for User Segments
         CinemaSurchargeSeedData.AddCinemaSurchargeSeedData(modelBuilder);
@@ -696,6 +701,8 @@ public class CinemaDbContext : DbContext
 
         // Seeds Vouchers
         VoucherSeedData.AddVoucherSeedData(modelBuilder);
+
+        AiResearchSeedData.AddAiResearchSeedData(modelBuilder);
 
         // Group Booking (Social)
 

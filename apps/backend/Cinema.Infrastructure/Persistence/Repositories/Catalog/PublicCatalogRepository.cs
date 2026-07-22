@@ -111,17 +111,35 @@ public class PublicCatalogRepository : IPublicCatalogRepository
                 MovieDescription = x.MovieDescription,
                 MoviePosterURL = x.MovieImageUrl,
                 MovieBannerURL = x.MovieBannerUrl,
+                TrailerUrl = x.TrailerUrl,
                 MovieRequiredAge = x.MovieRequiredAgeEntity != null ? x.MovieRequiredAgeEntity.MovieRequiredAgeSymbol : string.Empty,
                 MovieFormats = x.MovieFormatMovieInfoEntity.Select(m => m.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 IsCommingSoon = x.IsCommingSoon,
                 MovieCategories = x.MovieGenreMovieInfoEntity.Select(m => m.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 ReleaseDate = x.ActiveAt,
                 Actor = x.Actors,
-                Director = x.Director
+                Director = x.Director,
+                CoverImages = x.MovieCoverImageEntities
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.SortOrder)
+                    .Select(c => new MovieCoverImageRes
+                    {
+                        MovieCoverImageId = c.MovieCoverImageId,
+                        ImageUrl = c.ImageUrl,
+                        SortOrder = c.SortOrder,
+                        IsPrimary = c.IsPrimary,
+                        Caption = c.Caption
+                    })
+                    .ToList()
             })
             .FirstOrDefaultAsync();
 
         if (rawMovie == null) return null;
+
+        var coverImages = rawMovie.CoverImages;
+        var primaryBanner = coverImages.FirstOrDefault(c => c.IsPrimary)?.ImageUrl
+            ?? coverImages.FirstOrDefault()?.ImageUrl
+            ?? rawMovie.MovieBannerURL;
 
         return new MovieDetailInfoRes
         {
@@ -130,14 +148,16 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             MovieDuration = rawMovie.MovieDuration,
             MovieDescription = rawMovie.MovieDescription,
             MoviePosterURL = rawMovie.MoviePosterURL,
-            MovieBannerURL = rawMovie.MovieBannerURL,
+            MovieBannerURL = primaryBanner,
+            TrailerUrl = rawMovie.TrailerUrl,
             MovieRequiredAge = (rawMovie.MovieRequiredAge ?? string.Empty).Trim(),
             MovieFormatInfos = string.Join(", ", rawMovie.MovieFormats),
             IsCommingSoon = rawMovie.IsCommingSoon,
             MovieCategoryInfos = string.Join(", ", rawMovie.MovieCategories),
             ReleaseDate = rawMovie.ReleaseDate,
             Actor = rawMovie.Actor,
-            Director = rawMovie.Director
+            Director = rawMovie.Director,
+            CoverImages = coverImages
         };
     }
 
@@ -273,5 +293,38 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             .Where(m => !m.IsDeleted && ids.Contains(m.MovieId))
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public async Task<(List<string> Directors, List<string> Actors)> GetMoviePeopleAsync()
+    {
+        var rows = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => new { x.Director, x.Actors })
+            .ToListAsync();
+
+        static IEnumerable<string> SplitPeople(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) yield break;
+            foreach (var part in raw.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!string.IsNullOrWhiteSpace(part))
+                    yield return part.Trim();
+            }
+        }
+
+        var directors = rows
+            .SelectMany(r => SplitPeople(r.Director))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        var actors = rows
+            .SelectMany(r => SplitPeople(r.Actors))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        return (directors, actors);
     }
 }

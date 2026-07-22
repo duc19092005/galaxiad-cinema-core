@@ -97,10 +97,16 @@ const FacilitiesManagerPage: React.FC = () => {
 
   const sidebarSections: SidebarSection[] = [
     {
+      id: 'facilities-menu',
+      label: 'Chức năng',
+      description: 'Cơ sở vật chất & phòng chiếu',
+      icon: <LayoutDashboard size={18} />,
+      defaultOpen: true,
+      collapsible: true,
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
-        { id: 'auditoriums', label: 'Auditoriums', icon: <Monitor size={18} /> },
-        { id: 'seat-reports', label: 'Seat Reports', icon: <BarChart3 size={18} /> },
+        { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+        { id: 'auditoriums', label: 'Auditoriums', icon: <Monitor size={16} /> },
+        { id: 'seat-reports', label: 'Seat Reports', icon: <BarChart3 size={16} /> },
       ],
     },
   ];

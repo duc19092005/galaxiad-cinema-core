@@ -26,6 +26,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Docker
       - AiService__BaseUrl=http://ai:8000
       - AiService__GrpcUrl=http://ai:50051
+      - Tmdb__ApiKey=${TMDB_API_KEY:-}
+      - Tmdb__ImageBaseUrl=${TMDB_IMAGE_BASE_URL:-https://image.tmdb.org/t/p/w185}
     networks:
       - cinema-network
     depends_on:

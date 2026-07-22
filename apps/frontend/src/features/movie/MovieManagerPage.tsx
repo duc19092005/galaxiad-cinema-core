@@ -27,7 +27,14 @@ import axios from 'axios';
 import { dismissToast, showError, showLoading, showSuccess } from '../../utils/ToastUtils';
 import { authApi } from '../../api/authApi';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type { Movie, MovieRequiredAge, MovieGenre, UpdateMovieFormData } from '../../types/movie.types';
+import type {
+    Movie,
+    MovieRequiredAge,
+    MovieGenre,
+    UpdateMovieFormData,
+    MovieCoverImage,
+    ExternalPersonSearchItem,
+} from '../../types/movie.types';
 import type { MovieFormat, Cinema } from '../../types/facilities.types';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import LogoutModal from '../../components/LogoutModal';
@@ -111,6 +118,21 @@ const MovieDetailModal: React.FC<MovieDetailModalProps> = ({ movie, isOpen, onCl
                             </div>
                         ))}
                     </div>
+
+                    {(movie.coverImages && movie.coverImages.length > 0) && (
+                        <div style={{ marginBottom: 20 }}>
+                            <h3 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {t('movieManager.coverImages', 'Ảnh bìa')}
+                            </h3>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                                {movie.coverImages.map((c) => (
+                                    <div key={c.movieCoverImageId} style={{ width: 96, height: 56, borderRadius: 8, overflow: 'hidden', border: c.isPrimary ? '2px solid var(--accent)' : '1px solid var(--border-color)' }}>
+                                        <img src={c.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div>
                         <h3 style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
@@ -291,6 +313,399 @@ const SelectableOption: React.FC<{
     </button>
 );
 
+/** Parse "A, B, C" -> unique trimmed names */
+const parsePeopleCsv = (raw: string): string[] =>
+    raw
+        .split(/[,;|]/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+/** Debounced TMDB person search. role separates director vs actor. Min 2 chars. */
+function useTmdbPersonSearch(query: string, role: 'director' | 'actor') {
+    const { t } = useTranslation();
+    const [items, setItems] = useState<ExternalPersonSearchItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const seqRef = useRef(0);
+
+    useEffect(() => {
+        const q = query.trim();
+        const seq = ++seqRef.current;
+
+        if (q.length < 2) {
+            setItems([]);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
+        setLoading(true);
+        setError(null);
+        const timer = window.setTimeout(async () => {
+            try {
+                const res = await movieApi.searchExternalPeople(q, role);
+                if (seq !== seqRef.current) return;
+                setItems(res.data || []);
+                if (!(res.data || []).length) {
+                    setError(
+                        role === 'director'
+                            ? t('movieManager.tmdbNoDirectors', 'Không tìm thấy đạo diễn trên TMDB')
+                            : t('movieManager.tmdbNoActors', 'Không tìm thấy diễn viên trên TMDB')
+                    );
+                }
+            } catch (err: any) {
+                if (seq !== seqRef.current) return;
+                setItems([]);
+                setError(err?.response?.data?.message || t('movieManager.tmdbPeopleError', 'Lỗi tìm người trên TMDB'));
+            } finally {
+                if (seq === seqRef.current) setLoading(false);
+            }
+        }, 320);
+        return () => window.clearTimeout(timer);
+    }, [query, role, t]);
+
+    return { items, loading, error };
+}
+
+const PersonResultRow: React.FC<{
+    person: ExternalPersonSearchItem;
+    selected: boolean;
+    onSelect: () => void;
+    roleLabel: string;
+}> = ({ person, selected, onSelect, roleLabel }) => (
+    <button
+        type="button"
+        onClick={onSelect}
+        style={{
+            display: 'flex',
+            gap: 10,
+            alignItems: 'center',
+            textAlign: 'left',
+            padding: 10,
+            borderRadius: 12,
+            border: selected ? '1px solid var(--accent)' : '1px solid var(--border-color)',
+            background: selected ? 'rgba(255,138,0,0.14)' : 'rgba(255,255,255,0.03)',
+            cursor: 'pointer',
+            color: 'var(--text-primary)',
+            width: '100%',
+        }}
+    >
+        <div
+            style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                overflow: 'hidden',
+                background: '#222',
+                flex: '0 0 auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 800,
+                color: 'var(--accent)',
+            }}
+        >
+            {person.profileUrl ? (
+                <img src={person.profileUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+                person.name.charAt(0)
+            )}
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontWeight: 800, fontSize: 13 }}>{person.name}</div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {roleLabel}
+                {person.knownForDepartment ? ` · ${person.knownForDepartment}` : ''}
+            </div>
+        </div>
+        {selected && <CheckCircle size={16} style={{ color: 'var(--accent)', flex: '0 0 auto' }} />}
+    </button>
+);
+
+/**
+ * TWO completely separate pickers:
+ * 1) Đạo diễn — 1 search box, single select
+ * 2) Diễn viên — 1 other search box, multi select
+ * Both call TMDB person search (not movies).
+ */
+const ExternalMoviePeoplePicker: React.FC<{
+    movieNameHint?: string;
+    director: string;
+    actorsCsv: string;
+    onDirectorChange: (name: string) => void;
+    onActorsChange: (csv: string) => void;
+}> = ({ director, actorsCsv, onDirectorChange, onActorsChange }) => {
+    const { t } = useTranslation();
+    const [directorQuery, setDirectorQuery] = useState('');
+    const [actorQuery, setActorQuery] = useState('');
+    const directorSearch = useTmdbPersonSearch(directorQuery, 'director');
+    const actorSearch = useTmdbPersonSearch(actorQuery, 'actor');
+    const selectedActors = parsePeopleCsv(actorsCsv);
+
+    const toggleActor = (name: string) => {
+        const exists = selectedActors.some((a) => a.toLowerCase() === name.toLowerCase());
+        const next = exists
+            ? selectedActors.filter((a) => a.toLowerCase() !== name.toLowerCase())
+            : [...selectedActors, name];
+        onActorsChange(next.join(', '));
+    };
+
+    return (
+        <div
+            style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr',
+                gap: 16,
+            }}
+        >
+            {/* ========== ĐẠO DIỄN (riêng) ========== */}
+            <FormPanel>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 10,
+                        paddingBottom: 10,
+                        borderBottom: '1px solid rgba(255,138,0,0.25)',
+                    }}
+                >
+                    <span
+                        style={{
+                            fontSize: 11,
+                            fontWeight: 900,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#111',
+                            background: 'var(--accent)',
+                            borderRadius: 999,
+                            padding: '4px 10px',
+                        }}
+                    >
+                        {t('movieManager.directorSection', 'Đạo diễn')}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {t('movieManager.directorSingle', 'Chọn đúng 1 người')}
+                    </span>
+                </div>
+
+                {director ? (
+                    <div style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                        <span
+                            className="badge"
+                            style={{
+                                background: 'rgba(255,138,0,0.18)',
+                                color: 'var(--accent)',
+                                border: '1px solid rgba(255,138,0,0.35)',
+                                fontSize: 13,
+                                padding: '6px 12px',
+                            }}
+                        >
+                            {t('movieManager.selectedDirector', 'Đã chọn')}: {director}
+                        </span>
+                        <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: 11 }}
+                            onClick={() => onDirectorChange('')}
+                        >
+                            {t('common.clear', 'Xóa')}
+                        </button>
+                    </div>
+                ) : null}
+
+                <label className="input-label" style={{ marginBottom: 6 }}>
+                    {t('movieManager.searchDirector', 'Tìm đạo diễn (TMDB)')}
+                </label>
+                <div style={{ position: 'relative' }}>
+                    <Search
+                        size={14}
+                        style={{
+                            position: 'absolute',
+                            left: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'var(--text-muted)',
+                            pointerEvents: 'none',
+                        }}
+                    />
+                    <input
+                        type="text"
+                        className="input"
+                        style={{
+                            width: '100%',
+                            paddingLeft: 36,
+                            paddingRight: directorSearch.loading ? 40 : 12,
+                            borderColor: 'rgba(255,138,0,0.35)',
+                        }}
+                        value={directorQuery}
+                        onChange={(e) => setDirectorQuery(e.target.value)}
+                        placeholder={t('movieManager.directorSearchPh', 'Gõ tên đạo diễn: Nolan, Villeneuve...')}
+                        autoComplete="off"
+                        name="tmdb-director-search"
+                        id="tmdb-director-search"
+                    />
+                    {directorSearch.loading && (
+                        <Loader2
+                            size={14}
+                            style={{
+                                position: 'absolute',
+                                right: 12,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                animation: 'spin 1s linear infinite',
+                                color: 'var(--accent)',
+                            }}
+                        />
+                    )}
+                </div>
+                {directorQuery.trim().length > 0 && directorQuery.trim().length < 2 && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+                        {t('movieManager.typeMin2', 'Gõ tối thiểu 2 ký tự để tìm...')}
+                    </p>
+                )}
+                {directorSearch.error && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--danger)' }}>{directorSearch.error}</p>
+                )}
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 240, overflowY: 'auto' }}>
+                    {directorSearch.items.map((p) => (
+                        <PersonResultRow
+                            key={`director-${p.tmdbId}`}
+                            person={p}
+                            roleLabel={t('movieManager.director', 'Đạo diễn')}
+                            selected={director.trim().toLowerCase() === p.name.toLowerCase()}
+                            onSelect={() => onDirectorChange(p.name)}
+                        />
+                    ))}
+                </div>
+            </FormPanel>
+
+            {/* ========== DIỄN VIÊN (riêng) ========== */}
+            <FormPanel>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 10,
+                        paddingBottom: 10,
+                        borderBottom: '1px solid rgba(96,165,250,0.35)',
+                    }}
+                >
+                    <span
+                        style={{
+                            fontSize: 11,
+                            fontWeight: 900,
+                            letterSpacing: '0.08em',
+                            textTransform: 'uppercase',
+                            color: '#0c1a2e',
+                            background: '#60a5fa',
+                            borderRadius: 999,
+                            padding: '4px 10px',
+                        }}
+                    >
+                        {t('movieManager.actorsSection', 'Diễn viên')}
+                    </span>
+                    <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                        {t('movieManager.actorsMulti', 'Chọn nhiều người')}
+                        {selectedActors.length > 0 ? ` · ${selectedActors.length}` : ''}
+                    </span>
+                </div>
+
+                {selectedActors.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                        {selectedActors.map((name) => (
+                            <button
+                                key={name}
+                                type="button"
+                                onClick={() => toggleActor(name)}
+                                className="badge"
+                                style={{
+                                    background: 'rgba(96,165,250,0.18)',
+                                    color: '#93c5fd',
+                                    border: '1px solid rgba(96,165,250,0.4)',
+                                    cursor: 'pointer',
+                                    fontSize: 12,
+                                    padding: '6px 10px',
+                                }}
+                                title={t('common.remove', 'Bỏ chọn')}
+                            >
+                                {name} ×
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <label className="input-label" style={{ marginBottom: 6 }}>
+                    {t('movieManager.searchActors', 'Tìm diễn viên (TMDB)')}
+                </label>
+                <div style={{ position: 'relative' }}>
+                    <Search
+                        size={14}
+                        style={{
+                            position: 'absolute',
+                            left: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            color: 'var(--text-muted)',
+                            pointerEvents: 'none',
+                        }}
+                    />
+                    <input
+                        type="text"
+                        className="input"
+                        style={{
+                            width: '100%',
+                            paddingLeft: 36,
+                            paddingRight: actorSearch.loading ? 40 : 12,
+                            borderColor: 'rgba(96,165,250,0.4)',
+                        }}
+                        value={actorQuery}
+                        onChange={(e) => setActorQuery(e.target.value)}
+                        placeholder={t('movieManager.actorsSearchPh', 'Gõ tên diễn viên: Pattinson, DiCaprio...')}
+                        autoComplete="off"
+                        name="tmdb-actor-search"
+                        id="tmdb-actor-search"
+                    />
+                    {actorSearch.loading && (
+                        <Loader2
+                            size={14}
+                            style={{
+                                position: 'absolute',
+                                right: 12,
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                animation: 'spin 1s linear infinite',
+                                color: '#60a5fa',
+                            }}
+                        />
+                    )}
+                </div>
+                {actorQuery.trim().length > 0 && actorQuery.trim().length < 2 && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
+                        {t('movieManager.typeMin2', 'Gõ tối thiểu 2 ký tự để tìm...')}
+                    </p>
+                )}
+                {actorSearch.error && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--danger)' }}>{actorSearch.error}</p>
+                )}
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 280, overflowY: 'auto' }}>
+                    {actorSearch.items.map((p) => (
+                        <PersonResultRow
+                            key={`actor-${p.tmdbId}`}
+                            person={p}
+                            roleLabel={t('movieManager.actors', 'Diễn viên')}
+                            selected={selectedActors.some((a) => a.toLowerCase() === p.name.toLowerCase())}
+                            onSelect={() => toggleActor(p.name)}
+                        />
+                    ))}
+                </div>
+            </FormPanel>
+        </div>
+    );
+};
+
 const PosterUploadBox: React.FC<{ imagePreview: string | null; label: string; onClick: () => void }> = ({ imagePreview, label, onClick }) => {
     const { t } = useTranslation();
     return (
@@ -368,7 +783,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [bannerPreviews, setBannerPreviews] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -376,7 +791,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         movieName: '',
         movieDescription: '',
         movieImage: null as File | null,
-        movieBanner: null as File | null,
+        movieBanners: [] as File[],
         startedDate: '',
         endedDate: '',
         duration: '',
@@ -406,14 +821,21 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
         }
     };
 
-    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFormData(prev => ({ ...prev, movieBanner: file }));
+    const handleBannersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        setFormData(prev => ({ ...prev, movieBanners: [...prev.movieBanners, ...files] }));
+        files.forEach((file) => {
             const reader = new FileReader();
-            reader.onloadend = () => setBannerPreview(reader.result as string);
+            reader.onloadend = () => setBannerPreviews(prev => [...prev, reader.result as string]);
             reader.readAsDataURL(file);
-        }
+        });
+        e.target.value = '';
+    };
+
+    const removeBannerAt = (index: number) => {
+        setFormData(prev => ({ ...prev, movieBanners: prev.movieBanners.filter((_, i) => i !== index) }));
+        setBannerPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleFormatToggle = (formatId: string) => {
@@ -450,7 +872,7 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
 
         if (!formData.movieName.trim()) { notifyFormError(t('movieManager.pleaseEnterName'), setError); return; }
         if (!formData.movieImage) { notifyFormError(t('movieManager.pleaseSelectPoster'), setError); return; }
-        if (!formData.movieBanner) { notifyFormError(t('movieManager.pleaseSelectBanner'), setError); return; }
+        if (formData.movieBanners.length === 0) { notifyFormError(t('movieManager.pleaseSelectBanner'), setError); return; }
         if (!formData.startedDate) { notifyFormError(t('movieManager.pleaseSelectStartDate'), setError); return; }
         if (!formData.endedDate) { notifyFormError(t('movieManager.pleaseSelectEndDate'), setError); return; }
         if (!formData.duration || parseInt(formData.duration) <= 0) { notifyFormError(t('movieManager.pleaseEnterDuration'), setError); return; }
@@ -466,7 +888,8 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                 movieName: formData.movieName.trim(),
                 movieDescription: formData.movieDescription.trim(),
                 movieImage: formData.movieImage,
-                movieBanner: formData.movieBanner,
+                movieBanner: formData.movieBanners[0],
+                movieBanners: formData.movieBanners,
                 startedDate: vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate,
                 endedDate: vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate,
                 duration: parseInt(formData.duration),
@@ -546,11 +969,22 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             <div>
                                 <label className="input-label">{t('movieManager.bannerImage')} <RequiredMark /></label>
                                 <PosterUploadBox
-                                    imagePreview={bannerPreview}
+                                    imagePreview={bannerPreviews[0] || null}
                                     label={t('movieManager.uploadBannerImage')}
                                     onClick={() => bannerFileInputRef.current?.click()}
                                 />
-                                <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                                <input ref={bannerFileInputRef} type="file" accept="image/*" multiple onChange={handleBannersChange} className="hidden" />
+                                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>{t('movieManager.multiBannerHint', 'Có thể chọn nhiều ảnh bìa (banner/cover).')}</p>
+                                {bannerPreviews.length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                                        {bannerPreviews.map((src, idx) => (
+                                            <div key={idx} style={{ position: 'relative', width: 72, height: 44, borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                                                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button type="button" onClick={() => removeBannerAt(idx)} style={{ position: 'absolute', top: 2, right: 2, border: 'none', borderRadius: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', padding: 0 }}>×</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -575,21 +1009,18 @@ const CreateMovieModal: React.FC<CreateMovieModalProps> = ({ isOpen, onClose, on
                             <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder={t('movieManager.description')} maxLength={200} />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <div>
-                                <label className="input-label">{t('movieManager.trailerUrl')}</label>
-                                <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
-                            </div>
-                            <div>
-                                <label className="input-label">{t('movieManager.director')}</label>
-                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
-                            </div>
+                        <div>
+                            <label className="input-label">{t('movieManager.trailerUrl')}</label>
+                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
                         </div>
 
-                        <div>
-                            <label className="input-label">{t('movieManager.actors')}</label>
-                            <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
-                        </div>
+                        <ExternalMoviePeoplePicker
+                            movieNameHint={formData.movieName}
+                            director={formData.director}
+                            actorsCsv={formData.actors}
+                            onDirectorChange={(name) => setFormData((prev) => ({ ...prev, director: name }))}
+                            onActorsChange={(csv) => setFormData((prev) => ({ ...prev, actors: csv }))}
+                        />
 
                         <div>
                             <label className="input-label">{t('movieManager.requiredAgeRating')} <RequiredMark /></label>
@@ -697,7 +1128,9 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(movie.movieImageUrl);
-    const [bannerPreview, setBannerPreview] = useState<string | null>(movie.movieBannerUrl || null);
+    const [existingCovers, setExistingCovers] = useState<MovieCoverImage[]>(movie.coverImages || []);
+    const [removeCoverImageIds, setRemoveCoverImageIds] = useState<string[]>([]);
+    const [newBannerPreviews, setNewBannerPreviews] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const bannerFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -705,7 +1138,7 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         movieName: movie.movieName,
         movieDescription: movie.movieDescriptions,
         movieImage: null as File | null,
-        movieBanner: null as File | null,
+        movieBanners: [] as File[],
         startedDate: formatDateForInput(movie.startedDate),
         endedDate: formatDateForInput(movie.endedDate),
         duration: movie.duration.toString(),
@@ -741,14 +1174,26 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         }
     };
 
-    const handleBannerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setFormData(prev => ({ ...prev, movieBanner: file }));
+    const handleBannersChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+        setFormData(prev => ({ ...prev, movieBanners: [...prev.movieBanners, ...files] }));
+        files.forEach((file) => {
             const reader = new FileReader();
-            reader.onloadend = () => setBannerPreview(reader.result as string);
+            reader.onloadend = () => setNewBannerPreviews(prev => [...prev, reader.result as string]);
             reader.readAsDataURL(file);
-        }
+        });
+        e.target.value = '';
+    };
+
+    const markCoverRemoved = (id: string) => {
+        setRemoveCoverImageIds(prev => prev.includes(id) ? prev : [...prev, id]);
+        setExistingCovers(prev => prev.filter(c => c.movieCoverImageId !== id));
+    };
+
+    const removeNewBannerAt = (index: number) => {
+        setFormData(prev => ({ ...prev, movieBanners: prev.movieBanners.filter((_, i) => i !== index) }));
+        setNewBannerPreviews(prev => prev.filter((_, i) => i !== index));
     };
 
 
@@ -814,7 +1259,11 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
         if (movieNameChanged) submissionData.movieName = formData.movieName.trim();
         if (descriptionChanged) submissionData.movieDescription = formData.movieDescription.trim();
         if (formData.movieImage) submissionData.movieImage = formData.movieImage;
-        if (formData.movieBanner) submissionData.movieBanner = formData.movieBanner;
+        if (formData.movieBanners.length > 0) {
+            submissionData.movieBanners = formData.movieBanners;
+            submissionData.movieBanner = formData.movieBanners[0];
+        }
+        if (removeCoverImageIds.length > 0) submissionData.removeCoverImageIds = removeCoverImageIds;
         if (startedDateChanged) submissionData.startedDate = vietnamDateTimeLocalToOffsetString(formData.startedDate) ?? formData.startedDate;
         if (endedDateChanged) submissionData.endedDate = vietnamDateTimeLocalToOffsetString(formData.endedDate) ?? formData.endedDate;
         if (durationChanged) submissionData.duration = parseInt(formData.duration);
@@ -899,13 +1348,30 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                                 <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                             </div>
                             <div>
-                                <label className="input-label">Banner Image</label>
+                                <label className="input-label">{t('movieManager.bannerImage')}</label>
                                 <PosterUploadBox
-                                    imagePreview={bannerPreview}
+                                    imagePreview={newBannerPreviews[0] || existingCovers[0]?.imageUrl || movie.movieBannerUrl || null}
                                     label={t('movieManager.uploadNewBannerImage')}
                                     onClick={() => bannerFileInputRef.current?.click()}
                                 />
-                                <input ref={bannerFileInputRef} type="file" accept="image/*" onChange={handleBannerChange} className="hidden" />
+                                <input ref={bannerFileInputRef} type="file" accept="image/*" multiple onChange={handleBannersChange} className="hidden" />
+                                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>{t('movieManager.multiBannerHint', 'Thêm nhiều ảnh bìa / cover. Ảnh đầu là primary.')}</p>
+                                {(existingCovers.length > 0 || newBannerPreviews.length > 0) && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                                        {existingCovers.map((c) => (
+                                            <div key={c.movieCoverImageId} style={{ position: 'relative', width: 72, height: 44, borderRadius: 8, overflow: 'hidden', border: c.isPrimary ? '2px solid var(--accent)' : '1px solid var(--border-color)' }}>
+                                                <img src={c.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button type="button" onClick={() => markCoverRemoved(c.movieCoverImageId)} style={{ position: 'absolute', top: 2, right: 2, border: 'none', borderRadius: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', padding: 0 }}>×</button>
+                                            </div>
+                                        ))}
+                                        {newBannerPreviews.map((src, idx) => (
+                                            <div key={`new-${idx}`} style={{ position: 'relative', width: 72, height: 44, borderRadius: 8, overflow: 'hidden', border: '1px dashed var(--accent)' }}>
+                                                <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                                <button type="button" onClick={() => removeNewBannerAt(idx)} style={{ position: 'absolute', top: 2, right: 2, border: 'none', borderRadius: 4, background: 'rgba(0,0,0,0.65)', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', padding: 0 }}>×</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -930,21 +1396,18 @@ const UpdateMovieModal: React.FC<UpdateMovieModalProps> = ({ movie, isOpen, onCl
                             <textarea name="movieDescription" value={formData.movieDescription} onChange={handleInputChange} rows={3} className="input resize-none" placeholder={t('movieManager.description')} maxLength={200} />
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                            <div>
-                                <label className="input-label">{t('movieManager.trailerUrl')}</label>
-                                <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
-                            </div>
-                            <div>
-                                <label className="input-label">{t('movieManager.director')}</label>
-                                <input type="text" name="director" value={formData.director} onChange={handleInputChange} className="input" placeholder="Director name" />
-                            </div>
+                        <div>
+                            <label className="input-label">{t('movieManager.trailerUrl')}</label>
+                            <input type="url" name="trailerUrl" value={formData.trailerUrl} onChange={handleInputChange} className="input" placeholder="YouTube trailer URL" />
                         </div>
 
-                        <div>
-                            <label className="input-label">{t('movieManager.actors')}</label>
-                            <input type="text" name="actors" value={formData.actors} onChange={handleInputChange} className="input" placeholder="Actors (comma separated)" />
-                        </div>
+                        <ExternalMoviePeoplePicker
+                            movieNameHint={formData.movieName}
+                            director={formData.director}
+                            actorsCsv={formData.actors}
+                            onDirectorChange={(name) => setFormData((prev) => ({ ...prev, director: name }))}
+                            onActorsChange={(csv) => setFormData((prev) => ({ ...prev, actors: csv }))}
+                        />
 
                         <div>
                             <label className="input-label">{t('movieManager.requiredAgeRating')} <RequiredMark /></label>
@@ -1328,9 +1791,15 @@ const MovieManagerPage: React.FC = () => {
 
     const sidebarSections: SidebarSection[] = [
         {
+            id: 'movie-menu',
+            label: t('Management', 'Chức năng'),
+            description: t('Movies & catalog', 'Phim & danh mục'),
+            icon: <Film size={18} />,
+            defaultOpen: true,
+            collapsible: true,
             items: [
-                { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
-                { id: 'movies', label: t('Movies'), icon: <Film size={18} /> },
+                { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={16} /> },
+                { id: 'movies', label: t('Movies'), icon: <Film size={16} /> },
             ],
         },
     ];
@@ -1395,7 +1864,7 @@ const MovieManagerPage: React.FC = () => {
             />
             {isUpdateModalOpen && movieToUpdate && (
                 <UpdateMovieModal
-                    isOpen={isUpdateModalOpen}
+                        isOpen={isUpdateModalOpen}
                     onClose={() => { setIsUpdateModalOpen(false); setMovieToUpdate(null); }}
                     onSuccess={fetchMovies}
                     movie={movieToUpdate}

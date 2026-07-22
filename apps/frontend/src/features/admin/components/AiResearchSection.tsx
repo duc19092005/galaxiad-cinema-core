@@ -1,4 +1,4 @@
-﻿import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bot,
   CheckCircle2,
@@ -14,6 +14,7 @@ import { aiResearchApi } from '../../../api/aiResearchApi';
 import type {
   AiResearchAnalysisType,
   AiResearchCity,
+  AiResearchIeeeReference,
   AiResearchJobDetail,
   AiResearchJobSummary,
   AiResearchProgress,
@@ -62,6 +63,37 @@ const statusLabel = (status: string) =>
 
 const cityLabel = (city: AiResearchCity) => (city === 'HCM' ? 'TPHCM' : 'Hà Nội');
 
+/** Normalize reference array from API: ensure numeric id + stable sort. UI owns display numbering. */
+const normalizeReferences = (refs: AiResearchIeeeReference[] | undefined): AiResearchIeeeReference[] => {
+  if (!refs?.length) return [];
+  return [...refs]
+    .map((ref, index) => {
+      const parsedId = Number(ref.id);
+      const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : index + 1;
+      return {
+        ...ref,
+        id,
+        title: ref.title || 'Untitled source',
+        url: ref.url || '',
+      };
+    })
+    .sort((a, b) => a.id - b.id);
+};
+
+const formatIeeeReferenceBody = (ref: {
+  title: string;
+  url: string;
+  domain?: string;
+  ieeeText?: string;
+}) => {
+  if (ref.ieeeText) {
+    // Strip any leading [n] — UI always paints the number itself.
+    return ref.ieeeText.replace(/^\s*\[\d+\]\s*/, '').trim();
+  }
+  const domain = ref.domain || 'web';
+  return `“${ref.title}”, ${domain}, [Online]. Available: ${ref.url}`;
+};
+
 const renderCitationText = (text: string, onCitationClick: (id: number) => void) =>
   text.split(/(\[\d+\])/g).map((part, index) => {
     const match = /^\[(\d+)\]$/.exec(part);
@@ -74,19 +106,103 @@ const renderCitationText = (text: string, onCitationClick: (id: number) => void)
     );
   });
 
-/** Lightweight Markdown subset for IEEE body: tables, prose, and clickable [n] citations. */
+const renderInlineMarkdown = (text: string, onCitationClick: (id: number) => void) => {
+  // Bold **...** then citations.
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return (
+        <strong key={`b-${index}`}>{renderCitationText(part.slice(2, -2), onCitationClick)}</strong>
+      );
+    }
+    return <Fragment key={`t-${index}`}>{renderCitationText(part, onCitationClick)}</Fragment>;
+  });
+};
+
+/** Lightweight Markdown: headings, tables, bullets, prose + clickable [n] citations. */
 const renderIeeeMarkdown = (raw: string, onCitationClick: (id: number) => void) => {
   const blocks = raw.replace(/\r\n/g, '\n').split(/\n{2,}/);
   return blocks.map((block, blockIndex) => {
     const lines = block.split('\n').map((line) => line.trimEnd());
-    const isTable = lines.length >= 2 && lines[0].includes('|') && lines.some((line) => /^\|?\s*:?-{3,}/.test(line.replace(/\s/g, '')) || line.includes('---'));
+    const heading = /^(#{1,3})\s+(.+)$/.exec(lines[0]?.trim() || '');
+    if (heading && lines.length === 1) {
+      const level = heading[1].length;
+      const Tag = (level === 1 ? 'h3' : 'h4') as 'h3' | 'h4';
+      return (
+        <Tag key={`md-h-${blockIndex}`} className="ai-research-md-heading">
+          {renderInlineMarkdown(heading[2], onCitationClick)}
+        </Tag>
+      );
+    }
+    const isTable =
+      lines.length >= 2 &&
+      lines[0].includes('|') &&
+      lines.some((line) => /^\|?\s*:?-{3,}/.test(line.replace(/\s/g, '')) || line.includes('---'));
     if (isTable) {
-      const rows = lines.filter((line) => line.includes('|')).filter((line) => !/^\|?\s*[:\-| ]+\|?\s*$/.test(line)).map((line) => line.replace(/^\|/, '').replace(/\|$/, '').split('|').map((cell) => cell.trim()));
+      const rows = lines
+        .filter((line) => line.includes('|'))
+        .filter((line) => !/^\|?\s*[:\-| ]+\|?\s*$/.test(line))
+        .map((line) =>
+          line
+            .replace(/^\|/, '')
+            .replace(/\|$/, '')
+            .split('|')
+            .map((cell) => cell.trim()),
+        );
       if (!rows.length) return null;
       const [header, ...body] = rows;
-      return <div key={`md-table-${blockIndex}`} className="ai-research-ieee-table-wrap"><table className="ai-research-ieee-table"><thead><tr>{header.map((cell, index) => <th key={`${cell}-${index}`}>{renderCitationText(cell, onCitationClick)}</th>)}</tr></thead><tbody>{body.map((row, rowIndex) => <tr key={`r-${rowIndex}`}>{row.map((cell, cellIndex) => <td key={`${rowIndex}-${cellIndex}`}>{renderCitationText(cell, onCitationClick)}</td>)}</tr>)}</tbody></table></div>;
+      return (
+        <div key={`md-table-${blockIndex}`} className="ai-research-ieee-table-wrap">
+          <table className="ai-research-ieee-table">
+            <thead>
+              <tr>
+                {header.map((cell, index) => (
+                  <th key={`${cell}-${index}`}>{renderCitationText(cell, onCitationClick)}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {body.map((row, rowIndex) => (
+                <tr key={`r-${rowIndex}`}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={`${rowIndex}-${cellIndex}`}>
+                      {renderCitationText(cell, onCitationClick)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
     }
-    return <p key={`md-p-${blockIndex}`} className="ai-research-ieee-prose">{renderCitationText(block, onCitationClick)}</p>;
+    const bulletLines = lines.filter((line) => /^[-*•]\s+/.test(line.trim()) || /^\d+\.\s+/.test(line.trim()) || /^A\d+\.\s+/.test(line.trim()));
+    if (bulletLines.length === lines.length && lines.length > 0) {
+      return (
+        <ol key={`md-list-${blockIndex}`} className="ai-research-md-list">
+          {lines.map((line, lineIndex) => {
+            const content = line.replace(/^[-*•]\s+/, '').replace(/^\d+\.\s+/, '').replace(/^A\d+\.\s+/, '');
+            return <li key={lineIndex}>{renderInlineMarkdown(content, onCitationClick)}</li>;
+          })}
+        </ol>
+      );
+    }
+    // Multi-line block that starts with a markdown heading.
+    if (heading) {
+      const rest = lines.slice(1).join('\n').trim();
+      const Tag = (heading[1].length === 1 ? 'h3' : 'h4') as 'h3' | 'h4';
+      return (
+        <div key={`md-hblock-${blockIndex}`} className="ai-research-md-block">
+          <Tag className="ai-research-md-heading">{renderInlineMarkdown(heading[2], onCitationClick)}</Tag>
+          {rest ? <p className="ai-research-ieee-prose">{renderInlineMarkdown(rest, onCitationClick)}</p> : null}
+        </div>
+      );
+    }
+    return (
+      <p key={`md-p-${blockIndex}`} className="ai-research-ieee-prose">
+        {renderInlineMarkdown(block, onCitationClick)}
+      </p>
+    );
   });
 };
 const mergeProgress = (
@@ -279,6 +395,8 @@ const AiResearchSection = () => {
           },
           controller.signal,
           lastEventIdRef.current,
+          // Headers received — show live immediately even before the first parsed frame.
+          () => setSseState((current) => (current === 'connecting' || current === 'reconnecting' ? 'live' : current)),
         );
       } catch (error) {
         if (!controller.signal.aborted) {
@@ -397,53 +515,79 @@ const AiResearchSection = () => {
   };
 
   const summary = activeJob?.report?.summary;
+  const numberedReferences = useMemo(
+    () => normalizeReferences(summary?.references),
+    [summary?.references],
+  );
   const scrollToReference = useCallback((referenceId: number) => {
     document.getElementById(`ai-research-reference-${referenceId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, []);
-  const reportModules = useMemo(
-    () => Array.from(new Set(activeJob?.claims.map((claim) => claim.category) || [])),
-    [activeJob],
+
+
+  const phaseOrder = ['planning', 'researching', 'arbitrating', 'synthesizing'] as const;
+  const activePhase = progress?.phase || activeJob?.status || '';
+  const activePhaseIndex = phaseOrder.indexOf(
+    (phaseOrder.includes(activePhase as (typeof phaseOrder)[number])
+      ? activePhase
+      : activeJob?.status === 'done'
+        ? 'synthesizing'
+        : 'planning') as (typeof phaseOrder)[number],
   );
+  const budgetUsed = progress?.budgetUsed ?? activeJob?.budgetUsed ?? 0;
+  const budgetCapValue = progress?.budgetCap ?? activeJob?.budgetCap ?? budgetCap;
+  const budgetPct = Math.min(100, Math.round((budgetUsed / Math.max(1, budgetCapValue)) * 100));
+  const sseBadgeClass =
+    sseState === 'live'
+      ? 'live'
+      : sseState === 'degraded' || sseState === 'failed'
+        ? 'degraded'
+        : sseState === 'connecting' || sseState === 'reconnecting'
+          ? 'connecting'
+          : '';
+  const sseLabel =
+    sseState === 'live'
+      ? 'SSE live'
+      : sseState === 'connecting'
+        ? 'Đang nối SSE'
+        : sseState === 'reconnecting'
+          ? 'Đang nối lại'
+          : sseState === 'degraded' || sseState === 'failed'
+            ? 'SSE đang khôi phục'
+            : 'SSE idle';
 
   return (
     <div className="ai-research-page animate-in">
       <header className="ai-research-header">
         <div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 9,
-              color: 'var(--accent)',
-              marginBottom: 7,
-            }}
-          >
-            <Bot size={18} />
-            <span style={{ fontSize: 11, fontWeight: 850, textTransform: 'uppercase' }}>
-              Business Research Multi-Agent
-            </span>
+          <div className="ai-research-eyebrow">
+            <Bot size={14} />
+            <span>Business Research Multi-Agent</span>
           </div>
-          <h1 style={{ margin: 0, fontSize: 30, lineHeight: 1.15 }}>AI Research Workspace</h1>
-          <p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', fontSize: 14 }}>
+          <h1>AI Research Workspace</h1>
+          <p>
             Research giá, đối thủ, quy hoạch và chi phí mặt bằng với citation theo từng claim.
           </p>
         </div>
-        <button
-          className="ai-research-secondary"
-          onClick={() => void refreshJobs()}
-          disabled={loadingJobs}
-        >
-          <RefreshCw size={16} className={loadingJobs ? 'spin' : ''} />
-          Làm mới
-        </button>
+        <div className="ai-research-header-actions">
+          <button
+            type="button"
+            className="ai-research-secondary"
+            onClick={() => void refreshJobs()}
+            disabled={loadingJobs}
+          >
+            <RefreshCw size={16} className={loadingJobs ? 'spin' : ''} />
+            Làm mới
+          </button>
+        </div>
       </header>
 
       <div className="ai-research-layout">
-        <div className="ai-research-workspace">
+        {/* LEFT: config + history */}
+        <aside className="ai-research-col-left">
           <section className="ai-research-panel">
             <div className="ai-research-panel-header">
               <strong>Cấu hình job</strong>
-              <span className="ai-research-badge">{cityLabel(city)}</span>
+              <span className="ai-research-badge pulse">{cityLabel(city)}</span>
             </div>
             <div className="ai-research-panel-body">
               <div className="ai-research-form">
@@ -477,12 +621,14 @@ const AiResearchSection = () => {
                   <span className="ai-research-label">Chế độ chạy</span>
                   <div className="ai-research-segmented">
                     <button
+                      type="button"
                       className={runMode === 'RunAll' ? 'active' : ''}
                       onClick={() => setRunMode('RunAll')}
                     >
                       Chạy tất cả
                     </button>
                     <button
+                      type="button"
                       className={runMode === 'SelectedModules' ? 'active' : ''}
                       onClick={() => setRunMode('SelectedModules')}
                     >
@@ -521,18 +667,19 @@ const AiResearchSection = () => {
                   </div>
                 </div>
 
-                <label className="ai-research-field">
+                <div className="ai-research-field">
                   <span className="ai-research-label">Tavily call budget: {budgetCap}</span>
-                  <input
-                    className="ai-research-input"
-                    type="range"
-                    min={5}
-                    max={100}
-                    step={5}
-                    value={budgetCap}
-                    onChange={(event) => setBudgetCap(Number(event.target.value))}
-                  />
-                </label>
+                  <div className="ai-research-range-wrap">
+                    <input
+                      type="range"
+                      min={5}
+                      max={100}
+                      step={5}
+                      value={budgetCap}
+                      onChange={(event) => setBudgetCap(Number(event.target.value))}
+                    />
+                  </div>
+                </div>
 
                 <label className="ai-research-field">
                   <span className="ai-research-label">Ghi chú</span>
@@ -546,6 +693,7 @@ const AiResearchSection = () => {
                 </label>
 
                 <button
+                  type="button"
                   className="ai-research-primary"
                   onClick={() => void createJob()}
                   disabled={creating || isRunning}
@@ -575,6 +723,7 @@ const AiResearchSection = () => {
               )}
               {jobs.map((job) => (
                 <button
+                  type="button"
                   key={job.jobId}
                   className={`ai-research-history-item ${activeJob?.jobId === job.jobId ? 'active' : ''}`}
                   onClick={() => {
@@ -587,8 +736,8 @@ const AiResearchSection = () => {
                     }
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-                    <strong style={{ fontSize: 12 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
+                    <strong>
                       {job.analysisType === 'PricingAnalysis' ? 'Pricing' : 'Site/Location'} ·{' '}
                       {cityLabel(job.city)}
                     </strong>
@@ -596,7 +745,7 @@ const AiResearchSection = () => {
                       {statusLabel(job.status)}
                     </span>
                   </div>
-                  <div style={{ marginTop: 6, color: 'var(--text-muted)', fontSize: 11 }}>
+                  <div className="ai-research-history-meta">
                     {new Date(job.createdAt).toLocaleString('vi-VN')} · {job.budgetUsed}/
                     {job.budgetCap} calls
                   </div>
@@ -604,155 +753,193 @@ const AiResearchSection = () => {
               ))}
             </div>
           </section>
-        </div>
+        </aside>
 
-        <div className="ai-research-workspace">
-          <section className="ai-research-panel">
-            <div className="ai-research-panel-header">
-              <strong>Tiến độ realtime</strong>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <span
-                  className={`ai-research-badge ${sseState === 'live' ? 'resolved' : (sseState === 'degraded' || sseState === 'failed') ? 'conflicting' : ''}`}
-                  title="Trạng thái kênh SSE"
-                >
-                  <Radio size={11} style={{ marginRight: 4 }} />
-                  {sseState === 'live'
-                    ? 'SSE live'
-                    : sseState === 'connecting'
-                      ? 'Đang nối SSE'
-                      : sseState === 'degraded' || sseState === 'failed'
-                        ? 'SSE đang khôi phục'
-                        : 'SSE idle'}
+        {/* RIGHT: realtime cockpit */}
+        <div className="ai-research-col-right">
+          <div className="ai-research-stage-header">
+            <h2>Tiến độ realtime</h2>
+            <div className="ai-research-stage-actions">
+              <span className={`ai-research-badge ${sseBadgeClass}`} title="Trạng thái kênh SSE">
+                <Radio size={11} />
+                {sseLabel}
+              </span>
+              {activeJob && (
+                <span className={`ai-research-badge ${activeJob.status}`}>
+                  {statusLabel(activeJob.status)}
                 </span>
-                {activeJob && (
-                  <span className={`ai-research-badge ${activeJob.status}`}>
-                    {statusLabel(activeJob.status)}
-                  </span>
-                )}
-                {isRunning && (
-                  <button
-                    className="ai-research-secondary"
-                    style={{ minHeight: 30, padding: '4px 9px' }}
-                    onClick={() => void cancelJob()}
-                  >
-                    <CircleStop size={14} /> Hủy
-                  </button>
+              )}
+              {isRunning && (
+                <button
+                  type="button"
+                  className="ai-research-secondary ghost-sm"
+                  onClick={() => void cancelJob()}
+                >
+                  <CircleStop size={14} /> Hủy
+                </button>
+              )}
+            </div>
+          </div>
+
+          {!activeJob && (
+            <div className="ai-research-empty-stage">
+              Chọn một job ở lịch sử hoặc khởi chạy research mới để xem pipeline multi-agent realtime.
+            </div>
+          )}
+
+          {activeJob && (
+            <>
+              <div className={`ai-research-progress-card ${isRunning ? 'is-live' : ''}`}>
+                <div className="ai-research-progress-row">
+                  <span>{progress?.message || statusLabel(activeJob.status)}</span>
+                  <strong>
+                    {progress?.totalClaims ? `${processedPercent}%` : isRunning ? '…' : '0%'}
+                  </strong>
+                </div>
+                <div className="ai-research-progress-track">
+                  <div
+                    className={`ai-research-progress-fill ${isRunning ? 'running' : ''}`}
+                    style={{
+                      width: `${progress?.totalClaims ? processedPercent : isRunning ? 8 : 0}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="ai-research-phase-stepper" aria-label="Tiến trình multi-agent">
+                  {phaseOrder.map((phase, index) => (
+                    <span
+                      key={phase}
+                      className={
+                        progress?.phase === phase || activeJob.status === phase
+                          ? 'active'
+                          : activePhaseIndex > index || activeJob.status === 'done'
+                            ? 'done'
+                            : ''
+                      }
+                    >
+                      {statusLabel(phase)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="ai-research-metrics">
+                <div className="ai-research-metric">
+                  <small>Claims</small>
+                  <strong>
+                    {progress?.resolvedClaims || 0}
+                    <em>/{progress?.totalClaims || 0}</em>
+                  </strong>
+                </div>
+                <div className="ai-research-metric">
+                  <small>Critical</small>
+                  <strong>
+                    {progress?.criticalResolved || 0}
+                    <em>/{progress?.criticalTotal || 0}</em>
+                  </strong>
+                </div>
+                <div className="ai-research-metric">
+                  <small>Budget</small>
+                  <strong>
+                    {budgetUsed}
+                    <em>/{budgetCapValue}</em>
+                  </strong>
+                  <span className="metric-bar" style={{ width: `${budgetPct}%` }} />
+                </div>
+                <div className="ai-research-metric">
+                  <small>Module</small>
+                  <strong style={{ fontSize: 16, marginTop: 4 }}>
+                    {progress?.currentModule || '-'}
+                  </strong>
+                </div>
+              </div>
+
+              <div className="ai-research-live-context">
+                <div>
+                  <small>Agent</small>
+                  <strong>{progress?.agent || '-'}</strong>
+                </div>
+                <div>
+                  <small>Claim</small>
+                  <strong>
+                    {progress?.currentClaimId ? progress.currentClaimId.slice(0, 8) : '-'}
+                  </strong>
+                </div>
+                <div>
+                  <small>Evidence</small>
+                  <strong>{progress?.evidenceCount ?? 0}</strong>
+                </div>
+                <div>
+                  <small>Verdict</small>
+                  <strong>{progress?.verdict?.status || '-'}</strong>
+                </div>
+                {progress?.query && (
+                  <p>
+                    <small>Truy vấn hiện tại: </small>
+                    {progress.query}
+                  </p>
                 )}
               </div>
-            </div>
-            <div className="ai-research-panel-body">
-              {!activeJob && (
-                <div style={{ color: 'var(--text-muted)', padding: '30px 0', textAlign: 'center' }}>
-                  Chọn một job hoặc khởi chạy research mới.
-                </div>
-              )}
-              {activeJob && (
-                <>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      marginBottom: 9,
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
-                      {progress?.message || statusLabel(activeJob.status)}
-                    </span>
-                    <strong style={{ color: 'var(--accent)' }}>
-                      {progress?.totalClaims ? `${processedPercent}%` : isRunning ? '…' : '0%'}
-                    </strong>
-                  </div>
-                  <div className="ai-research-progress-track">
-                    <div
-                      className="ai-research-progress-fill"
-                      style={{
-                        width: `${progress?.totalClaims ? processedPercent : isRunning ? 8 : 0}%`,
-                      }}
-                    />
-                  </div>
-                  <div className="ai-research-metrics">
-                    <div className="ai-research-metric">
-                      <small>Claims</small>
-                      <strong>
-                        {progress?.resolvedClaims || 0}/{progress?.totalClaims || 0}
-                      </strong>
-                    </div>
-                    <div className="ai-research-metric">
-                      <small>Critical</small>
-                      <strong>
-                        {progress?.criticalResolved || 0}/{progress?.criticalTotal || 0}
-                      </strong>
-                    </div>
-                    <div className="ai-research-metric">
-                      <small>Budget</small>
-                      <strong>
-                        {progress?.budgetUsed || activeJob.budgetUsed}/{activeJob.budgetCap}
-                      </strong>
-                    </div>
-                    <div className="ai-research-metric">
-                      <small>Module</small>
-                      <strong>{progress?.currentModule || '-'}</strong>
-                    </div>
-                  </div>
 
-                  <div className="ai-research-phase-stepper" aria-label="Tiến trình multi-agent">
-                    {(['planning', 'researching', 'arbitrating', 'synthesizing'] as const).map((phase) => (
-                      <span key={phase} className={progress?.phase === phase ? 'active' : ''}>{statusLabel(phase)}</span>
-                    ))}
-                  </div>
-                  <div className="ai-research-live-context">
-                    <div><small>Agent</small><strong>{progress?.agent || '-'}</strong></div>
-                    <div><small>Claim</small><strong>{progress?.currentClaimId ? progress.currentClaimId.slice(0, 8) : '-'}</strong></div>
-                    <div><small>Evidence</small><strong>{progress?.evidenceCount ?? 0}</strong></div>
-                    <div><small>Verdict</small><strong>{progress?.verdict?.status || '-'}</strong></div>
-                    {progress?.query && <p><small>Truy vấn hiện tại:</small> {progress.query}</p>}
-                  </div>
-                  <div className="ai-research-cot">
-                    <div className="ai-research-cot-header">
-                      <Sparkles size={14} />
-                      <strong>Hoạt động agent (live)</strong>
-                      <span className="ai-research-badge">{timeline.length}</span>
+              <div className={`ai-research-cot ${isRunning ? 'is-live' : ''}`}>
+                <div className="ai-research-cot-toolbar">
+                  <span className="live-pill">
+                    <Sparkles size={13} className={isRunning ? 'spin' : ''} />
+                    Hoạt động agent (live)
+                    <span className="ai-research-badge">{timeline.length}</span>
+                  </span>
+                </div>
+                <div className="ai-research-cot-header" aria-hidden={timeline.length === 0}>
+                  <div>Agent</div>
+                  <div>Claim / Activity</div>
+                  <div>Evidence</div>
+                  <div>Verdict</div>
+                </div>
+                <div className="ai-research-cot-stream">
+                  {timeline.length === 0 && (
+                    <div className="ai-research-cot-empty">
+                      {isRunning
+                        ? 'Đang chờ event SSE từ pipeline…'
+                        : 'Chưa có bước suy luận. Chạy job để xem realtime.'}
                     </div>
-                    <div className="ai-research-cot-stream">
-                      {timeline.length === 0 && (
-                        <div className="ai-research-cot-empty">
-                          {isRunning
-                            ? 'Đang chờ event SSE từ pipeline…'
-                            : 'Chưa có bước suy luận. Chạy job để xem realtime.'}
+                  )}
+                  {timeline.map((item) => (
+                    <div key={item.id} className={`ai-research-cot-item event-${item.event}`}>
+                      <div className="col-agent">{item.agent || statusLabel(item.event)}</div>
+                      <div className="col-claim">
+                        {item.message}
+                        {item.activity && item.activity !== item.message && (
+                          <div className="ai-research-cot-meta-line">{item.activity}</div>
+                        )}
+                        <div className="ai-research-cot-meta-line">
+                          {new Date(item.at).toLocaleTimeString('vi-VN')}
                         </div>
-                      )}
-                      {timeline.map((item) => (
-                        <div key={item.id} className={`ai-research-cot-item event-${item.event}`}>
-                          <div className="ai-research-cot-meta">
-                            <span className="ai-research-cot-event">{statusLabel(item.event)}</span>
-                            <span className="ai-research-cot-time">
-                              {new Date(item.at).toLocaleTimeString('vi-VN')}
-                            </span>
-                          </div>
-                          <div className="ai-research-cot-message">{item.message}</div>
-                          {item.activity && item.activity !== item.message && (
-                            <div className="ai-research-cot-thought">Agent: {item.agent || '-'} · {item.activity}</div>
-                          )}
-                        </div>
-                      ))}
-                      <div ref={timelineEndRef} />
+                      </div>
+                      <div className="col-evidence">
+                        {typeof progress?.evidenceCount === 'number' && item.event.includes('evidence')
+                          ? progress.evidenceCount
+                          : item.event === 'evidence_found'
+                            ? '1+'
+                            : '-'}
+                      </div>
+                      <div className="col-verdict">{statusLabel(item.event)}</div>
                     </div>
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
+                  ))}
+                  <div ref={timelineEndRef} />
+                </div>
+              </div>
+            </>
+          )}
 
           {activeJob?.report && (
             <section className="ai-research-panel">
               <div className="ai-research-panel-header">
                 <div>
-                  <strong>Báo cáo IEEE · Galaxy Cinema Research</strong>
+                  <strong>Báo cáo khả thi điều hành · Galaxy Cinema</strong>
                   <div style={{ marginTop: 3, color: 'var(--text-muted)', fontSize: 11 }}>
                     {cityLabel(activeJob.city)} ·{' '}
                     {new Date(activeJob.report.generatedAt).toLocaleString('vi-VN')}
-                    {' · '}citation [n] only · URLs in References
+                    {' · '}dành cho CEO / CFO / HĐQT · trích dẫn IEEE [n]
                   </div>
                 </div>
                 <CheckCircle2 size={20} style={{ color: '#4ade80' }} />
@@ -760,245 +947,151 @@ const AiResearchSection = () => {
               <div className="ai-research-panel-body">
                 <div className="ai-research-metrics" style={{ marginTop: 0, marginBottom: 16 }}>
                   <div className="ai-research-metric">
-                    <small>Tổng claim</small>
+                    <small>Giả thuyết KT</small>
                     <strong>{summary?.totalClaims || activeJob.claims.length}</strong>
                   </div>
                   <div className="ai-research-metric">
-                    <small>Resolved</small>
+                    <small>Đã xác nhận</small>
                     <strong>{summary?.resolvedClaims || 0}</strong>
                   </div>
                   <div className="ai-research-metric">
-                    <small>Insufficient</small>
+                    <small>Cần thẩm định</small>
                     <strong>{summary?.insufficientClaims || 0}</strong>
                   </div>
                   <div className="ai-research-metric">
-                    <small>References</small>
-                    <strong>{summary?.references?.length || summary?.referenceCount || 0}</strong>
+                    <small>Tài liệu</small>
+                    <strong>
+                      {numberedReferences.length || summary?.referenceCount || 0}
+                    </strong>
                   </div>
                 </div>
 
-                {/* IEEE paper body (new jobs). Older jobs may only have executive fields. */}
-                {(summary?.title || summary?.abstract || summary?.introduction) ? (
-                  <article className="ai-research-ieee">
-                    <h1 className="ai-research-ieee-title">
-                      {summary?.title || summary?.headline || activeJob.report.title || 'Untitled'}
-                    </h1>
+                <article className="ai-research-ieee">
+                  <h1 className="ai-research-ieee-title">
+                    {summary?.title ||
+                      summary?.headline ||
+                      activeJob.report.title ||
+                      'Báo cáo đánh giá khả thi mở rộng Galaxy Cinema'}
+                  </h1>
 
-                    {!!summary?.authors?.length && (
-                      <div className="ai-research-ieee-authors">
-                        {summary.authors.map((author, index) => (
-                          <div key={`${author.name}-${index}`} className="ai-research-ieee-author">
-                            <strong>{author.name}</strong>
-                            {author.affiliation && <em>{author.affiliation}</em>}
-                            {author.email && <span className="mono">Contact: {author.email}</span>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {summary?.abstract && (
-                      <section className="ai-research-ieee-section">
-                        <h2>TÓM TẮT (ABSTRACT)</h2>
-                        <p className="ai-research-ieee-prose">{summary.abstract}</p>
-                      </section>
-                    )}
-
-                    {!!summary?.keywords?.length && (
-                      <p className="ai-research-ieee-keywords">
-                        <strong>Từ khóa (Keywords):</strong> {summary.keywords.join('; ')}.
-                      </p>
-                    )}
-
-                    {summary?.introduction && (
-                      <section className="ai-research-ieee-section">
-                        <h2>I. MỞ ĐẦU (INTRODUCTION)</h2>
-                        <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.introduction, scrollToReference)}
-                        </div>
-                      </section>
-                    )}
-
-                    {summary?.relatedWork && (
-                      <section className="ai-research-ieee-section">
-                        <h2>II. TỔNG QUAN NGHIÊN CỨU (RELATED WORK)</h2>
-                        <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.relatedWork, scrollToReference)}
-                        </div>
-                      </section>
-                    )}
-
-                    {summary?.methodology && (
-                      <section className="ai-research-ieee-section">
-                        <h2>III. PHƯƠNG PHÁP NGHIÊN CỨU (METHODOLOGY)</h2>
-                        <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.methodology, scrollToReference)}
-                        </div>
-                      </section>
-                    )}
-
-                    {summary?.resultsAndDiscussion && (
-                      <section className="ai-research-ieee-section">
-                        <h2>IV. THỰC NGHIỆM VÀ KẾT QUẢ (RESULTS &amp; DISCUSSION)</h2>
-                        <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.resultsAndDiscussion, scrollToReference)}
-                        </div>
-                      </section>
-                    )}
-
-                    {summary?.conclusion && (
-                      <section className="ai-research-ieee-section">
-                        <h2>V. KẾT LUẬN VÀ HƯỚNG PHÁT TRIỂN (CONCLUSION &amp; FUTURE WORK)</h2>
-                        <div className="ai-research-ieee-prose-block">
-                          {renderIeeeMarkdown(summary.conclusion, scrollToReference)}
-                        </div>
-                      </section>
-                    )}
-
-                    {!!summary?.references?.length && (
-                      <section className="ai-research-ieee-section">
-                        <h2>TÀI LIỆU THAM KHẢO (REFERENCES)</h2>
-                        <ol className="ai-research-ieee-refs">
-                          {summary.references.map((ref) => (
-                            <li id={`ai-research-reference-${ref.id}`} key={ref.id} value={ref.id}>
-                              {ref.ieeeText ? (
-                                <span>
-                                  {ref.ieeeText.replace(/^\s*\[\d+\]\s*/, '')}
-                                </span>
-                              ) : (
-                                <span>
-                                  “{ref.title}”, {ref.domain || 'web'}, [Online]. Available:{' '}
-                                  {ref.url}
-                                </span>
-                              )}
-                            </li>
-                          ))}
-                        </ol>
-                      </section>
-                    )}
-
-                    {summary?.provenance && (
-                      <section className="ai-research-ieee-section">
-                        <h2>NGUỒN DỮ LIỆU VÀ PHƯƠNG PHÁP</h2>
-                        <div className="ai-research-provenance">
-                          <p><strong>Phạm vi:</strong> {summary.provenance.analysisType} tại {summary.provenance.city} · {summary.provenance.claimCount} claim · {summary.provenance.referenceCount} tài liệu.</p>
-                          {summary.provenance.managerNotes && <p><strong>Ghi chú quản lý:</strong> {summary.provenance.managerNotes}</p>}
-                          <p><strong>Pipeline:</strong> {summary.provenance.pipeline.join(' → ')}.</p>
-                          <p><strong>Nguồn:</strong> {summary.provenance.sourceDomains.join(', ') || 'Chưa có nguồn hợp lệ'}.</p>
-                        </div>
-                      </section>
-                    )}
-
-                    {!!summary?.decisionBasis?.length && (
-                      <section className="ai-research-ieee-section">
-                        <h2>CƠ SỞ CỦA KẾT LUẬN</h2>
-                        <div className="ai-research-decision-list">
-                          {summary.decisionBasis.map((decision) => (
-                            <article className="ai-research-decision" key={decision.claimCode}>
-                              <div className="ai-research-decision-head"><strong>{decision.claimCode}</strong><span>{Math.round(decision.confidence * 100)}%</span></div>
-                              <p>{decision.claim}</p>
-                              <small>Kết luận: {decision.status} · {decision.classification} · {decision.supports} nguồn hỗ trợ · {decision.contradicts} nguồn mâu thuẫn · {decision.evidenceCount} evidence.</small>
-                              <div>{decision.citationIds.map((id) => <button type="button" className="ai-research-inline-citation" key={id} onClick={() => scrollToReference(id)}>[{id}]</button>)}</div>
-                            </article>
-                          ))}
-                        </div>
-                      </section>
-                    )}
-                    {summary?.appendix && (
-                      <section className="ai-research-ieee-section">
-                        <h2>PHỤ LỤC (APPENDIX) — RAW AUDIT MATRIX</h2>
-                        <pre className="ai-research-ieee-prose pre">{summary.appendix}</pre>
-                      </section>
-                    )}
-
-                    {summary?.confidenceNote && (
-                      <p className="ai-research-exec-note">{summary.confidenceNote}</p>
-                    )}
-                  </article>
-                ) : (
-                  <>
-                    {(summary?.headline || summary?.executiveSummary) && (
+                  {(summary?.executiveSummary || summary?.abstract) && (
+                    <section className="ai-research-ieee-section">
+                      <h2>1. Tóm tắt điều hành (Executive Summary)</h2>
                       <div className="ai-research-exec">
-                        {summary?.headline && (
-                          <h2 className="ai-research-exec-headline">{summary.headline}</h2>
-                        )}
-                        {summary?.executiveSummary && (
-                          <p className="ai-research-exec-body">{summary.executiveSummary}</p>
+                        <p className="ai-research-exec-body">
+                          {summary?.executiveSummary || summary?.abstract}
+                        </p>
+                        {summary?.confidenceNote && (
+                          <p className="ai-research-exec-note">
+                            Đánh giá rủi ro dữ liệu tổng thể: {summary.confidenceNote}
+                          </p>
                         )}
                       </div>
-                    )}
-                    {!!summary?.keyFindings?.length && (
-                      <div className="ai-research-exec-block">
-                        <h3>Phát hiện chính</h3>
-                        <ul>
-                          {summary.keyFindings.map((item) => (
-                            <li key={item}>{item}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </>
-                )}
+                    </section>
+                  )}
 
-                <details className="ai-research-appendix">
-                  <summary>Phụ lục — ma trận claim / evidence thô (audit)</summary>
-                  <div className="ai-research-appendix-body">
-                    {reportModules.map((module) => (
-                      <div key={module} style={{ marginBottom: 18 }}>
-                        <h4 style={{ margin: '0 0 6px', fontSize: 13, textTransform: 'capitalize' }}>
-                          {module.replaceAll('_', ' ')}
-                        </h4>
-                        {activeJob.claims
-                          .filter((claim) => claim.category === module)
-                          .map((claim) => (
-                            <article className="ai-research-claim" key={claim.claimId}>
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'flex-start',
-                                  justifyContent: 'space-between',
-                                  gap: 12,
-                                }}
-                              >
-                                <div style={{ fontSize: 13, lineHeight: 1.55 }}>{claim.text}</div>
-                                <strong
-                                  style={{
-                                    color: 'var(--accent)',
-                                    fontSize: 12,
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {Math.round(claim.confidence * 100)}%
-                                </strong>
-                              </div>
-                              <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
-                                <span className={`ai-research-badge ${claim.status}`}>
-                                  {claim.status}
-                                </span>
-                                <span className={`ai-research-badge ${claim.classification}`}>
-                                  {claim.classification}
-                                </span>
-                              </div>
-                              {claim.evidence.map((evidence) => (
-                                <a
-                                  key={evidence.evidenceId}
-                                  className="ai-research-citation"
-                                  href={evidence.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                >
-                                  <ExternalLink
-                                    size={11}
-                                    style={{ verticalAlign: '-1px', marginRight: 5 }}
-                                  />
-                                  {evidence.title} · {evidence.sourceDomain}
-                                </a>
-                              ))}
-                            </article>
-                          ))}
+                  {!!summary?.recommendations?.length && (
+                    <section className="ai-research-ieee-section">
+                      <h2>2. Đề xuất hành động theo thứ tự ưu tiên</h2>
+                      <ol className="ai-research-md-list ai-research-rec-list">
+                        {summary.recommendations.map((item, index) => (
+                          <li key={`rec-${index}`}>{renderCitationText(item, scrollToReference)}</li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+
+                  {!!summary?.keyFindings?.length && (
+                    <section className="ai-research-ieee-section">
+                      <h2>Phát hiện then chốt</h2>
+                      <ul className="ai-research-md-list">
+                        {summary.keyFindings.map((item, index) => (
+                          <li key={`kf-${index}`}>{renderCitationText(item, scrollToReference)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
+                  {summary?.introduction && (
+                    <section className="ai-research-ieee-section">
+                      <h2>Bối cảnh thị trường</h2>
+                      <div className="ai-research-ieee-prose-block">
+                        {renderIeeeMarkdown(summary.introduction, scrollToReference)}
                       </div>
-                    ))}
-                  </div>
-                </details>
+                    </section>
+                  )}
+
+                  {summary?.resultsAndDiscussion && (
+                    <section className="ai-research-ieee-section">
+                      <h2>3. Phân tích chi tiết theo trụ cột kinh doanh</h2>
+                      <p className="ai-research-section-hint">
+                        Mỗi trụ cột: Thực trạng thị trường · Đánh giá rủi ro &amp; độ tin cậy · Tác động
+                        CapEx/OpEx/Doanh thu. Trích dẫn IEEE [n].
+                      </p>
+                      <div className="ai-research-ieee-prose-block">
+                        {renderIeeeMarkdown(summary.resultsAndDiscussion, scrollToReference)}
+                      </div>
+                    </section>
+                  )}
+
+                  {summary?.executiveMatrixMarkdown &&
+                    !summary.resultsAndDiscussion?.includes('Trụ cột phân tích') && (
+                      <section className="ai-research-ieee-section">
+                        <h2>4. Bảng tổng hợp khả thi địa điểm &amp; chi phí</h2>
+                        <div className="ai-research-ieee-prose-block">
+                          {renderIeeeMarkdown(summary.executiveMatrixMarkdown, scrollToReference)}
+                        </div>
+                      </section>
+                    )}
+
+                  {!!summary?.risksAndUnknowns?.length && (
+                    <section className="ai-research-ieee-section">
+                      <h2>Rủi ro chiến lược &amp; khoảng trống dữ liệu</h2>
+                      <ul className="ai-research-md-list ai-research-risk-list">
+                        {summary.risksAndUnknowns.map((item, index) => (
+                          <li key={`risk-${index}`}>{renderCitationText(item, scrollToReference)}</li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
+                  {summary?.conclusion && (
+                    <section className="ai-research-ieee-section">
+                      <h2>Kết luận &amp; bước thẩm định tiếp theo</h2>
+                      <div className="ai-research-ieee-prose-block">
+                        {renderIeeeMarkdown(summary.conclusion, scrollToReference)}
+                      </div>
+                    </section>
+                  )}
+
+                  {numberedReferences.length > 0 && (
+                    <section className="ai-research-ieee-section">
+                      <h2>5. Tài liệu tham khảo (IEEE)</h2>
+                      <ol className="ai-research-ieee-refs">
+                        {numberedReferences.map((ref) => (
+                          <li
+                            id={`ai-research-reference-${ref.id}`}
+                            key={`${ref.id}-${ref.url}`}
+                            className="ai-research-ref-item"
+                            value={ref.id}
+                          >
+                            <span className="ai-research-ref-num" aria-hidden>
+                              [{ref.id}]
+                            </span>
+                            <span className="ai-research-ref-body">
+                              {formatIeeeReferenceBody(ref)}{' '}
+                              {ref.url ? (
+                                <a href={ref.url} target="_blank" rel="noreferrer" title={ref.url}>
+                                  <ExternalLink size={12} style={{ verticalAlign: '-2px' }} />
+                                </a>
+                              ) : null}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+                </article>
               </div>
             </section>
           )}

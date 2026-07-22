@@ -567,31 +567,18 @@
     "edit": "Редактировать",
     "save": "Сохранить",
     "cancel": "Отмена",
+    "goHome": "На Главную",
     "viewDetails": "Подробнее",
-    "goHome": "На главную",
-    "confirm": "Подтвердить",
-    "back": "Назад",
-    "next": "Далее",
-    "submit": "Отправить",
-    "loading": "Загрузка...",
-    "noData": "Нет данных",
-    "error": "Ошибка",
-    "success": "Успешно",
-    "all": "Все",
-    "search": "Поиск",
-    "filter": "Фильтр",
-    "sort": "Сортировка",
-    "retry": "Повторить",
-    "close": "Закрыть"
+    "loading": "Загрузка..."
   },
   "validation": {
-    "phoneLength": "Номер телефона должен содержать ровно 10 цифр.",
-    "idLength": "Идентификационный код должен содержать ровно 12 цифр.",
-    "nameSpecialChar": "Имя не должно содержать специальных символов.",
-    "dobRequired": "Дата рождения обязательна.",
-    "dobInvalidFormat": "Неверный формат даты (ДД/ММ/ГГГГ).",
-    "dobInvalidDate": "Неверная дата.",
-    "ageLimit": "Возраст должен быть от 16 до 80 лет."
+    "phoneLength": "Номер телефона должен содержать 10 цифр",
+    "idLength": "Удостоверение должно содержать 12 цифр",
+    "nameSpecialChar": "Имя не может содержать специальные символы",
+    "dobRequired": "Пожалуйста, введите дату рождения",
+    "dobInvalidFormat": "Неверный формат даты (ДД/ММ/ГГГГ)",
+    "dobInvalidDate": "Неверная дата",
+    "ageLimit": "Возраст должен быть от 16 до 80"
   },
   "toast": {
     "passwordChanged": "Пароль успешно изменён!",
@@ -932,7 +919,16 @@
     "goHome": "На главную",
     "movieNotFound": "Фильм не найден",
     "loadError": "Не удалось загрузить информацию о фильме. Пожалуйста, попробуйте позже.",
-    "noSimilarMovies": "Похожих фильмов не найдено."
+    "noSimilarMovies": "Похожих фильмов не найдено.",
+    "mainCast": "В главных ролях",
+    "continueSelectSeats": "Перейти к выбору мест",
+    "selectFormat": "Формат",
+    "showtimes": "Сеансы",
+    "studio": "Студия",
+    "coverGallery": "Обложки",
+    "heroCoverAlt": "Обложка фильма",
+    "details": "Детали",
+    "scrollToBooking": "Купить билет"
   },
   "similarMovies": {
     "vectorSimilarity": "Поиск по векторному сходству",
@@ -1328,19 +1324,11 @@
     "go_to_movies": "Смотреть фильмы"
   },
   "booking": {
-    "proceedToPay": "Перейти к оплате",
-    "premierPlus": "Premier Plus",
-    "promoBannerDesc": "Скидка 20% на попкорн",
-    "privacyPolicy": "Политика конфиденциальности",
-    "termsOfService": "Условия обслуживания",
-    "contactUs": "Связаться с нами",
-    "aboutUs": "О нас",
-    "cookiePolicy": "Политика Cookie",
-    "safetyRules": "Правила безопасности",
-    "careers": "Карьера",
-    "feedback": "Обратная связь",
-    "cinema": "КИНОТЕАТР",
-    "helpSupport": "Помощь и поддержка"
+    "bookingDate": "Дата Бронирования",
+    "showtime": "Сеанс",
+    "seats": "Места",
+    "amount": "Сумма",
+    "viewTicket": "Посмотреть Билет"
   },
   "notifications": {
     "shiftApproved": "Смена одобрена",
@@ -2373,28 +2361,21 @@
     "pointsToNext": "{{points}} баллов до {{nextRank}}",
     "points": "баллов"
   },
-  "booking": {
-    "bookingDate": "Дата Бронирования",
-    "showtime": "Сеанс",
-    "seats": "Места",
-    "amount": "Сумма",
-    "viewTicket": "Посмотреть Билет"
-  },
-  "validation": {
-    "phoneLength": "Номер телефона должен содержать 10 цифр",
-    "idLength": "Удостоверение должно содержать 12 цифр",
-    "nameSpecialChar": "Имя не может содержать специальные символы",
-    "dobRequired": "Пожалуйста, введите дату рождения",
-    "dobInvalidFormat": "Неверный формат даты (ДД/ММ/ГГГГ)",
-    "dobInvalidDate": "Неверная дата",
-    "ageLimit": "Возраст должен быть от 16 до 80"
-  },
-  "common": {
-    "edit": "Редактировать",
-    "save": "Сохранить",
-    "cancel": "Отмена",
-    "goHome": "На Главную",
-    "viewDetails": "Подробнее",
-    "loading": "Загрузка..."
+  "publicFooter": {
+    "brand": "CINEMA PRO",
+    "tagline": "Волшебство кино рядом с вами. Премиальный опыт и незабываемые истории.",
+    "quickLinks": "Быстрые ссылки",
+    "privacyPolicy": "Политика конфиденциальности",
+    "termsOfService": "Условия использования",
+    "contactUs": "Связаться с нами",
+    "company": "Компания",
+    "careers": "Карьера",
+    "feedback": "Обратная связь",
+    "aboutUs": "О нас",
+    "legal": "Правовая информация",
+    "cookiePolicy": "Политика cookie",
+    "safetyRules": "Правила безопасности",
+    "contact": "Контакты",
+    "copyright": "© 2024 CinemaPro. Все права защищены."
   }
 }

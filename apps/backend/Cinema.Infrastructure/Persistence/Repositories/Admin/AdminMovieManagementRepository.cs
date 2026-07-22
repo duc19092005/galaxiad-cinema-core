@@ -27,6 +27,18 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 MovieGenresInfos = x.MovieGenreMovieInfoEntity.Select(y => y.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 MovieImageUrl = x.MovieImageUrl,
                 MovieBannerUrl = x.MovieBannerUrl,
+                CoverImages = x.MovieCoverImageEntities
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.SortOrder)
+                    .Select(c => new ResMovieCoverImageDto
+                    {
+                        MovieCoverImageId = c.MovieCoverImageId,
+                        ImageUrl = c.ImageUrl,
+                        SortOrder = c.SortOrder,
+                        IsPrimary = c.IsPrimary,
+                        Caption = c.Caption
+                    })
+                    .ToList(),
                 MovieName = x.MovieName,
                 MovieVisualFormatInfos = x.MovieFormatMovieInfoEntity.Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 MovieCinemas = _dbContext.Set<MovieCinemaEntity>()
@@ -68,6 +80,19 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
                 MovieDescriptions = m.MovieDescription,
                 MovieGenresInfos = m.MovieGenreMovieInfoEntity.Select(y => y.MovieGenreInfoEntity.MovieGenreName).ToList(),
                 MovieImageUrl = m.MovieImageUrl,
+                MovieBannerUrl = m.MovieBannerUrl,
+                CoverImages = m.MovieCoverImageEntities
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.SortOrder)
+                    .Select(c => new ResMovieCoverImageDto
+                    {
+                        MovieCoverImageId = c.MovieCoverImageId,
+                        ImageUrl = c.ImageUrl,
+                        SortOrder = c.SortOrder,
+                        IsPrimary = c.IsPrimary,
+                        Caption = c.Caption
+                    })
+                    .ToList(),
                 MovieName = m.MovieName,
                 MovieVisualFormatInfos = m.MovieFormatMovieInfoEntity.Select(y => y.MovieFormatInfoEntity.MovieFormatName).ToList(),
                 MovieCinemas = _dbContext.Set<MovieCinemaEntity>()
@@ -151,6 +176,24 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
         await _dbContext.Set<MovieCinemaEntity>().AddRangeAsync(cinemas);
     }
 
+    public async Task AddMovieCoverImagesAsync(IEnumerable<MovieCoverImageEntity> covers)
+    {
+        await _dbContext.Set<MovieCoverImageEntity>().AddRangeAsync(covers);
+    }
+
+    public async Task<List<MovieCoverImageEntity>> GetMovieCoverImagesByMovieIdAsync(Guid movieId)
+    {
+        return await _dbContext.Set<MovieCoverImageEntity>()
+            .Where(x => x.MovieId == movieId)
+            .OrderBy(x => x.SortOrder)
+            .ToListAsync();
+    }
+
+    public void RemoveMovieCoverImages(IEnumerable<MovieCoverImageEntity> covers)
+    {
+        _dbContext.Set<MovieCoverImageEntity>().RemoveRange(covers);
+    }
+
     public void RemoveMovieFormats(IEnumerable<movieFormatMovieInfoEntity> formats)
     {
         _dbContext.Set<movieFormatMovieInfoEntity>().RemoveRange(formats);
@@ -190,6 +233,9 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
         var movieCinemas = await _dbContext.Set<MovieCinemaEntity>().Where(x => x.MovieId == movieId).ToListAsync();
         _dbContext.Set<MovieCinemaEntity>().RemoveRange(movieCinemas);
 
+        var movieCovers = await _dbContext.Set<MovieCoverImageEntity>().Where(x => x.MovieId == movieId).ToListAsync();
+        _dbContext.Set<MovieCoverImageEntity>().RemoveRange(movieCovers);
+
         var movie = await _dbContext.Set<MovieInfoEntity>().FindAsync(movieId);
         if (movie != null)
         {
@@ -219,5 +265,38 @@ public class AdminMovieManagementRepository : IAdminMovieManagementRepository
 
         return await _dbContext.Set<MovieInfoEntity>().AnyAsync(x =>
             x.MovieDescription == description && !x.IsDeleted);
+    }
+
+    public async Task<(List<string> Directors, List<string> Actors)> GetDistinctMoviePeopleAsync()
+    {
+        var rows = await _dbContext.Set<MovieInfoEntity>()
+            .AsNoTracking()
+            .Where(x => !x.IsDeleted)
+            .Select(x => new { x.Director, x.Actors })
+            .ToListAsync();
+
+        static IEnumerable<string> SplitPeople(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) yield break;
+            foreach (var part in raw.Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (!string.IsNullOrWhiteSpace(part))
+                    yield return part.Trim();
+            }
+        }
+
+        var directors = rows
+            .SelectMany(r => SplitPeople(r.Director))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        var actors = rows
+            .SelectMany(r => SplitPeople(r.Actors))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+        return (directors, actors);
     }
 }

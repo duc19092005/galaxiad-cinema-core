@@ -474,34 +474,21 @@
     "dobFormatNote": "(Lưu ý: Ngày / Tháng / Năm)"
   },
   "common": {
-    "edit": "Chỉnh sửa",
+    "edit": "Sửa",
     "save": "Lưu",
     "cancel": "Hủy",
-    "viewDetails": "Chi tiết",
-    "goHome": "Trang chủ",
-    "confirm": "Xác nhận",
-    "back": "Quay lại",
-    "next": "Tiếp theo",
-    "submit": "Gửi",
-    "loading": "Đang tải...",
-    "noData": "Không có dữ liệu",
-    "error": "Lỗi",
-    "success": "Thành công",
-    "all": "Tất cả",
-    "search": "Tìm kiếm",
-    "filter": "Lọc",
-    "sort": "Sắp xếp",
-    "retry": "Thử lại",
-    "close": "Đóng"
+    "goHome": "Về Trang Chủ",
+    "viewDetails": "Xem Chi Tiết",
+    "loading": "Đang tải..."
   },
   "validation": {
-    "phoneLength": "Số điện thoại phải có đúng 10 chữ số.",
-    "idLength": "Mã định danh phải có đúng 12 chữ số.",
-    "nameSpecialChar": "Họ và tên không được chứa ký tự đặc biệt.",
-    "dobRequired": "Vui lòng nhập ngày tháng năm sinh.",
-    "dobInvalidFormat": "Định dạng ngày không hợp lệ (DD/MM/YYYY).",
-    "dobInvalidDate": "Ngày tháng không hợp lệ.",
-    "ageLimit": "Độ tuổi yêu cầu từ 16 đến 80."
+    "phoneLength": "Số điện thoại phải có 10 chữ số",
+    "idLength": "CMND/CCCD phải có 12 chữ số",
+    "nameSpecialChar": "Tên không được chứa ký tự đặc biệt",
+    "dobRequired": "Vui lòng nhập ngày sinh",
+    "dobInvalidFormat": "Định dạng ngày không hợp lệ (DD/MM/YYYY)",
+    "dobInvalidDate": "Ngày không hợp lệ",
+    "ageLimit": "Tuổi phải từ 16 đến 80"
   },
   "toast": {
     "passwordChanged": "Đổi mật khẩu thành công!",
@@ -870,7 +857,16 @@
     "goHome": "Về trang chủ",
     "movieNotFound": "Không tìm thấy phim",
     "loadError": "Không thể tải thông tin phim. Vui lòng thử lại sau.",
-    "noSimilarMovies": "Không tìm thấy phim tương tự nào."
+    "noSimilarMovies": "Không tìm thấy phim tương tự nào.",
+    "mainCast": "Diễn viên chính",
+    "continueSelectSeats": "Tiếp tục chọn ghế",
+    "selectFormat": "Định dạng",
+    "showtimes": "Suất chiếu",
+    "studio": "Studio",
+    "coverGallery": "Ảnh bìa",
+    "heroCoverAlt": "Ảnh bìa phim",
+    "details": "Thông tin",
+    "scrollToBooking": "Đặt vé ngay"
   },
   "similarMovies": {
     "vectorSimilarity": "Tìm kiếm tương đồng vector",
@@ -1246,35 +1242,11 @@
     "go_to_movies": "Vào xem phim"
   },
   "booking": {
-    "proceedToPay": "Tiến hành thanh toán",
-    "premierPlus": "Premier Plus",
-    "promoBannerDesc": "Giảm 20% bỏng ngô",
-    "privacyPolicy": "Chính sách bảo mật",
-    "termsOfService": "Điều khoản dịch vụ",
-    "contactUs": "Liên hệ",
-    "aboutUs": "Về chúng tôi",
-    "cookiePolicy": "Chính sách Cookie",
-    "safetyRules": "Quy định an toàn",
-    "careers": "Tuyển dụng",
-    "feedback": "Phản hồi",
-    "cinema": "CINEMA",
-    "helpSupport": "Trợ giúp & Hỗ trợ",
-    "payment_failed": "Thanh Toán Thất Bại",
-    "try_again": "Thử Lại",
-    "return_home": "Về Trang Chủ",
-    "processing_error_title": "Lỗi Xử Lý",
-    "processing_error_msg": "Có lỗi xảy ra khi xử lý thanh toán. Ghế của bạn đã được giải phóng.",
-    "processing_error_detail": "Hệ thống gặp lỗi khi xử lý thanh toán của bạn. Vui lòng kiểm tra lịch sử đặt vé để xem đặt vé có thành công không.",
-    "payment_interrupted_title": "Thanh Toán Bị Gián Đoạn",
-    "payment_interrupted_msg": "Thanh toán của bạn chưa hoàn tất. Không có khoản phí nào được tính.",
-    "payment_interrupted_detail": "Phiên thanh toán của bạn bị gián đoạn hoặc hủy. Bạn có thể thử đặt lại.",
-    "need_help": "Cần Trợ Giúp?",
-    "support_msg": "Liên hệ đội hỗ trợ với mã đơn hàng nếu bạn bị tính phí.",
-    "available": "Còn trống",
-    "center": "Vùng trung tâm (Góc đẹp)",
-    "selected": "Đã chọn",
-    "locked": "Đã được đặt (người khác)",
-    "occupied": "Đã bán"
+    "bookingDate": "Ngày Đặt",
+    "showtime": "Suất Chiếu",
+    "seats": "Ghế",
+    "amount": "Tổng Tiền",
+    "viewTicket": "Xem Vé"
   },
   "notifications": {
     "shiftApproved": "Ca làm đã được phê duyệt",
@@ -2076,28 +2048,21 @@
     "pointsToNext": "Còn {{points}} điểm lên {{nextRank}}",
     "points": "điểm"
   },
-  "booking": {
-    "bookingDate": "Ngày Đặt",
-    "showtime": "Suất Chiếu",
-    "seats": "Ghế",
-    "amount": "Tổng Tiền",
-    "viewTicket": "Xem Vé"
-  },
-  "validation": {
-    "phoneLength": "Số điện thoại phải có 10 chữ số",
-    "idLength": "CMND/CCCD phải có 12 chữ số",
-    "nameSpecialChar": "Tên không được chứa ký tự đặc biệt",
-    "dobRequired": "Vui lòng nhập ngày sinh",
-    "dobInvalidFormat": "Định dạng ngày không hợp lệ (DD/MM/YYYY)",
-    "dobInvalidDate": "Ngày không hợp lệ",
-    "ageLimit": "Tuổi phải từ 16 đến 80"
-  },
-  "common": {
-    "edit": "Sửa",
-    "save": "Lưu",
-    "cancel": "Hủy",
-    "goHome": "Về Trang Chủ",
-    "viewDetails": "Xem Chi Tiết",
-    "loading": "Đang tải..."
+  "publicFooter": {
+    "brand": "CINEMA PRO",
+    "tagline": "Mang phép màu điện ảnh đến gần bạn hơn. Trải nghiệm cao cấp, câu chuyện khó quên.",
+    "quickLinks": "Liên kết nhanh",
+    "privacyPolicy": "Chính sách bảo mật",
+    "termsOfService": "Điều khoản dịch vụ",
+    "contactUs": "Liên hệ",
+    "company": "Công ty",
+    "careers": "Tuyển dụng",
+    "feedback": "Góp ý",
+    "aboutUs": "Về chúng tôi",
+    "legal": "Pháp lý",
+    "cookiePolicy": "Chính sách cookie",
+    "safetyRules": "Quy tắc an toàn",
+    "contact": "Liên hệ",
+    "copyright": "© 2024 CinemaPro. Đã đăng ký bản quyền."
   }
 }

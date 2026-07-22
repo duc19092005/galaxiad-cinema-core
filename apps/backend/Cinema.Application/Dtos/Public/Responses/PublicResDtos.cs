@@ -19,6 +19,23 @@ public class MovieDetailInfoRes : BaseMovieInfoRes
 
     public bool IsCommingSoon { get; set; }
 
+    public string TrailerUrl { get; set; } = string.Empty;
+
+    /// <summary>Multiple cover / banner images for hero carousel.</summary>
+    public List<MovieCoverImageRes> CoverImages { get; set; } = [];
+}
+
+public class MovieCoverImageRes
+{
+    public Guid MovieCoverImageId { get; set; }
+
+    public string ImageUrl { get; set; } = string.Empty;
+
+    public int SortOrder { get; set; }
+
+    public bool IsPrimary { get; set; }
+
+    public string? Caption { get; set; }
 }
 
 public class GetScheduleDetailsRes

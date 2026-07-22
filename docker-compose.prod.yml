@@ -38,6 +38,8 @@ services:
       - Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
       - Google__WebCallbackUrl=${GOOGLE_WEB_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-web}
       - Google__MobileCallbackUrl=${GOOGLE_MOBILE_CALLBACK_URL:-https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-mobile}
+      - Tmdb__ApiKey=${TMDB_API_KEY}
+      - Tmdb__ImageBaseUrl=${TMDB_IMAGE_BASE_URL:-https://image.tmdb.org/t/p/w185}
       - SeedAccounts__ProductionManagerPasswordHash=${PRODUCTION_MANAGER_PASSWORD_HASH}
     networks:
       - cinema-network

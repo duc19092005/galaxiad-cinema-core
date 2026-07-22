@@ -101,14 +101,37 @@ public class CreateMovieUseCase
                 throw new AppException(Messages.Movie.ImageUploadError, 400, "E01");
             }
 
-            // Upload banner if provided
-            if (request.MovieBanner != null)
+            // Collect multi banners: MovieBanners[] + optional legacy MovieBanner
+            var bannerFiles = new List<Microsoft.AspNetCore.Http.IFormFile>();
+            if (request.MovieBanners != null)
             {
-                bannerUploadStatus = await _imageStorageService.PostImageAsync(request.MovieBanner);
-                if (!bannerUploadStatus.Success)
+                bannerFiles.AddRange(request.MovieBanners.Where(f => f != null && f.Length > 0)!);
+            }
+            if (request.MovieBanner != null && request.MovieBanner.Length > 0
+                && !bannerFiles.Any(f => f.FileName == request.MovieBanner.FileName && f.Length == request.MovieBanner.Length))
+            {
+                bannerFiles.Insert(0, request.MovieBanner);
+            }
+
+            var uploadedBannerUrls = new List<string>();
+            foreach (var bannerFile in bannerFiles)
+            {
+                var upload = await _imageStorageService.PostImageAsync(bannerFile);
+                if (!upload.Success)
                 {
+                    // cleanup already uploaded banners
+                    foreach (var url in uploadedBannerUrls)
+                    {
+                        try { await _imageStorageService.DeleteImageAsync(url); } catch { /* ignore */ }
+                    }
                     throw new AppException(Messages.Movie.BannerUploadError, 400, "E01");
                 }
+                uploadedBannerUrls.Add(upload.Result);
+            }
+
+            if (uploadedBannerUrls.Count > 0)
+            {
+                bannerUploadStatus = (true, uploadedBannerUrls[0]);
             }
 
             var newMovieEntity = new MovieInfoEntity()
@@ -117,7 +140,7 @@ public class CreateMovieUseCase
                 MovieDescription = request.MovieDescription,
                 MovieName = request.MovieName,
                 MovieImageUrl = cloudinaryStatus.Result,
-                MovieBannerUrl = bannerUploadStatus.Result,
+                MovieBannerUrl = uploadedBannerUrls.FirstOrDefault() ?? string.Empty,
                 MovieRequiredAgeId = request.MovieRequiredAgeId,
                 ActiveAt = request.StartedDate,
                 EndedDate = request.EndedDate,
@@ -155,6 +178,22 @@ public class CreateMovieUseCase
             await _adminRepository.AddMovieFormatsAsync(newMovieFormatMovieInfos);
             await _adminRepository.AddMovieGenresAsync(newMovieGenreMovieInfos);
             await _adminRepository.AddMovieCinemasAsync(newMovieCinemaInfos);
+
+            if (uploadedBannerUrls.Count > 0)
+            {
+                var now = DateTime.UtcNow;
+                var coverEntities = uploadedBannerUrls.Select((url, index) => new MovieCoverImageEntity
+                {
+                    MovieCoverImageId = Guid.NewGuid(),
+                    MovieId = newMovieId,
+                    ImageUrl = url,
+                    SortOrder = index,
+                    IsPrimary = index == 0,
+                    IsActive = true,
+                    CreatedAt = now
+                });
+                await _adminRepository.AddMovieCoverImagesAsync(coverEntities);
+            }
             
             await _auditLogService.WriteAsync(
                 "Create",
@@ -195,9 +234,11 @@ public class CreateMovieUseCase
             {
                 await _imageStorageService.DeleteImageAsync(cloudinaryStatus.Result);
             }
-            if (bannerUploadStatus.Success)
+            // bannerUploadStatus.Result is primary; multi-banner cleanup handled when uploads fail mid-loop.
+            // On generic failure after all uploads, wipe primary + re-query is not available — delete known primary.
+            if (bannerUploadStatus.Success && !string.IsNullOrEmpty(bannerUploadStatus.Result))
             {
-                await _imageStorageService.DeleteImageAsync(bannerUploadStatus.Result);
+                try { await _imageStorageService.DeleteImageAsync(bannerUploadStatus.Result); } catch { /* ignore */ }
             }
 
             if (ex is AppException)

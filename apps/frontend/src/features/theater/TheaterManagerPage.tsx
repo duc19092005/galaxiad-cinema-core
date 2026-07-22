@@ -89,11 +89,17 @@ const TheaterManagerPage: React.FC = () => {
 
   const sidebarSections: SidebarSection[] = [
     {
+      id: 'theater-menu',
+      label: 'Chức năng',
+      description: 'Quản lý rạp & lịch chiếu',
+      icon: <LayoutDashboard size={18} />,
+      defaultOpen: true,
+      collapsible: true,
       items: [
-        { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={18} /> },
-        { id: 'employees', label: t('Employees', 'Quản lý nhân viên'), icon: <Users size={18} /> },
-        { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Ca làm việc'), icon: <Calendar size={18} /> },
-        { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Film size={18} /> },
+        { id: 'dashboard', label: t('sidebar.dashboard', 'Tổng quan'), icon: <LayoutDashboard size={16} /> },
+        { id: 'employees', label: t('Employees', 'Quản lý nhân viên'), icon: <Users size={16} /> },
+        { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Ca làm việc'), icon: <Calendar size={16} /> },
+        { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Film size={16} /> },
       ],
     },
   ];

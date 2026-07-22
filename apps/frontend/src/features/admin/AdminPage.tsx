@@ -29,7 +29,7 @@ import {
   Bot,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
@@ -48,7 +48,7 @@ import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema, Department } from '../../types/facilities.types';
 import AdminShiftApprovalSection from './components/AdminShiftApprovalSection';
 import { useCinema } from '../../contexts/CinemaContext';
-import AiResearchSection from './components/AiResearchSection';
+
 
 // ============================================
 // CONSTANTS
@@ -71,7 +71,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'ai', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts']);
 
 const isAccountActive = (status: AdminUserDto['accountStatus']) => {
   if (typeof status === 'number') return status === 1;
@@ -951,8 +951,15 @@ const AuditSection: React.FC<AuditSectionProps> = ({ auditLogs, loading, onRefre
 
 const AdminPage: React.FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { tab } = useParams();
   const { activeCinemaId, activeCinemaName, setActiveCinemaId } = useCinema();
+  // Legacy /admin/ai → dedicated AI workspace route
+  useEffect(() => {
+    if (tab === 'ai') {
+      navigate('/admin/ai/business-research', { replace: true });
+    }
+  }, [tab, navigate]);
   const initialTab = tab && adminTabIds.has(tab) ? tab : 'dashboard';
   const [activeTab, setActiveTab] = useState(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1094,6 +1101,10 @@ const AdminPage: React.FC = () => {
   };
 
   const handleTabChange = (tabId: string) => {
+    if (tabId === 'ai') {
+      navigate('/admin/ai/business-research');
+      return;
+    }
     setActiveTab(tabId);
     const newPath = tabId === 'dashboard' ? '/admin' : `/admin/${tabId}`;
     window.history.pushState(null, '', newPath);
@@ -1273,23 +1284,47 @@ const AdminPage: React.FC = () => {
     }
   };
 
-  const sidebarSections: SidebarSection[] = [
-    {
-      items: [
-        { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={18} /> },
-        { id: 'ai', label: 'AI', icon: <Bot size={18} /> },
-        { id: 'users', label: t('Users'), icon: <Users size={18} /> },
-        { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={18} /> },
-        { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={18} /> },
-        { id: 'pricing-promotions', label: t('Pricing Rules'), icon: <BadgePercent size={18} /> },
-        { id: 'banners', label: 'Banners', icon: <Image size={18} /> },
-        { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={18} /> },
-        { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={18} /> },
-        { id: 'audit', label: t('Audit Log'), icon: <Activity size={18} /> },
-        { id: 'shifts', label: t('adminShiftCancel.sidebarLabel'), icon: <Calendar size={18} /> },
-      ],
-    },
-  ];
+  const sidebarSections: SidebarSection[] = useMemo(
+    () => [
+      {
+        id: 'ai-workspace',
+        label: 'AI Workspace',
+        description: 'Research multi-agent & lab AI',
+        icon: <Bot size={18} />,
+        defaultOpen: false,
+        collapsible: true,
+        items: [
+          {
+            id: 'ai',
+            label: 'Mở AI Workspace',
+            icon: <Bot size={16} />,
+            onClick: () => navigate('/admin/ai/business-research'),
+          },
+        ],
+      },
+      {
+        id: 'admin-ops',
+        label: 'Quản trị hệ thống',
+        description: 'Users, rạp, voucher, quyền…',
+        icon: <LayoutDashboard size={18} />,
+        defaultOpen: true,
+        collapsible: true,
+        items: [
+          { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={16} /> },
+          { id: 'users', label: t('Users'), icon: <Users size={16} /> },
+          { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={16} /> },
+          { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={16} /> },
+          { id: 'pricing-promotions', label: t('Pricing Rules'), icon: <BadgePercent size={16} /> },
+          { id: 'banners', label: 'Banners', icon: <Image size={16} /> },
+          { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={16} /> },
+          { id: 'rights', label: t('Transfer Rights'), icon: <ShieldAlert size={16} /> },
+          { id: 'audit', label: t('Audit Log'), icon: <Activity size={16} /> },
+          { id: 'shifts', label: t('adminShiftCancel.sidebarLabel'), icon: <Calendar size={16} /> },
+        ],
+      },
+    ],
+    [navigate, t],
+  );
 
   const renderContent = () => {
     if (loading) {
@@ -1449,9 +1484,6 @@ const AdminPage: React.FC = () => {
             <AdminOpsTiles data={dashboardData} />
           </div>
         );
-
-      case 'ai':
-        return <AiResearchSection />;
 
       case 'users':
         return (

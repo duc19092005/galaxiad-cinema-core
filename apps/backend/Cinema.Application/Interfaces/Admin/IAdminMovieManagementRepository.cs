@@ -18,6 +18,9 @@ public interface IAdminMovieManagementRepository
     Task AddMovieFormatsAsync(IEnumerable<movieFormatMovieInfoEntity> formats);
     Task AddMovieGenresAsync(IEnumerable<MovieGenreMovieInfoEntity> genres);
     Task AddMovieCinemasAsync(IEnumerable<MovieCinemaEntity> cinemas);
+    Task AddMovieCoverImagesAsync(IEnumerable<MovieCoverImageEntity> covers);
+    Task<List<MovieCoverImageEntity>> GetMovieCoverImagesByMovieIdAsync(Guid movieId);
+    void RemoveMovieCoverImages(IEnumerable<MovieCoverImageEntity> covers);
     void RemoveMovieFormats(IEnumerable<movieFormatMovieInfoEntity> formats);
     void RemoveMovieGenres(IEnumerable<MovieGenreMovieInfoEntity> genres);
     void RemoveMovieCinemas(IEnumerable<MovieCinemaEntity> cinemas);
@@ -26,4 +29,5 @@ public interface IAdminMovieManagementRepository
     Task HardDeleteMovieAsync(Guid movieId);
     Task<bool> IsMovieNameExistsAsync(string name, Guid? excludeMovieId);
     Task<bool> IsMovieDescriptionExistsAsync(string description, Guid? excludeMovieId);
+    Task<(List<string> Directors, List<string> Actors)> GetDistinctMoviePeopleAsync();
 }

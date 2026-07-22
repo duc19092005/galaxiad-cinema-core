@@ -20,4 +20,7 @@ public interface IPublicCatalogRepository
     Task<GetAuditoriumInfosRes?> GetAuditoriumDetailsAsync(Guid scheduleId);
     Task<List<DateTime>> GetAllUpcomingUtcTimesAsync(string? city, Guid? cinemaId);
     Task<List<MovieInfoEntity>> GetMoviesByIdsAsync(List<Guid> ids);
+
+    /// <summary>Distinct director / actor names from public movie catalog.</summary>
+    Task<(List<string> Directors, List<string> Actors)> GetMoviePeopleAsync();
 }

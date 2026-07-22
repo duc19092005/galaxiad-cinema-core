@@ -122,6 +122,7 @@ export interface AiResearchReport {
     resultsAndDiscussion?: string;
     conclusion?: string;
     appendix?: string;
+    executiveMatrixMarkdown?: string;
     claimMatrix?: Array<{ claimCode?: string; text?: string; status?: string; classification?: string; confidence?: number; citations?: string }>;
     provenance?: AiResearchProvenance;
     decisionBasis?: AiResearchDecisionBasis[];

@@ -22,6 +22,7 @@ public class PublicController : ControllerBase
     private readonly GetScheduleDetailsUseCase _getScheduleDetailsUseCase;
     private readonly GetAuditoriumDetailsUseCase _getAuditoriumDetailsUseCase;
     private readonly GetAllUpcomingDatesUseCase _getAllUpcomingDatesUseCase;
+    private readonly GetMoviePeopleUseCase _getMoviePeopleUseCase;
 
     public PublicController(
         GetMovieFormatsUseCase getMovieFormatsUseCase,
@@ -31,7 +32,8 @@ public class PublicController : ControllerBase
         GetScheduleDatesUseCase getScheduleDatesUseCase,
         GetScheduleDetailsUseCase getScheduleDetailsUseCase,
         GetAuditoriumDetailsUseCase getAuditoriumDetailsUseCase,
-        GetAllUpcomingDatesUseCase getAllUpcomingDatesUseCase)
+        GetAllUpcomingDatesUseCase getAllUpcomingDatesUseCase,
+        GetMoviePeopleUseCase getMoviePeopleUseCase)
     {
         _getMovieFormatsUseCase = getMovieFormatsUseCase;
         _getMovieRequiredAgeUseCase = getMovieRequiredAgeUseCase;
@@ -41,6 +43,7 @@ public class PublicController : ControllerBase
         _getScheduleDetailsUseCase = getScheduleDetailsUseCase;
         _getAuditoriumDetailsUseCase = getAuditoriumDetailsUseCase;
         _getAllUpcomingDatesUseCase = getAllUpcomingDatesUseCase;
+        _getMoviePeopleUseCase = getMoviePeopleUseCase;
     }
 
     [HttpGet("MovieFormats")]
@@ -99,6 +102,14 @@ public class PublicController : ControllerBase
     public async Task<IActionResult> GetAllUpcomingDates([FromQuery] string? city, [FromQuery] Guid? cinemaId)
     {
         var result = await _getAllUpcomingDatesUseCase.ExecuteAsync(city, cinemaId);
+        return Ok(result);
+    }
+
+    /// <summary>Distinct directors &amp; actors from public movie catalog (for manager autocomplete).</summary>
+    [HttpGet("MoviePeople")]
+    public async Task<IActionResult> GetMoviePeople()
+    {
+        var result = await _getMoviePeopleUseCase.ExecuteAsync();
         return Ok(result);
     }
 }

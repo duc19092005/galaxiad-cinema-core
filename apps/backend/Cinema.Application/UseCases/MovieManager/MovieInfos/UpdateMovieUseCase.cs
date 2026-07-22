@@ -153,11 +153,113 @@ public class UpdateMovieUseCase
                     {
                         oldBannerUrl = findTheMovie.MovieBannerUrl;
                         findTheMovie.MovieBannerUrl = bannerUploadStatus.Result;
+
+                        // Keep cover table in sync: set primary cover to this banner
+                        var existingCovers = await _adminRepository.GetMovieCoverImagesByMovieIdAsync(itemId);
+                        var primary = existingCovers.FirstOrDefault(c => c.IsPrimary) ?? existingCovers.OrderBy(c => c.SortOrder).FirstOrDefault();
+                        if (primary != null)
+                        {
+                            primary.ImageUrl = bannerUploadStatus.Result;
+                            primary.IsPrimary = true;
+                        }
+                        else
+                        {
+                            await _adminRepository.AddMovieCoverImagesAsync(new[]
+                            {
+                                new MovieCoverImageEntity
+                                {
+                                    MovieCoverImageId = Guid.NewGuid(),
+                                    MovieId = itemId,
+                                    ImageUrl = bannerUploadStatus.Result,
+                                    SortOrder = 0,
+                                    IsPrimary = true,
+                                    IsActive = true,
+                                    CreatedAt = DateTime.UtcNow
+                                }
+                            });
+                        }
                     }
                     else
                     {
                         _logger.LogError(bannerUploadStatus.Result);
                         throw CustomSystemException.SystemExceptionCaller();
+                    }
+                }
+
+                // Remove selected cover images
+                if (request.RemoveCoverImageIds != null && request.RemoveCoverImageIds.Count > 0)
+                {
+                    var existingCovers = await _adminRepository.GetMovieCoverImagesByMovieIdAsync(itemId);
+                    var toRemove = existingCovers
+                        .Where(c => request.RemoveCoverImageIds.Contains(c.MovieCoverImageId))
+                        .ToList();
+                    if (toRemove.Count > 0)
+                    {
+                        _adminRepository.RemoveMovieCoverImages(toRemove);
+                        foreach (var cover in toRemove)
+                        {
+                            try { await _imageStorageService.DeleteImageAsync(cover.ImageUrl); } catch (Exception exDel)
+                            {
+                                _logger.LogWarning(exDel, "Could not delete cover image: {Url}", cover.ImageUrl);
+                            }
+                        }
+
+                        // Refresh primary banner url if needed
+                        var remaining = existingCovers.Except(toRemove).OrderBy(c => c.SortOrder).ToList();
+                        if (remaining.Count > 0)
+                        {
+                            var newPrimary = remaining.FirstOrDefault(c => c.IsPrimary) ?? remaining.First();
+                            foreach (var c in remaining) c.IsPrimary = c.MovieCoverImageId == newPrimary.MovieCoverImageId;
+                            findTheMovie.MovieBannerUrl = newPrimary.ImageUrl;
+                        }
+                        else if (string.IsNullOrEmpty(findTheMovie.MovieBannerUrl) || toRemove.Any(c => c.ImageUrl == findTheMovie.MovieBannerUrl))
+                        {
+                            findTheMovie.MovieBannerUrl = string.Empty;
+                        }
+                    }
+                }
+
+                // Append multi banners
+                if (request.MovieBanners != null && request.MovieBanners.Count > 0)
+                {
+                    var existingCovers = await _adminRepository.GetMovieCoverImagesByMovieIdAsync(itemId);
+                    var nextOrder = existingCovers.Count == 0 ? 0 : existingCovers.Max(c => c.SortOrder) + 1;
+                    var newCovers = new List<MovieCoverImageEntity>();
+                    var appendedUrls = new List<string>();
+
+                    foreach (var file in request.MovieBanners.Where(f => f != null && f.Length > 0))
+                    {
+                        var upload = await _imageStorageService.PostImageAsync(file);
+                        if (!upload.Success)
+                        {
+                            foreach (var url in appendedUrls)
+                            {
+                                try { await _imageStorageService.DeleteImageAsync(url); } catch { /* ignore */ }
+                            }
+                            throw new AppException(Messages.Movie.BannerUploadError, 400, "E01");
+                        }
+                        appendedUrls.Add(upload.Result);
+                        newCovers.Add(new MovieCoverImageEntity
+                        {
+                            MovieCoverImageId = Guid.NewGuid(),
+                            MovieId = itemId,
+                            ImageUrl = upload.Result,
+                            SortOrder = nextOrder++,
+                            IsPrimary = existingCovers.Count == 0 && newCovers.Count == 0,
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    if (newCovers.Count > 0)
+                    {
+                        // First appended becomes primary if none exist
+                        if (existingCovers.Count == 0)
+                        {
+                            newCovers[0].IsPrimary = true;
+                            findTheMovie.MovieBannerUrl = newCovers[0].ImageUrl;
+                        }
+                        await _adminRepository.AddMovieCoverImagesAsync(newCovers);
                     }
                 }
 

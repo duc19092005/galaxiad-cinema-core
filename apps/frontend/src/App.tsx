@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ScheduleManagerPage from './features/schedule/ScheduleManagerPage';
 import TheaterManagerPage from './features/theater/TheaterManagerPage';
 import AdminPage from './features/admin/AdminPage';
+import AdminAiPage from './features/admin/AdminAiPage';
 import MovieDetailPage from './features/booking/MovieDetailPage';
 import SimilarMoviesPage from './features/booking/SimilarMoviesPage';
 import BookingPage from './features/booking/BookingPage';
@@ -70,6 +71,8 @@ function AppRoutes() {
         <Route path="/cashier/sales" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierSalesPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff/:tab" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/ai" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/admin/ai/:module" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/:tab" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie-manager" element={<ProtectedRoute requiredRole="MovieManager"><PageTransition><MovieManagerPage /></PageTransition></ProtectedRoute>} />

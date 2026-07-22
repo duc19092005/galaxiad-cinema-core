@@ -1,4 +1,4 @@
-﻿import { API_BASE_URL, identityAxios } from './axiosClient';
+import { API_BASE_URL, identityAxios } from './axiosClient';
 import type { ApiSuccessResponse } from '../types/auth.types';
 import type {
   AiResearchJobDetail,
@@ -71,6 +71,7 @@ export const aiResearchApi = {
     onEvent: (event: AiResearchSseEvent) => void,
     signal: AbortSignal,
     afterEventId = 0,
+    onOpen?: () => void,
   ): Promise<void> => {
     let cursor = afterEventId;
     let attempt = 0;
@@ -91,12 +92,19 @@ export const aiResearchApi = {
 
     while (!signal.aborted) {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${cursor}`, {
-          method: 'GET', credentials: 'include',
-          headers: { Accept: 'text/event-stream', 'Cache-Control': 'no-cache' }, signal,
-        });
+        // Keep headers CORS-safe (avoid Cache-Control preflight); credentials carry the auth cookie.
+        const response = await fetch(
+          `${API_BASE_URL}/api/v1/admin/ai-research/jobs/${jobId}/events?afterEventId=${cursor}`,
+          {
+            method: 'GET',
+            credentials: 'include',
+            headers: { Accept: 'text/event-stream' },
+            signal,
+          },
+        );
         if (!response.ok || !response.body) throw new Error(`SSE connection failed (${response.status}).`);
         attempt = 0;
+        onOpen?.();
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';

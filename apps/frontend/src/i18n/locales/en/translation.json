@@ -496,31 +496,18 @@
     "edit": "Edit",
     "save": "Save",
     "cancel": "Cancel",
-    "viewDetails": "View Details",
     "goHome": "Go Home",
-    "confirm": "Confirm",
-    "back": "Back",
-    "next": "Next",
-    "submit": "Submit",
-    "loading": "Loading...",
-    "noData": "No data",
-    "error": "Error",
-    "success": "Success",
-    "all": "All",
-    "search": "Search",
-    "filter": "Filter",
-    "sort": "Sort",
-    "retry": "Retry",
-    "close": "Close"
+    "viewDetails": "View Details",
+    "loading": "Loading..."
   },
   "validation": {
-    "phoneLength": "Phone number must be exactly 10 digits.",
-    "idLength": "Identity code must be exactly 12 digits.",
-    "nameSpecialChar": "Name cannot contain special characters.",
-    "dobRequired": "Date of birth is required.",
-    "dobInvalidFormat": "Invalid date format (DD/MM/YYYY).",
-    "dobInvalidDate": "Invalid date.",
-    "ageLimit": "Age must be between 16 and 80."
+    "phoneLength": "Phone number must be 10 digits",
+    "idLength": "ID card must be 12 digits",
+    "nameSpecialChar": "Name cannot contain special characters",
+    "dobRequired": "Please enter date of birth",
+    "dobInvalidFormat": "Invalid date format (DD/MM/YYYY)",
+    "dobInvalidDate": "Invalid date",
+    "ageLimit": "Age must be between 16 and 80"
   },
   "toast": {
     "passwordChanged": "Password changed successfully!",
@@ -827,7 +814,16 @@
     "goHome": "Go Home",
     "movieNotFound": "Movie not found",
     "loadError": "Failed to load movie details. Please try again later.",
-    "noSimilarMovies": "No similar movies found."
+    "noSimilarMovies": "No similar movies found.",
+    "mainCast": "Main cast",
+    "continueSelectSeats": "Continue to seats",
+    "selectFormat": "Format",
+    "showtimes": "Showtimes",
+    "studio": "Studio",
+    "coverGallery": "Cover gallery",
+    "heroCoverAlt": "Movie cover",
+    "details": "Details",
+    "scrollToBooking": "Book now"
   },
   "similarMovies": {
     "vectorSimilarity": "Vector Similarity Search",
@@ -1223,35 +1219,11 @@
     "go_to_movies": "Browse Movies"
   },
   "booking": {
-    "proceedToPay": "Proceed to Pay",
-    "premierPlus": "Premier Plus",
-    "promoBannerDesc": "Get 20% off popcorn",
-    "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service",
-    "contactUs": "Contact Us",
-    "aboutUs": "About Us",
-    "cookiePolicy": "Cookie Policy",
-    "safetyRules": "Safety Rules",
-    "careers": "Careers",
-    "feedback": "Feedback",
-    "cinema": "CINEMA",
-    "helpSupport": "Help & Support",
-    "payment_failed": "Payment Failed",
-    "try_again": "Try Again",
-    "return_home": "Return to Home",
-    "processing_error_title": "Processing Error",
-    "processing_error_msg": "There was an error processing your payment. Your seats have been released.",
-    "processing_error_detail": "The system encountered an error while processing your payment. Please check your order history to see if the booking was successful.",
-    "payment_interrupted_title": "Payment Interrupted",
-    "payment_interrupted_msg": "Your payment was not completed. No charge has been made.",
-    "payment_interrupted_detail": "Your payment session was interrupted or cancelled. You can try booking again.",
-    "need_help": "Need Help?",
-    "support_msg": "Contact our support team with your Order ID if you were charged.",
-    "available": "Available",
-    "center": "Center Zone (Best View)",
-    "selected": "Selected",
-    "locked": "Locked (by others)",
-    "occupied": "Occupied"
+    "bookingDate": "Booking Date",
+    "showtime": "Showtime",
+    "seats": "Seats",
+    "amount": "Total Amount",
+    "viewTicket": "View Ticket"
   },
   "notifications": {
     "shiftApproved": "Shift approved",
@@ -2306,28 +2278,21 @@
     "pointsToNext": "{{points}} points to reach {{nextRank}}",
     "points": "pts"
   },
-  "booking": {
-    "bookingDate": "Booking Date",
-    "showtime": "Showtime",
-    "seats": "Seats",
-    "amount": "Total Amount",
-    "viewTicket": "View Ticket"
-  },
-  "validation": {
-    "phoneLength": "Phone number must be 10 digits",
-    "idLength": "ID card must be 12 digits",
-    "nameSpecialChar": "Name cannot contain special characters",
-    "dobRequired": "Please enter date of birth",
-    "dobInvalidFormat": "Invalid date format (DD/MM/YYYY)",
-    "dobInvalidDate": "Invalid date",
-    "ageLimit": "Age must be between 16 and 80"
-  },
-  "common": {
-    "edit": "Edit",
-    "save": "Save",
-    "cancel": "Cancel",
-    "goHome": "Go Home",
-    "viewDetails": "View Details",
-    "loading": "Loading..."
+  "publicFooter": {
+    "brand": "CINEMA PRO",
+    "tagline": "Bringing the magic of cinema to life. Premium experiences, unforgettable stories.",
+    "quickLinks": "Quick Links",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "contactUs": "Contact Us",
+    "company": "Company",
+    "careers": "Careers",
+    "feedback": "Feedback",
+    "aboutUs": "About Us",
+    "legal": "Legal",
+    "cookiePolicy": "Cookie Policy",
+    "safetyRules": "Safety Rules",
+    "contact": "Contact",
+    "copyright": "© 2024 CinemaPro. All rights reserved."
   }
 }

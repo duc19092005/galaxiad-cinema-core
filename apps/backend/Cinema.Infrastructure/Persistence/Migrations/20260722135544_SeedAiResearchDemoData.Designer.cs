@@ -4,16 +4,19 @@ using Cinema.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Cinema.Infrastructure.Migrations
+namespace Cinema.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(CinemaDbContext))]
-    partial class CinemaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260722135544_SeedAiResearchDemoData")]
+    partial class SeedAiResearchDemoData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3108,155 +3111,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.ToTable("MovieCommentEntity");
                 });
 
-            modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCoverImageEntity", b =>
-                {
-                    b.Property<Guid>("MovieCoverImageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Caption")
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasColumnType("varchar(2048)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPrimary")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid>("MovieId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.HasKey("MovieCoverImageId");
-
-                    b.HasIndex("MovieId", "IsPrimary");
-
-                    b.HasIndex("MovieId", "SortOrder");
-
-                    b.ToTable("MovieCoverImageEntity");
-
-                    b.HasData(
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000001"),
-                            Caption = "Gotham rain",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = true,
-                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            SortOrder = 0
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000002"),
-                            Caption = "Cinema noir",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            SortOrder = 1
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000003"),
-                            Caption = "Night streets",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1440404653325-ab127d49abc1?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            SortOrder = 2
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c6666666-0001-4000-8000-000000000004"),
-                            Caption = "Auditorium glow",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            SortOrder = 3
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000001"),
-                            Caption = "Atomic horizon",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = true,
-                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            SortOrder = 0
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000002"),
-                            Caption = "Desert sky",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            SortOrder = 1
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c7777777-0001-4000-8000-000000000003"),
-                            Caption = "Earth light",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("77777777-7777-7777-7777-777777777777"),
-                            SortOrder = 2
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000001"),
-                            Caption = "Biolume forest",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = true,
-                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
-                            SortOrder = 0
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000002"),
-                            Caption = "Ocean world",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
-                            SortOrder = 1
-                        },
-                        new
-                        {
-                            MovieCoverImageId = new Guid("c8888888-0001-4000-8000-000000000003"),
-                            Caption = "Planet glow",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ImageUrl = "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=1920&q=80",
-                            IsActive = true,
-                            IsPrimary = false,
-                            MovieId = new Guid("88888888-8888-8888-8888-888888888888"),
-                            SortOrder = 2
-                        });
-                });
-
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieFormatInfoEntity", b =>
                 {
                     b.Property<Guid>("MovieFormatId")
@@ -6160,17 +6014,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("UserInfoEntity");
                 });
 
-            modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieCoverImageEntity", b =>
-                {
-                    b.HasOne("Cinema.Domain.Entities.MovieInfos.MovieInfoEntity", "MovieInfoEntity")
-                        .WithMany("MovieCoverImageEntities")
-                        .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("MovieInfoEntity");
-                });
-
             modelBuilder.Entity("Cinema.Domain.Entities.MovieInfos.MovieGenreMovieInfoEntity", b =>
                 {
                     b.HasOne("Cinema.Domain.Entities.MovieInfos.MovieGenreInfoEntity", "MovieGenreInfoEntity")
@@ -6793,8 +6636,6 @@ namespace Cinema.Infrastructure.Migrations
                     b.Navigation("MovieCinemaEntities");
 
                     b.Navigation("MovieCommentEntities");
-
-                    b.Navigation("MovieCoverImageEntities");
 
                     b.Navigation("MovieFormatMovieInfoEntity");
 

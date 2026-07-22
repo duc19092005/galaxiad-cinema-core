@@ -25,12 +25,21 @@ export interface PaginatedResponse<T> {
     hasNextPage: boolean;
 }
 
+export interface PublicMovieCoverImage {
+    movieCoverImageId: string;
+    imageUrl: string;
+    sortOrder: number;
+    isPrimary: boolean;
+    caption?: string | null;
+}
+
 export interface PublicMovieDetail extends PublicMovieListItem {
     trailerUrl?: string;
     director: string;
     actor: string;
     movieDescription: string;
     movieBannerURL?: string;
+    coverImages?: PublicMovieCoverImage[];
 }
 
 export interface PublicCity {

@@ -190,10 +190,10 @@ class BusinessResearchOrchestrator:
             budget_used=budget_used,
             resolved_claims=processed,
             total_claims=len(claims),
-            message="Galaxy IEEE synthesizer: Abstract → References [n] (no raw URLs in body)",
+            message="Đang soạn Báo cáo khả thi điều hành (C-Level) + trích dẫn IEEE [n]",
             thought=(
-                "Soạn technical report chuẩn IEEE cho Galaxy Cinema: citation [1]..[n], "
-                "bảng ma trận claim, References đầy đủ URL; body không nhúng hyperlink."
+                "Tổng hợp thành executive feasibility: tóm tắt điều hành, đề xuất P0/P1/P2, "
+                "trụ cột quy hoạch–chi phí–footfall, ma trận C-level; lọc jargon kỹ thuật."
             ),
         )
         report = await self._render_report(request, template.label, claims)
@@ -215,7 +215,7 @@ class BusinessResearchOrchestrator:
         template_label: str,
         claims: list[Claim],
     ) -> dict[str, Any]:
-        ieee_summary = await self.synthesizer.synthesize(
+        summary = await self.synthesizer.synthesize(
             city=request.city,
             template_label=template_label,
             notes=request.notes,
@@ -251,13 +251,13 @@ class BusinessResearchOrchestrator:
                 }
             )
 
-        paper_title = ieee_summary.get("title") or f"{template_label} - {CITY_LABELS[request.city]}"
+        paper_title = summary.get("title") or f"{template_label} - {CITY_LABELS[request.city]}"
         return {
             "title": paper_title,
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "notes": request.notes,
-            "reportStyle": "ieee",
-            "summary": ieee_summary,
+            "reportStyle": summary.get("reportStyle") or "decision_brief",
+            "summary": summary,
             "sections": sections,
         }
 

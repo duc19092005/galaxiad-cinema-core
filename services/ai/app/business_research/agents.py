@@ -42,6 +42,57 @@ def _valid_citations(text: str, valid_ids: set[int]) -> str:
     return re.sub(r"\[(\d+)\]", replace, text or "")
 
 
+# Developer / pipeline jargon that must never reach C-level report body.
+_JARGON_PATTERNS: list[tuple[re.Pattern[str], str]] = [
+    (re.compile(r"\bstatus\s*=\s*\w+", re.I), ""),
+    (re.compile(r"\bclass\s*=\s*\w+", re.I), ""),
+    (re.compile(r"\bconf(?:idence)?\s*=?\s*\d+\s*%?", re.I), ""),
+    (re.compile(r"\bconf\s+\d+\s*%", re.I), ""),
+    (re.compile(r"\bArbitrator\b", re.I), "đánh giá độc lập"),
+    (re.compile(r"\bSynthesizer\b", re.I), "tổng hợp chiến lược"),
+    (re.compile(r"\bPlanner\b", re.I), "nhóm phân tích"),
+    (re.compile(r"\bTavily(?:\s*/?\s*MCP)?\b", re.I), "nguồn thị trường mở"),
+    (re.compile(r"\bDeepSeek\b", re.I), ""),
+    (re.compile(r"\bmulti[\s-]?agent\b", re.I), "hệ thống nghiên cứu"),
+    (re.compile(r"\bSSE\b", re.I), ""),
+    (re.compile(r"\bCall budget\b", re.I), ""),
+    (re.compile(r"\bEvidence thô\b", re.I), "minh chứng thị trường"),
+    (re.compile(r"\bAudit claim\b", re.I), ""),
+    (re.compile(r"\bPhụ lục A[^\n]*", re.I), ""),
+    (re.compile(r"Các mẩu evidence tiêu biểu[:：]?", re.I), "Tham chiếu thị trường:"),
+    (re.compile(r"Hệ thống kiểm chứng ở mức[^.]*\.", re.I), ""),
+    (re.compile(r"Arbitrator xếp loại[^.]*\.", re.I), ""),
+    (re.compile(r"\bclaim(?:s|Code| ID)?\b", re.I), "giả thuyết kinh doanh"),
+    (re.compile(r"\bVerdict\b", re.I), "kết luận"),
+    (re.compile(r"\bAgent\b", re.I), ""),
+    (re.compile(r"resolved", re.I), "đã xác nhận"),
+    (re.compile(r"insufficient(?:_final)?", re.I), "chưa đủ dữ liệu"),
+    (re.compile(r"conflicting", re.I), "có tín hiệu mâu thuẫn"),
+]
+
+
+def _risk_label_from_confidence(confidence: float, status: str, contradicts: int = 0) -> str:
+    if status in {"insufficient_final", "unresolved"} or contradicts > 0 and confidence < 0.75:
+        return "Rủi ro dữ liệu: Cao — chỉ mang tính định hướng; cần thẩm định bổ sung"
+    if confidence >= 0.9 and status == "resolved" and contradicts == 0:
+        return "Mức độ tin cậy cao (đối chiếu từ nhiều nguồn thị trường độc lập) · Rủi ro dữ liệu: Thấp"
+    if confidence >= 0.7:
+        return (
+            "Mức độ tin cậy trung bình (cần xác minh qua báo cáo giá độc lập / khảo sát thực địa) "
+            "· Rủi ro dữ liệu: Trung bình"
+        )
+    return "Mức độ tin cậy thấp — chưa đủ để đưa vào base-case tài chính · Rủi ro dữ liệu: Cao"
+
+
+def _strip_executive_jargon(text: str) -> str:
+    cleaned = _strip_urls(text or "")
+    for pattern, repl in _JARGON_PATTERNS:
+        cleaned = pattern.sub(repl, cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
 class PlannerAgent:
     async def plan(self, city: str, modules: list[ModuleTemplate]) -> list[Claim]:
         if DEEPSEEK_API_KEY:
@@ -175,7 +226,7 @@ class ArbitratorAgent:
 
 
 class ReportSynthesizerAgent:
-    """IEEE-style Galaxy Cinema technical report with [n] citations only in body."""
+    """C-level Business Feasibility report with IEEE [n] citations only."""
 
     async def synthesize(
         self,
@@ -200,6 +251,23 @@ class ReportSynthesizerAgent:
             "referenceCount": len(bibliography["entries"]),
         }
 
+        # Sanitize payload: keep structure for LLM, strip developer-facing phrasing hints.
+        executive_matrix_input = [
+            {
+                "topic": row["text"],
+                "module": row["module"],
+                "pillar": self._pillar_for_module(row["module"]),
+                "riskLabel": _risk_label_from_confidence(
+                    float(row["confidence"]), row["status"], int(row["contradicts"])
+                ),
+                "citations": row["citations"],
+                "citationIds": row["citationIds"],
+                "marketSnippets": row.get("evidenceSnippets") or [],
+                "sourceDomains": row.get("sourceDomains") or [],
+            }
+            for row in claim_rows
+        ]
+
         if DEEPSEEK_API_KEY and claims:
             try:
                 user_payload = {
@@ -207,22 +275,25 @@ class ReportSynthesizerAgent:
                     "city": city_label,
                     "analysisType": template_label,
                     "managerNotes": notes or "",
-                    "stats": stats,
-                    "claimMatrix": claim_rows,
+                    "runStatsForInternalUseOnly": {
+                        "hypothesisCount": stats["totalClaims"],
+                        "confirmedCount": stats["resolvedClaims"],
+                        "referenceCount": stats["referenceCount"],
+                    },
+                    "marketFindings": executive_matrix_input,
                     "bibliography": [
                         {
                             "id": entry["id"],
                             "title": entry["title"],
                             "domain": entry["domain"],
-                            # URL provided only for REFERENCE construction, not for body text.
                             "url": entry["url"],
                         }
                         for entry in bibliography["entries"]
                     ],
                     "instruction": (
-                        "Write a Galaxy Cinema IEEE-style research report in Vietnamese. "
-                        "Body/table citations must be [id] only. Never put URLs in body fields. "
-                        "resultsAndDiscussion MUST contain a Markdown claim evaluation matrix table."
+                        "Produce the C-level Business Feasibility Report JSON. "
+                        "Apply ABSOLUTE FILTERING RULES. No pipeline jargon, no conf%, no claim IDs. "
+                        "Use business risk language. Keep [n] citations. No raw URLs in body."
                     ),
                 }
                 raw = await call_deepseek(
@@ -241,10 +312,10 @@ class ReportSynthesizerAgent:
                         notes,
                         claim_rows,
                     )
-                    if paper.get("abstract") and paper.get("resultsAndDiscussion"):
+                    if paper.get("abstract") or paper.get("executiveSummary") or paper.get("resultsAndDiscussion"):
                         return paper
             except Exception as exc:
-                logger.warning(f"IEEE report synthesizer LLM fallback activated: {exc}")
+                logger.warning(f"Executive report synthesizer LLM fallback activated: {exc}")
 
         return self._fallback_ieee_paper(
             city_label, template_label, notes, claims, bibliography["entries"], stats, claim_rows
@@ -286,10 +357,14 @@ class ReportSynthesizerAgent:
             counters[claim.category] = counters.get(claim.category, 0) + 1
             code = self._claim_code(claim, counters[claim.category])
             ref_ids: list[int] = []
+            snippets: list[str] = []
             for item in claim.evidence:
                 ref_id = url_to_id.get(item.url)
                 if ref_id and ref_id not in ref_ids:
                     ref_ids.append(ref_id)
+                bit = (item.snippet or item.extracted_content or item.title or "").strip()
+                if bit and len(snippets) < 3:
+                    snippets.append(_strip_urls(bit[:280]))
             citation_text = ", ".join(f"[{i}]" for i in ref_ids[:6]) if ref_ids else "—"
             rows.append(
                 {
@@ -301,12 +376,17 @@ class ReportSynthesizerAgent:
                     "classification": claim.classification,
                     "confidence": claim.confidence,
                     "isCritical": claim.is_critical,
-"citationIds": ref_ids[:6],
+                    "citationIds": ref_ids[:6],
                     "citations": citation_text,
                     "evidenceCount": len(claim.evidence),
                     "supports": sum(item.relation == "supports" for item in claim.evidence),
                     "contradicts": sum(item.relation == "contradicts" for item in claim.evidence),
-                    "sourceDomains": list(dict.fromkeys(item.source_domain for item in claim.evidence if item.source_domain))[:6],
+                    "sourceDomains": list(
+                        dict.fromkeys(
+                            item.source_domain for item in claim.evidence if item.source_domain
+                        )
+                    )[:6],
+                    "evidenceSnippets": snippets,
                 }
             )
         return rows
@@ -336,24 +416,169 @@ class ReportSynthesizerAgent:
             "evidenceCount": row["evidenceCount"], "sourceDomains": row["sourceDomains"],
             "citationIds": row["citationIds"],
         } for row in claim_rows]
-    def _build_claim_matrix_markdown(self, claim_rows: list[dict]) -> str:
+    def _pillar_for_module(self, module: str) -> str:
+        if module in {"zoning_policy", "investment_incentive"}:
+            return "zoning"
+        if module in {"real_estate_price", "lease_cost", "pricing", "promotion"}:
+            return "cost"
+        if module in {"infrastructure_trend", "trend_demand", "competition", "background"}:
+            return "infrastructure"
+        return "cost"
+
+    def _pillar_title(self, pillar: str) -> str:
+        return {
+            "zoning": "A. Quy hoạch & địa điểm thương mại",
+            "cost": "B. Chi phí mặt bằng & dự phòng vận hành (CapEx / OpEx)",
+            "infrastructure": "C. Hạ tầng giao thông & tiềm năng khách hàng (Footfall)",
+            "pricing": "D. Giá vé, cạnh tranh & nhu cầu",
+        }.get(pillar, pillar)
+
+    def _build_executive_matrix_markdown(self, claim_rows: list[dict]) -> str:
         lines = [
-            "### BẢNG I: MA TRẬN ĐÁNH GIÁ VÀ KIỂM CHỨNG CÁC GIẢ THUYẾT VỊ TRÍ (CLAIM EVALUATION MATRIX)",
-            "",
-            "| Mã giả thuyết (Claim ID) | Nội dung phân tích khả thi vị trí (Feasibility Content) | Trạng thái (Status) | Loại (Class) | Độ tin cậy (Conf) | Tài liệu trích dẫn (Citations) |",
-            "| :--- | :--- | :---: | :---: | :---: | :---: |",
+            "| Trụ cột phân tích | Thực trạng & Khảo sát thị trường | Đánh giá rủi ro | Tác động kinh doanh (C-Level Focus) | Nguồn tham chiếu |",
+            "| :--- | :--- | :--- | :--- | :--- |",
         ]
+        by_pillar: dict[str, list[dict]] = {}
         for row in claim_rows:
-            conf = f"{int(round(float(row['confidence']) * 100))}%"
-            status = str(row["status"]).replace("insufficient_final", "Insufficient").title()
-            if status.lower() == "resolved":
-                status = "Resolved"
-            classification = str(row["classification"]).title()
-            text = str(row["text"]).replace("|", "/")
-            lines.append(
-                f"| **{row['claimCode']}** | {text} | {status} | {classification} | {conf} | {row['citations']} |"
+            by_pillar.setdefault(self._pillar_for_module(row["module"]), []).append(row)
+
+        for pillar, rows in by_pillar.items():
+            title = self._pillar_title(pillar).split(". ", 1)[-1]
+            topics = "; ".join(r["text"][:80] for r in rows[:3]).replace("|", "/")
+            cites = ", ".join(
+                dict.fromkeys(
+                    c
+                    for r in rows
+                    for c in (r["citations"].split(", ") if r["citations"] != "—" else [])
+                )
+            ) or "—"
+            risk = _risk_label_from_confidence(
+                float(rows[0]["confidence"]), rows[0]["status"], int(rows[0]["contradicts"])
             )
+            impact = (
+                "Ảnh hưởng shortlist vị trí, biên độ thuê/CapEx và giả định doanh thu — "
+                "chỉ chốt sau thẩm định thực địa & báo giá độc lập."
+            )
+            lines.append(f"| {title} | {topics} | {risk} | {impact} | {cites} |")
         return "\n".join(lines)
+
+    def _build_detailed_analysis(self, claim_rows: list[dict]) -> str:
+        """Executive pillar narrative (no developer jargon)."""
+        by_pillar: dict[str, list[dict]] = {}
+        for row in claim_rows:
+            by_pillar.setdefault(self._pillar_for_module(row["module"]), []).append(row)
+
+        blocks: list[str] = ["## 3. Phân tích chi tiết theo trụ cột kinh doanh"]
+        for pillar, rows in by_pillar.items():
+            blocks.append(f"\n### {self._pillar_title(pillar)}")
+            # Aggregate market reality from top rows
+            realities = []
+            for row in rows[:4]:
+                cites = row["citations"] if row["citations"] != "—" else ""
+                snippets = row.get("evidenceSnippets") or []
+                snippet = f" Tham chiếu thị trường: «{snippets[0]}»." if snippets else ""
+                realities.append(f"- {row['text']} {cites}.{snippet}".strip())
+            risk = _risk_label_from_confidence(
+                float(rows[0]["confidence"]), rows[0]["status"], int(rows[0]["contradicts"])
+            )
+            so_what = (
+                "Hàm ý chiến lược: dùng làm đầu vào shortlist và stress-test mô hình tài chính; "
+                "CapEx/OpEx chỉ khóa sau đàm phán thuê, kiểm tra PCCC/tải trọng sàn và khảo sát footfall."
+            )
+            if any(r["contradicts"] > 0 or r["status"] != "resolved" for r in rows):
+                so_what = (
+                    "Hàm ý chiến lược: chưa đủ vững cho cam kết vốn lớn; ưu tiên thẩm định bổ sung "
+                    "trước khi đưa vào base-case đầu tư."
+                )
+            blocks.append(
+                f"- **Thực trạng thị trường:**\n" + "\n".join(realities) + "\n"
+                f"- **Đánh giá rủi ro & độ tin cậy:** {risk}\n"
+                f"- **Tác động tới Galaxy Cinema (CapEx/OpEx/Doanh thu):** {so_what}"
+            )
+        return "\n".join(blocks)
+
+    def _build_key_findings(self, claim_rows: list[dict], city_label: str) -> list[str]:
+        findings: list[str] = []
+        ranked = sorted(
+            claim_rows,
+            key=lambda r: (0 if r.get("isCritical") else 1, -float(r.get("confidence") or 0)),
+        )
+        for row in ranked[:7]:
+            risk = _risk_label_from_confidence(
+                float(row["confidence"]), row["status"], int(row["contradicts"])
+            )
+            cites = row["citations"] if row["citations"] != "—" else ""
+            findings.append(
+                _strip_executive_jargon(
+                    f"Tại {city_label}: {row['text']}. {risk}. {cites}"
+                ).strip()
+            )
+        return findings
+
+    def _build_recommendations(
+        self,
+        claim_rows: list[dict],
+        city_label: str,
+        template_label: str,
+        notes: str,
+    ) -> list[str]:
+        recs: list[str] = []
+        weak = [r for r in claim_rows if r["status"] != "resolved" or r["contradicts"] > 0]
+        strong = [r for r in claim_rows if r["status"] == "resolved" and r["confidence"] >= 0.8]
+
+        if notes.strip():
+            recs.append(
+                f"P0 (Hành động ngay): Bám định hướng quản lý «{_strip_urls(notes.strip())[:160]}» "
+                f"khi lọc shortlist địa điểm tại {city_label}."
+            )
+        if strong:
+            top = strong[0]
+            recs.append(
+                f"P0 (Hành động ngay): Ưu tiên các cụm vị trí/phân khúc liên quan «{top['text'][:110]}» "
+                f"trong shortlist thương lượng {top['citations']}."
+            )
+        else:
+            recs.append(
+                f"P0 (Hành động ngay): Lập shortlist 3-5 phương án mặt bằng tại {city_label} "
+                "theo tiêu chí quy hoạch – footfall – biên độ thuê."
+            )
+        recs.append(
+            "P1 (Thẩm định chuyên sâu): Rà soát pháp lý, PCCC, tải trọng sàn rạp, "
+            "và đàm phán điều khoản thuê (fit-out, phí dịch vụ, điều chỉnh giá)."
+        )
+        if any(r["module"] in {"pricing", "lease_cost", "real_estate_price"} for r in claim_rows):
+            recs.append(
+                "P1 (Thẩm định chuyên sâu): Thu thập báo giá thuê độc lập (môi giới + chủ nhà) "
+                "để khóa biên độ CapEx/OpEx trước IC."
+            )
+        if weak:
+            recs.append(
+                "P1 (Thẩm định chuyên sâu): Bổ sung dữ liệu cho các giả thuyết còn khoảng trống "
+                "(nguồn chính thống, phỏng vấn chủ mặt bằng, khảo sát hiện trường)."
+            )
+        recs.append(
+            "P2 (Theo dõi chiến lược): Theo dõi tiến độ Metro/Vành đai và TTTM sắp mở "
+            "để điều chỉnh timing mở rạp và dự phóng footfall."
+        )
+        recs.append(
+            f"P2 (Theo dõi chiến lược): Cập nhật giả định doanh thu theo diễn biến cạnh tranh "
+            f"và nhu cầu giải trí tại {city_label} sau khi có shortlist."
+        )
+        return [_strip_executive_jargon(item) for item in recs[:7]]
+
+    def _build_risks(self, claim_rows: list[dict]) -> list[str]:
+        risks = [
+            "Dữ liệu thị trường mở có thể lỗi thời hoặc mang tính quảng cáo; không thay thế thẩm định pháp lý và kỹ thuật.",
+            "Thiếu hợp đồng thuê thực tế (giá net, fit-out, phí dịch vụ) làm biên độ CapEx/OpEx dễ lệch.",
+        ]
+        if any(r["contradicts"] > 0 for r in claim_rows):
+            risks.append("Một số tín hiệu thị trường mâu thuẫn nhau; cần đối chiếu thêm trước khi cam kết vốn.")
+        if any(r["status"] != "resolved" for r in claim_rows):
+            risks.append("Còn khoảng trống dữ liệu quan trọng — không đưa vào base-case tài chính.")
+        risks.append(
+            "Chưa có khảo sát hiện trường (lưu lượng, cạnh tranh bán kính 1-3km, PCCC, thông thủy, tải trọng sàn)."
+        )
+        return [_strip_executive_jargon(item) for item in risks]
 
     def _normalize_ieee_paper(
         self,
@@ -369,14 +594,14 @@ class ReportSynthesizerAgent:
             for key in keys:
                 value = parsed.get(key)
                 if isinstance(value, str) and value.strip():
-                    return _strip_urls(value.strip())
+                    return _strip_executive_jargon(value)
             return ""
 
         def as_list(value: object) -> list[str]:
             if isinstance(value, list):
-                return [str(item).strip() for item in value if str(item).strip()]
+                return [_strip_executive_jargon(str(item)) for item in value if str(item).strip()]
             if isinstance(value, str) and value.strip():
-                return [part.strip() for part in re.split(r"[,;]", value) if part.strip()]
+                return [_strip_executive_jargon(part) for part in re.split(r"[,;]", value) if part.strip()]
             return []
 
         authors = parsed.get("authors")
@@ -393,31 +618,68 @@ class ReportSynthesizerAgent:
                 if isinstance(item, dict)
             ] or [GALAXY_AUTHOR]
 
+        is_site = "site" in template_label.lower() or "location" in template_label.lower()
         title = text("title") or (
-            f"SITE AND LOCATION FEASIBILITY ANALYSIS FOR CINEMA EXPANSION IN "
-            f"{city_label.upper()}: A MULTI-AGENT COMPREHENSIVE APPROACH"
-            if "site" in template_label.lower() or "location" in template_label.lower()
-            else f"{template_label.upper()} ANALYSIS FOR GALAXY CINEMA IN {city_label.upper()}: A MULTI-AGENT APPROACH"
+            f"BÁO CÁO ĐÁNH GIÁ KHẢ THI ĐỊA ĐIỂM VÀ MẶT BẰNG MỞ RỘNG RẠP CHIẾU PHIM GALAXY CINEMA TẠI {city_label.upper()}"
+            if is_site
+            else f"BÁO CÁO ĐÁNH GIÁ KHẢ THI KINH DOANH ({template_label.upper()}) — GALAXY CINEMA TẠI {city_label.upper()}"
         )
 
-        abstract = text("abstract")
+        abstract = text("abstract") or text("executiveSummary", "executive_summary")
+        executive_summary = text("executiveSummary", "executive_summary") or abstract
         introduction = text("introduction")
-        related = text("relatedWork", "related_work")
-        methodology = text("methodology")
         results = text("resultsAndDiscussion", "results_and_discussion", "results")
         conclusion = text("conclusion")
-        appendix = text("appendix")
         keywords = as_list(parsed.get("keywords"))
+        key_findings = as_list(parsed.get("keyFindings") or parsed.get("key_findings"))
+        recommendations = as_list(parsed.get("recommendations"))
+        risks = as_list(parsed.get("risksAndUnknowns") or parsed.get("risks_and_unknowns"))
+        pillar_zoning = text("pillarZoning", "pillar_zoning")
+        pillar_cost = text("pillarCost", "pillar_cost")
+        pillar_infra = text("pillarInfrastructure", "pillar_infrastructure")
+        pillar_pricing = text("pillarPricing", "pillar_pricing")
+        matrix = text("executiveMatrixMarkdown", "executive_matrix_markdown")
 
-        # Force matrix table into results if model omitted it.
-        matrix = self._build_claim_matrix_markdown(claim_rows)
-        if results and "BẢNG I" not in results and "| Mã giả thuyết" not in results:
-            results = f"{matrix}\n\n### Phân tích chuyên sâu từ kết quả thực nghiệm:\n{results}"
-        elif not results:
-            results = matrix
+        detailed = self._build_detailed_analysis(claim_rows)
+        fallback_matrix = self._build_executive_matrix_markdown(claim_rows)
 
-        if not appendix:
-            appendix = self._build_appendix(claim_rows)
+        # Prefer model pillars; otherwise compose executive narrative.
+        pillar_parts = [p for p in (pillar_zoning, pillar_cost, pillar_infra, pillar_pricing) if p]
+        if pillar_parts:
+            composed = "\n\n".join(pillar_parts)
+            results = composed if not results or len(results) < 300 else f"{composed}\n\n{results}"
+        thin_results = (
+            not results
+            or len(results) < 350
+            or ("Thực trạng" not in results and "Tác động" not in results)
+        )
+        if thin_results:
+            results = detailed
+        if not matrix or "Trụ cột phân tích" not in matrix:
+            matrix = fallback_matrix
+
+        # Keep matrix inside results section for single reading path.
+        if "Trụ cột phân tích" not in results:
+            results = (
+                f"{results}\n\n## 4. Bảng tổng hợp khả thi địa điểm & chi phí\n\n{matrix}"
+            )
+
+        if not key_findings:
+            key_findings = self._build_key_findings(claim_rows, city_label)
+        if not recommendations:
+            recommendations = self._build_recommendations(
+                claim_rows, city_label, template_label, notes
+            )
+        if not risks:
+            risks = self._build_risks(claim_rows)
+        if not abstract:
+            abstract = (
+                f"Báo cáo đánh giá khả thi tại {city_label} phục vụ HĐQT Galaxy Cinema: "
+                f"tổng hợp {stats['totalClaims']} giả thuyết kinh doanh từ nguồn thị trường mở, "
+                f"trong đó {stats['resolvedClaims']} giả thuyết đủ độ tin cậy để định hướng shortlist. "
+                f"Kết luận mang tính hỗ trợ quyết định CapEx/OpEx và không thay thế khảo sát thực địa."
+            )
+            executive_summary = abstract
 
         valid_ids = {entry["id"] for entry in bibliography}
         used_ids = parsed.get("referenceIdsUsed") or parsed.get("reference_ids_used") or []
@@ -430,78 +692,75 @@ class ReportSynthesizerAgent:
                     continue
                 if num in valid_ids and num not in ordered_ids:
                     ordered_ids.append(num)
-        # Always include every bibliography entry for audit completeness.
         for entry in bibliography:
             if entry["id"] not in ordered_ids:
                 ordered_ids.append(entry["id"])
 
         id_to_entry = {entry["id"]: entry for entry in bibliography}
         references = [id_to_entry[i] for i in ordered_ids if i in id_to_entry]
-        introduction = _valid_citations(introduction, valid_ids)
-        related = _valid_citations(related, valid_ids)
-        methodology = _valid_citations(methodology, valid_ids)
-        results = _valid_citations(results, valid_ids)
-        conclusion = _valid_citations(conclusion, valid_ids)
-        appendix = _valid_citations(appendix, valid_ids)
-        provenance = self._build_provenance(city_label, template_label, notes, claim_rows, references)
-        decision_basis = self._build_decision_basis(claim_rows)
 
-        confidence = (
-            "high"
-            if stats["resolvedClaims"] >= max(1, int(stats["totalClaims"] * 0.7))
-            else "medium"
-            if stats["resolvedClaims"]
-            else "low"
+        def clean_body(value: str) -> str:
+            return _valid_citations(_strip_executive_jargon(value), valid_ids)
+
+        abstract = clean_body(abstract)
+        executive_summary = clean_body(executive_summary)
+        introduction = clean_body(introduction)
+        results = clean_body(results)
+        conclusion = clean_body(conclusion)
+        matrix = clean_body(matrix)
+        key_findings = [clean_body(item) for item in key_findings]
+        recommendations = [clean_body(item) for item in recommendations]
+        risks = [clean_body(item) for item in risks]
+
+        risk_overall = _risk_label_from_confidence(
+            float(stats["avgConfidence"]),
+            "resolved" if stats["resolvedClaims"] else "insufficient_final",
         )
 
         return {
-            "reportStyle": "ieee",
+            "reportStyle": "executive_feasibility",
             "title": title,
             "authors": authors,
             "abstract": abstract,
             "keywords": keywords
             or [
-                template_label,
+                "khả thi địa điểm",
                 city_label,
-                "cinema expansion",
-                "Tavily Search",
-                "multi-agent system",
-                "IEEE report",
+                "CapEx",
+                "OpEx",
+                "mặt bằng rạp",
+                "footfall",
             ],
             "introduction": introduction,
-            "relatedWork": related,
-            "methodology": methodology,
+            "relatedWork": "",
+            "methodology": "",
             "resultsAndDiscussion": results,
-            "conclusion": conclusion,
-            "appendix": appendix,
+            "conclusion": conclusion
+            or clean_body(
+                f"Khuyến nghị: dùng kết quả tại {city_label} để shortlist và thẩm định chuyên sâu, "
+                "không chốt cam kết vốn trước site visit và báo giá thuê độc lập."
+            ),
+            "appendix": "",
+            "executiveMatrixMarkdown": matrix,
+            "keyFindings": key_findings,
+            "recommendations": recommendations,
+            "risksAndUnknowns": risks,
             "claimMatrix": claim_rows,
-            "provenance": provenance,
-            "decisionBasis": decision_basis,
+            "provenance": self._build_provenance(city_label, template_label, notes, claim_rows, references),
+            "decisionBasis": self._build_decision_basis(claim_rows),
             "references": references,
             "headline": title,
-            "executiveSummary": abstract,
-            "confidenceOverall": confidence,
-            "confidenceNote": (
-                f"Resolved {stats['resolvedClaims']}/{stats['totalClaims']}, "
-                f"avg confidence {stats['avgConfidence']:.0%}, "
-                f"{len(references)} IEEE references (URLs only in References)."
+            "executiveSummary": executive_summary,
+            "confidenceOverall": (
+                "high"
+                if stats["resolvedClaims"] >= max(1, int(stats["totalClaims"] * 0.7))
+                else "medium"
+                if stats["resolvedClaims"]
+                else "low"
             ),
+            "confidenceNote": risk_overall,
             **stats,
         }
-
-    def _build_appendix(self, claim_rows: list[dict]) -> str:
-        lines = [
-            "PHỤ LỤC (APPENDIX) - CƠ SỞ DỮ LIỆU ĐỐI CHIẾU THÔ (RAW AUDIT MATRIX)",
-            "Phần này lưu trữ lịch sử đối sánh thô phục vụ quy trình hậu kiểm toán dữ liệu hệ thống.",
-            "",
-        ]
-        for row in claim_rows:
-            cites = row["citations"] if row["citations"] != "—" else "không có citation"
-            lines.append(
-                f"* **[{row['claimCode']}]** -> {row['text']} "
-                f"(status={row['status']}, class={row['classification']}, conf={int(row['confidence']*100)}%) · {cites}."
-            )
-        return "\n".join(lines)
 
     def _fallback_ieee_paper(
         self,
@@ -513,112 +772,86 @@ class ReportSynthesizerAgent:
         stats: dict,
         claim_rows: list[dict],
     ) -> dict:
+        is_site = "site" in template_label.lower() or "location" in template_label.lower()
         title = (
-            f"SITE AND LOCATION FEASIBILITY ANALYSIS FOR CINEMA EXPANSION IN "
-            f"{city_label.upper()}: A MULTI-AGENT COMPREHENSIVE APPROACH"
-            if "site" in template_label.lower() or "location" in template_label.lower()
-            else f"{template_label.upper()} FOR GALAXY CINEMA IN {city_label.upper()}: A MULTI-AGENT APPROACH"
+            f"BÁO CÁO ĐÁNH GIÁ KHẢ THI ĐỊA ĐIỂM VÀ MẶT BẰNG MỞ RỘNG RẠP CHIẾU PHIM GALAXY CINEMA TẠI {city_label.upper()}"
+            if is_site
+            else f"BÁO CÁO ĐÁNH GIÁ KHẢ THI KINH DOANH — GALAXY CINEMA TẠI {city_label.upper()}"
         )
 
         abstract = (
-            f"Bài báo trình bày kết quả nghiên cứu từ hệ thống multi-agent về {template_label} "
-            f"phục vụ chiến lược mở rộng mạng lưới rạp chiếu phim tại {city_label}. "
-            f"Hệ thống đã lập {stats['totalClaims']} giả thuyết cốt lõi (claims), thu thập minh chứng "
-            f"thời gian thực từ môi trường web (Tavily Search/MCP), đối chiếu độc lập thông qua arbitrator "
-            f"và tổng hợp theo khung chuẩn IEEE. Kết quả thực nghiệm cho thấy {stats['resolvedClaims']}/"
-            f"{stats['totalClaims']} giả thuyết được giải quyết (độ tin cậy trung bình "
-            f"{stats['avgConfidence']:.0%}). Dữ liệu đầu ra hỗ trợ định hướng lựa chọn địa điểm chiến lược "
-            f"và tối ưu chi phí vận hành, đồng thời chỉ rõ giới hạn dữ liệu online và hướng khảo sát thực địa."
+            f"Báo cáo đánh giá khả thi tại {city_label} cho Ban Điều hành Galaxy Cinema. "
+            f"Phạm vi gồm quy hoạch/địa điểm, chi phí mặt bằng (CapEx/OpEx) và hạ tầng–footfall, "
+            f"tổng hợp từ {stats['referenceCount']} nguồn thị trường mở. "
+            f"{stats['resolvedClaims']}/{stats['totalClaims']} giả thuyết kinh doanh đạt mức tin cậy "
+            f"đủ để định hướng shortlist; các khoảng trống còn lại yêu cầu thẩm định thực địa và báo giá độc lập. "
+            f"Kết luận mang tính hỗ trợ quyết định đầu tư, không thay thế due diligence kỹ thuật–pháp lý."
         )
+        if notes.strip():
+            abstract += f" Định hướng quản lý: {_strip_urls(notes.strip())[:180]}."
 
         first_cites = claim_rows[0]["citations"] if claim_rows else ""
         introduction = (
-            f"Việc mở rộng mạng lưới rạp chiếu phim tại thị trường năng động như {city_label} đòi hỏi "
-            f"phân tích đa chiều gồm quy hoạch đô thị, biên độ giá thuê mặt bằng thương mại, chi phí vận hành "
-            f"và động lực hạ tầng giao thông. Trong nghiên cứu này, các giả thuyết về tính khả thi vị trí "
-            f"được kiểm chứng dựa trên nguồn dữ liệu số công khai {first_cites}. "
-            f"Bằng mô hình Multi-Agent phối hợp, nghiên cứu hướng tới giảm thiểu rủi ro đầu tư cho Galaxy Cinema."
-        )
-        if notes.strip():
-            introduction += f" Ghi chú định hướng quản lý: {_strip_urls(notes.strip())[:240]}."
-
-        related_bits = []
-        for entry in bibliography[:8]:
-            related_bits.append(
-                f"Nguồn [{entry['id']}] ({entry['domain']}) cung cấp tham chiếu «{entry['title'][:90]}»."
-            )
-        related = " ".join(related_bits) or (
-            "Các báo cáo thị trường và nguồn quy hoạch công khai tạo nền tảng cho bài toán tối ưu vị trí rạp."
+            f"Mở rộng mạng lưới rạp tại {city_label} đòi hỏi nối quy hoạch, biên độ thuê, "
+            f"chi phí vận hành và hạ tầng giao thông thành bức tranh có thể hành động. "
+            f"Báo cáo này chuyển các tín hiệu thị trường công khai {first_cites} thành "
+            f"khuyến nghị CapEx/OpEx và lộ trình thẩm định cho HĐQT."
         )
 
-        methodology = (
-            "Phương pháp luận dựa trên kiến trúc Multi-Agent gồm bốn giai đoạn:\n"
-            "1. Planner Agent: phân rã bài toán thành các claims theo module phân tích.\n"
-            "2. Research Agent: dùng Tavily Search/MCP để trích xuất evidence web.\n"
-            "3. Arbitrator Agent: gán Supports/Contradicts/Irrelevant và tính confidence.\n"
-            "4. Synthesizer Agent: dựng báo cáo IEEE và đánh số citation theo bibliography.\n\n"
-            f"Thống kê chu kỳ chạy: total={stats['totalClaims']}, resolved={stats['resolvedClaims']}, "
-            f"insufficient={stats['insufficientClaims']}, conflicting={stats['conflictingClaims']}, "
-            f"references={stats['referenceCount']}."
-        )
+        results = self._build_detailed_analysis(claim_rows)
+        matrix = self._build_executive_matrix_markdown(claim_rows)
+        results = f"{results}\n\n## 4. Bảng tổng hợp khả thi địa điểm & chi phí\n\n{matrix}"
 
-        matrix = self._build_claim_matrix_markdown(claim_rows)
-        deep_dive = []
-        for row in claim_rows[:4]:
-            deep_dive.append(
-                f"* **{row['claimCode']}**: {row['text']} — {row['status']}, "
-                f"{row['classification']}, conf {int(row['confidence']*100)}% {row['citations']}."
-            )
-        results = (
-            f"{matrix}\n\n### Phân tích chuyên sâu từ kết quả thực nghiệm:\n"
-            + ("\n".join(deep_dive) if deep_dive else "Chưa đủ dữ liệu phân tích chuyên sâu.")
+        recommendations = self._build_recommendations(claim_rows, city_label, template_label, notes)
+        key_findings = self._build_key_findings(claim_rows, city_label)
+        risks = self._build_risks(claim_rows)
+        risk_overall = _risk_label_from_confidence(
+            float(stats["avgConfidence"]),
+            "resolved" if stats["resolvedClaims"] else "insufficient_final",
         )
 
         conclusion = (
-            f"Nghiên cứu đã ứng dụng multi-agent để thẩm định sơ bộ {template_label} của Galaxy Cinema tại "
-            f"{city_label}, quét {stats['referenceCount']} tài liệu web. Hạn chế: độ sâu mặt bằng cụ thể "
-            f"và thiếu khảo sát kỹ thuật thực địa (thông thủy, PCCC, tải trọng sàn). "
-            f"Hướng phát triển: site visit, phỏng vấn chủ mặt bằng, và tăng cường nguồn .gov.vn."
-        )
-
-        appendix = self._build_appendix(claim_rows)
-        confidence = (
-            "high"
-            if stats["resolvedClaims"] >= max(1, int(stats["totalClaims"] * 0.7))
-            else "medium"
-            if stats["resolvedClaims"]
-            else "low"
+            f"Khuyến nghị đầu tư tại {city_label}: dùng shortlist dựa trên trụ cột đã xác nhận, "
+            f"ưu tiên thẩm định pháp lý–PCCC–tải trọng sàn và khóa biên độ thuê trước IC. "
+            f"Hạn chế: thiếu dữ liệu hiện trường và hợp đồng thuê thực tế — chưa đủ cho base-case tài chính cuối cùng."
         )
 
         return {
-            "reportStyle": "ieee",
+            "reportStyle": "executive_feasibility",
             "title": title,
             "authors": [GALAXY_AUTHOR],
-            "abstract": abstract,
+            "abstract": _strip_executive_jargon(abstract),
             "keywords": [
-                template_label,
+                "khả thi địa điểm",
                 city_label,
-                "cinema expansion",
-                "Tavily Search",
-                "multi-agent system",
-                "IEEE report",
+                "CapEx",
+                "OpEx",
+                "mặt bằng rạp",
+                "footfall",
             ],
-            "introduction": _strip_urls(introduction),
-            "relatedWork": _strip_urls(related),
-            "methodology": methodology,
-            "resultsAndDiscussion": results,
-            "conclusion": conclusion,
-            "appendix": appendix,
+            "introduction": _strip_executive_jargon(introduction),
+            "relatedWork": "",
+            "methodology": "",
+            "resultsAndDiscussion": _strip_executive_jargon(results),
+            "conclusion": _strip_executive_jargon(conclusion),
+            "appendix": "",
+            "executiveMatrixMarkdown": matrix,
+            "keyFindings": key_findings,
+            "recommendations": recommendations,
+            "risksAndUnknowns": risks,
             "claimMatrix": claim_rows,
             "provenance": self._build_provenance(city_label, template_label, notes, claim_rows, bibliography),
             "decisionBasis": self._build_decision_basis(claim_rows),
             "references": bibliography,
             "headline": title,
-            "executiveSummary": abstract,
-            "confidenceOverall": confidence,
-            "confidenceNote": (
-                f"Fallback IEEE Galaxy template · resolved {stats['resolvedClaims']}/{stats['totalClaims']} · "
-                f"{len(bibliography)} refs"
+            "executiveSummary": _strip_executive_jargon(abstract),
+            "confidenceOverall": (
+                "high"
+                if stats["resolvedClaims"] >= max(1, int(stats["totalClaims"] * 0.7))
+                else "medium"
+                if stats["resolvedClaims"]
+                else "low"
             ),
+            "confidenceNote": risk_overall,
             **stats,
         }

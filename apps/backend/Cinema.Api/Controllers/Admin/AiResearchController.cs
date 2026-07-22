@@ -96,6 +96,9 @@ public sealed class AiResearchController : ControllerBase
         var bufferingFeature = HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>();
         bufferingFeature?.DisableBuffering();
 
+        // Force headers onto the wire before the first DB poll.
+        await Response.StartAsync(HttpContext.RequestAborted);
+
         var lastEventId = afterEventId;
         var lastHeartbeatAt = DateTime.UtcNow;
         var idleRounds = 0;
