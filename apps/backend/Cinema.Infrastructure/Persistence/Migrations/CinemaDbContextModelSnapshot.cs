@@ -471,14 +471,14 @@ namespace Cinema.Infrastructure.Migrations
                             JobId = new Guid("a1000001-0001-4000-8000-000000000001"),
                             GeneratedAt = new DateTime(2026, 7, 10, 8, 18, 0, 0, DateTimeKind.Utc),
                             SectionsJson = "[]",
-                            SummaryJson = "{\n  \"reportStyle\": \"executive_feasibility\",\n  \"title\": \"BÁO CÁO SEED · ĐÁNH GIÁ KHẢ THI GIÁ VÉ TPHCM (DEMO)\",\n  \"abstract\": \"Báo cáo seed demo cho Admin AI Workspace. Dữ liệu minh họa khung giá vé 2D và phụ thu định dạng tại TPHCM, phục vụ demo UI Business Research.\",\n  \"executiveSummary\": \"Seed demo: khung giá 2D cuối tuần và phụ thu IMAX tại TPHCM đủ để minh họa shortlist quyết định giá. Cần báo giá thực tế trước khi chốt policy.\",\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\n  \"totalClaims\": 2,\n  \"resolvedClaims\": 2,\n  \"insufficientClaims\": 0,\n  \"referenceCount\": 2,\n  \"keyFindings\": [\n    \"Seed: Giá vé 2D cuối tuần tại TPHCM có biên độ tham chiếu từ nguồn demo [1].\",\n    \"Seed: Phụ thu IMAX/4DX là đòn bẩy doanh thu suất cao cấp [2].\"\n  ],\n  \"recommendations\": [\n    \"P0 (Hành động ngay): Rà soát bảng giá 2D cuối tuần theo cụm rạp TPHCM.\",\n    \"P1 (Thẩm định chuyên sâu): Thu thập bảng giá chuỗi đối thủ trước khi chỉnh phụ thu IMAX.\",\n    \"P2 (Theo dõi chiến lược): Theo dõi conversion suất midweek sau khi thử khuyến mãi.\"\n  ],\n  \"risksAndUnknowns\": [\n    \"Dữ liệu seed chỉ mang tính minh họa UI, không dùng cho quyết định đầu tư thật.\"\n  ],\n  \"resultsAndDiscussion\": \"### B. Chi phí & định giá (seed)\\n\\n- **Thực trạng thị trường:** Khung giá 2D và phụ thu định dạng tại TPHCM (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Mức độ tin cậy trung bình (seed data).\\n- **Tác động tới Galaxy Cinema (CapEx/OpEx/Doanh thu):** Dùng để demo luồng báo cáo điều hành trên Admin AI.\",\n  \"conclusion\": \"Seed demo hoàn tất. Chạy job live để có báo cáo multi-agent thật.\",\n  \"references\": [\n    {\n      \"id\": 1,\n      \"title\": \"Seed · Giá vé 2D TPHCM (demo)\",\n      \"url\": \"https://example.com/seed/pricing-hcm-2d\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[1] \\\"Seed · Giá vé 2D TPHCM (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-hcm-2d\"\n    },\n    {\n      \"id\": 2,\n      \"title\": \"Seed · Phụ thu IMAX (demo)\",\n      \"url\": \"https://example.com/seed/pricing-imax\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[2] \\\"Seed · Phụ thu IMAX (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-imax\"\n    }\n  ]\n}"
+                            SummaryJson = "{\r\n  \"reportStyle\": \"executive_feasibility\",\r\n  \"title\": \"BÁO CÁO SEED · ĐÁNH GIÁ KHẢ THI GIÁ VÉ TPHCM (DEMO)\",\r\n  \"abstract\": \"Báo cáo seed demo cho Admin AI Workspace. Dữ liệu minh họa khung giá vé 2D và phụ thu định dạng tại TPHCM, phục vụ demo UI Business Research.\",\r\n  \"executiveSummary\": \"Seed demo: khung giá 2D cuối tuần và phụ thu IMAX tại TPHCM đủ để minh họa shortlist quyết định giá. Cần báo giá thực tế trước khi chốt policy.\",\r\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\r\n  \"totalClaims\": 2,\r\n  \"resolvedClaims\": 2,\r\n  \"insufficientClaims\": 0,\r\n  \"referenceCount\": 2,\r\n  \"keyFindings\": [\r\n    \"Seed: Giá vé 2D cuối tuần tại TPHCM có biên độ tham chiếu từ nguồn demo [1].\",\r\n    \"Seed: Phụ thu IMAX/4DX là đòn bẩy doanh thu suất cao cấp [2].\"\r\n  ],\r\n  \"recommendations\": [\r\n    \"P0 (Hành động ngay): Rà soát bảng giá 2D cuối tuần theo cụm rạp TPHCM.\",\r\n    \"P1 (Thẩm định chuyên sâu): Thu thập bảng giá chuỗi đối thủ trước khi chỉnh phụ thu IMAX.\",\r\n    \"P2 (Theo dõi chiến lược): Theo dõi conversion suất midweek sau khi thử khuyến mãi.\"\r\n  ],\r\n  \"risksAndUnknowns\": [\r\n    \"Dữ liệu seed chỉ mang tính minh họa UI, không dùng cho quyết định đầu tư thật.\"\r\n  ],\r\n  \"resultsAndDiscussion\": \"### B. Chi phí & định giá (seed)\\n\\n- **Thực trạng thị trường:** Khung giá 2D và phụ thu định dạng tại TPHCM (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Mức độ tin cậy trung bình (seed data).\\n- **Tác động tới Galaxy Cinema (CapEx/OpEx/Doanh thu):** Dùng để demo luồng báo cáo điều hành trên Admin AI.\",\r\n  \"conclusion\": \"Seed demo hoàn tất. Chạy job live để có báo cáo multi-agent thật.\",\r\n  \"references\": [\r\n    {\r\n      \"id\": 1,\r\n      \"title\": \"Seed · Giá vé 2D TPHCM (demo)\",\r\n      \"url\": \"https://example.com/seed/pricing-hcm-2d\",\r\n      \"domain\": \"example.com\",\r\n      \"ieeeText\": \"[1] \\\"Seed · Giá vé 2D TPHCM (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-hcm-2d\"\r\n    },\r\n    {\r\n      \"id\": 2,\r\n      \"title\": \"Seed · Phụ thu IMAX (demo)\",\r\n      \"url\": \"https://example.com/seed/pricing-imax\",\r\n      \"domain\": \"example.com\",\r\n      \"ieeeText\": \"[2] \\\"Seed · Phụ thu IMAX (demo)\\\", example.com, [Online]. Available: https://example.com/seed/pricing-imax\"\r\n    }\r\n  ]\r\n}"
                         },
                         new
                         {
                             JobId = new Guid("a1000001-0001-4000-8000-000000000002"),
                             GeneratedAt = new DateTime(2026, 7, 12, 9, 56, 0, 0, DateTimeKind.Utc),
                             SectionsJson = "[]",
-                            SummaryJson = "{\n  \"reportStyle\": \"executive_feasibility\",\n  \"title\": \"BÁO CÁO SEED · KHẢ THI ĐỊA ĐIỂM KHU ĐÔNG TPHCM (DEMO)\",\n  \"abstract\": \"Báo cáo seed demo shortlist mặt bằng khu Đông TPHCM: biên độ thuê và tín hiệu footfall metro.\",\n  \"executiveSummary\": \"Seed demo: khu Đông có tín hiệu footfall và biên độ thuê tham chiếu. Cần site visit + báo giá độc lập trước IC.\",\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\n  \"totalClaims\": 2,\n  \"resolvedClaims\": 2,\n  \"insufficientClaims\": 0,\n  \"referenceCount\": 2,\n  \"keyFindings\": [\n    \"Seed: Biên độ thuê mặt bằng khu Đông mang tính tham chiếu [1].\",\n    \"Seed: Metro/vành đai hỗ trợ kỳ vọng footfall dài hạn [2].\"\n  ],\n  \"recommendations\": [\n    \"P0 (Hành động ngay): Lập shortlist 3-5 mặt bằng khu Đông 1.500-3.000m².\",\n    \"P1 (Thẩm định chuyên sâu): Kiểm tra PCCC, tải trọng sàn, điều khoản fit-out.\",\n    \"P2 (Theo dõi chiến lược): Bám tiến độ metro quanh shortlist.\"\n  ],\n  \"risksAndUnknowns\": [\n    \"Seed data không thay thế thẩm định pháp lý và khảo sát hiện trường.\"\n  ],\n  \"resultsAndDiscussion\": \"### A. Quy hoạch & địa điểm (seed)\\n\\n- **Thực trạng thị trường:** Biên độ thuê và footfall khu Đông (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Trung bình (seed).\\n- **Tác động tới Galaxy Cinema:** Demo báo cáo khả thi C-level trên Admin AI.\",\n  \"conclusion\": \"Seed demo site feasibility. Chạy pipeline live để cập nhật số liệu thị trường thật.\",\n  \"references\": [\n    {\n      \"id\": 1,\n      \"title\": \"Seed · Giá thuê khu Đông (demo)\",\n      \"url\": \"https://example.com/seed/lease-east-hcm\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[1] \\\"Seed · Giá thuê khu Đông (demo)\\\", example.com, [Online]. Available: https://example.com/seed/lease-east-hcm\"\n    },\n    {\n      \"id\": 2,\n      \"title\": \"Seed · Metro & footfall (demo)\",\n      \"url\": \"https://example.com/seed/metro-footfall\",\n      \"domain\": \"example.com\",\n      \"ieeeText\": \"[2] \\\"Seed · Metro & footfall (demo)\\\", example.com, [Online]. Available: https://example.com/seed/metro-footfall\"\n    }\n  ]\n}"
+                            SummaryJson = "{\r\n  \"reportStyle\": \"executive_feasibility\",\r\n  \"title\": \"BÁO CÁO SEED · KHẢ THI ĐỊA ĐIỂM KHU ĐÔNG TPHCM (DEMO)\",\r\n  \"abstract\": \"Báo cáo seed demo shortlist mặt bằng khu Đông TPHCM: biên độ thuê và tín hiệu footfall metro.\",\r\n  \"executiveSummary\": \"Seed demo: khu Đông có tín hiệu footfall và biên độ thuê tham chiếu. Cần site visit + báo giá độc lập trước IC.\",\r\n  \"confidenceNote\": \"Mức độ tin cậy demo (seed) · Rủi ro dữ liệu: Trung bình\",\r\n  \"totalClaims\": 2,\r\n  \"resolvedClaims\": 2,\r\n  \"insufficientClaims\": 0,\r\n  \"referenceCount\": 2,\r\n  \"keyFindings\": [\r\n    \"Seed: Biên độ thuê mặt bằng khu Đông mang tính tham chiếu [1].\",\r\n    \"Seed: Metro/vành đai hỗ trợ kỳ vọng footfall dài hạn [2].\"\r\n  ],\r\n  \"recommendations\": [\r\n    \"P0 (Hành động ngay): Lập shortlist 3-5 mặt bằng khu Đông 1.500-3.000m².\",\r\n    \"P1 (Thẩm định chuyên sâu): Kiểm tra PCCC, tải trọng sàn, điều khoản fit-out.\",\r\n    \"P2 (Theo dõi chiến lược): Bám tiến độ metro quanh shortlist.\"\r\n  ],\r\n  \"risksAndUnknowns\": [\r\n    \"Seed data không thay thế thẩm định pháp lý và khảo sát hiện trường.\"\r\n  ],\r\n  \"resultsAndDiscussion\": \"### A. Quy hoạch & địa điểm (seed)\\n\\n- **Thực trạng thị trường:** Biên độ thuê và footfall khu Đông (demo) [1], [2].\\n- **Đánh giá rủi ro & độ tin cậy:** Trung bình (seed).\\n- **Tác động tới Galaxy Cinema:** Demo báo cáo khả thi C-level trên Admin AI.\",\r\n  \"conclusion\": \"Seed demo site feasibility. Chạy pipeline live để cập nhật số liệu thị trường thật.\",\r\n  \"references\": [\r\n    {\r\n      \"id\": 1,\r\n      \"title\": \"Seed · Giá thuê khu Đông (demo)\",\r\n      \"url\": \"https://example.com/seed/lease-east-hcm\",\r\n      \"domain\": \"example.com\",\r\n      \"ieeeText\": \"[1] \\\"Seed · Giá thuê khu Đông (demo)\\\", example.com, [Online]. Available: https://example.com/seed/lease-east-hcm\"\r\n    },\r\n    {\r\n      \"id\": 2,\r\n      \"title\": \"Seed · Metro & footfall (demo)\",\r\n      \"url\": \"https://example.com/seed/metro-footfall\",\r\n      \"domain\": \"example.com\",\r\n      \"ieeeText\": \"[2] \\\"Seed · Metro & footfall (demo)\\\", example.com, [Online]. Available: https://example.com/seed/metro-footfall\"\r\n    }\r\n  ]\r\n}"
                         });
                 });
 
@@ -1243,6 +1243,45 @@ namespace Cinema.Infrastructure.Migrations
                             ShiftName = "Ca Full-time Chiều",
                             ShiftType = 1,
                             StartTime = new TimeSpan(0, 14, 0, 0, 0)
+                        },
+                        new
+                        {
+                            ShiftTemplateId = new Guid("a1111111-1111-1111-1111-666666666666"),
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            DepartmentId = new Guid("d1111111-1111-1111-1111-333333333333"),
+                            EndTime = new TimeSpan(0, 16, 0, 0, 0),
+                            IsActive = true,
+                            MaxStaff = 4,
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            ShiftName = "Ca vệ sinh Full-time",
+                            ShiftType = 1,
+                            StartTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            ShiftTemplateId = new Guid("b2222222-2222-2222-2222-666666666666"),
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            DepartmentId = new Guid("d2222222-2222-2222-2222-333333333333"),
+                            EndTime = new TimeSpan(0, 16, 0, 0, 0),
+                            IsActive = true,
+                            MaxStaff = 4,
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            ShiftName = "Ca vệ sinh Full-time",
+                            ShiftType = 1,
+                            StartTime = new TimeSpan(0, 8, 0, 0, 0)
+                        },
+                        new
+                        {
+                            ShiftTemplateId = new Guid("c3333333-3333-3333-3333-666666666666"),
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
+                            EndTime = new TimeSpan(0, 16, 0, 0, 0),
+                            IsActive = true,
+                            MaxStaff = 4,
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            ShiftName = "Ca vệ sinh Full-time",
+                            ShiftType = 1,
+                            StartTime = new TimeSpan(0, 8, 0, 0, 0)
                         });
                 });
 
@@ -1861,6 +1900,33 @@ namespace Cinema.Infrastructure.Migrations
                             DepartmentType = 0,
                             IsActive = true,
                             SharedUserId = new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32")
+                        },
+                        new
+                        {
+                            DepartmentId = new Guid("d1111111-1111-1111-1111-333333333333"),
+                            CashierType = 0,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            DepartmentName = "Bộ phận vệ sinh",
+                            DepartmentType = 1,
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentId = new Guid("d2222222-2222-2222-2222-333333333333"),
+                            CashierType = 0,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            DepartmentName = "Bộ phận vệ sinh",
+                            DepartmentType = 1,
+                            IsActive = true
+                        },
+                        new
+                        {
+                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
+                            CashierType = 0,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            DepartmentName = "Bộ phận vệ sinh",
+                            DepartmentType = 1,
+                            IsActive = true
                         });
                 });
 
@@ -2856,6 +2922,1455 @@ namespace Cinema.Infrastructure.Migrations
                             RowIndex = 3,
                             SeatNumber = "D8"
                         });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Cleaning.CleaningTaskEntity", b =>
+                {
+                    b.Property<Guid>("CleaningTaskId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AssignedStaffId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AuditoriumId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DueAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("MovieScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProofImageUrl")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ShiftScheduleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TaskType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("VerifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CleaningTaskId");
+
+                    b.HasIndex("MovieScheduleId")
+                        .IsUnique()
+                        .HasFilter("[MovieScheduleId] IS NOT NULL");
+
+                    b.HasIndex("ShiftScheduleId");
+
+                    b.HasIndex("VerifiedByUserId");
+
+                    b.HasIndex("AssignedStaffId", "Status");
+
+                    b.HasIndex("AuditoriumId", "ScheduledAt");
+
+                    b.HasIndex("CinemaId", "Status", "ScheduledAt");
+
+                    b.ToTable("CleaningTaskEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionComboItemEntity", b =>
+                {
+                    b.Property<Guid>("ComboItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ComboProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ComponentProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("ComboItemId");
+
+                    b.HasIndex("ComponentProductId");
+
+                    b.HasIndex("ComboProductId", "ComponentProductId")
+                        .IsUnique();
+
+                    b.ToTable("ConcessionComboItemEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            ComboItemId = new Guid("cb000001-0000-4000-8000-000000000001"),
+                            ComboProductId = new Guid("fb000001-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000001-0000-4000-8000-000000000002"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000001-0000-4000-8000-000000000002"),
+                            ComboProductId = new Guid("fb000001-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000001-0000-4000-8000-000000000004"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000001-0000-4000-8000-000000000003"),
+                            ComboProductId = new Guid("fb000001-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000001-0000-4000-8000-000000000001"),
+                            Quantity = 1
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000001-0000-4000-8000-000000000004"),
+                            ComboProductId = new Guid("fb000001-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000001-0000-4000-8000-000000000004"),
+                            Quantity = 1
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000002-0000-4000-8000-000000000001"),
+                            ComboProductId = new Guid("fb000002-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000002-0000-4000-8000-000000000002"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000002-0000-4000-8000-000000000002"),
+                            ComboProductId = new Guid("fb000002-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000002-0000-4000-8000-000000000004"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000002-0000-4000-8000-000000000003"),
+                            ComboProductId = new Guid("fb000002-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000002-0000-4000-8000-000000000001"),
+                            Quantity = 1
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000002-0000-4000-8000-000000000004"),
+                            ComboProductId = new Guid("fb000002-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000002-0000-4000-8000-000000000004"),
+                            Quantity = 1
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000003-0000-4000-8000-000000000001"),
+                            ComboProductId = new Guid("fb000003-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000003-0000-4000-8000-000000000002"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000003-0000-4000-8000-000000000002"),
+                            ComboProductId = new Guid("fb000003-0000-4000-8000-000000000009"),
+                            ComponentProductId = new Guid("fb000003-0000-4000-8000-000000000004"),
+                            Quantity = 2
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000003-0000-4000-8000-000000000003"),
+                            ComboProductId = new Guid("fb000003-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000003-0000-4000-8000-000000000001"),
+                            Quantity = 1
+                        },
+                        new
+                        {
+                            ComboItemId = new Guid("cb000003-0000-4000-8000-000000000004"),
+                            ComboProductId = new Guid("fb000003-0000-4000-8000-000000000010"),
+                            ComponentProductId = new Guid("fb000003-0000-4000-8000-000000000004"),
+                            Quantity = 1
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionInventoryEntity", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("LastCountedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastRestockedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("QuantityOnHand")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityReserved")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ProductId");
+
+                    b.ToTable("ConcessionInventoryEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000001"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 120,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000002"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 100,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000003"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 60,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000004"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 200,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000005"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 180,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000006"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 250,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000007"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 80,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000008"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 90,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000001"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 120,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000002"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 100,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000003"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 60,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000004"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 200,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000005"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 180,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000006"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 250,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000007"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 80,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000008"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 90,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000001"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 120,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000002"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 100,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000003"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 60,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000004"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 200,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000005"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 180,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000006"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 250,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000007"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 80,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000008"),
+                            LastRestockedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            QuantityOnHand = 90,
+                            QuantityReserved = 0,
+                            RowVersion = new byte[0],
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", b =>
+                {
+                    b.Property<Guid>("ProductId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ActiveAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CostPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("DeletedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsAvailableOnline")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsCombo")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHot")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LowStockThreshold")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<int>("Unit")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UpdatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ProductId");
+
+                    b.HasIndex("CinemaId", "Sku")
+                        .IsUnique();
+
+                    b.HasIndex("CinemaId", "Category", "IsActive");
+
+                    b.HasIndex("CinemaId", "IsAvailableOnline", "IsActive");
+
+                    b.ToTable("ConcessionProductEntity");
+
+                    b.HasData(
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000001"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 18000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (vừa)",
+                            Sku = "POP-M",
+                            Unit = 2,
+                            UnitPrice = 55000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000002"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 22000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (lớn)",
+                            Sku = "POP-L",
+                            Unit = 2,
+                            UnitPrice = 70000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000003"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp phô mai (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp phô mai (lớn)",
+                            Sku = "POP-CHS",
+                            Unit = 2,
+                            UnitPrice = 80000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000004"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 10000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Coca-Cola (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Coca-Cola (vừa)",
+                            Sku = "DRK-COKE",
+                            Unit = 1,
+                            UnitPrice = 35000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000005"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 12000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Pepsi (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Pepsi (lớn)",
+                            Sku = "DRK-PEPSI",
+                            Unit = 1,
+                            UnitPrice = 42000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000006"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 6000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Nước suối Aquafina",
+                            ImageUrl = "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Nước suối Aquafina",
+                            Sku = "DRK-WTR",
+                            Unit = 0,
+                            UnitPrice = 20000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000007"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 15000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Khoai tây lắc phô mai",
+                            ImageUrl = "https://images.unsplash.com/photo-1576107232684-1279f390859f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Khoai tây lắc phô mai",
+                            Sku = "SNK-FRY",
+                            Unit = 2,
+                            UnitPrice = 45000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000008"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 13000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Xúc xích nướng",
+                            ImageUrl = "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Xúc xích nướng",
+                            Sku = "SNK-SAU",
+                            Unit = 0,
+                            UnitPrice = 38000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000009"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 62000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            Sku = "CMB-COUPLE",
+                            Unit = 3,
+                            UnitPrice = 189000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000001-0000-4000-8000-000000000010"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            Sku = "CMB-SOLO",
+                            Unit = 3,
+                            UnitPrice = 85000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000001"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 18000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (vừa)",
+                            Sku = "POP-M",
+                            Unit = 2,
+                            UnitPrice = 55000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000002"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 22000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (lớn)",
+                            Sku = "POP-L",
+                            Unit = 2,
+                            UnitPrice = 70000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000003"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp phô mai (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp phô mai (lớn)",
+                            Sku = "POP-CHS",
+                            Unit = 2,
+                            UnitPrice = 80000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000004"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 10000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Coca-Cola (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Coca-Cola (vừa)",
+                            Sku = "DRK-COKE",
+                            Unit = 1,
+                            UnitPrice = 35000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000005"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 12000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Pepsi (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Pepsi (lớn)",
+                            Sku = "DRK-PEPSI",
+                            Unit = 1,
+                            UnitPrice = 42000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000006"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 6000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Nước suối Aquafina",
+                            ImageUrl = "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Nước suối Aquafina",
+                            Sku = "DRK-WTR",
+                            Unit = 0,
+                            UnitPrice = 20000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000007"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 15000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Khoai tây lắc phô mai",
+                            ImageUrl = "https://images.unsplash.com/photo-1576107232684-1279f390859f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Khoai tây lắc phô mai",
+                            Sku = "SNK-FRY",
+                            Unit = 2,
+                            UnitPrice = 45000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000008"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 13000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Xúc xích nướng",
+                            ImageUrl = "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Xúc xích nướng",
+                            Sku = "SNK-SAU",
+                            Unit = 0,
+                            UnitPrice = 38000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000009"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 62000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            Sku = "CMB-COUPLE",
+                            Unit = 3,
+                            UnitPrice = 189000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000002-0000-4000-8000-000000000010"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            Sku = "CMB-SOLO",
+                            Unit = 3,
+                            UnitPrice = 85000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000001"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 18000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (vừa)",
+                            Sku = "POP-M",
+                            Unit = 2,
+                            UnitPrice = 55000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000002"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 22000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp rang bơ (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp rang bơ (lớn)",
+                            Sku = "POP-L",
+                            Unit = 2,
+                            UnitPrice = 70000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000003"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 0,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Bắp phô mai (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Bắp phô mai (lớn)",
+                            Sku = "POP-CHS",
+                            Unit = 2,
+                            UnitPrice = 80000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000004"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 10000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Coca-Cola (vừa)",
+                            ImageUrl = "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 15,
+                            ProductName = "Coca-Cola (vừa)",
+                            Sku = "DRK-COKE",
+                            Unit = 1,
+                            UnitPrice = 35000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000005"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 12000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Pepsi (lớn)",
+                            ImageUrl = "https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Pepsi (lớn)",
+                            Sku = "DRK-PEPSI",
+                            Unit = 1,
+                            UnitPrice = 42000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000006"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 1,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 6000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Nước suối Aquafina",
+                            ImageUrl = "https://images.unsplash.com/photo-1548839140-29a749e1bc4e?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Nước suối Aquafina",
+                            Sku = "DRK-WTR",
+                            Unit = 0,
+                            UnitPrice = 20000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000007"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 15000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Khoai tây lắc phô mai",
+                            ImageUrl = "https://images.unsplash.com/photo-1576107232684-1279f390859f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Khoai tây lắc phô mai",
+                            Sku = "SNK-FRY",
+                            Unit = 2,
+                            UnitPrice = 45000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000008"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 2,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 13000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Xúc xích nướng",
+                            ImageUrl = "https://images.unsplash.com/photo-1619740455993-9e612b1af08a?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = false,
+                            IsDeleted = false,
+                            IsHot = false,
+                            LowStockThreshold = 15,
+                            ProductName = "Xúc xích nướng",
+                            Sku = "SNK-SAU",
+                            Unit = 0,
+                            UnitPrice = 38000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000009"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 62000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1585647347384-2593bc35786b?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Đôi (2 bắp lớn + 2 Coca)",
+                            Sku = "CMB-COUPLE",
+                            Unit = 3,
+                            UnitPrice = 189000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        },
+                        new
+                        {
+                            ProductId = new Guid("fb000003-0000-4000-8000-000000000010"),
+                            ActiveAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Category = 4,
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            CostPrice = 28000m,
+                            CreatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedByUserId = new Guid("e4e1f7d8-c3b2-4a90-8c67-2f5a1b3d9e0c"),
+                            Description = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            ImageUrl = "https://images.unsplash.com/photo-1578849278619-e73505e9610f?w=600&auto=format&fit=crop&q=80",
+                            IsActive = true,
+                            IsAvailableOnline = true,
+                            IsCombo = true,
+                            IsDeleted = false,
+                            IsHot = true,
+                            LowStockThreshold = 0,
+                            ProductName = "Combo Solo (1 bắp vừa + 1 Coca)",
+                            Sku = "CMB-SOLO",
+                            Unit = 3,
+                            UnitPrice = 85000m,
+                            UpdatedAt = new DateTime(2026, 3, 18, 0, 0, 0, 0, DateTimeKind.Utc)
+                        });
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.InventoryTransactionEntity", b =>
+                {
+                    b.Property<Guid>("TransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("PerformedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("QuantityChange")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityOnHandAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityReservedAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.HasKey("TransactionId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("CinemaId", "OccurredAt");
+
+                    b.HasIndex("ProductId", "OccurredAt");
+
+                    b.ToTable("InventoryTransactionEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.OrderConcessionDetailEntity", b =>
+                {
+                    b.Property<Guid>("OrderConcessionDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProductNameSnapshot")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StockState")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("UnitPriceSnapshot")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("OrderConcessionDetailId");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockState");
+
+                    b.HasIndex("OrderId", "ProductId");
+
+                    b.ToTable("OrderConcessionDetailEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.StockRequestEntity", b =>
+                {
+                    b.Property<Guid>("StockRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ApprovedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReceivedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("ShippedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ShippedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("StockRequestId");
+
+                    b.HasIndex("ApprovedByUserId");
+
+                    b.HasIndex("ReceivedByUserId");
+
+                    b.HasIndex("RequestCode")
+                        .IsUnique();
+
+                    b.HasIndex("RequestedByUserId");
+
+                    b.HasIndex("ShippedByUserId");
+
+                    b.HasIndex("CinemaId", "Status");
+
+                    b.ToTable("StockRequestEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.StockRequestItemEntity", b =>
+                {
+                    b.Property<Guid>("StockRequestItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ApprovedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ReceivedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RequestedQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("StockRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("StockRequestItemId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("StockRequestId");
+
+                    b.ToTable("StockRequestItemEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.WasteReportEntity", b =>
+                {
+                    b.Property<Guid>("WasteReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CinemaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ProofImageUrl")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("ReportedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReviewNote")
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("WasteReportId");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("ReportedByUserId");
+
+                    b.HasIndex("ReviewedByUserId");
+
+                    b.HasIndex("CinemaId", "Status");
+
+                    b.ToTable("WasteReportEntity");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
@@ -4368,6 +5883,9 @@ namespace Cinema.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(20)");
 
+                    b.Property<decimal>("ConcessionSubtotal")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("CustomerAddress")
                         .HasColumnType("nvarchar(200)");
 
@@ -4561,6 +6079,51 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111023"),
                             PermissionInfo = "ManageStaffProfiles"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111024"),
+                            PermissionInfo = "ViewConcession"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111025"),
+                            PermissionInfo = "ManageConcession"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111026"),
+                            PermissionInfo = "SellConcession"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111027"),
+                            PermissionInfo = "ViewInventory"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111028"),
+                            PermissionInfo = "ManageInventory"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111029"),
+                            PermissionInfo = "ViewInventoryHistory"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111030"),
+                            PermissionInfo = "PerformCleaning"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111031"),
+                            PermissionInfo = "ManageCleaning"
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111032"),
+                            PermissionInfo = "VerifyCleaning"
                         });
                 });
 
@@ -4696,6 +6259,51 @@ namespace Cinema.Infrastructure.Migrations
                         },
                         new
                         {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111024"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111025"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111026"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111027"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111028"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111029"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111030"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111031"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111032"),
+                            RoleId = new Guid("3c0d9e1f-a6b7-c8d9-e0f1-2a3b4c5d6e7f")
+                        },
+                        new
+                        {
                             PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111010"),
                             RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c")
                         },
@@ -4737,6 +6345,16 @@ namespace Cinema.Infrastructure.Migrations
                         new
                         {
                             PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111016"),
+                            RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111026"),
+                            RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111024"),
                             RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c")
                         },
                         new
@@ -4808,6 +6426,96 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111019"),
                             RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111031"),
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111032"),
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111024"),
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111027"),
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111029"),
+                            RoleId = new Guid("5e2f1a3b-c8d9-e0f1-a2b3-4c5d6e7f8a9b")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111030"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111012"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111013"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111014"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111001"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111016"),
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111024"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111025"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111027"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111028"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111029"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111001"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
+                        },
+                        new
+                        {
+                            PermissionId = new Guid("a1b2c3d4-1111-1111-1111-111111111019"),
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2")
                         },
                         new
                         {
@@ -4940,6 +6648,22 @@ namespace Cinema.Infrastructure.Migrations
                             RoleName = "FacilitiesManager",
                             RoleType = 3,
                             SalaryPerHour = 0m
+                        },
+                        new
+                        {
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            DiscountPercent = 0m,
+                            RoleName = "Janitor",
+                            RoleType = 4,
+                            SalaryPerHour = 0m
+                        },
+                        new
+                        {
+                            RoleId = new Guid("8b5c4d6e-f1a2-b3c4-d5e6-f7a8b9c0d1e2"),
+                            DiscountPercent = 0m,
+                            RoleName = "InventoryManager",
+                            RoleType = 3,
+                            SalaryPerHour = 0m
                         });
                 });
 
@@ -5025,6 +6749,33 @@ namespace Cinema.Infrastructure.Migrations
                             UserId = new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"),
                             CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                             DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
+                            EmployeeType = 1,
+                            IsCinemaManager = false,
+                            WorkingStatus = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000001"),
+                            CinemaId = new Guid("11111111-1111-1111-1111-111111111111"),
+                            DepartmentId = new Guid("d1111111-1111-1111-1111-333333333333"),
+                            EmployeeType = 1,
+                            IsCinemaManager = false,
+                            WorkingStatus = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000002"),
+                            CinemaId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            DepartmentId = new Guid("d2222222-2222-2222-2222-333333333333"),
+                            EmployeeType = 1,
+                            IsCinemaManager = false,
+                            WorkingStatus = true
+                        },
+                        new
+                        {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000003"),
+                            CinemaId = new Guid("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                            DepartmentId = new Guid("dbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
                             EmployeeType = 1,
                             IsCinemaManager = false,
                             WorkingStatus = true
@@ -5395,6 +7146,48 @@ namespace Cinema.Infrastructure.Migrations
                         },
                         new
                         {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000001"),
+                            AccountStatus = 1,
+                            DateOfBirth = new DateTime(1993, 4, 12, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IdentityCode = "JANITOR_GALAXY_001",
+                            Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi",
+                            PhoneNumber = "0988000101",
+                            RegisterMethod = 0,
+                            RewardPoints = 0L,
+                            UserEmail = "janitor.galaxy.nguyen.du@cinema.com",
+                            UserName = "Nguyễn Minh Tâm",
+                            UserType = 0
+                        },
+                        new
+                        {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000002"),
+                            AccountStatus = 1,
+                            DateOfBirth = new DateTime(1991, 8, 23, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IdentityCode = "JANITOR_LOTTE_001",
+                            Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi",
+                            PhoneNumber = "0988000102",
+                            RegisterMethod = 0,
+                            RewardPoints = 0L,
+                            UserEmail = "janitor.lotte.west.lake@cinema.com",
+                            UserName = "Trần Thị Mai",
+                            UserType = 0
+                        },
+                        new
+                        {
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000003"),
+                            AccountStatus = 1,
+                            DateOfBirth = new DateTime(1995, 2, 7, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IdentityCode = "JANITOR_BHD_001",
+                            Password = "$2a$12$ufIKVZZwGlxHfQ0WSZQRmeDDeCuneaflIghQhHC6RupR0LVYLU5bi",
+                            PhoneNumber = "0988000103",
+                            RegisterMethod = 0,
+                            RewardPoints = 0L,
+                            UserEmail = "janitor.bhd.bitexco@cinema.com",
+                            UserName = "Lê Quốc Bảo",
+                            UserType = 0
+                        },
+                        new
+                        {
                             UserId = new Guid("c0000000-0000-0000-0000-000000000001"),
                             AccountStatus = 1,
                             DateOfBirth = new DateTime(1995, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -5574,6 +7367,21 @@ namespace Cinema.Infrastructure.Migrations
                         {
                             RoleId = new Guid("1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c"),
                             UserId = new Guid("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000001")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000002")
+                        },
+                        new
+                        {
+                            RoleId = new Guid("7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1"),
+                            UserId = new Guid("a1000000-0000-4000-8000-000000000003")
                         },
                         new
                         {
@@ -6049,6 +7857,225 @@ namespace Cinema.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("AuditoriumInfoEntities");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Cleaning.CleaningTaskEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.StaffProfileEntity", "AssignedStaff")
+                        .WithMany()
+                        .HasForeignKey("AssignedStaffId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.AuditoriumInfoEntities", "AuditoriumInfoEntities")
+                        .WithMany()
+                        .HasForeignKey("AuditoriumId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany("CleaningTasks")
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.MovieInfos.MovieScheduleInfoEntity", "MovieScheduleInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("MovieScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaShiftScheduleEntity", "CinemaShiftScheduleEntity")
+                        .WithMany()
+                        .HasForeignKey("ShiftScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "VerifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("VerifiedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedStaff");
+
+                    b.Navigation("AuditoriumInfoEntities");
+
+                    b.Navigation("CinemaInfoEntity");
+
+                    b.Navigation("CinemaShiftScheduleEntity");
+
+                    b.Navigation("MovieScheduleInfoEntity");
+
+                    b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionComboItemEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ComboProduct")
+                        .WithMany("ComboItems")
+                        .HasForeignKey("ComboProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ComponentProduct")
+                        .WithMany()
+                        .HasForeignKey("ComponentProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ComboProduct");
+
+                    b.Navigation("ComponentProduct");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionInventoryEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ConcessionProductEntity")
+                        .WithOne("Inventory")
+                        .HasForeignKey("Cinema.Domain.Entities.Concessions.ConcessionInventoryEntity", "ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConcessionProductEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany("ConcessionProducts")
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CinemaInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.InventoryTransactionEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany("InventoryTransactions")
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ConcessionProductEntity")
+                        .WithMany("InventoryTransactions")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("CinemaInfoEntity");
+
+                    b.Navigation("ConcessionProductEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.OrderConcessionDetailEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.OrderInfoEntity", "OrderInfoEntity")
+                        .WithMany("OrderConcessionDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ConcessionProductEntity")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ConcessionProductEntity");
+
+                    b.Navigation("OrderInfoEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.StockRequestEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "ApprovedByUser")
+                        .WithMany()
+                        .HasForeignKey("ApprovedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "ReceivedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReceivedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "RequestedByUser")
+                        .WithMany()
+                        .HasForeignKey("RequestedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "ShippedByUser")
+                        .WithMany()
+                        .HasForeignKey("ShippedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ApprovedByUser");
+
+                    b.Navigation("CinemaInfoEntity");
+
+                    b.Navigation("ReceivedByUser");
+
+                    b.Navigation("RequestedByUser");
+
+                    b.Navigation("ShippedByUser");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.StockRequestItemEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ConcessionProductEntity")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.Concessions.StockRequestEntity", "StockRequestEntity")
+                        .WithMany("Items")
+                        .HasForeignKey("StockRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ConcessionProductEntity");
+
+                    b.Navigation("StockRequestEntity");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.WasteReportEntity", b =>
+                {
+                    b.HasOne("Cinema.Domain.Entities.CinemaInfos.CinemaInfoEntity", "CinemaInfoEntity")
+                        .WithMany()
+                        .HasForeignKey("CinemaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", "ConcessionProductEntity")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "ReportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReportedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cinema.Domain.Entities.UserInfos.UserInfoEntity", "ReviewedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("CinemaInfoEntity");
+
+                    b.Navigation("ConcessionProductEntity");
+
+                    b.Navigation("ReportedByUser");
+
+                    b.Navigation("ReviewedByUser");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
@@ -6733,7 +8760,13 @@ namespace Cinema.Infrastructure.Migrations
 
                     b.Navigation("CinemaSurchargeInfosEntity");
 
+                    b.Navigation("CleaningTasks");
+
+                    b.Navigation("ConcessionProducts");
+
                     b.Navigation("Departments");
+
+                    b.Navigation("InventoryTransactions");
 
                     b.Navigation("MovieCinemaEntities");
                 });
@@ -6751,6 +8784,20 @@ namespace Cinema.Infrastructure.Migrations
             modelBuilder.Entity("Cinema.Domain.Entities.CinemaInfos.SeatsInfoEntity", b =>
                 {
                     b.Navigation("OrderDetailsInfo");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.ConcessionProductEntity", b =>
+                {
+                    b.Navigation("ComboItems");
+
+                    b.Navigation("Inventory");
+
+                    b.Navigation("InventoryTransactions");
+                });
+
+            modelBuilder.Entity("Cinema.Domain.Entities.Concessions.StockRequestEntity", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Cinema.Domain.Entities.GroupBooking.GroupBookingMemberEntity", b =>
@@ -6832,6 +8879,8 @@ namespace Cinema.Infrastructure.Migrations
 
             modelBuilder.Entity("Cinema.Domain.Entities.UserInfos.OrderInfoEntity", b =>
                 {
+                    b.Navigation("OrderConcessionDetails");
+
                     b.Navigation("OrderDetailsInfo");
                 });
 

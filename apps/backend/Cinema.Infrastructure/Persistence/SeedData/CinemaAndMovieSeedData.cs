@@ -301,6 +301,38 @@ public static class CinemaAndMovieSeedData
                 CashierType = CashierType.FoodPOS,
                 SharedUserId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32"),
                 IsActive = true
+            },
+
+            // Bộ phận vệ sinh không sử dụng tài khoản POS dùng chung.
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-333333333333"),
+                CinemaId = cinemaHCMId,
+                DepartmentName = "Bộ phận vệ sinh",
+                DepartmentType = DepartmentType.Janitorial,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-333333333333"),
+                CinemaId = cinemaHNId,
+                DepartmentName = "Bộ phận vệ sinh",
+                DepartmentType = DepartmentType.Janitorial,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
+            },
+            new DepartmentEntity
+            {
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
+                CinemaId = cinemaBHDId,
+                DepartmentName = "Bộ phận vệ sinh",
+                DepartmentType = DepartmentType.Janitorial,
+                CashierType = CashierType.TicketPOS,
+                SharedUserId = null,
+                IsActive = true
             }
         };
 
@@ -492,6 +524,44 @@ public static class CinemaAndMovieSeedData
                 EndTime = new TimeSpan(22, 0, 0),
                 MaxStaff = 5,
                 RoleId = userRoles.Cashier,
+                IsActive = true
+            },
+
+            // Ca mặc định cho bộ phận vệ sinh tại từng rạp.
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("a1111111-1111-1111-1111-666666666666"),
+                CinemaId = cinemaHCMId,
+                DepartmentId = Guid.Parse("d1111111-1111-1111-1111-333333333333"),
+                ShiftName = "Ca vệ sinh Full-time",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 4,
+                RoleId = userRoles.Janitor,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("b2222222-2222-2222-2222-666666666666"),
+                CinemaId = cinemaHNId,
+                DepartmentId = Guid.Parse("d2222222-2222-2222-2222-333333333333"),
+                ShiftName = "Ca vệ sinh Full-time",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 4,
+                RoleId = userRoles.Janitor,
+                IsActive = true
+            },
+            new CinemaShiftTemplateEntity
+            {
+                ShiftTemplateId = Guid.Parse("c3333333-3333-3333-3333-666666666666"),
+                CinemaId = cinemaBHDId,
+                DepartmentId = Guid.Parse("dbbbbbbb-bbbb-bbbb-bbbb-333333333333"),
+                ShiftName = "Ca vệ sinh Full-time",
+                StartTime = new TimeSpan(8, 0, 0),
+                EndTime = new TimeSpan(16, 0, 0),
+                MaxStaff = 4,
+                RoleId = userRoles.Janitor,
                 IsActive = true
             }
         };

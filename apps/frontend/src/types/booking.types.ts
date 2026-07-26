@@ -8,6 +8,7 @@ export interface SeatSelection {
 export interface CreateBookingRequest {
     scheduleId: string;
     seatSelections: SeatSelection[];
+    concessionItems?: Array<{ productId: string; quantity: number }>;
     customerName?: string;
     customerEmail?: string;
     customerPhone?: string;

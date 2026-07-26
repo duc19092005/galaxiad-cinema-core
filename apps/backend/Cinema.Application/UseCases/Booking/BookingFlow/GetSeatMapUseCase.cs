@@ -33,6 +33,7 @@ public class GetSeatMapUseCase
         var seatMap = new ResPublicSeatMapDto
         {
             ScheduleId = schedule.ScheduleId,
+            CinemaId = schedule.CinemaId,
             AuditoriumNumber = schedule.AuditoriumNumber,
             MovieName = schedule.MovieName,
             MovieRequiredAgeSymbol = schedule.MovieRequiredAgeSymbol,

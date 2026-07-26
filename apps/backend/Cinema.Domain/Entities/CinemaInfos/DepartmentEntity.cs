@@ -41,7 +41,14 @@ public class DepartmentEntity
 
 public enum DepartmentType
 {
-    Cashier = 0
+    /// <summary>Quầy thu ngân (vé hoặc bắp nước)</summary>
+    Cashier = 0,
+
+    /// <summary>Phòng ban vệ sinh, dùng kiosk riêng cho nhân viên quét dọn check-in</summary>
+    Janitorial = 1,
+
+    /// <summary>Phòng ban kho</summary>
+    Inventory = 2
 }
 
 public enum CashierType

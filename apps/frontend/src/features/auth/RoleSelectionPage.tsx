@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Shield, Ticket, Film, Building2, Wrench, Loader2, AlertCircle, Clapperboard } from 'lucide-react';
+import { User, Shield, Ticket, Film, Building2, Wrench, Boxes, Loader2, AlertCircle, Clapperboard, Sparkles } from 'lucide-react';
 import { authApi } from '../../api/authApi';
 import axios from 'axios';
 import type { ApiErrorResponse } from '../../types/auth.types';
@@ -14,10 +14,12 @@ import Cookies from 'js-cookie';
 const roleConfig: Record<string, { icon: React.ElementType; label: string; route: string; description: string; gradient: string }> = {
   Customer: { icon: Ticket, label: 'roles.customer', route: '/home', description: 'Browse movies and book tickets', gradient: 'linear-gradient(135deg, #ff8a00, #ea580c)' },
   Cashier: { icon: Ticket, label: 'roles.cashier', route: '/staff', description: 'Manage personal shifts and attendance', gradient: 'linear-gradient(135deg, #059669, #10b981)' },
+  Janitor: { icon: Sparkles, label: 'Nhân viên quét dọn', route: '/janitor', description: 'Nhận ca, chấm công khuôn mặt và hoàn thành nhiệm vụ vệ sinh', gradient: 'linear-gradient(135deg, #0f766e, #14b8a6)' },
   Admin: { icon: Shield, label: 'roles.admin', route: '/admin', description: 'Full system administration', gradient: 'linear-gradient(135deg, #6366f1, #8b5cf6)' },
   MovieManager: { icon: Film, label: 'roles.movieManager', route: '/movie-manager', description: 'Manage movie listings', gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)' },
   TheaterManager: { icon: Building2, label: 'roles.theaterManager', route: '/theater-manager', description: 'Manage theater schedules', gradient: 'linear-gradient(135deg, #ec4899, #db2777)' },
   FacilitiesManager: { icon: Wrench, label: 'roles.facilitiesManager', route: '/facilities-manager/dashboard', description: 'Manage cinemas and facilities', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+  WarehouseManager: { icon: Boxes, label: 'roles.warehouseManager', route: '/warehouse-manager', description: 'Manage F&B supply chain & waste', gradient: 'linear-gradient(135deg, #0284c7, #38bdf8)' },
 };
 
 const RoleSelectionPage: React.FC = () => {

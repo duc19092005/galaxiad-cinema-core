@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   Loader2, AlertCircle, Plus, Trash2,
-  RefreshCw, Ticket, Coffee, UserCheck, Eye, EyeOff
+  RefreshCw, Ticket, Coffee, UserCheck, Eye, EyeOff, Sparkles
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { facilitiesApi } from '../../api/facilitiesApi';
@@ -64,7 +64,7 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState<CashierDepartmentType>('TicketPOS');
+  const [newType, setNewType] = useState<CashierDepartmentType | 'Janitorial'>('TicketPOS');
   const [createMsg, setCreateMsg] = useState<string | null>(null);
 
   // Show password info
@@ -106,8 +106,8 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
       const payload: CreateDepartmentRequest = {
         cinemaId: selectedCinemaId,
         departmentName: newName.trim(),
-        departmentType: 'Cashier',
-        cashierType: newType,
+        departmentType: newType === 'Janitorial' ? 'Janitorial' : 'Cashier',
+        cashierType: newType === 'Janitorial' ? 'TicketPOS' : newType,
       };
       const res = await facilitiesApi.createDepartment(payload);
       if (res.isSuccess) {
@@ -161,7 +161,7 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h3 style={{ margin: 0, fontWeight: 700, fontSize: 18, color: 'var(--text-primary)' }}>
-            Phòng Ban Thu Ngân
+            Phòng ban vận hành
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>
             {t('departmentManager.description')}
@@ -241,6 +241,17 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
               >
                 <Coffee size={16} /> {t('departmentManager.foodPOS')}
               </button>
+              <button
+                onClick={() => setNewType('Janitorial')}
+                style={{
+                  flex: 1, padding: '10px 0', borderRadius: 8, border: newType === 'Janitorial' ? '2px solid var(--accent)' : '1px solid var(--border-color)',
+                  background: newType === 'Janitorial' ? 'var(--accent-soft)' : 'var(--bg-base)',
+                  color: 'var(--text-primary)', fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                }}
+              >
+                <Sparkles size={16} /> Vệ sinh
+              </button>
             </div>
 
             {createMsg && (
@@ -316,19 +327,21 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 10,
-                    background: dept.cashierType === 'TicketPOS'
-                      ? 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
-                      : 'linear-gradient(135deg, var(--warning), var(--danger))',
+                    background: dept.departmentType === 'Janitorial'
+                      ? 'linear-gradient(135deg, #0f766e, #14b8a6)'
+                      : dept.cashierType === 'TicketPOS'
+                        ? 'linear-gradient(135deg, var(--accent), var(--accent-hover))'
+                        : 'linear-gradient(135deg, var(--warning), var(--danger))',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
-                    {dept.cashierType === 'TicketPOS' ? <Ticket size={16} color="#fff" /> : <Coffee size={16} color="#fff" />}
+                    {dept.departmentType === 'Janitorial' ? <Sparkles size={16} color="#fff" /> : dept.cashierType === 'TicketPOS' ? <Ticket size={16} color="#fff" /> : <Coffee size={16} color="#fff" />}
                   </div>
                   <div>
                     <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text-primary)' }}>
                       {dept.departmentName}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                      {dept.cashierType === 'TicketPOS' ? t('departmentManager.ticketPOS') : t('departmentManager.foodPOS')}
+                      {dept.departmentType === 'Janitorial' ? 'Bộ phận vệ sinh' : dept.cashierType === 'TicketPOS' ? t('departmentManager.ticketPOS') : t('departmentManager.foodPOS')}
                     </div>
                   </div>
                 </div>
@@ -343,6 +356,7 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
               </div>
 
               {/* Body */}
+              {dept.departmentType !== 'Janitorial' && (
               <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--accent)', fontSize: 12, fontWeight: 800 }}>
                   <UserCheck size={14} />
@@ -367,6 +381,7 @@ const DepartmentManager: React.FC<Props> = ({ cinemas, activeCinemaId }) => {
                   </span>
                 </div>
               </div>
+              )}
 
               {/* Actions */}
               {(isAdmin || isFacilities) && (

@@ -2,14 +2,16 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Cookies from 'js-cookie';
-import { Banknote, CalendarDays, Clock3, LayoutDashboard, LogIn, RefreshCw, TimerReset } from 'lucide-react';
+import { BadgeCheck, Banknote, CalendarDays, Camera, Clock3, LayoutDashboard, LogIn, LogOut, RefreshCw, TimerReset, Sparkles } from 'lucide-react';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
+import FaceScanModal from '../../components/FaceScanModal';
 import StaffShiftSelfService from '../booking/components/StaffShiftSelfService';
+import JanitorCleaningTasks from './components/JanitorCleaningTasks';
 import { staffShiftApi } from '../../api/staffShiftApi';
-import type { PayrollDto, ShiftRegistrationDto, StaffWorkingLogDto } from '../../types/shift.types';
-import { showError } from '../../utils/ToastUtils';
+import type { CashierShiftSession, PayrollDto, ShiftRegistrationDto, StaffWorkingLogDto } from '../../types/shift.types';
+import { showError, showSuccess } from '../../utils/ToastUtils';
 
 const formatMoney = (value: number) => `${Math.round(value).toLocaleString('vi-VN')} VND`;
 const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -24,7 +26,23 @@ const makeShiftDateTime = (dateValue: string, timeValue: string) => {
 
 const minutesUntil = (date: Date) => Math.round((date.getTime() - Date.now()) / 60000);
 
-const StaffPortalPage: React.FC = () => {
+const JANITOR_SHIFT_SESSION_KEY = 'janitor_shift_session';
+type StaffPortalRole = 'Cashier' | 'Janitor';
+
+interface StaffPortalPageProps {
+  portalRole?: StaffPortalRole;
+}
+
+const readJanitorShiftSession = (): CashierShiftSession | null => {
+  try {
+    const raw = localStorage.getItem(JANITOR_SHIFT_SESSION_KEY);
+    return raw ? JSON.parse(raw) as CashierShiftSession : null;
+  } catch {
+    return null;
+  }
+};
+
+const StaffPortalPage: React.FC<StaffPortalPageProps> = ({ portalRole = 'Cashier' }) => {
   const navigate = useNavigate();
   const { tab } = useParams<{ tab: string }>();
   const activeTab = tab || 'dashboard';
@@ -34,6 +52,12 @@ const StaffPortalPage: React.FC = () => {
   const [history, setHistory] = useState<StaffWorkingLogDto[]>([]);
   const [payrolls, setPayrolls] = useState<PayrollDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ userId?: string; username?: string; userName?: string; isSharedPosAccount?: boolean } | null>(null);
+  const [shiftSession, setShiftSession] = useState<CashierShiftSession | null>(() => portalRole === 'Janitor' ? readJanitorShiftSession() : null);
+  const [showFaceScan, setShowFaceScan] = useState(false);
+  const [attendanceSubmitting, setAttendanceSubmitting] = useState(false);
+  const baseRoute = portalRole === 'Janitor' ? '/janitor' : '/staff';
+  const isJanitor = portalRole === 'Janitor';
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -61,11 +85,12 @@ const StaffPortalPage: React.FC = () => {
     try {
       const stored = localStorage.getItem('user_info');
       const user = stored ? JSON.parse(stored) : null;
-      if (user?.isSharedPosAccount) navigate('/cashier', { replace: true });
+      setCurrentUser(user);
+      if (portalRole === 'Cashier' && user?.isSharedPosAccount) navigate('/cashier', { replace: true });
     } catch {
       // ignore invalid cached user data
     }
-  }, [navigate]);
+  }, [navigate, portalRole]);
 
   const dashboard = useMemo(() => {
     const today = todayKey();
@@ -79,13 +104,18 @@ const StaffPortalPage: React.FC = () => {
       .filter((item) => item.status === 'Approved')
       .map((item) => {
         const startsAt = makeShiftDateTime(item.registrationDate, item.startTime);
-        return startsAt ? { item, startsAt } : null;
+        const parsedEnd = makeShiftDateTime(item.registrationDate, item.endTime);
+        if (!startsAt) return null;
+        const endsAt = parsedEnd && parsedEnd <= startsAt
+          ? new Date(parsedEnd.getTime() + 24 * 60 * 60 * 1000)
+          : parsedEnd;
+        return { item, startsAt, endsAt };
       })
-      .filter((item): item is { item: ShiftRegistrationDto; startsAt: Date } => Boolean(item))
+      .filter((item): item is { item: ShiftRegistrationDto; startsAt: Date; endsAt: Date | null } => Boolean(item))
       .filter((item) => {
         const timeDiff = item.startsAt.getTime() - Date.now();
-        // Only show shifts starting within the next 3 hours (3 * 3600 * 1000) or started up to 30 minutes ago (-30 * 60 * 1000)
-        return timeDiff <= 3 * 60 * 60 * 1000 && timeDiff >= -30 * 60 * 1000;
+        const hasNotEnded = (item.endsAt?.getTime() ?? item.startsAt.getTime()) >= Date.now();
+        return timeDiff <= 3 * 60 * 60 * 1000 && hasNotEnded;
       })
       .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0] || null;
 
@@ -96,6 +126,43 @@ const StaffPortalPage: React.FC = () => {
     localStorage.removeItem('user_info');
     Cookies.remove('X-Access-Token');
     navigate('/login', { replace: true });
+  };
+
+  const handleJanitorClockIn = async (faceVector: number[]) => {
+    setShowFaceScan(false);
+    setAttendanceSubmitting(true);
+    try {
+      const response = await staffShiftApi.clockIn({ staffId: currentUser?.userId, faceVector });
+      const nextSession: CashierShiftSession = {
+        staffId: response.data.staffId,
+        staffName: response.data.staffName,
+        accessToken: response.data.accessToken,
+        clockedInAt: new Date().toISOString(),
+      };
+      localStorage.setItem(JANITOR_SHIFT_SESSION_KEY, JSON.stringify(nextSession));
+      setShiftSession(nextSession);
+      showSuccess(response.message || `Đã vào ca cho ${response.data.staffName}.`);
+      loadDashboard();
+    } catch {
+      showError('Không thể vào ca. Hãy kiểm tra ca đã được duyệt và thử quét lại khuôn mặt.');
+    } finally {
+      setAttendanceSubmitting(false);
+    }
+  };
+
+  const handleJanitorClockOut = async () => {
+    setAttendanceSubmitting(true);
+    try {
+      const response = await staffShiftApi.clockOut({}, shiftSession?.accessToken);
+      localStorage.removeItem(JANITOR_SHIFT_SESSION_KEY);
+      setShiftSession(null);
+      showSuccess(response.message || 'Đã kết thúc ca làm.');
+      loadDashboard();
+    } catch {
+      showError('Không thể kết thúc ca làm. Vui lòng thử lại.');
+    } finally {
+      setAttendanceSubmitting(false);
+    }
   };
 
   const sidebarSections: SidebarSection[] = [
@@ -109,6 +176,7 @@ const StaffPortalPage: React.FC = () => {
       items: [
         { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
         { id: 'schedule', label: t('staffPortal.schedule'), icon: <CalendarDays size={16} /> },
+        ...(isJanitor ? [{ id: 'cleaning', label: 'Nhiệm vụ quét dọn', icon: <Sparkles size={16} /> }] : []),
       ],
     },
   ];
@@ -119,9 +187,9 @@ const StaffPortalPage: React.FC = () => {
         isOpen={sidebarOpen}
         onToggle={() => setSidebarOpen((value) => !value)}
         activeTab={activeTab}
-        onTabChange={(id) => navigate('/staff/' + id)}
+        onTabChange={(id) => navigate(baseRoute + '/' + id)}
         sections={sidebarSections}
-        role="Cashier Staff"
+        role={isJanitor ? 'Nhân viên quét dọn' : 'Nhân viên thu ngân'}
         collapsibleDesktop
       />
       <ManagementChrome sidebarOpen={sidebarOpen} onSidebarToggle={() => setSidebarOpen((value) => !value)} />
@@ -130,6 +198,8 @@ const StaffPortalPage: React.FC = () => {
         <div className="page-container">
           {activeTab === 'schedule' ? (
             <StaffShiftSelfService />
+          ) : activeTab === 'cleaning' && isJanitor ? (
+            <JanitorCleaningTasks />
           ) : (
             <section style={{ display: 'grid', gap: 18 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: 'flex-start', flexWrap: 'wrap' }}>
@@ -161,7 +231,23 @@ const StaffPortalPage: React.FC = () => {
               borderRadius: 'var(--radius-lg)',
               background: 'var(--bg-surface)',
             }}>
-              {dashboard.upcoming ? (
+              {isJanitor && shiftSession ? (
+                <>
+                  <span className="badge badge-success" style={{ width: 'fit-content' }}>Đang trong ca</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <BadgeCheck size={28} style={{ color: 'var(--success)' }} />
+                    <div>
+                      <h2 style={{ margin: 0, fontSize: 18, fontWeight: 850 }}>{shiftSession.staffName}</h2>
+                      <p style={{ margin: '5px 0 0', color: 'var(--text-secondary)', fontSize: 13 }}>
+                        Vào ca lúc {new Date(shiftSession.clockedInAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                  <button className="btn btn-danger" onClick={handleJanitorClockOut} disabled={attendanceSubmitting} style={{ width: 'fit-content' }}>
+                    <LogOut size={16} /> Kết thúc ca
+                  </button>
+                </>
+              ) : dashboard.upcoming ? (
                 <>
                   <span className={minutesUntil(dashboard.upcoming.startsAt) <= 30 ? 'badge badge-warning' : 'badge badge-accent'} style={{ width: 'fit-content' }}>
                     {minutesUntil(dashboard.upcoming.startsAt) <= 0
@@ -174,10 +260,16 @@ const StaffPortalPage: React.FC = () => {
                       {dashboard.upcoming.startsAt.toLocaleString('vi-VN')} | {dashboard.upcoming.item.startTime} - {dashboard.upcoming.item.endTime}
                     </p>
                   </div>
-                  <button className="btn btn-primary" onClick={handleGoToPosLogin} style={{ width: 'fit-content' }}>
-                    <LogIn size={16} />
-                    {t('staffPortal.loginPos')}
-                  </button>
+                  {isJanitor ? (
+                    <button className="btn btn-primary" onClick={() => setShowFaceScan(true)} disabled={attendanceSubmitting} style={{ width: 'fit-content' }}>
+                      <Camera size={16} /> Quét khuôn mặt & vào ca
+                    </button>
+                  ) : (
+                    <button className="btn btn-primary" onClick={handleGoToPosLogin} style={{ width: 'fit-content' }}>
+                      <LogIn size={16} />
+                      {t('staffPortal.loginPos')}
+                    </button>
+                  )}
                 </>
               ) : (
                 <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -207,6 +299,15 @@ const StaffPortalPage: React.FC = () => {
           )}
         </div>
       </main>
+
+      {showFaceScan && (
+        <FaceScanModal
+          mode="clockin"
+          staffName={currentUser?.userName || currentUser?.username}
+          onDescriptor={handleJanitorClockIn}
+          onClose={() => setShowFaceScan(false)}
+        />
+      )}
     </div>
   );
 };

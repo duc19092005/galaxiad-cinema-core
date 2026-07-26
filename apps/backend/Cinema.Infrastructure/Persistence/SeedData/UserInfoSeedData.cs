@@ -21,6 +21,9 @@ public static class SeedDataUserInfos
         var lotteFoodPosId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a22");
         var bhdTicketPosId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a31");
         var bhdFoodPosId = Guid.Parse("f9c3b8a1-8d24-42f5-b28f-e9c8f6153a32");
+        var galaxyJanitorId = Guid.Parse("a1000000-0000-4000-8000-000000000001");
+        var lotteJanitorId = Guid.Parse("a1000000-0000-4000-8000-000000000002");
+        var bhdJanitorId = Guid.Parse("a1000000-0000-4000-8000-000000000003");
 
         var customerStandardId = Guid.Parse("c0000000-0000-0000-0000-000000000001");
         var customerVipId = Guid.Parse("c0000000-0000-0000-0000-000000000002");
@@ -155,6 +158,42 @@ public static class SeedDataUserInfos
             },
             new UserInfoEntity
             {
+                UserId = galaxyJanitorId,
+                UserEmail = "janitor.galaxy.nguyen.du@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Nguyễn Minh Tâm",
+                PhoneNumber = "0988000101",
+                DateOfBirth = new DateTime(1993, 4, 12),
+                IdentityCode = "JANITOR_GALAXY_001"
+            },
+            new UserInfoEntity
+            {
+                UserId = lotteJanitorId,
+                UserEmail = "janitor.lotte.west.lake@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Trần Thị Mai",
+                PhoneNumber = "0988000102",
+                DateOfBirth = new DateTime(1991, 8, 23),
+                IdentityCode = "JANITOR_LOTTE_001"
+            },
+            new UserInfoEntity
+            {
+                UserId = bhdJanitorId,
+                UserEmail = "janitor.bhd.bitexco@cinema.com",
+                Password = adminPasswordHash,
+                RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                AccountStatus = AccountStatusEnum.Active,
+                UserName = "Lê Quốc Bảo",
+                PhoneNumber = "0988000103",
+                DateOfBirth = new DateTime(1995, 2, 7),
+                IdentityCode = "JANITOR_BHD_001"
+            },
+            new UserInfoEntity
+            {
                 UserId = customerStandardId,
                 UserEmail = "customer.standard@cinema.com",
                 Password = adminPasswordHash,
@@ -217,6 +256,9 @@ public static class SeedDataUserInfos
             new UserRoleInfoEntity { UserId = lotteFoodPosId, RoleId = userRoles.Cashier },
             new UserRoleInfoEntity { UserId = bhdTicketPosId, RoleId = userRoles.Cashier },
             new UserRoleInfoEntity { UserId = bhdFoodPosId, RoleId = userRoles.Cashier },
+            new UserRoleInfoEntity { UserId = galaxyJanitorId, RoleId = userRoles.Janitor },
+            new UserRoleInfoEntity { UserId = lotteJanitorId, RoleId = userRoles.Janitor },
+            new UserRoleInfoEntity { UserId = bhdJanitorId, RoleId = userRoles.Janitor },
             new UserRoleInfoEntity { UserId = customerStandardId, RoleId = userRoles.Customer },
             new UserRoleInfoEntity { UserId = customerVipId, RoleId = userRoles.Customer },
             new UserRoleInfoEntity { UserId = customerGoldId, RoleId = userRoles.Customer },
@@ -236,7 +278,10 @@ public static class SeedDataUserInfos
             DepartmentProfile(lotteTicketPosId, "22222222-2222-2222-2222-222222222222", "d2222222-2222-2222-2222-111111111111"),
             DepartmentProfile(lotteFoodPosId, "22222222-2222-2222-2222-222222222222", "d2222222-2222-2222-2222-222222222222"),
             DepartmentProfile(bhdTicketPosId, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "dbbbbbbb-bbbb-bbbb-bbbb-111111111111"),
-            DepartmentProfile(bhdFoodPosId, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "dbbbbbbb-bbbb-bbbb-bbbb-222222222222")
+            DepartmentProfile(bhdFoodPosId, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "dbbbbbbb-bbbb-bbbb-bbbb-222222222222"),
+            DepartmentProfile(galaxyJanitorId, "11111111-1111-1111-1111-111111111111", "d1111111-1111-1111-1111-333333333333"),
+            DepartmentProfile(lotteJanitorId, "22222222-2222-2222-2222-222222222222", "d2222222-2222-2222-2222-333333333333"),
+            DepartmentProfile(bhdJanitorId, "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb", "dbbbbbbb-bbbb-bbbb-bbbb-333333333333")
         );
     }
 

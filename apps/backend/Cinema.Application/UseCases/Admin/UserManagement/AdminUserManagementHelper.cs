@@ -22,6 +22,7 @@ public static class AdminUserManagementHelper
     public static readonly Guid[] StaffRoleIds =
     [
         userRoles.Cashier,
+        userRoles.Janitor,
         userRoles.MovieManager,
         userRoles.TheaterManager,
         userRoles.FacilitiesManager

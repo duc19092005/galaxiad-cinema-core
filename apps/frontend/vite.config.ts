@@ -30,10 +30,17 @@ export default defineConfig({
     exclude: ['face-api.js'],
   },
   server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
     watch: {
-      // Limit watched paths to src/ — skip node_modules entirely to avoid CPU spikes
-      ignored: ['**/node_modules/**', '**/dist/**'],
+      // Enable polling for Docker container mounts on Windows
+      usePolling: true,
       interval: 1000,
+      ignored: ['**/node_modules/**', '**/dist/**'],
+    },
+    hmr: {
+      clientPort: 5173,
     },
     proxy: {
       '/api': {

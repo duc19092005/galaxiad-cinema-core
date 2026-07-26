@@ -93,6 +93,8 @@ public class GetPriceInfos
 
 public class GetAuditoriumInfosRes
 {
+    public Guid CinemaId { get; set; }
+
     public string MovieName { get; set; } = string.Empty;
 
     public string MovieVisualFormatName { get; set; } = string.Empty;

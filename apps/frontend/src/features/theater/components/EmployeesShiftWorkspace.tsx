@@ -208,9 +208,13 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
       if (rid && rname) map.set(rid, rname);
     });
     const list = Array.from(map.entries()).map(([roleId, roleName]) => ({ roleId, roleName }));
-    if (list.length === 0) {
-      list.push({ roleId: '1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', roleName: 'Cashier' });
-    }
+    const requiredRoles = [
+      { roleId: '1a8f7b9c-d4e5-4f6a-b7c8-9d0e1f2a3b4c', roleName: 'Cashier' },
+      { roleId: '7a4b3c5d-e0f1-a2b3-c4d5-e6f7a8b9c0d1', roleName: 'Janitor' },
+    ];
+    requiredRoles.forEach((role) => {
+      if (!list.some((item) => item.roleId === role.roleId)) list.push(role);
+    });
     return list;
   }, [templates]);
 
@@ -1097,6 +1101,8 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
                         const id = dept.departmentId ?? dept.DepartmentId;
                         const name = dept.departmentName ?? dept.DepartmentName;
                         const type = dept.cashierType ?? dept.CashierType ?? dept.departmentType ?? dept.DepartmentType;
+                        const departmentType = dept.departmentType ?? dept.DepartmentType;
+                        const isJanitorial = departmentType === 1 || departmentType === 'Janitorial';
                         const email = dept.sharedUserEmail ?? dept.SharedUserEmail;
                         const isActive = dept.isActive ?? dept.IsActive;
                         const typeLabel = type === 1 ? t('employeesShiftWorkspace.typeTicketCounter') : type === 2 ? t('employeesShiftWorkspace.typeFoodCounter') : type === 3 ? t('employeesShiftWorkspace.typeWarehouse') : t('employeesShiftWorkspace.typeDepartment');
@@ -1123,7 +1129,18 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
                                   <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{t('employeesShiftWorkspace.sharedPOSAccount')}</div>
                                 </div>
                               ) : (
-                                <span style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>{t('employeesShiftWorkspace.notConfigured')}</span>
+                                <span style={{
+                                  display: 'inline-flex', alignItems: 'center', minHeight: 26,
+                                  padding: '4px 9px', borderRadius: 7, fontSize: 11, fontWeight: 700,
+                                  color: isJanitorial ? '#22c55e' : 'var(--text-muted)',
+                                  background: isJanitorial ? 'rgba(34,197,94,0.10)' : 'transparent',
+                                  border: isJanitorial ? '1px solid rgba(34,197,94,0.28)' : 'none',
+                                  fontStyle: isJanitorial ? 'normal' : 'italic'
+                                }}>
+                                  {isJanitorial
+                                    ? t('employeesShiftWorkspace.noPOSRequired')
+                                    : t('employeesShiftWorkspace.notConfigured')}
+                                </span>
                               )}
                             </td>
                             <td>

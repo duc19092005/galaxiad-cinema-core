@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Cinema.Application.Dtos.Concessions;
 
 namespace Cinema.Application.Dtos.Booking;
 
@@ -77,6 +78,7 @@ public class ShowtimeSlot
 public class ResPublicSeatMapDto
 {
     public Guid ScheduleId { get; set; }
+    public Guid CinemaId { get; set; }
     public string AuditoriumNumber { get; set; } = string.Empty;
     public string MovieName { get; set; } = string.Empty;
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;
@@ -115,6 +117,8 @@ public class ReqCreateBookingDto
     [Required(ErrorMessage = "Seat selections are required")]
     [MinLength(1, ErrorMessage = "At least one seat must be selected")]
     public List<SeatSelectionDto> SeatSelections { get; set; } = [];
+
+    public List<ReqConcessionItemDto> ConcessionItems { get; set; } = [];
 
     [StringLength(50)]
     public string? CustomerName { get; set; }
@@ -390,6 +394,7 @@ public class ScheduleSearchRowDto
 public class SeatMapScheduleQueryDto
 {
     public Guid ScheduleId { get; set; }
+    public Guid CinemaId { get; set; }
     public string AuditoriumNumber { get; set; } = string.Empty;
     public string MovieName { get; set; } = string.Empty;
     public string MovieRequiredAgeSymbol { get; set; } = string.Empty;

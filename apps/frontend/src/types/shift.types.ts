@@ -98,6 +98,7 @@ export interface StaffProfileDto {
   isCinemaManager: boolean;
   hasFaceRegistered: boolean;
   employeeType?: number;
+  roleNames?: string[];
 }
 
 export interface CreateShiftTemplateRequest {
