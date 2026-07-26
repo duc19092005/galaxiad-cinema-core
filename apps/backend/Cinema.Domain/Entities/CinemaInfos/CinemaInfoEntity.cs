@@ -45,5 +45,11 @@ public class CinemaInfoEntity : BaseManagementStatus<UserInfoEntity>
     public List<MovieCinemaEntity> MovieCinemaEntities { get; set; } = [];
 
     public List<CinemaSurchargeInfosEntity> CinemaSurchargeInfosEntity { get; set; } = [];
+
+    public List<Concessions.ConcessionProductEntity> ConcessionProducts { get; set; } = [];
+
+    public List<Concessions.InventoryTransactionEntity> InventoryTransactions { get; set; } = [];
+
+    public List<Cleaning.CleaningTaskEntity> CleaningTasks { get; set; } = [];
 }
 

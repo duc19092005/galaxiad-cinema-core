@@ -81,12 +81,15 @@ namespace Cinema.Api.Middlewares
 
             context.Response.StatusCode = statusCode;
 
+            object? conflicts = exception is ConcessionOutOfStockException outOfStockEx ? outOfStockEx.Conflicts : null;
+
             var response = new
             {
                 StatusCode = statusCode,
                 ErrorCode = errorCode,
                 Message = message, 
                 Errors = errors,  
+                Conflicts = conflicts,
                 Timestamp = DateTime.UtcNow
             };
 

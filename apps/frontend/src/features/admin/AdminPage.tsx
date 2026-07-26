@@ -12,7 +12,7 @@ import {
   Film,
   Calendar,
   DollarSign,
-  Ticket,
+  Ticket, TicketPercent, Popcorn,
   Camera,
   Search,
   Loader2,
@@ -49,6 +49,7 @@ import type { Cinema, Department } from '../../types/facilities.types';
 import AdminShiftApprovalSection from './components/AdminShiftApprovalSection';
 import UsersSection from './components/UsersSection';
 import BusinessIntelligenceSection from './components/BusinessIntelligenceSection';
+import { ConcessionCatalogSection } from './components/ConcessionCatalogSection';
 import { useCinema } from '../../contexts/CinemaContext';
 
 
@@ -73,7 +74,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const formatCompactNumber = (value?: number | null) => (value ?? 0).toLocaleString('vi-VN');
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts', 'business-intel']);
+const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts', 'business-intel', 'concessions']);
 
 const createFaceVectorFromImage = async (file: File): Promise<number[] | null> => {
   try {
@@ -1058,7 +1059,8 @@ const AdminPage: React.FC = () => {
           { id: 'business-intel', label: t('adminBi.sidebar', 'Phân tích KD'), icon: <Brain size={16} /> },
           { id: 'users', label: t('Users'), icon: <Users size={16} /> },
           { id: 'cinemas', label: t('Cinemas'), icon: <Building2 size={16} /> },
-          { id: 'vouchers', label: t('Vouchers'), icon: <Ticket size={16} /> },
+          { id: 'concessions', label: 'Danh mục F&B', icon: <Popcorn size={16} /> },
+          { id: 'vouchers', label: t('Vouchers'), icon: <TicketPercent size={16} /> },
           { id: 'pricing-promotions', label: t('Pricing Rules'), icon: <BadgePercent size={16} /> },
           { id: 'banners', label: 'Banners', icon: <Image size={16} /> },
           { id: 'permissions', label: t('Permissions'), icon: <KeyRound size={16} /> },
@@ -1263,6 +1265,9 @@ const AdminPage: React.FC = () => {
             />
           </div>
         );
+
+      case 'concessions':
+        return <ConcessionCatalogSection cinemaId={activeCinemaId} />;
 
       case 'permissions':
         return <RolePermissionsSection />;

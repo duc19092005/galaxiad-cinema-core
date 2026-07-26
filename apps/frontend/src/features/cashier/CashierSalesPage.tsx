@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Film, Calendar, Clock, Monitor, ShoppingCart, User, CreditCard,
-  CheckCircle2, Printer, LogOut, Loader2, RefreshCw, Ticket, ChevronRight, Banknote
+  CheckCircle2, Printer, LogOut, Loader2, RefreshCw, Ticket, ChevronRight, Banknote, Popcorn
 } from 'lucide-react';
 import { publicApi } from '../../api/publicApi';
 import { useSeatWs } from '../../hooks/useSeatWs';
@@ -21,6 +21,7 @@ import {
   occupiedIdsFromSeatMap,
 } from '../../utils/seatSelectionPolicy';
 import SegmentQuantityPicker from '../../components/SegmentQuantityPicker';
+import ConcessionPosPanel from './components/ConcessionPosPanel';
 import {
   assignSegmentsToSeats,
   buildSegmentLineSummaries,
@@ -37,6 +38,8 @@ const CashierSalesPage: React.FC = () => {
   // Cashier Shift Session
   const [session, setSession] = useState<CashierShiftSession | null>(() => readCashierShiftSession());
   const [cinemaName, setCinemaName] = useState<string>('');
+  const [cinemaId, setCinemaId] = useState<string>('');
+  const [showConcessionPanel, setShowConcessionPanel] = useState(false);
 
   // Search & Catalog
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -86,6 +89,7 @@ const CashierSalesPage: React.FC = () => {
       try {
         const user = JSON.parse(storedUser);
         setCinemaName(user.cinemaName || 'Cinema Branch');
+        setCinemaId(user.cinemaId || (user.managedCinemas && user.managedCinemas[0]?.cinemaId) || '');
       } catch {
         setCinemaName('Cinema Branch');
       }
@@ -488,6 +492,14 @@ const CashierSalesPage: React.FC = () => {
 
         {session && (
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowConcessionPanel(true)}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-[#ff8a00] bg-[#ff8a00]/10 border border-[#ff8a00]/30 hover:bg-[#ff8a00]/20 transition-colors"
+            >
+              <Popcorn size={14} />
+              Bán bắp nước
+            </button>
+
             <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-xl bg-white/5 border border-white/5">
               <User className="text-[#ff8a00]" size={16} />
               <div className="text-left">
@@ -1018,6 +1030,10 @@ const CashierSalesPage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showConcessionPanel && (
+        <ConcessionPosPanel cinemaId={cinemaId || null} onClose={() => setShowConcessionPanel(false)} />
       )}
     </div>
   );

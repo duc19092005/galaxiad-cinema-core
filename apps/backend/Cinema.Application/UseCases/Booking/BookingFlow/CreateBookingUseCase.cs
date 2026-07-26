@@ -3,6 +3,8 @@ using Cinema.Application.Dtos.Booking;
 using Cinema.Application.Exceptions;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.Concessions;
+using Cinema.Application.Dtos.Concessions;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.UseCases.Booking.Services;
 using Cinema.Domain.Enums;
@@ -29,6 +31,8 @@ public class CreateBookingUseCase
     private readonly IBackgroundJobScheduler _jobScheduler;
     private readonly ISeatLockService _seatLockService;
     private readonly ISeatLockerNotificationService _seatLockerNotificationService;
+    private readonly IInventoryStockService _inventoryStockService;
+    private readonly IConcessionRepository _concessionRepository;
 
     public CreateBookingUseCase(
         IBookingOrderRepository orderRepository,
@@ -42,7 +46,9 @@ public class CreateBookingUseCase
         IMovieCacheService cacheService,
         IBackgroundJobScheduler jobScheduler,
         ISeatLockService seatLockService,
-        ISeatLockerNotificationService seatLockerNotificationService)
+        ISeatLockerNotificationService seatLockerNotificationService,
+        IInventoryStockService inventoryStockService,
+        IConcessionRepository concessionRepository)
     {
         _unitOfWork = unitOfWork;
         _orderRepository = orderRepository;
@@ -56,6 +62,8 @@ public class CreateBookingUseCase
         _jobScheduler = jobScheduler;
         _seatLockService = seatLockService;
         _seatLockerNotificationService = seatLockerNotificationService;
+        _inventoryStockService = inventoryStockService;
+        _concessionRepository = concessionRepository;
     }
 
     public async Task<BaseResponse<ResCreateBookingDto>> ExecuteAsync(ReqCreateBookingDto request, string ipAddress)
@@ -77,7 +85,32 @@ public class CreateBookingUseCase
 
             var roleDiscountPercent = BookingPricingService.CalculateRoleDiscountPercent(customerProfile);
             var voucherDiscountPercent = await _voucherService.ValidateAndCalculateVoucherDiscountAsync(request, orderUserId);
-            var finalPrice = BookingVoucherService.ApplyDiscounts(totalPrice, roleDiscountPercent, voucherDiscountPercent, orderDetails);
+            var ticketFinalPrice = BookingVoucherService.ApplyDiscounts(totalPrice, roleDiscountPercent, voucherDiscountPercent, orderDetails);
+
+            var concessionItems = (request.ConcessionItems ?? [])
+                .Where(item => item.Quantity > 0)
+                .GroupBy(item => item.ProductId)
+                .Select(group => new ReqConcessionItemDto
+                {
+                    ProductId = group.Key,
+                    Quantity = group.Sum(item => item.Quantity)
+                })
+                .ToList();
+
+            var cinemaId = schedule.AuditoriumInfoEntities?.CinemaId ?? Guid.Empty;
+            var concessionProducts = concessionItems.Count == 0
+                ? []
+                : await _concessionRepository.GetProductsByIdsWithInventoryAsync(concessionItems.Select(item => item.ProductId));
+
+            if (concessionProducts.Count != concessionItems.Count
+                || concessionProducts.Any(product => product.CinemaId != cinemaId || !product.IsActive || !product.IsAvailableOnline))
+            {
+                throw new BadRequestException("One or more concession products are unavailable for this cinema.", "BK14");
+            }
+
+            var concessionSubtotal = concessionItems.Sum(item =>
+                concessionProducts.First(product => product.ProductId == item.ProductId).UnitPrice * item.Quantity);
+            var finalPrice = ticketFinalPrice + concessionSubtotal;
 
             var (finalName, finalEmail, finalPhone) = await ResolveCustomerInfoAsync(
                 orderUserId, isCashier, customerName, customerEmail, customerPhone);
@@ -88,11 +121,21 @@ public class CreateBookingUseCase
                 : OrderStatusEnum.Pending;
 
             var order = BuildOrderEntity(orderId, orderUserId, orderStaffId, resolvedOrderStatus,
-                resolvedPaymentMethod, finalPrice, totalPrice, orderDetails,
+                resolvedPaymentMethod, finalPrice, totalPrice, concessionSubtotal, orderDetails,
                 finalName, finalEmail, finalPhone, request, seatIds: request.SeatSelections.Select(s => s.SeatId).ToList());
 
             await _orderRepository.AddOrderAsync(order);
             await _orderRepository.AddOrderDetailsRangeAsync(orderDetails);
+
+            if (concessionItems.Count > 0)
+            {
+                var performedByUserId = orderStaffId ?? orderUserId;
+                if (resolvedOrderStatus == OrderStatusEnum.Booked)
+                    await _inventoryStockService.SellDirectAsync(cinemaId, concessionItems, orderId, performedByUserId);
+                else
+                    await _inventoryStockService.ReserveAsync(cinemaId, concessionItems, orderId, performedByUserId);
+            }
+
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -281,7 +324,7 @@ public class CreateBookingUseCase
 
     private OrderInfoEntity BuildOrderEntity(
         Guid orderId, Guid? userId, Guid? staffId, OrderStatusEnum status,
-        PaymentMethodEnum paymentMethod, decimal finalPrice, decimal subtotal,
+        PaymentMethodEnum paymentMethod, decimal finalPrice, decimal subtotal, decimal concessionSubtotal,
         List<OrderDetailsInfo> details, string? name, string? email, string? phone,
         ReqCreateBookingDto request, List<Guid> seatIds)
     {
@@ -294,9 +337,10 @@ public class CreateBookingUseCase
             OrderStatus = status,
             PaymentMethod = paymentMethod,
             TotalPrice = finalPrice,
-            SubtotalPrice = subtotal,
+            SubtotalPrice = subtotal + concessionSubtotal,
+            ConcessionSubtotal = concessionSubtotal,
             PromotionDiscountAmount = details.Sum(x => x.PricingAdjustmentAmount < 0 ? Math.Abs(x.PricingAdjustmentAmount) : 0),
-            VoucherDiscountAmount = subtotal - finalPrice,
+            VoucherDiscountAmount = Math.Max(0, subtotal + concessionSubtotal - finalPrice),
             FinalAmount = finalPrice,
             PricingSnapshotJson = System.Text.Json.JsonSerializer.Serialize(details.Select(x => new
             {

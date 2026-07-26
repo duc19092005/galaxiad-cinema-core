@@ -105,6 +105,7 @@ export interface MovieFormat {
 // DEPARTMENT (PHÒNG BAN THU NGÂN) TYPES
 // =============================================
 
+export type DepartmentType = 'Cashier' | 'Janitorial';
 export type CashierDepartmentType = 'TicketPOS' | 'FoodPOS';
 
 export interface Department {
@@ -112,7 +113,7 @@ export interface Department {
     cinemaId: string;
     cinemaName: string;
     departmentName: string;
-    departmentType: string;
+    departmentType: DepartmentType;
     cashierType: CashierDepartmentType;
     sharedUserId: string | null;
     sharedUserEmail: string | null;
@@ -123,7 +124,7 @@ export interface Department {
 export interface CreateDepartmentRequest {
     cinemaId: string;
     departmentName: string;
-    departmentType: string;
+    departmentType: DepartmentType;
     cashierType: CashierDepartmentType;
 }
 

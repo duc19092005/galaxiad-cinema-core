@@ -140,6 +140,7 @@ public class ResStaffProfileDto
     public bool IsCinemaManager { get; set; }
     public bool HasFaceRegistered { get; set; }
     public EmployeeWorkType EmployeeType { get; set; }
+    public List<string> RoleNames { get; set; } = [];
 }
 
 public class ReqCalculatePayrollDto

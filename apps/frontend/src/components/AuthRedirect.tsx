@@ -7,10 +7,12 @@ import { verifyAuthAndGetUser } from '../utils/authHelpers';
 const roleConfig: Record<string, string> = {
   Customer: '/home',
   Cashier: '/staff',
+  Janitor: '/janitor',
   Admin: '/admin',
   MovieManager: '/movie-manager',
   TheaterManager: '/theater-manager',
   FacilitiesManager: '/facilities-manager/dashboard',
+  WarehouseManager: '/warehouse-manager',
 };
 
 const AuthRedirect: React.FC = () => {

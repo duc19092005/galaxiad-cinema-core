@@ -111,6 +111,7 @@ export interface PublicSeat {
 
 export interface PublicSeatMap {
     scheduleId: string;
+    cinemaId: string;
     auditoriumName: string;
     movieName: string;
     movieRequiredAgeSymbol?: string;

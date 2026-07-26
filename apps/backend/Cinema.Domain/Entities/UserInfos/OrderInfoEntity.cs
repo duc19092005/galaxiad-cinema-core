@@ -32,6 +32,10 @@ public class OrderInfoEntity
     [Column(TypeName = "decimal(18,2)")]
     public decimal FinalAmount { get; set; }
 
+    /// <summary>Tổng tiền đồ ăn thức uống, tách riêng khỏi tiền vé để báo cáo doanh thu</summary>
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal ConcessionSubtotal { get; set; }
+
     [Column(TypeName = "nvarchar(max)")]
     public string? PricingSnapshotJson { get; set; }
     
@@ -60,5 +64,7 @@ public class OrderInfoEntity
     public UserInfoEntity UserInfoEntity { get; set; } = null!;
 
     public List<OrderDetailsInfo> OrderDetailsInfo { get; set; } = [];
+
+    public List<Concessions.OrderConcessionDetailEntity> OrderConcessionDetails { get; set; } = [];
 }
 

@@ -4,6 +4,7 @@ import type { AdminUserDto } from '../types/admin.types';
 export const STAFF_ROLES = new Set([
   'Admin',
   'Cashier',
+  'Janitor',
   'MovieManager',
   'TheaterManager',
   'FacilitiesManager',
@@ -23,6 +24,7 @@ export type StaffRoleFilter =
   | 'managers'
   | 'Admin'
   | 'Cashier'
+  | 'Janitor'
   | 'MovieManager'
   | 'TheaterManager'
   | 'FacilitiesManager';
@@ -63,6 +65,7 @@ export const primaryRole = (user: AdminUserDto): string => {
     'FacilitiesManager',
     'MovieManager',
     'Cashier',
+    'Janitor',
     'Customer',
   ];
   for (const p of priority) {
@@ -76,7 +79,7 @@ const managerRank = (user: AdminUserDto): number => {
   if (roles.includes('TheaterManager') || roles.includes('FacilitiesManager')) return 0;
   if (roles.includes('MovieManager')) return 1;
   if (roles.includes('Admin')) return 2;
-  if (roles.includes('Cashier')) return 3;
+  if (roles.includes('Cashier') || roles.includes('Janitor')) return 3;
   return 4;
 };
 
