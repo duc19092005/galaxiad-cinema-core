@@ -1,4 +1,5 @@
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.Concessions;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Utils;
@@ -25,6 +26,7 @@ public class ProcessVnPayCallbackUseCase
     private readonly SocialBooking.GetGroupBookingStateUseCase _getGroupStateUseCase;
     private readonly IGroupBookingCacheService _groupBookingCacheService;
     private readonly IVoteTimeoutScheduler _voteTimeoutScheduler;
+    private readonly IInventoryStockService _inventoryStockService;
 
     public ProcessVnPayCallbackUseCase(
         IPaymentCallbackRepository repo,
@@ -36,7 +38,8 @@ public class ProcessVnPayCallbackUseCase
         ISeatLockerNotificationService notificationService,
         SocialBooking.GetGroupBookingStateUseCase getGroupStateUseCase,
         IGroupBookingCacheService groupBookingCacheService,
-        IVoteTimeoutScheduler voteTimeoutScheduler)
+        IVoteTimeoutScheduler voteTimeoutScheduler,
+        IInventoryStockService inventoryStockService)
     {
         _unitOfWork = unitOfWork;
         _repo = repo;
@@ -48,6 +51,7 @@ public class ProcessVnPayCallbackUseCase
         _getGroupStateUseCase = getGroupStateUseCase;
         _groupBookingCacheService = groupBookingCacheService;
         _voteTimeoutScheduler = voteTimeoutScheduler;
+        _inventoryStockService = inventoryStockService;
     }
 
     public async Task<(bool success, Guid orderId, string? groupCode)> ExecuteAsync(IDictionary<string, string> vnpParams)
@@ -135,6 +139,7 @@ public class ProcessVnPayCallbackUseCase
         {
             order.OrderStatus = OrderStatusEnum.Booked;
             order.VnPayTransactionId = transactionId;
+            await _inventoryStockService.CommitAsync(order.OrderId, order.StaffId ?? order.UserId);
 
             // Credit points and mark voucher as used
             if (order.UserId.HasValue)
@@ -157,6 +162,7 @@ public class ProcessVnPayCallbackUseCase
         {
             order.OrderStatus = OrderStatusEnum.Canceled;
             ReleaseOrderDetails(order);
+            await _inventoryStockService.ReleaseAsync(order.OrderId);
         }
 
         await _unitOfWork.SaveChangesAsync();

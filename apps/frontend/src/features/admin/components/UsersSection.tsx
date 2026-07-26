@@ -372,6 +372,7 @@ const UsersSection: React.FC<UsersSectionProps> = ({
               <option value="FacilitiesManager">Facilities Manager</option>
               <option value="MovieManager">Movie Manager</option>
               <option value="Cashier">Cashier</option>
+              <option value="Janitor">Nhân viên quét dọn</option>
               <option value="Admin">Admin</option>
             </select>
 

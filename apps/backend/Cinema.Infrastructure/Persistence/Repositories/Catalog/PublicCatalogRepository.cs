@@ -233,6 +233,7 @@ public class PublicCatalogRepository : IPublicCatalogRepository
             .Where(x => !x.IsDeleted && x.MovieScheduleInfoId == scheduleId)
             .Select(x => new GetAuditoriumInfosRes
             {
+                CinemaId = x.AuditoriumInfoEntities != null ? x.AuditoriumInfoEntities.CinemaId : Guid.Empty,
                 MovieName = x.MovieInfoEntity != null ? x.MovieInfoEntity.MovieName : "",
                 MovieVisualFormatName = x.MovieFormatInfoEntity != null ? x.MovieFormatInfoEntity.MovieFormatName : "",
                 MovieRequiredAgeSymbol = x.MovieInfoEntity != null && x.MovieInfoEntity.MovieRequiredAgeEntity != null

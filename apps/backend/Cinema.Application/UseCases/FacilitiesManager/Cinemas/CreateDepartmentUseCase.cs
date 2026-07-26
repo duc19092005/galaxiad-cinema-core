@@ -56,45 +56,47 @@ public class CreateDepartmentUseCase
             throw new AppException(Messages.Department.AlreadyExists(request.DepartmentName), 400, "DEPT_ERR");
 
         var departmentId = Guid.NewGuid();
-        var sharedUserId = Guid.NewGuid();
+        Guid? sharedUserId = request.DepartmentType == DepartmentType.Cashier ? Guid.NewGuid() : null;
         var email = DepartmentSharedAccountMapper.BuildEmail(request, cinema);
         const string defaultPassword = DepartmentSharedAccountMapper.DefaultPassword;
 
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
-            // 1. Create shared user account
-            var sharedUser = new UserInfoEntity
+            // Cashier departments use a shared POS account. Janitorial departments
+            // contain individually assigned Janitor users and must not create a POS login.
+            if (sharedUserId.HasValue)
             {
-                UserId = sharedUserId,
-                UserEmail = email,
-                Password = _passwordHasher.Hash(defaultPassword),
-                RegisterMethod = RegisterMethodEnum.UsernamePassword,
-                AccountStatus = AccountStatusEnum.Active,
-                DateOfBirth = new DateTime(2000, 1, 1),
-                IdentityCode = $"DEPT_{departmentId:N}",
-                PhoneNumber = cinema.CinemaHotLineNumber,
-                UserName = DepartmentSharedAccountMapper.BuildUserName(request, cinema),
-                UserType = UserTypeEnum.SharedPOS
-            };
-            await _unitOfWork.Repository<UserInfoEntity>().AddAsync(sharedUser);
+                var sharedUser = new UserInfoEntity
+                {
+                    UserId = sharedUserId.Value,
+                    UserEmail = email,
+                    Password = _passwordHasher.Hash(defaultPassword),
+                    RegisterMethod = RegisterMethodEnum.UsernamePassword,
+                    AccountStatus = AccountStatusEnum.Active,
+                    DateOfBirth = new DateTime(2000, 1, 1),
+                    IdentityCode = $"DEPT_{departmentId:N}",
+                    PhoneNumber = cinema.CinemaHotLineNumber,
+                    UserName = DepartmentSharedAccountMapper.BuildUserName(request, cinema),
+                    UserType = UserTypeEnum.SharedPOS
+                };
+                await _unitOfWork.Repository<UserInfoEntity>().AddAsync(sharedUser);
 
-            // 2. Assign Cashier role
-            await _unitOfWork.Repository<UserRoleInfoEntity>().AddAsync(new UserRoleInfoEntity
-            {
-                UserId = sharedUserId,
-                RoleId = userRoles.Cashier
-            });
+                await _unitOfWork.Repository<UserRoleInfoEntity>().AddAsync(new UserRoleInfoEntity
+                {
+                    UserId = sharedUserId.Value,
+                    RoleId = userRoles.Cashier
+                });
 
-            // 3. Create StaffProfile for the shared account
-            await _unitOfWork.Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
-            {
-                UserId = sharedUserId,
-                CinemaId = request.CinemaId,
-                DepartmentId = departmentId,
-                WorkingStatus = true,
-                IsCinemaManager = false
-            });
+                await _unitOfWork.Repository<StaffProfileEntity>().AddAsync(new StaffProfileEntity
+                {
+                    UserId = sharedUserId.Value,
+                    CinemaId = request.CinemaId,
+                    DepartmentId = departmentId,
+                    WorkingStatus = true,
+                    IsCinemaManager = false
+                });
+            }
 
             // 4. Create Department
             await _unitOfWork.Repository<DepartmentEntity>().AddAsync(new DepartmentEntity

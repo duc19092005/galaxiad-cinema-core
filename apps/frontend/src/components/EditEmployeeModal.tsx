@@ -179,7 +179,7 @@ const EditEmployeeModal: React.FC<EditEmployeeModalProps> = ({ isOpen, onClose, 
 
   // ── Computed ─────────────────────────────────────────────────────────────
 
-  const isCashierSelected = allRoles.some(r => selectedRoleIds.includes(r.roleId) && r.roleName === 'Cashier');
+  const isCashierSelected = allRoles.some(r => selectedRoleIds.includes(r.roleId) && (r.roleName === 'Cashier' || r.roleName === 'Janitor'));
   const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every(id => b.includes(id));
   const rolesChanged = !sameSet(selectedRoleIds, initialRoleIds);
   const etChanged = isCashierSelected && employeeType !== initialEmployeeType;

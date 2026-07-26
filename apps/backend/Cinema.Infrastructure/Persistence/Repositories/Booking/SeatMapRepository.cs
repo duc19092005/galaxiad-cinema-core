@@ -27,6 +27,7 @@ public class SeatMapRepository : ISeatMapRepository
             .Select(s => new SeatMapScheduleQueryDto
             {
                 ScheduleId = s.MovieScheduleInfoId,
+                CinemaId = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.CinemaId : Guid.Empty,
                 AuditoriumNumber = s.AuditoriumInfoEntities != null ? s.AuditoriumInfoEntities.AuditoriumNumber : string.Empty,
                 MovieName = s.MovieInfoEntity != null ? s.MovieInfoEntity.MovieName : string.Empty,
                 MovieRequiredAgeSymbol = s.MovieInfoEntity != null && s.MovieInfoEntity.MovieRequiredAgeEntity != null

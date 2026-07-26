@@ -32,7 +32,16 @@ public static class PermissionsSeedData
             new PermissionEntity { PermissionId = userPermissions.ManageVouchers, PermissionInfo = "ManageVouchers" },
             new PermissionEntity { PermissionId = userPermissions.ManageFormats, PermissionInfo = "ManageFormats" },
             new PermissionEntity { PermissionId = userPermissions.ManageSurcharges, PermissionInfo = "ManageSurcharges" },
-            new PermissionEntity { PermissionId = userPermissions.ManageStaffProfiles, PermissionInfo = "ManageStaffProfiles" }
+            new PermissionEntity { PermissionId = userPermissions.ManageStaffProfiles, PermissionInfo = "ManageStaffProfiles" },
+            new PermissionEntity { PermissionId = userPermissions.ViewConcession, PermissionInfo = "ViewConcession" },
+            new PermissionEntity { PermissionId = userPermissions.ManageConcession, PermissionInfo = "ManageConcession" },
+            new PermissionEntity { PermissionId = userPermissions.SellConcession, PermissionInfo = "SellConcession" },
+            new PermissionEntity { PermissionId = userPermissions.ViewInventory, PermissionInfo = "ViewInventory" },
+            new PermissionEntity { PermissionId = userPermissions.ManageInventory, PermissionInfo = "ManageInventory" },
+            new PermissionEntity { PermissionId = userPermissions.ViewInventoryHistory, PermissionInfo = "ViewInventoryHistory" },
+            new PermissionEntity { PermissionId = userPermissions.PerformCleaning, PermissionInfo = "PerformCleaning" },
+            new PermissionEntity { PermissionId = userPermissions.ManageCleaning, PermissionInfo = "ManageCleaning" },
+            new PermissionEntity { PermissionId = userPermissions.VerifyCleaning, PermissionInfo = "VerifyCleaning" }
         );
 
         // Helper to create PermissionForRole seed entries
@@ -49,7 +58,12 @@ public static class PermissionsSeedData
             userPermissions.ProcessPayroll, userPermissions.ManageUsers,
             userPermissions.ViewAuditLogs, userPermissions.ManageVouchers,
             userPermissions.ManageFormats, userPermissions.ManageSurcharges,
-            userPermissions.ManageStaffProfiles
+            userPermissions.ManageStaffProfiles,
+            userPermissions.ViewConcession, userPermissions.ManageConcession,
+            userPermissions.SellConcession, userPermissions.ViewInventory,
+            userPermissions.ManageInventory, userPermissions.ViewInventoryHistory,
+            userPermissions.PerformCleaning, userPermissions.ManageCleaning,
+            userPermissions.VerifyCleaning
         };
 
         // Admin gets ALL permissions
@@ -70,7 +84,9 @@ public static class PermissionsSeedData
             new PermissionForRoleEntity { PermissionId = userPermissions.RegisterShift, RoleId = userRoles.Cashier },
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewCinema, RoleId = userRoles.Cashier },
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewSchedule, RoleId = userRoles.Cashier },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewPayroll, RoleId = userRoles.Cashier }
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewPayroll, RoleId = userRoles.Cashier },
+            new PermissionForRoleEntity { PermissionId = userPermissions.SellConcession, RoleId = userRoles.Cashier },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewConcession, RoleId = userRoles.Cashier }
         );
 
         // Customer permissions
@@ -92,7 +108,33 @@ public static class PermissionsSeedData
             new PermissionForRoleEntity { PermissionId = userPermissions.ApproveShift, RoleId = userRoles.TheaterManager },
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewPayroll, RoleId = userRoles.TheaterManager },
             new PermissionForRoleEntity { PermissionId = userPermissions.ManageStaffProfiles, RoleId = userRoles.TheaterManager },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.TheaterManager }
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.TheaterManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ManageCleaning, RoleId = userRoles.TheaterManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.VerifyCleaning, RoleId = userRoles.TheaterManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewConcession, RoleId = userRoles.TheaterManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewInventory, RoleId = userRoles.TheaterManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewInventoryHistory, RoleId = userRoles.TheaterManager }
+        );
+
+        // Janitor permissions: chi lam viec voi nhiem vu quet don va ca lam cua minh
+        modelBuilder.Entity<PermissionForRoleEntity>().HasData(
+            new PermissionForRoleEntity { PermissionId = userPermissions.PerformCleaning, RoleId = userRoles.Janitor },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ClockIn, RoleId = userRoles.Janitor },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ClockOut, RoleId = userRoles.Janitor },
+            new PermissionForRoleEntity { PermissionId = userPermissions.RegisterShift, RoleId = userRoles.Janitor },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewCinema, RoleId = userRoles.Janitor },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewPayroll, RoleId = userRoles.Janitor }
+        );
+
+        // InventoryManager permissions: quan ly danh muc va ton kho, khong ban ve
+        modelBuilder.Entity<PermissionForRoleEntity>().HasData(
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewConcession, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ManageConcession, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewInventory, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ManageInventory, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewInventoryHistory, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewCinema, RoleId = userRoles.InventoryManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.InventoryManager }
         );
 
         // FacilitiesManager permissions

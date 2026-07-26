@@ -192,7 +192,10 @@ public class ShiftManagerRepository : IShiftManagerRepository
                 DepartmentName = s.DepartmentEntity != null ? s.DepartmentEntity.DepartmentName : null,
                 IsCinemaManager = s.IsCinemaManager,
                 HasFaceRegistered = !string.IsNullOrEmpty(s.FaceVector),
-                EmployeeType = s.EmployeeType
+                EmployeeType = s.EmployeeType,
+                RoleNames = s.UserInfoEntity != null
+                    ? s.UserInfoEntity.UserRoleInfoEntity.Select(ur => ur.RoleListInfoEntity.RoleName).ToList()
+                    : new List<string>()
             })
             .ToListAsync();
     }

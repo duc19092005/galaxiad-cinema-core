@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Application.Interfaces.Booking;
+using Cinema.Application.Interfaces.Concessions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,15 +21,18 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<PendingOrderCancellationJob> _logger;
     private readonly ISeatLockerNotificationService _seatLockerNotificationService;
+    private readonly IInventoryStockService _inventoryStockService;
 
     public PendingOrderCancellationJob(
         IUnitOfWork unitOfWork, 
         ILogger<PendingOrderCancellationJob> logger,
-        ISeatLockerNotificationService seatLockerNotificationService)
+        ISeatLockerNotificationService seatLockerNotificationService,
+        IInventoryStockService inventoryStockService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
         _seatLockerNotificationService = seatLockerNotificationService;
+        _inventoryStockService = inventoryStockService;
     }
 
     /// <summary>
@@ -95,6 +99,7 @@ public class PendingOrderCancellationJob : IPendingOrderCancellationJob
     private async Task CancelOrderAndNotifyAsync(OrderInfoEntity order)
     {
         order.OrderStatus = OrderStatusEnum.Canceled;
+        await _inventoryStockService.ReleaseAsync(order.OrderId);
         var releasedAt = DateTime.UtcNow;
         
         var details = order.OrderDetailsInfo;

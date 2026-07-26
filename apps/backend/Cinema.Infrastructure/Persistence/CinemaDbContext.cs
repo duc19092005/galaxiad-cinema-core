@@ -9,6 +9,8 @@ using Cinema.Domain.Entities.GroupBooking;
 using Cinema.Domain.Entities.Vouchers;
 using Cinema.Domain.Entities.Banners;
 using Cinema.Domain.Entities.AiResearch;
+using Cinema.Domain.Entities.Concessions;
+using Cinema.Domain.Entities.Cleaning;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
 using Cinema.Infrastructure.Persistence.SeedData;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
@@ -16,6 +18,8 @@ using Cinema.Infrastructure.Persistence.RelationshipKeys.IdentityAccess;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Promotions;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Common;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.UserInfos;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.Concessions;
+using Cinema.Infrastructure.Persistence.RelationshipKeys.Cleaning;
 using Microsoft.EntityFrameworkCore;
 
 // ReSharper disable All
@@ -143,6 +147,28 @@ public class CinemaDbContext : DbContext
     public DbSet<AiResearchEvidenceEntity> AiResearchEvidenceEntity { get; set; }
     public DbSet<AiResearchReportEntity> AiResearchReportEntity { get; set; }
     public DbSet<AiResearchEventEntity> AiResearchEventEntity { get; set; }
+
+    // Concession (Food & Beverage) & Inventory
+
+    public DbSet<ConcessionProductEntity> ConcessionProductEntity { get; set; }
+
+    public DbSet<ConcessionComboItemEntity> ConcessionComboItemEntity { get; set; }
+
+    public DbSet<ConcessionInventoryEntity> ConcessionInventoryEntity { get; set; }
+
+    public DbSet<InventoryTransactionEntity> InventoryTransactionEntity { get; set; }
+
+    public DbSet<OrderConcessionDetailEntity> OrderConcessionDetailEntity { get; set; }
+
+    public DbSet<StockRequestEntity> StockRequestEntity { get; set; }
+
+    public DbSet<StockRequestItemEntity> StockRequestItemEntity { get; set; }
+
+    public DbSet<WasteReportEntity> WasteReportEntity { get; set; }
+
+    // Cleaning
+
+    public DbSet<CleaningTaskEntity> CleaningTaskEntity { get; set; }
 
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -703,6 +729,16 @@ public class CinemaDbContext : DbContext
         VoucherSeedData.AddVoucherSeedData(modelBuilder);
 
         AiResearchSeedData.AddAiResearchSeedData(modelBuilder);
+
+        // Concession (F&B) & Inventory
+
+        ConcessionRelationships.AddConcessionRelationships(modelBuilder);
+
+        ConcessionSeedData.AddConcessionSeedData(modelBuilder);
+
+        // Cleaning
+
+        CleaningRelationships.AddCleaningRelationships(modelBuilder);
 
         // Group Booking (Social)
 

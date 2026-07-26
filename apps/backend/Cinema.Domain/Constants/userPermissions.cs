@@ -48,4 +48,28 @@ public static class userPermissions
     
     // Staff Profile Management
     public static readonly Guid ManageStaffProfiles = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111023");
+
+    // Concession (Food & Beverage)
+    /// <summary>Xem danh mục sản phẩm bắp nước</summary>
+    public static readonly Guid ViewConcession = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111024");
+    /// <summary>Tạo, sửa, bật tắt sản phẩm và giá</summary>
+    public static readonly Guid ManageConcession = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111025");
+    /// <summary>Bán bắp nước tại quầy</summary>
+    public static readonly Guid SellConcession = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111026");
+
+    // Inventory
+    /// <summary>Xem tồn kho hiện tại</summary>
+    public static readonly Guid ViewInventory = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111027");
+    /// <summary>Nhập kho, điều chỉnh, kiểm kê</summary>
+    public static readonly Guid ManageInventory = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111028");
+    /// <summary>Xem lịch sử biến động kho</summary>
+    public static readonly Guid ViewInventoryHistory = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111029");
+
+    // Cleaning
+    /// <summary>Nhân viên thực hiện quét dọn</summary>
+    public static readonly Guid PerformCleaning = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111030");
+    /// <summary>Quản lý gán và theo dõi nhiệm vụ quét dọn</summary>
+    public static readonly Guid ManageCleaning = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111031");
+    /// <summary>Xác nhận kết quả quét dọn</summary>
+    public static readonly Guid VerifyCleaning = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111032");
 }

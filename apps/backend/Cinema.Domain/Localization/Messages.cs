@@ -338,6 +338,54 @@ public static class Messages
         public static string PayrollCalculated(int shiftCount, decimal totalAmount) => $"Payroll calculated successfully. Total shifts: {shiftCount}, total amount: {totalAmount:N0} VND.";
         public static string PayrollPaid(decimal totalAmount) => $"Payroll payment confirmed successfully for {totalAmount:N0} VND.";
         public static string NoUncalculatedShiftsBefore(DateTime date) => $"There are no uncalculated shifts for this staff member before {date:dd/MM/yyyy}.";
+        public const string NoStaffOnShiftNow = "No staff member with an approved active shift was found right now.";
+    }
+
+    // =============================================================
+    //  CONCESSION (FOOD & BEVERAGE) & INVENTORY
+    // =============================================================
+    public static class Concession
+    {
+        public const string ProductNotFound = "Product not found.";
+        public const string ProductAlreadyExists = "A product with this SKU already exists at this cinema.";
+        public const string ProductCreated = "Product created successfully.";
+        public const string ProductUpdated = "Product updated successfully.";
+        public const string ProductToggled = "Product status updated successfully.";
+        public const string ComboCreated = "Combo created successfully.";
+        public const string ComboComponentNotFound = "One or more combo component products were not found.";
+        public const string ComboComponentMustNotBeCombo = "A combo component cannot itself be a combo.";
+        public const string SaleCompleted = "Sale completed successfully.";
+        public const string NoItemsProvided = "No items were provided for this order.";
+        public const string OutOfStockChooseAnother = "One or more items are out of stock. Please choose another item.";
+        public const string StockCheckSuccess = "Stock check completed.";
+        public const string CinemaMismatch = "You can only manage concessions for your own cinema.";
+    }
+
+    public static class Inventory
+    {
+        public const string RestockSuccess = "Stock restocked successfully.";
+        public const string AdjustSuccess = "Stock adjusted successfully.";
+        public const string StockCountSuccess = "Stock count recorded successfully.";
+        public const string InventoryNotFound = "Inventory record not found for this product.";
+        public const string InsufficientStock = "Insufficient stock available.";
+        public const string ConcurrencyConflict = "Stock was updated by another operation, please retry.";
+    }
+
+    // =============================================================
+    //  CLEANING / JANITOR
+    // =============================================================
+    public static class Cleaning
+    {
+        public const string TaskNotFound = "Cleaning task not found.";
+        public const string TaskAlreadyAssigned = "This task is already assigned to another staff member.";
+        public const string TaskNotAssignedToYou = "This task is not assigned to you.";
+        public const string InvalidStatusTransition = "Cannot change the task to this status from its current status.";
+        public const string TaskAssigned = "Cleaning task assigned successfully.";
+        public const string TaskStarted = "Cleaning task started.";
+        public const string TaskCompleted = "Cleaning task completed successfully.";
+        public const string TaskVerified = "Cleaning task verified successfully.";
+        public const string StaffNotOnShift = "This staff member does not have an active approved shift.";
+        public const string TasksGenerated = "Cleaning tasks generated successfully.";
     }
 
     // =============================================================

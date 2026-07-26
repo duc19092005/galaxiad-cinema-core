@@ -94,8 +94,8 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
     );
   };
 
-  const isCashierSelected = roles.some(role => selectedRoleIds.includes(role.roleId) && role.roleName === 'Cashier');
-  const initialIsCashierSelected = roles.some(role => initialRoleIds.includes(role.roleId) && role.roleName === 'Cashier');
+  const isCashierSelected = roles.some(role => selectedRoleIds.includes(role.roleId) && (role.roleName === 'Cashier' || role.roleName === 'Janitor'));
+  const initialIsCashierSelected = roles.some(role => initialRoleIds.includes(role.roleId) && (role.roleName === 'Cashier' || role.roleName === 'Janitor'));
   const employeeTypeChanged = isCashierSelected && (employeeType !== (initialEmployeeType ?? 1) || isCashierSelected !== initialIsCashierSelected);
   const hasChanges = !sameRoleSet(selectedRoleIds, initialRoleIds) || employeeTypeChanged;
 
@@ -260,11 +260,11 @@ const RoleUpdateModal: React.FC<RoleUpdateModalProps> = ({
                 </div>
               </div>
 
-              {/* Employee Type Selection for Cashier role */}
+              {/* Employee Type Selection for shift staff roles */}
               {isCashierSelected && (
                 <div style={{ marginTop: '28px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
                   <p className="text-muted" style={{ fontSize: 13, marginBottom: '12px', letterSpacing: '0.3px' }}>
-                    Loại nhân viên (Cashier Staff)
+                    Loại nhân viên (Thu ngân / Quét dọn)
                   </p>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     {([{ value: 1, label: 'Full-time', desc: 'Ca 8h, lý do bắt buộc nếu đăng ký ca ngắn' }, { value: 2, label: 'Part-time', desc: 'Chỉ đăng ký được ca ≤ 4h' }] as const).map((opt) => {

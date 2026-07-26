@@ -17,8 +17,10 @@ import { useCinema } from '../../contexts/CinemaContext';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import LogoutModal from '../../components/LogoutModal';
 import Cookies from 'js-cookie';
-import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar, Film } from 'lucide-react';
+import { Loader2, AlertCircle, LayoutDashboard, Users, Calendar, Film, Popcorn, Sparkles } from 'lucide-react';
 import EmployeesShiftWorkspace from './components/EmployeesShiftWorkspace';
+import ConcessionsWorkspace from './components/ConcessionsWorkspace';
+import CleaningBoardWorkspace from './components/CleaningBoardWorkspace';
 import { facilitiesApi } from '../../api/facilitiesApi';
 import type { Cinema } from '../../types/facilities.types';
 
@@ -33,7 +35,7 @@ const TheaterManagerPage: React.FC = () => {
   const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
   const [cinemas, setCinemas] = useState<Cinema[]>([]);
   const { tab } = useParams<{ tab?: string }>();
-  const activeTab = (tab || 'dashboard') as 'dashboard' | 'employees' | 'employees-schedule' | 'schedule';
+  const activeTab = (tab || 'dashboard') as 'dashboard' | 'employees' | 'employees-schedule' | 'schedule' | 'concessions' | 'cleaning';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -100,6 +102,8 @@ const TheaterManagerPage: React.FC = () => {
         { id: 'employees', label: t('Employees', 'Quản lý nhân viên'), icon: <Users size={16} /> },
         { id: 'employees-schedule', label: t('sidebar.workSchedule', 'Ca làm việc'), icon: <Calendar size={16} /> },
         { id: 'schedule', label: t('sidebar.schedule', 'Lịch chiếu'), icon: <Film size={16} /> },
+        { id: 'concessions', label: t('sidebar.concessions', 'Bắp nước & Kho'), icon: <Popcorn size={16} /> },
+        { id: 'cleaning', label: t('sidebar.cleaning', 'Quét dọn'), icon: <Sparkles size={16} /> },
       ],
     },
   ];
@@ -158,6 +162,10 @@ const TheaterManagerPage: React.FC = () => {
             <ScheduleManagerPage isEmbedded={true} />
           </div>
         );
+      case 'concessions':
+        return <ConcessionsWorkspace cinemaId={activeCinemaId} />;
+      case 'cleaning':
+        return <CleaningBoardWorkspace cinemaId={activeCinemaId} />;
       default:
         return null;
     }

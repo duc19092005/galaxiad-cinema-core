@@ -21,6 +21,7 @@ import ScheduleManagerPage from './features/schedule/ScheduleManagerPage';
 import TheaterManagerPage from './features/theater/TheaterManagerPage';
 import AdminPage from './features/admin/AdminPage';
 import AdminAiPage from './features/admin/AdminAiPage';
+import WarehouseManagerPage from './features/warehouse/WarehouseManagerPage';
 import MovieDetailPage from './features/booking/MovieDetailPage';
 import SimilarMoviesPage from './features/booking/SimilarMoviesPage';
 import BookingPage from './features/booking/BookingPage';
@@ -77,6 +78,8 @@ function AppRoutes() {
         <Route path="/cashier/sales" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><CashierSalesPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
         <Route path="/staff/:tab" element={<ProtectedRoute requiredRole="Cashier"><PageTransition><StaffPortalPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/janitor" element={<ProtectedRoute requiredRole="Janitor"><PageTransition><StaffPortalPage portalRole="Janitor" /></PageTransition></ProtectedRoute>} />
+        <Route path="/janitor/:tab" element={<ProtectedRoute requiredRole="Janitor"><PageTransition><StaffPortalPage portalRole="Janitor" /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/ai" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin/ai/:module" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminAiPage /></PageTransition></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><PageTransition><AdminPage /></PageTransition></ProtectedRoute>} />
@@ -86,6 +89,8 @@ function AppRoutes() {
         <Route path="/theater-manager/:tab" element={<ProtectedRoute requiredRole="TheaterManager"><PageTransition><TheaterManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/facilities-manager" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/facilities-manager/:tab" element={<ProtectedRoute requiredRole="FacilitiesManager"><PageTransition><FacilitiesManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/warehouse-manager" element={<ProtectedRoute requiredRole="WarehouseManager"><PageTransition><WarehouseManagerPage /></PageTransition></ProtectedRoute>} />
+        <Route path="/warehouse-manager/:tab" element={<ProtectedRoute requiredRole="WarehouseManager"><PageTransition><WarehouseManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/schedule" element={<ProtectedRoute requiredRole="Admin"><PageTransition><ScheduleManagerPage /></PageTransition></ProtectedRoute>} />
         <Route path="/movie/:movieId" element={<PageTransition><MovieDetailPage /></PageTransition>} />
         <Route path="/movie/:movieId/similar" element={<PageTransition><SimilarMoviesPage /></PageTransition>} />
@@ -119,7 +124,7 @@ function BottomNavBar() {
   const user = storedUserStr ? JSON.parse(storedUserStr) : null;
 
   // Only show bottom nav on public client pages (exclude admin, movie-manager, cashier, staff, etc.)
-  const hidePaths = ['/admin', '/movie-manager', '/theater-manager', '/facilities-manager', '/cashier', '/staff', '/login', '/register'];
+  const hidePaths = ['/admin', '/movie-manager', '/theater-manager', '/facilities-manager', '/warehouse-manager', '/cashier', '/staff', '/janitor', '/login', '/register'];
   const shouldHide = hidePaths.some(p => location.pathname.startsWith(p));
 
   if (shouldHide) return null;

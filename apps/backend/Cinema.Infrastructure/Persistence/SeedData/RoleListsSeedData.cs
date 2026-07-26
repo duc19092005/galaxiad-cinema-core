@@ -15,7 +15,9 @@ public static class SeedDataRoleLists
             new RoleListInfoEntity() { RoleId = userRoles.Admin, RoleName = "Admin", RoleType = RoleCategory.Admin },
             new RoleListInfoEntity() { RoleId = userRoles.MovieManager, RoleName = "MovieManager", RoleType = RoleCategory.Manager },
             new RoleListInfoEntity() { RoleId = userRoles.TheaterManager, RoleName = "TheaterManager", RoleType = RoleCategory.Manager },
-            new RoleListInfoEntity() { RoleId = userRoles.FacilitiesManager, RoleName = "FacilitiesManager", RoleType = RoleCategory.Manager }
+            new RoleListInfoEntity() { RoleId = userRoles.FacilitiesManager, RoleName = "FacilitiesManager", RoleType = RoleCategory.Manager },
+            new RoleListInfoEntity() { RoleId = userRoles.Janitor, RoleName = "Janitor", RoleType = RoleCategory.Staff },
+            new RoleListInfoEntity() { RoleId = userRoles.InventoryManager, RoleName = "InventoryManager", RoleType = RoleCategory.Manager }
         );
     }
 }

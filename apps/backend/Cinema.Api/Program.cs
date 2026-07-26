@@ -5,6 +5,7 @@ using Cinema.Api.Bootstraps.Facilities;
 using Cinema.Api.Bootstraps.IdentityAccess;
 using Cinema.Api.Bootstraps.MovieInfos;
 using Cinema.Api.Bootstraps.Booking;
+using Cinema.Api.Bootstraps.Concessions;
 using Cinema.Api.Bootstraps.Validate;
 using Cinema.Api.Bootstraps.Chatbot;
 using Cinema.Api.Hubs;
@@ -172,6 +173,7 @@ builder.Services.AddIdentityServices();
 builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
 builder.Services.AddBookingServices();
+builder.Services.AddConcessionAndCleaningServices();
 
 // SignalR for real-time notifications
 builder.Services.AddSignalR();
@@ -224,6 +226,7 @@ builder.Services.AddAuthorization(options => {
     options.AddPolicy("Admin" , policy => policy.RequireRole("Admin"));
     options.AddPolicy("TheaterManager", policy => policy.RequireRole("TheaterManager", "Admin"));
     options.AddPolicy("MovieManager", policy => policy.RequireRole("MovieManager", "Admin"));
+    options.AddPolicy("WarehouseManager", policy => policy.RequireRole("WarehouseManager", "Admin"));
 });
 
 // Swagger Config
