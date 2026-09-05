@@ -1,15 +1,15 @@
-# 🎬 HỆ THỐNG QUẢN LÝ ĐẶT VÉ PHIM (CINEMA BOOKING PLATFORM) — API BACKEND
+# 🎬 HỆ THỐNG QUẢN LÝ RẠP CHIẾU PHIM TOÀN DIỆN (COMPREHENSIVE CINEMA MANAGEMENT PLATFORM) — API BACKEND
 
 🌐 **Select Language:** ![VN](https://flagcdn.com/w20/vn.png) [Tiếng Việt](./README.md) • ![GB](https://flagcdn.com/w20/gb.png) [English](./README.en.md) • ![RU](https://flagcdn.com/w20/ru.png) [Русский](./README.ru.md)
 
 ---
 
-> **Một giải pháp backend hiện đại, tối ưu hiệu năng và xử lý realtime dành cho các hệ thống rạp chiếu phim quy mô lớn.**
+> **Không đơn thuần là một hệ thống đặt vé — Giải pháp quản trị vận hành toàn diện, tối ưu hiệu năng và xử lý realtime dành cho chuỗi rạp chiếu phim quy mô lớn.**
 
 ---
 
 ## 📌 Giới thiệu dự án
-Hệ thống **Cinema Booking Backend** được phát triển trên nền tảng **ASP.NET Core 8** và **SQL Server**, cung cấp giải pháp API toàn diện cho việc vận hành chuỗi rạp chiếu phim. Hệ thống không chỉ giải quyết các nghiệp vụ bán vé, quản lý rạp mà còn tập trung tối ưu hóa trải nghiệm người dùng cuối qua xử lý thời gian thực (**Realtime**), tích hợp thanh toán điện tử an toàn, và tự động hóa các tác vụ quản trị.
+Hệ thống **Galaxiad Cinema Core Backend** được phát triển trên nền tảng **ASP.NET Core 8** và **SQL Server**, cung cấp giải pháp API toàn diện cho việc quản lý và vận hành chuỗi rạp chiếu phim chuyên nghiệp. Hệ thống vượt xa các nền tảng bán vé thông thường bằng việc tích hợp đồng bộ: quản trị cơ sở vật chất phòng chiếu, ma trận ghế đa phân khúc, lập lịch chiếu tự động không xung đột, điều phối ca làm việc và chấm công nhận diện khuôn mặt nhân viên, bán hàng tại quầy POS, quản trị kho bãi hàng hóa combo bắp nước, điều phối dọn dẹp vệ sinh phòng chiếu, chính sách giá động & voucher, cùng xử lý giữ ghế thời gian thực (**Realtime Redis Locking**) và thanh toán điện tử chuẩn VNPay HMAC-SHA512.
 
 Dự án được thiết kế theo cấu trúc **Pragmatic Clean Architecture**, đảm bảo tính mô-đun hóa cao, dễ dàng mở rộng, kiểm thử và bảo trì lâu dài.
 

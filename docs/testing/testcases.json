@@ -1,0 +1,1248 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-09-05T13:14:13.039Z",
+  "testcases": [
+    {
+      "id": "AUTH-ACC-001",
+      "module": "IdentityAccess",
+      "useCase": "RegisterRegularUseCase",
+      "purpose": "Đăng ký tài khoản khách hàng mới với dữ liệu hợp lệ (tên, email, password mạnh, tuổi > 13)",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "emailExists": false
+      },
+      "steps": [
+        "POST /api/v1/IdentityAccess/register với email mới, mật khẩu thỏa mãn chính sách, ngày sinh hợp lệ"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "dbCheck": "Tạo UserInfoEntity mới, PasswordHash chuẩn, gán Role=Customer"
+      },
+      "forbiddenSideEffects": [
+        "Không lưu plain-text password",
+        "Không gán quyền Admin/Staff cho đăng ký công khai"
+      ],
+      "cleanup": "Xóa user theo email",
+      "automation": {
+        "testName": "RegisterRegularUseCase_ValidData_CreatesCustomerSuccessfully",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "AUTH-ACC-002",
+      "module": "IdentityAccess",
+      "useCase": "RegisterRegularUseCase",
+      "purpose": "Chặn đăng ký khi trùng email",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "existingUserEmail": "test.dup@example.com"
+      },
+      "steps": [
+        "POST /api/v1/IdentityAccess/register với email đã tồn tại"
+      ],
+      "expectedResult": {
+        "httpStatus": 400,
+        "errorCode": "EMAIL_ALREADY_EXISTS"
+      },
+      "forbiddenSideEffects": [
+        "Không ghi đè hoặc sửa đổi tài khoản hiện có"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "RegisterRegularUseCase_DuplicateEmail_ThrowsAppException",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "AUTH-ACC-003",
+      "module": "IdentityAccess",
+      "useCase": "LoginRegularUseCase",
+      "purpose": "Đăng nhập với email và mật khẩu đúng, trả về JWT có đầy đủ claims",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "activeUserExists": true
+      },
+      "steps": [
+        "POST /api/v1/IdentityAccess/login với thông tin xác thực chính xác"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "tokenCheck": "JWT token chứa sub/userId, role, email, cinemaId nếu có"
+      },
+      "forbiddenSideEffects": [
+        "Không trả về hash mật khẩu hoặc secret server"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "LoginRegularUseCase_CorrectCredentials_ReturnsJwtToken",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "AUTH-ACC-004",
+      "module": "IdentityAccess",
+      "useCase": "LoginRegularUseCase",
+      "purpose": "Chặn đăng nhập khi sai mật khẩu hoặc tài khoản bị khóa",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "lockedUserExists": true
+      },
+      "steps": [
+        "POST /api/v1/IdentityAccess/login với mật khẩu sai hoặc tài khoản IsActive=false"
+      ],
+      "expectedResult": {
+        "httpStatus": 401,
+        "errorCode": "UNAUTHORIZED_OR_LOCKED"
+      },
+      "forbiddenSideEffects": [
+        "Không sinh JWT token cho tài khoản không hợp lệ"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "LoginRegularUseCase_InvalidOrLocked_RejectsLogin",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "AUTH-ACC-005",
+      "module": "IdentityAccess",
+      "useCase": "ChangePasswordUseCase",
+      "purpose": "Đổi mật khẩu: kiểm tra mật khẩu cũ chính xác và cập nhật hash mới",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "authenticatedUser": true
+      },
+      "steps": [
+        "POST /api/v1/IdentityAccess/change-password với oldPassword đúng, newPassword mới"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "hashUpdated": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép đổi nếu mật khẩu cũ không khớp"
+      ],
+      "cleanup": "Reset mật khẩu",
+      "automation": {
+        "testName": "ChangePasswordUseCase_ValidOldPassword_UpdatesHash",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "AUTH-ACC-006",
+      "module": "IdentityAccess",
+      "useCase": "GoogleLoginCallbackUseCase",
+      "purpose": "Xử lý Google OAuth token tại biên: tạo mới user nếu chưa có hoặc đăng nhập",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "validGooglePayload": true
+      },
+      "steps": [
+        "Mô phỏng callback Google token xác thực thành công"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "tokenReturned": true
+      },
+      "forbiddenSideEffects": [
+        "Không yêu cầu mật khẩu hệ thống cho user Google OAuth"
+      ],
+      "cleanup": "Xóa user test",
+      "automation": {
+        "testName": "GoogleLoginCallbackUseCase_ValidPayload_AuthenticatesSuccessfully",
+        "suite": "Cinema.Tests.Unit.Identity"
+      }
+    },
+    {
+      "id": "RBAC-PERM-001",
+      "module": "Admin",
+      "useCase": "AssignRoleToUserUseCase",
+      "purpose": "Admin phân quyền role cho tài khoản, ngăn chặn escalation trái phép",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "adminUser": true,
+        "targetUser": true
+      },
+      "steps": [
+        "Admin gọi PUT /api/v1/AdminManageUsers/{userId}/role gán role Staff"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "dbCheck": "Role mapping cập nhật thành Staff"
+      },
+      "forbiddenSideEffects": [
+        "User thường không được tự gán role Admin"
+      ],
+      "cleanup": "Reset role",
+      "automation": {
+        "testName": "AssignRoleToUserUseCase_AdminAssignsStaff_UpdatesSuccessfully",
+        "suite": "Cinema.Tests.Unit.Admin"
+      }
+    },
+    {
+      "id": "RBAC-PERM-002",
+      "module": "TheaterManager",
+      "useCase": "TheaterManagerMovieSchedulesController",
+      "purpose": "Rà soát Cinema Tenancy: Quản lý rạp A không được sửa rạp B",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "managerCinemaA": "cinema-1",
+        "targetCinemaB": "cinema-2"
+      },
+      "steps": [
+        "Theater Manager của cinema-1 gửi request sửa lịch chiếu của cinema-2"
+      ],
+      "expectedResult": {
+        "httpStatus": 403,
+        "errorCode": "CINEMA_ACCESS_DENIED"
+      },
+      "forbiddenSideEffects": [
+        "Không làm rò rỉ dữ liệu hoặc thay đổi trạng thái của rạp khác"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "MovieSchedules_CrossCinemaModification_ReturnsForbidden403",
+        "suite": "Cinema.Tests.Integration.Theater"
+      }
+    },
+    {
+      "id": "RBAC-PERM-003",
+      "module": "Admin",
+      "useCase": "GetRecentAuditLogsUseCase",
+      "purpose": "Ghi nhận và truy vấn Audit Log khi Admin/Manager thực hiện thao tác nhạy cảm",
+      "priority": "P1",
+      "testType": "integration",
+      "preconditions": {
+        "adminPerformedAction": true
+      },
+      "steps": [
+        "GET /api/v1/admin/audit-logs với bộ lọc ngày và loại hành động"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "logsContainAction": true,
+        "actorIdLogged": true
+      },
+      "forbiddenSideEffects": [
+        "Không ghi thiếu thông tin người thực hiện"
+      ],
+      "cleanup": "Dọn audit logs test",
+      "automation": {
+        "testName": "AuditLogs_AdminOperations_LoggedAndRetrievedAccurately",
+        "suite": "Cinema.Tests.Integration.Admin"
+      }
+    },
+    {
+      "id": "MOV-CAT-001",
+      "module": "MovieManager",
+      "useCase": "CreateMovieUseCase",
+      "purpose": "Thêm phim mới với đầy đủ thông tin định dạng, poster, thời lượng",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "validMovieDto": true
+      },
+      "steps": [
+        "POST /api/v1/movie-manager với dữ liệu phim mới"
+      ],
+      "expectedResult": {
+        "httpStatus": 201,
+        "movieCreatedInDb": true,
+        "statusIsDraftOrActive": true
+      },
+      "forbiddenSideEffects": [
+        "Không tạo phim với thời lượng <= 0"
+      ],
+      "cleanup": "Xóa phim test",
+      "automation": {
+        "testName": "CreateMovieUseCase_ValidData_CreatesMovie",
+        "suite": "Cinema.Tests.Unit.MovieManager"
+      }
+    },
+    {
+      "id": "MOV-CAT-002",
+      "module": "MovieManager",
+      "useCase": "DeleteMovieUseCase",
+      "purpose": "Chặn xóa phim đang có lịch chiếu hoạt động hoặc có vé đã đặt",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "movieHasActiveShowtimes": true
+      },
+      "steps": [
+        "DELETE /api/v1/movie-manager/{id} với phim đang có lịch chiếu"
+      ],
+      "expectedResult": {
+        "httpStatus": 400,
+        "errorCode": "MOVIE_HAS_ACTIVE_SCHEDULES"
+      },
+      "forbiddenSideEffects": [
+        "Không xóa cascade làm mất lịch chiếu hoặc vé đã bán"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "DeleteMovieUseCase_MovieInUse_RejectsDeletion",
+        "suite": "Cinema.Tests.Integration.MovieManager"
+      }
+    },
+    {
+      "id": "AUD-LAYOUT-001",
+      "module": "FacilitiesManager",
+      "useCase": "CreateAuditoriumUseCase",
+      "purpose": "Tạo phòng chiếu và sinh ma trận ghế (hàng, cột, loại ghế, lối đi)",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "cinemaExists": true
+      },
+      "steps": [
+        "POST /api/v1/facilities-manager/auditoriums với sơ đồ ghế hợp lệ"
+      ],
+      "expectedResult": {
+        "httpStatus": 201,
+        "seatsGeneratedCountExact": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép trùng tọa độ hàng/cột giữa hai ghế"
+      ],
+      "cleanup": "Xóa phòng chiếu test",
+      "automation": {
+        "testName": "CreateAuditoriumUseCase_ValidLayout_GeneratesSeats",
+        "suite": "Cinema.Tests.Unit.FacilitiesManager"
+      }
+    },
+    {
+      "id": "AUD-LAYOUT-002",
+      "module": "FacilitiesManager",
+      "useCase": "UpdateAuditoriumUseCase",
+      "purpose": "Chặn sửa sơ đồ ghế phòng chiếu khi đã có vé được bán",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "auditoriumHasSoldTickets": true
+      },
+      "steps": [
+        "PUT /api/v1/facilities-manager/auditoriums/{id} thay đổi sơ đồ ghế"
+      ],
+      "expectedResult": {
+        "httpStatus": 400,
+        "errorCode": "AUDITORIUM_HAS_EXISTING_BOOKINGS"
+      },
+      "forbiddenSideEffects": [
+        "Không làm sai lệch vị trí ghế của các vé đã bán trước đó"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "UpdateAuditoriumUseCase_HasBookings_RejectsLayoutUpdate",
+        "suite": "Cinema.Tests.Integration.FacilitiesManager"
+      }
+    },
+    {
+      "id": "SCHED-SHOW-001",
+      "module": "TheaterManager",
+      "useCase": "CreateMovieScheduleUseCase",
+      "purpose": "Tạo lịch chiếu hợp lệ: kiểm tra thời gian bắt đầu, thời lượng phim và thời gian dọn dẹp",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "movieExists": true,
+        "auditoriumExists": true
+      },
+      "steps": [
+        "POST /api/v1/theater-manager/schedules với thời gian chiếu hợp lệ"
+      ],
+      "expectedResult": {
+        "httpStatus": 201,
+        "scheduleCreated": true,
+        "endTimeCalculatedCorrectly": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "Xóa lịch chiếu test",
+      "automation": {
+        "testName": "CreateMovieScheduleUseCase_ValidTimes_CreatesSchedule",
+        "suite": "Cinema.Tests.Unit.TheaterManager"
+      }
+    },
+    {
+      "id": "SCHED-SHOW-002",
+      "module": "TheaterManager",
+      "useCase": "CreateMovieScheduleUseCase",
+      "purpose": "Chặn tạo lịch chiếu bị trùng khung giờ trong cùng một phòng chiếu",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "existingScheduleFrom10to12": true
+      },
+      "steps": [
+        "POST tạo lịch chiếu mới từ 11h đến 13h cho cùng phòng chiếu"
+      ],
+      "expectedResult": {
+        "httpStatus": 400,
+        "errorCode": "SCHEDULE_OVERLAP_DETECTED"
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép 2 suất chiếu cùng phát song song trong 1 phòng"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "CreateMovieScheduleUseCase_OverlappingShowtime_Rejects",
+        "suite": "Cinema.Tests.Integration.TheaterManager"
+      }
+    },
+    {
+      "id": "SEAT-POL-001",
+      "module": "Booking",
+      "useCase": "BookingSeatSelectionPolicy",
+      "purpose": "Kiểm tra chính sách chọn ghế: không để lại ghế trống đơn lẻ (orphan seat)",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "rowSeatsCount": 10
+      },
+      "steps": [
+        "Khách hàng chọn ghế A1, A2 và A4, để lại duy nhất ghế A3 ở giữa"
+      ],
+      "expectedResult": {
+        "isValid": false,
+        "errorMessageContains": "Không được để lại ghế trống đơn lẻ"
+      },
+      "forbiddenSideEffects": [
+        "Không chấp nhận danh sách ghế vi phạm orphan seat rule"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "SeatSelectionPolicy_OrphanSingleSeat_ReturnsInvalid",
+        "suite": "Cinema.Tests.Unit.Booking"
+      }
+    },
+    {
+      "id": "SEAT-POL-002",
+      "module": "Booking",
+      "useCase": "BookingSeatSelectionPolicy",
+      "purpose": "Giới hạn số lượng ghế đặt: tối thiểu 1 ghế, tối đa 10 ghế mỗi lượt đặt",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {},
+      "steps": [
+        "Kiểm tra chọn 0 ghế và chọn 11 ghế"
+      ],
+      "expectedResult": {
+        "zeroSeatsValid": false,
+        "elevenSeatsValid": false
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép tạo booking 0 vé hoặc vượt quá giới hạn vé"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "SeatSelectionPolicy_InvalidSeatCounts_Rejects",
+        "suite": "Cinema.Tests.Unit.Booking"
+      }
+    },
+    {
+      "id": "SEAT-LOCK-001",
+      "module": "Booking",
+      "useCase": "SeatLockManager",
+      "purpose": "Khóa ghế thành công trong Redis với TTL 10 phút",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "redisConnected": true,
+        "showtimeId": "sch-01",
+        "seatId": "seat-01"
+      },
+      "steps": [
+        "Gọi LockSeatAsync(showtimeId, seatId, userId, ttlMinutes=10)"
+      ],
+      "expectedResult": {
+        "isSuccess": true,
+        "redisKeyExists": "lock:sch-01:seat-01",
+        "redisTtlAround": 600
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép người khác ghi đè lock"
+      ],
+      "cleanup": "Xóa redis test key",
+      "automation": {
+        "testName": "SeatLockManager_LockSingleSeat_SetsRedisWithTTL",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "SEAT-LOCK-002",
+      "module": "Booking",
+      "useCase": "SeatLockManager",
+      "purpose": "Tranh chấp giữ ghế đồng thời (Race Condition): Chỉ 1 client giữ thành công",
+      "priority": "P0",
+      "testType": "concurrency",
+      "preconditions": {
+        "redisConnected": true,
+        "showtimeId": "sch-02",
+        "seatId": "seat-05"
+      },
+      "steps": [
+        "10 request đồng thời giữ cùng ghế 'seat-05' tại 'sch-02'"
+      ],
+      "expectedResult": {
+        "successfulCount": 1,
+        "failedCount": 9,
+        "redisOwnerCheck": "Key thuộc về 1 userId"
+      },
+      "forbiddenSideEffects": [
+        "Không bao giờ có 2 client cùng nhận trạng thái LockSuccess"
+      ],
+      "cleanup": "Xóa redis test key",
+      "automation": {
+        "testName": "SeatLockManager_ConcurrentLockRequests_OnlyOneSucceeds",
+        "suite": "Cinema.Tests.Integration.Concurrency"
+      }
+    },
+    {
+      "id": "SEAT-LOCK-003",
+      "module": "Booking",
+      "useCase": "SeatLockManager",
+      "purpose": "Rollback toàn bộ khi giữ nhiều ghế nhưng có 1 ghế bị người khác giữ trước",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "seatA": "seat-10",
+        "seatBAlreadyLocked": "seat-11"
+      },
+      "steps": [
+        "Khóa trước seat-11 bởi User X",
+        "User Y gửi request khóa [seat-10, seat-11]"
+      ],
+      "expectedResult": {
+        "isSuccess": false,
+        "seat10Unlocked": true,
+        "seat11Owner": "User X"
+      },
+      "forbiddenSideEffects": [
+        "User Y không được chiếm giữ dở dang seat-10 khi thất bại"
+      ],
+      "cleanup": "Xóa redis test keys",
+      "automation": {
+        "testName": "SeatLockManager_BatchLockPartialFailure_RollsBackAllAcquiredLocks",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "SEAT-LOCK-004",
+      "module": "Booking",
+      "useCase": "SeatLockManager",
+      "purpose": "Chặn mở khóa ghế của người khác (Sai owner không được unlock)",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "seatLockedByUserA": true
+      },
+      "steps": [
+        "User B gửi request mở khóa ghế của User A"
+      ],
+      "expectedResult": {
+        "isUnlocked": false,
+        "seatStillLockedByA": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép can thiệp vào khóa của người dùng khác"
+      ],
+      "cleanup": "Xóa redis key",
+      "automation": {
+        "testName": "SeatLockManager_UnlockByWrongUser_FailsToUnlock",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "BOOK-FLOW-001",
+      "module": "Booking",
+      "useCase": "CreateBookingUseCase",
+      "purpose": "Tạo đơn đặt vé hợp lệ: tính giá chính xác từ server, sinh đơn Pending và URL thanh toán",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "showtimeActive": true,
+        "seatsLocked": [
+          "s1",
+          "s2"
+        ],
+        "unitPrice": 100000
+      },
+      "steps": [
+        "POST /api/v1/Booking/create-booking với thông tin suất chiếu và ghế"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "orderStatus": "Pending",
+        "totalAmountCalculated": 200000
+      },
+      "forbiddenSideEffects": [
+        "Không tin tưởng tổng tiền gửi từ client",
+        "Không kích hoạt vé khi chưa trả tiền"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "CreateBookingUseCase_ValidData_CreatesPendingOrderWithAccuratePrice",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "BOOK-FLOW-002",
+      "module": "Booking",
+      "useCase": "CreateBookingUseCase",
+      "purpose": "Hai request đồng thời tạo đơn cùng 1 ghế: ngăn chặn 2 vé trùng",
+      "priority": "P0",
+      "testType": "concurrency",
+      "preconditions": {
+        "sameSeat": "seat-race-1"
+      },
+      "steps": [
+        "2 threads đồng thời gửi lệnh CreateBooking cho cùng 1 ghế"
+      ],
+      "expectedResult": {
+        "successfulBookings": 1,
+        "conflicts": 1,
+        "dbTicketCount": 1
+      },
+      "forbiddenSideEffects": [
+        "Không bao giờ xuất hiện double booking"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "CreateBooking_ConcurrentCreationSameSeat_OneSucceedsOneFails",
+        "suite": "Cinema.Tests.Integration.Concurrency"
+      }
+    },
+    {
+      "id": "BOOK-FLOW-003",
+      "module": "Booking",
+      "useCase": "GetTicketDataUseCase",
+      "purpose": "Truy vấn vé: chỉ chủ sở hữu hoặc nhân viên rạp mới được xem chi tiết vé",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "orderOwnedByUserA": true
+      },
+      "steps": [
+        "User B gọi GET /api/v1/Booking/ticket-data/{bookingCode} của User A"
+      ],
+      "expectedResult": {
+        "httpStatus": 403,
+        "errorCode": "ACCESS_DENIED"
+      },
+      "forbiddenSideEffects": [
+        "Không làm rò rỉ thông tin cá nhân và vé của khách hàng khác"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "GetTicketDataUseCase_OtherUser_ReturnsForbidden",
+        "suite": "Cinema.Tests.Unit.Booking"
+      }
+    },
+    {
+      "id": "PRICE-CALC-001",
+      "module": "Admin",
+      "useCase": "CalculatePricingPromotionUseCase",
+      "purpose": "Tính toán phụ thu định dạng (3D/IMAX), loại ghế (VIP/Couple) và giảm giá khuyến mãi",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "basePrice": 90000,
+        "surchargeImax": 40000,
+        "vipSeat": 20000
+      },
+      "steps": [
+        "Gọi CalculatePricingPromotion cho suất chiếu IMAX ghế VIP"
+      ],
+      "expectedResult": {
+        "finalPricePerSeat": 150000,
+        "surchargesAppliedCorrectly": true
+      },
+      "forbiddenSideEffects": [
+        "Không áp dụng sai tỷ lệ làm tròn giá vé"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "CalculatePricingPromotionUseCase_FormatAndSeatSurcharges_CalculatesAccurately",
+        "suite": "Cinema.Tests.Unit.Admin"
+      }
+    },
+    {
+      "id": "VOUCH-APPLY-001",
+      "module": "Admin",
+      "useCase": "RedeemVoucherUseCase",
+      "purpose": "Áp dụng voucher hợp lệ: kiểm tra hạn dùng, hạng thành viên, giá trị tối thiểu",
+      "priority": "P0",
+      "testType": "unit",
+      "preconditions": {
+        "validVoucher": true,
+        "minSpend": 150000,
+        "orderTotal": 200000
+      },
+      "steps": [
+        "Áp dụng mã voucher giảm 20% cho đơn hàng 200k"
+      ],
+      "expectedResult": {
+        "discountAmount": 40000,
+        "finalPayAmount": 160000
+      },
+      "forbiddenSideEffects": [
+        "Không giảm giá vượt quá giá trị tối đa được thiết lập"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "RedeemVoucherUseCase_ValidConditions_AppliesDiscountAccurately",
+        "suite": "Cinema.Tests.Unit.Admin"
+      }
+    },
+    {
+      "id": "VOUCH-CONCUR-001",
+      "module": "Admin",
+      "useCase": "RedeemVoucherUseCase",
+      "purpose": "Tranh chấp voucher còn 1 lượt dùng duy nhất (Race Condition)",
+      "priority": "P0",
+      "testType": "concurrency",
+      "preconditions": {
+        "voucherRemainingUsage": 1
+      },
+      "steps": [
+        "2 user đồng thời gửi request áp dụng cùng 1 mã voucher còn 1 lượt"
+      ],
+      "expectedResult": {
+        "successfulRedemption": 1,
+        "rejectedRedemption": 1
+      },
+      "forbiddenSideEffects": [
+        "Voucher không được vượt quá số lượt sử dụng tối đa"
+      ],
+      "cleanup": "Khôi phục voucher",
+      "automation": {
+        "testName": "RedeemVoucher_ConcurrentUsageLastRemaining_OnlyOneSucceeds",
+        "suite": "Cinema.Tests.Integration.Concurrency"
+      }
+    },
+    {
+      "id": "PAY-VNPAY-001",
+      "module": "Booking",
+      "useCase": "ProcessVnPayCallbackUseCase",
+      "purpose": "Xử lý callback VNPay thành công: Xác minh HMAC-SHA512, chuyển Order sang Booked, kích hoạt vé",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "orderPendingExists": true,
+        "amount": 200000
+      },
+      "steps": [
+        "Tạo callback với vnp_ResponseCode=00, ký HMAC chuẩn, gửi tới /api/v1/Booking/vnpay-callback"
+      ],
+      "expectedResult": {
+        "httpStatus": 302,
+        "redirectLocationContains": "booking-success",
+        "orderStatus": "Booked",
+        "ticketActive": true
+      },
+      "forbiddenSideEffects": [
+        "Không hủy đơn khi callback thành công"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "ProcessVnPayCallback_ValidSignatureAndSuccessCode_CompletesOrder",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "PAY-VNPAY-002",
+      "module": "Booking",
+      "useCase": "ProcessVnPayCallbackUseCase",
+      "purpose": "Chặn và từ chối callback có chữ ký sai (Invalid Checksum/Tampered URL)",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "orderPendingExists": true
+      },
+      "steps": [
+        "Gửi callback với vnp_SecureHash bị sửa đổi"
+      ],
+      "expectedResult": {
+        "redirectLocationContains": "booking-failed",
+        "orderStatus": "Pending"
+      },
+      "forbiddenSideEffects": [
+        "Không bao giờ hoàn tất đơn hàng khi chữ ký không khớp"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "ProcessVnPayCallback_InvalidSignature_RejectsAndFailsBooking",
+        "suite": "Cinema.Tests.Integration.Booking"
+      }
+    },
+    {
+      "id": "PAY-VNPAY-003",
+      "module": "Booking",
+      "useCase": "ProcessVnPayCallbackUseCase",
+      "purpose": "Idempotency: Nhận 2 callback thành công đồng thời cho cùng 1 đơn hàng",
+      "priority": "P0",
+      "testType": "concurrency",
+      "preconditions": {
+        "orderPendingExists": true
+      },
+      "steps": [
+        "Gửi 2 callback thành công đồng thời cho cùng 1 mã đơn hàng"
+      ],
+      "expectedResult": {
+        "finalStatus": "Booked",
+        "pointsAddedOnce": true,
+        "inventoryDeductedOnce": true
+      },
+      "forbiddenSideEffects": [
+        "Không cộng điểm 2 lần",
+        "Không trừ kho 2 lần"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "ProcessVnPayCallback_DuplicateConcurrentCallbacks_IsIdempotent",
+        "suite": "Cinema.Tests.Integration.Concurrency"
+      }
+    },
+    {
+      "id": "JOB-EXP-001",
+      "module": "BackgroundJobs",
+      "useCase": "PendingOrderCancellationJob",
+      "purpose": "Job tự động quét và hủy đơn hàng Pending quá 15 phút, giải phóng ghế và kho",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "orderExpiredPending": true
+      },
+      "steps": [
+        "Chạy PendingOrderCancellationJob.ExecuteAsync()"
+      ],
+      "expectedResult": {
+        "orderStatusUpdated": "Canceled",
+        "redisLockReleased": true,
+        "stockReleased": true
+      },
+      "forbiddenSideEffects": [
+        "Không hủy đơn đã thanh toán (Booked)",
+        "Không hủy đơn mới tạo dưới 15 phút"
+      ],
+      "cleanup": "Xóa đơn test",
+      "automation": {
+        "testName": "PendingOrderCancellationJob_ExpiredOrders_CancelsAndReleasesResources",
+        "suite": "Cinema.Tests.Integration.BackgroundJobs"
+      }
+    },
+    {
+      "id": "JOB-BANNER-001",
+      "module": "BackgroundJobs",
+      "useCase": "AutoGenerateBannersJob",
+      "purpose": "Tự động sinh banner nổi bật cho rạp chiếu dựa trên phim đang hot",
+      "priority": "P1",
+      "testType": "integration",
+      "preconditions": {
+        "activeMoviesWithPosters": true
+      },
+      "steps": [
+        "Invoke AutoGenerateBannersJob.ExecuteAsync()"
+      ],
+      "expectedResult": {
+        "bannersGeneratedForCinemas": true
+      },
+      "forbiddenSideEffects": [
+        "Không sinh banner trùng lặp quá mức"
+      ],
+      "cleanup": "Xóa banner sinh tự động",
+      "automation": {
+        "testName": "AutoGenerateBannersJob_ExecutesSuccessfully",
+        "suite": "Cinema.Tests.Integration.BackgroundJobs"
+      }
+    },
+    {
+      "id": "JOB-SYNC-001",
+      "module": "BackgroundJobs",
+      "useCase": "MovieStatusSyncBackgroundService",
+      "purpose": "Đồng bộ trạng thái phim: Chuyển phim từ Coming Soon sang Now Showing khi đến ngày",
+      "priority": "P1",
+      "testType": "integration",
+      "preconditions": {
+        "movieReleaseDateToday": true
+      },
+      "steps": [
+        "Invoke MovieStatusSyncBackgroundService tick"
+      ],
+      "expectedResult": {
+        "movieStatusUpdatedToNowShowing": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "Reset ngày release phim",
+      "automation": {
+        "testName": "MovieStatusSync_ReleaseDateReached_UpdatesStatus",
+        "suite": "Cinema.Tests.Integration.BackgroundJobs"
+      }
+    },
+    {
+      "id": "GRP-ROOM-001",
+      "module": "SocialBooking",
+      "useCase": "CreateGroupBookingRoomUseCase",
+      "purpose": "Tạo phòng đặt vé nhóm (2-8 người), sinh mã phòng duy nhất",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "hostUser": true
+      },
+      "steps": [
+        "POST /api/v1/GroupBooking/create-room với showtimeId"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "joinCodeGenerated": true,
+        "hostAssigned": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "Xóa phòng test",
+      "automation": {
+        "testName": "CreateGroupBookingRoom_ValidShowtime_CreatesRoomWithCode",
+        "suite": "Cinema.Tests.Unit.SocialBooking"
+      }
+    },
+    {
+      "id": "GRP-ROOM-002",
+      "module": "SocialBooking",
+      "useCase": "JoinGroupBookingRoomUseCase",
+      "purpose": "Thành viên tham gia phòng: kiểm tra mã phòng, giới hạn tối đa 8 người",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "roomHas7Members": true
+      },
+      "steps": [
+        "Người thứ 8 join -> thành công; người thứ 9 join -> bị từ chối full phòng"
+      ],
+      "expectedResult": {
+        "member8Success": true,
+        "member9Rejected": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép vượt quá sức chứa tối đa của nhóm"
+      ],
+      "cleanup": "Xóa phòng test",
+      "automation": {
+        "testName": "JoinGroupBookingRoom_MaxCapacityReached_RejectsNewMember",
+        "suite": "Cinema.Tests.Unit.SocialBooking"
+      }
+    },
+    {
+      "id": "GRP-VOTE-001",
+      "module": "SocialBooking",
+      "useCase": "VotePaymentMethodUseCase",
+      "purpose": "Bỏ phiếu phương thức thanh toán nhóm và giải quyết hòa phiếu bằng quyền của Host",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "roomWith4Members": true
+      },
+      "steps": [
+        "2 phiếu HostPays, 2 phiếu SplitSelf, Host vote HostPays"
+      ],
+      "expectedResult": {
+        "winningMethod": "HostPays",
+        "tiebreakerApplied": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "VotePaymentMethod_TieVotes_HostHasTiebreakerDecisiveVote",
+        "suite": "Cinema.Tests.Unit.SocialBooking"
+      }
+    },
+    {
+      "id": "CONC-INV-001",
+      "module": "Concessions",
+      "useCase": "ReserveStockUseCase",
+      "purpose": "Quản lý tồn kho: Tranh chấp mua phần tồn kho cuối cùng (Race Condition)",
+      "priority": "P0",
+      "testType": "concurrency",
+      "preconditions": {
+        "itemId": "popcorn-last",
+        "stock": 1
+      },
+      "steps": [
+        "2 requests đồng thời trừ 1 sản phẩm 'popcorn-last'"
+      ],
+      "expectedResult": {
+        "successCount": 1,
+        "failedCount": 1,
+        "finalStock": 0
+      },
+      "forbiddenSideEffects": [
+        "Tồn kho không bao giờ bị âm (< 0)"
+      ],
+      "cleanup": "Khôi phục tồn kho",
+      "automation": {
+        "testName": "ConcessionInventory_ConcurrentReservationLastItem_PreventsNegativeStock",
+        "suite": "Cinema.Tests.Integration.Concurrency"
+      }
+    },
+    {
+      "id": "CONC-INV-002",
+      "module": "Concessions",
+      "useCase": "CommitStockUseCase",
+      "purpose": "Xác nhận trừ kho sau khi thanh toán đơn hàng thành công",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "reservedStockExists": true
+      },
+      "steps": [
+        "Gọi CommitStockAsync cho orderId đã thanh toán"
+      ],
+      "expectedResult": {
+        "stockReservedDecreased": true,
+        "physicalStockUpdated": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "CommitStockUseCase_ValidOrder_FinalizesInventoryDeduction",
+        "suite": "Cinema.Tests.Integration.Concessions"
+      }
+    },
+    {
+      "id": "STAFF-SHIFT-001",
+      "module": "Staff",
+      "useCase": "RegisterShiftUseCase",
+      "purpose": "Nhân viên đăng ký ca làm việc: kiểm tra không trùng ca, rạp hợp lệ",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "staffProfileExists": true
+      },
+      "steps": [
+        "POST /api/v1/staff/shifts/register với ca sáng"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "registrationPending": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép đăng ký 2 ca trùng giờ nhau"
+      ],
+      "cleanup": "Hủy đăng ký test",
+      "automation": {
+        "testName": "RegisterShiftUseCase_ValidShift_RegistersPending",
+        "suite": "Cinema.Tests.Unit.Staff"
+      }
+    },
+    {
+      "id": "STAFF-CLOCK-001",
+      "module": "Staff",
+      "useCase": "ClockInUseCase",
+      "purpose": "Chấm công vào ca: kiểm tra dữ liệu nhận diện khuôn mặt ở biên API",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "shiftRegisteredForToday": true
+      },
+      "steps": [
+        "POST /api/v1/staff/shifts/clock-in với face descriptor hợp lệ"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "clockInRecorded": true,
+        "clockInTimeUtc": true
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép clock-in 2 lần trong cùng một ca"
+      ],
+      "cleanup": "Xóa bản ghi chấm công test",
+      "automation": {
+        "testName": "ClockInUseCase_ValidFaceData_RecordsClockInTime",
+        "suite": "Cinema.Tests.Unit.Staff"
+      }
+    },
+    {
+      "id": "CLEAN-TASK-001",
+      "module": "Cleaning",
+      "useCase": "TheaterManagerCleaningController",
+      "purpose": "Quản lý giao việc dọn dẹp phòng chiếu sau khi kết thúc suất chiếu",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "finishedShowtime": true,
+        "janitorAssigned": true
+      },
+      "steps": [
+        "Giao việc dọn dẹp -> Nhân viên bắt đầu -> Hoàn thành nhiệm vụ"
+      ],
+      "expectedResult": {
+        "taskStatusTransition": "Assigned -> InProgress -> Completed"
+      },
+      "forbiddenSideEffects": [
+        "Không thể hoàn thành nếu chưa chuyển sang InProgress"
+      ],
+      "cleanup": "Xóa task test",
+      "automation": {
+        "testName": "CleaningTask_LifecycleTransitions_HandledCorrectly",
+        "suite": "Cinema.Tests.Unit.Cleaning"
+      }
+    },
+    {
+      "id": "ENG-COMM-001",
+      "module": "Customer",
+      "useCase": "CreateMovieCommentUseCase",
+      "purpose": "Bình luận phim: kiểm tra quyền của người dùng và lọc nội dung qua AI moderation",
+      "priority": "P2",
+      "testType": "integration",
+      "preconditions": {
+        "authenticatedCustomer": true
+      },
+      "steps": [
+        "POST bình luận phim với nội dung lành mạnh"
+      ],
+      "expectedResult": {
+        "httpStatus": 201,
+        "commentCreated": true,
+        "moderationPassed": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "Xóa bình luận test",
+      "automation": {
+        "testName": "CreateMovieComment_AppropriateContent_CreatesSuccessfully",
+        "suite": "Cinema.Tests.Integration.Engagement"
+      }
+    },
+    {
+      "id": "AI-REST-001",
+      "module": "AiService",
+      "useCase": "HealthRouter",
+      "purpose": "Kiểm tra endpoint /health trả về trạng thái healthy của FastAPI",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {},
+      "steps": [
+        "GET /health trên service AI"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "status": "healthy"
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "test_health_endpoint",
+        "suite": "services.ai.tests.unit"
+      }
+    },
+    {
+      "id": "AI-REC-001",
+      "module": "AiService",
+      "useCase": "RecommendationsRouter",
+      "purpose": "Đề xuất phim cá nhân hóa dựa trên vector embedding Qdrant (Mock LLM)",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "mockQdrantVector": true
+      },
+      "steps": [
+        "POST /api/v1/recommendations/personalized với danh sách phim đã xem"
+      ],
+      "expectedResult": {
+        "httpStatus": 200,
+        "moviesReturnedCountGreaterZero": true
+      },
+      "forbiddenSideEffects": [],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "test_recommend_request_valid",
+        "suite": "services.ai.tests.unit"
+      }
+    },
+    {
+      "id": "AI-LIVE-001",
+      "module": "AiService",
+      "useCase": "ChatRouter",
+      "purpose": "Live AI smoke test với API key thật: gọi tool và trích xuất tham số đặt vé",
+      "priority": "P1",
+      "testType": "live_ai",
+      "preconditions": {
+        "apiKeyConfigured": true,
+        "maxCallsBudget": 20
+      },
+      "steps": [
+        "Gửi câu hỏi tự nhiên 'Tìm suất chiếu phim Batman tối nay' tới AI service"
+      ],
+      "expectedResult": {
+        "toolCallName": "SearchShowtimes",
+        "validJsonArgs": true
+      },
+      "forbiddenSideEffects": [
+        "Không vượt quá 20 API calls trong 1 lần chạy"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "test_live_ai_smoke_booking_intent",
+        "suite": "services.ai.tests.live"
+      }
+    },
+    {
+      "id": "API-GEN-001",
+      "module": "Common",
+      "useCase": "RateLimiterMiddleware",
+      "purpose": "Rate limit: Chặn request khi vượt quá hạn mức cấu hình (HTTP 429 Too Many Requests)",
+      "priority": "P0",
+      "testType": "integration",
+      "preconditions": {
+        "rateLimitPolicy": "BookingCreatePolicy (5 requests/min)"
+      },
+      "steps": [
+        "Gửi 6 request liên tiếp trong 10 giây từ cùng một IP/User"
+      ],
+      "expectedResult": {
+        "first5Status": 200,
+        "sixthStatus": 429
+      },
+      "forbiddenSideEffects": [
+        "Không cho phép spam làm tê liệt hệ thống"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "RateLimiting_ExceedsQuota_Returns429TooManyRequests",
+        "suite": "Cinema.Tests.Integration.ApiFlows"
+      }
+    },
+    {
+      "id": "API-GEN-002",
+      "module": "Common",
+      "useCase": "ErrorHandlingMiddleware",
+      "purpose": "Middleware xử lý lỗi tập trung: Định dạng JSON trả về chuẩn RFC 7807, không lộ stack trace bí mật",
+      "priority": "P1",
+      "testType": "unit",
+      "preconditions": {
+        "unhandledExceptionThrown": true
+      },
+      "steps": [
+        "Gọi endpoint ném ngoại lệ chưa xử lý"
+      ],
+      "expectedResult": {
+        "httpStatus": 500,
+        "errorPayloadContainsCode": true,
+        "doesNotContainDbConnectionStrings": true
+      },
+      "forbiddenSideEffects": [
+        "Không rò rỉ stack trace bí mật hoặc chuỗi kết nối ra ngoài"
+      ],
+      "cleanup": "N/A",
+      "automation": {
+        "testName": "ErrorMiddleware_UnhandledException_ReturnsStandardProblemDetails",
+        "suite": "Cinema.Tests.Unit.Common"
+      }
+    }
+  ]
+}

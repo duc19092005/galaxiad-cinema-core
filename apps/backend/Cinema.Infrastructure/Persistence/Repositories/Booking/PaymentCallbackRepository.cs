@@ -35,8 +35,11 @@ public class PaymentCallbackRepository : IPaymentCallbackRepository
             .CountAsync(od => od.OrderId == orderId);
     }
 
-    public Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
-        => _common.FindUserByIdAsync(userId);
+    public async Task<UserInfoEntity?> FindUserByIdAsync(Guid userId)
+    {
+        return await _dbContext.Set<UserInfoEntity>()
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+    }
 
     public async Task<UserVoucherEntity?> GetUserVoucherForUsageAsync(Guid voucherId, Guid userId)
     {

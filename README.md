@@ -1,14 +1,16 @@
-# 🎬 Galaxiad Cinema Core
+# 🎬 Galaxiad Cinema Core — Hệ Thống Quản Lý Rạp Chiếu Phim Toàn Diện
 
-> Nền tảng quản lý rạp chiếu phim toàn diện — quản lý phòng chiếu, lịch phim, vé, khuyến mãi, nhân viên và AI hỗ trợ — tất cả trên một giao diện duy nhất.
+> **Nền tảng quản lý và vận hành chuỗi rạp chiếu phim chuyên nghiệp — Không đơn thuần là một hệ thống đặt vé.**  
+> Giải pháp bao quát toàn diện vòng đời vận hành rạp chiếu phim: từ quản lý phòng chiếu, ma trận ghế ngồi, lịch chiếu thông minh, nhân sự, ca làm việc, chấm công khuôn mặt, quầy bán hàng POS, kho bãi bắp nước, kiểm soát vệ sinh, chính sách giá động & voucher, đến trợ lý AI DeepSeek và phân tích doanh thu.
 
 ---
 
 ## 🚀 Sứ mệnh dự án
 
-**Galaxiad Cinema Core** là một nền tảng quản lý rạp chiếu phim hiện đại, giúp chủ rạp và đội ngũ vận hành quản lý toàn bộ hoạt động kinh doanh — từ đặt vé online, quản lý phòng chiếu, lịch chiếu phim, khuyến mãi, nhân viên, đến chấm công và báo cáo doanh thu — tất cả trên một hệ thống duy nhất.
-
-Hệ thống tích hợp AI để đề xuất lịch chiếu thông minh, chatbot hỗ trợ khách hàng 24/7 với LangChain Agent, và gợi ý phim cá nhân hóa dựa trên hành vi người dùng.
+**Galaxiad Cinema Core** là một hệ thống quản lý rạp chiếu phim hiện đại toàn diện (**Comprehensive Cinema Management System**). Dự án được kiến trúc để vượt xa giới hạn của các website đặt vé thông thường, cung cấp một hệ điều hành đồng bộ cho toàn bộ hoạt động của chuỗi rạp chiếu phim:
+- **Không đơn thuần là đặt vé**: Hệ thống giải quyết các bài toán vận hành phức tạp của chuỗi rạp — từ quản trị cơ sở vật chất phòng chiếu, thiết lập sơ đồ ghế (Standard, VIP, Sweetbox/Couple), phân ca làm việc cho nhân viên, chấm công sinh trắc học khuôn mặt qua camera, trạm POS bán vé và combo bắp nước tại quầy, quản trị xuất-nhập-tồn kho bãi, điều phối tác vụ dọn dẹp vệ sinh phòng chiếu, cho tới hệ thống chính sách giá động (phụ thu định dạng 3D/IMAX/4DX, suất chiếu sớm, đối tượng khách hàng) và phân tích báo cáo doanh thu chuyên sâu.
+- **Tích hợp trí tuệ nhân tạo (AI)**: Đề xuất lịch chiếu tối ưu phòng ngừa xung đột, chatbot hỗ trợ khách hàng và điều phối quy trình đặt vé 24/7 bằng LangChain Agent + DeepSeek LLM, cùng mô hình gợi ý phim cá nhân hóa dựa trên vector embedding Qdrant.
+- **Trải nghiệm khách hàng thời gian thực (Realtime Experience)**: Đặt vé mượt mà với cơ chế khóa ghế thời gian thực chống xung đột (Double Booking) qua Redis, thanh toán bảo mật chuẩn VNPay HMAC-SHA512, và tính năng phòng đặt vé nhóm (Social Booking Room) với biểu quyết phương thức thanh toán.
 
 ---
 

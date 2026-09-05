@@ -1,10 +1,11 @@
-# 🎬 Cinema Management — Frontend
+# 🎬 Comprehensive Cinema Management System — Frontend
 
-> React + TypeScript + Vite application for the Galaxiad Cinema Core platform.
+> **React 19 + TypeScript + Vite application for the Galaxiad Cinema Core platform.**  
+> Far beyond a simple ticket booking site — An enterprise cinema management and multi-role operations application.
 
 ## Introduction
 
-The frontend provides a complete cinema management interface for **7 user roles**: Customer, Cashier, Movie Manager, Theater Manager, Facilities Manager, Admin, and Guest (public).
+The frontend provides a comprehensive cinema management portal for **7 distinct user roles**: Customer, Cashier (POS), Movie Manager, Theater Manager, Facilities Manager, Admin, and Guest (public).
 
 **Features by role:**
 - **Guest / Public**: Browse movies, showtimes, view offers, contact forms, legal pages

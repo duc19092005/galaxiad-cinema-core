@@ -128,11 +128,6 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
             connection.off('seat-unlocked', handleSeatUnlocked);
             connection.off('seat-released', handleSeatUnlocked);
             connection.off('seat-unavailable', handleSeatUnavailable);
-            stopConnection(connection).catch(() => {});
-            if (connectionRef.current === connection) {
-                connectionRef.current = null;
-            }
-
             if (scheduleId && myLockedSeatsRef.current.size > 0) {
                 const seatIds = Array.from(myLockedSeatsRef.current);
                 myLockedSeatsRef.current.clear();
@@ -141,6 +136,10 @@ export function useSeatWs(scheduleId: string | null, options: UseSeatWsOptions =
                         connection.invoke('unlockSeat', scheduleId, seatId, clientIdRef.current).catch(() => {});
                     }
                 }
+            }
+            stopConnection(connection).catch(() => {});
+            if (connectionRef.current === connection) {
+                connectionRef.current = null;
             }
         };
     }, [scheduleId, ignoreGroupSessionId]);

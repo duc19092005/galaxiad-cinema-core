@@ -5,102 +5,6 @@ import Cookies from 'js-cookie';
 // In Development: fallback to localhost:5032
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
-/**
- * Axios instance for Identity Access APIs
- * Base URL: {API_BASE_URL}/api/v1
- */
-export const identityAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
-/**
- * Axios instance for Facilities Manager APIs
- * Base URL: {API_BASE_URL}/api
- */
-export const facilitiesAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
-/**
- * Axios instance for Movie Manager APIs
- * Base URL: {API_BASE_URL}/api
- */
-export const movieAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 30000, // Longer timeout for file uploads
-});
-
-/**
- * Axios instance for Theater Manager APIs
- * Base URL: {API_BASE_URL}/api
- */
-export const theaterAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
-// =============================================
-// SHARED INTERCEPTORS
-// =============================================
-
-/**
- * Axios instance for Booking APIs
- * Base URL: {API_BASE_URL}/api/v1/booking
- */
-export const bookingAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1/booking`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
-/**
- * Axios instance for Staff and Theater Manager Shift APIs
- * Base URL: {API_BASE_URL}/api/v1
- */
-export const shiftAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
-/**
- * Axios instance for Public APIs
- * Base URL: {API_BASE_URL}/api/v1/Public
- * Notice: No withCredentials since it is public, but you can include interceptors for Language
- */
-export const publicAxios = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1/Public`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true,
-  timeout: 10000,
-});
-
 const isProtectedPath = (pathname: string): boolean => {
   const protectedPrefixes = [
     '/role-selection',
@@ -111,44 +15,52 @@ const isProtectedPath = (pathname: string): boolean => {
     '/theater-manager',
     '/facilities-manager',
     '/schedule',
-    '/account'
+    '/account',
   ];
-  return protectedPrefixes.some(prefix => 
+  return protectedPrefixes.some((prefix) =>
     pathname === prefix || pathname.startsWith(prefix + '/')
   );
 };
 
-const allInstances = [identityAxios, facilitiesAxios, movieAxios, theaterAxios, bookingAxios, shiftAxios, publicAxios];
+/**
+ * Factory to create standardized Axios instances with language,
+ * auth token injection, and centralized error/401 handling.
+ */
+export const createApiClient = (path: string, timeout = 10000) => {
+  const instance = axios.create({
+    baseURL: `${API_BASE_URL}${path}`,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    withCredentials: true,
+    timeout,
+  });
 
-allInstances.forEach((instance) => {
-  // Request interceptor — attach language header
+  // Request interceptor: language + auth token injection
   instance.interceptors.request.use(
     (config) => {
-      // Priority 1: Get from localStorage (set by i18n.on('languageChanged'))
-      // Priority 2: Default to 'en'
       const currentLanguage = localStorage.getItem('language') || 'en';
-
-      // Traditional header
       config.headers['Accept-Language'] = currentLanguage;
-
-      // Custom header for backend translation engine
       config.headers['X-Language'] = currentLanguage;
+
+      const token = Cookies.get('X-Access-Token');
+      if (token && !config.headers['Authorization']) {
+        config.headers['Authorization'] = `Bearer ${token}`;
+      }
 
       return config;
     },
     (error) => Promise.reject(error)
   );
 
-  // Response interceptor — handle 401 globally
+  // Response interceptor: handle 401 globally
   instance.interceptors.response.use(
     (response) => response,
     (error) => {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        // Token expired or invalid — clear local storage and cookies
         localStorage.removeItem('user_info');
         Cookies.remove('X-Access-Token');
-        // Redirect to login if on a protected page
-        const currentPath = window.location.pathname;
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
         if (isProtectedPath(currentPath) && currentPath !== '/login') {
           window.location.href = '/login';
         }
@@ -156,7 +68,52 @@ allInstances.forEach((instance) => {
       return Promise.reject(error);
     }
   );
-});
+
+  return instance;
+};
+
+/**
+ * Axios instance for Identity Access APIs
+ * Base URL: {API_BASE_URL}/api/v1
+ */
+export const identityAxios = createApiClient('/api/v1', 10000);
+
+/**
+ * Axios instance for Facilities Manager APIs
+ * Base URL: {API_BASE_URL}/api
+ */
+export const facilitiesAxios = createApiClient('/api', 10000);
+
+/**
+ * Axios instance for Movie Manager APIs
+ * Base URL: {API_BASE_URL}/api
+ */
+export const movieAxios = createApiClient('/api', 30000);
+
+/**
+ * Axios instance for Theater Manager APIs
+ * Base URL: {API_BASE_URL}/api
+ */
+export const theaterAxios = createApiClient('/api', 10000);
+
+/**
+ * Axios instance for Booking APIs
+ * Base URL: {API_BASE_URL}/api/v1/booking
+ */
+export const bookingAxios = createApiClient('/api/v1/booking', 10000);
+
+/**
+ * Axios instance for Staff and Theater Manager Shift APIs
+ * Base URL: {API_BASE_URL}/api/v1
+ */
+export const shiftAxios = createApiClient('/api/v1', 10000);
+
+/**
+ * Axios instance for Public APIs
+ * Base URL: {API_BASE_URL}/api/v1/Public
+ */
+export const publicAxios = createApiClient('/api/v1/Public', 10000);
 
 // Default export for backward compatibility
 export default identityAxios;
+

@@ -1,0 +1,148 @@
+services:
+  # Database & Cache for Demo
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Demo_Cinema_Password123!
+    volumes:
+      - demo_sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Demo_Cinema_Password123!' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cinema-demo-net
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cinema-demo-net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - demo_qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cinema-demo-net
+
+  # AI HTTP Service
+  ai-http:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      - ENVIRONMENT=development
+      - EMBEDDING_BACKEND=mock
+      - HOST=0.0.0.0
+      - PORT=8000
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=cinema_demo_movies
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BACKEND_API_URL=http://api:8080/api/v1
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cinema-demo-net
+
+  # AI gRPC Service
+  ai-grpc:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    command: ["python", "app/grpc_server.py"]
+    environment:
+      - ENVIRONMENT=development
+      - EMBEDDING_BACKEND=mock
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=cinema_demo_movies
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - cinema-demo-net
+
+  # Backend .NET API (Demo exposes port 8080 to localhost)
+  api:
+    build:
+      context: ../../apps/backend
+      dockerfile: ../../infrastructure/docker/dockerfiles/backend.Dockerfile
+      target: development
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Database__AutoMigrate=true
+      - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaDemoDb;User Id=sa;Password=Demo_Cinema_Password123!;TrustServerCertificate=True;
+      - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaDemoDb;User Id=sa;Password=Demo_Cinema_Password123!;TrustServerCertificate=True;
+      - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
+      - AiService__BaseUrl=http://ai-http:8000
+      - AiService__GrpcUrl=http://ai-grpc:50051
+      - BackgroundJobs__Enabled=true
+      - JWT_KEY=DemoSuperSecretKeyForJwtAuthenticationTestingOnly1234567890!
+      - JWT_ISS=CinemaDemo
+      - JWT_AUD=CinemaDemo
+      - AES_256_KEY=Demo1234567890123456789012345678
+      - AES_256_IV=Demo123456789012
+      - VNPay__TmnCode=DEMOTMN
+      - VNPay__HashSecret=DEMOHASHSECRET1234567890ABCDEF
+      - VNPay__PayUrl=http://localhost:8080/mock/vnpay/pay
+      - VNPay__ReturnUrl=http://localhost:8080/api/v1/Booking/vnpay-callback
+    depends_on:
+      mssql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-http:
+        condition: service_healthy
+    networks:
+      - cinema-demo-net
+
+  # Frontend for Visual Demo (optional)
+  frontend:
+    build:
+      context: ../../apps/frontend
+      dockerfile: ../../infrastructure/docker/dockerfiles/frontend.Dockerfile
+      target: development
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - api
+    networks:
+      - cinema-demo-net
+
+networks:
+  cinema-demo-net:
+    driver: bridge
+
+volumes:
+  demo_sql_data:
+  demo_qdrant_data:

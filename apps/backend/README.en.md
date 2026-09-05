@@ -1,15 +1,15 @@
-# 🎬 CINEMA BOOKING PLATFORM — API BACKEND
+# 🎬 COMPREHENSIVE CINEMA MANAGEMENT SYSTEM — API BACKEND
 
 🌐 **Select Language:** ![VN](https://flagcdn.com/w20/vn.png) [Tiếng Việt](./README.md) • ![GB](https://flagcdn.com/w20/gb.png) [English](./README.en.md) • ![RU](https://flagcdn.com/w20/ru.png) [Русский](./README.ru.md)
 
 ---
 
-> **A modern, high-performance, and real-time backend solution designed for large-scale cinema chain operations.**
+> **Far beyond a simple ticket booking system — An enterprise-grade, high-performance, and real-time operations solution designed for large-scale cinema chains.**
 
 ---
 
 ## 📌 Project Overview
-The **Cinema Booking Backend** is built on **ASP.NET Core 8** and **SQL Server**, offering a comprehensive suite of APIs for modern cinema chain management. The system is engineered to deliver a seamless customer experience through **real-time seat locking**, secure electronic payments, conflict-free scheduling algorithms, and automated background administration.
+The **Galaxiad Cinema Core Backend** is built on **ASP.NET Core 8** and **SQL Server**, offering a comprehensive suite of APIs for enterprise cinema chain operations. Going far beyond conventional ticket booking platforms, the system synchronizes multi-hall auditorium layouts, tiered seat matrices, conflict-free showtime scheduling algorithms, staff shift planning and biometric face-recognition clock-in, POS counter terminal sales, concession warehouse inventory logistics, janitorial maintenance workflows, dynamic pricing & voucher rules, alongside **real-time distributed Redis seat locking** and cryptographically verified VNPay HMAC-SHA512 payments.
 
 The project adheres to **Pragmatic Clean Architecture**, ensuring modularity, clear separation of concerns, high testability, and long-term maintainability.
 

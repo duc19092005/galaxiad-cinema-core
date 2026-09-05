@@ -1,0 +1,149 @@
+services:
+  # Database & Cache (Internal network only, no localhost port exposure to prevent conflicts)
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Test_Cinema_Password123!
+    volumes:
+      - test_sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test_Cinema_Password123!' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - cinema-test-net
+
+  redis:
+    image: redis:alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cinema-test-net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    volumes:
+      - test_qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cinema-test-net
+
+  # AI HTTP Service (FastAPI)
+  ai-http:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      - ENVIRONMENT=testing
+      - EMBEDDING_BACKEND=mock
+      - HOST=0.0.0.0
+      - PORT=8000
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=cinema_test_movies
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - BACKEND_API_URL=http://api:8080/api/v1
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cinema-test-net
+
+  # AI gRPC Service (Separate process for independent Docker lifecycle tracking)
+  ai-grpc:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    command: ["python", "app/grpc_server.py"]
+    environment:
+      - ENVIRONMENT=testing
+      - EMBEDDING_BACKEND=mock
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=cinema_test_movies
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      redis:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - cinema-test-net
+
+  # Backend .NET API (Testing Environment)
+  api:
+    build:
+      context: ../../apps/backend
+      dockerfile: ../../infrastructure/docker/dockerfiles/backend.Dockerfile
+      target: development
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaTestDb;User Id=sa;Password=Test_Cinema_Password123!;TrustServerCertificate=True;
+      - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaTestDb;User Id=sa;Password=Test_Cinema_Password123!;TrustServerCertificate=True;
+      - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
+      - AiService__BaseUrl=http://ai-http:8000
+      - AiService__GrpcUrl=http://ai-grpc:50051
+      - BackgroundJobs__Enabled=false
+      - RateLimiting__TestingMode=true
+      - JWT_KEY=TestSuperSecretKeyForJwtAuthenticationTestingOnly1234567890!
+      - JWT_ISS=CinemaTest
+      - JWT_AUD=CinemaTest
+      - AES_256_KEY=Test1234567890123456789012345678
+      - AES_256_IV=Test123456789012
+      - VNPay__TmnCode=TESTTMN
+      - VNPay__HashSecret=TESTHASHSECRET1234567890ABCDEF
+      - VNPay__PayUrl=http://api:8080/mock/vnpay/pay
+      - VNPay__ReturnUrl=http://api:8080/api/v1/Booking/vnpay-callback
+    depends_on:
+      mssql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai-http:
+        condition: service_healthy
+    networks:
+      - cinema-test-net
+
+  # Dedicated Test Runner Container
+  test-runner:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/dockerfiles/test-runner.Dockerfile
+    volumes:
+      - ../..:/workspace
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Testing
+      - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaTestDb;User Id=sa;Password=Test_Cinema_Password123!;TrustServerCertificate=True;
+      - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
+      - API_BASE_URL=http://api:8080
+      - AI_BASE_URL=http://ai-http:8000
+    depends_on:
+      - api
+    networks:
+      - cinema-test-net
+
+networks:
+  cinema-test-net:
+    driver: bridge
+
+volumes:
+  test_sql_data:
+  test_qdrant_data:

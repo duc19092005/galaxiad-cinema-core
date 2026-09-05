@@ -1,0 +1,120 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=CinemaDev123!
+    volumes:
+      - dev_sql_data:/var/opt/mssql
+    networks:
+      - cinema-dev-net
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - cinema-dev-net
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - dev_qdrant_data:/qdrant/storage
+    networks:
+      - cinema-dev-net
+
+  ai-http:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../../services/ai:/app
+    environment:
+      - ENVIRONMENT=development
+      - HOST=0.0.0.0
+      - PORT=8000
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - qdrant
+    networks:
+      - cinema-dev-net
+
+  ai-grpc:
+    build:
+      context: ../../services/ai
+      dockerfile: ../../infrastructure/docker/dockerfiles/ai.Dockerfile
+    command: ["python", "app/grpc_server.py"]
+    ports:
+      - "50051:50051"
+    volumes:
+      - ../../services/ai:/app
+    environment:
+      - ENVIRONMENT=development
+      - QDRANT_URL=http://qdrant:6333
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+      - qdrant
+    networks:
+      - cinema-dev-net
+
+  api:
+    build:
+      context: ../../apps/backend
+      dockerfile: ../../infrastructure/docker/dockerfiles/backend.Dockerfile
+      target: development
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    volumes:
+      - ../../apps/backend:/src
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Database__AutoMigrate=true
+      - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaDevDb;User Id=sa;Password=CinemaDev123!;TrustServerCertificate=True;
+      - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaDevDb;User Id=sa;Password=CinemaDev123!;TrustServerCertificate=True;
+      - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
+      - AiService__BaseUrl=http://ai-http:8000
+      - AiService__GrpcUrl=http://ai-grpc:50051
+    depends_on:
+      - mssql
+      - redis
+      - ai-http
+    networks:
+      - cinema-dev-net
+
+  frontend:
+    build:
+      context: ../../apps/frontend
+      dockerfile: ../../infrastructure/docker/dockerfiles/frontend.Dockerfile
+      target: development
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../apps/frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8080
+    depends_on:
+      - api
+    networks:
+      - cinema-dev-net
+
+networks:
+  cinema-dev-net:
+    driver: bridge
+
+volumes:
+  dev_sql_data:
+  dev_qdrant_data:

@@ -1,14 +1,18 @@
-# 📊 Báo Cáo Chi Tiết Các Test Case & Trạng Thái Kiểm Thử
+# 📊 Báo Cáo Chi Tiết Các Test Case & Trạng Thái Kiểm Thử (Legacy Document)
 
-Dưới đây là bảng báo cáo chi tiết tất cả các test case (kịch bản kiểm thử) trong hệ thống **Galaxiad Cinema Core**, được phân loại theo từng dịch vụ (Backend, Frontend, AI Service) cùng loại kiểm thử (Unit Test / Integration Test) và trạng thái hiện tại.
+[🇻🇳 Tiếng Việt](README.md) | [🇬🇧 English](README.en.md) | [🇷🇺 Русский](README.ru.md)
 
-> [!IMPORTANT]
-> **Lưu ý về dữ liệu kiểm thử (Seed Data / Mocks):**
-> Tất cả các kiểm thử đơn vị (Unit Test) và tích hợp (Integration Test) trong tài liệu này đều chạy trên **Dữ liệu Giả lập (Mock / In-memory DB / Seed Data)** để tối ưu hóa tốc độ (chạy mất dưới 1 giây), không làm bẩn Database và không phát sinh chi phí gọi các API tính phí bên ngoài (như DeepSeek LLM API).
+> [!WARNING]
+> **TÀI LIỆU CHUYỂN TIẾP (MIGRATION NOTICE):**
+> Tài liệu này được giữ lại nhằm mục đích đối chiếu lịch sử. Toàn bộ danh mục kiểm thử chuẩn hóa, có thể truy vết (traceable), có schema kiểm tra hợp lệ và phản ánh đúng thực tế chạy tự động hiện đã được chuyển giao sang thư mục:
+> - **Ma trận kiểm thử chuẩn hóa:** [docs/testing/catalog.md](../testing/catalog.md)
+> - **Schema & Dữ liệu JSON:** [docs/testing/testcases.json](../testing/testcases.json)
+> - **Inventory mã nguồn:** [docs/testing/inventory.json](../testing/inventory.json)
 >
-> Để chạy thử nghiệm hệ thống với **Dữ liệu thực tế và LLM thật**, vui lòng tham khảo tài liệu hướng dẫn Manual Test / E2E Playwright tại file [README.md](../../README.md) của dự án.
+> **Quy định nghiêm ngặt:** Kết quả kiểm thử thực tế được xuất riêng biệt theo từng đợt chạy (Test Run Artifacts), **tuyệt đối không ghi đè nhãn "Passed" thủ công** vào tài liệu thiết kế testcase.
 
 ---
+
 
 ## 1. Dịch Vụ Backend (.NET)
 * Chạy bằng lệnh: `dotnet test` bên trong container `galaxiad-cinema-core-api-1`.

@@ -1,0 +1,3506 @@
+{
+  "version": "1.0.0",
+  "scannedAt": "2026-09-05T13:13:03.916Z",
+  "summary": {
+    "totalControllers": 40,
+    "totalUseCases": 204,
+    "totalBackgroundJobs": 9,
+    "totalAiRouters": 9
+  },
+  "controllers": [
+    {
+      "name": "AdminBannersController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminBannersController.cs",
+      "route": "api/v1/admin/banners",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAll",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "scope",
+          "actionName": "GetScope",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id:guid}",
+          "actionName": "GetById",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "Create",
+          "params": "[FromBody] BannerUpsertDto dto"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{id:guid}",
+          "actionName": "Update",
+          "params": "Guid id, [FromBody] BannerUpsertDto dto"
+        },
+        {
+          "httpMethod": "HttpPatch",
+          "subRoute": "{id:guid}/toggle",
+          "actionName": "Toggle",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{id:guid}",
+          "actionName": "Delete",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "overview",
+          "actionName": "GetOverview",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "copy-to-local",
+          "actionName": "CopySystemToLocal",
+          "params": "[FromBody] CopyOverrideRequest request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "override-local",
+          "actionName": "OverrideLocal",
+          "params": "[FromBody] CopyOverrideRequest request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "picker/movies",
+          "actionName": "GetMoviesForPicker",
+          "params": "[FromQuery] string? status"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "picker/vouchers",
+          "actionName": "GetVouchersForPicker",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "auto-all",
+          "actionName": "AutoGenerateAll",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "GetAllBannersUseCase",
+        "GetBannerByIdUseCase",
+        "CreateBannerUseCase",
+        "UpdateBannerUseCase",
+        "DeleteBannerUseCase",
+        "ToggleBannerUseCase",
+        "GetBannerScopeUseCase",
+        "IUserContextService"
+      ]
+    },
+    {
+      "name": "AdminManagementTransferController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminManagementTransferController.cs",
+      "route": "api/v1/admin/transfer-rights",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "managers",
+          "actionName": "GetManagers",
+          "params": "[FromQuery] TransferTypeEnum type"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "managed-items/{userId}",
+          "actionName": "GetManagedItems",
+          "params": "string? userId, [FromQuery] TransferTypeEnum type"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "execute",
+          "actionName": "TransferRights",
+          "params": "[FromBody] TransferManagementReqDto request"
+        }
+      ],
+      "injectedUseCases": [
+        "GetUsersByRoleUseCase",
+        "GetManagedItemsUseCase",
+        "TransferManagementUseCase"
+      ]
+    },
+    {
+      "name": "AdminManageUsersController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminManageUsersController.cs",
+      "route": "api/v1/[controller]",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAllUsers",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{userId}/profile",
+          "actionName": "UpdateUserProfile",
+          "params": "Guid userId, [FromBody] AdminUpdateUserProfileDto dto"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{userId}/status",
+          "actionName": "UpdateUserStatus",
+          "params": "Guid userId, [FromQuery] AccountStatusEnum status"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{userId}/portrait",
+          "actionName": "UpdateUserPortrait",
+          "params": "Guid userId, IFormFile portrait"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{userId}/role",
+          "actionName": "GetUserRole",
+          "params": "Guid userId"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{userId}/role",
+          "actionName": "UpdateUserRole",
+          "params": "Guid userId, [FromBody] UpdateUserRoleRequestDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "create-user",
+          "actionName": "CreateUser",
+          "params": "[FromBody] AdminCreateUserRequestDto request"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "cinemas/{cinemaId}/manager",
+          "actionName": "AssignCinemaManager",
+          "params": "Guid cinemaId, [FromQuery] Guid managerId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "roles",
+          "actionName": "GetAllRoles",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "permissions",
+          "actionName": "GetAllPermissions",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "roles-permissions",
+          "actionName": "GetRolesPermissions",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "roles/{roleId}/permissions",
+          "actionName": "UpdateRolePermissions",
+          "params": "Guid roleId, [FromBody] List<Guid> permissionIds"
+        }
+      ],
+      "injectedUseCases": [
+        "GetAllUsersUseCase",
+        "SetUserStatusUseCase",
+        "UpdateUserPortraitUseCase",
+        "GetUserRolesUseCase",
+        "AssignRoleToUserUseCase",
+        "CreateUserUseCase",
+        "AssignCinemaToManagerUseCase",
+        "GetAssignableRolesUseCase",
+        "GetAllPermissionsUseCase",
+        "GetRolesPermissionsUseCase",
+        "UpdateRolePermissionsUseCase",
+        "AdminUpdateUserProfileUseCase"
+      ]
+    },
+    {
+      "name": "AdminPricingPromotionsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminPricingPromotionsController.cs",
+      "route": "api/v1/admin/pricing-promotions",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAll",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "options",
+          "actionName": "GetOptions",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id:guid}",
+          "actionName": "GetById",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "check-conflicts",
+          "actionName": "CheckConflicts",
+          "params": "[FromBody] PricingPromotionUpsertDto dto, [FromQuery] Guid? excludeId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "Create",
+          "params": "[FromBody] PricingPromotionUpsertDto dto"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{id:guid}",
+          "actionName": "Update",
+          "params": "Guid id, [FromBody] PricingPromotionUpsertDto dto"
+        },
+        {
+          "httpMethod": "HttpPatch",
+          "subRoute": "{id:guid}/toggle",
+          "actionName": "Toggle",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{id:guid}",
+          "actionName": "Delete",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "GetAllPricingPromotionsUseCase",
+        "GetPricingPromotionOptionsUseCase",
+        "GetPricingPromotionByIdUseCase",
+        "CreatePricingPromotionUseCase",
+        "UpdatePricingPromotionUseCase",
+        "TogglePricingPromotionUseCase",
+        "DeletePricingPromotionUseCase",
+        "CheckPricingPromotionConflictsUseCase"
+      ]
+    },
+    {
+      "name": "AdminShiftController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminShiftController.cs",
+      "route": "api/Admin/Shifts",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "pending-deletions",
+          "actionName": "GetPendingDeletionRequests",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "schedules/{id}/approve-deletion",
+          "actionName": "ApproveDeletionRequest",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "schedules/{id}/reject-deletion",
+          "actionName": "RejectDeletionRequest",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "GetPendingDeletionRequestsUseCase",
+        "ApproveDeletionRequestUseCase",
+        "RejectDeletionRequestUseCase"
+      ]
+    },
+    {
+      "name": "AdminVoucherController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AdminVoucherController.cs",
+      "route": "api/v1/admin/vouchers",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "CreateVoucher",
+          "params": "[FromBody] CreateVoucherDto dto"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{id}",
+          "actionName": "UpdateVoucher",
+          "params": "Guid id, [FromBody] UpdateVoucherDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAllVouchers",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id}",
+          "actionName": "GetVoucherById",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{id}",
+          "actionName": "DeleteVoucher",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateVoucherUseCase",
+        "UpdateVoucherUseCase",
+        "DeleteVoucherUseCase",
+        "GetAllVouchersUseCase",
+        "GetVoucherByIdUseCase"
+      ]
+    },
+    {
+      "name": "AiResearchController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AiResearchController.cs",
+      "route": "api/v1/admin/ai-research/jobs",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "Create",
+          "params": "[FromBody] CreateAiResearchJobRequest request,\r\n        CancellationToken cancellationToken"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "List",
+          "params": "CancellationToken cancellationToken"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{jobId:guid}",
+          "actionName": "Get",
+          "params": "Guid jobId, CancellationToken cancellationToken"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{jobId:guid}/cancel",
+          "actionName": "Cancel",
+          "params": "Guid jobId, CancellationToken cancellationToken"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{jobId:guid}/events",
+          "actionName": "Events",
+          "params": "Guid jobId, [FromQuery] long afterEventId = 0"
+        }
+      ],
+      "injectedUseCases": [
+        "IAiResearchService"
+      ]
+    },
+    {
+      "name": "AuditLogsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/AuditLogsController.cs",
+      "route": "api/v1/admin/audit-logs",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "recent",
+          "actionName": "GetRecent",
+          "params": "[FromQuery] int take = 30"
+        }
+      ],
+      "injectedUseCases": [
+        "GetRecentAuditLogsUseCase"
+      ]
+    },
+    {
+      "name": "ManagementDashboardController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/ManagementDashboardController.cs",
+      "route": "api/v1/admin/dashboard",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "management",
+          "actionName": "GetManagementDashboard",
+          "params": "[FromQuery] Guid? cinemaId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetManagementDashboardUseCase"
+      ]
+    },
+    {
+      "name": "ScheduleJobsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Admin/ScheduleJobsController.cs",
+      "route": "api/v1/[controller]",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "Get",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": []
+    },
+    {
+      "name": "ChatbotController",
+      "file": "apps/backend/Cinema.Api/Controllers/Chatbot/ChatbotController.cs",
+      "route": "api/chatbot",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "chat",
+          "actionName": "Chat",
+          "params": "[FromBody] ChatbotRequestDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "chat/stream",
+          "actionName": "ChatStream",
+          "params": "[FromBody] ChatbotRequestDto request"
+        }
+      ],
+      "injectedUseCases": []
+    },
+    {
+      "name": "BookingController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Booking/BookingController.cs",
+      "route": "api/v1/booking",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "create",
+          "actionName": "CreateBooking",
+          "params": "[FromBody] ReqCreateBookingDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "ticket/{orderId}",
+          "actionName": "GetTicketData",
+          "params": "Guid orderId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "ticket/{orderId}/download",
+          "actionName": "DownloadTicket",
+          "params": "Guid orderId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "vnpay-callback",
+          "actionName": "VnPayCallback",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "seats/lock",
+          "actionName": "LockSeat",
+          "params": "[FromBody] ReqLockSeatDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "seats/unlock",
+          "actionName": "UnlockSeat",
+          "params": "[FromBody] ReqUnlockSeatDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "customer-lookup",
+          "actionName": "LookupCustomer",
+          "params": "[FromQuery] string email"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "account-info",
+          "actionName": "GetAccountInfo",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "history",
+          "actionName": "GetBookingHistory",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "CreateBookingUseCase",
+        "GetTicketDataUseCase",
+        "ProcessVnPayCallbackUseCase",
+        "GetUserAccountInfoUseCase",
+        "GetUserBookingHistoryUseCase",
+        "GetBookingCustomerByEmailUseCase",
+        "SeatLockManager"
+      ]
+    },
+    {
+      "name": "GroupBookingController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Booking/GroupBookingController.cs",
+      "route": "api/v1/booking/group",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "create",
+          "actionName": "CreateGroup",
+          "params": "[FromBody] ReqCreateGroupBookingDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "join",
+          "actionName": "JoinGroup",
+          "params": "[FromBody] ReqJoinGroupBookingDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "state/{groupSessionId}",
+          "actionName": "GetGroupState",
+          "params": "Guid groupSessionId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "seats/{groupSessionId}",
+          "actionName": "SelectSeats",
+          "params": "Guid groupSessionId, [FromBody] ReqSelectGroupSeatsDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "seats/{groupSessionId}/renew",
+          "actionName": "RenewSeatLocks",
+          "params": "Guid groupSessionId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "confirm/{groupSessionId}",
+          "actionName": "ConfirmSeats",
+          "params": "Guid groupSessionId, [FromBody] ReqConfirmGroupSeatsDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "pay/{groupSessionId}",
+          "actionName": "PayGroup",
+          "params": "Guid groupSessionId, [FromQuery] Guid? failedMemberId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "chat/{groupSessionId}",
+          "actionName": "SendChat",
+          "params": "Guid groupSessionId, [FromBody] ReqSendGroupChatDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "chat/{groupSessionId}",
+          "actionName": "GetChatMessages",
+          "params": "Guid groupSessionId, [FromQuery] int limit = 50, [FromQuery] DateTime? before = null"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "vote/{groupSessionId}",
+          "actionName": "VoteMovie",
+          "params": "Guid groupSessionId, [FromBody] ReqVoteMovieDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "payment-action/{groupSessionId}",
+          "actionName": "HandlePaymentAction",
+          "params": "Guid groupSessionId, [FromBody] ReqGroupPaymentActionDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "leave/{groupSessionId}",
+          "actionName": "LeaveGroup",
+          "params": "Guid groupSessionId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "vote-payment-method/{groupSessionId}",
+          "actionName": "VotePaymentMethod",
+          "params": "Guid groupSessionId, [FromBody] ReqVotePaymentMethodDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "payment-method-vote/{groupSessionId}",
+          "actionName": "GetPaymentMethodVoteState",
+          "params": "Guid groupSessionId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "pair/{groupSessionId}",
+          "actionName": "CreatePair",
+          "params": "Guid groupSessionId, [FromBody] ReqCreatePairDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "pair/{groupSessionId}/respond/{pairId}",
+          "actionName": "RespondPair",
+          "params": "Guid groupSessionId, string pairId, [FromBody] ReqRespondPairDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "pairs/{groupSessionId}",
+          "actionName": "GetGroupPairs",
+          "params": "Guid groupSessionId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "vote-payment-failure/{groupSessionId}",
+          "actionName": "VotePaymentFailure",
+          "params": "Guid groupSessionId, [FromBody] ReqVotePaymentFailureDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "raise-hand/{groupSessionId}",
+          "actionName": "RaiseHand",
+          "params": "Guid groupSessionId, [FromBody] ReqRaiseHandDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "vote-failure-option/{groupSessionId}",
+          "actionName": "VoteFailureOption",
+          "params": "Guid groupSessionId, [FromBody] ReqVoteFailureOptionDto request"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateGroupBookingUseCase",
+        "JoinGroupBookingUseCase",
+        "GetGroupBookingStateUseCase",
+        "SelectGroupSeatsUseCase",
+        "RenewGroupMemberSeatLocksUseCase",
+        "ConfirmGroupMemberSeatsUseCase",
+        "PayGroupBookingUseCase",
+        "SendGroupChatMessageUseCase",
+        "GetGroupChatMessagesUseCase",
+        "VoteMovieUseCase",
+        "HandleGroupPaymentFailureUseCase",
+        "LeaveGroupBookingUseCase",
+        "VotePaymentMethodUseCase",
+        "GetPaymentMethodVoteStateUseCase",
+        "CreatePairUseCase",
+        "RespondPairUseCase",
+        "GetGroupPairsUseCase",
+        "VotePaymentFailureUseCase",
+        "RaiseHandUseCase",
+        "GroupBookingWsManager"
+      ]
+    },
+    {
+      "name": "PublicMovieController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Booking/PublicMovieController.cs",
+      "route": "api/v1/public/movies",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "now-showing",
+          "actionName": "GetNowShowing",
+          "params": "[FromQuery] string? keyword, [FromQuery] Guid? cinemaId, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 5"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "coming-soon",
+          "actionName": "GetComingSoon",
+          "params": "[FromQuery] string? keyword, [FromQuery] Guid? cinemaId, [FromQuery] int pageIndex = 1, [FromQuery] int pageSize = 5"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "cities",
+          "actionName": "GetCities",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "genres",
+          "actionName": "GetGenres",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "active-cinemas",
+          "actionName": "GetActiveCinemas",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "nearest-cinemas",
+          "actionName": "GetNearestCinemas",
+          "params": "[FromQuery] double latitude, [FromQuery] double longitude"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "active-movies",
+          "actionName": "GetActiveMovies",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "search-schedules",
+          "actionName": "GetAdvancedSearchSchedules",
+          "params": "[FromQuery] DateTime? date,\r\n        [FromQuery] Guid? movieId,\r\n        [FromQuery] Guid? cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{movieId}",
+          "actionName": "GetMovieDetail",
+          "params": "Guid movieId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{movieId}/similar",
+          "actionName": "GetSimilarMovies",
+          "params": "Guid movieId, [FromQuery] int limit = 6"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{movieId}/showtimes",
+          "actionName": "GetCinemaShowtimes",
+          "params": "Guid movieId,\r\n        [FromQuery] string city,\r\n        [FromQuery] DateTime? date"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "schedules/{scheduleId}/seats",
+          "actionName": "GetSeatMap",
+          "params": "Guid scheduleId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "schedules/{scheduleId}/prices",
+          "actionName": "GetPricing",
+          "params": "Guid scheduleId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetNowShowingMoviesUseCase",
+        "GetComingSoonMoviesUseCase",
+        "GetCitiesUseCase",
+        "GetGenresUseCase",
+        "GetActiveCinemasUseCase",
+        "GetNearestCinemasUseCase",
+        "GetActiveMoviesUseCase",
+        "GetAdvancedSearchSchedulesUseCase",
+        "GetMovieDetailUseCase",
+        "GetCinemaShowtimesUseCase",
+        "GetSeatMapUseCase",
+        "GetPricingUseCase",
+        "GetSimilarMoviesUseCase"
+      ]
+    },
+    {
+      "name": "PublicBannersController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Catalog/PublicBannersController.cs",
+      "route": "api/v1/Public/banners",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetActive",
+          "params": "[FromQuery] Guid? cinemaId, [FromQuery] string? cinemaCity"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "track-interest",
+          "actionName": "TrackInterest",
+          "params": "[FromBody] TrackInterestRequest request"
+        }
+      ],
+      "injectedUseCases": [
+        "GetActiveBannersUseCase"
+      ]
+    },
+    {
+      "name": "PublicConcessionsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Catalog/PublicConcessionsController.cs",
+      "route": "api/Public/Concessions",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/menu",
+          "actionName": "GetMenu",
+          "params": "Guid cinemaId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetConcessionMenuUseCase"
+      ]
+    },
+    {
+      "name": "PublicController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Catalog/PublicController.cs",
+      "route": "api/v1/[controller]/",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "MovieFormats",
+          "actionName": "GetMovieFormats",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "MovieRequiredAge",
+          "actionName": "GetMovieRequiredAge",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "Movies",
+          "actionName": "GetMovies",
+          "params": "[FromQuery] string? city,\r\n        [FromQuery] string? status,\r\n        [FromQuery] Guid? cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "MovieDetail/{MovieId}",
+          "actionName": "GetMovieDetail",
+          "params": "Guid MovieId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "ScheduleDates/{MovieId}",
+          "actionName": "GetScheduleDates",
+          "params": "Guid MovieId, [FromQuery] string? city"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "ScheduleDetails/{MovieId}/{ScheduleDate}",
+          "actionName": "GetScheduleDetails",
+          "params": "Guid MovieId, DateTime ScheduleDate, [FromQuery] string? city"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "AuditoriumDetails/{ScheduleId}",
+          "actionName": "GetAuditoriumDetails",
+          "params": "Guid ScheduleId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "UpcomingDates",
+          "actionName": "GetAllUpcomingDates",
+          "params": "[FromQuery] string? city, [FromQuery] Guid? cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "MoviePeople",
+          "actionName": "GetMoviePeople",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "People/Detail",
+          "actionName": "GetPersonDetail",
+          "params": "[FromQuery] string name,\r\n        [FromQuery] string role = \"actor\",\r\n        [FromQuery] int pageIndex = 1,\r\n        [FromQuery] int pageSize = 12"
+        }
+      ],
+      "injectedUseCases": [
+        "GetMovieFormatsUseCase",
+        "GetMovieRequiredAgeUseCase",
+        "GetMoviesUseCase",
+        "GetMovieDetailUseCase",
+        "GetScheduleDatesUseCase",
+        "GetScheduleDetailsUseCase",
+        "GetAuditoriumDetailsUseCase",
+        "GetAllUpcomingDatesUseCase",
+        "GetMoviePeopleUseCase",
+        "GetMoviePersonDetailUseCase"
+      ]
+    },
+    {
+      "name": "PublicPromotionsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Catalog/PublicPromotionsController.cs",
+      "route": "api/v1/promotions",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetActive",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{slug}",
+          "actionName": "GetBySlug",
+          "params": "string slug"
+        }
+      ],
+      "injectedUseCases": [
+        "GetActivePublicPricingPromotionsUseCase",
+        "GetPricingPromotionBySlugUseCase"
+      ]
+    },
+    {
+      "name": "MovieCommentsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Engagement/MovieCommentsController.cs",
+      "route": "api/v1/comments",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/{movieId}",
+          "actionName": "GetComments",
+          "params": "Guid movieId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/trending",
+          "actionName": "GetTrendingMovies",
+          "params": "[FromQuery] int days = 30,\r\n        [FromQuery] int take = 10,\r\n        [FromQuery] Guid? cinemaId = null,\r\n        [FromQuery] string? city = null"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/top-rated",
+          "actionName": "GetTopRatedMovies",
+          "params": "[FromQuery] int take = 5,\r\n        [FromQuery] Guid? cinemaId = null"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "movies/{movieId}/view",
+          "actionName": "TrackMovieView",
+          "params": "Guid movieId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/{movieId}/eligibility",
+          "actionName": "GetEligibility",
+          "params": "Guid movieId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "movies/{movieId}",
+          "actionName": "CreateComment",
+          "params": "Guid movieId, [FromBody] ReqCreateMovieCommentDto request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{parentCommentId}/replies",
+          "actionName": "CreateReply",
+          "params": "Guid parentCommentId, [FromBody] ReqCreateMovieReplyDto request"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{commentId}",
+          "actionName": "DeleteComment",
+          "params": "Guid commentId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetMovieCommentsUseCase",
+        "GetTrendingMoviesUseCase",
+        "GetTopRatedMoviesUseCase",
+        "TrackMovieViewUseCase",
+        "GetCommentEligibilityUseCase",
+        "CreateMovieCommentUseCase",
+        "CreateMovieReplyUseCase",
+        "DeleteOwnCommentUseCase"
+      ]
+    },
+    {
+      "name": "NotificationsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Engagement/NotificationsController.cs",
+      "route": "api/v1/notifications",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetMyNotifications",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPatch",
+          "subRoute": "{notificationId}/read",
+          "actionName": "MarkAsRead",
+          "params": "Guid notificationId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "sse",
+          "actionName": "GetNotificationsSse",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "GetMyNotificationsUseCase",
+        "MarkNotificationAsReadUseCase",
+        "ISseNotificationService"
+      ]
+    },
+    {
+      "name": "RecommendationController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Engagement/RecommendationController.cs",
+      "route": "api/v1/[controller]/",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "survey/status",
+          "actionName": "GetSurveyStatus",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "survey",
+          "actionName": "SaveSurvey",
+          "params": "[FromBody] SaveSurveyRequestDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies",
+          "actionName": "GetRecommendations",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "sync-movies",
+          "actionName": "SyncMoviesToAiService",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "GetSurveyStatusUseCase",
+        "SaveSurveyUseCase",
+        "GetRecommendationsUseCase",
+        "SyncMoviesToAiServiceUseCase"
+      ]
+    },
+    {
+      "name": "PublicVoucherController",
+      "file": "apps/backend/Cinema.Api/Controllers/Customer/Vouchers/PublicVoucherController.cs",
+      "route": "api/v1/public/vouchers",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetActiveVouchers",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{id}/redeem",
+          "actionName": "RedeemVoucher",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-vouchers",
+          "actionName": "GetMyVouchers",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "available-for-user",
+          "actionName": "GetAvailableVouchersForChatbot",
+          "params": "[FromQuery] Guid userId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetActiveVouchersUseCase",
+        "RedeemVoucherUseCase",
+        "GetMyVouchersUseCase"
+      ]
+    },
+    {
+      "name": "IdentityAccessController",
+      "file": "apps/backend/Cinema.Api/Controllers/Identity/IdentityAccessController.cs",
+      "route": "api/v1/[controller]/",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "regular-register",
+          "actionName": "RegularRegister",
+          "params": "[FromBody] ReqRegularRegisterDto registerRegularIdentityAccessDto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "regular-login",
+          "actionName": "RegularLogin",
+          "params": "[FromBody] ReqRegularLoginDto regularLoginReqDto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "google-login",
+          "actionName": "GoogleLoginInit",
+          "params": "[FromQuery] string platform = \"web\""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "google-callback-web",
+          "actionName": "GoogleCallbackWeb",
+          "params": "[FromQuery] string code, [FromQuery] string state"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "google-callback-mobile",
+          "actionName": "GoogleCallbackMobile",
+          "params": "[FromQuery] string code, [FromQuery] string state"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "Logout",
+          "actionName": "Logout",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "get-profile",
+          "actionName": "GetProfile",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "change-password",
+          "actionName": "ChangePassword",
+          "params": "ReqChangePasswordDto request"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "update-profile",
+          "actionName": "UpdateUserProfile",
+          "params": "ReqUpdateUserProfileDto request"
+        }
+      ],
+      "injectedUseCases": [
+        "IdentityAccessRegularRegisterUseCase",
+        "identityAccessRegularLoginUseCase",
+        "GoogleLoginInitUseCase",
+        "GoogleLoginCallbackUseCase",
+        "GetProfileUseCase",
+        "ChangePasswordUseCase",
+        "UpdateUserProfileUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerCleaningController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Cleaning/TheaterManagerCleaningController.cs",
+      "route": "api/TheaterManager/Cleaning",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/board",
+          "actionName": "GetBoard",
+          "params": "Guid cinemaId, [FromQuery] DateTime? date, [FromQuery] CleaningTaskStatus? status"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "tasks/{taskId:guid}/assign",
+          "actionName": "AssignTask",
+          "params": "Guid taskId, [FromBody] ReqAssignCleaningTaskDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "tasks/{taskId:guid}/verify",
+          "actionName": "VerifyTask",
+          "params": "Guid taskId, [FromBody] ReqVerifyCleaningTaskDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{cinemaId:guid}/generate-tasks",
+          "actionName": "GenerateTasks",
+          "params": "Guid cinemaId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate"
+        }
+      ],
+      "injectedUseCases": [
+        "GetCleaningBoardUseCase",
+        "AssignCleaningTaskUseCase",
+        "VerifyCleaningTaskUseCase",
+        "GenerateCleaningTasksForShowtimesUseCase"
+      ]
+    },
+    {
+      "name": "AdminConcessionCatalogController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Concessions/AdminConcessionCatalogController.cs",
+      "route": "api/Admin/Concessions",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "products",
+          "actionName": "CreateProduct",
+          "params": "[FromBody] ReqCreateConcessionProductDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "combos",
+          "actionName": "CreateCombo",
+          "params": "[FromBody] ReqCreateComboDto dto"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "products/{productId:guid}",
+          "actionName": "UpdateProduct",
+          "params": "Guid productId, [FromBody] ReqUpdateConcessionProductDto dto"
+        },
+        {
+          "httpMethod": "HttpPatch",
+          "subRoute": "products/{productId:guid}/status",
+          "actionName": "ToggleStatus",
+          "params": "Guid productId, [FromQuery] bool isActive"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateConcessionProductUseCase",
+        "CreateComboUseCase",
+        "UpdateConcessionProductUseCase",
+        "ToggleConcessionProductStatusUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerConcessionController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Concessions/TheaterManagerConcessionController.cs",
+      "route": "api/TheaterManager/Concessions",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/products",
+          "actionName": "GetProducts",
+          "params": "Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/inventory",
+          "actionName": "GetInventoryStatus",
+          "params": "Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/inventory/history",
+          "actionName": "GetInventoryHistory",
+          "params": "Guid cinemaId, [FromQuery] ReqInventoryHistoryFilterDto filter"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "stock-requests",
+          "actionName": "CreateStockRequest",
+          "params": "[FromBody] ReqCreateStockRequestDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/stock-requests",
+          "actionName": "GetStockRequests",
+          "params": "Guid cinemaId, [FromQuery] StockRequestStatus? status"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "stock-requests/{id:guid}/receive",
+          "actionName": "ReceiveStockRequest",
+          "params": "Guid id, [FromBody] ReqReceiveStockRequestDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "waste-reports",
+          "actionName": "CreateWasteReport",
+          "params": "[FromBody] ReqCreateWasteReportDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/waste-reports",
+          "actionName": "GetWasteReports",
+          "params": "Guid cinemaId, [FromQuery] WasteReportStatus? status"
+        }
+      ],
+      "injectedUseCases": [
+        "GetConcessionProductsUseCase",
+        "GetInventoryStatusUseCase",
+        "GetInventoryHistoryUseCase",
+        "CreateStockRequestUseCase",
+        "GetStockRequestsUseCase",
+        "ReceiveStockRequestUseCase",
+        "CreateWasteReportUseCase",
+        "GetWasteReportsUseCase"
+      ]
+    },
+    {
+      "name": "WarehouseManagerController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Concessions/WarehouseManagerController.cs",
+      "route": "api/WarehouseManager",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "StockRequests",
+          "actionName": "GetStockRequests",
+          "params": "[FromQuery] Guid? cinemaId, [FromQuery] StockRequestStatus? status"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "StockRequests/{id:guid}/approve",
+          "actionName": "ApproveStockRequest",
+          "params": "Guid id, [FromBody] ReqApproveStockRequestDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "StockRequests/{id:guid}/reject",
+          "actionName": "RejectStockRequest",
+          "params": "Guid id, [FromBody] ReqRejectStockRequestDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "StockRequests/{id:guid}/ship",
+          "actionName": "ShipStockRequest",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "WasteReports",
+          "actionName": "GetWasteReports",
+          "params": "[FromQuery] Guid? cinemaId, [FromQuery] WasteReportStatus? status"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "WasteReports/{id:guid}/review",
+          "actionName": "ReviewWasteReport",
+          "params": "Guid id, [FromBody] ReqReviewWasteReportDto dto"
+        }
+      ],
+      "injectedUseCases": [
+        "GetStockRequestsUseCase",
+        "ApproveStockRequestUseCase",
+        "RejectStockRequestUseCase",
+        "ShipStockRequestUseCase",
+        "GetWasteReportsUseCase",
+        "ReviewWasteReportUseCase"
+      ]
+    },
+    {
+      "name": "AuditoriumController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Facilities/AuditoriumController.cs",
+      "route": "api/facilities/auditorium",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "AddAuditorium",
+          "params": "AddReqAuditoriumDto request"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{id}",
+          "actionName": "EditAuditorium",
+          "params": "Guid id, EditReqAuditoriumDto request"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{id}",
+          "actionName": "DeleteAuditorium",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAuditorium",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id}",
+          "actionName": "GetAuditorium",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "cinema/{id}",
+          "actionName": "GetCinema",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateAuditoriumUseCase",
+        "UpdateAuditoriumUseCase",
+        "DeleteAuditoriumUseCase",
+        "GetAllAuditoriumsUseCase",
+        "GetAuditoriumByIdUseCase",
+        "GetAuditoriumsByCinemaIdUseCase"
+      ]
+    },
+    {
+      "name": "CinemaController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Facilities/CinemaController.cs",
+      "route": "api/facilities/cinema",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id}",
+          "actionName": "GetCinemaById",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{cinemaId}",
+          "actionName": "EditCinema",
+          "params": "Guid cinemaId, EditCinemaReqDto editCinemaReqDto"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{cinemaId}",
+          "actionName": "DeleteCinema",
+          "params": "Guid cinemaId"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateCinemaUseCase",
+        "UpdateCinemaUseCase",
+        "DeleteCinemaUseCase",
+        "GetAllCinemasUseCase",
+        "GetCinemaByIdUseCase"
+      ]
+    },
+    {
+      "name": "DepartmentController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Facilities/DepartmentController.cs",
+      "route": "api/facilities/departments",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetDepartments",
+          "params": "[FromQuery] Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "CreateDepartment",
+          "params": "[FromBody] CreateDepartmentReqDto request"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{id}",
+          "actionName": "UpdateDepartment",
+          "params": "Guid id, [FromBody] UpdateDepartmentReqDto request"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{id}",
+          "actionName": "DeleteDepartment",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "GetDepartmentsUseCase",
+        "CreateDepartmentUseCase",
+        "UpdateDepartmentUseCase",
+        "DeleteDepartmentUseCase"
+      ]
+    },
+    {
+      "name": "MovieFormatControllerController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Facilities/MovieFormatControllerController.cs",
+      "route": "api/facilities/movie-format",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAllMovieFormat",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "FacilitiesManagerReadMovieFormatUseCase"
+      ]
+    },
+    {
+      "name": "ExternalMovieMetadataController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Movies/ExternalMovieMetadataController.cs",
+      "route": "api/movieManager/external",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/search",
+          "actionName": "SearchMovies",
+          "params": "[FromQuery] string? q, CancellationToken ct"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/popular",
+          "actionName": "PopularMovies",
+          "params": "CancellationToken ct"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies/{tmdbId:int}/credits",
+          "actionName": "GetCredits",
+          "params": "int tmdbId, CancellationToken ct"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "people/search",
+          "actionName": "SearchPeople",
+          "params": "[FromQuery] string? q, [FromQuery] string? role, CancellationToken ct"
+        }
+      ],
+      "injectedUseCases": []
+    },
+    {
+      "name": "MovieController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Movies/MovieController.cs",
+      "route": "api/movieManager/movies",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "",
+          "actionName": "CreateMovie",
+          "params": "ReqAddMovieManagerMovieDto request"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{movieId}",
+          "actionName": "UpdateMovie",
+          "params": "Guid movieId, ReqEditMovieManagerMovieDto request"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "",
+          "actionName": "GetAllMovies",
+          "params": "[FromQuery] Guid? cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{id}",
+          "actionName": "GetMovieById",
+          "params": "Guid id"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateMovieUseCase",
+        "UpdateMovieUseCase",
+        "GetMovieInfosUseCase",
+        "GetMovieInfoByIdUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerDataController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Theaters/TheaterManagerDataController.cs",
+      "route": "api/TheaterManager/Data",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "movies-with-formats",
+          "actionName": "GetMoviesWithFormats",
+          "params": "[FromQuery] Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-auditoriums",
+          "actionName": "GetMyAuditoriums",
+          "params": "[FromQuery] Guid? cinemaId"
+        }
+      ],
+      "injectedUseCases": [
+        "GetMoviesWithFormatsUseCase",
+        "GetMyAuditoriumsUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerMovieScheduleRecommendationsController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Theaters/TheaterManagerMovieScheduleRecommendationsController.cs",
+      "route": "api/TheaterManager/MovieScheduleRecommendations",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "generate",
+          "actionName": "Generate",
+          "params": "GenerateShowtimeRecommendationsRequest request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "preview",
+          "actionName": "Preview",
+          "params": "RecommendationSelectionRequest request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "apply",
+          "actionName": "Apply",
+          "params": "ApplyShowtimeRecommendationsRequest request"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{recommendationId:guid}/dismiss",
+          "actionName": "Dismiss",
+          "params": "Guid recommendationId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "history",
+          "actionName": "History",
+          "params": "[FromQuery] Guid cinemaId, [FromQuery] int take = 20"
+        }
+      ],
+      "injectedUseCases": [
+        "GenerateShowtimeRecommendationsUseCase",
+        "PreviewShowtimeRecommendationsUseCase",
+        "ApplyShowtimeRecommendationsUseCase",
+        "DismissShowtimeRecommendationUseCase",
+        "GetShowtimeRecommendationHistoryUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerMovieSchedulesController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Theaters/TheaterManagerMovieSchedulesController.cs",
+      "route": "api/TheaterManager/MovieSchedules",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{auditoriumId}",
+          "actionName": "GetSchedules",
+          "params": "Guid auditoriumId"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "{auditoriumId}",
+          "actionName": "UpdateSchedule",
+          "params": "Guid auditoriumId, [FromBody] TheaterManagerEditMovieSchedulesRequest request"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "{scheduleId}",
+          "actionName": "DeleteSchedule",
+          "params": "Guid scheduleId"
+        }
+      ],
+      "injectedUseCases": [
+        "CreateMovieScheduleUseCase",
+        "UpdateMovieScheduleUseCase",
+        "DeleteMovieScheduleUseCase"
+      ]
+    },
+    {
+      "name": "TheaterManagerShiftController",
+      "file": "apps/backend/Cinema.Api/Controllers/Management/Theaters/TheaterManagerShiftController.cs",
+      "route": "api/TheaterManager/Shifts",
+      "actions": [
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "templates",
+          "actionName": "CreateShiftTemplate",
+          "params": "[FromBody] ReqCreateShiftTemplateDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "templates",
+          "actionName": "GetShiftTemplates",
+          "params": "[FromQuery] Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "registrations",
+          "actionName": "GetShiftRegistrations",
+          "params": "[FromQuery] Guid cinemaId, [FromQuery] string? status"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "registrations/{id}/approve",
+          "actionName": "ApproveShift",
+          "params": "Guid id, [FromBody] ReqApproveShiftDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "registrations/{id}/reject",
+          "actionName": "RejectShift",
+          "params": "Guid id, [FromBody] ReqApproveShiftDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "registrations/{id}/cancel",
+          "actionName": "CancelShift",
+          "params": "Guid id, [FromBody] ReqApproveShiftDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "assign",
+          "actionName": "AssignShift",
+          "params": "[FromBody] ReqAssignShiftDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "staff-profiles",
+          "actionName": "GetStaffProfiles",
+          "params": "[FromQuery] Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpPut",
+          "subRoute": "staff-profiles/{id}",
+          "actionName": "UpdateStaffProfile",
+          "params": "Guid id, [FromBody] ReqUpdateStaffProfileDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "payroll/calculate",
+          "actionName": "CalculatePayroll",
+          "params": "[FromBody] ReqCalculatePayrollDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "payroll/{id}/pay",
+          "actionName": "PayPayroll",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "payroll/staff/{staffId}",
+          "actionName": "GetStaffPayroll",
+          "params": "Guid staffId"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "payroll/cinema/{cinemaId}",
+          "actionName": "GetCinemaPayroll",
+          "params": "Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "schedules",
+          "actionName": "CreateShiftSchedule",
+          "params": "[FromBody] ReqCreateShiftScheduleDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "schedules",
+          "actionName": "GetShiftSchedules",
+          "params": "[FromQuery] Guid cinemaId, \r\n        [FromQuery] Guid? departmentId, \r\n        [FromQuery] DateTime startDate, \r\n        [FromQuery] DateTime endDate"
+        },
+        {
+          "httpMethod": "HttpDelete",
+          "subRoute": "schedules/{id}",
+          "actionName": "DeleteShiftSchedule",
+          "params": "Guid id, [FromBody] ReqDeleteShiftScheduleDto dto"
+        }
+      ],
+      "injectedUseCases": [
+        "ApproveShiftRegistrationUseCase",
+        "RejectShiftRegistrationUseCase",
+        "CancelShiftRegistrationUseCase",
+        "AssignShiftDirectlyUseCase",
+        "CalculatePayrollUseCase",
+        "PayPayrollUseCase",
+        "CreateShiftTemplateUseCase",
+        "GetShiftTemplatesUseCase",
+        "GetShiftRegistrationsUseCase",
+        "GetStaffProfilesUseCase",
+        "UpdateStaffProfileUseCase",
+        "GetStaffPayrollUseCase",
+        "GetCinemaPayrollUseCase",
+        "CreateShiftScheduleUseCase",
+        "GetShiftSchedulesUseCase",
+        "DeleteShiftScheduleUseCase"
+      ]
+    },
+    {
+      "name": "StaffCleaningController",
+      "file": "apps/backend/Cinema.Api/Controllers/Staff/StaffCleaningController.cs",
+      "route": "api/Staff/Cleaning",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-tasks",
+          "actionName": "GetMyTasks",
+          "params": "[FromQuery] DateTime? date"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "tasks/{taskId:guid}/start",
+          "actionName": "StartTask",
+          "params": "Guid taskId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "tasks/{taskId:guid}/complete",
+          "actionName": "CompleteTask",
+          "params": "Guid taskId, [FromBody] ReqCompleteCleaningTaskDto dto"
+        }
+      ],
+      "injectedUseCases": [
+        "GetMyCleaningTasksUseCase",
+        "StartCleaningTaskUseCase",
+        "CompleteCleaningTaskUseCase"
+      ]
+    },
+    {
+      "name": "StaffPosController",
+      "file": "apps/backend/Cinema.Api/Controllers/Staff/StaffPosController.cs",
+      "route": "api/Staff/Pos",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "{cinemaId:guid}/menu",
+          "actionName": "GetMenu",
+          "params": "Guid cinemaId"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "stock-check",
+          "actionName": "CheckStock",
+          "params": "[FromBody] ReqCheckConcessionStockDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "sell",
+          "actionName": "Sell",
+          "params": "[FromBody] ReqSellConcessionPosDto dto"
+        }
+      ],
+      "injectedUseCases": [
+        "GetConcessionMenuUseCase",
+        "CheckConcessionStockUseCase",
+        "SellConcessionPosUseCase"
+      ]
+    },
+    {
+      "name": "StaffShiftController",
+      "file": "apps/backend/Cinema.Api/Controllers/Staff/StaffShiftController.cs",
+      "route": "api/Staff/Shifts",
+      "actions": [
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "available",
+          "actionName": "GetAvailableShifts",
+          "params": "[FromQuery] DateTime date"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "register",
+          "actionName": "RegisterShift",
+          "params": "[FromBody] ReqRegisterShiftDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-registrations",
+          "actionName": "GetMyRegistrations",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "my-registrations/{id}/cancel",
+          "actionName": "CancelPendingRegistration",
+          "params": "Guid id"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "my-registrations/bulk-cancel",
+          "actionName": "CancelBulkPendingRegistrations",
+          "params": "[FromBody] List<Guid> ids"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "{staffId}/register-face",
+          "actionName": "RegisterFace",
+          "params": "Guid staffId, [FromBody] ReqRegisterFaceDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "clock-in",
+          "actionName": "ClockIn",
+          "params": "[FromBody] ReqClockInDto dto"
+        },
+        {
+          "httpMethod": "HttpPost",
+          "subRoute": "clock-out",
+          "actionName": "ClockOut",
+          "params": "[FromBody] ReqClockOutDto dto"
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-history",
+          "actionName": "GetMyHistory",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "my-payroll",
+          "actionName": "GetMyPayroll",
+          "params": ""
+        },
+        {
+          "httpMethod": "HttpGet",
+          "subRoute": "notifications/sse",
+          "actionName": "GetNotificationsSse",
+          "params": ""
+        }
+      ],
+      "injectedUseCases": [
+        "RegisterShiftUseCase",
+        "RegisterFaceUseCase",
+        "ClockInUseCase",
+        "ClockOutUseCase",
+        "ISseNotificationService",
+        "GetAvailableShiftsUseCase",
+        "GetMyRegistrationsUseCase",
+        "CancelPendingRegistrationUseCase",
+        "BulkCancelPendingRegistrationsUseCase",
+        "GetMyWorkingHistoryUseCase",
+        "GetMyPayrollUseCase"
+      ]
+    }
+  ],
+  "useCases": [
+    {
+      "className": "GetRecentAuditLogsUseCase",
+      "fileName": "GetRecentAuditLogsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Audit/GetRecentAuditLogsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CreateBannerUseCase",
+      "fileName": "CreateBannerUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/CreateBannerUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteBannerUseCase",
+      "fileName": "DeleteBannerUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/DeleteBannerUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllBannersUseCase",
+      "fileName": "GetAllBannersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/GetAllBannersUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetBannerByIdUseCase",
+      "fileName": "GetBannerByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/GetBannerByIdUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetBannerScopeUseCase",
+      "fileName": "GetBannerScopeUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/GetBannerScopeUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "ToggleBannerUseCase",
+      "fileName": "ToggleBannerUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/ToggleBannerUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateBannerUseCase",
+      "fileName": "UpdateBannerUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Banners/UpdateBannerUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetManagementDashboardUseCase",
+      "fileName": "GetManagementDashboardUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Dashboard/GetManagementDashboardUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CalculatePricingPromotionUseCase",
+      "fileName": "CalculatePricingPromotionUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/CalculatePricingPromotionUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CheckPricingPromotionConflictsUseCase",
+      "fileName": "CheckPricingPromotionConflictsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/CheckPricingPromotionConflictsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CreatePricingPromotionUseCase",
+      "fileName": "CreatePricingPromotionUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/CreatePricingPromotionUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "DeletePricingPromotionUseCase",
+      "fileName": "DeletePricingPromotionUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/DeletePricingPromotionUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetActivePublicPricingPromotionsUseCase",
+      "fileName": "GetActivePublicPricingPromotionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/GetActivePublicPricingPromotionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllPricingPromotionsUseCase",
+      "fileName": "GetAllPricingPromotionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/GetAllPricingPromotionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetPricingPromotionByIdUseCase",
+      "fileName": "GetPricingPromotionByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/GetPricingPromotionByIdUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetPricingPromotionBySlugUseCase",
+      "fileName": "GetPricingPromotionBySlugUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/GetPricingPromotionBySlugUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetPricingPromotionOptionsUseCase",
+      "fileName": "GetPricingPromotionOptionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/GetPricingPromotionOptionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "PricingPromotionHelper",
+      "fileName": "PricingPromotionHelper",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/PricingPromotionHelper.cs",
+      "module": "Admin",
+      "isHandler": false
+    },
+    {
+      "className": "TogglePricingPromotionUseCase",
+      "fileName": "TogglePricingPromotionUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/TogglePricingPromotionUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "UpdatePricingPromotionUseCase",
+      "fileName": "UpdatePricingPromotionUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/PricingPromotions/UpdatePricingPromotionUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "AdminReadScheduleUseCase",
+      "fileName": "AdminReadScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/ShiftSchedules/AdminReadScheduleUseCase.cs",
+      "module": "Admin",
+      "isHandler": false
+    },
+    {
+      "className": "ApproveDeletionRequestUseCase",
+      "fileName": "ApproveDeletionRequestUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/ShiftSchedules/ApproveDeletionRequestUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetPendingDeletionRequestsUseCase",
+      "fileName": "GetPendingDeletionRequestsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/ShiftSchedules/GetPendingDeletionRequestsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "RejectDeletionRequestUseCase",
+      "fileName": "RejectDeletionRequestUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/ShiftSchedules/RejectDeletionRequestUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetManagedItemsUseCase",
+      "fileName": "GetManagedItemsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Transfers/GetManagedItemsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetUsersByRoleUseCase",
+      "fileName": "GetUsersByRoleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Transfers/GetUsersByRoleUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "TransferManagementUseCase",
+      "fileName": "TransferManagementUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Transfers/TransferManagementUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "AdminUpdateUserProfileUseCase",
+      "fileName": "AdminUpdateUserProfileUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/AdminUpdateUserProfileUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "AdminUserManagementHelper",
+      "fileName": "AdminUserManagementHelper",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/AdminUserManagementHelper.cs",
+      "module": "Admin",
+      "isHandler": false
+    },
+    {
+      "className": "AssignCinemaToManagerUseCase",
+      "fileName": "AssignCinemaToManagerUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/AssignCinemaToManagerUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "AssignRoleToUserUseCase",
+      "fileName": "AssignRoleToUserUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/AssignRoleToUserUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CreateUserUseCase",
+      "fileName": "CreateUserUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/CreateUserUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllPermissionsUseCase",
+      "fileName": "GetAllPermissionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/GetAllPermissionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllUsersUseCase",
+      "fileName": "GetAllUsersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/GetAllUsersUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAssignableRolesUseCase",
+      "fileName": "GetAssignableRolesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/GetAssignableRolesUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetRolesPermissionsUseCase",
+      "fileName": "GetRolesPermissionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/GetRolesPermissionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetUserRolesUseCase",
+      "fileName": "GetUserRolesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/GetUserRolesUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "SetUserStatusUseCase",
+      "fileName": "SetUserStatusUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/SetUserStatusUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateRolePermissionsUseCase",
+      "fileName": "UpdateRolePermissionsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/UpdateRolePermissionsUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateUserPortraitUseCase",
+      "fileName": "UpdateUserPortraitUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/UserManagement/UpdateUserPortraitUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "CreateVoucherUseCase",
+      "fileName": "CreateVoucherUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/CreateVoucherUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteVoucherUseCase",
+      "fileName": "DeleteVoucherUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/DeleteVoucherUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetActiveVouchersUseCase",
+      "fileName": "GetActiveVouchersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/GetActiveVouchersUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllVouchersUseCase",
+      "fileName": "GetAllVouchersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/GetAllVouchersUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyVouchersUseCase",
+      "fileName": "GetMyVouchersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/GetMyVouchersUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "GetVoucherByIdUseCase",
+      "fileName": "GetVoucherByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/GetVoucherByIdUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "RedeemVoucherUseCase",
+      "fileName": "RedeemVoucherUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/RedeemVoucherUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateVoucherUseCase",
+      "fileName": "UpdateVoucherUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Admin/Vouchers/UpdateVoucherUseCase.cs",
+      "module": "Admin",
+      "isHandler": true
+    },
+    {
+      "className": "BookingSeatSelectionPolicy",
+      "fileName": "BookingSeatSelectionPolicy",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/BookingSeatSelectionPolicy.cs",
+      "module": "Booking",
+      "isHandler": false
+    },
+    {
+      "className": "CreateBookingUseCase",
+      "fileName": "CreateBookingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/CreateBookingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetPricingUseCase",
+      "fileName": "GetPricingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/GetPricingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetSeatMapUseCase",
+      "fileName": "GetSeatMapUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/GetSeatMapUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetTicketDataUseCase",
+      "fileName": "GetTicketDataUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/GetTicketDataUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "ProcessVnPayCallbackUseCase",
+      "fileName": "ProcessVnPayCallbackUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/BookingFlow/ProcessVnPayCallbackUseCase.cs",
+      "module": "Booking",
+      "isHandler": false
+    },
+    {
+      "className": "BookingPricingService",
+      "fileName": "BookingPricingService",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Services/BookingPricingService.cs",
+      "module": "Booking",
+      "isHandler": false
+    },
+    {
+      "className": "BookingVoucherService",
+      "fileName": "BookingVoucherService",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Services/BookingVoucherService.cs",
+      "module": "Booking",
+      "isHandler": false
+    },
+    {
+      "className": "GetActiveCinemasUseCase",
+      "fileName": "GetActiveCinemasUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetActiveCinemasUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetActiveMoviesUseCase",
+      "fileName": "GetActiveMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetActiveMoviesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetAdvancedSearchSchedulesUseCase",
+      "fileName": "GetAdvancedSearchSchedulesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetAdvancedSearchSchedulesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetCinemaShowtimesUseCase",
+      "fileName": "GetCinemaShowtimesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetCinemaShowtimesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetCitiesUseCase",
+      "fileName": "GetCitiesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetCitiesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetComingSoonMoviesUseCase",
+      "fileName": "GetComingSoonMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetComingSoonMoviesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetGenresUseCase",
+      "fileName": "GetGenresUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetGenresUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieDetailUseCase",
+      "fileName": "GetMovieDetailUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetMovieDetailUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetNearestCinemasUseCase",
+      "fileName": "GetNearestCinemasUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetNearestCinemasUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetNowShowingMoviesUseCase",
+      "fileName": "GetNowShowingMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetNowShowingMoviesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetSimilarMoviesUseCase",
+      "fileName": "GetSimilarMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/Showtimes/GetSimilarMoviesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "ConfirmGroupMemberSeatsUseCase",
+      "fileName": "ConfirmGroupMemberSeatsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/ConfirmGroupMemberSeatsUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "CreateGroupBookingUseCase",
+      "fileName": "CreateGroupBookingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/CreateGroupBookingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "CreatePairUseCase",
+      "fileName": "CreatePairUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/CreatePairUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetGroupBookingStateUseCase",
+      "fileName": "GetGroupBookingStateUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/GetGroupBookingStateUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetGroupChatMessagesUseCase",
+      "fileName": "GetGroupChatMessagesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/GetGroupChatMessagesUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetGroupPairsUseCase",
+      "fileName": "GetGroupPairsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/GetGroupPairsUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetPaymentMethodVoteStateUseCase",
+      "fileName": "GetPaymentMethodVoteStateUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/GetPaymentMethodVoteStateUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GroupBookingCacheTtl",
+      "fileName": "GroupBookingCacheTtl",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/GroupBookingCacheTtl.cs",
+      "module": "Booking",
+      "isHandler": false
+    },
+    {
+      "className": "HandleGroupPaymentFailureUseCase",
+      "fileName": "HandleGroupPaymentFailureUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/HandleGroupPaymentFailureUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "JoinGroupBookingUseCase",
+      "fileName": "JoinGroupBookingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/JoinGroupBookingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "LeaveGroupBookingUseCase",
+      "fileName": "LeaveGroupBookingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/LeaveGroupBookingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "PayGroupBookingUseCase",
+      "fileName": "PayGroupBookingUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/PayGroupBookingUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "RaiseHandUseCase",
+      "fileName": "RaiseHandUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/RaiseHandUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "RenewGroupMemberSeatLocksUseCase",
+      "fileName": "RenewGroupMemberSeatLocksUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/RenewGroupMemberSeatLocksUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "RespondPairUseCase",
+      "fileName": "RespondPairUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/RespondPairUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "SelectGroupSeatsUseCase",
+      "fileName": "SelectGroupSeatsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/SelectGroupSeatsUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "SendGroupChatMessageUseCase",
+      "fileName": "SendGroupChatMessageUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/SendGroupChatMessageUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "VoteMovieUseCase",
+      "fileName": "VoteMovieUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/VoteMovieUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "VotePaymentFailureUseCase",
+      "fileName": "VotePaymentFailureUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/VotePaymentFailureUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "VotePaymentMethodUseCase",
+      "fileName": "VotePaymentMethodUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/SocialBooking/VotePaymentMethodUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetBookingCustomerByEmailUseCase",
+      "fileName": "GetBookingCustomerByEmailUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/UserHistory/GetBookingCustomerByEmailUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetUserAccountInfoUseCase",
+      "fileName": "GetUserAccountInfoUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/UserHistory/GetUserAccountInfoUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "GetUserBookingHistoryUseCase",
+      "fileName": "GetUserBookingHistoryUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Booking/UserHistory/GetUserBookingHistoryUseCase.cs",
+      "module": "Booking",
+      "isHandler": true
+    },
+    {
+      "className": "ChatbotOrchestrator",
+      "fileName": "ChatbotOrchestrator",
+      "file": "apps/backend/Cinema.Application/UseCases/Chatbot/ChatbotOrchestrator.cs",
+      "module": "Chatbot",
+      "isHandler": true
+    },
+    {
+      "className": "GetCleaningBoardUseCase",
+      "fileName": "CleaningTaskUseCases",
+      "file": "apps/backend/Cinema.Application/UseCases/Cleaning/CleaningTaskUseCases.cs",
+      "module": "Cleaning",
+      "isHandler": true
+    },
+    {
+      "className": "GenerateCleaningTasksForShowtimesUseCase",
+      "fileName": "GenerateCleaningTasksForShowtimesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Cleaning/GenerateCleaningTasksForShowtimesUseCase.cs",
+      "module": "Cleaning",
+      "isHandler": true
+    },
+    {
+      "className": "CreateComboUseCase",
+      "fileName": "CreateComboUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/CreateComboUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "CreateConcessionProductUseCase",
+      "fileName": "CreateConcessionProductUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/CreateConcessionProductUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "GetConcessionMenuUseCase",
+      "fileName": "GetConcessionMenuUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/GetConcessionMenuUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "GetInventoryStatusUseCase",
+      "fileName": "GetInventoryStatusUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/GetInventoryStatusUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "RestockInventoryUseCase",
+      "fileName": "RestockInventoryUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/RestockInventoryUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "CheckConcessionStockUseCase",
+      "fileName": "SellConcessionPosUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/SellConcessionPosUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "CreateStockRequestUseCase",
+      "fileName": "StockRequestUseCases",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/StockRequests/StockRequestUseCases.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateConcessionProductUseCase",
+      "fileName": "UpdateConcessionProductUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/UpdateConcessionProductUseCase.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "CreateWasteReportUseCase",
+      "fileName": "WasteReportUseCases",
+      "file": "apps/backend/Cinema.Application/UseCases/Concessions/WasteReports/WasteReportUseCases.cs",
+      "module": "Concessions",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllUpcomingDatesUseCase",
+      "fileName": "GetAllUpcomingDatesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetAllUpcomingDatesUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetAuditoriumDetailsUseCase",
+      "fileName": "GetAuditoriumDetailsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetAuditoriumDetailsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieDetailUseCase",
+      "fileName": "GetMovieDetailUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMovieDetailUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieFormatsUseCase",
+      "fileName": "GetMovieFormatsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMovieFormatsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMoviePeopleUseCase",
+      "fileName": "GetMoviePeopleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMoviePeopleUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMoviePersonDetailUseCase",
+      "fileName": "GetMoviePersonDetailUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMoviePersonDetailUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieRequiredAgeUseCase",
+      "fileName": "GetMovieRequiredAgeUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMovieRequiredAgeUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMoviesUseCase",
+      "fileName": "GetMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetMoviesUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetScheduleDatesUseCase",
+      "fileName": "GetScheduleDatesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetScheduleDatesUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetScheduleDetailsUseCase",
+      "fileName": "GetScheduleDetailsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Catalog/GetScheduleDetailsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "CreateMovieCommentUseCase",
+      "fileName": "CreateMovieCommentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/CreateMovieCommentUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "CreateMovieReplyUseCase",
+      "fileName": "CreateMovieReplyUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/CreateMovieReplyUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteOwnCommentUseCase",
+      "fileName": "DeleteOwnCommentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/DeleteOwnCommentUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetCommentEligibilityUseCase",
+      "fileName": "GetCommentEligibilityUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/GetCommentEligibilityUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieCommentsUseCase",
+      "fileName": "GetMovieCommentsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/GetMovieCommentsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyNotificationsUseCase",
+      "fileName": "GetMyNotificationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/GetMyNotificationsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetTopRatedMoviesUseCase",
+      "fileName": "GetTopRatedMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/GetTopRatedMoviesUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetTrendingMoviesUseCase",
+      "fileName": "GetTrendingMoviesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/GetTrendingMoviesUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "MarkNotificationAsReadUseCase",
+      "fileName": "MarkNotificationAsReadUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/MarkNotificationAsReadUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "ModerateMovieCommentUseCase",
+      "fileName": "ModerateMovieCommentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/ModerateMovieCommentUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "MovieCommentHelper",
+      "fileName": "MovieCommentHelper",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/MovieCommentHelper.cs",
+      "module": "Customer",
+      "isHandler": false
+    },
+    {
+      "className": "TrackMovieViewUseCase",
+      "fileName": "TrackMovieViewUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Comments/TrackMovieViewUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetRecommendationsUseCase",
+      "fileName": "GetRecommendationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Recommendation/GetRecommendationsUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "GetSurveyStatusUseCase",
+      "fileName": "GetSurveyStatusUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Recommendation/GetSurveyStatusUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "SaveSurveyUseCase",
+      "fileName": "SaveSurveyUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Recommendation/SaveSurveyUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "SyncMoviesToAiServiceUseCase",
+      "fileName": "SyncMoviesToAiServiceUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Customer/Engagement/Recommendation/SyncMoviesToAiServiceUseCase.cs",
+      "module": "Customer",
+      "isHandler": true
+    },
+    {
+      "className": "CreateAuditoriumUseCase",
+      "fileName": "CreateAuditoriumUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/CreateAuditoriumUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteAuditoriumUseCase",
+      "fileName": "DeleteAuditoriumUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/DeleteAuditoriumUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllAuditoriumsUseCase",
+      "fileName": "GetAllAuditoriumsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/GetAllAuditoriumsUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetAuditoriumByIdUseCase",
+      "fileName": "GetAuditoriumByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/GetAuditoriumByIdUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetAuditoriumsByCinemaIdUseCase",
+      "fileName": "GetAuditoriumsByCinemaIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/GetAuditoriumsByCinemaIdUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "SeatLayoutPolicy",
+      "fileName": "SeatLayoutPolicy",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/SeatLayoutPolicy.cs",
+      "module": "FacilitiesManager",
+      "isHandler": false
+    },
+    {
+      "className": "UpdateAuditoriumUseCase",
+      "fileName": "UpdateAuditoriumUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Auditoriums/UpdateAuditoriumUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "CreateCinemaUseCase",
+      "fileName": "CreateCinemaUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/CreateCinemaUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "CreateDepartmentUseCase",
+      "fileName": "CreateDepartmentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/CreateDepartmentUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteCinemaUseCase",
+      "fileName": "DeleteCinemaUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/DeleteCinemaUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteDepartmentUseCase",
+      "fileName": "DeleteDepartmentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/DeleteDepartmentUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetAllCinemasUseCase",
+      "fileName": "GetAllCinemasUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/GetAllCinemasUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetCinemaByIdUseCase",
+      "fileName": "GetCinemaByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/GetCinemaByIdUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetDepartmentsUseCase",
+      "fileName": "GetDepartmentsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/GetDepartmentsUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateCinemaUseCase",
+      "fileName": "UpdateCinemaUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/UpdateCinemaUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateDepartmentUseCase",
+      "fileName": "UpdateDepartmentUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/Cinemas/UpdateDepartmentUseCase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": true
+    },
+    {
+      "className": "FacilitiesManagerReadMovieFormatUseCase",
+      "fileName": "MovieFormatInfoUsecase",
+      "file": "apps/backend/Cinema.Application/UseCases/FacilitiesManager/MovieFormat/MovieFormatInfoUsecase.cs",
+      "module": "FacilitiesManager",
+      "isHandler": false
+    },
+    {
+      "className": "ChangePasswordUseCase",
+      "fileName": "ChangePasswordUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/ChangePasswordUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": true
+    },
+    {
+      "className": "GetProfileUseCase",
+      "fileName": "GetProfileUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/GetProfileUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": true
+    },
+    {
+      "className": "GoogleLoginCallbackUseCase",
+      "fileName": "GoogleLoginCallbackUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/GoogleLoginCallbackUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": true
+    },
+    {
+      "className": "GoogleLoginInitUseCase",
+      "fileName": "GoogleLoginInitUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/GoogleLoginInitUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": false
+    },
+    {
+      "className": "identityAccessRegularLoginUseCase",
+      "fileName": "LoginRegularUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/LoginRegularUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": false
+    },
+    {
+      "className": "IdentityAccessRegularRegisterUseCase",
+      "fileName": "RegisterRegularUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/RegisterRegularUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": false
+    },
+    {
+      "className": "UpdateUserProfileUseCase",
+      "fileName": "UpdateUserProfileUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/IdentityAccess/UpdateUserProfileUseCase.cs",
+      "module": "IdentityAccess",
+      "isHandler": true
+    },
+    {
+      "className": "CreateMovieUseCase",
+      "fileName": "CreateMovieUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/CreateMovieUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteMovieUseCase",
+      "fileName": "DeleteMovieUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/DeleteMovieUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieInfoByIdUseCase",
+      "fileName": "GetMovieInfoByIdUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/GetMovieInfoByIdUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetMovieInfosUseCase",
+      "fileName": "GetMovieInfosUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/GetMovieInfosUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "SetMovieActiveUseCase",
+      "fileName": "SetMovieActiveUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/SetMovieActiveUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "SetMovieInactiveUseCase",
+      "fileName": "SetMovieInactiveUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/SetMovieInactiveUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateMovieUseCase",
+      "fileName": "UpdateMovieUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/MovieManager/MovieInfos/UpdateMovieUseCase.cs",
+      "module": "MovieManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetActiveBannersUseCase",
+      "fileName": "GetActiveBannersUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Public/GetActiveBannersUseCase.cs",
+      "module": "Public",
+      "isHandler": true
+    },
+    {
+      "className": "BulkCancelPendingRegistrationsUseCase",
+      "fileName": "BulkCancelPendingRegistrationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/BulkCancelPendingRegistrationsUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "CancelPendingRegistrationUseCase",
+      "fileName": "CancelPendingRegistrationUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/CancelPendingRegistrationUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "ClockInUseCase",
+      "fileName": "ClockInUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/ClockInUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "ClockOutUseCase",
+      "fileName": "ClockOutUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/ClockOutUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "GetAvailableShiftsUseCase",
+      "fileName": "GetAvailableShiftsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/GetAvailableShiftsUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyPayrollUseCase",
+      "fileName": "GetMyPayrollUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/GetMyPayrollUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyRegistrationsUseCase",
+      "fileName": "GetMyRegistrationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/GetMyRegistrationsUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyWorkingHistoryUseCase",
+      "fileName": "GetMyWorkingHistoryUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/GetMyWorkingHistoryUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "RegisterFaceUseCase",
+      "fileName": "RegisterFaceUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/RegisterFaceUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "RegisterShiftUseCase",
+      "fileName": "RegisterShiftUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/Staff/RegisterShiftUseCase.cs",
+      "module": "Staff",
+      "isHandler": true
+    },
+    {
+      "className": "GetMyAuditoriumsUseCase",
+      "fileName": "GetMyAuditoriumsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/Auditoriums/GetMyAuditoriumsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ReadAuditorium",
+      "fileName": "ReadAuditorium",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/Auditoriums/ReadAuditorium.cs",
+      "module": "TheaterManager",
+      "isHandler": false
+    },
+    {
+      "className": "CreateMovieScheduleUseCase",
+      "fileName": "CreateMovieScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/CreateMovieScheduleUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteMovieScheduleUseCase",
+      "fileName": "DeleteMovieScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/DeleteMovieScheduleUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetMoviesWithFormatsUseCase",
+      "fileName": "GetMoviesWithFormatsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/GetMoviesWithFormatsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ReadMovieSchedules",
+      "fileName": "ReadMovieSchedules",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/ReadMovieSchedules.cs",
+      "module": "TheaterManager",
+      "isHandler": false
+    },
+    {
+      "className": "SetScheduleActiveUseCase",
+      "fileName": "SetScheduleActiveUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/SetScheduleActiveUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "SetScheduleInactiveUseCase",
+      "fileName": "SetScheduleInactiveUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/SetScheduleInactiveUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "UpdateMovieScheduleUseCase",
+      "fileName": "UpdateMovieScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/MovieSchedules/UpdateMovieScheduleUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ApproveShiftRegistrationUseCase",
+      "fileName": "ApproveShiftRegistrationUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/ApproveShiftRegistrationUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "AssignShiftDirectlyUseCase",
+      "fileName": "AssignShiftDirectlyUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/AssignShiftDirectlyUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "CalculatePayrollUseCase",
+      "fileName": "CalculatePayrollUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/CalculatePayrollUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "CancelShiftRegistrationUseCase",
+      "fileName": "CancelShiftRegistrationUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/CancelShiftRegistrationUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "CreateShiftTemplateUseCase",
+      "fileName": "CreateShiftTemplateUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/CreateShiftTemplateUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetCinemaPayrollUseCase",
+      "fileName": "GetCinemaPayrollUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/GetCinemaPayrollUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetShiftRegistrationsUseCase",
+      "fileName": "GetShiftRegistrationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/GetShiftRegistrationsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetShiftTemplatesUseCase",
+      "fileName": "GetShiftTemplatesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/GetShiftTemplatesUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetStaffPayrollUseCase",
+      "fileName": "GetStaffPayrollUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/GetStaffPayrollUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetStaffProfilesUseCase",
+      "fileName": "GetStaffProfilesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/GetStaffProfilesUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "PayPayrollUseCase",
+      "fileName": "PayPayrollUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/PayPayrollUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "RejectShiftRegistrationUseCase",
+      "fileName": "RejectShiftRegistrationUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/RejectShiftRegistrationUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ShiftRegistrationResolver",
+      "fileName": "ShiftRegistrationResolver",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/ShiftRegistrationResolver.cs",
+      "module": "TheaterManager",
+      "isHandler": false
+    },
+    {
+      "className": "UpdateStaffProfileUseCase",
+      "fileName": "UpdateStaffProfileUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftManagement/UpdateStaffProfileUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "CreateShiftScheduleUseCase",
+      "fileName": "CreateShiftScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftSchedules/CreateShiftScheduleUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "DeleteShiftScheduleUseCase",
+      "fileName": "DeleteShiftScheduleUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftSchedules/DeleteShiftScheduleUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetShiftSchedulesUseCase",
+      "fileName": "GetShiftSchedulesUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShiftSchedules/GetShiftSchedulesUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ApplyShowtimeRecommendationsUseCase",
+      "fileName": "ApplyShowtimeRecommendationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/ApplyShowtimeRecommendationsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "DismissShowtimeRecommendationUseCase",
+      "fileName": "DismissShowtimeRecommendationUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/DismissShowtimeRecommendationUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GenerateShowtimeRecommendationsUseCase",
+      "fileName": "GenerateShowtimeRecommendationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/GenerateShowtimeRecommendationsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "GetShowtimeRecommendationHistoryUseCase",
+      "fileName": "GetShowtimeRecommendationHistoryUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/GetShowtimeRecommendationHistoryUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "PreviewShowtimeRecommendationsUseCase",
+      "fileName": "PreviewShowtimeRecommendationsUseCase",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/PreviewShowtimeRecommendationsUseCase.cs",
+      "module": "TheaterManager",
+      "isHandler": true
+    },
+    {
+      "className": "ShowtimeRecommendationMapper",
+      "fileName": "ShowtimeRecommendationMapper",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/ShowtimeRecommendationMapper.cs",
+      "module": "TheaterManager",
+      "isHandler": false
+    },
+    {
+      "className": "ShowtimeRecommendationService",
+      "fileName": "ShowtimeRecommendationService",
+      "file": "apps/backend/Cinema.Application/UseCases/TheaterManager/ShowtimeRecommendations/ShowtimeRecommendationService.cs",
+      "module": "TheaterManager",
+      "isHandler": false
+    }
+  ],
+  "backgroundJobs": [
+    {
+      "name": "AutoGenerateBannersJob",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Banners/AutoGenerateBannersJob.cs"
+    },
+    {
+      "name": "BannerCleanupJob",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Banners/BannerCleanupJob.cs"
+    },
+    {
+      "name": "MovieInterestSyncJob",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Banners/MovieInterestSyncJob.cs"
+    },
+    {
+      "name": "PendingOrderCancellationJob",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Bookings/PendingOrderCancellationJob.cs"
+    },
+    {
+      "name": "MovieStatusSyncBackgroundService",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Movies/MovieStatusSyncBackgroundService.cs"
+    },
+    {
+      "name": "AiMovieEmbeddingStartupService",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Recommendations/AiMovieEmbeddingStartupService.cs"
+    },
+    {
+      "name": "AiMovieEmbeddingSyncService",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Recommendations/AiMovieEmbeddingSyncService.cs"
+    },
+    {
+      "name": "MovieViewBufferSyncService",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/Tracking/MovieViewBufferSyncService.cs"
+    },
+    {
+      "name": "VoteTimerBackgroundService",
+      "file": "apps/backend/Cinema.Infrastructure/BackgroundJobs/VoteTimerBackgroundService.cs"
+    }
+  ],
+  "aiEndpoints": [
+    {
+      "router": "business_research",
+      "file": "services/ai/app/routes/business_research.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/run/stream"
+        },
+        {
+          "method": "POST",
+          "path": "/run"
+        }
+      ]
+    },
+    {
+      "router": "chat",
+      "file": "services/ai/app/routes/chat.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/chat"
+        },
+        {
+          "method": "POST",
+          "path": "/chat/stream"
+        }
+      ]
+    },
+    {
+      "router": "classification",
+      "file": "services/ai/app/routes/classification.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/classify-intent"
+        }
+      ]
+    },
+    {
+      "router": "embedding",
+      "file": "services/ai/app/routes/embedding.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/embed-movies"
+        },
+        {
+          "method": "DELETE",
+          "path": "/embed-movies/{movie_id}"
+        },
+        {
+          "method": "POST",
+          "path": "/sync-movies"
+        }
+      ]
+    },
+    {
+      "router": "guard",
+      "file": "services/ai/app/routes/guard.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/guard"
+        }
+      ]
+    },
+    {
+      "router": "health",
+      "file": "services/ai/app/routes/health.py",
+      "endpoints": [
+        {
+          "method": "GET",
+          "path": "/health"
+        }
+      ]
+    },
+    {
+      "router": "moderation",
+      "file": "services/ai/app/routes/moderation.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/moderate"
+        }
+      ]
+    },
+    {
+      "router": "recommendations",
+      "file": "services/ai/app/routes/recommendations.py",
+      "endpoints": [
+        {
+          "method": "POST",
+          "path": "/recommend"
+        },
+        {
+          "method": "POST",
+          "path": "/recommend-by-id"
+        }
+      ]
+    },
+    {
+      "router": "__init__",
+      "file": "services/ai/app/routes/__init__.py",
+      "endpoints": []
+    }
+  ]
+}

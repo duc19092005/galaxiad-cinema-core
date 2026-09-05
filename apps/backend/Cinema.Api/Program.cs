@@ -294,9 +294,10 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Disable rate limiting in Development/Docker to avoid 429 errors during development
+// Disable rate limiting in Development/Docker to avoid 429 errors during development, unless explicitly enabled for testing
 var envName = app.Environment.EnvironmentName;
-if (envName != "Development" && envName != "Docker")
+var rateLimitTestingMode = app.Configuration.GetValue<bool>("RateLimiting:TestingMode", false);
+if ((envName != "Development" && envName != "Docker") || rateLimitTestingMode)
 {
     app.UseRateLimiter();
 }
@@ -332,15 +333,36 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
         : []
 });
 
-// Register recurring jobs
-var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
-recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
-recurringJobManager.AddBannerCleanupRecurringJob(intervalMinutes: 30);
-recurringJobManager.AddMovieInterestSyncRecurringJob(intervalMinutes: 10);
+// Register recurring jobs if enabled
+var backgroundJobsEnabled = app.Configuration.GetValue<bool>("BackgroundJobs:Enabled", true);
+if (backgroundJobsEnabled)
+{
+    var recurringJobManager = app.Services.GetRequiredService<IRecurringJobManager>();
+    recurringJobManager.AddPendingOrderCancellationRecurringJob(intervalMinutes: 5, expireAfterMinutes: 15);
+    recurringJobManager.AddBannerCleanupRecurringJob(intervalMinutes: 30);
+    recurringJobManager.AddMovieInterestSyncRecurringJob(intervalMinutes: 10);
 
-// Auto-generate banners for all cinemas on startup + every 6 hours
-var backgroundJobClient = app.Services.GetRequiredService<IBackgroundJobClient>();
-recurringJobManager.AddAutoGenerateBannersJob(backgroundJobClient);
+    // Auto-generate banners for all cinemas on startup + every 6 hours
+    var backgroundJobClient = app.Services.GetRequiredService<IBackgroundJobClient>();
+    recurringJobManager.AddAutoGenerateBannersJob(backgroundJobClient);
+}
+
+// Health checks endpoints for Docker/K8s liveness and readiness probes
+app.MapGet("/health/live", () => Results.Ok(new { status = "Live", timestamp = DateTime.UtcNow }));
+app.MapGet("/health/ready", async (CinemaDbContext dbContext) =>
+{
+    try
+    {
+        var canConnect = await dbContext.Database.CanConnectAsync();
+        return canConnect
+            ? Results.Ok(new { status = "Ready", database = "Connected", timestamp = DateTime.UtcNow })
+            : Results.Problem("Database connection unavailable", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Readiness check failed: {ex.Message}", statusCode: StatusCodes.Status503ServiceUnavailable);
+    }
+});
 
 app.MapControllers();
 app.MapHub<CinemaHub>("/hubs/cinema");

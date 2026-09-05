@@ -1,14 +1,16 @@
-# 🎬 Galaxiad Cinema Core
+# 🎬 Galaxiad Cinema Core — Comprehensive Cinema Management System
 
-> Comprehensive cinema management platform — manage auditoriums, showtimes, tickets, promotions, staff, and AI assistance — all in one unified interface.
+> **Enterprise-grade multi-cinema operations and management platform — Far beyond a simple ticket booking system.**  
+> An end-to-end solution covering the complete cinema operational lifecycle: from auditorium layout grids, dynamic seat matrix, conflict-free scheduling, staff shift scheduling & biometric face-scan attendance, POS counter sales, concession inventory management, janitorial task workflows, dynamic pricing rules & loyalty vouchers, to DeepSeek AI agents and business intelligence analytics.
 
 ---
 
 ## 🚀 Project Mission
 
-**Galaxiad Cinema Core** is a modern cinema management platform that helps theater owners and operations teams manage their entire business — from online ticket booking, auditorium management, showtime scheduling, promotions, staff management, attendance tracking, to revenue reports — all in a single system.
-
-The platform integrates AI for intelligent showtime recommendations, a 24/7 AI chatbot powered by LangChain Agent, and personalized movie suggestions based on user behavior.
+**Galaxiad Cinema Core** is an enterprise-grade **Comprehensive Cinema Management System**. The architecture is engineered to reach far beyond conventional ticket booking websites, functioning as a synchronized operating platform for cinema chain networks:
+- **Far Beyond Ticket Booking**: The system resolves complex cinema operations — managing multi-auditorium facilities, customizable seat matrices (Standard, VIP, Sweetbox/Couple), staff shift rosters with peer swap requests, camera-based facial recognition attendance clock-in, point-of-sale (POS) ticket and concession combo checkouts, warehouse inventory logistics, automated cleaning task dispatching, multi-tiered dynamic pricing policies (3D/IMAX/4DX format surcharges, early bird slots, audience segments), and in-depth business intelligence reporting.
+- **Deep AI Integration**: Conflict-free smart showtime scheduling recommendations, 24/7 conversational customer service and automated booking flow orchestration via LangChain Agent + DeepSeek LLM, and personalized movie recommendation models powered by Qdrant vector embeddings.
+- **Real-Time Customer Experience**: Seamless seat booking backed by distributed Redis seat locking to prevent double-booking collisions, cryptographically verified VNPay HMAC-SHA512 electronic payments, and collaborative social booking rooms with democratic payment method voting.
 
 ---
 

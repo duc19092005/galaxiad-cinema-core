@@ -1,112 +1,40 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import { useTranslation } from 'react-i18next';
 import {
-  BadgeCheck,
-  Banknote,
   Calendar,
   CalendarPlus,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  CircleDollarSign,
-  Clock3,
   Loader2,
   RefreshCw,
-  ScanFace,
-  Trash2,
-  UserCheck,
-  UserRound,
   Users,
-  X,
 } from 'lucide-react';
 import { staffShiftApi } from '../../../api/staffShiftApi';
 import { theaterShiftApi } from '../../../api/theaterShiftApi';
 import { facilitiesApi } from '../../../api/facilitiesApi';
 import { showError, showSuccess } from '../../../utils/ToastUtils';
-import type { PayrollDto, ShiftRegistrationDto, ShiftTemplateDto, StaffProfileDto, ShiftScheduleDto } from '../../../types/shift.types';
-import { useTranslation } from 'react-i18next';
+import type {
+  PayrollDto,
+  ShiftRegistrationDto,
+  ShiftScheduleDto,
+  ShiftTemplateDto,
+  StaffProfileDto,
+} from '../../../types/shift.types';
 import FaceScanModal from '../../../components/FaceScanModal';
-
-
-const statusFilters = ['All', 'Pending', 'Approved', 'Rejected', 'Cancelled'] as const;
-
-/** Local calendar YYYY-MM-DD (avoids UTC shift from toISOString). */
-const toLocalDateKey = (d: Date) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-};
-
-const parseLocalDate = (yyyyMmDd: string) => {
-  const [y, m, d] = yyyyMmDd.split('-').map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-};
-
-const todayInput = () => toLocalDateKey(new Date());
-
-/** Normalize API schedule date to YYYY-MM-DD for filtering/grouping. */
-const scheduleDateKey = (value?: string | null) => {
-  if (!value) return '';
-  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return '';
-  return toLocalDateKey(d);
-};
-
-const getApiErrorMessage = (error: unknown, fallback: string) => {
-  if (!axios.isAxiosError(error)) return fallback;
-  const payload = error.response?.data as { message?: string; Message?: string; errorCode?: string; ErrorCode?: string } | undefined;
-  const code = payload?.errorCode ?? payload?.ErrorCode;
-  if (error.response?.status === 409 || code === 'SHIFT_ERR') return 'Capacity limit updated. Try again in a few seconds.';
-  if (code === 'PAYROLL_ERR') return payload?.message ?? payload?.Message ?? 'Payroll cannot be processed.';
-  return payload?.message ?? payload?.Message ?? fallback;
-};
-
-const formatDate = (value?: string | null) => {
-  if (!value) return 'N/A';
-  return new Date(value).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-};
-
-const formatMoney = (value: number) => `${value.toLocaleString('vi-VN')} VND`;
-
-const statusBadgeClass = (status: string) => {
-  if (status === 'Approved' || status === 'Paid' || status === 'Active') return 'badge badge-success';
-  if (status === 'Pending' || status === 'PendingDeletion') return 'badge badge-warning';
-  if (status === 'Rejected' || status === 'Cancelled' || status === 'Deleted') return 'badge badge-danger';
-  return 'badge badge-default';
-};
-
-const StaffPortrait: React.FC<{ src?: string | null; name: string }> = ({ src, name }) => (
-  <div style={{
-    width: 34,
-    height: 34,
-    borderRadius: '50%',
-    overflow: 'hidden',
-    background: 'var(--accent-soft)',
-    border: '1px solid var(--border-color)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  }}>
-    {src ? (
-      <img src={src} alt={`${name} portrait`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-    ) : (
-      <UserRound size={16} style={{ color: 'var(--accent)' }} />
-    )}
-  </div>
-);
-
-const addHoursToTime = (timeStr: string, hours: number): string => {
-  if (!timeStr) return '';
-  const [h, m] = timeStr.split(':').map(Number);
-  const newH = (h + hours) % 24;
-  return `${String(newH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-};
-
-const hoursArray = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
-const minutesArray = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+import {
+  addHoursToTime,
+  formatDate,
+  getApiErrorMessage,
+  parseLocalDate,
+  scheduleDateKey,
+  statusFilters,
+  todayInput,
+  toLocalDateKey,
+} from './shiftWorkspace/shiftWorkspaceHelpers';
+import { ShiftSummaryCards } from './shiftWorkspace/ShiftSummaryCards';
+import { ShiftRegistrationsSection } from './shiftWorkspace/ShiftRegistrationsSection';
+import { ShiftDirectAssignmentSection } from './shiftWorkspace/ShiftDirectAssignmentSection';
+import { PayrollSection } from './shiftWorkspace/PayrollSection';
+import { StaffDirectorySection } from './shiftWorkspace/StaffDirectorySection';
+import { ShiftSchedulingSection } from './shiftWorkspace/ShiftSchedulingSection';
 
 interface EmployeesShiftWorkspaceProps {
   cinemaId: string | null;
@@ -115,6 +43,7 @@ interface EmployeesShiftWorkspaceProps {
   /** When true, hide management/scheduling tab switcher (dedicated route pages). */
   lockToDefaultTab?: boolean;
 }
+
 const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
   cinemaId,
   defaultTab = 'management',
@@ -122,7 +51,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
   lockToDefaultTab = false,
 }) => {
   const [activeTab, setActiveTab] = useState<'management' | 'scheduling'>(defaultTab);
-  
+
   useEffect(() => {
     setActiveTab(defaultTab);
   }, [defaultTab]);
@@ -168,7 +97,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     d.setDate(diff);
     return toLocalDateKey(d);
   });
-  /** Optional single-day focus from week strip (null = show full range from DB). */
   const [focusedDay, setFocusedDay] = useState<string | null>(null);
   const [schedules, setSchedules] = useState<ShiftScheduleDto[]>([]);
   const [schedulesLoading, setSchedulesLoading] = useState(false);
@@ -198,13 +126,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
   const activeStaff = staff.filter((item) => item.workingStatus);
   const faceReadyCount = staff.filter((item) => item.hasFaceRegistered).length;
 
-  // Removed unused defaultStaffId and defaultTemplateId
-
   const uniqueRoles = useMemo(() => {
     const map = new Map<string, string>();
-    templates.forEach(t => {
-      const rid = t.roleId ?? (t as any).RoleId;
-      const rname = t.roleName ?? (t as any).RoleName;
+    templates.forEach(tpl => {
+      const rid = tpl.roleId ?? (tpl as any).RoleId;
+      const rname = tpl.roleName ?? (tpl as any).RoleName;
       if (rid && rname) map.set(rid, rname);
     });
     const list = Array.from(map.entries()).map(([roleId, roleName]) => ({ roleId, roleName }));
@@ -218,7 +144,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     return list;
   }, [templates]);
 
-  // Generate repeating week choices based on selected newSchedDate
   const repeatWeekChoices = useMemo(() => {
     if (!newSchedDate) return [];
     const date = new Date(newSchedDate);
@@ -236,12 +161,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
 
   const shiftWeekDays = useMemo(() => {
     const start = parseLocalDate(scheduleStartDate);
-    if (Number.isNaN(start.getTime())) return [] as { key: string; label: string; sub: string; count: number; isToday: boolean }[];
+    if (Number.isNaN(start.getTime())) return [];
     const todayKey = todayInput();
     const end = parseLocalDate(scheduleEndDate);
-    const days: { key: string; label: string; sub: string; count: number; isToday: boolean }[] = [];
+    const days = [];
     const cursor = new Date(start);
-    // Cap strip at 14 days to keep UI usable for custom ranges
     for (let i = 0; i < 14 && cursor.getTime() <= end.getTime(); i++) {
       const key = toLocalDateKey(cursor);
       const count = schedules.filter((s) => scheduleDateKey(s.date) === key).length;
@@ -282,7 +206,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     setScheduleEndDate(toLocalDateKey(end));
   };
 
-  // Group schedules by date for rendering
   const groupedSchedules = useMemo(() => {
     const groups: { date: string; dateKey: string; dateObj: Date; items: ShiftScheduleDto[] }[] = [];
     visibleSchedules.forEach((s) => {
@@ -330,7 +253,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
       const rawPayrolls = payrollRes.data ?? (payrollRes as any).Data ?? (Array.isArray(payrollRes) ? payrollRes : []);
       const rawDepts = deptRes.data ?? (deptRes as any).Data ?? (Array.isArray(deptRes) ? deptRes : []);
 
-      // Normalize all properties and keep DTO shape using spread operator
       const normalizedStaff = rawStaff.map((s: any) => ({
         ...s,
         userId: s.userId ?? s.UserId,
@@ -417,7 +339,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
       setAssignStaffId((current) => current || firstStaffId);
       setPayrollStaffId((current) => current || firstStaffId);
       setAssignTemplateId((current) => current || firstTemplateId);
-      
+
       const defaultRoleId = normalizedTemplates?.[0]?.roleId ?? '';
       setNewSchedRoleId((current) => current || defaultRoleId);
     } catch (error) {
@@ -427,7 +349,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     }
   }, [cinemaId, statusFilter, t]);
 
-  // Load scheduled shifts for the scheduling tab (date filter hits DB via query params)
   const loadSchedules = useCallback(async () => {
     if (!cinemaId || activeTab !== 'scheduling') return;
     if (!selectedDeptId) {
@@ -440,12 +361,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
 
     setSchedulesLoading(true);
     try {
-      const res = await theaterShiftApi.getShiftSchedules(
-        cinemaId,
-        selectedDeptId,
-        start,
-        end,
-      );
+      const res = await theaterShiftApi.getShiftSchedules(cinemaId, selectedDeptId, start, end);
       const rawScheds = res.data ?? (res as any).Data ?? (Array.isArray(res) ? res : []);
       const normalizedScheds = (Array.isArray(rawScheds) ? rawScheds : []).map((s: any) => ({
         ...s,
@@ -491,16 +407,13 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
   useEffect(() => {
     if (departments.length > 0 && !selectedDeptId) {
       const firstDeptId = departments[0].departmentId ?? departments[0].DepartmentId;
-      if (firstDeptId) {
-        setSelectedDeptId(firstDeptId);
-      }
+      if (firstDeptId) setSelectedDeptId(firstDeptId);
     }
   }, [departments, selectedDeptId]);
 
   useEffect(() => {
     const firstStaffId = staff[0]?.userId;
     const firstTemplateId = templates[0]?.shiftTemplateId;
-
     if (!assignStaffId && firstStaffId) setAssignStaffId(firstStaffId);
     if (!payrollStaffId && firstStaffId) setPayrollStaffId(firstStaffId);
     if (!assignTemplateId && firstTemplateId) setAssignTemplateId(firstTemplateId);
@@ -512,11 +425,10 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     }
   }, [uniqueRoles, newSchedRoleId]);
 
-  // Handle template pre-filling in scheduling form
   const handlePrefillTemplate = (templateId: string) => {
     setPrefillTemplateId(templateId);
     if (!templateId) return;
-    const target = templates.find(t => t.shiftTemplateId === templateId);
+    const target = templates.find(tpl => tpl.shiftTemplateId === templateId);
     if (target) {
       setNewSchedName(target.shiftName);
       setNewSchedStart(target.startTime.slice(0, 5));
@@ -640,7 +552,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     }
   };
 
-  // Create scheduled shift
   const handleCreateSchedule = async () => {
     if (!cinemaId || !selectedDeptId) return;
     if (!newSchedDate || !newSchedName || !newSchedStart || !newSchedEnd || !newSchedRoleId) {
@@ -665,7 +576,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
       await theaterShiftApi.createShiftSchedule({
         cinemaId,
         departmentId: selectedDeptId,
-        // Business calendar day (no Z) — backend treats Unspecified as Vietnam local.
         date: `${newSchedDate}T00:00:00`,
         shifts: [
           {
@@ -675,7 +585,7 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
             maxStaff: newSchedMaxStaff,
             roleId: newSchedRoleId,
             shiftType: newSchedShiftType,
-          }
+          },
         ],
         repeatWeekly,
         repeatWeeksCount: repeatWeekly ? repeatWeeksCount : undefined,
@@ -693,12 +603,11 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
     }
   };
 
-  // Delete scheduled shift
   const handleDeleteSchedule = async (id: string, hasRegistered: boolean) => {
     const confirmMsg = hasRegistered
       ? t('employeesShiftWorkspace.confirmDeleteHasRegistered')
       : t('employeesShiftWorkspace.confirmDeleteNoRegistered');
-    
+
     if (!window.confirm(confirmMsg)) return;
 
     const reason = window.prompt(t('employeesShiftWorkspace.promptReason'), '');
@@ -821,1104 +730,122 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
         </div>
       </div>
 
-      {/* RENDER: QUẢN LÝ NHÂN VIÊN (hiển thị cho cả 2 mode nhưng staff-only chỉ có phần này) */}
+      {/* RENDER: QUẢN LÝ NHÂN VIÊN */}
       {(mode === 'staff-only' || activeTab === 'management') && (
         <>
-          <div className="employee-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}>
-            <SummaryTile icon={<Users size={18} />} label={t('employeesShiftWorkspace.activeStaff')} value={`${activeStaff.length}/${staff.length}`} />
-            <SummaryTile icon={<ScanFace size={18} />} label={t('employeesShiftWorkspace.faceRegistered')} value={`${faceReadyCount}/${staff.length}`} />
-            <SummaryTile icon={<CalendarPlus size={18} />} label={t('employeesShiftWorkspace.pendingRegistrations')} value={String(pendingRegistrations.length)} />
-            <SummaryTile icon={<Banknote size={18} />} label={t('employeesShiftWorkspace.pendingPayrolls')} value={String(pendingPayrolls.length)} />
-          </div>
+          <ShiftSummaryCards
+            activeStaffCount={activeStaff.length}
+            totalStaffCount={staff.length}
+            faceReadyCount={faceReadyCount}
+            pendingRegistrationsCount={pendingRegistrations.length}
+            pendingPayrollsCount={pendingPayrolls.length}
+          />
 
-          {/* Phần duyệt ca chỉ hiện ở mode shift-management */}
           {mode === 'shift-management' && (
-          <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)', gap: 16 }}>
-            <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.shiftRegistrations')}</h3>
-                <select className="input select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as (typeof statusFilters)[number])} style={{ width: 180 }}>
-                  {statusFilters.map((status) => <option key={status} value={status}>{status}</option>)}
-                </select>
+            <section className="employee-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.35fr) minmax(320px, 0.65fr)', gap: 16 }}>
+              <ShiftRegistrationsSection
+                registrations={registrations}
+                groupedRegistrations={groupedRegistrations}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                loading={loading}
+                actionLoading={actionLoading}
+                onAction={runRegistrationAction}
+              />
+
+              <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
+                <ShiftDirectAssignmentSection
+                  staff={staff}
+                  templates={templates}
+                  assignStaffId={assignStaffId}
+                  setAssignStaffId={setAssignStaffId}
+                  assignTemplateId={assignTemplateId}
+                  setAssignTemplateId={setAssignTemplateId}
+                  assignDate={assignDate}
+                  setAssignDate={setAssignDate}
+                  actionLoading={actionLoading}
+                  onAssignShift={handleAssignShift}
+                />
+
+                <PayrollSection
+                  staff={staff}
+                  payrolls={payrolls}
+                  payrollStaffId={payrollStaffId}
+                  setPayrollStaffId={setPayrollStaffId}
+                  payrollUpToDate={payrollUpToDate}
+                  setPayrollUpToDate={setPayrollUpToDate}
+                  actionLoading={actionLoading}
+                  onCalculatePayroll={handleCalculatePayroll}
+                  onPayPayroll={handlePayPayroll}
+                />
               </div>
+            </section>
+          )}
 
-              {loading ? (
-                <LoadingState label={t('employeesShiftWorkspace.loadingRegistrations')} />
-              ) : registrations.length === 0 ? (
-                <EmptyState label={t('employeesShiftWorkspace.noRegistrationsMatch')} />
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {groupedRegistrations.map((group) => (
-                    <div key={group.date} style={{ 
-                      background: 'var(--bg-elevated)', 
-                      border: '1px solid var(--border-color)', 
-                      borderRadius: 'var(--radius-lg)', 
-                      padding: '16px 20px',
-                      boxShadow: 'var(--shadow-md)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-                        <div style={{ width: 6, height: 16, background: 'var(--accent)', borderRadius: '2px' }} />
-                        <span style={{ fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>{group.date}</span>
-                        <span style={{ 
-                          fontSize: '11px', 
-                          color: 'var(--accent)', 
-                          background: 'var(--accent-soft)',
-                          padding: '2px 8px',
-                          borderRadius: 'var(--radius-sm)',
-                          fontWeight: 700,
-                          marginLeft: '8px'
-                        }}>
-                          {group.items.length} {t('employeesShiftWorkspace.registrationsCount')}
-                        </span>
-                      </div>
-                      <div className="table-container" style={{ border: 'none', background: 'transparent' }}>
-                        <table style={{ width: '100%' }}>
-                          <thead>
-                            <tr>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colStaff')}</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colShift')}</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colStatus')}</th>
-                              <th style={{ color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colNotes')}</th>
-                              <th style={{ textAlign: 'right', color: 'var(--text-primary)', opacity: 0.9 }}>{t('employeesShiftWorkspace.colActions')}</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {group.items.map((registration) => (
-                              <tr key={registration.shiftRegistrationId}>
-                                <td>
-                                  <strong style={{ color: 'var(--text-primary)', fontWeight: 650 }}>{registration.staffName}</strong>
-                                </td>
-                                <td>
-                                  <div style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{registration.shiftName}</div>
-                                  <div style={{ fontSize: 11, color: 'var(--text-primary)', opacity: 0.8, marginTop: 2 }}>{registration.startTime} {t('employeesShiftWorkspace.timeTo')} {registration.endTime}</div>
-                                </td>
-                                <td><span className={statusBadgeClass(registration.status)}>{registration.status}</span></td>
-                                <td style={{ 
-                                  color: registration.notes ? 'var(--text-primary)' : 'var(--text-secondary)', 
-                                  fontSize: 13, 
-                                  fontStyle: registration.notes ? 'normal' : 'italic',
-                                  fontWeight: registration.notes ? 500 : 'normal',
-                                  opacity: registration.notes ? 1 : 0.6
-                                }}>
-                                  {registration.notes || '-'}
-                                </td>
-                                <td>
-                                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                                    {registration.status === 'Pending' && (
-                                      <>
-                                        <ActionButton label={t('employeesShiftWorkspace.approve')} tone="success" icon={<Check size={13} />} loading={actionLoading === `approve-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'approve')} />
-                                        <ActionButton label={t('employeesShiftWorkspace.reject')} tone="danger" icon={<X size={13} />} loading={actionLoading === `reject-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'reject')} />
-                                      </>
-                                    )}
-                                    {registration.status === 'Approved' && (
-                                      <ActionButton label={t('employeesShiftWorkspace.cancel')} tone="danger" icon={<X size={13} />} loading={actionLoading === `cancel-${registration.shiftRegistrationId}`} onClick={() => runRegistrationAction(registration, 'cancel')} />
-                                    )}
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: 'grid', gap: 16, alignContent: 'start' }}>
-              <Panel title={t('employeesShiftWorkspace.directAssignment')} icon={<CalendarPlus size={18} />}>
-                <Field label={t('employeesShiftWorkspace.staff')}>
-                  <select className="input select" value={assignStaffId} onChange={(event) => setAssignStaffId(event.target.value)}>
-                    {staff.map((item) => <option key={item.userId} value={item.userId}>{item.userName}</option>)}
-                  </select>
-                </Field>
-                <Field label={t('employeesShiftWorkspace.shiftTemplate')}>
-                  <select className="input select" value={assignTemplateId} onChange={(event) => setAssignTemplateId(event.target.value)}>
-                    {templates.map((template) => <option key={template.shiftTemplateId} value={template.shiftTemplateId}>{template.shiftName} ({template.roleName})</option>)}
-                  </select>
-                </Field>
-                <Field label={t('employeesShiftWorkspace.date')}>
-                  <input className="input" type="date" value={assignDate} onChange={(event) => setAssignDate(event.target.value)} />
-                </Field>
-                <button className="btn btn-primary" onClick={handleAssignShift} disabled={actionLoading === 'assign' || staff.length === 0 || templates.length === 0}>
-                  {actionLoading === 'assign' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <CalendarPlus size={16} />}
-                  {t('employeesShiftWorkspace.assignShift')}
-                </button>
-              </Panel>
-
-              <Panel title={t('employeesShiftWorkspace.payroll')} icon={<CircleDollarSign size={18} />}>
-                <Field label={t('employeesShiftWorkspace.staff')}>
-                  <select className="input select" value={payrollStaffId} onChange={(event) => setPayrollStaffId(event.target.value)}>
-                    {staff.map((item) => <option key={item.userId} value={item.userId}>{item.userName}</option>)}
-                  </select>
-                </Field>
-                <Field label={t('employeesShiftWorkspace.calculateUpTo')}>
-                  <input className="input" type="date" value={payrollUpToDate} onChange={(event) => setPayrollUpToDate(event.target.value)} />
-                </Field>
-                <button className="btn btn-primary" onClick={handleCalculatePayroll} disabled={actionLoading === 'calculate-payroll' || staff.length === 0}>
-                  {actionLoading === 'calculate-payroll' ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Banknote size={16} />}
-                  {t('employeesShiftWorkspace.calculatePayroll')}
-                </button>
-              </Panel>
-
-              <Panel title={t('employeesShiftWorkspace.payrollHistory')} icon={<Banknote size={18} />}>
-                {payrolls.length === 0 ? (
-                  <EmptyState label={t('employeesShiftWorkspace.noPayrollRecords')} />
-                ) : (
-                  <div className="table-container">
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>{t('employeesShiftWorkspace.colPayrollStaff')}</th>
-                          <th>{t('employeesShiftWorkspace.colAmount')}</th>
-                          <th>{t('employeesShiftWorkspace.colStatus')}</th>
-                          <th>{t('employeesShiftWorkspace.colActions')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {payrolls.map((payroll) => (
-                          <tr key={payroll.salaryTotalLoggerId}>
-                            <td>
-                              <strong>{payroll.staffName}</strong>
-                              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDate(payroll.receivedDay)}</div>
-                            </td>
-                            <td>{formatMoney(payroll.totalReceived)}</td>
-                            <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
-                            <td>
-                              {payroll.paymentStatus === 'Pending' ? (
-                                <ActionButton label={t('employeesShiftWorkspace.pay')} tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
-                              ) : (
-                                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || t('employeesShiftWorkspace.paid')}</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Panel>
-            </div>
-          </section>
-          )}{/* end mode === shift-management */}
-          {/* Bảng nhân viên & phòng ban chỉ hiện ở trang Quản lý nhân viên */}
           {mode === 'staff-only' && (
-          <section className="employee-layout" style={{ display: 'grid', gap: 16 }}>
-            {/* ─── Bảng 1: Nhân viên thực thể ─── */}
-            <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <UserRound size={18} style={{ color: 'var(--accent)' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.staff')}</h3>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
-                  background: 'var(--accent-soft)', color: 'var(--accent)', border: '1px solid var(--accent)',
-                }}>
-                  {staff.length} {t('employeesShiftWorkspace.people')}
-                </span>
-              </div>
-              {staff.length === 0 ? (
-                <EmptyState label={t('employeesShiftWorkspace.noStaffFound')} />
-              ) : (
-                <div className="table-container">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t('employeesShiftWorkspace.colStaffName')}</th>
-                        <th>{t('employeesShiftWorkspace.colDepartment')}</th>
-                        <th>{t('employeesShiftWorkspace.colFace')}</th>
-                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
-                        <th>{t('employeesShiftWorkspace.colActions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {staff.map((profile) => (
-                        <tr key={profile.userId}>
-                          <td>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                              <StaffPortrait src={profile.portraitImageUrl} name={profile.userName} />
-                              <div>
-                                <strong>{profile.userName}</strong>
-                                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{profile.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td>
-                            <span className="badge badge-default" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}>
-                              {profile.departmentName || t('employeesShiftWorkspace.unassigned')}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={profile.hasFaceRegistered ? 'badge badge-success' : 'badge badge-warning'}>
-                              {profile.hasFaceRegistered ? t('employeesShiftWorkspace.registered') : t('employeesShiftWorkspace.notYet')}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={profile.workingStatus ? 'badge badge-success' : 'badge badge-default'}>
-                              {profile.workingStatus ? t('employeesShiftWorkspace.active') : t('employeesShiftWorkspace.inactive')}
-                            </span>
-                          </td>
-                          <td>
-                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                              <ActionButton label={profile.workingStatus ? t('employeesShiftWorkspace.deactivate') : t('employeesShiftWorkspace.activate')} tone={profile.workingStatus ? 'danger' : 'success'} icon={<UserCheck size={13} />} loading={actionLoading === `staff-${profile.userId}`} onClick={() => handleToggleStaffStatus(profile)} />
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* ─── Bảng 2: Tài khoản quầy phòng ban (POS Shared Accounts) ─── */}
-            <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <Users size={18} style={{ color: '#f59e0b' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.departmentAccounts')}</h3>
-                <span style={{
-                  fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
-                  background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.35)',
-                }}>
-                  {departments.length} {t('employeesShiftWorkspace.departments')}
-                </span>
-              </div>
-              {departments.length === 0 ? (
-                <EmptyState label={t('employeesShiftWorkspace.noDepartments')} />
-              ) : (
-                <div className="table-container">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t('employeesShiftWorkspace.colDepartmentName')}</th>
-                        <th>{t('employeesShiftWorkspace.colType')}</th>
-                        <th>{t('employeesShiftWorkspace.colPOSEmail')}</th>
-                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {departments.map((dept, index) => {
-                        const id = dept.departmentId ?? dept.DepartmentId;
-                        const name = dept.departmentName ?? dept.DepartmentName;
-                        const type = dept.cashierType ?? dept.CashierType ?? dept.departmentType ?? dept.DepartmentType;
-                        const departmentType = dept.departmentType ?? dept.DepartmentType;
-                        const isJanitorial = departmentType === 1 || departmentType === 'Janitorial';
-                        const email = dept.sharedUserEmail ?? dept.SharedUserEmail;
-                        const isActive = dept.isActive ?? dept.IsActive;
-                        const typeLabel = type === 1 ? t('employeesShiftWorkspace.typeTicketCounter') : type === 2 ? t('employeesShiftWorkspace.typeFoodCounter') : type === 3 ? t('employeesShiftWorkspace.typeWarehouse') : t('employeesShiftWorkspace.typeDepartment');
-                        const typeTone = type === 1 ? '#3b82f6' : type === 2 ? '#f59e0b' : type === 3 ? '#8b5cf6' : '#6b7280';
-                        const itemKey = (!id || id === '00000000-0000-0000-0000-000000000000') ? `dept-${index}` : id;
-                        return (
-                          <tr key={itemKey}>
-                            <td>
-                              <strong style={{ color: 'var(--text-primary)' }}>{name}</strong>
-                            </td>
-                            <td>
-                              <span style={{
-                                fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6,
-                                background: `${typeTone}18`, color: typeTone, border: `1px solid ${typeTone}40`,
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {typeLabel}
-                              </span>
-                            </td>
-                            <td>
-                              {email ? (
-                                <div>
-                                  <div style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>{email}</div>
-                                  <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>{t('employeesShiftWorkspace.sharedPOSAccount')}</div>
-                                </div>
-                              ) : (
-                                <span style={{
-                                  display: 'inline-flex', alignItems: 'center', minHeight: 26,
-                                  padding: '4px 9px', borderRadius: 7, fontSize: 11, fontWeight: 700,
-                                  color: isJanitorial ? '#22c55e' : 'var(--text-muted)',
-                                  background: isJanitorial ? 'rgba(34,197,94,0.10)' : 'transparent',
-                                  border: isJanitorial ? '1px solid rgba(34,197,94,0.28)' : 'none',
-                                  fontStyle: isJanitorial ? 'normal' : 'italic'
-                                }}>
-                                  {isJanitorial
-                                    ? t('employeesShiftWorkspace.noPOSRequired')
-                                    : t('employeesShiftWorkspace.notConfigured')}
-                                </span>
-                              )}
-                            </td>
-                            <td>
-                              <span className={isActive ? 'badge badge-success' : 'badge badge-default'}>
-                                {isActive ? t('employeesShiftWorkspace.active') : t('employeesShiftWorkspace.off')}
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* ─── Bảng 3: Lịch sử lương ─── */}
-            <div className="glass-card" style={{ padding: 20, overflow: 'hidden' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <Banknote size={18} style={{ color: '#22c55e' }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.payrollHistory')}</h3>
-                {pendingPayrolls.length > 0 && (
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 8,
-                    background: 'rgba(34,197,94,0.12)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.35)',
-                  }}>
-                    {pendingPayrolls.length} {t('employeesShiftWorkspace.awaitingPayment')}
-                  </span>
-                )}
-              </div>
-              {payrolls.length === 0 ? (
-                <EmptyState label={t('employeesShiftWorkspace.noPayrollRecords')} />
-              ) : (
-                <div className="table-container">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>{t('employeesShiftWorkspace.colPayrollStaff')}</th>
-                        <th>{t('employeesShiftWorkspace.colAmount')}</th>
-                        <th>{t('employeesShiftWorkspace.colStatus')}</th>
-                        <th>{t('employeesShiftWorkspace.colActions')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {payrolls.map((payroll) => (
-                        <tr key={payroll.salaryTotalLoggerId}>
-                          <td>
-                            <strong>{payroll.staffName}</strong>
-                            <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{formatDate(payroll.receivedDay)}</div>
-                          </td>
-                          <td>{formatMoney(payroll.totalReceived)}</td>
-                          <td><span className={statusBadgeClass(payroll.paymentStatus)}>{payroll.paymentStatus}</span></td>
-                          <td>
-                            {payroll.paymentStatus === 'Pending' ? (
-                              <ActionButton label={t('employeesShiftWorkspace.pay')} tone="success" icon={<BadgeCheck size={13} />} loading={actionLoading === `pay-${payroll.salaryTotalLoggerId}`} onClick={() => handlePayPayroll(payroll)} />
-                            ) : (
-                              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>{payroll.paidByName || t('employeesShiftWorkspace.paid')}</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </section>
-          )}{/* end mode === staff-only */}
+            <StaffDirectorySection
+              staff={staff}
+              departments={departments}
+              payrolls={payrolls}
+              pendingPayrolls={pendingPayrolls}
+              actionLoading={actionLoading}
+              onToggleStaffStatus={handleToggleStaffStatus}
+              onPayPayroll={handlePayPayroll}
+            />
+          )}
         </>
       )}
 
-      {/* RENDER TAB 2: LẬP LỊCH LÀM VIỆC - chỉ hiện ở mode shift-management */}
+      {/* RENDER TAB 2: LẬP LỊCH LÀM VIỆC */}
       {mode === 'shift-management' && activeTab === 'scheduling' && (
-        <section style={{ display: 'grid', gap: 16 }}>
-          {/* Stats row */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-              gap: 12,
-            }}
-          >
-            {[
-              { label: t('employeesShiftWorkspace.shiftsInRange', 'Ca trong kỳ'), value: shiftStats.total, color: 'var(--accent)' },
-              { label: t('employeesShiftWorkspace.openSlots', 'Còn chỗ'), value: shiftStats.open, color: '#22c55e' },
-              { label: t('employeesShiftWorkspace.fullShifts', 'Đã đủ người'), value: shiftStats.full, color: '#3b82f6' },
-              { label: t('employeesShiftWorkspace.pendingDeletion', 'Chờ xóa'), value: shiftStats.pendingDel, color: '#f59e0b' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="glass-card"
-                style={{
-                  padding: '14px 16px',
-                  borderTop: `3px solid ${item.color}`,
-                }}
-              >
-                <p style={{ margin: 0, fontSize: 11, color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  {item.label}
-                </p>
-                <p style={{ margin: '6px 0 0', fontSize: 24, fontWeight: 850, color: 'var(--text-primary)' }}>{item.value}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Toolbar: department + compact week filter */}
-          <div
-            className="glass-card"
-            style={{
-              padding: '10px 12px',
-              display: 'grid',
-              gap: 10,
-            }}
-          >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)' }}>
-                  {t('employeesShiftWorkspace.department')}
-                </span>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {departments.length === 0 ? (
-                    <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('employeesShiftWorkspace.noDepartments')}</span>
-                  ) : (
-                    departments.map((d, index) => {
-                      const id = d.departmentId ?? d.DepartmentId;
-                      const name = d.departmentName ?? d.DepartmentName;
-                      const itemKey = (!id || id === '00000000-0000-0000-0000-000000000000') ? `dept-pill-${index}` : id;
-                      const active = selectedDeptId === id;
-                      return (
-                        <button
-                          key={itemKey}
-                          type="button"
-                          onClick={() => setSelectedDeptId(id)}
-                          style={{
-                            padding: '4px 9px',
-                            borderRadius: 999,
-                            border: active ? '1px solid var(--accent)' : '1px solid var(--border-color)',
-                            background: active ? 'rgba(255,138,0,0.14)' : 'var(--bg-elevated)',
-                            color: active ? 'var(--accent)' : 'var(--text-secondary)',
-                            fontSize: 11,
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {name}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-
-              {/* Compact From — To filter */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  flexWrap: 'wrap',
-                  padding: '3px 4px 3px 6px',
-                  borderRadius: 8,
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-elevated)',
-                }}
-              >
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', paddingLeft: 2 }}>
-                  {t('employeesShiftWorkspace.from', 'From')}
-                </span>
-                <input
-                  type="date"
-                  value={scheduleStartDate}
-                  onChange={(e) => {
-                    const start = e.target.value;
-                    setFocusedDay(null);
-                    setScheduleStartDate(start);
-                    // Keep a sensible week window when From moves past To
-                    if (start && scheduleEndDate && start > scheduleEndDate) {
-                      const d = parseLocalDate(start);
-                      d.setDate(d.getDate() + 6);
-                      setScheduleEndDate(toLocalDateKey(d));
-                    }
-                  }}
-                  style={{
-                    width: 118,
-                    height: 26,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '2px 6px',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)' }}>
-                  {t('employeesShiftWorkspace.to', 'To')}
-                </span>
-                <input
-                  type="date"
-                  value={scheduleEndDate}
-                  onChange={(e) => {
-                    setFocusedDay(null);
-                    const end = e.target.value;
-                    setScheduleEndDate(end);
-                    if (end && scheduleStartDate && end < scheduleStartDate) {
-                      setScheduleStartDate(end);
-                    }
-                  }}
-                  style={{
-                    width: 118,
-                    height: 26,
-                    fontSize: 11,
-                    fontWeight: 600,
-                    padding: '2px 6px',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-primary)',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => shiftRangeByDays(scheduleStartDate, -1)}
-                  title={t('employeesShiftWorkspace.prevWeek', 'Tuần trước')}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    display: 'grid',
-                    placeItems: 'center',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
-                >
-                  <ChevronLeft size={13} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => shiftRangeByDays(scheduleStartDate, 1)}
-                  title={t('employeesShiftWorkspace.nextWeek', 'Tuần sau')}
-                  style={{
-                    width: 26,
-                    height: 26,
-                    display: 'grid',
-                    placeItems: 'center',
-                    borderRadius: 6,
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-surface)',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    padding: 0,
-                  }}
-                >
-                  <ChevronRight size={13} />
-                </button>
-                <button
-                  type="button"
-                  onClick={loadSchedules}
-                  title={t('employeesShiftWorkspace.filter', 'Filter')}
-                  style={{
-                    height: 26,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    padding: '0 8px',
-                    borderRadius: 6,
-                    border: '1px solid rgba(255,138,0,0.35)',
-                    background: 'rgba(255,138,0,0.12)',
-                    color: 'var(--accent)',
-                    fontSize: 11,
-                    fontWeight: 750,
-                    cursor: 'pointer',
-                  }}
-                >
-                  <RefreshCw size={11} />
-                  {t('employeesShiftWorkspace.filter', 'Filter')}
-                </button>
-              </div>
-            </div>
-
-            {/* Compact week day strip */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-                gap: 5,
-              }}
-            >
-              {shiftWeekDays.map((day) => {
-                const selected = focusedDay === day.key || (!focusedDay && newSchedDate === day.key);
-                return (
-                  <button
-                    key={day.key}
-                    type="button"
-                    onClick={() => {
-                      setNewSchedDate(day.key);
-                      // Toggle day focus filter (client) — range already loaded from DB
-                      setFocusedDay((prev) => (prev === day.key ? null : day.key));
-                    }}
-                    style={{
-                      padding: '6px 4px',
-                      borderRadius: 8,
-                      border: selected
-                        ? '1px solid var(--accent)'
-                        : day.isToday
-                          ? '1px solid rgba(255,138,0,0.35)'
-                          : '1px solid var(--border-color)',
-                      background: selected
-                        ? 'rgba(255,138,0,0.16)'
-                        : day.isToday
-                          ? 'rgba(255,138,0,0.06)'
-                          : 'var(--bg-elevated)',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                      {day.label}
-                    </div>
-                    <div style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', marginTop: 1 }}>
-                      {day.sub}
-                    </div>
-                    <div
-                      style={{
-                        marginTop: 3,
-                        fontSize: 9,
-                        fontWeight: 700,
-                        color: day.count > 0 ? 'var(--accent)' : 'var(--text-muted)',
-                      }}
-                    >
-                      {day.count} ca
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            className="employee-layout"
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'minmax(0, 1.4fr) minmax(300px, 0.7fr)',
-              gap: 16,
-              alignItems: 'start',
-            }}
-          >
-            {/* LEFT: SCHEDULE LIST */}
-            <div className="glass-card" style={{ padding: 20, display: 'grid', gap: 16, minHeight: 360 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>{t('employeesShiftWorkspace.departmentSchedule')}</h3>
-                  <p style={{ margin: '4px 0 0', fontSize: 12, color: 'var(--text-secondary)' }}>
-                    {t('employeesShiftWorkspace.departmentScheduleDesc')}
-                  </p>
-                </div>
-              </div>
-
-              {schedulesLoading || loading ? (
-                <LoadingState label={t('employeesShiftWorkspace.loadingSchedules', 'Đang tải lịch ca…')} />
-              ) : visibleSchedules.length === 0 ? (
-                <EmptyState
-                  label={
-                    focusedDay
-                      ? t('employeesShiftWorkspace.noSchedulesOnDay', 'Không có ca trong ngày đã chọn.')
-                      : t('employeesShiftWorkspace.noSchedules')
-                  }
-                />
-              ) : (
-                <div style={{ display: 'grid', gap: 18 }}>
-                  {groupedSchedules.map((group) => (
-                    <div key={group.date}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 10,
-                          marginBottom: 10,
-                        }}
-                      >
-                        <div
-                          style={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: 10,
-                            display: 'grid',
-                            placeItems: 'center',
-                            background: 'rgba(255,138,0,0.12)',
-                            color: 'var(--accent)',
-                          }}
-                        >
-                          <Calendar size={15} />
-                        </div>
-                        <div>
-                          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)' }}>{group.date}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                            {group.items.length} {t('employeesShiftWorkspace.shifts', 'ca')}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div style={{ display: 'grid', gap: 10 }}>
-                        {group.items.map((s) => {
-                          const fill = s.maxStaff > 0 ? Math.min(100, Math.round((s.registeredCount / s.maxStaff) * 100)) : 0;
-                          const isFull = s.registeredCount >= s.maxStaff;
-                          return (
-                            <div
-                              key={s.shiftScheduleId}
-                              style={{
-                                padding: '14px 16px',
-                                borderRadius: 14,
-                                border: '1px solid var(--border-color)',
-                                background: 'linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))',
-                                display: 'grid',
-                                gap: 10,
-                              }}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-                                <div style={{ minWidth: 0, flex: 1 }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                                    <strong style={{ fontSize: 15, color: 'var(--text-primary)' }}>{s.shiftName}</strong>
-                                    <span className="badge badge-default" style={{ fontSize: 10 }}>{s.roleName}</span>
-                                    {s.deletionStatus !== 'Active' && (
-                                      <span className={statusBadgeClass(s.deletionStatus)}>
-                                        {s.deletionStatus === 'PendingDeletion'
-                                          ? t('adminShiftApproval.tableStatusPending')
-                                          : s.deletionStatus}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div
-                                    style={{
-                                      marginTop: 6,
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: 6,
-                                      fontSize: 12,
-                                      color: 'var(--text-secondary)',
-                                      fontWeight: 600,
-                                    }}
-                                  >
-                                    <Clock3 size={13} style={{ color: 'var(--accent)' }} />
-                                    {s.startTime?.slice(0, 5)} – {s.endTime?.slice(0, 5)}
-                                  </div>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                  <div style={{ textAlign: 'right' }}>
-                                    <div
-                                      style={{
-                                        fontSize: 13,
-                                        fontWeight: 800,
-                                        color: isFull ? 'var(--success)' : 'var(--text-primary)',
-                                      }}
-                                    >
-                                      {s.registeredCount}/{s.maxStaff}
-                                    </div>
-                                    <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-                                      {isFull
-                                        ? t('employeesShiftWorkspace.full', 'Đủ')
-                                        : t('employeesShiftWorkspace.registeredCount')}
-                                    </div>
-                                  </div>
-                                  {s.deletionStatus === 'Active' && (
-                                    <button
-                                      className="btn"
-                                      onClick={() => handleDeleteSchedule(s.shiftScheduleId, s.registeredCount > 0)}
-                                      disabled={actionLoading === `delete-sched-${s.shiftScheduleId}`}
-                                      style={{
-                                        padding: '7px 10px',
-                                        fontSize: 12,
-                                        color: 'var(--danger)',
-                                        background: 'rgba(239,68,68,0.08)',
-                                        border: '1px solid rgba(239,68,68,0.2)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 4,
-                                      }}
-                                    >
-                                      {actionLoading === `delete-sched-${s.shiftScheduleId}` ? (
-                                        <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} />
-                                      ) : (
-                                        <Trash2 size={13} />
-                                      )}
-                                      {t('employeesShiftWorkspace.cancelShift')}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              <div
-                                style={{
-                                  height: 6,
-                                  borderRadius: 999,
-                                  background: 'var(--bg-elevated)',
-                                  overflow: 'hidden',
-                                  border: '1px solid var(--border-color)',
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    width: `${fill}%`,
-                                    height: '100%',
-                                    borderRadius: 999,
-                                    background: isFull
-                                      ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                                      : 'linear-gradient(90deg, #ff8a00, #f59e0b)',
-                                    transition: 'width 0.25s ease',
-                                  }}
-                                />
-                              </div>
-
-                              {s.registeredStaff?.length > 0 && (
-                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                                  <span style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 600 }}>
-                                    {t('employeesShiftWorkspace.staffLabel')}:
-                                  </span>
-                                  {s.registeredStaff.map((r) => (
-                                    <span
-                                      key={r.shiftRegistrationId}
-                                      style={{
-                                        fontSize: 11,
-                                        fontWeight: 650,
-                                        background:
-                                          r.status === 'Approved'
-                                            ? 'rgba(34,197,94,0.12)'
-                                            : 'rgba(234,179,8,0.12)',
-                                        color: r.status === 'Approved' ? 'var(--success)' : 'var(--warning)',
-                                        padding: '3px 8px',
-                                        borderRadius: 999,
-                                        border: `1px solid ${
-                                          r.status === 'Approved'
-                                            ? 'rgba(34,197,94,0.25)'
-                                            : 'rgba(234,179,8,0.25)'
-                                        }`,
-                                      }}
-                                    >
-                                      {r.staffName}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT: CREATE SCHEDULE FORM */}
-            <div
-              className="glass-card"
-              style={{
-                padding: 0,
-                overflow: 'hidden',
-                position: 'sticky',
-                top: 16,
-                alignSelf: 'start',
-              }}
-            >
-              <div
-                style={{
-                  padding: '16px 18px',
-                  borderBottom: '1px solid var(--border-color)',
-                  background: 'linear-gradient(135deg, rgba(255,138,0,0.12), transparent)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <div
-                  style={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: 10,
-                    display: 'grid',
-                    placeItems: 'center',
-                    background: 'rgba(255,138,0,0.16)',
-                    color: 'var(--accent)',
-                  }}
-                >
-                  <CalendarPlus size={18} />
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>{t('employeesShiftWorkspace.createNewShift')}</h3>
-                  <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--text-muted)' }}>
-                    {t('employeesShiftWorkspace.createShiftHint', 'Chọn ngày trên dải tuần, điền ca rồi tạo.')}
-                  </p>
-                </div>
-              </div>
-
-              <div style={{ padding: 18, display: 'grid', gap: 14 }}>
-                <Field label={t('employeesShiftWorkspace.selectDate')}>
-                  <input className="input" type="date" value={newSchedDate} onChange={(e) => setNewSchedDate(e.target.value)} />
-                </Field>
-
-                <Field label={t('employeesShiftWorkspace.prefillFromTemplate')}>
-                  <select className="input select" value={prefillTemplateId} onChange={(e) => handlePrefillTemplate(e.target.value)}>
-                    <option value="">-- {t('employeesShiftWorkspace.selectTemplate')} --</option>
-                    {templates.map((tpl) => (
-                      <option key={tpl.shiftTemplateId} value={tpl.shiftTemplateId}>
-                        {tpl.shiftName} ({tpl.startTime.slice(0, 5)}-{tpl.endTime.slice(0, 5)})
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <Field label={t('employeesShiftWorkspace.shiftType')}>
-                      <select
-                        className="input select"
-                        value={newSchedShiftType}
-                        onChange={(e) => setNewSchedShiftType(Number(e.target.value) as 1 | 2 | 3)}
-                      >
-                        <option value={1}>{t('employeesShiftWorkspace.shiftTypeFulltime')}</option>
-                        <option value={2}>{t('employeesShiftWorkspace.shiftTypeParttime')}</option>
-                        <option value={3}>{t('employeesShiftWorkspace.shiftTypeFlexible')}</option>
-                      </select>
-                    </Field>
-                  </div>
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <Field label={t('employeesShiftWorkspace.shiftName')}>
-                      <input
-                        className="input"
-                        type="text"
-                        value={newSchedName}
-                        onChange={(e) => setNewSchedName(e.target.value)}
-                        placeholder={t('employeesShiftWorkspace.shiftNamePlaceholder')}
-                      />
-                    </Field>
-                  </div>
-                  <Field label={t('employeesShiftWorkspace.startTime')}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <select
-                        className="input select"
-                        value={newSchedStart.split(':')[0] || '08'}
-                        onChange={(e) => {
-                          const min = newSchedStart.split(':')[1] || '00';
-                          setNewSchedStart(`${e.target.value}:${min}`);
-                        }}
-                        style={{ flex: 1 }}
-                      >
-                        {hoursArray.map((h) => (
-                          <option key={h} value={h}>{h}h</option>
-                        ))}
-                      </select>
-                      <select
-                        className="input select"
-                        value={newSchedStart.split(':')[1] || '00'}
-                        onChange={(e) => {
-                          const hr = newSchedStart.split(':')[0] || '08';
-                          setNewSchedStart(`${hr}:${e.target.value}`);
-                        }}
-                        style={{ flex: 1 }}
-                      >
-                        {minutesArray.map((m) => (
-                          <option key={m} value={m}>{m}m</option>
-                        ))}
-                      </select>
-                    </div>
-                  </Field>
-                  <Field label={t('employeesShiftWorkspace.endTime')}>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      <select
-                        className="input select"
-                        value={newSchedEnd.split(':')[0] || '16'}
-                        onChange={(e) => {
-                          const min = newSchedEnd.split(':')[1] || '00';
-                          setNewSchedEnd(`${e.target.value}:${min}`);
-                        }}
-                        disabled={newSchedShiftType !== 3}
-                        style={{ flex: 1, ...(newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}
-                      >
-                        {hoursArray.map((h) => (
-                          <option key={h} value={h}>{h}h</option>
-                        ))}
-                      </select>
-                      <select
-                        className="input select"
-                        value={newSchedEnd.split(':')[1] || '00'}
-                        onChange={(e) => {
-                          const hr = newSchedEnd.split(':')[0] || '16';
-                          setNewSchedEnd(`${hr}:${e.target.value}`);
-                        }}
-                        disabled={newSchedShiftType !== 3}
-                        style={{ flex: 1, ...(newSchedShiftType !== 3 ? { opacity: 0.6, cursor: 'not-allowed' } : {}) }}
-                      >
-                        {minutesArray.map((m) => (
-                          <option key={m} value={m}>{m}m</option>
-                        ))}
-                      </select>
-                    </div>
-                  </Field>
-                  <Field label={t('employeesShiftWorkspace.maxStaff')}>
-                    <input
-                      className="input"
-                      type="number"
-                      min={1}
-                      value={newSchedMaxStaff}
-                      onChange={(e) => setNewSchedMaxStaff(Number(e.target.value))}
-                    />
-                  </Field>
-                  <Field label={t('employeesShiftWorkspace.role')}>
-                    <select className="input select" value={newSchedRoleId} onChange={(e) => setNewSchedRoleId(e.target.value)}>
-                      {uniqueRoles.map((r) => (
-                        <option key={r.roleId} value={r.roleId}>{r.roleName}</option>
-                      ))}
-                    </select>
-                  </Field>
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: 8,
-                    padding: '12px 14px',
-                    background: 'var(--bg-elevated)',
-                    borderRadius: 12,
-                    border: '1px solid var(--border-color)',
-                  }}
-                >
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
-                    <input
-                      type="checkbox"
-                      checked={repeatWeekly}
-                      onChange={(e) => setRepeatWeekly(e.target.checked)}
-                      style={{ width: 16, height: 16 }}
-                    />
-                    {t('employeesShiftWorkspace.autoRepeatWeekly')}
-                  </label>
-
-                  {repeatWeekly && (
-                    <div style={{ display: 'grid', gap: 6, marginTop: 4 }}>
-                      <span className="input-label" style={{ margin: 0, fontSize: 12 }}>
-                        {t('employeesShiftWorkspace.repeatWeeksQuestion')}
-                      </span>
-                      <select
-                        className="input select"
-                        value={repeatWeeksCount}
-                        onChange={(e) => setRepeatWeeksCount(Number(e.target.value))}
-                      >
-                        {repeatWeekChoices.map((choice) => (
-                          <option key={choice.weeks} value={choice.weeks}>
-                            {t('employeesShiftWorkspace.weekChoice', { weeks: choice.weeks, date: choice.dateStr })}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <button
-                  className="btn btn-primary"
-                  onClick={handleCreateSchedule}
-                  disabled={actionLoading === 'create-schedule' || !selectedDeptId}
-                  style={{ width: '100%' }}
-                >
-                  {actionLoading === 'create-schedule' ? (
-                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
-                  ) : (
-                    <CalendarPlus size={16} />
-                  )}
-                  {t('employeesShiftWorkspace.createSchedule')}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
+        <ShiftSchedulingSection
+          departments={departments}
+          selectedDeptId={selectedDeptId}
+          setSelectedDeptId={setSelectedDeptId}
+          scheduleStartDate={scheduleStartDate}
+          setScheduleStartDate={setScheduleStartDate}
+          scheduleEndDate={scheduleEndDate}
+          setScheduleEndDate={setScheduleEndDate}
+          loadSchedules={loadSchedules}
+          shiftStats={shiftStats}
+          shiftWeekDays={shiftWeekDays}
+          focusedDay={focusedDay}
+          setFocusedDay={setFocusedDay}
+          shiftRangeByDays={shiftRangeByDays}
+          visibleSchedules={visibleSchedules}
+          groupedSchedules={groupedSchedules}
+          schedulesLoading={schedulesLoading}
+          loading={loading}
+          actionLoading={actionLoading}
+          handleDeleteSchedule={handleDeleteSchedule}
+          newSchedDate={newSchedDate}
+          setNewSchedDate={setNewSchedDate}
+          prefillTemplateId={prefillTemplateId}
+          handlePrefillTemplate={handlePrefillTemplate}
+          templates={templates}
+          newSchedShiftType={newSchedShiftType}
+          setNewSchedShiftType={setNewSchedShiftType}
+          newSchedName={newSchedName}
+          setNewSchedName={setNewSchedName}
+          newSchedStart={newSchedStart}
+          setNewSchedStart={setNewSchedStart}
+          newSchedEnd={newSchedEnd}
+          setNewSchedEnd={setNewSchedEnd}
+          newSchedMaxStaff={newSchedMaxStaff}
+          setNewSchedMaxStaff={setNewSchedMaxStaff}
+          newSchedRoleId={newSchedRoleId}
+          setNewSchedRoleId={setNewSchedRoleId}
+          uniqueRoles={uniqueRoles}
+          repeatWeekly={repeatWeekly}
+          setRepeatWeekly={setRepeatWeekly}
+          repeatWeeksCount={repeatWeeksCount}
+          setRepeatWeeksCount={setRepeatWeeksCount}
+          repeatWeekChoices={repeatWeekChoices}
+          handleCreateSchedule={handleCreateSchedule}
+        />
       )}
 
-      {/* Face Scan Modal — camera-based real AI recognition */}
+      {/* Face Scan Modal */}
       {faceStaff && showFaceScanModal && (
         <FaceScanModal
           mode="register"
@@ -1931,80 +858,6 @@ const EmployeesShiftWorkspace: React.FC<EmployeesShiftWorkspaceProps> = ({
         />
       )}
     </div>
-  );
-};
-
-const SummaryTile: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
-  <div className="glass-card" style={{ padding: 16 }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-      <div style={{ color: 'var(--accent)' }}>{icon}</div>
-      <span style={{ fontSize: 22, fontWeight: 800 }}>{value}</span>
-    </div>
-    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>{label}</p>
-  </div>
-);
-
-const Panel: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
-  <div className="glass-card" style={{ padding: 18, display: 'grid', gap: 12 }}>
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-      <span style={{ color: 'var(--accent)' }}>{icon}</span>
-      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800 }}>{title}</h3>
-    </div>
-    {children}
-  </div>
-);
-
-const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <label style={{ display: 'grid', gap: 6 }}>
-    <span className="input-label" style={{ margin: 0 }}>{label}</span>
-    {children}
-  </label>
-);
-
-const LoadingState: React.FC<{ label: string }> = ({ label }) => (
-  <div className="state-center" style={{ minHeight: 180 }}>
-    <Loader2 size={24} style={{ color: 'var(--accent)', animation: 'spin 1s linear infinite' }} />
-    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', fontFamily: "'JetBrains Mono', monospace" }}>{label}</p>
-  </div>
-);
-
-const EmptyState: React.FC<{ label: string }> = ({ label }) => (
-  <div className="state-center" style={{ minHeight: 150, border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-lg)' }}>
-    <UserRound size={28} style={{ color: 'var(--text-muted)', opacity: 0.45 }} />
-    <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)' }}>{label}</p>
-  </div>
-);
-
-const ActionButton: React.FC<{
-  label: string;
-  tone: 'success' | 'danger' | 'neutral';
-  icon: React.ReactNode;
-  loading: boolean;
-  onClick: () => void;
-}> = ({ label, tone, icon, loading, onClick }) => {
-  const color = tone === 'success' ? 'var(--success)' : tone === 'danger' ? 'var(--danger)' : 'var(--text-secondary)';
-  const background = tone === 'success'
-    ? 'rgba(34,197,94,0.08)'
-    : tone === 'danger'
-      ? 'rgba(239,68,68,0.08)'
-      : 'rgba(255,255,255,0.04)';
-  return (
-    <button
-      className="btn"
-      onClick={onClick}
-      disabled={loading}
-      style={{
-        minHeight: 28,
-        padding: '5px 10px',
-        fontSize: 12,
-        color,
-        background,
-        border: `1px solid ${tone === 'neutral' ? 'var(--border-color)' : `${color}44`}`,
-      }}
-    >
-      {loading ? <Loader2 size={13} style={{ animation: 'spin 1s linear infinite' }} /> : icon}
-      {label}
-    </button>
   );
 };
 

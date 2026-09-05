@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CinemaTestCaseCatalog",
+  "type": "object",
+  "required": ["version", "generatedAt", "testcases"],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "testcases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "module",
+          "useCase",
+          "purpose",
+          "priority",
+          "testType",
+          "preconditions",
+          "steps",
+          "expectedResult",
+          "forbiddenSideEffects",
+          "cleanup",
+          "automation"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]+-[A-Z0-9]+-[0-9]{3,4}$"
+          },
+          "module": {
+            "type": "string"
+          },
+          "useCase": {
+            "type": "string"
+          },
+          "purpose": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P0", "P1", "P2"]
+          },
+          "testType": {
+            "type": "string",
+            "enum": ["unit", "integration", "api_flow", "concurrency", "live_ai"]
+          },
+          "preconditions": {
+            "type": "object"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expectedResult": {
+            "type": "object"
+          },
+          "forbiddenSideEffects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "cleanup": {
+            "type": "string"
+          },
+          "automation": {
+            "type": "object",
+            "required": ["testName", "suite"],
+            "properties": {
+              "testName": {
+                "type": "string"
+              },
+              "suite": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["pending", "passed", "failed", "skipped"]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

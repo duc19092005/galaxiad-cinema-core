@@ -1,4 +1,4 @@
-﻿**/.dockerignore
+**/.dockerignore
 **/.env
 **/.git
 **/.gitignore
@@ -19,6 +19,10 @@
 **/node_modules
 **/npm-debug.log
 **/obj
+**/TestResults
+**/*.trx
+**/*.log
+appsettings*.local.json
 **/secrets.dev.yaml
 **/values.dev.yaml
 LICENSE
