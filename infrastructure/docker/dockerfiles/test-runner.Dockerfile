@@ -12,6 +12,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 # Install pytest and httpx for Python contract checks
-RUN pip3 install --no-cache-dir pytest httpx
+RUN pip3 install --no-cache-dir --break-system-packages pytest httpx
 
 ENTRYPOINT ["/bin/bash"]

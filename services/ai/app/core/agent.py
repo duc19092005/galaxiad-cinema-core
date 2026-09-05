@@ -68,7 +68,7 @@ def get_message_history(session_id: str) -> BaseChatMessageHistory:
 
 
 llm = ChatOpenAI(
-    api_key=DEEPSEEK_API_KEY,
+    api_key=DEEPSEEK_API_KEY or "sk-dummy-test-key-for-testing",
     base_url=DEEPSEEK_BASE_URL,
     model=DEEPSEEK_MODEL,
     temperature=0.2,

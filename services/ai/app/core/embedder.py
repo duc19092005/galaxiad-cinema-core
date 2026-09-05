@@ -35,7 +35,10 @@ class MovieEmbedder:
         self._initialized = False
         self.model = None
 
-        if EMBEDDING_BACKEND == "cloud":
+        if EMBEDDING_BACKEND == "mock":
+            logger.info("Embedding backend: mock (deterministic pseudo-embeddings for testing)")
+            self.model = None
+        elif EMBEDDING_BACKEND == "cloud":
             if not JINA_API_KEY:
                 raise ValueError("JINA_API_KEY is required when EMBEDDING_BACKEND=cloud")
             logger.info("Embedding backend: cloud (Jina AI embeddings-v3)")
@@ -109,10 +112,22 @@ class MovieEmbedder:
             self.ensure_collection()
 
     def _embed_text(self, text: str) -> List[float]:
-        """Embed text using the configured backend (local or cloud)."""
+        """Embed text using the configured backend (mock, local or cloud)."""
+        if EMBEDDING_BACKEND == "mock":
+            return self._embed_text_mock(text)
         if EMBEDDING_BACKEND == "cloud":
             return self._embed_text_cloud(text)
         return self._embed_text_local(text)
+
+    def _embed_text_mock(self, text: str) -> List[float]:
+        """Generate deterministic normalized pseudo-embedding for testing."""
+        h = int(hashlib.md5(text.encode("utf-8")).hexdigest(), 16)
+        rng = np.random.default_rng(h % (2**32))
+        vec = rng.standard_normal(EMBEDDING_DIM)
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            vec = vec / norm
+        return vec.astype(float).tolist()
 
     def _embed_text_local(self, text: str) -> List[float]:
         """Embed via local SentenceTransformer model and match configured dimension."""

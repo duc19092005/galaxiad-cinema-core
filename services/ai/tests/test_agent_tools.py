@@ -18,8 +18,9 @@ from core.tools import suggest_seats_tool
 @pytest.mark.asyncio
 async def test_get_message_history_fallback():
     """Verify Redis failures fall back to in-memory chat history."""
-    history = get_message_history("test_fallback_session_id")
-    assert isinstance(history, InMemoryChatMessageHistory)
+    with patch("redis.Redis.ping", side_effect=Exception("Redis connection refused")):
+        history = get_message_history("test_fallback_session_id")
+        assert isinstance(history, InMemoryChatMessageHistory)
 
 
 @pytest.mark.asyncio

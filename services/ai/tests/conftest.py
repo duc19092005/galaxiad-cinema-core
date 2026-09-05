@@ -11,6 +11,12 @@ _app_dir = os.path.join(_ai_root, 'app')
 if _app_dir not in sys.path:
     sys.path.insert(0, _app_dir)
 
+# Ensure test credentials and test mode are set so modules don't crash on import
+os.environ.setdefault("DEEPSEEK_API_KEY", "sk-dummy-test-key-for-testing")
+os.environ.setdefault("OPENAI_API_KEY", "sk-dummy-test-key-for-testing")
+os.environ.setdefault("ENVIRONMENT", "testing")
+os.environ.setdefault("EMBEDDING_BACKEND", "mock")
+
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
