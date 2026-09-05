@@ -93,7 +93,8 @@ public class SelectGroupSeatsUseCase
             var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(
                 auditoriumSeats,
                 seatIds,
-                occupiedOutsideGroup.Concat(otherMemberSeatIds));
+                occupiedOutsideGroup.Concat(otherMemberSeatIds),
+                requireContiguousSelection: false); // Intermediate choices; enforce on confirmation.
 
             if (seatSelectionErrors.Count > 0)
                 throw new BadRequestException(seatSelectionErrors, "GBK36");

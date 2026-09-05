@@ -20,6 +20,7 @@ public class ConfirmGroupMemberSeatsUseCase
     private readonly ISeatLockerNotificationService _notificationService;
     private readonly GetGroupBookingStateUseCase _getGroupBookingStateUseCase;
     private readonly BookingPricingService _bookingPricingService;
+    private readonly ISeatLockService _seatLockService;
 
     public ConfirmGroupMemberSeatsUseCase(
         IGroupBookingRepository groupBookingRepository,
@@ -27,7 +28,8 @@ public class ConfirmGroupMemberSeatsUseCase
         IUnitOfWork unitOfWork,
         ISeatLockerNotificationService notificationService,
         GetGroupBookingStateUseCase getGroupBookingStateUseCase,
-        BookingPricingService bookingPricingService)
+        BookingPricingService bookingPricingService,
+        ISeatLockService seatLockService)
     {
         _groupBookingRepository = groupBookingRepository;
         _userContextService = userContextService;
@@ -35,6 +37,7 @@ public class ConfirmGroupMemberSeatsUseCase
         _notificationService = notificationService;
         _getGroupBookingStateUseCase = getGroupBookingStateUseCase;
         _bookingPricingService = bookingPricingService;
+        _seatLockService = seatLockService;
     }
 
     public async Task<BaseResponse<ResConfirmGroupMemberSeatsDto>> ExecuteAsync(Guid groupSessionId, ReqConfirmGroupSeatsDto request)
@@ -188,7 +191,10 @@ public class ConfirmGroupMemberSeatsUseCase
             .ToList();
 
         // Treat other members' seats as already occupied; validate this member's block.
-        var occupiedForPolicy = occupiedOutsideGroup.Concat(otherMemberSeatIds);
+        var locks = await _seatLockService.GetLocksForScheduleAsync(session.MovieScheduleId.ToString());
+        var otherLocks = locks.Where(l => l.GroupSessionId != session.GroupSessionId || l.MemberId != member.MemberId)
+            .Select(l => Guid.Parse(l.SeatId));
+        var occupiedForPolicy = occupiedOutsideGroup.Concat(otherMemberSeatIds).Concat(otherLocks);
         var errors = BookingSeatSelectionPolicy.ValidateSeatSelection(
             auditoriumSeats,
             confirmingSeatIds,

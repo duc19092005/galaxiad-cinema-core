@@ -40,6 +40,76 @@ public class BookingSeatSelectionPolicyTests
             selectedCols.Select(Seat),
             occupiedCols.Select(Seat));
 
+
+    [Fact]
+    public void DistantSelection_WhenValidBlockExists_IsRejected()
+    {
+        Validate(BuildRow(8), [1, 6], []).Should().Contain(Messages.Booking.SelectionMustBeContiguous);
+    }
+
+    [Fact]
+    public void IntermediateDistantSelection_IsAllowed()
+    {
+        BookingSeatSelectionPolicy.ValidateSeatSelection(BuildRow(8), [Seat(1), Seat(6)], [], false)
+            .Should().BeEmpty();
+    }
+
+    [Fact]
+    public void FragmentedRemainingStock_AllowsSplitSelection()
+    {
+        Validate(BuildRow(5), [1, 5], [2, 3, 4]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void HeldAlternativeBlock_DoesNotPreventSplitSelection()
+    {
+        Validate(BuildRow(8), [1, 8], [2, 3, 4, 5, 6, 7]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void AlternativeThatWouldCreateOrphan_DoesNotPreventSplitSelection()
+    {
+        // Free run 3-5: either pair leaves a new orphan against occupied 2 or 6.
+        Validate(BuildRow(7), [1, 7], [2, 6]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SelectionAcrossRows_WhenBlockExists_IsRejected()
+    {
+        var seats = BuildRow(2);
+        var other = BuildRow(2, 1);
+        foreach (var seat in other) seat.SeatId = Guid.NewGuid();
+        BookingSeatSelectionPolicy.ValidateSeatSelection(
+            seats.Concat(other), [Seat(1), other[0].SeatId], [])
+            .Should().Contain(Messages.Booking.SelectionMustBeContiguous);
+    }
+
+    [Fact]
+    public void Aisle_DoesNotCountAsAdjacentBlock()
+    {
+        var seats = BuildRow(3).Where(s => s.ColIndex != 1).ToList();
+        Validate(seats, [1, 3], []).Should().BeEmpty();
+        var other = BuildRow(2, 1);
+        foreach (var seat in other) seat.SeatId = Guid.NewGuid();
+        Validate(seats.Concat(other).ToList(), [1, 3], [])
+            .Should().Contain(Messages.Booking.SelectionMustBeContiguous);
+    }
+
+    [Fact]
+    public void Aisle_DoesNotCreatePhantomOrphan()
+    {
+        var seats = BuildRow(5).Where(s => s.ColIndex != 1).ToList();
+        BookingSeatSelectionPolicy.FindIsolatedEmptySeats(seats, new HashSet<Guid> { Seat(1), Seat(4) })
+            .Should().BeEmpty();
+        Validate(seats, [4], [1]).Should().BeEmpty();
+    }
+
+    [Fact]
+    public void ReversedAdjacentSelection_IsAllowed()
+    {
+        Validate(BuildRow(8), [5, 4], []).Should().BeEmpty();
+    }
+
     [Fact]
     public void Solo_MiddleSeat_OnEmptyRow_IsAllowed()
     {

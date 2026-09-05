@@ -525,6 +525,7 @@
     "ageLimit": "Age must be between 16 and 80"
   },
   "toast": {
+    "contiguousSeats": "Please select adjacent seats in the same row to keep space available for other groups. Separate seats are allowed when no suitable block remains.",
     "passwordChanged": "Password changed successfully!",
     "noChanges": "No changes detected",
     "deleteMovieSuccess": "Movie deleted successfully!",

@@ -18,6 +18,7 @@ import CreateGroupBookingModal from '../socialBooking/CreateGroupBookingModal';
 import {
     canAddSeat,
     createsIsolatedEmptySeat,
+    requiresContiguousSelection,
     normalizeSeatId,
     occupiedIdsFromSeatMap,
 } from '../../utils/seatSelectionPolicy';
@@ -301,6 +302,10 @@ const BookingPage: React.FC = () => {
                 'Bạn đã chọn {{selected}}/{{required}} ghế. Vui lòng chọn đúng số ghế theo số vé.',
                 { selected: selectedSeats.length, required: ticketQuantity }
             ));
+            return;
+        }
+        if (requiresContiguousSelection(layoutSeats, selectedSeats.map(s => s.seatId), occupiedSeatIds)) {
+            showError(t('toast.contiguousSeats', 'Vui lòng chọn các ghế liền nhau trong cùng hàng để giữ chỗ cho nhóm khách khác. Bạn có thể chọn ghế rời khi không còn cụm ghế phù hợp với số vé.'));
             return;
         }
         if (selectionCreatesIsolation) {

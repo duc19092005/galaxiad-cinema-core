@@ -8,7 +8,8 @@ namespace Cinema.Application.UseCases.Booking.BookingFlow;
 /// R1: Solo (1 seat) is always allowed from an isolation standpoint when it does not create a new gap.
 /// R2: Reject only when the selection creates a NEW single-seat gap (X _ X) on a row.
 ///     Pre-existing orphans do not block bookings on other seats/rows; filling an orphan is allowed.
-///     Edge empties and gaps ≥ 2 are allowed.
+///     Edge empties and gaps ≥ 2 are allowed. Aisles break adjacency.
+/// R3: At checkout require contiguous seats when a valid block of that size remains.
 /// </summary>
 public static class BookingSeatSelectionPolicy
 {
@@ -17,7 +18,8 @@ public static class BookingSeatSelectionPolicy
     public static List<string> ValidateSeatSelection(
         IEnumerable<SeatsInfoEntity> auditoriumSeats,
         IEnumerable<Guid> selectedSeatIds,
-        IEnumerable<Guid> occupiedSeatIds)
+        IEnumerable<Guid> occupiedSeatIds,
+        bool requireContiguousSelection = true)
     {
         var errors = new List<string>();
         var selectedList = selectedSeatIds.ToList();
@@ -52,12 +54,49 @@ public static class BookingSeatSelectionPolicy
             return errors;
         }
 
-        if (CreatesIsolatedEmptySeat(seatList, selectedList, occupiedSeatIds))
+        var occupied = occupiedSeatIds.ToHashSet();
+        if (CreatesIsolatedEmptySeat(seatList, selectedList, occupied))
         {
             errors.Add(Messages.Booking.SelectionLeavesIsolatedSeat);
         }
 
+        if (requireContiguousSelection && RequiresContiguousSelection(seatList, selectedList, occupied))
+            errors.Add(Messages.Booking.SelectionMustBeContiguous);
+
         return errors;
+    }
+
+    /// <summary>
+    /// Require one block per order/member while a legal block of the requested size
+    /// remains. Allow split seating when stock is fragmented. Missing columns are aisles.
+    /// </summary>
+    public static bool RequiresContiguousSelection(
+        IEnumerable<SeatsInfoEntity> auditoriumSeats,
+        IEnumerable<Guid> selectedSeatIds,
+        IEnumerable<Guid> occupiedSeatIds)
+    {
+        var seats = auditoriumSeats.ToList();
+        var selected = selectedSeatIds.ToHashSet();
+        if (selected.Count < 2) return false;
+        var picked = seats.Where(s => selected.Contains(s.SeatId)).OrderBy(s => s.ColIndex).ToList();
+        if (picked.Count != selected.Count) return false; // Validated separately.
+        if (picked.All(s => s.RowIndex == picked[0].RowIndex)
+            && picked.Zip(picked.Skip(1)).All(pair => pair.Second.ColIndex == pair.First.ColIndex + 1))
+            return false;
+
+        var occupied = occupiedSeatIds.ToHashSet();
+        foreach (var row in seats.GroupBy(s => s.RowIndex))
+        {
+            var ordered = row.OrderBy(s => s.ColIndex).ToList();
+            for (var start = 0; start + selected.Count <= ordered.Count; start++)
+            {
+                var block = ordered.Skip(start).Take(selected.Count).ToList();
+                if (block.Any(s => occupied.Contains(s.SeatId))) continue;
+                if (block[^1].ColIndex - block[0].ColIndex != selected.Count - 1) continue;
+                if (!CreatesIsolatedEmptySeat(seats, block.Select(s => s.SeatId), occupied)) return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>
@@ -87,7 +126,9 @@ public static class BookingSeatSelectionPolicy
                 var leftTaken = unavailableSeatIds.Contains(rowSeats[i - 1].SeatId);
                 var rightTaken = unavailableSeatIds.Contains(rowSeats[i + 1].SeatId);
 
-                if (leftTaken && rightTaken)
+                if (leftTaken && rightTaken
+                    && seat.ColIndex == rowSeats[i - 1].ColIndex + 1
+                    && rowSeats[i + 1].ColIndex == seat.ColIndex + 1)
                 {
                     isolated.Add(seat);
                 }

@@ -242,7 +242,10 @@ public class CreateBookingUseCase
             throw new BadRequestException(Messages.Booking.SeatsAlreadyBooked, "BK04");
 
         var occupiedSeatIds = await _orderRepository.GetOccupiedSeatIdsAsync(request.ScheduleId);
-        var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(auditoriumSeats, seatIds, occupiedSeatIds);
+        var locks = await _seatLockService.GetLocksForScheduleAsync(request.ScheduleId.ToString());
+        var lockedByOthers = locks.Where(l => l.OwnerToken != request.SeatLockOwnerToken)
+            .Select(l => Guid.Parse(l.SeatId));
+        var seatSelectionErrors = BookingSeatSelectionPolicy.ValidateSeatSelection(auditoriumSeats, seatIds, occupiedSeatIds.Concat(lockedByOthers));
         if (seatSelectionErrors.Count > 0)
             throw new BadRequestException(seatSelectionErrors, "BK10");
 

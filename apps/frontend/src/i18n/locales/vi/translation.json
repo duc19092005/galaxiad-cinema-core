@@ -523,6 +523,7 @@
     "ageLimit": "Tuổi phải từ 16 đến 80"
   },
   "toast": {
+    "contiguousSeats": "Vui lòng chọn các ghế liền nhau trong cùng hàng để giữ chỗ cho nhóm khách khác. Bạn có thể chọn ghế rời khi không còn cụm ghế phù hợp với số vé.",
     "passwordChanged": "Đổi mật khẩu thành công!",
     "noChanges": "Không có thay đổi nào",
     "deleteMovieSuccess": "Xóa phim thành công!",

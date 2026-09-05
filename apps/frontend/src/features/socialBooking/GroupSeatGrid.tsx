@@ -10,6 +10,7 @@ import type { PublicSeatMap, PublicSeat, PublicPricing } from '../../types/publi
 import {
   canAddSeat,
   createsIsolatedEmptySeat,
+  requiresContiguousSelection,
   normalizeSeatId,
   occupiedIdsFromSeatMap,
 } from '../../utils/seatSelectionPolicy';
@@ -228,6 +229,10 @@ export default function GroupSeatGrid({ groupState, scheduleId, onRefresh }: Pro
         'Bạn đã chọn {{selected}}/{{required}} ghế. Vui lòng chọn đúng số ghế theo số vé.',
         { selected: myConfirmedSeats.length, required: ticketQuantity }
       ));
+      return;
+    }
+    if (requiresContiguousSelection(layoutSeats, myConfirmedSeats, occupiedSeatIds)) {
+      showError(t('toast.contiguousSeats', 'Vui lòng chọn các ghế liền nhau trong cùng hàng để giữ chỗ cho nhóm khách khác. Bạn có thể chọn ghế rời khi không còn cụm ghế phù hợp với số vé.'));
       return;
     }
     if (createsIsolatedEmptySeat(layoutSeats, myConfirmedSeats, occupiedSeatIds)) {

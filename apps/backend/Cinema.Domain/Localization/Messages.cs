@@ -236,6 +236,7 @@ public static class Messages
         public const string InvalidSeats = "One or more selected seats are invalid";
         public const string SeatsAlreadyBooked = "One or more selected seats are already booked";
         public const string AtLeastOneSeatMustBeSelected = "At least one seat must be selected.";
+        public const string SelectionMustBeContiguous = "Vui lòng chọn các ghế liền nhau trong cùng hàng để giữ chỗ cho nhóm khách khác. Bạn có thể chọn ghế rời khi không còn cụm ghế phù hợp với số vé.";
         public const string MaxTenTicketsPerOrder = "You can select up to 10 tickets per order.";
         public const string DuplicateSelectedSeats = "Duplicate selected seats are not allowed.";
         public const string SelectionLeavesIsolatedSeat = "Không được để trống 1 ghế lẻ giữa hai ghế đã bán/đã chọn trong cùng hàng. Hãy chọn ghế liền kề hoặc chọn đúng ghế lẻ đó.";
