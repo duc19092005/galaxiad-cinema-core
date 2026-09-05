@@ -1,16 +1,18 @@
 import json
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from langchain_core.chat_history import InMemoryChatMessageHistory
 
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
+_ai_root = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_ai_root / "app"))
+sys.path.insert(0, str(_ai_root))
 
-from agent import get_message_history
-from tools import suggest_seats_tool
+from core.agent import get_message_history
+from core.tools import suggest_seats_tool
 
 
 @pytest.mark.asyncio
@@ -39,12 +41,15 @@ async def test_suggest_seats_consecutive():
         }
     }
 
-    with patch("httpx.AsyncClient.get") as mock_get:
-        mock_response = AsyncMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_data
-        mock_get.return_value = mock_response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_data
 
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with patch("core.tools._get_backend_client", return_value=mock_client), \
+         patch("httpx.AsyncClient.get", return_value=mock_response):
         result = await suggest_seats_tool.ainvoke({"schedule_id": "dummy_schedule_id", "quantity": 2})
         payload = json.loads(result)
 
@@ -70,12 +75,15 @@ async def test_suggest_seats_fallback_to_individual():
         }
     }
 
-    with patch("httpx.AsyncClient.get") as mock_get:
-        mock_response = AsyncMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = mock_data
-        mock_get.return_value = mock_response
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = mock_data
 
+    mock_client = AsyncMock()
+    mock_client.get = AsyncMock(return_value=mock_response)
+
+    with patch("core.tools._get_backend_client", return_value=mock_client), \
+         patch("httpx.AsyncClient.get", return_value=mock_response):
         result = await suggest_seats_tool.ainvoke({"schedule_id": "dummy_schedule_id", "quantity": 2})
         payload = json.loads(result)
 

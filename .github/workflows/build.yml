@@ -122,7 +122,7 @@ jobs:
             
             # Kiểm tra xem đã có commit HEAD chưa (tránh lỗi chạy lần đầu khi mới init git)
             if git rev-parse --verify HEAD >/dev/null 2>&1; then
-              CHANGES=$(git diff --name-only HEAD origin/main | grep -E '^(apps/backend/|services/ai/|nginx/|docker-compose.prod.yml)')
+              CHANGES=$(git diff --name-only HEAD origin/main | grep -E '^(apps/backend/|services/ai/|infrastructure/)')
             else
               CHANGES="first_run"
             fi
@@ -130,7 +130,7 @@ jobs:
             git reset --hard origin/main
             
             if [ -n "$CHANGES" ]; then
-              echo "Phat hien thay doi o Backend/AI/Nginx. Tien hanh build lai container..."
+              echo "Phat hien thay doi o Backend/AI/Nginx/Infrastructure. Tien hanh build lai container..."
               
               # Tự động nhận diện file Env của Portainer (stack.env) hoặc file .env thường
               if [ -f "stack.env" ]; then
@@ -139,10 +139,10 @@ jobs:
                 ENV_FILE=".env"
               fi
               
-              docker compose -f docker-compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE down
-              docker compose -f docker-compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE up -d --build --remove-orphans
+              docker compose -f infrastructure/docker/compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE down
+              docker compose -f infrastructure/docker/compose.prod.yml -p galaxiad-cinema --env-file $ENV_FILE up -d --build --remove-orphans
             else
-              echo "Chi co thay doi o Frontend. Bo qua khong build lai VPS."
+              echo "Chi co thay doi o Frontend/Docs. Bo qua khong build lai VPS."
             fi
 
 
