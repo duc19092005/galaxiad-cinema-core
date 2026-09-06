@@ -9,9 +9,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     jq \
     && rm -rf /var/lib/apt/lists/*
 
+# Debian's Python binary is /usr/bin/python3.  Keep the console scripts installed
+# by pip3 executable too (pytest uses /usr/local/bin/python in its shebang).
+RUN ln -sf /usr/bin/python3 /usr/local/bin/python
+
 WORKDIR /workspace
 
 # Install pytest and httpx for Python contract checks
-RUN pip3 install --no-cache-dir --break-system-packages pytest httpx
+RUN pip3 install --no-cache-dir --break-system-packages pytest httpx pillow minio
 
-ENTRYPOINT ["/bin/bash"]
+CMD ["/bin/bash"]

@@ -38,6 +38,45 @@ services:
     networks:
       - cinema-test-net
 
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=cinema-test
+      - MINIO_ROOT_PASSWORD=cinema-test-secret
+    volumes:
+      - test_minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cinema-test-net
+
+  ollama:
+    image: ollama/ollama:latest
+    gpus: all
+    volumes:
+      - test_ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks:
+      - cinema-test-net
+
+  ollama-init:
+    image: ollama/ollama:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["until OLLAMA_HOST=http://ollama:11434 ollama list >/dev/null 2>&1; do sleep 2; done; OLLAMA_HOST=http://ollama:11434 ollama pull qwen3.5:4b"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - cinema-test-net
+
   # AI HTTP Service (FastAPI)
   ai-http:
     build:
@@ -54,13 +93,17 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - BACKEND_API_URL=http://api:8080/api/v1
-      - DEEPSEEK_API_KEY=sk-dummy-test-key-for-testing
-      - OPENAI_API_KEY=sk-dummy-test-key-for-testing
+      - LLM_PROVIDER=ollama
+      - LLM_TIMEOUT_SECONDS=180
+      - DEEPSEEK_BASE_URL=http://ollama:11434/v1
+      - DEEPSEEK_MODEL=qwen3.5:4b
     depends_on:
       redis:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -82,13 +125,16 @@ services:
       - QDRANT_COLLECTION=cinema_test_movies
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - DEEPSEEK_API_KEY=sk-dummy-test-key-for-testing
-      - OPENAI_API_KEY=sk-dummy-test-key-for-testing
+      - LLM_PROVIDER=ollama
+      - DEEPSEEK_BASE_URL=http://ollama:11434/v1
+      - DEEPSEEK_MODEL=qwen3.5:4b
     depends_on:
       redis:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
     networks:
       - cinema-test-net
 
@@ -105,13 +151,18 @@ services:
       - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
       - AiService__BaseUrl=http://ai-http:8000
       - AiService__GrpcUrl=http://ai-grpc:50051
+      - Minio__Endpoint=minio:9000
+      - Minio__AccessKey=cinema-test
+      - Minio__SecretKey=cinema-test-secret
+      - Minio__ContractBucket=cinema-test-contracts
+      - Minio__UseSsl=false
       - BackgroundJobs__Enabled=false
       - RateLimiting__TestingMode=true
-      - JWT_KEY=TestSuperSecretKeyForJwtAuthenticationTestingOnly1234567890!
-      - JWT_ISS=CinemaTest
-      - JWT_AUD=CinemaTest
-      - AES_256_KEY=Test1234567890123456789012345678
-      - AES_256_IV=Test123456789012
+      - JWT_Info__Key=TestSuperSecretKeyForJwtAuthenticationTestingOnly1234567890!
+      - JWT_Info__Iss=CinemaTest
+      - JWT_Info__Aud=CinemaTest
+      - AES_256__Key=00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff
+      - AES_256__IV=00112233445566778899aabbccddeeff
       - VNPay__TmnCode=TESTTMN
       - VNPay__HashSecret=TESTHASHSECRET1234567890ABCDEF
       - VNPay__PayUrl=http://api:8080/mock/vnpay/pay
@@ -122,6 +173,8 @@ services:
       redis:
         condition: service_healthy
       ai-http:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     networks:
       - cinema-test-net
@@ -139,6 +192,10 @@ services:
       - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
       - API_BASE_URL=http://api:8080
       - AI_BASE_URL=http://ai-http:8000
+      - MINIO_HEALTH_URL=http://minio:9000/minio/health/live
+      - MINIO_ENDPOINT=minio:9000
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=qwen3.5:4b
     depends_on:
       - api
     networks:
@@ -151,3 +208,5 @@ networks:
 volumes:
   test_sql_data:
   test_qdrant_data:
+  test_minio_data:
+  test_ollama_data:

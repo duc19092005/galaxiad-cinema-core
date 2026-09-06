@@ -1,4 +1,3 @@
-using Cinema.Application.Dtos.MovieManager.Requests;
 using Cinema.Application.UseCases.MovieManager.MovieInfos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,36 +11,32 @@ namespace Cinema.Api.Controllers.Management.Movies;
 [ApiExplorerSettings(GroupName = "v1-movie-manager")]
 public class MovieController : ControllerBase
 {
-    private readonly CreateMovieUseCase _createMovieUseCase;
-    private readonly UpdateMovieUseCase _updateMovieUseCase;
     private readonly GetMovieInfosUseCase _getMovieInfosUseCase;
     private readonly GetMovieInfoByIdUseCase _getMovieInfoByIdUseCase;
 
     public MovieController(
-        CreateMovieUseCase createMovieUseCase,
-        UpdateMovieUseCase updateMovieUseCase,
         GetMovieInfosUseCase getMovieInfosUseCase,
         GetMovieInfoByIdUseCase getMovieInfoByIdUseCase)
     {
-        _createMovieUseCase = createMovieUseCase;
-        _updateMovieUseCase = updateMovieUseCase;
         _getMovieInfosUseCase = getMovieInfosUseCase;
         _getMovieInfoByIdUseCase = getMovieInfoByIdUseCase;
     }
 
     [HttpPost("")]
-    public async Task<IActionResult> CreateMovie(ReqAddMovieManagerMovieDto request)
-    {
-        var results = await _createMovieUseCase.ExecuteAsync(request);
-        return Ok(results);
-    }
+    [Obsolete("Direct movie mutation is disabled. Activate an approved film contract instead.")]
+    public IActionResult CreateMovie() => DirectMutationDisabled();
 
     [HttpPut("{movieId}")]
-    public async Task<IActionResult> UpdateMovie(Guid movieId, ReqEditMovieManagerMovieDto request)
-    {
-        var results = await _updateMovieUseCase.ExecuteAsync(movieId, request);
-        return Ok(results);
-    }
+    [Obsolete("Direct movie mutation is disabled. Submit a movie change request instead.")]
+    public IActionResult UpdateMovie(Guid movieId) => DirectMutationDisabled();
+
+    [HttpDelete("{movieId}")]
+    [Obsolete("Movies with contractual, schedule, ticket, and revenue history cannot be deleted directly.")]
+    public IActionResult DeleteMovie(Guid movieId) => DirectMutationDisabled();
+
+    [HttpPatch("{movieId}/status")]
+    [Obsolete("Movie availability is derived from approved exhibition rights and schedules.")]
+    public IActionResult SetMovieStatus(Guid movieId) => DirectMutationDisabled();
 
     [HttpGet("")]
     public async Task<IActionResult> GetAllMovies([FromQuery] Guid? cinemaId)
@@ -56,4 +51,11 @@ public class MovieController : ControllerBase
         var results = await _getMovieInfoByIdUseCase.ExecuteAsync(id);
         return Ok(results);
     }
+
+    private ObjectResult DirectMutationDisabled() => StatusCode(StatusCodes.Status410Gone, new
+    {
+        isSuccess = false,
+        errorCode = "MOVIE_DIRECT_MUTATION_DISABLED",
+        message = "Không thể thay đổi phim trực tiếp. Hãy dùng hợp đồng đã duyệt hoặc yêu cầu điều chỉnh phim."
+    });
 }

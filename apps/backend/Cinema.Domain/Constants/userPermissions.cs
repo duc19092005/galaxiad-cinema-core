@@ -72,4 +72,15 @@ public static class userPermissions
     public static readonly Guid ManageCleaning = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111031");
     /// <summary>Xác nhận kết quả quét dọn</summary>
     public static readonly Guid VerifyCleaning = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111032");
+    // Film contracts
+    public static readonly Guid ViewContracts = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111033");
+    public static readonly Guid ManageContractDrafts = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111034");
+    public static readonly Guid ManageContractTemplates = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111035");
+    public static readonly Guid ApproveContracts = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111036");
+    public static readonly Guid SignContracts = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111037");
+    public static readonly Guid ActivateContracts = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111038");
+    public static readonly Guid ViewContractFinance = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111039");
+    public static readonly Guid ManageSettlements = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111040");
+    public static readonly Guid ProposeMovieChanges = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111041");
+    public static readonly Guid ApproveMovieChanges = Guid.Parse("a1b2c3d4-1111-1111-1111-111111111042");
 }

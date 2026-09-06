@@ -5,20 +5,12 @@ import type {
     Movie,
     MovieRequiredAge,
     MovieGenre,
-    CreateMovieFormData,
-    UpdateMovieFormData,
     MoviePeople,
     ExternalMovieSearchItem,
     ExternalMovieCredits,
     ExternalPersonSearchItem,
 } from '../types/movie.types';
 import type { MovieFormat } from '../types/facilities.types';
-
-const normalizeSuccessResponse = <T = any>(response: any): ApiSuccessResponse<T> => ({
-    isSuccess: response.data?.isSuccess ?? response.data?.IsSuccess ?? (response.status >= 200 && response.status < 300),
-    message: response.data?.message ?? response.data?.Message ?? 'Success',
-    data: response.data?.data ?? response.data?.Data,
-});
 
 export const movieApi = {
     /** GET /api/movieManager/movies */
@@ -98,104 +90,4 @@ export const movieApi = {
         return response.data;
     },
 
-    /** POST /api/movieManager/movies (multipart/form-data) */
-    createMovie: async (data: CreateMovieFormData): Promise<ApiSuccessResponse> => {
-        const formData = new FormData();
-        formData.append('movieRequiredAgeId', data.movieRequiredAgeId);
-        formData.append('movieName', data.movieName);
-        formData.append('movieDescription', data.movieDescription);
-        formData.append('movieImage', data.movieImage);
-        if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
-        if (data.movieBanners?.length) {
-            data.movieBanners.forEach((file) => formData.append('MovieBanners', file));
-        }
-        formData.append('EndedDate', data.endedDate);
-        formData.append('StartedDate', data.startedDate);
-        formData.append('duration', data.duration.toString());
-        if (data.trailerUrl) formData.append('TrailerUrl', data.trailerUrl);
-        if (data.director) formData.append('Director', data.director);
-        if (data.actors) formData.append('Actors', data.actors);
-        if (data.cinemaIds) {
-            data.cinemaIds.forEach((id) => {
-                formData.append('CinemaIds', id);
-            });
-        }
-
-        // Append arrays
-        data.movieFormatIds.forEach((id) => {
-            formData.append('movieFormatIds', id);
-        });
-        data.movieGenreIds.forEach((id) => {
-            formData.append('movieGenreIds', id);
-        });
-
-        const response = await movieAxios.post<any>(
-            '/movieManager/movies',
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
-        );
-        return normalizeSuccessResponse(response);
-    },
-
-    /** PUT /api/movieManager/movies/{movieId} (multipart/form-data) */
-    updateMovie: async (movieId: string, data: UpdateMovieFormData): Promise<ApiSuccessResponse> => {
-        const formData = new FormData();
-
-        if (data.movieRequiredAgeId !== undefined) formData.append('MovieRequiredAgeId', data.movieRequiredAgeId);
-        if (data.movieName !== undefined) formData.append('movieName', data.movieName);
-        if (data.movieDescription !== undefined) formData.append('movieDescription', data.movieDescription);
-        if (data.movieImage) formData.append('movieImage', data.movieImage);
-        if (data.movieBanner) formData.append('movieBanner', data.movieBanner);
-        if (data.movieBanners?.length) {
-            data.movieBanners.forEach((file) => formData.append('MovieBanners', file));
-        }
-        if (data.removeCoverImageIds?.length) {
-            data.removeCoverImageIds.forEach((id) => formData.append('RemoveCoverImageIds', id));
-        }
-        if (data.endedDate !== undefined && data.endedDate !== null) formData.append('EndedDate', data.endedDate);
-        if (data.startedDate !== undefined && data.startedDate !== null) formData.append('StartedDate', data.startedDate);
-        if (data.duration !== undefined) formData.append('duration', data.duration.toString());
-        if (data.trailerUrl !== undefined) formData.append('TrailerUrl', data.trailerUrl);
-        if (data.director !== undefined) formData.append('Director', data.director);
-        if (data.actors !== undefined) formData.append('Actors', data.actors);
-
-        if (data.movieFormatIds) {
-            data.movieFormatIds.forEach((id) => {
-                formData.append('movieFormatIds', id);
-            });
-        }
-        if (data.movieGenreIds) {
-            data.movieGenreIds.forEach((id) => {
-                formData.append('movieGenreIds', id);
-            });
-        }
-        if (data.cinemaIds) {
-            data.cinemaIds.forEach((id) => {
-                formData.append('CinemaIds', id);
-            });
-        }
-
-        const response = await movieAxios.put<any>(
-            `/movieManager/movies/${movieId}`,
-            formData,
-            {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            }
-        );
-        return normalizeSuccessResponse(response);
-    },
-
-    /** DELETE /api/movieManager/movies/{movieId} */
-    deleteMovie: async (movieId: string): Promise<ApiSuccessResponse> => {
-        const response = await movieAxios.delete<any>(
-            `/movieManager/movies/${movieId}`
-        );
-        return normalizeSuccessResponse(response);
-    },
 };

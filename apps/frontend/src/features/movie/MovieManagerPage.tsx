@@ -3,35 +3,27 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Film, LayoutDashboard } from 'lucide-react';
+import { FileText, Film, LayoutDashboard } from 'lucide-react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useTranslation } from 'react-i18next';
 import { movieApi } from '../../api/movieApi';
 import { authApi } from '../../api/authApi';
-import { publicApi } from '../../api/publicApi';
-import { facilitiesApi } from '../../api/facilitiesApi';
 import { showError, showSuccess } from '../../utils/ToastUtils';
 import { formatVietnamDate } from '../../utils/dateTimeUtils';
 import type { ApiErrorResponse } from '../../types/auth.types';
-import type {
-    Movie,
-    MovieGenre,
-    MovieRequiredAge,
-} from '../../types/movie.types';
-import type { Cinema, MovieFormat } from '../../types/facilities.types';
+import type { Movie } from '../../types/movie.types';
+import { contractApi } from '../../api/contractApi';
 
 import LogoutModal from '../../components/LogoutModal';
-import AssignRightsModal from '../admin/components/AssignRightsModal';
 import ManagementDashboard from '../../components/ManagementDashboard';
 import AppSidebar from '../../components/AppSidebar';
 import type { SidebarSection } from '../../components/AppSidebar';
 import ManagementChrome from '../../components/ManagementChrome';
 
 import { MovieDetailModal } from './components/MovieDetailModal';
-import { CreateMovieModal } from './components/CreateMovieModal';
-import { UpdateMovieModal } from './components/UpdateMovieModal';
 import { MoviesListTab } from './components/MoviesListTab';
+import { ContractsWorkspace } from '../contracts/ContractsWorkspace';
 
 const MovieManagerPage: React.FC = () => {
     const navigate = useNavigate();
@@ -39,10 +31,6 @@ const MovieManagerPage: React.FC = () => {
     const [user, setUser] = useState<{ username: string; roles?: string[]; selectedRole?: string } | null>(null);
 
     const [movies, setMovies] = useState<Movie[]>([]);
-    const [formats, setFormats] = useState<MovieFormat[]>([]);
-    const [requiredAges, setRequiredAges] = useState<MovieRequiredAge[]>([]);
-    const [genres, setGenres] = useState<MovieGenre[]>([]);
-    const [cinemas, setCinemas] = useState<Cinema[]>([]);
     const [loading, setLoading] = useState(true);
     const [_error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -55,29 +43,8 @@ const MovieManagerPage: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Modals
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-    const [movieToUpdate, setMovieToUpdate] = useState<Movie | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-
-    // Assign Rights Modal state
-    const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
-    const [itemToAssign, setItemToAssign] = useState<{ id: string; name: string } | null>(null);
-
-    // Check if user is Admin
-    const isAdmin = !!user?.roles?.includes('Admin');
-    const handleDeleteMovie = async (movie: Movie) => {
-        if (!window.confirm(`Are you sure you want to delete movie "${movie.movieName}"?`)) return;
-        try {
-            await movieApi.deleteMovie(movie.movieId!);
-            showSuccess('Movie deleted successfully');
-            fetchMovies();
-        } catch (_err: any) {
-            const msg = _err.response?.data?.message || 'Không thể xóa phim này';
-            showError(msg);
-        }
-    };
 
     useEffect(() => {
         const storedUser = localStorage.getItem('user_info');
@@ -87,10 +54,6 @@ const MovieManagerPage: React.FC = () => {
             const roles = parsed.roles || [];
             if (!roles.includes('MovieManager') && !roles.includes('Admin')) { navigate('/role-selection'); return; }
             setUser(parsed);
-            fetchFormats();
-            fetchRequiredAges();
-            fetchGenres();
-            fetchCinemas();
         } catch { navigate('/login'); }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [navigate]);
@@ -126,28 +89,19 @@ const MovieManagerPage: React.FC = () => {
         } finally { setLoading(false); }
     };
 
-    const fetchFormats = async () => {
-        try { const res = await movieApi.getMovieFormats(); setFormats(res.data || []); } catch { }
-    };
-
-    const fetchRequiredAges = async () => {
-        try { const res = await movieApi.getMovieRequiredAges(); setRequiredAges(res.data || []); } catch { }
-    };
-
-    const fetchGenres = async () => {
+    const handleChangeRequest = async (movie: Movie) => {
+        const reason = window.prompt(`Lý do điều chỉnh metadata cho “${movie.movieName}”:`, 'Cập nhật nội dung hiển thị theo tài liệu đối tác');
+        if (!reason) return;
+        const proposedDescription = window.prompt('Mô tả mới (để trống nếu không đổi):', movie.movieDescriptions || '');
+        if (proposedDescription === null) return;
         try {
-            const res = await publicApi.getMovieGenres();
-            const genresData: MovieGenre[] = (res.data || []).map(g => ({
-                movieGenreId: g.genreId,
-                movieGenreName: g.genreName,
-                movieGenreDescription: g.description,
-            }));
-            setGenres(genresData);
-        } catch { }
-    };
-
-    const fetchCinemas = async () => {
-        try { const res = await facilitiesApi.getCinemaList(); setCinemas(res.data || []); } catch { }
+            const created = await contractApi.proposeMovieChange(movie.movieId, reason, JSON.stringify({ movieDescription: proposedDescription }));
+            await contractApi.submitMovieChange(created.data.movieChangeRequestId);
+            showSuccess('Đã gửi yêu cầu điều chỉnh cho Admin. Phim hiện tại chưa bị thay đổi.');
+        } catch (err: unknown) {
+            const response = (err as { response?: { data?: { message?: string } } }).response;
+            showError(response?.data?.message || 'Không thể tạo yêu cầu điều chỉnh.');
+        }
     };
 
     const handleLogoutConfirm = async () => {
@@ -184,7 +138,8 @@ const MovieManagerPage: React.FC = () => {
             collapsible: true,
             items: [
                 { id: 'dashboard', label: t('Dashboard'), icon: <LayoutDashboard size={16} /> },
-                { id: 'movies', label: t('Movies'), icon: <Film size={16} /> },
+                { id: 'contracts', label: 'Hợp đồng được giao', icon: <FileText size={16} /> },
+                { id: 'movies', label: 'Danh mục phim — chỉ đọc', icon: <Film size={16} /> },
             ],
         },
     ];
@@ -200,15 +155,13 @@ const MovieManagerPage: React.FC = () => {
                         loading={loading}
                         searchTerm={searchTerm}
                         onSearchChange={setSearchTerm}
-                        onCreateClick={() => setIsCreateModalOpen(true)}
                         onMovieClick={(movie) => { setSelectedMovie(movie); setIsDetailModalOpen(true); }}
-                        onEditClick={(movie) => { setMovieToUpdate(movie); setIsUpdateModalOpen(true); }}
-                        onDeleteClick={handleDeleteMovie}
-                        onAssignClick={(id, name) => { setItemToAssign({ id, name }); setIsAssignModalOpen(true); }}
-                        isAdmin={isAdmin}
+                        onChangeRequest={(movie) => void handleChangeRequest(movie)}
                         formatDate={formatDate}
                     />
                 );
+            case 'contracts':
+                return <ContractsWorkspace mode="manager" />;
             default:
                 return <ManagementDashboard role="movie" />;
         }
@@ -238,27 +191,6 @@ const MovieManagerPage: React.FC = () => {
             </main>
 
             {/* Modals */}
-            <CreateMovieModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSuccess={fetchMovies}
-                formats={formats}
-                requiredAges={requiredAges}
-                genres={genres}
-                cinemas={cinemas}
-            />
-            {isUpdateModalOpen && movieToUpdate && (
-                <UpdateMovieModal
-                    isOpen={isUpdateModalOpen}
-                    onClose={() => { setIsUpdateModalOpen(false); setMovieToUpdate(null); }}
-                    onSuccess={fetchMovies}
-                    movie={movieToUpdate}
-                    formats={formats}
-                    requiredAges={requiredAges}
-                    genres={genres}
-                    cinemas={cinemas}
-                />
-            )}
             {selectedMovie && (
                 <MovieDetailModal
                     movie={selectedMovie}
@@ -274,17 +206,6 @@ const MovieManagerPage: React.FC = () => {
                 error={logoutError}
             />
 
-            {/* Assign Rights Modal */}
-            {isAdmin && itemToAssign && (
-                <AssignRightsModal
-                    isOpen={isAssignModalOpen}
-                    onClose={() => { setIsAssignModalOpen(false); setItemToAssign(null); }}
-                    itemId={itemToAssign.id}
-                    itemName={itemToAssign.name}
-                    type={3}
-                    onSuccess={() => fetchMovies()}
-                />
-            )}
         </div>
     );
 };

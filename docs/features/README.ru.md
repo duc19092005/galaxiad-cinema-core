@@ -33,6 +33,7 @@
 | [Панель администратора](./ru/admin.md) | `admin.md` | 30+ endpoints (Пользователи, RBAC, Ваучеры, Цены, Аудит, Jobs) |
 | [Управление объектами](./ru/facilities.md) | `facilities.md` | 13 endpoints (Кинотеатры, Залы, Места) |
 | [Управление фильмами](./ru/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Форматы, Жанры) |
+| [Договоры на фильмы и права показа](./ru/film-contracts.md) | `film-contracts.md` | Досье, OCR, подпись/активация, права, MinIO и аудит тестов |
 | [Управление театром](./ru/theater-manager.md) | `theater-manager.md` | 27 endpoints (Расписание, AI Рекомендации, Смены, Дашборд) |
 
 ---

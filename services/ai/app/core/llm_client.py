@@ -2,7 +2,7 @@ import json
 import httpx
 from loguru import logger
 from fastapi import HTTPException
-from config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
+from config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL, LLM_PROVIDER, LLM_TIMEOUT_SECONDS
 
 # Global HTTP client for DeepSeek connection reuse
 deepseek_client = None
@@ -10,7 +10,7 @@ deepseek_client = None
 def init_deepseek_client():
     global deepseek_client
     if deepseek_client is None:
-        deepseek_client = httpx.AsyncClient(timeout=30.0)
+        deepseek_client = httpx.AsyncClient(timeout=LLM_TIMEOUT_SECONDS)
         logger.info("DeepSeek HTTP AsyncClient initialized in llm_client.")
     return deepseek_client
 
@@ -23,30 +23,33 @@ async def close_deepseek_client():
 
 async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float = 0.2) -> str:
     """Helper function to perform direct async completions with DeepSeek API."""
-    if not DEEPSEEK_API_KEY:
+    if not DEEPSEEK_API_KEY and LLM_PROVIDER != "ollama":
         logger.error("DEEPSEEK_API_KEY is not configured.")
         raise HTTPException(status_code=500, detail="DeepSeek API key is not configured.")
 
-    url = f"{DEEPSEEK_BASE_URL}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
+    is_ollama = LLM_PROVIDER == "ollama"
+    url = f"{DEEPSEEK_BASE_URL.removesuffix('/v1')}/api/chat" if is_ollama else f"{DEEPSEEK_BASE_URL}/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    if DEEPSEEK_API_KEY:
+        headers["Authorization"] = f"Bearer {DEEPSEEK_API_KEY}"
     payload = {
         "model": DEEPSEEK_MODEL,
-        "temperature": temperature,
         "messages": [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ]
     }
+    if is_ollama:
+        payload.update({"stream": False, "format": "json", "think": False, "options": {"temperature": temperature, "num_predict": 1200}})
+    else:
+        payload.update({"temperature": temperature, "max_tokens": 1200})
 
     try:
         client = deepseek_client if deepseek_client else init_deepseek_client()
         response = await client.post(url, headers=headers, json=payload)
         response.raise_for_status()
         res_json = response.json()
-        content = res_json["choices"][0]["message"]["content"]
+        content = res_json["message"]["content"] if is_ollama else res_json["choices"][0]["message"]["content"]
         return content or ""
     except Exception as e:
         logger.error(f"Error calling DeepSeek API: {e}")
@@ -54,15 +57,14 @@ async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float
 
 async def call_deepseek_stream(system_prompt: str, user_prompt: str, temperature: float = 0.2):
     """Stream text chunks from DeepSeek's OpenAI-compatible chat completions API."""
-    if not DEEPSEEK_API_KEY:
+    if not DEEPSEEK_API_KEY and LLM_PROVIDER != "ollama":
         logger.error("DEEPSEEK_API_KEY is not configured.")
         raise HTTPException(status_code=500, detail="DeepSeek API key is not configured.")
 
     url = f"{DEEPSEEK_BASE_URL}/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {DEEPSEEK_API_KEY}",
-        "Content-Type": "application/json"
-    }
+    headers = {"Content-Type": "application/json"}
+    if DEEPSEEK_API_KEY:
+        headers["Authorization"] = f"Bearer {DEEPSEEK_API_KEY}"
     payload = {
         "model": DEEPSEEK_MODEL,
         "temperature": temperature,

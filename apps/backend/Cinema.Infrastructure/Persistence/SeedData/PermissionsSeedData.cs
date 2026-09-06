@@ -41,7 +41,17 @@ public static class PermissionsSeedData
             new PermissionEntity { PermissionId = userPermissions.ViewInventoryHistory, PermissionInfo = "ViewInventoryHistory" },
             new PermissionEntity { PermissionId = userPermissions.PerformCleaning, PermissionInfo = "PerformCleaning" },
             new PermissionEntity { PermissionId = userPermissions.ManageCleaning, PermissionInfo = "ManageCleaning" },
-            new PermissionEntity { PermissionId = userPermissions.VerifyCleaning, PermissionInfo = "VerifyCleaning" }
+            new PermissionEntity { PermissionId = userPermissions.VerifyCleaning, PermissionInfo = "VerifyCleaning" },
+            new PermissionEntity { PermissionId = userPermissions.ViewContracts, PermissionInfo = "ViewContracts" },
+            new PermissionEntity { PermissionId = userPermissions.ManageContractDrafts, PermissionInfo = "ManageContractDrafts" },
+            new PermissionEntity { PermissionId = userPermissions.ManageContractTemplates, PermissionInfo = "ManageContractTemplates" },
+            new PermissionEntity { PermissionId = userPermissions.ApproveContracts, PermissionInfo = "ApproveContracts" },
+            new PermissionEntity { PermissionId = userPermissions.SignContracts, PermissionInfo = "SignContracts" },
+            new PermissionEntity { PermissionId = userPermissions.ActivateContracts, PermissionInfo = "ActivateContracts" },
+            new PermissionEntity { PermissionId = userPermissions.ViewContractFinance, PermissionInfo = "ViewContractFinance" },
+            new PermissionEntity { PermissionId = userPermissions.ManageSettlements, PermissionInfo = "ManageSettlements" },
+            new PermissionEntity { PermissionId = userPermissions.ProposeMovieChanges, PermissionInfo = "ProposeMovieChanges" },
+            new PermissionEntity { PermissionId = userPermissions.ApproveMovieChanges, PermissionInfo = "ApproveMovieChanges" }
         );
 
         // Helper to create PermissionForRole seed entries
@@ -63,7 +73,12 @@ public static class PermissionsSeedData
             userPermissions.SellConcession, userPermissions.ViewInventory,
             userPermissions.ManageInventory, userPermissions.ViewInventoryHistory,
             userPermissions.PerformCleaning, userPermissions.ManageCleaning,
-            userPermissions.VerifyCleaning
+            userPermissions.VerifyCleaning,
+            userPermissions.ViewContracts, userPermissions.ManageContractDrafts,
+            userPermissions.ManageContractTemplates, userPermissions.ApproveContracts,
+            userPermissions.SignContracts, userPermissions.ActivateContracts,
+            userPermissions.ViewContractFinance, userPermissions.ManageSettlements,
+            userPermissions.ProposeMovieChanges, userPermissions.ApproveMovieChanges
         };
 
         // Admin gets ALL permissions
@@ -151,9 +166,12 @@ public static class PermissionsSeedData
         // MovieManager permissions
         modelBuilder.Entity<PermissionForRoleEntity>().HasData(
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewMovie, RoleId = userRoles.MovieManager },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ManageMovie, RoleId = userRoles.MovieManager },
             new PermissionForRoleEntity { PermissionId = userPermissions.ViewSchedule, RoleId = userRoles.MovieManager },
-            new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.MovieManager }
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewAuditLogs, RoleId = userRoles.MovieManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewContracts, RoleId = userRoles.MovieManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ManageContractDrafts, RoleId = userRoles.MovieManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ViewContractFinance, RoleId = userRoles.MovieManager },
+            new PermissionForRoleEntity { PermissionId = userPermissions.ProposeMovieChanges, RoleId = userRoles.MovieManager }
         );
 
     }

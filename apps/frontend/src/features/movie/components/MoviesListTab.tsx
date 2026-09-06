@@ -2,15 +2,12 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
     Clock,
-    Edit,
     Eye,
     Film,
+    FilePenLine,
     Loader2,
-    Plus,
     Search,
-    Trash2,
     User as UserIcon,
-    UserPlus,
 } from 'lucide-react';
 import type { Movie } from '../../../types/movie.types';
 
@@ -19,12 +16,8 @@ export interface MoviesListTabProps {
     loading: boolean;
     searchTerm: string;
     onSearchChange: (v: string) => void;
-    onCreateClick: () => void;
     onMovieClick: (movie: Movie) => void;
-    onEditClick: (movie: Movie) => void;
-    onDeleteClick: (movie: Movie) => void;
-    onAssignClick: (id: string, name: string) => void;
-    isAdmin: boolean;
+    onChangeRequest: (movie: Movie) => void;
     formatDate: (d: string) => string;
 }
 
@@ -33,12 +26,8 @@ export const MoviesListTab: React.FC<MoviesListTabProps> = ({
     loading,
     searchTerm,
     onSearchChange,
-    onCreateClick,
     onMovieClick,
-    onEditClick,
-    onDeleteClick,
-    onAssignClick,
-    isAdmin,
+    onChangeRequest,
     formatDate,
 }) => {
     const { t } = useTranslation();
@@ -66,10 +55,7 @@ export const MoviesListTab: React.FC<MoviesListTabProps> = ({
                         style={{ paddingLeft: 36 }}
                     />
                 </div>
-                <button onClick={onCreateClick} className="btn btn-primary">
-                    <Plus size={14} />
-                    {t('Add New Movie')}
-                </button>
+                <span className="badge" style={{ color: 'var(--accent)' }}>Danh mục chỉ đọc</span>
             </div>
 
             {movies.length === 0 ? (
@@ -79,7 +65,7 @@ export const MoviesListTab: React.FC<MoviesListTabProps> = ({
                         {searchTerm ? 'No movies found' : 'No movies yet'}
                     </p>
                     <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>
-                        {searchTerm ? 'Try adjusting your search' : 'Click "Add New Movie" to get started'}
+                        {searchTerm ? 'Try adjusting your search' : 'Phim sẽ xuất hiện sau khi Admin kích hoạt hợp đồng.'}
                     </p>
                 </div>
             ) : (
@@ -112,17 +98,9 @@ export const MoviesListTab: React.FC<MoviesListTabProps> = ({
                                     <button onClick={(e) => { e.stopPropagation(); onMovieClick(movie); }} className="btn-icon" style={{ background: 'rgba(255,255,255,0.1)' }}>
                                         <Eye size={16} />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); onEditClick(movie); }} className="btn-icon" style={{ background: 'rgba(59, 130, 246, 0.2)' }}>
-                                        <Edit size={16} />
+                                    <button title="Đề xuất điều chỉnh" onClick={(e) => { e.stopPropagation(); onChangeRequest(movie); }} className="btn-icon" style={{ background: 'rgba(255,138,0,.18)' }}>
+                                        <FilePenLine size={16} />
                                     </button>
-                                    <button onClick={(e) => { e.stopPropagation(); onDeleteClick(movie); }} className="btn-icon" style={{ background: 'rgba(239, 68, 68, 0.2)' }}>
-                                        <Trash2 size={16} />
-                                    </button>
-                                    {isAdmin && (
-                                        <button onClick={(e) => { e.stopPropagation(); onAssignClick(movie.movieId!, movie.movieName); }} className="btn-icon" style={{ background: 'rgba(139, 92, 246, 0.2)' }}>
-                                            <UserPlus size={16} />
-                                        </button>
-                                    )}
                                 </div>
 
                                 {/* Duration Badge */}

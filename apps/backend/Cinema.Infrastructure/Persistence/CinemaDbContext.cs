@@ -11,6 +11,8 @@ using Cinema.Domain.Entities.Banners;
 using Cinema.Domain.Entities.AiResearch;
 using Cinema.Domain.Entities.Concessions;
 using Cinema.Domain.Entities.Cleaning;
+using Cinema.Domain.Entities.Contracts;
+using Cinema.Domain.Enums;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.MovieInfos;
 using Cinema.Infrastructure.Persistence.SeedData;
 using Cinema.Infrastructure.Persistence.RelationshipKeys.Facilities;
@@ -170,6 +172,86 @@ public class CinemaDbContext : DbContext
 
     public DbSet<CleaningTaskEntity> CleaningTaskEntity { get; set; }
 
+    // Film contracts and revenue sharing
+    public DbSet<ContractTemplateEntity> ContractTemplateEntity { get; set; }
+    public DbSet<DistributorEntity> DistributorEntity { get; set; }
+    public DbSet<FilmContractEntity> FilmContractEntity { get; set; }
+    public DbSet<ContractRevisionEntity> ContractRevisionEntity { get; set; }
+    public DbSet<ContractDocumentEntity> ContractDocumentEntity { get; set; }
+    public DbSet<ContractMovieLineEntity> ContractMovieLineEntity { get; set; }
+    public DbSet<ContractSignOffEntity> ContractSignOffEntity { get; set; }
+    public DbSet<ExhibitionRightEntity> ExhibitionRightEntity { get; set; }
+    public DbSet<MovieChangeRequestEntity> MovieChangeRequestEntity { get; set; }
+    public DbSet<TicketRevenueSnapshotEntity> TicketRevenueSnapshotEntity { get; set; }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        await CaptureTicketRevenueSnapshotsAsync(cancellationToken);
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task CaptureTicketRevenueSnapshotsAsync(CancellationToken ct)
+    {
+        var bookedOrders = ChangeTracker.Entries<OrderInfoEntity>()
+            .Where(entry => entry.Entity.OrderStatus == OrderStatusEnum.Booked &&
+                (entry.State == EntityState.Added ||
+                 (entry.State == EntityState.Modified && entry.Property(x => x.OrderStatus).IsModified)))
+            .Select(entry => entry.Entity)
+            .ToList();
+        if (bookedOrders.Count == 0) return;
+
+        var orderIds = bookedOrders.Select(x => x.OrderId).ToList();
+        var trackedDetails = ChangeTracker.Entries<OrderDetailsInfo>()
+            .Where(x => orderIds.Contains(x.Entity.OrderId)).Select(x => x.Entity).ToList();
+        var trackedKeys = trackedDetails.Select(x => new { x.OrderId, x.SeatId }).ToHashSet();
+        var storedDetails = await OrderDetailsInfoEntity.AsNoTracking()
+            .Where(x => orderIds.Contains(x.OrderId)).ToListAsync(ct);
+        var details = trackedDetails.Concat(storedDetails.Where(x =>
+            !trackedKeys.Contains(new { x.OrderId, x.SeatId }))).ToList();
+        if (details.Count == 0) return;
+
+        var existing = await TicketRevenueSnapshotEntity.AsNoTracking()
+            .Where(x => orderIds.Contains(x.OrderId)).Select(x => new { x.OrderId, x.SeatId }).ToListAsync(ct);
+        var existingKeys = existing.ToHashSet();
+        var scheduleIds = details.Select(x => x.MovieScheduleId).Distinct().ToList();
+        var schedules = await MovieScheduleInfoEntity.AsNoTracking()
+            .Where(x => scheduleIds.Contains(x.MovieScheduleInfoId))
+            .Select(x => new
+            {
+                x.MovieScheduleInfoId, x.MovieId, x.MovieFormatId, x.StartTime, x.EndedTime,
+                CinemaId = x.AuditoriumInfoEntities!.CinemaId
+            }).ToDictionaryAsync(x => x.MovieScheduleInfoId, ct);
+        var movieIds = schedules.Values.Select(x => x.MovieId).Distinct().ToList();
+        var rights = await ExhibitionRightEntity.AsNoTracking()
+            .Where(x => movieIds.Contains(x.MovieId) && x.IsActive).ToListAsync(ct);
+        var orderDates = bookedOrders.ToDictionary(x => x.OrderId, x => x.OrderDate);
+
+        foreach (var detail in details)
+        {
+            if (existingKeys.Contains(new { detail.OrderId, detail.SeatId }) ||
+                !schedules.TryGetValue(detail.MovieScheduleId, out var schedule)) continue;
+            var right = rights.Where(x => x.MovieId == schedule.MovieId &&
+                    (!x.CinemaId.HasValue || x.CinemaId == schedule.CinemaId) &&
+                    (!x.FormatId.HasValue || x.FormatId == schedule.MovieFormatId) &&
+                    x.StartsAt <= schedule.StartTime && x.EndsAt >= schedule.EndedTime)
+                .OrderByDescending(x => x.CinemaId.HasValue).ThenByDescending(x => x.FormatId.HasValue)
+                .ThenByDescending(x => x.StartsAt).FirstOrDefault();
+            if (right == null) continue;
+            var basis = detail.FinalPrice;
+            var cinemaAmount = decimal.Round(basis * right.CinemaSharePercent / 100m, 0, MidpointRounding.AwayFromZero);
+            TicketRevenueSnapshotEntity.Add(new TicketRevenueSnapshotEntity
+            {
+                TicketRevenueSnapshotId = Guid.NewGuid(), OrderId = detail.OrderId, SeatId = detail.SeatId,
+                MovieScheduleId = detail.MovieScheduleId, MovieId = schedule.MovieId,
+                ContractId = right.ContractId, ContractRevisionId = right.ContractRevisionId,
+                SoldAt = orderDates.GetValueOrDefault(detail.OrderId, DateTime.UtcNow), ShowtimeAt = schedule.StartTime,
+                TicketNetAmount = detail.FinalPrice, RefundedAmount = 0, RevenueBasisAmount = basis,
+                CinemaSharePercent = right.CinemaSharePercent, CinemaShareAmount = cinemaAmount,
+                DistributorShareAmount = basis - cinemaAmount
+            });
+        }
+    }
+
     
    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -251,6 +333,79 @@ public class CinemaDbContext : DbContext
         modelBuilder.Entity<OrderInfoEntity>(entity =>
         {
             entity.HasIndex(o => o.BookingCode).IsUnique();
+        });
+
+        modelBuilder.Entity<ContractTemplateEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.Code, x.Version }).IsUnique();
+            entity.Property(x => x.Status).HasConversion<int>();
+        });
+        modelBuilder.Entity<DistributorEntity>().HasIndex(x => x.LegalName);
+        modelBuilder.Entity<FilmContractEntity>(entity =>
+        {
+            entity.HasIndex(x => x.InternalCode).IsUnique();
+            entity.HasIndex(x => new { x.Status, x.AssignedMovieManagerId });
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.Property(x => x.ProcessingStatus).HasConversion<int>();
+            entity.HasOne(x => x.PreviousContract).WithMany().HasForeignKey(x => x.PreviousContractId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne(x => x.AssignedMovieManager).WithMany().HasForeignKey(x => x.AssignedMovieManagerId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<ContractRevisionEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.ContractId, x.RevisionNumber }).IsUnique();
+            entity.HasOne(x => x.Contract).WithMany(x => x.Revisions).HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ContractDocumentEntity>(entity =>
+        {
+            entity.HasIndex(x => x.Sha256);
+            entity.Property(x => x.Kind).HasConversion<int>();
+            entity.HasOne(x => x.Revision).WithMany(x => x.Documents).HasForeignKey(x => x.ContractRevisionId).OnDelete(DeleteBehavior.Cascade);
+        });
+        modelBuilder.Entity<ContractMovieLineEntity>(entity =>
+        {
+            entity.Property(x => x.CinemaScopeState).HasConversion<int>();
+            entity.Property(x => x.FormatScopeState).HasConversion<int>();
+            entity.Property(x => x.SettlementCycle).HasConversion<int>();
+            entity.HasOne(x => x.Revision).WithMany(x => x.MovieLines).HasForeignKey(x => x.ContractRevisionId).OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(x => x.Movie).WithMany().HasForeignKey(x => x.MovieId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<movieRequiredAgeEntity>().WithMany().HasForeignKey(x => x.MovieRequiredAgeId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<ContractSignOffEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.ContractId, x.ContractRevisionId }).IsUnique();
+            entity.HasOne<FilmContractEntity>().WithMany().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ContractRevisionEntity>().WithMany().HasForeignKey(x => x.ContractRevisionId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<UserInfoEntity>().WithMany().HasForeignKey(x => x.SignedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<ExhibitionRightEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.MovieId, x.CinemaId, x.FormatId, x.StartsAt, x.EndsAt });
+            entity.HasIndex(x => new { x.ContractId, x.ContractMovieLineId });
+            entity.HasOne<FilmContractEntity>().WithMany().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ContractRevisionEntity>().WithMany().HasForeignKey(x => x.ContractRevisionId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ContractMovieLineEntity>().WithMany().HasForeignKey(x => x.ContractMovieLineId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<MovieInfoEntity>().WithMany().HasForeignKey(x => x.MovieId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<CinemaInfoEntity>().WithMany().HasForeignKey(x => x.CinemaId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<MovieFormatInfoEntity>().WithMany().HasForeignKey(x => x.FormatId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<MovieChangeRequestEntity>(entity =>
+        {
+            entity.Property(x => x.Status).HasConversion<int>();
+            entity.HasIndex(x => new { x.MovieId, x.Status });
+            entity.HasOne<MovieInfoEntity>().WithMany().HasForeignKey(x => x.MovieId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<UserInfoEntity>().WithMany().HasForeignKey(x => x.RequestedByUserId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<UserInfoEntity>().WithMany().HasForeignKey(x => x.ReviewedByUserId).OnDelete(DeleteBehavior.Restrict);
+        });
+        modelBuilder.Entity<TicketRevenueSnapshotEntity>(entity =>
+        {
+            entity.HasIndex(x => new { x.OrderId, x.SeatId }).IsUnique();
+            entity.HasIndex(x => new { x.MovieId, x.ShowtimeAt });
+            entity.HasOne<OrderInfoEntity>().WithMany().HasForeignKey(x => x.OrderId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<SeatsInfoEntity>().WithMany().HasForeignKey(x => x.SeatId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<MovieScheduleInfoEntity>().WithMany().HasForeignKey(x => x.MovieScheduleId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<MovieInfoEntity>().WithMany().HasForeignKey(x => x.MovieId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<FilmContractEntity>().WithMany().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Restrict);
+            entity.HasOne<ContractRevisionEntity>().WithMany().HasForeignKey(x => x.ContractRevisionId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ShowtimeRecommendationBatchEntity>(entity =>

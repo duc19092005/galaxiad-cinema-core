@@ -28,6 +28,50 @@ services:
     networks:
       - cinema-dev-net
 
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=cinema-local
+      - MINIO_ROOT_PASSWORD=cinema-local-secret
+    volumes:
+      - dev_minio_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9000/minio/health/live >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - cinema-dev-net
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    gpus: all
+    volumes:
+      - dev_ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    networks:
+      - cinema-dev-net
+
+  ollama-init:
+    image: ollama/ollama:latest
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["until OLLAMA_HOST=http://ollama:11434 ollama list >/dev/null 2>&1; do sleep 2; done; OLLAMA_HOST=http://ollama:11434 ollama pull qwen3.5:4b"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - cinema-dev-net
+
   ai-http:
     build:
       context: ../../services/ai
@@ -36,6 +80,8 @@ services:
       - "8000:8000"
     volumes:
       - ../../services/ai:/app
+      - /app/app/pb
+      - dev_huggingface_data:/root/.cache/huggingface
     environment:
       - ENVIRONMENT=development
       - HOST=0.0.0.0
@@ -43,9 +89,22 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - LLM_PROVIDER=ollama
+      - DEEPSEEK_BASE_URL=http://ollama:11434/v1
+      - DEEPSEEK_MODEL=qwen3.5:4b
     depends_on:
-      - redis
-      - qdrant
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 240
+      start_period: 30s
     networks:
       - cinema-dev-net
 
@@ -58,14 +117,23 @@ services:
       - "50051:50051"
     volumes:
       - ../../services/ai:/app
+      - /app/app/pb
+      - dev_huggingface_data:/root/.cache/huggingface
     environment:
       - ENVIRONMENT=development
       - QDRANT_URL=http://qdrant:6333
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - LLM_PROVIDER=ollama
+      - DEEPSEEK_BASE_URL=http://ollama:11434/v1
+      - DEEPSEEK_MODEL=qwen3.5:4b
     depends_on:
-      - redis
-      - qdrant
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+      ollama-init:
+        condition: service_completed_successfully
     networks:
       - cinema-dev-net
 
@@ -95,10 +163,20 @@ services:
       - ConnectionStrings__RedisConnection=redis:6379,abortConnect=false
       - AiService__BaseUrl=http://ai-http:8000
       - AiService__GrpcUrl=http://ai-grpc:50051
+      - Minio__Endpoint=minio:9000
+      - Minio__AccessKey=cinema-local
+      - Minio__SecretKey=cinema-local-secret
+      - Minio__ContractBucket=cinema-contracts
+      - Minio__UseSsl=false
     depends_on:
-      - mssql
-      - redis
-      - ai-http
+      mssql:
+        condition: service_started
+      redis:
+        condition: service_started
+      ai-http:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     networks:
       - cinema-dev-net
 
@@ -126,3 +204,6 @@ networks:
 volumes:
   dev_sql_data:
   dev_qdrant_data:
+  dev_huggingface_data:
+  dev_minio_data:
+  dev_ollama_data:

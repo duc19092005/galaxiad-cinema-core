@@ -33,6 +33,7 @@
 | [Quản trị hệ thống](./vi/admin.md) | `admin.md` | 30+ endpoints (Users, Roles, Vouchers, Pricing, Audit, Jobs) |
 | [Quản lý cơ sở](./vi/facilities.md) | `facilities.md` | 13 endpoints (Rạp, Phòng, Ghế) |
 | [Quản lý phim](./vi/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Định dạng, Thể loại) |
+| [Hợp đồng phim & quyền chiếu](./vi/film-contracts.md) | `film-contracts.md` | Hồ sơ, OCR, ký/kích hoạt, quyền chiếu, MinIO và đối soát test |
 | [Quản lý lịch chiếu](./vi/theater-manager.md) | `theater-manager.md` | 27 endpoints (Lịch chiếu, AI Gợi ý, Ca làm, Dashboard) |
 
 ---

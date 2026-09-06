@@ -6,6 +6,9 @@ WORKDIR /app
 # Install system dependencies if any
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    tesseract-ocr-vie \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for Docker cache

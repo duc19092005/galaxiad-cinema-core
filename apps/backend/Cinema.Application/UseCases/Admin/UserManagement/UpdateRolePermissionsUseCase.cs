@@ -47,6 +47,23 @@ public class UpdateRolePermissionsUseCase
             await _adminUserRepository.DeletePermissionForRoleAsync(roleId);
 
             var nextPermissionIds = permissionIds.Distinct().ToList();
+            var contractAdminOnlyPermissions = new HashSet<Guid>
+            {
+                userPermissions.ManageMovie,
+                userPermissions.ManageContractTemplates,
+                userPermissions.ApproveContracts,
+                userPermissions.SignContracts,
+                userPermissions.ActivateContracts,
+                userPermissions.ManageSettlements,
+                userPermissions.ApproveMovieChanges
+            };
+            if (roleId == userRoles.MovieManager &&
+                nextPermissionIds.Any(contractAdminOnlyPermissions.Contains))
+            {
+                throw new BadRequestException(
+                    "MovieManager không được cấp quyền ghi phim, phát hành mẫu, duyệt, ký, kích hoạt hợp đồng hoặc chốt tài chính.",
+                    "CONTRACT_PERMISSION_NOT_ALLOWED");
+            }
             if (nextPermissionIds.Contains(userPermissions.ApproveShift) &&
                 roleId != userRoles.Admin &&
                 roleId != userRoles.TheaterManager)

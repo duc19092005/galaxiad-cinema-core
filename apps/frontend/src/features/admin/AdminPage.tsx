@@ -10,6 +10,7 @@ import {
   KeyRound,
   Activity,
   Film,
+  FileText,
   Calendar,
   DollarSign,
   Ticket, TicketPercent, Popcorn,
@@ -53,6 +54,7 @@ import {
 } from './components/AdminDashboardWidgets';
 import { AuditSection } from './components/AuditSection';
 import { CreateUserModal } from './components/CreateUserModal';
+import { ContractsWorkspace } from '../contracts/ContractsWorkspace';
 
 // ============================================
 // CONSTANTS & HELPERS
@@ -64,7 +66,7 @@ const getAdminErrorMessage = (error: unknown, fallback: string) => {
   return response?.data?.message ?? response?.data?.Message ?? fallback;
 };
 
-const adminTabIds = new Set(['dashboard', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts', 'business-intel', 'concessions']);
+const adminTabIds = new Set(['dashboard', 'contracts', 'users', 'cinemas', 'vouchers', 'pricing-promotions', 'banners', 'permissions', 'rights', 'audit', 'shifts', 'business-intel', 'concessions']);
 
 const createFaceVectorFromImage = async (file: File): Promise<number[] | null> => {
   try {
@@ -420,6 +422,17 @@ const AdminPage: React.FC = () => {
   const sidebarSections: SidebarSection[] = useMemo(
     () => [
       {
+        id: 'film-contracts',
+        label: 'Khai thác phim',
+        description: 'Hợp đồng, quyền chiếu và tỷ lệ chia',
+        icon: <FileText size={18} />,
+        defaultOpen: true,
+        collapsible: true,
+        items: [
+          { id: 'contracts', label: 'Hợp đồng phim', icon: <FileText size={16} /> },
+        ],
+      },
+      {
         id: 'ai-workspace',
         label: 'AI Workspace',
         description: 'Research multi-agent & lab AI',
@@ -619,6 +632,8 @@ const AdminPage: React.FC = () => {
             <AdminOpsTiles data={dashboardData} />
           </div>
         );
+      case 'contracts':
+        return <ContractsWorkspace mode="admin" />;
 
       case 'business-intel':
         return <BusinessIntelligenceSection />;

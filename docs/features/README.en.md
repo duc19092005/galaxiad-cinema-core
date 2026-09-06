@@ -33,6 +33,7 @@
 | [Admin Panel](./en/admin.md) | `admin.md` | 30+ endpoints (Users, Roles, Vouchers, Pricing, Promotions, Audit, Dashboard, Jobs) |
 | [Facilities Management](./en/facilities.md) | `facilities.md` | 13 endpoints (Cinemas, Auditoriums, Departments) |
 | [Movie Management](./en/movie-manager.md) | `movie-manager.md` | 5 endpoints (CRUD, Formats, Age ratings) |
+| [Film Contracts & Exhibition Rights](./en/film-contracts.md) | `film-contracts.md` | Dossiers, OCR, sign-off/activation, rights, MinIO, and test audit |
 | [Theater Management](./en/theater-manager.md) | `theater-manager.md` | 27 endpoints (Schedules, AI Recommendations, Shifts, Dashboard) |
 
 ---

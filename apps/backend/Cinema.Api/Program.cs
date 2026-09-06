@@ -10,6 +10,7 @@ using Cinema.Api.Bootstraps.Validate;
 using Cinema.Api.Bootstraps.Chatbot;
 using Cinema.Api.Hubs;
 using Cinema.Api.Middlewares;
+using Cinema.Api.Services.Contracts;
 using Cinema.Application.Exceptions;
 using Cinema.Infrastructure;
 using Cinema.Infrastructure.Identity;
@@ -195,6 +196,15 @@ builder.Services.AddHostedService<MovieViewBufferSyncService>();
 builder.Services.AddJwt(builder.Configuration);
 builder.Services.AddScoped<IImageStorageService, CloudinaryImageStorageService>();
 builder.Services.AddScoped<IBackgroundJobScheduler, HangfireJobSchedulerService>();
+builder.Services.AddHttpClient("ContractAi", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["AiService:BaseUrl"] ?? "http://localhost:8000/");
+    client.Timeout = TimeSpan.FromMinutes(3);
+});
+if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
+    builder.Services.AddSingleton<IContractObjectStorage, MinioContractObjectStorage>();
+else
+    builder.Services.AddSingleton<IContractObjectStorage, FileContractObjectStorage>();
 builder.Services.TheaterManagerValidate();
 
 // CORS

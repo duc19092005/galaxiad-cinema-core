@@ -5,6 +5,7 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces.TheaterManager;
 using Cinema.Domain.Entities.MovieInfos;
+using Cinema.Domain.Entities.Contracts;
 using Cinema.Domain.Enums;
 using Cinema.Domain.Interfaces.Persistence;
 using Cinema.Domain.Localization;
@@ -73,6 +74,9 @@ public class CreateMovieScheduleUseCase
                 .ToDictionary(format => format.MovieFormatId, format => format.MovieFormatName);
 
             var authorizedMovies = await _repository.GetAuthorizedMovieIdsAsync(requestedMovieIds, cinemaId);
+            var exhibitionRights = _unitOfWork.Repository<ExhibitionRightEntity>().Query()
+                .Where(right => requestedMovieIds.Contains(right.MovieId) && right.IsActive)
+                .ToList();
             var proposedSlots = new List<MovieScheduleInfoEntity>();
             var existingMatchSchedules = await _repository.GetExistingSchedulesForAuditoriumAsync(
                 request.AuditoriumId,
@@ -114,7 +118,22 @@ public class CreateMovieScheduleUseCase
                     throw new BadRequestException(Messages.Schedule.PastDateNotAllowed, "E01");
                 }
 
-                if (slot.StartedDate < movie.ActiveAt || slot.StartedDate.Date > movie.EndedDate.Date)
+                var endTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
+                var movieRights = exhibitionRights.Where(right => right.MovieId == slot.MovieId).ToList();
+                if (movieRights.Count > 0)
+                {
+                    var isContractAuthorized = movieRights.Any(right =>
+                        (!right.CinemaId.HasValue || right.CinemaId == cinemaId) &&
+                        (!right.FormatId.HasValue || right.FormatId == slot.FormatId) &&
+                        right.StartsAt <= slot.StartedDate && right.EndsAt >= endTime);
+                    if (!isContractAuthorized)
+                    {
+                        throw new BadRequestException(
+                            $"Suất chiếu '{movie.MovieName}' nằm ngoài thời gian, rạp hoặc định dạng được hợp đồng cho phép.",
+                            "EXHIBITION_RIGHT_VIOLATION");
+                    }
+                }
+                else if (slot.StartedDate < movie.ActiveAt || endTime > movie.EndedDate.AddDays(1).Date)
                 {
                     throw new BadRequestException(
                         Messages.Schedule.MovieAvailability(
@@ -124,7 +143,6 @@ public class CreateMovieScheduleUseCase
                         "E01");
                 }
 
-                var endTime = slot.StartedDate.AddMinutes(movie.MovieDuration);
                 var normalizedStart = DateTimeHelper.NormalizeIncoming(slot.StartedDate);
                 var normalizedEnd = DateTimeHelper.NormalizeIncoming(endTime);
 
