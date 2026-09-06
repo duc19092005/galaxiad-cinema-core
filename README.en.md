@@ -78,7 +78,15 @@ flowchart TD
 - **Pricing Segments**: Manage ticket pricing by segment (Student, Adult, VIP...)
 
 ### 🎬 Movie Manager
-- **Movie Information Management**: Add/edit movies, showtimes, age ratings (P, K, T13, T16, T18, C)
+- **Read-only movie catalog**: View movies, exhibition rights, and Admin-activated dossiers; direct movie create/edit/delete is disabled
+- **Change requests**: Propose poster, description, or metadata changes for an Admin diff review and approval
+
+### 📄 Film Contracts & OCR (Movie Contract Workflow)
+- **Contract intake**: MovieManager uploads partner PDFs, scans, and appendices; the original file is immutable and stored with a hash and revision
+- **OCR and clause analysis**: The Python AI Service reads PDF text layers or Vietnamese/English scans with Tesseract, then extracts movies, dates, cinema/format scope, classification, and revenue-share policy
+- **Evidence-backed review**: Every extracted field keeps page, source text, and `SPECIFIED` / `NO_ADDITIONAL_RESTRICTION_CONFIRMED` / `UNRESOLVED` status; missing values are never guessed as 50/50 or system-wide
+- **Approve, sign, activate**: Admin approves a revision, signs internally, and activates one transaction that creates/links the movie, exhibition rights, and financial policy; contract history is retained
+- **Role separation**: Admin manages templates, partners, sign-off, activation, and settlement; MovieManager handles assigned dossiers; TheaterManager schedules only from activated rights
 
 ### 📋 Theater Manager
 - **Staff Shift Management**: Approve shifts, view attendance
@@ -89,6 +97,7 @@ flowchart TD
 - **Promotions & Vouchers**: Create and manage promotions, reward point vouchers
 - **Audit Log**: View system-wide activity logs
 - **Dashboard**: Revenue charts, ticket sales, recent activity
+- **Film contracts & finance**: Versioned templates/contracts, exhibition-right approvals, revenue shares, settlements, and movie revenue rankings
 
 ---
 
@@ -98,12 +107,13 @@ flowchart TD
 |-------|-----------|------|
 | **Frontend** | React + TypeScript + Vite | User Interface (Web) |
 | **Backend** | ASP.NET Core 8 | Business logic, REST API, WebSocket |
-| **AI Service** | Python FastAPI + DeepSeek LLM | LangChain Agent, chatbot, recommendations, auto-booking |
+| **AI Service** | Python FastAPI + DeepSeek/Ollama | LangChain Agent, chatbot, contract OCR, clause analysis, recommendations |
 | **LangChain Agent** | `create_tool_calling_agent` | Booking flow orchestration: seat suggestion, voucher, confirmation |
 | **Communication** | gRPC (protobuf) | C# backend ↔ Python AI Service |
 | **Database** | SQL Server (MSSQL) | Primary data storage (transactions, users, metadata) |
 | **Cache & Memory** | Redis | Fast caching, chat history (30-min TTL) |
 | **Vector DB** | Qdrant | Vector embeddings for movie recommendations |
+| **Contract Storage** | MinIO (local/test), existing storage (production) | Private contract files, appendices, and assets |
 | **Real-time** | WebSocket | Real-time seat status updates |
 
 ---
@@ -130,6 +140,8 @@ docker compose up --build
 ```
 
 Access: `http://localhost:5173`
+
+Local and test Docker environments can run contract OCR and analysis with Ollama `qwen3.5:4b` without a paid API key. Contract files are stored in MinIO locally/in tests; production keeps the existing storage backend.
 
 ### Run individually
 
@@ -175,6 +187,7 @@ python main.py
 - [Backend README (VI)](apps/backend/README.md)
 - [Backend README (EN)](apps/backend/README.en.md)
 - [Backend README (RU)](apps/backend/README.ru.md)
+- [Film Contracts & OCR](docs/features/en/film-contracts.md)
 
 ---
 

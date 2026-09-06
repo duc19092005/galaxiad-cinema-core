@@ -78,7 +78,15 @@ flowchart TD
 - **Phân khúc giá**: Quản lý giá vé theo đối tượng (Học sinh, Người lớn, VIP...)
 
 ### 🎬 Quản lý phim (Movie Manager)
-- **Quản lý thông tin phim**: Thêm/sửa phim, lịch chiếu, phân loại độ tuổi (P, K, T13, T16, T18, C)
+- **Danh mục phim chỉ đọc**: Xem phim, quyền khai thác và hồ sơ đã được Admin kích hoạt; không còn thêm/sửa/xóa phim trực tiếp
+- **Yêu cầu điều chỉnh**: Đề xuất thay đổi poster, mô tả hoặc metadata để Admin xem diff và phê duyệt
+
+### 📄 Hợp đồng phim & OCR (Movie Contract Workflow)
+- **Tiếp nhận hợp đồng**: MovieManager tải lên PDF, ảnh scan và phụ lục từ đối tác; file gốc được lưu bất biến cùng hash và revision
+- **OCR và phân tích điều khoản**: Python AI Service đọc PDF text layer hoặc OCR tiếng Việt/Anh bằng Tesseract, sau đó dùng model để bóc tách phim, thời hạn, phạm vi rạp/định dạng, phân loại và chính sách chia doanh thu
+- **Đối chiếu có nguồn**: Mỗi trường trích xuất giữ trang, đoạn nguồn, trạng thái `SPECIFIED` / `NO_ADDITIONAL_RESTRICTION_CONFIRMED` / `UNRESOLVED`; dữ liệu thiếu không bị tự đoán thành 50/50 hoặc toàn hệ thống
+- **Duyệt, ký và kích hoạt**: Admin duyệt revision, ký nội bộ, rồi kích hoạt transaction để tạo/liên kết phim, quyền chiếu và chính sách tài chính; lịch sử hợp đồng không bị xóa
+- **Quản trị theo vai trò**: Admin quản lý mẫu, đối tác, ký/kích hoạt và đối soát; MovieManager chỉ xử lý hồ sơ được giao; TheaterManager chỉ lập lịch theo quyền đã kích hoạt
 
 ### 📋 Quản lý rạp (Theater Manager)
 - **Quản lý ca nhân viên**: Duyệt ca, xem bảng chấm công
@@ -89,6 +97,7 @@ flowchart TD
 - **Khuyến mãi & Voucher**: Tạo và quản lý chương trình khuyến mãi, voucher điểm thưởng
 - **Audit Log**: Xem nhật ký hoạt động toàn hệ thống
 - **Dashboard tổng quan**: Biểu đồ doanh thu, vé bán ra, hoạt động gần đây
+- **Hợp đồng và tài chính phim**: Quản lý mẫu/hợp đồng theo phiên bản, phê duyệt quyền chiếu, tỷ lệ doanh thu, đối soát và xếp hạng doanh thu theo phim
 
 ---
 
@@ -98,12 +107,13 @@ flowchart TD
 |-------|-----------|---------|
 | **Frontend** | React + TypeScript + Vite | Giao diện người dùng (Web) |
 | **Backend** | ASP.NET Core 8 | Xử lý nghiệp vụ, REST API, WebSocket |
-| **AI Service** | Python FastAPI + DeepSeek LLM | LangChain Agent, chatbot, gợi ý phim, đặt vé tự động |
+| **AI Service** | Python FastAPI + DeepSeek/Ollama | LangChain Agent, chatbot, OCR hợp đồng, phân tích điều khoản, gợi ý phim |
 | **LangChain Agent** | `create_tool_calling_agent` | Điều phối luồng đặt vé: gợi ý ghế, voucher, xác nhận |
 | **Communication** | gRPC (protobuf) | Giao tiếp giữa C# backend và Python AI Service |
 | **Database** | SQL Server (MSSQL) | Lưu trữ dữ liệu chính (giao dịch, người dùng, metadata) |
 | **Cache & Memory** | Redis | Cache nhanh, lưu chat history (TTL 30 phút) |
 | **Vector DB** | Qdrant | Lưu trữ vector embeddings cho gợi ý phim |
+| **Contract Storage** | MinIO (local/test), storage hiện hữu (production) | Lưu file hợp đồng, phụ lục và asset riêng tư |
 | **Real-time** | WebSocket | Cập nhật trạng thái ghế real-time, thông báo |
 
 ---
@@ -130,6 +140,8 @@ docker compose up --build
 ```
 
 Truy cập: `http://localhost:5173`
+
+Môi trường local/test có thể chạy OCR và phân tích hợp đồng bằng Ollama `qwen3.5:4b` trong Docker, không cần API key trả phí. File hợp đồng local/test được lưu trong MinIO; production tiếp tục dùng storage hiện hữu.
 
 ### Chạy từng phần riêng lẻ
 
@@ -180,6 +192,7 @@ python main.py
 ### Dịch thuật
 - Tài liệu kỹ thuật: [Tiếng Việt](docs/algorithms/vi/README.md) | [Русский](docs/algorithms/ru/README.md)
 - Quy tắc kinh doanh: [Tiếng Việt](docs/business/vi/README.md) | [Русский](docs/business/ru/README.md)
+- Hợp đồng phim & OCR: [Tiếng Việt](docs/features/vi/film-contracts.md) | [English](docs/features/en/film-contracts.md) | [Русский](docs/features/ru/film-contracts.md)
 
 ---
 
