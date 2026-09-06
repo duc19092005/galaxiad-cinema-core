@@ -1,4 +1,4 @@
-namespace Cinema.Api.Services.Contracts;
+namespace Cinema.Application.Interfaces.Contracts;
 
 public interface IContractObjectStorage
 {

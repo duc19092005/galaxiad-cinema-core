@@ -10,7 +10,9 @@ using Cinema.Api.Bootstraps.Validate;
 using Cinema.Api.Bootstraps.Chatbot;
 using Cinema.Api.Hubs;
 using Cinema.Api.Middlewares;
-using Cinema.Api.Services.Contracts;
+using Cinema.Api.Bootstraps.Contracts;
+using Cinema.Application.Interfaces.Contracts;
+using Cinema.Infrastructure.ExternalServices.Contracts;
 using Cinema.Application.Exceptions;
 using Cinema.Infrastructure;
 using Cinema.Infrastructure.Identity;
@@ -175,6 +177,7 @@ builder.Services.AddFacilitiesServices();
 builder.Services.AddMovieServices();
 builder.Services.AddBookingServices();
 builder.Services.AddConcessionAndCleaningServices();
+builder.Services.AddContractServices();
 
 // SignalR for real-time notifications
 builder.Services.AddSignalR();

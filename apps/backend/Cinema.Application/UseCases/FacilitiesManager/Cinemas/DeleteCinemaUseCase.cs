@@ -6,7 +6,6 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
@@ -44,7 +43,7 @@ public class DeleteCinemaUseCase
             if (findCinema == null)
             {
                 throw new AppException(Messages.Cinema.NotFoundById(itemId),
-                    StatusCodes.Status404NotFound, "C01");
+                    404, "C01");
             }
 
             var hasBookedBookings = await _repository.HasBookedBookingForCinemaAsync(itemId);
@@ -52,7 +51,7 @@ public class DeleteCinemaUseCase
             {
                 throw new AppException(
                     Messages.Cinema.CannotDeleteActiveBookings,
-                    StatusCodes.Status409Conflict,
+                    409,
                     "C03");
             }
 
@@ -102,7 +101,7 @@ public class DeleteCinemaUseCase
         catch (Exception e)
         {
             _logger.LogError("There a Error with System : {0}", e.Message);
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
 }

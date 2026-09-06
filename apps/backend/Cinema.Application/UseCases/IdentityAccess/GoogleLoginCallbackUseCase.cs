@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Cinema.Application.Abstractions.Security;
 using Cinema.Domain.Constants;
@@ -12,6 +10,7 @@ using Cinema.Application.Dtos;
 using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.IIdentityAccess;
+using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -28,18 +27,15 @@ public class GoogleLoginCallbackUseCase
     private readonly IIdentityAccessRepository _repository;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleLoginCallbackUseCase> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IGoogleAuthService _googleAuthService;
     private readonly IJwtService _jwtService;
     private readonly IEncryptionService _encryptionService;
-
-    private const string GoogleTokenEndpoint = "https://oauth2.googleapis.com/token";
-    private const string GoogleUserInfoEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo";
 
     public GoogleLoginCallbackUseCase(
         IIdentityAccessRepository repository,
         IConfiguration configuration,
         ILogger<GoogleLoginCallbackUseCase> logger,
-        IHttpClientFactory httpClientFactory,
+        IGoogleAuthService googleAuthService,
         IJwtService jwtService,
         IUnitOfWork unitOfWork,
         IEncryptionService encryptionService)
@@ -48,7 +44,7 @@ public class GoogleLoginCallbackUseCase
         _repository = repository;
         _configuration = configuration;
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
+        _googleAuthService = googleAuthService;
         _jwtService = jwtService;
         _encryptionService = encryptionService;
     }
@@ -70,15 +66,7 @@ public class GoogleLoginCallbackUseCase
                 _logger.LogWarning("Failed to parse state parameter, defaulting to web");
             }
 
-            string redirectUri = GetCallbackUri(platform);
-
-            var tokenResponse = await ExchangeCodeForTokens(code, redirectUri);
-            if (tokenResponse == null)
-            {
-                throw new AppException(Messages.Auth.GoogleTokenExchangeFailed, 400, "G02");
-            }
-
-            var googleUserInfo = await GetGoogleUserInfo(tokenResponse.AccessToken);
+            var googleUserInfo = await _googleAuthService.AuthenticateCodeAsync(code, platform);
             if (googleUserInfo == null || string.IsNullOrEmpty(googleUserInfo.Email))
             {
                 throw new AppException(Messages.Auth.GoogleUserInfoFailed, 400, "G03");
@@ -116,13 +104,13 @@ public class GoogleLoginCallbackUseCase
                     existingUser.SubId = googleUserInfo.Id;
                 }
 
-                if (!string.IsNullOrEmpty(tokenResponse.RefreshToken))
+                if (!string.IsNullOrEmpty(googleUserInfo.RefreshToken))
                 {
                     var aesKey = _configuration["AES_256:Key"];
                     var aesIv = _configuration["AES_256:IV"];
                     if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
                     {
-                        existingUser.RefreshToken = _encryptionService.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
+                        existingUser.RefreshToken = _encryptionService.Encrypt(googleUserInfo.RefreshToken, aesKey, aesIv);
                     }
                 }
 
@@ -136,13 +124,13 @@ public class GoogleLoginCallbackUseCase
                 isNewAccount = true;
 
                 string? encryptedRefreshToken = null;
-                if (!string.IsNullOrEmpty(tokenResponse.RefreshToken))
+                if (!string.IsNullOrEmpty(googleUserInfo.RefreshToken))
                 {
                     var aesKey = _configuration["AES_256:Key"];
                     var aesIv = _configuration["AES_256:IV"];
                     if (!string.IsNullOrEmpty(aesKey) && !string.IsNullOrEmpty(aesIv))
                     {
-                        encryptedRefreshToken = _encryptionService.Encrypt(tokenResponse.RefreshToken, aesKey, aesIv);
+                        encryptedRefreshToken = _encryptionService.Encrypt(googleUserInfo.RefreshToken, aesKey, aesIv);
                     }
                 }
 
@@ -236,115 +224,4 @@ public class GoogleLoginCallbackUseCase
             throw new AppException(Messages.System.GeneralError, 500, "S01");
         }
     }
-
-    private string GetCallbackUri(string platform)
-    {
-        return platform.ToLower() switch
-        {
-            "web" => _configuration["Google:WebCallbackUrl"]
-                     ?? "https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-web",
-            "mobile" => _configuration["Google:MobileCallbackUrl"]
-                         ?? "https://api.galaxiadcine.online/api/v1/IdentityAccess/google-callback-mobile",
-            _ => throw new AppException(Messages.Platform.InvalidPlatform, 400, "G05")
-        };
-    }
-
-    private async Task<GoogleTokenResponse?> ExchangeCodeForTokens(string code, string redirectUri)
-    {
-        var clientId = _configuration["Google:ClientId"];
-        var clientSecret = _configuration["Google:ClientSecret"];
-
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(clientSecret))
-        {
-            _logger.LogError("Google ClientId or ClientSecret is not configured");
-            throw new AppException(Messages.System.Error, 500, "G01");
-        }
-
-        var httpClient = _httpClientFactory.CreateClient();
-
-        var requestBody = new Dictionary<string, string>
-        {
-            { "code", code },
-            { "client_id", clientId },
-            { "client_secret", clientSecret },
-            { "redirect_uri", redirectUri },
-            { "grant_type", "authorization_code" }
-        };
-
-        var response = await httpClient.PostAsync(GoogleTokenEndpoint, new FormUrlEncodedContent(requestBody));
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Google token exchange failed: {StatusCode} - {Response}",
-                response.StatusCode, responseContent);
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<GoogleTokenResponse>(responseContent);
-    }
-
-    private async Task<GoogleUserInfo?> GetGoogleUserInfo(string accessToken)
-    {
-        var httpClient = _httpClientFactory.CreateClient();
-        httpClient.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
-
-        var response = await httpClient.GetAsync(GoogleUserInfoEndpoint);
-        var responseContent = await response.Content.ReadAsStringAsync();
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Google user info request failed: {StatusCode} - {Response}",
-                response.StatusCode, responseContent);
-            return null;
-        }
-
-        return JsonSerializer.Deserialize<GoogleUserInfo>(responseContent);
-    }
-}
-
-internal class GoogleTokenResponse
-{
-    [JsonPropertyName("access_token")]
-    public string AccessToken { get; set; } = string.Empty;
-
-    [JsonPropertyName("refresh_token")]
-    public string? RefreshToken { get; set; }
-
-    [JsonPropertyName("expires_in")]
-    public int ExpiresIn { get; set; }
-
-    [JsonPropertyName("token_type")]
-    public string TokenType { get; set; } = string.Empty;
-
-    [JsonPropertyName("id_token")]
-    public string? IdToken { get; set; }
-
-    [JsonPropertyName("scope")]
-    public string? Scope { get; set; }
-}
-
-internal class GoogleUserInfo
-{
-    [JsonPropertyName("id")]
-    public string Id { get; set; } = string.Empty;
-
-    [JsonPropertyName("email")]
-    public string Email { get; set; } = string.Empty;
-
-    [JsonPropertyName("verified_email")]
-    public bool VerifiedEmail { get; set; }
-
-    [JsonPropertyName("name")]
-    public string? Name { get; set; }
-
-    [JsonPropertyName("given_name")]
-    public string? GivenName { get; set; }
-
-    [JsonPropertyName("family_name")]
-    public string? FamilyName { get; set; }
-
-    [JsonPropertyName("picture")]
-    public string? Picture { get; set; }
 }

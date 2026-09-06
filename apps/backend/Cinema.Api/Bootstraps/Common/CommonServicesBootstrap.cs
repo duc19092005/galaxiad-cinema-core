@@ -110,6 +110,7 @@ public static class CommonServicesBootstrap
 
         // Recommendation & AI Sync Services
         services.AddScoped<IRecommendationRepository, RecommendationRepository>();
+        services.AddScoped<IAiRecommendationClient, AiRecommendationClient>();
         services.AddScoped<AiMovieEmbeddingSyncService>();
         services.AddScoped<IAiMovieEmbeddingSyncService>(sp => sp.GetRequiredService<AiMovieEmbeddingSyncService>());
         services.AddScoped<GetRecommendationsUseCase>();

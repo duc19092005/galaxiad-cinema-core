@@ -2,7 +2,6 @@
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
 using Cinema.Domain.Entities.CinemaInfos;
-using Microsoft.AspNetCore.Http;
 
 namespace Cinema.Application.Validators;
 
@@ -29,7 +28,7 @@ public class CinemaValidate
         }
         catch (Exception)
         {
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
 
@@ -55,7 +54,7 @@ public class CinemaValidate
         }
         catch (Exception)
         {
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
     
@@ -79,7 +78,7 @@ public class CinemaValidate
         }
         catch (Exception)
         {
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
     
@@ -104,7 +103,7 @@ public class CinemaValidate
         }
         catch (Exception)
         {
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
 }

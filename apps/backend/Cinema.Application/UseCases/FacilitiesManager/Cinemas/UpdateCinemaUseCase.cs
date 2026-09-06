@@ -10,7 +10,6 @@ using Cinema.Application.Dtos.FacilitiesManager.Cinemas.Requests;
 using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
@@ -47,7 +46,7 @@ public class UpdateCinemaUseCase
             if (findCinema == null)
             {
                 throw new AppException(Messages.Cinema.NotFoundById(itemId),
-                    StatusCodes.Status404NotFound, "C01");
+                    404, "C01");
             }
             
             var hasBookedBookings = await _repository.HasBookedBookingForCinemaAsync(itemId);
@@ -55,7 +54,7 @@ public class UpdateCinemaUseCase
             {
                 throw new AppException(
                     Messages.Cinema.CannotEditActiveBookings,
-                    StatusCodes.Status409Conflict,
+                    409,
                     "C02");
             }
 
@@ -124,7 +123,7 @@ public class UpdateCinemaUseCase
         catch (Exception ex)
         {
             _logger.LogError(ex.Message);
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
 }

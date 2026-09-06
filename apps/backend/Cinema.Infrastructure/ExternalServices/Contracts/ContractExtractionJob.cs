@@ -1,9 +1,12 @@
-﻿using System.Text.Json;
+using System.Net.Http.Headers;
+using System.Text.Json;
+using Cinema.Application.Interfaces.Contracts;
 using Cinema.Domain.Enums;
 using Cinema.Infrastructure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-namespace Cinema.Api.Services.Contracts;
+namespace Cinema.Infrastructure.ExternalServices.Contracts;
 
 public sealed class ContractExtractionJob
 {
@@ -38,7 +41,7 @@ public sealed class ContractExtractionJob
                 var bytes = await _storage.GetAsync(document.StoragePath, ct)
                     ?? throw new FileNotFoundException("Contract object is missing.", document.StoragePath);
                 var content = new ByteArrayContent(bytes);
-                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(document.ContentType);
+                content.Headers.ContentType = new MediaTypeHeaderValue(document.ContentType);
                 form.Add(content, "files", document.FileName);
             }
             var response = await _clients.CreateClient("ContractAi").PostAsync("api/contracts/extract", form, ct);

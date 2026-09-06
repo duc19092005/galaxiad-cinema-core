@@ -11,7 +11,6 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Entities.CinemaInfos;
-using Microsoft.AspNetCore.Http;
 using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
@@ -115,7 +114,7 @@ public class CreateCinemaUseCase
         catch (Exception e)
         {
             _logger.LogError("There a Error with System : {0}", e.Message);
-            throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "S01");
+            throw new AppException(Messages.System.Error, 500, "S01");
         }
     }
 }

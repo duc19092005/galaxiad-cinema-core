@@ -89,7 +89,15 @@ public class AdminManageUsersController : ControllerBase
     [Consumes("multipart/form-data")]
     public async Task<IActionResult> UpdateUserPortrait(Guid userId, IFormFile portrait)
     {
-        var result = await _updateUserPortraitUseCase.ExecuteAsync(userId, portrait);
+        await using var stream = portrait?.OpenReadStream();
+        var fileUpload = portrait == null ? null : new Cinema.Application.Dtos.Common.FileUploadModel
+        {
+            Stream = stream ?? Stream.Null,
+            FileName = portrait.FileName,
+            ContentType = portrait.ContentType,
+            Length = portrait.Length
+        };
+        var result = await _updateUserPortraitUseCase.ExecuteAsync(userId, fileUpload);
         if (!result.IsSuccess)
         {
             return BadRequest(result);

@@ -3,9 +3,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Cinema.Application.Interfaces.IThirdPersonServices;
+using Cinema.Application.Dtos.Common;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -28,7 +28,7 @@ public class CloudinaryImageStorageService : IImageStorageService
         _logger = logger;
     }
 
-    public async Task<(bool Success, string Result)> PostImageAsync(IFormFile? file)
+    public async Task<(bool Success, string Result)> PostImageAsync(FileUploadModel? file)
     {
         if (file == null || file.Length == 0)
         {
@@ -37,17 +37,14 @@ public class CloudinaryImageStorageService : IImageStorageService
 
         ImageUploadResult uploadResult;
 
-        await using (var stream = file.OpenReadStream())
+        var uploadParams = new ImageUploadParams()
         {
-            var uploadParams = new ImageUploadParams()
-            {
-                File = new FileDescription(file.FileName, stream),
-                Folder = "MovieImages",
-                Transformation = new Transformation().Quality("auto").FetchFormat("auto")
-            };
+            File = new FileDescription(file.FileName, file.Stream),
+            Folder = "MovieImages",
+            Transformation = new Transformation().Quality("auto").FetchFormat("auto")
+        };
 
-            uploadResult = await _cloudinary.UploadAsync(uploadParams);
-        }
+        uploadResult = await _cloudinary.UploadAsync(uploadParams);
 
         if (!string.IsNullOrEmpty(uploadResult.SecureUrl?.ToString()))
         {

@@ -6,7 +6,6 @@ using Cinema.Application.Interfaces;
 using Cinema.Application.Interfaces.Facilities;
 using Cinema.Application.Exceptions;
 using Cinema.Domain.Localization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Cinema.Application.UseCases.FacilitiesManager.Cinemas;
@@ -41,7 +40,7 @@ public class GetCinemaByIdUseCase
             if (cinemaData == null)
             {
                 throw new AppException(Messages.Cinema.NotFound,
-                    StatusCodes.Status404NotFound, "NotFound01");
+                    404, "NotFound01");
             }
 
             return new BaseResponse<ResFacilitiesManagerCinema>

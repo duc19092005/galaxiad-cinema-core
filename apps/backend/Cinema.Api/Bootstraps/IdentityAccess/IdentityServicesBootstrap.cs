@@ -28,8 +28,8 @@ public static class IdentityServicesBootstrap
         services.AddScoped<GetProfileUseCase>();
         services.AddScoped<ChangePasswordUseCase>();
         services.AddScoped<UpdateUserProfileUseCase>();
-        
-        // Google OAuth2 HttpClient
+        // Google OAuth2
+        services.AddScoped<Cinema.Application.Interfaces.IThirdPersonServices.IGoogleAuthService, Cinema.Infrastructure.ExternalServices.Identity.GoogleAuthService>();
         services.AddHttpClient();
 
         return services;

@@ -1,7 +1,9 @@
+using Cinema.Application.Interfaces.Contracts;
+using Microsoft.Extensions.Configuration;
 using Minio;
 using Minio.DataModel.Args;
 
-namespace Cinema.Api.Services.Contracts;
+namespace Cinema.Infrastructure.ExternalServices.Contracts;
 
 public sealed class MinioContractObjectStorage : IContractObjectStorage
 {

@@ -102,7 +102,7 @@ public class CreateMovieUseCase
             }
 
             // Collect multi banners: MovieBanners[] + optional legacy MovieBanner
-            var bannerFiles = new List<Microsoft.AspNetCore.Http.IFormFile>();
+            var bannerFiles = new List<Cinema.Application.Dtos.Common.FileUploadModel>();
             if (request.MovieBanners != null)
             {
                 bannerFiles.AddRange(request.MovieBanners.Where(f => f != null && f.Length > 0)!);

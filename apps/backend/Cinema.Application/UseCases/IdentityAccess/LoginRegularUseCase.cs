@@ -10,7 +10,6 @@ using Cinema.Application.Dtos.IdentityAccess.Responses;
 using Cinema.Application.Interfaces.IIdentityAccess;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Domain.Enums;
@@ -82,14 +81,14 @@ public class identityAccessRegularLoginUseCase : ILogin<ReqRegularLoginDto, ResR
             if (getJWTKey == null || getJWTIss == null || getJwtAud == null)
             {
                 _logger.LogError("JWT_Info:Key and JWT_Info:Iss not null");
-                throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
+                throw new AppException(Messages.System.Error, 500, "E01");
             }
 
             string? token = _jwtService.GenerateToken(getJWTKey, getJWTIss, getJwtAud, getUserInfo.UserEmail, result.UserName, getUserInfo.UserId, roles, permissions);
             if (token == null)
             {
                 _logger.LogError("Token Generator System Error");
-                throw new AppException(Messages.System.Error, StatusCodes.Status500InternalServerError, "E01");
+                throw new AppException(Messages.System.Error, 500, "E01");
             }
 
             List<ManagedCinemaInfoDto>? managedCinemasList = null;

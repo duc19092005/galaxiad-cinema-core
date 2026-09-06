@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Cinema.Application.Dtos;
+using Cinema.Application.Dtos.Common;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Application.Interfaces.Admin;
 using Cinema.Application.Interfaces.IThirdPersonServices;
@@ -30,7 +30,7 @@ public class UpdateUserPortraitUseCase
         _auditLogService = auditLogService;
     }
 
-    public async Task<BaseResponse<string>> ExecuteAsync(Guid userId, IFormFile? portrait)
+    public async Task<BaseResponse<string>> ExecuteAsync(Guid userId, FileUploadModel? portrait)
     {
         if (portrait == null || portrait.Length == 0)
         {

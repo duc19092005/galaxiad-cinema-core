@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
+using Cinema.Application.Dtos.Common;
 
 namespace Cinema.Application.Dtos.MovieManager.Requests;
 
@@ -17,13 +17,13 @@ public class ReqAddMovieManagerMovieDto
     public string MovieDescription { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Movie Image is required")]
-    public IFormFile MovieImage { get; set; } = null!;
+    public FileUploadModel MovieImage { get; set; } = null!;
 
     /// <summary>Legacy single banner (optional if MovieBanners is provided).</summary>
-    public IFormFile? MovieBanner { get; set; }
+    public FileUploadModel? MovieBanner { get; set; }
 
     /// <summary>Multiple cover/banner images (hero carousel).</summary>
-    public List<IFormFile>? MovieBanners { get; set; }
+    public List<FileUploadModel>? MovieBanners { get; set; }
 
     [Required(ErrorMessage = "Movie Ended Date is required")]
     public DateTime EndedDate { get; set; }
@@ -65,13 +65,13 @@ public class ReqEditMovieManagerMovieDto
     [StringLength(200, MinimumLength = 1 , ErrorMessage = "Movie Descriptions length must be between 1 and 200 characters")]
     public string? MovieDescription { get; set; } 
 
-    public IFormFile? MovieImage { get; set; }
+    public FileUploadModel? MovieImage { get; set; }
 
     /// <summary>Legacy single banner replace (optional).</summary>
-    public IFormFile? MovieBanner { get; set; }
+    public FileUploadModel? MovieBanner { get; set; }
 
     /// <summary>Append additional cover/banner images.</summary>
-    public List<IFormFile>? MovieBanners { get; set; }
+    public List<FileUploadModel>? MovieBanners { get; set; }
 
     /// <summary>Remove existing cover images by id.</summary>
     public List<Guid>? RemoveCoverImageIds { get; set; }

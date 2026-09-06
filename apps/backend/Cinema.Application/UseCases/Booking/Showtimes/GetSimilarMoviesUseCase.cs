@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Cinema.Application.Dtos;
@@ -14,7 +11,6 @@ using Cinema.Application.Interfaces.Booking;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Localization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Cinema.Application.Mappers.Booking;
 
@@ -23,21 +19,18 @@ namespace Cinema.Application.UseCases.Booking.Showtimes;
 public class GetSimilarMoviesUseCase
 {
     private readonly IBookingCatalogRepository _repository;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
+    private readonly IAiRecommendationClient _aiRecommendationClient;
     private readonly IMovieCacheService _cacheService;
     private readonly ILogger<GetSimilarMoviesUseCase> _logger;
 
     public GetSimilarMoviesUseCase(
         IBookingCatalogRepository repository,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        IAiRecommendationClient aiRecommendationClient,
         IMovieCacheService cacheService,
         ILogger<GetSimilarMoviesUseCase> logger)
     {
         _repository = repository;
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
+        _aiRecommendationClient = aiRecommendationClient;
         _cacheService = cacheService;
         _logger = logger;
     }
@@ -75,36 +68,23 @@ public class GetSimilarMoviesUseCase
 
         try
         {
-            var aiServiceUrl = _configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000";
-            var client = _httpClientFactory.CreateClient();
-            client.Timeout = TimeSpan.FromSeconds(5);
-
             var reqBody = new AiRecommendRequest { UserText = userText, TopK = limit + 4 };
-            var content = new StringContent(JsonSerializer.Serialize(reqBody), Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync($"{aiServiceUrl}/recommend", content, cancellationToken);
-            if (response.IsSuccessStatusCode)
+            var aiResult = await _aiRecommendationClient.RecommendAsync(reqBody, cancellationToken);
+            if (aiResult?.Results != null && aiResult.Results.Count > 0)
             {
-                var aiResult = JsonSerializer.Deserialize<AiRecommendResponse>(
-                    await response.Content.ReadAsStringAsync(cancellationToken),
-                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                var aiMovieIds = aiResult.Results
+                    .Select(r => Guid.TryParse(r.MovieId, out var id) ? id : Guid.Empty)
+                    .Where(id => id != Guid.Empty && id != movieId)
+                    .Distinct()
+                    .ToList();
 
-                if (aiResult?.Results != null && aiResult.Results.Count > 0)
-                {
-                    var aiMovieIds = aiResult.Results
-                        .Select(r => Guid.TryParse(r.MovieId, out var id) ? id : Guid.Empty)
-                        .Where(id => id != Guid.Empty && id != movieId)
-                        .Distinct()
-                        .ToList();
-
-                    // Find corresponding pre-loaded movies in the candidate pool preserving AI ordering
-                    similarMovies = aiMovieIds
-                        .Select(id => candidates.FirstOrDefault(c => c.MovieId == id))
-                        .Where(m => m != null)
-                        .Cast<ResPublicMovieListDto>()
-                        .Take(limit)
-                        .ToList();
-                }
+                // Find corresponding pre-loaded movies in the candidate pool preserving AI ordering
+                similarMovies = aiMovieIds
+                    .Select(id => candidates.FirstOrDefault(c => c.MovieId == id))
+                    .Where(m => m != null)
+                    .Cast<ResPublicMovieListDto>()
+                    .Take(limit)
+                    .ToList();
             }
         }
         catch (Exception ex)

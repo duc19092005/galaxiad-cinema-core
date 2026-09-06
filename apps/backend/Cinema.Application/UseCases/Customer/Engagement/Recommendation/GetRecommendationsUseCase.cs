@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -12,7 +11,6 @@ using Cinema.Application.Interfaces.Comments;
 using Cinema.Application.Interfaces.IThirdPersonServices;
 using Cinema.Domain.Entities.UserInfos;
 using Cinema.Domain.Localization;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Cinema.Application.UseCases.Customer.Engagement.Recommendation;
@@ -28,21 +26,18 @@ public class GetRecommendationsUseCase
     private const double SurveyWeight = 0.72;
 
     private readonly IRecommendationRepository _repository;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IConfiguration _configuration;
+    private readonly IAiRecommendationClient _aiClient;
     private readonly ILogger<GetRecommendationsUseCase> _logger;
     private readonly IAiMovieEmbeddingSyncService _aiMovieEmbeddingSyncService;
 
     public GetRecommendationsUseCase(
         IRecommendationRepository repository,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration configuration,
+        IAiRecommendationClient aiClient,
         ILogger<GetRecommendationsUseCase> logger,
         IAiMovieEmbeddingSyncService aiMovieEmbeddingSyncService)
     {
         _repository = repository;
-        _httpClientFactory = httpClientFactory;
-        _configuration = configuration;
+        _aiClient = aiClient;
         _logger = logger;
         _aiMovieEmbeddingSyncService = aiMovieEmbeddingSyncService;
     }
@@ -59,9 +54,6 @@ public class GetRecommendationsUseCase
         {
             await _aiMovieEmbeddingSyncService.EnsureMoviesSyncedAsync(cancellationToken);
 
-            var aiServiceUrl = _configuration["AiService:BaseUrl"] ?? "http://cinema-ai-service:8000";
-            var client = _httpClientFactory.CreateClient();
-
             var recentRatings = await _repository.GetRecentPositiveRatingSignalsAsync(
                 userId,
                 DateTime.UtcNow.AddDays(-30),
@@ -70,8 +62,6 @@ public class GetRecommendationsUseCase
             if (recentRatings.Count > 0)
             {
                 var candidates = await QuerySimilarBySignalsAsync(
-                    client,
-                    aiServiceUrl,
                     recentRatings,
                     interactedMovieIds,
                     RecentRatingWeight,
@@ -90,8 +80,6 @@ public class GetRecommendationsUseCase
             {
                 var genreText = BuildLongTermGenreText(dominantGenres);
                 var candidates = await QueryByTextAsync(
-                    client,
-                    aiServiceUrl,
                     genreText,
                     interactedMovieIds,
                     LongTermGenreWeight,
@@ -113,8 +101,6 @@ public class GetRecommendationsUseCase
             if (highQualityInteractions.Count > 0)
             {
                 var candidates = await QuerySimilarBySignalsAsync(
-                    client,
-                    aiServiceUrl,
                     highQualityInteractions,
                     interactedMovieIds,
                     HighQualityInteractionWeight,
@@ -132,8 +118,6 @@ public class GetRecommendationsUseCase
             if (!string.IsNullOrWhiteSpace(surveyText))
             {
                 var candidates = await QueryByTextAsync(
-                    client,
-                    aiServiceUrl,
                     surveyText,
                     interactedMovieIds,
                     SurveyWeight,
@@ -153,7 +137,7 @@ public class GetRecommendationsUseCase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error building personalized recommendations");
+            _logger.LogWarning(ex, "Failed to compute personalized recommendations for {UserId}", userId);
             return Success(
                 await BuildFallbackListAsync(interactedMovieIds, FinalTake),
                 Messages.Recommendation.PopularRecommendations);
@@ -180,8 +164,6 @@ public class GetRecommendationsUseCase
     }
 
     private async Task<List<RankedCandidate>> QuerySimilarBySignalsAsync(
-        HttpClient client,
-        string aiServiceUrl,
         List<MovieBehaviorSignal> signals,
         HashSet<Guid> interactedMovieIds,
         double sourceWeight,
@@ -203,11 +185,7 @@ public class GetRecommendationsUseCase
                 ExcludeIds = excludeIds
             };
 
-            var response = await PostAiAsync<AiRecommendByIdRequest, AiRecommendResponse>(
-                client,
-                $"{aiServiceUrl}/recommend-by-id",
-                request,
-                cancellationToken);
+            var response = await _aiClient.RecommendByIdAsync(request, cancellationToken);
 
             if (response?.Results.Count > 0)
             {
@@ -219,8 +197,6 @@ public class GetRecommendationsUseCase
     }
 
     private async Task<List<RankedCandidate>> QueryByTextAsync(
-        HttpClient client,
-        string aiServiceUrl,
         string userText,
         HashSet<Guid> interactedMovieIds,
         double sourceWeight,
@@ -233,11 +209,7 @@ public class GetRecommendationsUseCase
             ExcludeIds = interactedMovieIds.Select(id => id.ToString()).ToList()
         };
 
-        var response = await PostAiAsync<AiRecommendRequest, AiRecommendResponse>(
-            client,
-            $"{aiServiceUrl}/recommend",
-            request,
-            cancellationToken);
+        var response = await _aiClient.RecommendAsync(request, cancellationToken);
 
         if (response?.Results.Count is null or 0)
         {
@@ -257,25 +229,6 @@ public class GetRecommendationsUseCase
         }
 
         return candidates;
-    }
-
-    private async Task<TResponse?> PostAiAsync<TRequest, TResponse>(
-        HttpClient client,
-        string url,
-        TRequest request,
-        CancellationToken cancellationToken)
-    {
-        var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
-        var response = await client.PostAsync(url, content, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("AI service returned {StatusCode} for {Url}", response.StatusCode, url);
-            return default;
-        }
-
-        return JsonSerializer.Deserialize<TResponse>(
-            await response.Content.ReadAsStringAsync(cancellationToken),
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
     }
 
     private static List<RankedCandidate> MergeGroupsRoundRobin(
