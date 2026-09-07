@@ -16,6 +16,10 @@ public static class CinemaAndMovieSeedData
         
         var defaultDate = new DateTime(2024, 1, 1);
         var now = new DateTime(2026, 3, 18, 0, 0, 0); // Use fixed date for stable migrations
+        // Demo movie rights use one consistent window so the contract workflow can be
+        // demonstrated with the same dates across the catalog, schedules and sample PDFs.
+        var movieActiveAt = new DateTime(2026, 9, 6, 0, 0, 0, DateTimeKind.Utc);
+        var movieEndedDate = new DateTime(2027, 9, 20, 23, 59, 59, DateTimeKind.Utc);
 
         // 1. Seed Cinemas
         var cinemaHCMId = Guid.Parse("11111111-1111-1111-1111-111111111111");
@@ -131,8 +135,8 @@ public static class CinemaAndMovieSeedData
                 Actors = "Robert Pattinson, Zoë Kravitz, Paul Dano",
                 MovieDuration = 176,
                 MovieRequiredAgeId = movieRequiredAgeConstants.Teen13,
-                ActiveAt = now.AddDays(-5),
-                EndedDate = now.AddDays(25), 
+                ActiveAt = movieActiveAt,
+                EndedDate = movieEndedDate,
                 IsActive = true,
                 CreatedAt = defaultDate,
                 UpdatedAt = defaultDate,
@@ -150,8 +154,8 @@ public static class CinemaAndMovieSeedData
                 Actors = "Cillian Murphy, Emily Blunt, Matt Damon",
                 MovieDuration = 180,
                 MovieRequiredAgeId = movieRequiredAgeConstants.Teen16,
-                ActiveAt = now.AddDays(-1),
-                EndedDate = now.AddDays(30),
+                ActiveAt = movieActiveAt,
+                EndedDate = movieEndedDate,
                 IsActive = true,
                 CreatedAt = defaultDate,
                 UpdatedAt = defaultDate,
@@ -169,8 +173,8 @@ public static class CinemaAndMovieSeedData
                 Actors = "Sam Worthington, Zoe Saldana, Sigourney Weaver",
                 MovieDuration = 192,
                 MovieRequiredAgeId = movieRequiredAgeConstants.Teen13,
-                ActiveAt = now.AddDays(10), // Phim sắp chiếu
-                EndedDate = now.AddDays(40),
+                ActiveAt = movieActiveAt,
+                EndedDate = movieEndedDate,
                 IsActive = true,
                 CreatedAt = defaultDate,
                 UpdatedAt = defaultDate,

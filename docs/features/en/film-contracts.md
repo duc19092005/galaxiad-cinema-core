@@ -41,7 +41,7 @@ Development and Testing store private contract files in MinIO. Production retain
 
 Partner is optional at intake. The Admin list can filter by partner; the partner is extracted from the licensor/distributor section and then confirmed by a human. Optional fields are never invented: missing description, poster, dates, classification, scope, or share values remain unresolved and block approval when required. `SPECIFIED` is used only when cinema/format names map to the catalog; “all cinemas in the chain” remains `NO_ADDITIONAL_RESTRICTION_CONFIRMED` instead of becoming a fake cinema name.
 
-The PDFs in `sample-contracts/` are explicitly marked demo data and include Unicode Vietnamese, partner details, descriptions, and poster URLs. Movie descriptions use `nvarchar(2048)`; existing `?` characters must be re-imported from the source because lost encoding cannot be reconstructed.
+The five PDFs in `sample-contracts/` (Dune, Mai, Avatar, Oppenheimer, and Spider-Man) are explicitly marked demo data and include Unicode Vietnamese, partner details, descriptions, poster URLs, and the shared 2026-09-06 through 2027-09-20 rights window for OCR checks. Movie descriptions use `nvarchar(2048)`; existing `?` characters must be re-imported from the source because lost encoding cannot be reconstructed.
 
 ## Docker verification
 

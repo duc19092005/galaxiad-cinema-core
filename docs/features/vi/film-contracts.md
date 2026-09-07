@@ -43,7 +43,7 @@ Môi trường Development/Testing lưu PDF hợp đồng và asset riêng tư t
 
 Các trường optional không được tự điền giá trị giả: thiếu mô tả, poster, ngày, phân loại, phạm vi hoặc tỷ lệ sẽ hiện “chưa xác định” và chặn duyệt nếu là điều kiện bắt buộc. Poster chỉ được lưu khi URL/asset xuất hiện trong tài liệu hoặc được người rà soát bổ sung có nguồn. `SPECIFIED` chỉ dùng khi ánh xạ được tên rạp/định dạng; câu “toàn hệ thống” dùng `NO_ADDITIONAL_RESTRICTION_CONFIRMED`, không biến thành tên rạp giả.
 
-Hai PDF trong `sample-contracts/` là dữ liệu demo, có nhãn mô phỏng, tiếng Việt Unicode, đối tác, mô tả và poster URL để kiểm tra OCR. Cột mô tả phim dùng `nvarchar(2048)`; dữ liệu cũ đã lưu dấu `?` cần nạp lại từ nguồn gốc vì database không thể khôi phục ký tự đã mất.
+Bộ năm PDF trong `sample-contracts/` là dữ liệu demo (Dune, Mai, Avatar, Oppenheimer và Spider-Man), có nhãn mô phỏng, tiếng Việt Unicode, đối tác, mô tả, poster URL và cùng thời hạn 06/09/2026–20/09/2027 để kiểm tra OCR. Cột mô tả phim dùng `nvarchar(2048)`; dữ liệu cũ đã lưu dấu `?` cần nạp lại từ nguồn gốc vì database không thể khôi phục ký tự đã mất.
 
 Docker dev/test chạy Ollama với `qwen3.5:4b` và không cần API key. Adapter dùng API native của Ollama, `think: false`, JSON mode và giới hạn output để tránh reasoning dài làm hỏng schema.
 
