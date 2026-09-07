@@ -17,7 +17,7 @@ public class MovieInfoEntity : BaseManagementStatus<UserInfoEntity>
     [Column(TypeName = "nvarchar(100)")]
     public string MovieName { get; set; } = string.Empty;
 
-    [Column(TypeName = "varchar(2048)")]
+    [Column(TypeName = "nvarchar(2048)")]
     public string MovieDescription { get; set; } = string.Empty;
 
     [Column(TypeName = "varchar(2048)")]

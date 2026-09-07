@@ -2,11 +2,13 @@ using Cinema.Application.Dtos.MovieManager.Contracts;
 using Cinema.Domain.Entities.Contracts;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Interfaces.Persistence;
 
 namespace Cinema.Application.Interfaces.Contracts;
 
 public interface IContractRepository
 {
+    Task<List<ContractReviewerDto>> ListReviewersAsync(CancellationToken ct);
     Task<List<FilmContractEntity>> ListContractsAsync(ContractStatus? status, Guid userId, bool isAdmin, CancellationToken ct);
     Task<FilmContractEntity?> GetContractDetailAsync(Guid contractId, Guid userId, bool isAdmin, CancellationToken ct);
     Task<FilmContractEntity?> GetEditableContractAsync(Guid contractId, Guid userId, bool isAdmin, CancellationToken ct);
@@ -48,5 +50,5 @@ public interface IContractRepository
     Task ApplyApprovedMovieChangesAsync(Guid movieId, Dictionary<string, string> changes, Guid reviewedByUserId, CancellationToken ct);
 
     Task SaveChangesAsync(CancellationToken ct);
-    Task<IAsyncDisposable> BeginTransactionAsync(CancellationToken ct);
+    Task<IUnitOfWorkTransaction> BeginTransactionAsync(CancellationToken ct);
 }

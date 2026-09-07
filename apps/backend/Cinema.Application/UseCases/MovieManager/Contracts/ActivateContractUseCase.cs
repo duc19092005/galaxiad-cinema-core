@@ -124,6 +124,7 @@ public class ActivateContractUseCase
         contract.UpdatedAt = DateTime.UtcNow;
 
         await _repository.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
         return (false, revision.MovieLines.Select(x => x.MovieId));
     }
 }

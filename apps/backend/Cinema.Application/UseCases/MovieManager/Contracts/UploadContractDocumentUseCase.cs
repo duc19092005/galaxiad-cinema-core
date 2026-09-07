@@ -35,6 +35,8 @@ public class UploadContractDocumentUseCase
             throw new AppException("Không tìm thấy hồ sơ được giao.", 404, "CONTRACT_NOT_FOUND");
         if (contract.Status != ContractStatus.Draft)
             throw new AppException("Chỉ hồ sơ DRAFT mới được upload.", 409, "CONTRACT_STATE_CONFLICT");
+        if (contract.ProcessingStatus is ContractProcessingStatus.Queued or ContractProcessingStatus.Processing)
+            throw new AppException("Chờ OCR hoàn tất trước khi bổ sung tài liệu.", 409, "CONTRACT_PROCESSING");
         if (file.Length is <= 0 or > 25 * 1024 * 1024)
             throw new AppException("File phải từ 1 byte đến 25 MB.", 400, "CONTRACT_FILE_SIZE");
 
@@ -57,6 +59,8 @@ public class UploadContractDocumentUseCase
             throw new AppException("Không tìm thấy revision hiện tại.", 404, "REVISION_NOT_FOUND");
 
         var documentId = Guid.NewGuid();
+        revision.DataReviewed = false;
+        revision.FinancialPolicyReviewed = false;
         var sha = Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();
         var objectKey = $"{contractId:N}/{revision.ContractRevisionId:N}/{documentId:N}{extension}";
         var contentType = ContentTypeFor(extension);

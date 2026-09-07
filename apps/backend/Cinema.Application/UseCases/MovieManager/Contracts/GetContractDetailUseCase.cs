@@ -52,6 +52,7 @@ public class GetContractDetailUseCase
                 RevisionNumber = revision.RevisionNumber,
                 ExtractedText = revision.ExtractedText,
                 ExtractionJson = revision.ExtractionJson,
+                ReviewHistoryJson = revision.ReviewedDataJson,
                 DataReviewed = revision.DataReviewed,
                 FinancialPolicyReviewed = revision.FinancialPolicyReviewed,
                 Documents = revision.Documents.Select(d => new ResContractDocumentDto(
@@ -106,7 +107,8 @@ public class GetContractDetailUseCase
             actions.Add("UPLOAD_DOCUMENT");
             actions.Add("TRIGGER_EXTRACTION");
             actions.Add("REVIEW_DATA");
-            actions.Add("SUBMIT_FOR_REVIEW");
+            actions.Add(isAdmin ? "APPROVE_CONTRACT" : "SUBMIT_FOR_REVIEW");
+            if (isAdmin) actions.Add("ASSIGN_REVIEWER");
         }
         if (isAdmin && contract.Status == ContractStatus.PendingReview)
         {

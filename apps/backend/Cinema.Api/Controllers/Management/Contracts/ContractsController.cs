@@ -14,6 +14,18 @@ namespace Cinema.Api.Controllers.Management.Contracts;
 [Tags("Film contracts")]
 public sealed class ContractsController : ControllerBase
 {
+    [HttpGet("reviewers")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Reviewers([FromServices] AssignContractUseCase useCase, CancellationToken ct) =>
+        Ok(new { isSuccess = true, data = await useCase.ListAsync(ct) });
+
+    [HttpPost("{id:guid}/assign")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Assign(Guid id, AssignContractReqDto request, [FromServices] AssignContractUseCase useCase, CancellationToken ct)
+    {
+        await useCase.ExecuteAsync(id, request.MovieManagerId, ct);
+        return Ok(new { isSuccess = true });
+    }
     private readonly ListContractsUseCase _listContractsUseCase;
     private readonly GetContractDetailUseCase _getContractDetailUseCase;
     private readonly CreateContractUseCase _createContractUseCase;

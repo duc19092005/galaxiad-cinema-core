@@ -21,7 +21,7 @@ async def close_deepseek_client():
         deepseek_client = None
         logger.info("DeepSeek HTTP AsyncClient closed in llm_client.")
 
-async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float = 0.2) -> str:
+async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float = 0.2, max_tokens: int = 1200) -> str:
     """Helper function to perform direct async completions with DeepSeek API."""
     if not DEEPSEEK_API_KEY and LLM_PROVIDER != "ollama":
         logger.error("DEEPSEEK_API_KEY is not configured.")
@@ -40,9 +40,9 @@ async def call_deepseek(system_prompt: str, user_prompt: str, temperature: float
         ]
     }
     if is_ollama:
-        payload.update({"stream": False, "format": "json", "think": False, "options": {"temperature": temperature, "num_predict": 1200}})
+        payload.update({"stream": False, "format": "json", "think": False, "options": {"temperature": temperature, "num_predict": max_tokens}})
     else:
-        payload.update({"temperature": temperature, "max_tokens": 1200})
+        payload.update({"temperature": temperature, "max_tokens": max_tokens})
 
     try:
         client = deepseek_client if deepseek_client else init_deepseek_client()

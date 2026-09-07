@@ -54,6 +54,12 @@ public static class ContractRevisionValidator
             {
                 x.VietnameseTitle,
                 x.EnglishTitle,
+                x.Description,
+                x.PosterUrl,
+                x.TrailerUrl,
+                x.Director,
+                x.Actors,
+                x.MovieId,
                 x.DurationMinutes,
                 x.MovieRequiredAgeId,
                 x.LicenseStartAt,

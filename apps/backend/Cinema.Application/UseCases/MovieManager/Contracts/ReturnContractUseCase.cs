@@ -40,12 +40,9 @@ public class ReturnContractUseCase
         var revision = await _repository.GetCurrentRevisionAsync(contractId, ct);
         if (revision != null)
         {
-            revision.ReviewedDataJson = JsonSerializer.Serialize(new
-            {
-                previousData = revision.ReviewedDataJson,
-                returnedReason = request.Reason,
-                returnedAt = DateTime.UtcNow
-            }, JsonOptions);
+            ContractReviewHistory.Append(revision, _userContext.GetUserId(), "RETURN", new { request.Reason }, _userContext.GetUserName());
+            revision.DataReviewed = false;
+            revision.FinancialPolicyReviewed = false;
         }
 
         await _repository.SaveChangesAsync(ct);

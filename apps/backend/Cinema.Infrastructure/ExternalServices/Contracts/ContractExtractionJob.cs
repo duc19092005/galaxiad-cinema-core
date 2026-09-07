@@ -50,6 +50,19 @@ public sealed class ContractExtractionJob
             revision.ExtractionJson = payload;
             using var json = JsonDocument.Parse(payload);
             revision.ExtractedText = json.RootElement.TryGetProperty("text", out var text) ? text.GetString() ?? "" : "";
+            if (!contract.DistributorId.HasValue && json.RootElement.TryGetProperty("analysis", out var analysis)
+                && analysis.TryGetProperty("distributor", out var party) && party.ValueKind == JsonValueKind.Object
+                && party.TryGetProperty("legalName", out var nameElement) && nameElement.ValueKind == JsonValueKind.String
+                && nameElement.GetString() is { Length: > 0 and <= 200 } name)
+            {
+                var partner = await _db.DistributorEntity.FirstOrDefaultAsync(x => x.LegalName == name, ct);
+                if (partner == null)
+                {
+                    partner = new Cinema.Domain.Entities.Contracts.DistributorEntity { DistributorId = Guid.NewGuid(), LegalName = name };
+                    _db.DistributorEntity.Add(partner);
+                }
+                contract.DistributorId = partner.DistributorId;
+            }
             contract.ProcessingStatus = ContractProcessingStatus.AwaitingDataApproval;
         }
         catch (Exception ex)

@@ -82,8 +82,8 @@ flowchart TD
 - **Change requests**: Propose poster, description, or metadata changes for an Admin diff review and approval
 
 ### 📄 Film Contracts & OCR (Movie Contract Workflow)
-- **Contract intake**: MovieManager uploads partner PDFs, scans, and appendices; the original file is immutable and stored with a hash and revision
-- **OCR and clause analysis**: The Python AI Service reads PDF text layers or Vietnamese/English scans with Tesseract, then extracts movies, dates, cinema/format scope, classification, and revenue-share policy
+- **Contract intake**: Admin uploads partner PDFs, scans, and appendices; OCR starts immediately and Admin may assign MovieManager for reconciliation; the original file is immutable and stored with a hash and revision
+- **OCR and clause analysis**: The Python AI Service prefers PDF text layers, falls back to `pypdfium2` page rendering and Vietnamese/English Tesseract OCR, then asks local Ollama `qwen3.5:4b` for page-sourced JSON covering partners, movies, descriptions, posters, dates, scope, and revenue shares. Invalid or missing values remain `UNRESOLVED`; data is never guessed.
 - **Evidence-backed review**: Every extracted field keeps page, source text, and `SPECIFIED` / `NO_ADDITIONAL_RESTRICTION_CONFIRMED` / `UNRESOLVED` status; missing values are never guessed as 50/50 or system-wide
 - **Approve, sign, activate**: Admin approves a revision, signs internally, and activates one transaction that creates/links the movie, exhibition rights, and financial policy; contract history is retained
 - **Role separation**: Admin manages templates, partners, sign-off, activation, and settlement; MovieManager handles assigned dossiers; TheaterManager schedules only from activated rights

@@ -48,6 +48,10 @@ export const createApiClient = (path: string, timeout = 10000) => {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
 
+      if (config.data instanceof FormData) {
+        delete (config.headers as Record<string, unknown>)['Content-Type'];
+      }
+
       return config;
     },
     (error) => Promise.reject(error)

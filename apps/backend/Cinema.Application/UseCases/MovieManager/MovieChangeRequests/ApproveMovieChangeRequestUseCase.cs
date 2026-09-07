@@ -48,6 +48,7 @@ public class ApproveMovieChangeRequestUseCase
         item.UpdatedAt = DateTime.UtcNow;
 
         await _repository.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
 
         return MovieChangeRequestStatus.Approved.ToString();
     }

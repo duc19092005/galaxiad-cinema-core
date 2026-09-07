@@ -18,6 +18,7 @@ public static class ContractServicesBootstrap
 
         // Contracts Use Cases
         services.AddScoped<ListContractsUseCase>();
+        services.AddScoped<AssignContractUseCase>();
         services.AddScoped<GetContractDetailUseCase>();
         services.AddScoped<CreateContractUseCase>();
         services.AddScoped<UploadContractDocumentUseCase>();

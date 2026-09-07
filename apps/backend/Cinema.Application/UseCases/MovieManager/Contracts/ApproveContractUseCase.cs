@@ -25,7 +25,7 @@ public class ApproveContractUseCase
         if (contract == null)
             throw new AppException("Không tìm thấy hợp đồng.", 404, "CONTRACT_NOT_FOUND");
 
-        if (contract.Status != ContractStatus.PendingReview)
+        if (contract.Status != ContractStatus.PendingReview && contract.Status != ContractStatus.Draft)
             throw new AppException("Chỉ hồ sơ PENDING_REVIEW mới được duyệt.", 409, "CONTRACT_STATE_CONFLICT");
 
         var revision = await _repository.GetCurrentRevisionAsync(contractId, ct);
@@ -33,6 +33,9 @@ public class ApproveContractUseCase
             throw new AppException("Không tìm thấy revision hợp đồng.", 404, "REVISION_NOT_FOUND");
 
         ContractRevisionValidator.Validate(revision);
+        if (contract.ProcessingStatus is ContractProcessingStatus.Queued or ContractProcessingStatus.Processing)
+            throw new AppException("Chờ OCR hoàn tất.", 409, "CONTRACT_PROCESSING");
+        ContractReviewHistory.Append(revision, _userContext.GetUserId(), "APPROVE", new { revision.RevisionNumber });
 
         contract.Status = ContractStatus.ReadyToSign;
         contract.UpdatedAt = DateTime.UtcNow;

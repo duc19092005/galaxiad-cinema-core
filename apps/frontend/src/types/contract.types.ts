@@ -58,6 +58,7 @@ export interface ContractDetail extends ContractSummary {
     revisionNumber: number;
     extractedText: string;
     extractionJson: string;
+    reviewHistoryJson?: string;
     dataReviewed: boolean;
     financialPolicyReviewed: boolean;
     documents: ContractDocument[];

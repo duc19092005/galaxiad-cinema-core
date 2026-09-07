@@ -4,13 +4,15 @@ import type { ContractDetail, ContractMovieLine, ContractSummary, ContractTempla
 interface Envelope<T> { isSuccess: boolean; data: T; message?: string }
 
 export const contractApi = {
+  reviewers: async () => (await movieAxios.get<Envelope<{ userId: string; name: string }[]>>('/contracts/reviewers')).data,
+  assign: async (id: string, movieManagerId: string) => (await movieAxios.post(`/contracts/${id}/assign`, { movieManagerId })).data,
   list: async (status?: string) => (await movieAxios.get<Envelope<ContractSummary[]>>('/contracts', { params: status ? { status } : {} })).data,
   get: async (id: string) => (await movieAxios.get<Envelope<ContractDetail>>(`/contracts/${id}`)).data,
   create: async (body: { distributorName?: string; counterpartyContractNumber?: string; templateId?: string; isDemo?: boolean }) =>
     (await movieAxios.post<Envelope<{ id: string; internalCode: string }>>('/contracts', body)).data,
   upload: async (id: string, file: File, kind = 'Original') => {
     const data = new FormData(); data.append('file', file); data.append('kind', kind);
-    return (await movieAxios.post(`/contracts/${id}/documents`, data, { headers: { 'Content-Type': 'multipart/form-data' }, timeout: 120000 })).data;
+    return (await movieAxios.post(`/contracts/${id}/documents`, data, { timeout: 120000 })).data;
   },
   openDocument: async (contractId: string, documentId: string, fileName: string) => {
     const response = await movieAxios.get(`/contracts/${contractId}/documents/${documentId}`, { responseType: 'blob' });
@@ -19,8 +21,8 @@ export const contractApi = {
     window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
   },
   extract: async (id: string) => (await movieAxios.post(`/contracts/${id}/extractions`)).data,
-  review: async (id: string, movieLines: ContractMovieLine[], financialPolicyReviewed: boolean) =>
-    (await movieAxios.put(`/contracts/${id}/extraction-review`, { movieLines, financialPolicyReviewed })).data,
+  review: async (id: string, movieLines: ContractMovieLine[], financialPolicyReviewed: boolean, distributorName?: string) =>
+    (await movieAxios.put(`/contracts/${id}/extraction-review`, { movieLines, financialPolicyReviewed, distributorName })).data,
   submit: async (id: string) => (await movieAxios.post(`/contracts/${id}/submit`)).data,
   approve: async (id: string) => (await movieAxios.post(`/contracts/${id}/approve`)).data,
   returnForRevision: async (id: string, reason: string) => (await movieAxios.post(`/contracts/${id}/return`, { reason })).data,

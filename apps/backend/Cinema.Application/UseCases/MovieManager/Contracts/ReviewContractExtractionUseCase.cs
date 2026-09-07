@@ -31,6 +31,8 @@ public class ReviewContractExtractionUseCase
             throw new AppException("Không tìm thấy hợp đồng.", 404, "CONTRACT_NOT_FOUND");
         if (contract.Status != ContractStatus.Draft)
             throw new AppException("Hồ sơ đã khóa.", 409, "CONTRACT_STATE_CONFLICT");
+        if (contract.ProcessingStatus is ContractProcessingStatus.Queued or ContractProcessingStatus.Processing)
+            throw new AppException("Chờ OCR hoàn tất trước khi đối soát.", 409, "CONTRACT_PROCESSING");
 
         var revision = await _repository.GetCurrentRevisionAsync(contractId, ct);
         if (revision == null)
@@ -63,15 +65,19 @@ public class ReviewContractExtractionUseCase
             Reviewed = line.Reviewed
         }).ToList();
 
+        await using var transaction = await _repository.BeginTransactionAsync(ct);
         await _repository.ReplaceMovieLinesAsync(revision.ContractRevisionId, newLines, ct);
 
-        revision.ReviewedDataJson = JsonSerializer.Serialize(request, JsonOptions);
+        ContractReviewHistory.Append(revision, userId, "REVIEW", request, _userContext.GetUserName());
+        if (!string.IsNullOrWhiteSpace(request.DistributorName))
+            contract.DistributorId = await _repository.GetOrCreateDistributorAsync(null, request.DistributorName, false, ct);
         revision.DataReviewed = request.MovieLines.Count > 0 && request.MovieLines.All(x => x.Reviewed);
         revision.FinancialPolicyReviewed = request.FinancialPolicyReviewed;
         contract.ProcessingStatus = ContractProcessingStatus.AwaitingDataApproval;
         contract.UpdatedAt = DateTime.UtcNow;
 
         await _repository.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
         return (revision.DataReviewed, revision.FinancialPolicyReviewed);
     }
 

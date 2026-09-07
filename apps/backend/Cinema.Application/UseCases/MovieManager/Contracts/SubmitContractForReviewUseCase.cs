@@ -33,6 +33,7 @@ public class SubmitContractForReviewUseCase
             throw new AppException("Không tìm thấy revision hợp đồng.", 404, "REVISION_NOT_FOUND");
 
         ContractRevisionValidator.Validate(revision);
+        ContractReviewHistory.Append(revision, userId, "SUBMIT", new { revision.RevisionNumber });
 
         contract.Status = ContractStatus.PendingReview;
         contract.UpdatedAt = DateTime.UtcNow;

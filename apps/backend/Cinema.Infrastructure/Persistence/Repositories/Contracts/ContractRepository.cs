@@ -5,6 +5,8 @@ using Cinema.Application.Interfaces.Contracts;
 using Cinema.Domain.Entities.Contracts;
 using Cinema.Domain.Entities.MovieInfos;
 using Cinema.Domain.Enums;
+using Cinema.Domain.Interfaces.Persistence;
+using Cinema.Infrastructure.Persistence.Repositories.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cinema.Infrastructure.Persistence.Repositories.Contracts;
@@ -89,9 +91,17 @@ public class ContractRepository : IContractRepository
             (x.RoleListInfoEntity.RoleName == "MovieManager" || x.RoleListInfoEntity.RoleName == "Admin"), ct);
     }
 
+    public Task<List<ContractReviewerDto>> ListReviewersAsync(CancellationToken ct) =>
+        _db.UserRoleInfoEntity.AsNoTracking()
+            .Where(x => x.RoleListInfoEntity.RoleName == "MovieManager" && x.UserInfoEntity.AccountStatus == AccountStatusEnum.Active)
+            .Select(x => new ContractReviewerDto(x.UserId, x.UserInfoEntity.UserName))
+            .Distinct().ToListAsync(ct);
+
     public async Task<Guid> GetOrCreateDistributorAsync(Guid? distributorId, string? distributorName, bool isDemo, CancellationToken ct)
     {
         if (distributorId.HasValue) return distributorId.Value;
+        var existing = await _db.DistributorEntity.FirstOrDefaultAsync(x => x.LegalName == distributorName!.Trim(), ct);
+        if (existing != null) return existing.DistributorId;
         var distributor = new DistributorEntity
         {
             DistributorId = Guid.NewGuid(),
@@ -329,9 +339,9 @@ public class ContractRepository : IContractRepository
 
     public Task SaveChangesAsync(CancellationToken ct) => _db.SaveChangesAsync(ct);
 
-    public async Task<IAsyncDisposable> BeginTransactionAsync(CancellationToken ct)
+    public async Task<IUnitOfWorkTransaction> BeginTransactionAsync(CancellationToken ct)
     {
         var tx = await _db.Database.BeginTransactionAsync(ct);
-        return tx;
+        return new EfUnitOfWorkTransaction(tx);
     }
 }

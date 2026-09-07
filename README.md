@@ -82,8 +82,8 @@ flowchart TD
 - **Yêu cầu điều chỉnh**: Đề xuất thay đổi poster, mô tả hoặc metadata để Admin xem diff và phê duyệt
 
 ### 📄 Hợp đồng phim & OCR (Movie Contract Workflow)
-- **Tiếp nhận hợp đồng**: MovieManager tải lên PDF, ảnh scan và phụ lục từ đối tác; file gốc được lưu bất biến cùng hash và revision
-- **OCR và phân tích điều khoản**: Python AI Service đọc PDF text layer hoặc OCR tiếng Việt/Anh bằng Tesseract, sau đó dùng model để bóc tách phim, thời hạn, phạm vi rạp/định dạng, phân loại và chính sách chia doanh thu
+- **Tiếp nhận hợp đồng**: Admin tải lên PDF, ảnh scan và phụ lục từ đối tác; OCR chạy ngay, sau đó Admin có thể giao MovieManager đối soát; file gốc được lưu bất biến cùng hash và revision
+- **OCR và phân tích điều khoản**: Python AI Service ưu tiên đọc PDF text layer, fallback render trang scan bằng `pypdfium2` rồi OCR tiếng Việt/Anh bằng Tesseract; Ollama `qwen3.5:4b` phân tích text theo trang thành JSON có nguồn cho đối tác, phim, mô tả, poster, thời hạn, phạm vi và chia doanh thu. Schema lỗi/thiếu chuyển thành `UNRESOLVED`, không tự đoán dữ liệu.
 - **Đối chiếu có nguồn**: Mỗi trường trích xuất giữ trang, đoạn nguồn, trạng thái `SPECIFIED` / `NO_ADDITIONAL_RESTRICTION_CONFIRMED` / `UNRESOLVED`; dữ liệu thiếu không bị tự đoán thành 50/50 hoặc toàn hệ thống
 - **Duyệt, ký và kích hoạt**: Admin duyệt revision, ký nội bộ, rồi kích hoạt transaction để tạo/liên kết phim, quyền chiếu và chính sách tài chính; lịch sử hợp đồng không bị xóa
 - **Quản trị theo vai trò**: Admin quản lý mẫu, đối tác, ký/kích hoạt và đối soát; MovieManager chỉ xử lý hồ sơ được giao; TheaterManager chỉ lập lịch theo quyền đã kích hoạt

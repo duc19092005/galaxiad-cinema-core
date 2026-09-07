@@ -157,6 +157,7 @@ services:
       - /src/Cinema.Infrastructure/obj
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_USE_POLLING_FILE_WATCHER=false
       - Database__AutoMigrate=true
       - ConnectionStrings__DatabaseConnection=Server=mssql;Database=CinemaDevDb;User Id=sa;Password=CinemaDev123!;TrustServerCertificate=True;
       - ConnectionStrings__HangfireConnection=Server=mssql;Database=CinemaDevDb;User Id=sa;Password=CinemaDev123!;TrustServerCertificate=True;

@@ -12,7 +12,11 @@ public sealed record CreateContractReqDto(
 
 public sealed record ReviewExtractionReqDto(
     List<ContractMovieLineDto> MovieLines,
-    bool FinancialPolicyReviewed);
+    bool FinancialPolicyReviewed,
+    string? DistributorName = null);
+
+public sealed record ContractReviewerDto(Guid UserId, string Name);
+public sealed record AssignContractReqDto(Guid MovieManagerId);
 
 public sealed record ContractMovieLineDto
 {
@@ -82,6 +86,7 @@ public sealed record ResContractRevisionDto
     public int RevisionNumber { get; init; }
     public string ExtractedText { get; init; } = string.Empty;
     public string ExtractionJson { get; init; } = "{}";
+    public string ReviewHistoryJson { get; init; } = "{}";
     public bool DataReviewed { get; init; }
     public bool FinancialPolicyReviewed { get; init; }
     public IEnumerable<ResContractDocumentDto> Documents { get; init; } = [];
@@ -173,4 +178,3 @@ public sealed record ResMovieRevenueItemDto(
     decimal RevenueWeightPercent,
     decimal CinemaShareWeightPercent,
     decimal EffectiveCinemaRate);
-
